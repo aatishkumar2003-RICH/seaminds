@@ -1,57 +1,119 @@
 import { useState, useEffect, useRef } from "react";
 import { Send } from "lucide-react";
+import { toast } from "sonner";
 
 interface Message {
   id: number;
-  role: "ai" | "user";
-  text: string;
+  role: "assistant" | "user";
+  content: string;
 }
 
 const GREETING = `Hey Rajan, it's SeaMinds. 👋
 
 How are you feeling today? No right or wrong answer — just checking in.`;
 
-const AI_RESPONSES = [
-  "Thanks for sharing that with me. That sounds like a lot to carry. What's been weighing on you most?",
-  "I hear you. Being away from family is one of the hardest parts of life at sea. How long until your next leave?",
-  "That makes sense. Sleep can be tough with the watch schedule. Have you tried anything that helps, even a little?",
-  "You're not alone in feeling that way. A lot of crew go through the same thing. Want to talk more about it?",
-  "I appreciate you opening up. That takes strength. What would make today even a little bit better for you?",
-];
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 
 const CrewChat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const responseIndex = useRef(0);
 
   useEffect(() => {
-    // AI sends first message automatically
     const timer = setTimeout(() => {
-      setMessages([{ id: 1, role: "ai", text: GREETING }]);
+      setMessages([{ id: 1, role: "assistant", content: GREETING }]);
     }, 800);
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, isTyping]);
+  }, [messages, isLoading]);
 
-  const sendMessage = () => {
-    if (!input.trim() || isTyping) return;
+  const sendMessage = async () => {
+    if (!input.trim() || isLoading) return;
 
-    const userMsg: Message = { id: Date.now(), role: "user", text: input.trim() };
-    setMessages((prev) => [...prev, userMsg]);
+    const userMsg: Message = { id: Date.now(), role: "user", content: input.trim() };
+    const updatedMessages = [...messages, userMsg];
+    setMessages(updatedMessages);
     setInput("");
-    setIsTyping(true);
+    setIsLoading(true);
 
-    setTimeout(() => {
-      const aiText = AI_RESPONSES[responseIndex.current % AI_RESPONSES.length];
-      responseIndex.current += 1;
-      setMessages((prev) => [...prev, { id: Date.now() + 1, role: "ai", text: aiText }]);
-      setIsTyping(false);
-    }, 1500);
+    let assistantSoFar = "";
+
+    try {
+      const resp = await fetch(CHAT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({
+          messages: updatedMessages.map((m) => ({ role: m.role, content: m.content })),
+        }),
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.error || `Request failed (${resp.status})`);
+      }
+
+      if (!resp.body) throw new Error("No response body");
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let textBuffer = "";
+      let streamDone = false;
+
+      while (!streamDone) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        textBuffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
+
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (line.startsWith(":") || line.trim() === "") continue;
+          if (!line.startsWith("data: ")) continue;
+
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") { streamDone = true; break; }
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (content) {
+              assistantSoFar += content;
+              const current = assistantSoFar;
+              setMessages((prev) => {
+                const last = prev[prev.length - 1];
+                if (last?.role === "assistant" && last.id === -1) {
+                  return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: current } : m));
+                }
+                return [...prev, { id: -1, role: "assistant", content: current }];
+              });
+            }
+          } catch {
+            textBuffer = line + "\n" + textBuffer;
+            break;
+          }
+        }
+      }
+
+      // Finalize assistant message with a real id
+      setMessages((prev) =>
+        prev.map((m) => (m.id === -1 ? { ...m, id: Date.now() + 1 } : m))
+      );
+    } catch (e: any) {
+      console.error("Chat error:", e);
+      toast.error(e.message || "Failed to get response");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -74,26 +136,24 @@ const CrewChat = () => {
         {messages.map((msg) => (
           <div
             key={msg.id}
-            className={`chat-fade-in max-w-[85%] ${
-              msg.role === "ai" ? "mr-auto" : "ml-auto"
-            }`}
+            className={`chat-fade-in max-w-[85%] ${msg.role === "assistant" ? "mr-auto" : "ml-auto"}`}
           >
-            {msg.role === "ai" && (
+            {msg.role === "assistant" && (
               <p className="text-xs font-medium text-primary mb-1 ml-1">SeaMinds</p>
             )}
             <div
               className={`px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-line ${
-                msg.role === "ai"
+                msg.role === "assistant"
                   ? "bg-secondary text-secondary-foreground rounded-tl-md"
                   : "bg-primary text-primary-foreground rounded-tr-md"
               }`}
             >
-              {msg.text}
+              {msg.content}
             </div>
           </div>
         ))}
 
-        {isTyping && (
+        {isLoading && !messages.some((m) => m.id === -1) && (
           <div className="chat-fade-in max-w-[85%] mr-auto">
             <p className="text-xs font-medium text-primary mb-1 ml-1">SeaMinds</p>
             <div className="bg-secondary px-4 py-3 rounded-2xl rounded-tl-md flex items-center gap-1.5">
@@ -118,7 +178,7 @@ const CrewChat = () => {
           />
           <button
             onClick={sendMessage}
-            disabled={!input.trim() || isTyping}
+            disabled={!input.trim() || isLoading}
             className="p-2 rounded-full bg-primary text-primary-foreground disabled:opacity-30 transition-opacity"
           >
             <Send size={16} />
