@@ -14,7 +14,65 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          crew_profile_id: string
+          id: string
+          role: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          crew_profile_id: string
+          id?: string
+          role: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          crew_profile_id?: string
+          id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_crew_profile_id_fkey"
+            columns: ["crew_profile_id"]
+            isOneToOne: false
+            referencedRelation: "crew_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crew_profiles: {
+        Row: {
+          created_at: string
+          first_name: string
+          id: string
+          onboarded: boolean
+          role: string
+          ship_name: string
+        }
+        Insert: {
+          created_at?: string
+          first_name: string
+          id?: string
+          onboarded?: boolean
+          role: string
+          ship_name: string
+        }
+        Update: {
+          created_at?: string
+          first_name?: string
+          id?: string
+          onboarded?: boolean
+          role?: string
+          ship_name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
