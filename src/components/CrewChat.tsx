@@ -1,46 +1,100 @@
 import { useState, useEffect, useRef } from "react";
 import { Send } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
-  id: number;
+  id: string;
   role: "assistant" | "user";
   content: string;
 }
 
-const GREETING = `Hey Rajan, it's SeaMinds. 👋
-
-How are you feeling today? No right or wrong answer — just checking in.`;
+interface CrewChatProps {
+  profileId: string;
+  firstName: string;
+}
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 
-const CrewChat = () => {
+const CrewChat = ({ profileId, firstName }: CrewChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const GREETING = `Hey ${firstName}, it's SeaMinds. 👋\n\nHow are you feeling today? No right or wrong answer — just checking in.`;
+
+  // Load existing messages from DB
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setMessages([{ id: 1, role: "assistant", content: GREETING }]);
-    }, 800);
-    return () => clearTimeout(timer);
-  }, []);
+    const load = async () => {
+      const { data, error } = await supabase
+        .from("chat_messages")
+        .select("id, role, content")
+        .eq("crew_profile_id", profileId)
+        .order("created_at", { ascending: true });
+
+      if (error) {
+        console.error("Failed to load messages:", error);
+      }
+
+      if (data && data.length > 0) {
+        setMessages(data.map((m) => ({ id: m.id, role: m.role as "assistant" | "user", content: m.content })));
+      } else {
+        // First time — insert greeting
+        const { data: inserted, error: insertErr } = await supabase
+          .from("chat_messages")
+          .insert({ crew_profile_id: profileId, role: "assistant", content: GREETING })
+          .select("id")
+          .single();
+
+        if (!insertErr && inserted) {
+          setMessages([{ id: inserted.id, role: "assistant", content: GREETING }]);
+        }
+      }
+      setInitialLoading(false);
+    };
+    load();
+  }, [profileId]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, isLoading]);
 
+  const getTimeGreeting = () => {
+    const h = new Date().getHours();
+    if (h < 12) return "Good morning";
+    if (h < 18) return "Good afternoon";
+    return "Good evening";
+  };
+
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
 
-    const userMsg: Message = { id: Date.now(), role: "user", content: input.trim() };
-    const updatedMessages = [...messages, userMsg];
-    setMessages(updatedMessages);
+    const userContent = input.trim();
     setInput("");
     setIsLoading(true);
 
+    // Save user message to DB
+    const { data: savedUser, error: saveErr } = await supabase
+      .from("chat_messages")
+      .insert({ crew_profile_id: profileId, role: "user", content: userContent })
+      .select("id")
+      .single();
+
+    if (saveErr) {
+      console.error("Failed to save message:", saveErr);
+      toast.error("Failed to send message");
+      setIsLoading(false);
+      return;
+    }
+
+    const userMsg: Message = { id: savedUser.id, role: "user", content: userContent };
+    const updatedMessages = [...messages, userMsg];
+    setMessages(updatedMessages);
+
     let assistantSoFar = "";
+    const streamId = "streaming";
 
     try {
       const resp = await fetch(CHAT_URL, {
@@ -91,10 +145,10 @@ const CrewChat = () => {
               const current = assistantSoFar;
               setMessages((prev) => {
                 const last = prev[prev.length - 1];
-                if (last?.role === "assistant" && last.id === -1) {
+                if (last?.id === streamId) {
                   return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: current } : m));
                 }
-                return [...prev, { id: -1, role: "assistant", content: current }];
+                return [...prev, { id: streamId, role: "assistant", content: current }];
               });
             }
           } catch {
@@ -104,9 +158,16 @@ const CrewChat = () => {
         }
       }
 
-      // Finalize assistant message with a real id
+      // Save assistant response to DB
+      const { data: savedAssistant } = await supabase
+        .from("chat_messages")
+        .insert({ crew_profile_id: profileId, role: "assistant", content: assistantSoFar })
+        .select("id")
+        .single();
+
+      // Replace streaming message with real id
       setMessages((prev) =>
-        prev.map((m) => (m.id === -1 ? { ...m, id: Date.now() + 1 } : m))
+        prev.map((m) => (m.id === streamId ? { ...m, id: savedAssistant?.id || crypto.randomUUID() } : m))
       );
     } catch (e: any) {
       console.error("Chat error:", e);
@@ -123,12 +184,24 @@ const CrewChat = () => {
     }
   };
 
+  if (initialLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-primary pulse-dot" style={{ animationDelay: "0s" }} />
+          <span className="w-2 h-2 rounded-full bg-primary pulse-dot" style={{ animationDelay: "0.3s" }} />
+          <span className="w-2 h-2 rounded-full bg-primary pulse-dot" style={{ animationDelay: "0.6s" }} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="px-5 pt-12 pb-4 border-b border-border">
-        <p className="text-sm text-muted-foreground tracking-wide uppercase">Good evening</p>
-        <h1 className="text-xl font-semibold text-foreground">Rajan</h1>
+        <p className="text-sm text-muted-foreground tracking-wide uppercase">{getTimeGreeting()}</p>
+        <h1 className="text-xl font-semibold text-foreground">{firstName}</h1>
       </div>
 
       {/* Messages */}
@@ -153,7 +226,7 @@ const CrewChat = () => {
           </div>
         ))}
 
-        {isLoading && !messages.some((m) => m.id === -1) && (
+        {isLoading && !messages.some((m) => m.id === "streaming") && (
           <div className="chat-fade-in max-w-[85%] mr-auto">
             <p className="text-xs font-medium text-primary mb-1 ml-1">SeaMinds</p>
             <div className="bg-secondary px-4 py-3 rounded-2xl rounded-tl-md flex items-center gap-1.5">
