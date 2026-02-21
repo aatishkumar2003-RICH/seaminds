@@ -105,6 +105,7 @@ const CrewChat = ({ profileId, firstName }: CrewChatProps) => {
         },
         body: JSON.stringify({
           messages: updatedMessages.map((m) => ({ role: m.role, content: m.content })),
+          profileId,
         }),
       });
 

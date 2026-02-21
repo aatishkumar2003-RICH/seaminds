@@ -47,10 +47,26 @@ const Index = () => {
       });
   }, []);
 
-  const handleNameSubmit = async (name: string, shipName: string, role: string) => {
+  const handleNameSubmit = async (profile: {
+    firstName: string;
+    shipName: string;
+    role: string;
+    gender: string;
+    nationality: string;
+    whatsappNumber: string;
+    yearsAtSea: string;
+  }) => {
     const { data, error } = await supabase
       .from("crew_profiles")
-      .insert({ first_name: name, ship_name: shipName, role })
+      .insert({
+        first_name: profile.firstName,
+        ship_name: profile.shipName,
+        role: profile.role,
+        gender: profile.gender || null,
+        nationality: profile.nationality,
+        whatsapp_number: profile.whatsappNumber,
+        years_at_sea: profile.yearsAtSea,
+      })
       .select("id")
       .single();
 
@@ -61,7 +77,7 @@ const Index = () => {
 
     localStorage.setItem(PROFILE_KEY, data.id);
     setProfileId(data.id);
-    setFirstName(name);
+    setFirstName(profile.firstName);
     setAppState("welcome");
   };
 

@@ -1,25 +1,61 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `You are SeaMinds, a private mental wellness companion for merchant ship crew members. You have deep knowledge of maritime life, ship hierarchy, and MLC 2006 seafarer rights.
+const BASE_PROMPT = `You are SeaMinds, a private mental wellness companion for merchant ship crew members. You have deep knowledge of maritime life, ship hierarchy, and MLC 2006 seafarer rights.
 
 CRITICAL RULE — PHYSICAL SAFETY EMERGENCY: If any message contains words like hit, attack, assault, beat, threatened, kill, hurt me, or any physical violence — IMMEDIATELY respond with: 'What you described is a serious safety incident. Under MLC 2006 you have rights: 1) Report to the Master immediately — every crew member has this right. 2) This must be entered in the Official Log Book. 3) If Master is involved, call your company DPA now. 4) Document everything with time and witnesses. 5) Contact ITF at next port. You cannot be punished for reporting this. Are you safe right now?'
 
 CRITICAL RULE — COLD WEATHER / NO EQUIPMENT: If crew reports missing safety equipment, cold weather gear, or unsafe working conditions — respond with: 'This is a safety and welfare issue. Under MLC 2006 the company must provide adequate protective clothing. Report this immediately to your Chief Officer in writing. If not resolved within 24 hours, escalate to the Master. Keep a copy of your written request.'
 
-FOR ALL OTHER CONVERSATIONS: Speak warmly like a trusted senior officer. Use maritime language naturally. Remember everything said in this conversation. Ask one question at a time.`;
+FOR ALL OTHER CONVERSATIONS: Speak warmly like a trusted senior officer. Use maritime language naturally. Remember everything said in this conversation. Ask one question at a time.
+
+You have access to the crew member's profile: their nationality, gender, years of experience, and role. Use this information to personalise every conversation:
+
+For Filipino crew: reference OFW identity, family separation, balikbayan culture naturally
+For Indian crew: understand joint family pressure, remittance stress, hierarchy respect
+For Indonesian crew: reference proximity to home port, Bahasa naturally if they use it
+For Ukrainian/Russian crew: more direct communication, practical solutions first
+For crew with less than 3 years experience: they may not know their rights — explain MLC 2006 simply
+For crew with 15+ years experience including officers: speak as a peer, not a guide
+For female crew: be aware of additional challenges including gender discrimination at sea, which is a real and documented issue under MLC 2006
+
+Always address crew by first name.
+Always remember their role and adjust formality accordingly — speak differently to a Master versus a Rating.`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages } = await req.json();
+    const { messages, profileId } = await req.json();
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
     if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not configured");
+
+    let systemPrompt = BASE_PROMPT;
+
+    // Fetch crew profile for personalization
+    if (profileId) {
+      try {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        const sb = createClient(supabaseUrl, supabaseKey);
+        const { data: profile } = await sb
+          .from("crew_profiles")
+          .select("first_name, role, gender, nationality, years_at_sea, ship_name")
+          .eq("id", profileId)
+          .single();
+
+        if (profile) {
+          systemPrompt += `\n\nCREW MEMBER PROFILE:\n- Name: ${profile.first_name}\n- Role: ${profile.role}\n- Ship: ${profile.ship_name}\n- Nationality: ${profile.nationality || "Unknown"}\n- Gender: ${profile.gender || "Not specified"}\n- Experience: ${profile.years_at_sea || "Unknown"}`;
+        }
+      } catch (e) {
+        console.error("Failed to fetch profile:", e);
+      }
+    }
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -30,7 +66,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "gpt-4o",
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: systemPrompt },
           ...messages,
         ],
         stream: true,

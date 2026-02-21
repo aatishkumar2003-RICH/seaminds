@@ -50,26 +50,38 @@ export type Database = {
         Row: {
           created_at: string
           first_name: string
+          gender: string | null
           id: string
+          nationality: string
           onboarded: boolean
           role: string
           ship_name: string
+          whatsapp_number: string
+          years_at_sea: string
         }
         Insert: {
           created_at?: string
           first_name: string
+          gender?: string | null
           id?: string
+          nationality?: string
           onboarded?: boolean
           role: string
           ship_name: string
+          whatsapp_number?: string
+          years_at_sea?: string
         }
         Update: {
           created_at?: string
           first_name?: string
+          gender?: string | null
           id?: string
+          nationality?: string
           onboarded?: boolean
           role?: string
           ship_name?: string
+          whatsapp_number?: string
+          years_at_sea?: string
         }
         Relationships: []
       }
