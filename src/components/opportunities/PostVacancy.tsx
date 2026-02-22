@@ -48,6 +48,7 @@ const PostVacancy = () => {
   const [salaryMin, setSalaryMin] = useState("");
   const [salaryMax, setSalaryMax] = useState("");
   const [specialReqs, setSpecialReqs] = useState("");
+  const [minSmcScore, setMinSmcScore] = useState("");
   const [posting, setPosting] = useState(false);
 
   // Post-submit state
@@ -94,6 +95,7 @@ const PostVacancy = () => {
       salary_min: parseInt(salaryMin),
       salary_max: parseInt(salaryMax),
       special_requirements: specialReqs,
+      min_smc_score: minSmcScore ? parseFloat(minSmcScore) : null,
     }).select("id").single();
 
     if (error || !vacancy) {
@@ -228,7 +230,7 @@ const PostVacancy = () => {
           </div>
         )}
 
-        <Button variant="outline" className="w-full" onClick={() => { setPosted(false); setVesselName(""); setVesselType(""); setRankRequired(""); setContractDuration(""); setStartDate(undefined); setJoiningPort(""); setSalaryMin(""); setSalaryMax(""); setSpecialReqs(""); }}>
+        <Button variant="outline" className="w-full" onClick={() => { setPosted(false); setVesselName(""); setVesselType(""); setRankRequired(""); setContractDuration(""); setStartDate(undefined); setJoiningPort(""); setSalaryMin(""); setSalaryMax(""); setSpecialReqs(""); setMinSmcScore(""); }}>
           Post Another Vacancy
         </Button>
       </div>
@@ -310,6 +312,20 @@ const PostVacancy = () => {
             placeholder="e.g. Must hold valid US visa, tanker endorsement required"
             rows={3}
             className="w-full bg-secondary text-foreground text-sm rounded-xl px-4 py-3 placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary resize-none"
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs text-muted-foreground">Minimum SMC Score Required <span className="text-muted-foreground/60">(optional, 0.00–5.00)</span></label>
+          <Input
+            type="number"
+            step="0.01"
+            min="0"
+            max="5"
+            value={minSmcScore}
+            onChange={(e) => setMinSmcScore(e.target.value)}
+            placeholder="e.g. 3.50"
+            className="text-sm"
           />
         </div>
 

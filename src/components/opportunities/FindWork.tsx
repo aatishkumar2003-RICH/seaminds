@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
-import { CalendarIcon, Ship, Anchor, Globe, Clock, MapPin, DollarSign, Check } from "lucide-react";
+import { CalendarIcon, Ship, Anchor, Globe, Clock, MapPin, DollarSign, Check, AlertTriangle, Award } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -38,7 +38,11 @@ interface Vacancy {
   salary_max: number;
   company_name: string;
   manager_profile_id: string;
+  min_smc_score: number | null;
 }
+
+// Demo SMC score for development
+const DEMO_SMC_SCORE = 4.17;
 
 const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSea, shipName }: FindWorkProps) => {
   const [availabilityDate, setAvailabilityDate] = useState<Date>();
@@ -264,8 +268,30 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                   <DollarSign size={12} className="text-primary/70" />
                   <span>${v.salary_min.toLocaleString()} – ${v.salary_max.toLocaleString()} /mo</span>
                 </div>
+                {v.min_smc_score && (
+                  <div className="flex items-center gap-1.5 col-span-2">
+                    <Award size={12} className="text-primary/70" />
+                    <span>Min SMC Score: {v.min_smc_score.toFixed(2)}</span>
+                  </div>
+                )}
               </div>
-              <Button size="sm" className="w-full" onClick={() => handleApply(v)}>Apply Now</Button>
+              {(() => {
+                const meetsScore = !v.min_smc_score || DEMO_SMC_SCORE >= v.min_smc_score;
+                if (meetsScore) {
+                  return <Button size="sm" className="w-full" onClick={() => handleApply(v)}>Apply Now</Button>;
+                }
+                return (
+                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 space-y-1">
+                    <div className="flex items-center gap-1.5">
+                      <AlertTriangle size={12} className="text-amber-400" />
+                      <span className="text-xs font-medium text-amber-300">Score Required: {v.min_smc_score?.toFixed(2)}</span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">
+                      Your Score: <span className="text-foreground font-medium">{DEMO_SMC_SCORE.toFixed(2)}</span> — Visit Academy to Improve
+                    </p>
+                  </div>
+                );
+              })()}
             </div>
           ))
         )}
