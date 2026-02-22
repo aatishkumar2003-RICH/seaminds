@@ -10,6 +10,7 @@ import ScoreReveal from "./steps/ScoreReveal";
 interface AssessmentFlowProps {
   profileId: string;
   firstName: string;
+  lastName: string;
   rank: string;
   shipName: string;
   assessmentId: string;
@@ -18,7 +19,7 @@ interface AssessmentFlowProps {
 
 const TOTAL_STEPS = 6;
 
-const AssessmentFlow = ({ profileId, firstName, rank, shipName, assessmentId, onComplete }: AssessmentFlowProps) => {
+const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assessmentId, onComplete }: AssessmentFlowProps) => {
   const [step, setStep] = useState(1);
 
   const goNext = () => setStep((s) => Math.min(s + 1, TOTAL_STEPS));
@@ -83,6 +84,7 @@ const AssessmentFlow = ({ profileId, firstName, rank, shipName, assessmentId, on
           <ScoreReveal
             assessmentId={assessmentId}
             firstName={firstName}
+            lastName={lastName}
             rank={rank}
             onComplete={onComplete}
           />

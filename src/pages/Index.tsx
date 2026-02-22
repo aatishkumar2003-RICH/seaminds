@@ -25,6 +25,7 @@ const Index = () => {
   const [screen, setScreen] = useState<Screen>("chat");
   const [profileId, setProfileId] = useState("");
   const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [role, setRole] = useState("");
   const [shipName, setShipName] = useState("");
   const [voyageStartDate, setVoyageStartDate] = useState("");
@@ -37,13 +38,14 @@ const Index = () => {
 
     supabase
       .from("crew_profiles")
-      .select("id, first_name, onboarded, role, ship_name, voyage_start_date, manning_agency, nationality")
+      .select("id, first_name, last_name, onboarded, role, ship_name, voyage_start_date, manning_agency, nationality")
       .eq("id", savedId)
       .single()
       .then(({ data, error }) => {
         if (error || !data) { localStorage.removeItem(PROFILE_KEY); setAppState("landing"); return; }
         setProfileId(data.id);
         setFirstName(data.first_name);
+        setLastName(data.last_name || "");
         setRole(data.role);
         setShipName(data.ship_name);
         setVoyageStartDate(data.voyage_start_date || "");
@@ -172,7 +174,7 @@ const Index = () => {
         ) : screen === "community" ? (
           <Community profileId={profileId} shipName={shipName} manningAgency={manningAgency} firstName={firstName} voyageStartDate={voyageStartDate} onCompleteVoyage={() => setAppState("voyage-report")} />
         ) : (
-          <SMCScoreTab profileId={profileId} firstName={firstName} rank={role} shipName={shipName} />
+          <SMCScoreTab profileId={profileId} firstName={firstName} lastName={lastName} rank={role} shipName={shipName} />
         )}
       </div>
 
