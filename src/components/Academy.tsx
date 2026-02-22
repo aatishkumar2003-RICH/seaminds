@@ -122,11 +122,9 @@ const Academy = () => {
               </p>
 
               {/* YouTube */}
-              <a
-                href={youtubeUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 rounded-xl bg-card border border-border p-4 hover:border-primary/50 transition-colors"
+              <button
+                onClick={() => window.open(youtubeUrl, "_blank")}
+                className="w-full flex items-center gap-3 rounded-xl bg-card border border-border p-4 hover:border-primary/50 transition-colors text-left"
               >
                 <div className="w-9 h-9 rounded-lg bg-red-500/15 flex items-center justify-center shrink-0">
                   <Youtube size={18} className="text-red-400" />
@@ -136,14 +134,12 @@ const Academy = () => {
                   <p className="text-[11px] text-muted-foreground">Search "{searchResults}" maritime videos</p>
                 </div>
                 <ExternalLink size={14} className="text-muted-foreground shrink-0" />
-              </a>
+              </button>
 
               {/* Google */}
-              <a
-                href={googleUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 rounded-xl bg-card border border-border p-4 hover:border-primary/50 transition-colors"
+              <button
+                onClick={() => window.open(googleUrl, "_blank")}
+                className="w-full flex items-center gap-3 rounded-xl bg-card border border-border p-4 hover:border-primary/50 transition-colors text-left"
               >
                 <div className="w-9 h-9 rounded-lg bg-blue-500/15 flex items-center justify-center shrink-0">
                   <Globe size={18} className="text-blue-400" />
@@ -153,19 +149,17 @@ const Academy = () => {
                   <p className="text-[11px] text-muted-foreground">Maritime regulations & guidance</p>
                 </div>
                 <ExternalLink size={14} className="text-muted-foreground shrink-0" />
-              </a>
+              </button>
 
               {/* Maritime Resources */}
               <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider pt-1">
                 Official Maritime Resources
               </p>
               {MARITIME_RESOURCES.map((res) => (
-                <a
+                <button
                   key={res.name}
-                  href={`${res.url}${encodedQuery}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 rounded-xl bg-card border border-border p-3 hover:border-primary/50 transition-colors"
+                  onClick={() => window.open(`${res.url}${encodedQuery}`, "_blank")}
+                  className="w-full flex items-center gap-3 rounded-xl bg-card border border-border p-3 hover:border-primary/50 transition-colors text-left"
                 >
                   <span className="text-lg w-6 text-center">{res.icon}</span>
                   <div className="flex-1 min-w-0">
@@ -173,7 +167,7 @@ const Academy = () => {
                     <p className="text-[10px] text-muted-foreground truncate">Search "{searchResults}"</p>
                   </div>
                   <ExternalLink size={12} className="text-muted-foreground shrink-0" />
-                </a>
+                </button>
               ))}
 
               {/* Suggested Topics */}
