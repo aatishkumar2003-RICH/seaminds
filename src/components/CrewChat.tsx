@@ -23,6 +23,7 @@ const CrewChat = ({ profileId, firstName, role, shipName }: CrewChatProps) => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [showMoodButtons, setShowMoodButtons] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const FIRST_VISIT_GREETING = `Hey ${firstName}. ${role} on ${shipName} — that's a life most people can't imagine. I don't know your story yet, but I'm here and nothing you tell me goes anywhere else. What's been on your mind lately?`;
@@ -120,6 +121,7 @@ const CrewChat = ({ profileId, firstName, role, shipName }: CrewChatProps) => {
           console.error("Failed to generate welcome-back:", e);
         } finally {
           setIsLoading(false);
+          setShowMoodButtons(true);
         }
       } else {
         // First time — insert personalized greeting
@@ -132,6 +134,7 @@ const CrewChat = ({ profileId, firstName, role, shipName }: CrewChatProps) => {
         if (!insertErr && inserted) {
           setMessages([{ id: inserted.id, role: "assistant", content: FIRST_VISIT_GREETING }]);
         }
+        setShowMoodButtons(true);
       }
       setInitialLoading(false);
     };
@@ -149,11 +152,11 @@ const CrewChat = ({ profileId, firstName, role, shipName }: CrewChatProps) => {
     return "Good evening";
   };
 
-  const sendMessage = async () => {
-    if (!input.trim() || isLoading) return;
-
-    const userContent = input.trim();
-    setInput("");
+  const sendMessage = async (overrideContent?: string) => {
+    const userContent = (overrideContent || input).trim();
+    if (!userContent || isLoading) return;
+    if (!overrideContent) setInput("");
+    setShowMoodButtons(false);
     setIsLoading(true);
 
     // Save user message to DB
@@ -266,6 +269,18 @@ const CrewChat = ({ profileId, firstName, role, shipName }: CrewChatProps) => {
     }
   };
 
+  const MOOD_OPTIONS = [
+    { emoji: "😊", label: "Good" },
+    { emoji: "😐", label: "Okay" },
+    { emoji: "😔", label: "Struggling" },
+    { emoji: "😤", label: "Angry" },
+  ];
+
+  const handleMoodSelect = (mood: { emoji: string; label: string }) => {
+    setShowMoodButtons(false);
+    sendMessage(`I'm feeling ${mood.label.toLowerCase()}`);
+  };
+
   if (initialLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -308,7 +323,7 @@ const CrewChat = ({ profileId, firstName, role, shipName }: CrewChatProps) => {
           </div>
         ))}
 
-        {isLoading && !messages.some((m) => m.id === "streaming") && (
+        {isLoading && !messages.some((m) => m.id === "streaming") && !messages.some((m) => m.id === "welcome-stream") && (
           <div className="chat-fade-in max-w-[85%] mr-auto">
             <p className="text-xs font-medium text-primary mb-1 ml-1">SeaMinds</p>
             <div className="bg-secondary px-4 py-3 rounded-2xl rounded-tl-md flex items-center gap-1.5">
@@ -316,6 +331,20 @@ const CrewChat = ({ profileId, firstName, role, shipName }: CrewChatProps) => {
               <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground pulse-dot" style={{ animationDelay: "0.3s" }} />
               <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground pulse-dot" style={{ animationDelay: "0.6s" }} />
             </div>
+          </div>
+        )}
+
+        {showMoodButtons && !isLoading && (
+          <div className="chat-fade-in flex flex-wrap gap-2 justify-center py-2">
+            {MOOD_OPTIONS.map((mood) => (
+              <button
+                key={mood.label}
+                onClick={() => handleMoodSelect(mood)}
+                className="px-4 py-2.5 rounded-2xl bg-secondary text-secondary-foreground text-sm font-medium hover:bg-accent transition-colors"
+              >
+                {mood.emoji} {mood.label}
+              </button>
+            ))}
           </div>
         )}
       </div>
@@ -332,7 +361,7 @@ const CrewChat = ({ profileId, firstName, role, shipName }: CrewChatProps) => {
             className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
           />
           <button
-            onClick={sendMessage}
+            onClick={() => sendMessage()}
             disabled={!input.trim() || isLoading}
             className="p-2 rounded-full bg-primary text-primary-foreground disabled:opacity-30 transition-opacity"
           >
