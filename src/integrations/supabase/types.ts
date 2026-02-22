@@ -52,6 +52,7 @@ export type Database = {
           first_name: string
           gender: string | null
           id: string
+          manning_agency: string | null
           nationality: string
           onboarded: boolean
           role: string
@@ -65,6 +66,7 @@ export type Database = {
           first_name: string
           gender?: string | null
           id?: string
+          manning_agency?: string | null
           nationality?: string
           onboarded?: boolean
           role: string
@@ -78,6 +80,7 @@ export type Database = {
           first_name?: string
           gender?: string | null
           id?: string
+          manning_agency?: string | null
           nationality?: string
           onboarded?: boolean
           role?: string

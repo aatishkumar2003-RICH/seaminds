@@ -1,0 +1,1 @@
+ALTER TABLE public.crew_profiles ADD COLUMN manning_agency text DEFAULT NULL;
