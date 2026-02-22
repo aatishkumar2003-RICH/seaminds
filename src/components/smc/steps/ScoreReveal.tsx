@@ -82,7 +82,8 @@ const ScoreReveal = ({ assessmentId, firstName, rank, onComplete }: Props) => {
       if (step >= steps) {
         clearInterval(interval);
         setDisplayScore(finalScore);
-        // Save to DB
+        // Navigate FIRST, DB write in background
+        setPhase("done");
         try {
           supabase
             .from("smc_assessments")
@@ -94,11 +95,9 @@ const ScoreReveal = ({ assessmentId, firstName, rank, onComplete }: Props) => {
               status: "completed",
               completed_at: new Date().toISOString(),
             })
-            .eq("id", assessmentId)
-            .then(() => setPhase("done"));
+            .eq("id", assessmentId);
         } catch (err) {
           console.log("DB write error (non-blocking):", err);
-          setPhase("done");
         }
       }
     }, duration / steps);
