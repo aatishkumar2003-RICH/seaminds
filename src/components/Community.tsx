@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Compass, Shield, Users, Ship, MapPin } from "lucide-react";
+import { Compass, Shield, Users, Ship, MapPin, AlertTriangle, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface CommunityProps {
@@ -9,6 +9,15 @@ interface CommunityProps {
 }
 
 const MOOD_WORDS = ["Tired", "Good", "Homesick", "Motivated", "Grateful", "Lonely", "Strong", "Bored", "Hopeful", "Calm"];
+
+const SAFETY_CATEGORIES = [
+  { id: "physical", emoji: "🔴", label: "Physical Safety", desc: "Unsafe equipment, missing PPE, structural damage" },
+  { id: "fatigue", emoji: "🟠", label: "Fatigue & Rest Hours", desc: "Pressure to work beyond STCW limits" },
+  { id: "harassment", emoji: "🟡", label: "Harassment or Bullying", desc: "From any crew member or officer" },
+  { id: "environmental", emoji: "🔵", label: "Environmental Violation", desc: "Illegal discharge, MARPOL breach" },
+  { id: "conditions", emoji: "⚪", label: "Working Conditions", desc: "MLC 2006 violation, food, accommodation" },
+  { id: "other", emoji: "🟣", label: "Other", desc: "Anything not listed above" },
+];
 
 const Community = ({ shipName, manningAgency, profileId }: CommunityProps) => {
   const [companyCount, setCompanyCount] = useState(0);
@@ -248,6 +257,9 @@ const Community = ({ shipName, manningAgency, profileId }: CommunityProps) => {
           )}
         </div>
 
+        {/* SECTION 4 — Anonymous Safety Reporting */}
+        <SafetyReportSection shipName={shipName} manningAgency={manningAgency} />
+
         {/* Privacy Notice */}
         <div className="flex items-start gap-3 bg-card rounded-2xl px-5 py-4 border border-border">
           <Shield size={16} className="text-primary flex-shrink-0 mt-0.5" />
@@ -258,6 +270,136 @@ const Community = ({ shipName, manningAgency, profileId }: CommunityProps) => {
 
         <div className="h-4" />
       </div>
+    </div>
+  );
+};
+
+/* Safety Report Sub-component */
+const SafetyReportSection = ({ shipName, manningAgency }: { shipName: string; manningAgency: string }) => {
+  const [showForm, setShowForm] = useState(false);
+  const [category, setCategory] = useState("");
+  const [description, setDescription] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const wordCount = description.trim().split(/\s+/).filter(Boolean).length;
+  const canSubmit = category && wordCount >= 10 && wordCount <= 200;
+
+  const handleSubmit = async () => {
+    if (!canSubmit) return;
+    setSubmitting(true);
+    await supabase.from("safety_reports").insert({
+      ship_name: shipName,
+      manning_agency: manningAgency || null,
+      category,
+      description: description.trim(),
+    });
+    setSubmitting(false);
+    setSubmitted(true);
+  };
+
+  if (submitted) {
+    return (
+      <div className="bg-card rounded-2xl border border-emerald-500/30 p-6 space-y-4">
+        <div className="flex items-center gap-3">
+          <CheckCircle size={24} className="text-emerald-400" />
+          <p className="text-sm font-semibold text-foreground">Report Received</p>
+        </div>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          Your report has been received. Your identity is completely protected. The welfare officer will review this within 24 hours. You cannot be identified or penalised for submitting this report under MLC 2006 Article III.
+        </p>
+        <button
+          onClick={() => { setSubmitted(false); setShowForm(false); setCategory(""); setDescription(""); }}
+          className="text-xs text-primary font-medium"
+        >
+          Done
+        </button>
+      </div>
+    );
+  }
+
+  if (!showForm) {
+    return (
+      <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
+        <p className="text-xs text-muted-foreground uppercase tracking-widest">Safety Reporting</p>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-red-500/15 flex items-center justify-center">
+            <AlertTriangle size={18} className="text-red-400" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-foreground">Report a Safety Concern</p>
+            <p className="text-xs text-muted-foreground">Anonymous & Confidential</p>
+          </div>
+        </div>
+        <button
+          onClick={() => setShowForm(true)}
+          className="w-full bg-red-600 hover:bg-red-700 text-white font-medium text-sm rounded-xl py-3 transition-colors"
+        >
+          Report Safety Concern
+        </button>
+        <p className="text-[10px] text-muted-foreground leading-relaxed">
+          Under ISM Code and MLC 2006 every seafarer has the right to report safety concerns without fear of retaliation.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
+      <p className="text-xs text-muted-foreground uppercase tracking-widest">Report a Safety Concern — Anonymous & Confidential</p>
+
+      {/* Category selection */}
+      <div className="space-y-2">
+        <p className="text-xs text-muted-foreground">Select category:</p>
+        {SAFETY_CATEGORIES.map((cat) => (
+          <button
+            key={cat.id}
+            onClick={() => setCategory(cat.id)}
+            className={`w-full flex items-center gap-3 rounded-xl p-3 text-left transition-colors border ${
+              category === cat.id ? "border-primary bg-primary/10" : "border-border hover:border-primary/30"
+            }`}
+          >
+            <span className="text-lg">{cat.emoji}</span>
+            <div>
+              <p className="text-sm font-medium text-foreground">{cat.label}</p>
+              <p className="text-[11px] text-muted-foreground">{cat.desc}</p>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {/* Description */}
+      {category && (
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground">Describe the concern (10–200 words):</p>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Describe what you have observed..."
+            className="w-full bg-secondary text-foreground text-sm rounded-xl px-4 py-3 placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary min-h-[100px] resize-none"
+          />
+          <p className={`text-[11px] ${wordCount >= 10 && wordCount <= 200 ? "text-emerald-400" : "text-muted-foreground"}`}>
+            {wordCount} / 200 words {wordCount < 10 && `(minimum 10)`}
+          </p>
+        </div>
+      )}
+
+      <div className="flex gap-3">
+        <button onClick={() => { setShowForm(false); setCategory(""); setDescription(""); }} className="flex-1 bg-secondary text-muted-foreground text-sm rounded-xl py-3 font-medium">
+          Cancel
+        </button>
+        <button
+          onClick={handleSubmit}
+          disabled={!canSubmit || submitting}
+          className="flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-30 text-white text-sm rounded-xl py-3 font-medium transition-colors"
+        >
+          {submitting ? "Submitting..." : "Submit Report"}
+        </button>
+      </div>
+
+      <p className="text-[10px] text-muted-foreground leading-relaxed text-center">
+        Under ISM Code and MLC 2006 every seafarer has the right to report safety concerns without fear of retaliation.
+      </p>
     </div>
   );
 };

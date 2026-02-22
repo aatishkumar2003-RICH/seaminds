@@ -115,6 +115,36 @@ export type Database = {
         }
         Relationships: []
       }
+      safety_reports: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          id: string
+          manning_agency: string | null
+          ship_name: string
+          status: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description: string
+          id?: string
+          manning_agency?: string | null
+          ship_name: string
+          status?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          manning_agency?: string | null
+          ship_name?: string
+          status?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
