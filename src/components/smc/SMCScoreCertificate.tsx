@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Share2, TrendingUp, Award, ExternalLink, Shield } from "lucide-react";
+import { Share2, TrendingUp, Award, ExternalLink, Shield, Download, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SubScore {
   name: string;
@@ -80,17 +81,54 @@ interface SMCScoreCertificateProps {
 
 const SMCScoreCertificate = ({ data = DEMO_DATA, onImproveScore }: SMCScoreCertificateProps) => {
   const [showImprove, setShowImprove] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const band = getScoreBand(data.overallScore);
 
   const lowestSub = [...data.subScores].sort((a, b) => a.score - b.score)[0];
   const improvementTopics = ACADEMY_MAP[lowestSub.name] || [];
 
-  const handleShare = () => {
-    const text = `I just received my SeaMinds Certified Score: ${data.overallScore.toFixed(2)} ${band.stars} ${band.label} — verified maritime competency. View my certificate at seaminds.life/verify — Certificate ID: ${data.certificateId}`;
-    if (navigator.share) {
-      navigator.share({ title: "My SeaMinds Certified Score", text });
-    } else {
-      navigator.clipboard.writeText(text);
+  const handleShare = async () => {
+    setGenerating(true);
+    try {
+      const payload = {
+        crewName: data.crewName,
+        rank: data.rank,
+        vesselType: data.vesselType,
+        overallScore: data.overallScore,
+        subScores: data.subScores,
+        certificateId: data.certificateId,
+        assessmentDate: data.assessmentDate,
+        expiryDate: data.expiryDate,
+        scoreBand: band.label,
+      };
+
+      const { data: pdfData, error } = await supabase.functions.invoke("generate-certificate", {
+        body: payload,
+      });
+
+      if (error) throw error;
+
+      // pdfData is an ArrayBuffer or Blob
+      const blob = pdfData instanceof Blob ? pdfData : new Blob([pdfData], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `SMC-Certificate-${data.certificateId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      // Fallback: copy share text to clipboard
+      const text = `I just received my SeaMinds Certified Score: ${data.overallScore.toFixed(2)} ${band.stars} ${band.label} — verified maritime competency. View my certificate at seaminds.life/verify?id=${data.certificateId}`;
+      if (navigator.share) {
+        navigator.share({ title: "My SeaMinds Certified Score", text });
+      } else {
+        navigator.clipboard.writeText(text);
+      }
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -243,10 +281,11 @@ const SMCScoreCertificate = ({ data = DEMO_DATA, onImproveScore }: SMCScoreCerti
         <div className="flex gap-3">
           <button
             onClick={handleShare}
-            className="flex-1 font-semibold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-colors text-white"
+            disabled={generating}
+            className="flex-1 font-semibold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-colors text-white disabled:opacity-60"
             style={{ background: "linear-gradient(135deg, #D4AF37 0%, #C5941F 100%)" }}
           >
-            <Share2 size={16} /> Share My Certificate
+            {generating ? <><Loader2 size={16} className="animate-spin" /> Generating PDF...</> : <><Download size={16} /> Download Certificate</>}
           </button>
           <button
             onClick={() => { setShowImprove(true); onImproveScore?.(); }}
