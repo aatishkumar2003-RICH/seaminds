@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react";
-import { MessageCircle, LayoutDashboard, Briefcase } from "lucide-react";
+import { MessageCircle, LayoutDashboard, Briefcase, Newspaper } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import NameEntry from "@/components/NameEntry";
 import WelcomeScreens from "@/components/WelcomeScreens";
 import CrewChat from "@/components/CrewChat";
 import WelfareDashboard from "@/components/WelfareDashboard";
 import Opportunities from "@/components/Opportunities";
+import News from "@/components/News";
 
 type AppState = "loading" | "name-entry" | "welcome" | "main";
-type Screen = "chat" | "dashboard" | "opportunities";
+type Screen = "chat" | "dashboard" | "opportunities" | "news";
 
 const PROFILE_KEY = "seamind_profile_id";
 
@@ -136,8 +137,10 @@ const Index = () => {
           <CrewChat profileId={profileId} firstName={firstName} role={role} shipName={shipName} voyageStartDate={voyageStartDate} />
         ) : screen === "dashboard" ? (
           <WelfareDashboard />
-        ) : (
+        ) : screen === "opportunities" ? (
           <Opportunities />
+        ) : (
+          <News />
         )}
       </div>
 
@@ -168,6 +171,15 @@ const Index = () => {
         >
           <Briefcase size={20} />
           <span className="text-[10px] font-medium tracking-wide uppercase">Jobs</span>
+        </button>
+        <button
+          onClick={() => setScreen("news")}
+          className={`flex flex-col items-center gap-1 transition-colors ${
+            screen === "news" ? "text-primary" : "text-muted-foreground"
+          }`}
+        >
+          <Newspaper size={20} />
+          <span className="text-[10px] font-medium tracking-wide uppercase">News</span>
         </button>
       </nav>
     </div>
