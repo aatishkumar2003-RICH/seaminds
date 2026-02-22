@@ -1,0 +1,1 @@
+ALTER TABLE public.job_vacancies ADD COLUMN min_smc_score numeric(3,2) DEFAULT NULL;

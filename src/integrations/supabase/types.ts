@@ -235,6 +235,7 @@ export type Database = {
           id: string
           joining_port: string
           manager_profile_id: string
+          min_smc_score: number | null
           rank_required: string
           salary_max: number
           salary_min: number
@@ -251,6 +252,7 @@ export type Database = {
           id?: string
           joining_port: string
           manager_profile_id: string
+          min_smc_score?: number | null
           rank_required: string
           salary_max?: number
           salary_min?: number
@@ -267,6 +269,7 @@ export type Database = {
           id?: string
           joining_port?: string
           manager_profile_id?: string
+          min_smc_score?: number | null
           rank_required?: string
           salary_max?: number
           salary_min?: number
