@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { Anchor, ChevronDown } from "lucide-react";
+import { format } from "date-fns";
+import { Anchor, ChevronDown, CalendarIcon } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 
 interface NameEntryProps {
   onSubmit: (data: {
@@ -10,6 +14,7 @@ interface NameEntryProps {
     nationality: string;
     whatsappNumber: string;
     yearsAtSea: string;
+    voyageStartDate: string;
   }) => void;
 }
 
@@ -50,8 +55,9 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
   const [yearsAtSea, setYearsAtSea] = useState("");
   const [filteredNationalities, setFilteredNationalities] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [voyageStartDate, setVoyageStartDate] = useState<Date>();
 
-  const canSubmit = firstName.trim() && shipName.trim() && role && nationality.trim() && phoneNumber.trim() && yearsAtSea;
+  const canSubmit = firstName.trim() && shipName.trim() && role && nationality.trim() && phoneNumber.trim() && yearsAtSea && voyageStartDate;
 
   const handleNationalityChange = (val: string) => {
     setNationality(val);
@@ -81,6 +87,7 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
       nationality: nationality.trim(),
       whatsappNumber: `${countryCode}${phoneNumber.trim()}`,
       yearsAtSea,
+      voyageStartDate: voyageStartDate ? format(voyageStartDate, "yyyy-MM-dd") : "",
     });
   };
 
@@ -106,6 +113,39 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
               <label className={labelClass}>Ship Name *</label>
               <input type="text" value={shipName} onChange={(e) => setShipName(e.target.value)} placeholder="e.g. MV Pacific Star" className={inputClass} />
             </div>
+          </div>
+
+          {/* Row 1.5: Voyage Start Date */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className={labelClass}>Voyage Start Date *</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className={cn(
+                      selectClass,
+                      "flex items-center justify-between text-left",
+                      !voyageStartDate && "text-muted-foreground"
+                    )}
+                  >
+                    {voyageStartDate ? format(voyageStartDate, "PPP") : "Select date"}
+                    <CalendarIcon size={16} className="text-muted-foreground" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={voyageStartDate}
+                    onSelect={setVoyageStartDate}
+                    disabled={(date) => date > new Date()}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div />
           </div>
 
           {/* Row 2: Role + Gender */}

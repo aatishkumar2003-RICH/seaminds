@@ -56,6 +56,7 @@ export type Database = {
           onboarded: boolean
           role: string
           ship_name: string
+          voyage_start_date: string | null
           whatsapp_number: string
           years_at_sea: string
         }
@@ -68,6 +69,7 @@ export type Database = {
           onboarded?: boolean
           role: string
           ship_name: string
+          voyage_start_date?: string | null
           whatsapp_number?: string
           years_at_sea?: string
         }
@@ -80,6 +82,7 @@ export type Database = {
           onboarded?: boolean
           role?: string
           ship_name?: string
+          voyage_start_date?: string | null
           whatsapp_number?: string
           years_at_sea?: string
         }
