@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Shield, Check, CreditCard, Loader2 } from "lucide-react";
+import { Shield, Check, Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface CrewPaymentGateProps {
@@ -20,19 +20,39 @@ const INCLUSIONS = [
   "Access to salary bidding marketplace",
 ];
 
+// Early access config
+const EARLY_ACCESS_TOTAL = 1000;
+const EARLY_ACCESS_USED = 153; // demo number — update as real signups happen
+const EARLY_ACCESS_REMAINING = EARLY_ACCESS_TOTAL - EARLY_ACCESS_USED;
+
 const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) => {
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
 
-  const handlePayment = async () => {
+  const isEarlyAccess = EARLY_ACCESS_REMAINING > 0;
+
+  const handleClaim = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("create-smc-payment", {
-        body: { product_key: "crew_assessment", crew_profile_id: profileId },
-      });
-      if (error) throw error;
-      if (data?.url) {
-        window.open(data.url, "_blank");
+      if (isEarlyAccess) {
+        // Free early access — insert directly, no Stripe
+        const { error } = await supabase.from("smc_payments").insert({
+          crew_profile_id: profileId,
+          amount_paid: 0,
+          payment_type: "early_access_free",
+          status: "completed",
+          assessment_unlocked: true,
+        });
+        if (error) throw error;
+        onPaymentSuccess();
+      } else {
+        // Standard $29 Stripe flow
+        const { data, error } = await supabase.functions.invoke("create-smc-payment", {
+          body: { product_key: "crew_assessment", crew_profile_id: profileId },
+        });
+        if (error) throw error;
+        if (data?.url) {
+          window.open(data.url, "_blank");
+        }
       }
     } catch (err) {
       console.error("Payment error:", err);
@@ -40,24 +60,6 @@ const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) 
       setLoading(false);
     }
   };
-
-  if (success) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center">
-        <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mb-4">
-          <Check size={32} className="text-emerald-400" />
-        </div>
-        <h2 className="text-lg font-semibold text-foreground mb-2">Payment confirmed</h2>
-        <p className="text-sm text-muted-foreground mb-6">Your assessment is now unlocked</p>
-        <button
-          onClick={onPaymentSuccess}
-          className="bg-primary text-primary-foreground font-semibold px-8 py-3 rounded-xl"
-        >
-          Start My Assessment
-        </button>
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
@@ -69,6 +71,14 @@ const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) 
           </div>
           <h1 className="text-xl font-bold text-foreground">Get Your SeaMinds Certified Score</h1>
         </div>
+
+        {/* Early access counter */}
+        {isEarlyAccess && (
+          <div className="text-center space-y-1">
+            <p className="text-sm font-semibold text-foreground">🎯 Early Access — Free for First 1,000 Crew</p>
+            <p className="text-lg font-bold text-primary gold-glow">{EARLY_ACCESS_REMAINING} spots remaining</p>
+          </div>
+        )}
 
         {/* Benefit cards */}
         <div className="space-y-3">
@@ -82,8 +92,18 @@ const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) 
 
         {/* Price */}
         <div className="text-center py-4">
-          <p className="text-4xl font-bold text-primary gold-glow">$29</p>
-          <p className="text-xs text-muted-foreground mt-1">one-time payment · valid 2 years</p>
+          {isEarlyAccess ? (
+            <>
+              <p className="text-lg text-muted-foreground line-through">$29</p>
+              <p className="text-5xl font-bold text-primary gold-glow">FREE</p>
+              <p className="text-xs text-muted-foreground mt-2">Early Access · Limited to first 1,000 crew · No credit card needed</p>
+            </>
+          ) : (
+            <>
+              <p className="text-4xl font-bold text-primary gold-glow">$29</p>
+              <p className="text-xs text-muted-foreground mt-1">one-time payment · valid 2 years</p>
+            </>
+          )}
         </div>
 
         {/* Inclusions */}
@@ -98,21 +118,27 @@ const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) 
 
         {/* CTA */}
         <button
-          onClick={handlePayment}
+          onClick={handleClaim}
           disabled={loading}
           className="w-full bg-primary text-primary-foreground font-bold py-4 rounded-xl text-base flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors disabled:opacity-60"
         >
           {loading ? (
             <Loader2 size={18} className="animate-spin" />
           ) : (
-            <CreditCard size={18} />
+            <Sparkles size={18} />
           )}
-          {loading ? "Processing..." : "Pay $29 — Start My Assessment"}
+          {loading ? "Processing..." : isEarlyAccess ? "Claim My Free Assessment" : "Pay $29 — Start My Assessment"}
         </button>
 
-        <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
-          Secure payment via Stripe · Visa · Mastercard · Apple Pay
-        </p>
+        {isEarlyAccess ? (
+          <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
+            After 1,000 crew — standard price $29. Lock in your free assessment now.
+          </p>
+        ) : (
+          <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
+            Secure payment via Stripe · Visa · Mastercard · Apple Pay
+          </p>
+        )}
       </div>
     </div>
   );

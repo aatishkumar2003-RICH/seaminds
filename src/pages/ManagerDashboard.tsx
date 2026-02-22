@@ -384,6 +384,12 @@ const ManagerDashboard = () => {
             <p className="text-xs text-muted-foreground text-center py-4">
               Conversation content is always private and sealed. This dashboard shows mood indicators, check-in data, and anonymous safety reports only.
             </p>
+
+            {/* Admin: Free assessment counter */}
+            <div className="bg-secondary/50 rounded-xl border border-border px-4 py-3 flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">Free assessments used</span>
+              <span className="text-xs font-bold text-primary">153 / 1,000</span>
+            </div>
           </>
         )}
       </div>
