@@ -339,6 +339,60 @@ export type Database = {
         }
         Relationships: []
       }
+      smc_assessments: {
+        Row: {
+          behavioural_score: number | null
+          certificate_id: string | null
+          completed_at: string | null
+          crew_profile_id: string
+          current_step: number
+          doc_upload_status: string
+          english_score: number | null
+          experience_score: number | null
+          id: string
+          overall_score: number | null
+          score_band: string | null
+          started_at: string
+          status: string
+          technical_score: number | null
+          wellness_score: number | null
+        }
+        Insert: {
+          behavioural_score?: number | null
+          certificate_id?: string | null
+          completed_at?: string | null
+          crew_profile_id: string
+          current_step?: number
+          doc_upload_status?: string
+          english_score?: number | null
+          experience_score?: number | null
+          id?: string
+          overall_score?: number | null
+          score_band?: string | null
+          started_at?: string
+          status?: string
+          technical_score?: number | null
+          wellness_score?: number | null
+        }
+        Update: {
+          behavioural_score?: number | null
+          certificate_id?: string | null
+          completed_at?: string | null
+          crew_profile_id?: string
+          current_step?: number
+          doc_upload_status?: string
+          english_score?: number | null
+          experience_score?: number | null
+          id?: string
+          overall_score?: number | null
+          score_band?: string | null
+          started_at?: string
+          status?: string
+          technical_score?: number | null
+          wellness_score?: number | null
+        }
+        Relationships: []
+      }
       smc_payments: {
         Row: {
           amount_paid: number

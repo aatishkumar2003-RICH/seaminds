@@ -172,7 +172,7 @@ const Index = () => {
         ) : screen === "community" ? (
           <Community profileId={profileId} shipName={shipName} manningAgency={manningAgency} firstName={firstName} voyageStartDate={voyageStartDate} onCompleteVoyage={() => setAppState("voyage-report")} />
         ) : (
-          <SMCScoreTab profileId={profileId} />
+          <SMCScoreTab profileId={profileId} firstName={firstName} rank={role} shipName={shipName} />
         )}
       </div>
 
