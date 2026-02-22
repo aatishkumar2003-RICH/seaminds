@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Anchor, ArrowUpDown, LogOut, AlertTriangle, FileWarning } from "lucide-react";
+import { Anchor, ArrowUpDown, LogOut, AlertTriangle, FileWarning, CreditCard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import ManagerPaymentHistory from "@/components/smc/ManagerPaymentHistory";
 
 interface CrewRow {
   id: string;
@@ -26,6 +27,7 @@ interface SafetyReport {
 }
 
 type SortKey = "shipName" | "mood" | "daysSinceCheckIn";
+type DashTab = "crew" | "payments";
 
 const MOOD_MAP: Record<string, { label: string; emoji: string; order: number }> = {
   good: { label: "Good", emoji: "😊", order: 1 },
@@ -51,11 +53,13 @@ const ManagerDashboard = () => {
   const [sortKey, setSortKey] = useState<SortKey>("shipName");
   const [sortAsc, setSortAsc] = useState(true);
   const [safetyReports, setSafetyReports] = useState<SafetyReport[]>([]);
-
+  const [dashTab, setDashTab] = useState<DashTab>("crew");
+  const [managerUserId, setManagerUserId] = useState("");
   useEffect(() => {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { navigate("/manager"); return; }
+      setManagerUserId(user.id);
 
       const { data: profile } = await supabase
         .from("manager_profiles")
@@ -206,156 +210,182 @@ const ManagerDashboard = () => {
       </header>
 
       <div className="max-w-6xl mx-auto px-6 py-6 space-y-6">
-        {/* Alert Banner */}
-        {alertCount > 0 && (
-          <div className="flex items-center gap-3 bg-amber-500/15 border border-amber-500/30 rounded-xl px-5 py-4">
-            <AlertTriangle size={20} className="text-amber-500 shrink-0" />
-            <p className="text-sm text-amber-200 font-medium">
-              Welfare attention needed — {alertCount} crew member{alertCount > 1 ? "s" : ""} reporting low mood today.
-            </p>
-          </div>
-        )}
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-secondary rounded-xl p-4">
-            <p className="text-2xl font-bold text-foreground">{crewRows.length}</p>
-            <p className="text-xs text-muted-foreground mt-1">Total Crew</p>
-          </div>
-          <div className="bg-secondary rounded-xl p-4">
-            <p className="text-2xl font-bold text-foreground">{new Set(crewRows.map((r) => r.shipName)).size}</p>
-            <p className="text-xs text-muted-foreground mt-1">Vessels</p>
-          </div>
-          <div className="bg-secondary rounded-xl p-4">
-            <p className="text-2xl font-bold text-foreground">{crewRows.filter((r) => r.mood).length}</p>
-            <p className="text-xs text-muted-foreground mt-1">Mood Reports</p>
-          </div>
-          <div className="bg-secondary rounded-xl p-4">
-            <p className="text-2xl font-bold text-amber-500">{alertCount}</p>
-            <p className="text-xs text-muted-foreground mt-1">Alerts</p>
-          </div>
+        {/* Tab switcher */}
+        <div className="flex gap-1 bg-secondary rounded-xl p-1">
+          <button
+            onClick={() => setDashTab("crew")}
+            className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors ${
+              dashTab === "crew" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Crew Overview
+          </button>
+          <button
+            onClick={() => setDashTab("payments")}
+            className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1.5 ${
+              dashTab === "payments" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <CreditCard size={14} /> Credits & Payments
+          </button>
         </div>
 
-        {/* Table */}
-        <div className="bg-secondary/50 rounded-xl border border-border overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-left">
-                  <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase">Name</th>
-                  <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase">Rank</th>
-                  <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase cursor-pointer select-none" onClick={() => handleSort("shipName")}>
-                    <span className="flex items-center gap-1">Ship <ArrowUpDown size={12} /></span>
-                  </th>
-                  <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase">Voyage Day</th>
-                  <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase cursor-pointer select-none" onClick={() => handleSort("mood")}>
-                    <span className="flex items-center gap-1">Mood <ArrowUpDown size={12} /></span>
-                  </th>
-                  <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase cursor-pointer select-none" onClick={() => handleSort("daysSinceCheckIn")}>
-                    <span className="flex items-center gap-1">Last Check-in <ArrowUpDown size={12} /></span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {sorted.map((row) => (
-                  <tr
-                    key={row.id}
-                    className={`border-b border-border/50 transition-colors ${row.isAlert ? "bg-amber-500/10" : "hover:bg-secondary/80"}`}
-                  >
-                    <td className="px-4 py-3 text-foreground font-medium">
-                      {row.firstName} {row.lastName}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">{row.role}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{row.shipName}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{row.voyageDays > 0 ? `Day ${row.voyageDays}` : "—"}</td>
-                    <td className="px-4 py-3">
-                      {row.mood ? (
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                          row.mood === "Good" ? "bg-emerald-500/15 text-emerald-400" :
-                          row.mood === "Okay" ? "bg-blue-500/15 text-blue-400" :
-                          row.mood === "Struggling" ? "bg-amber-500/15 text-amber-400" :
-                          row.mood === "Angry" ? "bg-red-500/15 text-red-400" : "bg-secondary text-muted-foreground"
-                        }`}>
-                          {row.moodEmoji} {row.mood}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground text-xs">No data</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {row.daysSinceCheckIn === 999 ? "Never" : row.daysSinceCheckIn === 0 ? "Today" : `${row.daysSinceCheckIn}d ago`}
-                    </td>
-                  </tr>
-                ))}
-                {sorted.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
-                      No crew members from {companyName} have signed up yet.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        {dashTab === "payments" ? (
+          <ManagerPaymentHistory managerUserId={managerUserId} />
+        ) : (
+          <>
+            {/* Alert Banner */}
+            {alertCount > 0 && (
+              <div className="flex items-center gap-3 bg-amber-500/15 border border-amber-500/30 rounded-xl px-5 py-4">
+                <AlertTriangle size={20} className="text-amber-500 shrink-0" />
+                <p className="text-sm text-amber-200 font-medium">
+                  Welfare attention needed — {alertCount} crew member{alertCount > 1 ? "s" : ""} reporting low mood today.
+                </p>
+              </div>
+            )}
 
-        {/* Safety Reports */}
-        {safetyReports.length > 0 && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <FileWarning size={18} className="text-red-400" />
-              <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Anonymous Safety Reports</h2>
-              <span className="bg-red-500/15 text-red-400 text-xs font-bold px-2 py-0.5 rounded-full">{safetyReports.length}</span>
+            {/* Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-secondary rounded-xl p-4">
+                <p className="text-2xl font-bold text-foreground">{crewRows.length}</p>
+                <p className="text-xs text-muted-foreground mt-1">Total Crew</p>
+              </div>
+              <div className="bg-secondary rounded-xl p-4">
+                <p className="text-2xl font-bold text-foreground">{new Set(crewRows.map((r) => r.shipName)).size}</p>
+                <p className="text-xs text-muted-foreground mt-1">Vessels</p>
+              </div>
+              <div className="bg-secondary rounded-xl p-4">
+                <p className="text-2xl font-bold text-foreground">{crewRows.filter((r) => r.mood).length}</p>
+                <p className="text-xs text-muted-foreground mt-1">Mood Reports</p>
+              </div>
+              <div className="bg-secondary rounded-xl p-4">
+                <p className="text-2xl font-bold text-amber-500">{alertCount}</p>
+                <p className="text-xs text-muted-foreground mt-1">Alerts</p>
+              </div>
             </div>
+
+            {/* Table */}
             <div className="bg-secondary/50 rounded-xl border border-border overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border text-left">
-                      <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase">Date</th>
-                      <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase">Ship</th>
-                      <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase">Category</th>
-                      <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase">Description</th>
-                      <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase">Status</th>
+                      <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase">Name</th>
+                      <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase">Rank</th>
+                      <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase cursor-pointer select-none" onClick={() => handleSort("shipName")}>
+                        <span className="flex items-center gap-1">Ship <ArrowUpDown size={12} /></span>
+                      </th>
+                      <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase">Voyage Day</th>
+                      <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase cursor-pointer select-none" onClick={() => handleSort("mood")}>
+                        <span className="flex items-center gap-1">Mood <ArrowUpDown size={12} /></span>
+                      </th>
+                      <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase cursor-pointer select-none" onClick={() => handleSort("daysSinceCheckIn")}>
+                        <span className="flex items-center gap-1">Last Check-in <ArrowUpDown size={12} /></span>
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {safetyReports.map((report) => (
-                      <tr key={report.id} className="border-b border-border/50">
-                        <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                          {new Date(report.created_at).toLocaleDateString()}
+                    {sorted.map((row) => (
+                      <tr
+                        key={row.id}
+                        className={`border-b border-border/50 transition-colors ${row.isAlert ? "bg-amber-500/10" : "hover:bg-secondary/80"}`}
+                      >
+                        <td className="px-4 py-3 text-foreground font-medium">
+                          {row.firstName} {row.lastName}
                         </td>
-                        <td className="px-4 py-3 text-muted-foreground">{report.ship_name}</td>
-                        <td className="px-4 py-3 text-foreground font-medium capitalize">{report.category}</td>
-                        <td className="px-4 py-3 text-muted-foreground max-w-xs truncate">{report.description}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{row.role}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{row.shipName}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{row.voyageDays > 0 ? `Day ${row.voyageDays}` : "—"}</td>
                         <td className="px-4 py-3">
-                          <select
-                            value={report.status}
-                            onChange={async (e) => {
-                              const newStatus = e.target.value;
-                              await supabase.from("safety_reports").update({ status: newStatus }).eq("id", report.id);
-                              setSafetyReports((prev) => prev.map((r) => r.id === report.id ? { ...r, status: newStatus } : r));
-                            }}
-                            className="bg-secondary text-foreground text-xs rounded-lg px-2 py-1 border border-border"
-                          >
-                            <option value="New">🔴 New</option>
-                            <option value="Under Review">🟡 Under Review</option>
-                            <option value="Resolved">🟢 Resolved</option>
-                          </select>
+                          {row.mood ? (
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                              row.mood === "Good" ? "bg-emerald-500/15 text-emerald-400" :
+                              row.mood === "Okay" ? "bg-blue-500/15 text-blue-400" :
+                              row.mood === "Struggling" ? "bg-amber-500/15 text-amber-400" :
+                              row.mood === "Angry" ? "bg-red-500/15 text-red-400" : "bg-secondary text-muted-foreground"
+                            }`}>
+                              {row.moodEmoji} {row.mood}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">No data</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {row.daysSinceCheckIn === 999 ? "Never" : row.daysSinceCheckIn === 0 ? "Today" : `${row.daysSinceCheckIn}d ago`}
                         </td>
                       </tr>
                     ))}
+                    {sorted.length === 0 && (
+                      <tr>
+                        <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                          No crew members from {companyName} have signed up yet.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
             </div>
-          </div>
-        )}
 
-        {/* Privacy note */}
-        <p className="text-xs text-muted-foreground text-center py-4">
-          Conversation content is always private and sealed. This dashboard shows mood indicators, check-in data, and anonymous safety reports only.
-        </p>
+            {/* Safety Reports */}
+            {safetyReports.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <FileWarning size={18} className="text-red-400" />
+                  <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Anonymous Safety Reports</h2>
+                  <span className="bg-red-500/15 text-red-400 text-xs font-bold px-2 py-0.5 rounded-full">{safetyReports.length}</span>
+                </div>
+                <div className="bg-secondary/50 rounded-xl border border-border overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border text-left">
+                          <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase">Date</th>
+                          <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase">Ship</th>
+                          <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase">Category</th>
+                          <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase">Description</th>
+                          <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {safetyReports.map((report) => (
+                          <tr key={report.id} className="border-b border-border/50">
+                            <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+                              {new Date(report.created_at).toLocaleDateString()}
+                            </td>
+                            <td className="px-4 py-3 text-muted-foreground">{report.ship_name}</td>
+                            <td className="px-4 py-3 text-foreground font-medium capitalize">{report.category}</td>
+                            <td className="px-4 py-3 text-muted-foreground max-w-xs truncate">{report.description}</td>
+                            <td className="px-4 py-3">
+                              <select
+                                value={report.status}
+                                onChange={async (e) => {
+                                  const newStatus = e.target.value;
+                                  await supabase.from("safety_reports").update({ status: newStatus }).eq("id", report.id);
+                                  setSafetyReports((prev) => prev.map((r) => r.id === report.id ? { ...r, status: newStatus } : r));
+                                }}
+                                className="bg-secondary text-foreground text-xs rounded-lg px-2 py-1 border border-border"
+                              >
+                                <option value="New">🔴 New</option>
+                                <option value="Under Review">🟡 Under Review</option>
+                                <option value="Resolved">🟢 Resolved</option>
+                              </select>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Privacy note */}
+            <p className="text-xs text-muted-foreground text-center py-4">
+              Conversation content is always private and sealed. This dashboard shows mood indicators, check-in data, and anonymous safety reports only.
+            </p>
+          </>
+        )}
       </div>
     </div>
   );
