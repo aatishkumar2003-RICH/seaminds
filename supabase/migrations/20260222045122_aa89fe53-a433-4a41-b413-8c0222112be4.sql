@@ -1,0 +1,1 @@
+ALTER TABLE public.crew_profiles ADD COLUMN voyage_start_date date;

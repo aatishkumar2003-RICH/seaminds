@@ -14,11 +14,12 @@ interface CrewChatProps {
   firstName: string;
   role: string;
   shipName: string;
+  voyageStartDate: string;
 }
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 
-const CrewChat = ({ profileId, firstName, role, shipName }: CrewChatProps) => {
+const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: CrewChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -299,6 +300,11 @@ const CrewChat = ({ profileId, firstName, role, shipName }: CrewChatProps) => {
       <div className="px-5 pt-12 pb-4 border-b border-border">
         <p className="text-sm text-muted-foreground tracking-wide uppercase">{getTimeGreeting()}</p>
         <h1 className="text-xl font-semibold text-foreground">{firstName}</h1>
+        {voyageStartDate && (
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Day {Math.max(1, Math.ceil((Date.now() - new Date(voyageStartDate).getTime()) / 86400000))} of voyage
+          </p>
+        )}
       </div>
 
       {/* Messages */}

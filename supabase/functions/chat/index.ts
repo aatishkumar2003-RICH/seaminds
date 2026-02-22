@@ -56,12 +56,17 @@ serve(async (req) => {
         const sb = createClient(supabaseUrl, supabaseKey);
         const { data: profile } = await sb
           .from("crew_profiles")
-          .select("first_name, role, gender, nationality, years_at_sea, ship_name")
+          .select("first_name, role, gender, nationality, years_at_sea, ship_name, voyage_start_date")
           .eq("id", profileId)
           .single();
 
         if (profile) {
-          systemPrompt += `\n\nCREW MEMBER PROFILE:\n- Name: ${profile.first_name}\n- Role: ${profile.role}\n- Ship: ${profile.ship_name}\n- Nationality: ${profile.nationality || "Unknown"}\n- Gender: ${profile.gender || "Not specified"}\n- Experience: ${profile.years_at_sea || "Unknown"}`;
+          let voyageDayInfo = "";
+          if (profile.voyage_start_date) {
+            const days = Math.max(1, Math.ceil((Date.now() - new Date(profile.voyage_start_date).getTime()) / 86400000));
+            voyageDayInfo = `\n- Days into current voyage: ${days}`;
+          }
+          systemPrompt += `\n\nCREW MEMBER PROFILE:\n- Name: ${profile.first_name}\n- Role: ${profile.role}\n- Ship: ${profile.ship_name}\n- Nationality: ${profile.nationality || "Unknown"}\n- Gender: ${profile.gender || "Not specified"}\n- Experience: ${profile.years_at_sea || "Unknown"}${voyageDayInfo}\n\nUse the voyage day count naturally in conversation when relevant — for example mentioning how far they are into the voyage, or acknowledging milestones like the first week, first month, or halfway point.`;
         }
       } catch (e) {
         console.error("Failed to fetch profile:", e);

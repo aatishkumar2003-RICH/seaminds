@@ -18,6 +18,7 @@ const Index = () => {
   const [firstName, setFirstName] = useState("");
   const [role, setRole] = useState("");
   const [shipName, setShipName] = useState("");
+  const [voyageStartDate, setVoyageStartDate] = useState("");
 
   // Check for existing profile on load
   useEffect(() => {
@@ -30,7 +31,7 @@ const Index = () => {
     // Verify profile still exists
     supabase
       .from("crew_profiles")
-      .select("id, first_name, onboarded, role, ship_name")
+      .select("id, first_name, onboarded, role, ship_name, voyage_start_date")
       .eq("id", savedId)
       .single()
       .then(({ data, error }) => {
@@ -43,6 +44,7 @@ const Index = () => {
         setFirstName(data.first_name);
         setRole(data.role);
         setShipName(data.ship_name);
+        setVoyageStartDate(data.voyage_start_date || "");
         if (!data.onboarded) {
           setAppState("welcome");
         } else {
@@ -59,6 +61,7 @@ const Index = () => {
     nationality: string;
     whatsappNumber: string;
     yearsAtSea: string;
+    voyageStartDate: string;
   }) => {
     const { data, error } = await supabase
       .from("crew_profiles")
@@ -70,6 +73,7 @@ const Index = () => {
         nationality: profile.nationality,
         whatsapp_number: profile.whatsappNumber,
         years_at_sea: profile.yearsAtSea,
+        voyage_start_date: profile.voyageStartDate || null,
       })
       .select("id")
       .single();
@@ -84,6 +88,7 @@ const Index = () => {
     setFirstName(profile.firstName);
     setRole(profile.role);
     setShipName(profile.shipName);
+    setVoyageStartDate(profile.voyageStartDate);
     setAppState("welcome");
   };
 
@@ -127,7 +132,7 @@ const Index = () => {
     <div className="flex flex-col h-screen max-w-md mx-auto bg-background">
       <div className="flex-1 overflow-hidden">
         {screen === "chat" ? (
-          <CrewChat profileId={profileId} firstName={firstName} role={role} shipName={shipName} />
+          <CrewChat profileId={profileId} firstName={firstName} role={role} shipName={shipName} voyageStartDate={voyageStartDate} />
         ) : (
           <WelfareDashboard />
         )}
