@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
-import { Compass, Shield, Users, Ship, MapPin, AlertTriangle, CheckCircle } from "lucide-react";
+import { Compass, Shield, Users, Ship, MapPin, AlertTriangle, CheckCircle, Heart, Send, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface CommunityProps {
   shipName: string;
   manningAgency: string;
   profileId: string;
+  firstName: string;
+  voyageStartDate: string;
 }
 
 const MOOD_WORDS = ["Tired", "Good", "Homesick", "Motivated", "Grateful", "Lonely", "Strong", "Bored", "Hopeful", "Calm"];
@@ -19,7 +22,7 @@ const SAFETY_CATEGORIES = [
   { id: "other", emoji: "🟣", label: "Other", desc: "Anything not listed above" },
 ];
 
-const Community = ({ shipName, manningAgency, profileId }: CommunityProps) => {
+const Community = ({ shipName, manningAgency, profileId, firstName, voyageStartDate }: CommunityProps) => {
   const [companyCount, setCompanyCount] = useState(0);
   const [vesselCount, setVesselCount] = useState(0);
   const [portInput, setPortInput] = useState("");
@@ -257,7 +260,10 @@ const Community = ({ shipName, manningAgency, profileId }: CommunityProps) => {
           )}
         </div>
 
-        {/* SECTION 4 — Anonymous Safety Reporting */}
+        {/* SECTION 4 — Family Connection */}
+        <FamilyConnectionSection profileId={profileId} firstName={firstName} shipName={shipName} voyageStartDate={voyageStartDate} />
+
+        {/* SECTION 5 — Anonymous Safety Reporting */}
         <SafetyReportSection shipName={shipName} manningAgency={manningAgency} />
 
         {/* Privacy Notice */}
@@ -269,6 +275,235 @@ const Community = ({ shipName, manningAgency, profileId }: CommunityProps) => {
         </div>
 
         <div className="h-4" />
+      </div>
+    </div>
+  );
+};
+
+/* Family Connection Sub-component */
+const FAMILY_EMAIL_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/family-email`;
+
+const FamilyConnectionSection = ({ profileId, firstName, shipName, voyageStartDate }: {
+  profileId: string; firstName: string; shipName: string; voyageStartDate: string;
+}) => {
+  const [familyName, setFamilyName] = useState("");
+  const [familyRelation, setFamilyRelation] = useState("");
+  const [familyEmail, setFamilyEmail] = useState("");
+  const [enabled, setEnabled] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [personalMessage, setPersonalMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const [connectionId, setConnectionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      const { data } = await supabase
+        .from("family_connections")
+        .select("*")
+        .eq("crew_profile_id", profileId)
+        .single();
+      if (data) {
+        setFamilyName(data.family_name);
+        setFamilyRelation(data.family_relation);
+        setFamilyEmail(data.family_email);
+        setEnabled(data.enabled);
+        setSaved(true);
+        setConnectionId(data.id);
+      }
+      setLoading(false);
+    };
+    load();
+  }, [profileId]);
+
+  const voyageDays = voyageStartDate
+    ? Math.max(1, Math.ceil((Date.now() - new Date(voyageStartDate).getTime()) / 86400000))
+    : 0;
+
+  const handleSave = async () => {
+    if (!familyName.trim() || !familyEmail.trim() || !familyRelation.trim()) return;
+    setLoading(true);
+
+    if (connectionId) {
+      await supabase.from("family_connections").update({
+        family_name: familyName.trim(),
+        family_relation: familyRelation.trim(),
+        family_email: familyEmail.trim(),
+        enabled,
+      }).eq("id", connectionId);
+    } else {
+      const { data } = await supabase.from("family_connections").insert({
+        crew_profile_id: profileId,
+        family_name: familyName.trim(),
+        family_relation: familyRelation.trim(),
+        family_email: familyEmail.trim(),
+        enabled,
+      }).select("id").single();
+      if (data) setConnectionId(data.id);
+    }
+    setSaved(true);
+    setLoading(false);
+    toast.success("Family connection saved");
+  };
+
+  const handleToggle = async () => {
+    const newEnabled = !enabled;
+    setEnabled(newEnabled);
+    if (connectionId) {
+      await supabase.from("family_connections").update({ enabled: newEnabled }).eq("id", connectionId);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!personalMessage.trim() || !familyEmail) return;
+    setSending(true);
+    try {
+      const res = await fetch(FAMILY_EMAIL_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({
+          to: familyEmail,
+          familyName,
+          crewName: firstName,
+          shipName,
+          voyageDay: voyageDays,
+          personalMessage: personalMessage.trim(),
+        }),
+      });
+      if (res.ok) {
+        toast.success(`Message sent to ${familyName}`);
+        setPersonalMessage("");
+      } else {
+        toast.error("Failed to send message");
+      }
+    } catch {
+      toast.error("Failed to send message");
+    }
+    setSending(false);
+  };
+
+  const msgWordCount = personalMessage.trim().split(/\s+/).filter(Boolean).length;
+
+  if (loading) return null;
+
+  return (
+    <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
+      <p className="text-xs text-muted-foreground uppercase tracking-widest">Family Connection</p>
+
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+          <Heart size={18} className="text-primary" />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-foreground">Connect Your Family to Your Voyage</p>
+          <p className="text-[11px] text-muted-foreground">Weekly welfare updates sent to your loved one</p>
+        </div>
+      </div>
+
+      {!saved ? (
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-[10px] text-muted-foreground uppercase">Name</label>
+              <input
+                type="text"
+                value={familyName}
+                onChange={(e) => setFamilyName(e.target.value)}
+                placeholder="e.g. Maria"
+                className="w-full bg-secondary text-foreground text-sm rounded-xl px-3 py-2.5 placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] text-muted-foreground uppercase">Relation</label>
+              <input
+                type="text"
+                value={familyRelation}
+                onChange={(e) => setFamilyRelation(e.target.value)}
+                placeholder="e.g. Wife"
+                className="w-full bg-secondary text-foreground text-sm rounded-xl px-3 py-2.5 placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] text-muted-foreground uppercase">Email</label>
+            <input
+              type="email"
+              value={familyEmail}
+              onChange={(e) => setFamilyEmail(e.target.value)}
+              placeholder="maria@email.com"
+              className="w-full bg-secondary text-foreground text-sm rounded-xl px-3 py-2.5 placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary"
+            />
+          </div>
+          <button
+            onClick={handleSave}
+            disabled={!familyName.trim() || !familyEmail.trim() || !familyRelation.trim()}
+            className="w-full bg-primary text-primary-foreground text-sm font-medium rounded-xl py-3 disabled:opacity-30 transition-opacity"
+          >
+            Save Family Connection
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {/* Connection info */}
+          <div className="bg-secondary rounded-xl p-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-foreground">{familyName} — {familyRelation}</p>
+              <p className="text-xs text-muted-foreground">{familyEmail}</p>
+            </div>
+            <button onClick={() => setSaved(false)} className="text-xs text-primary">Edit</button>
+          </div>
+
+          {/* Toggle */}
+          <div className="flex items-center justify-between bg-secondary rounded-xl p-4">
+            <div>
+              <p className="text-sm font-medium text-foreground">Weekly Welfare Updates</p>
+              <p className="text-[11px] text-muted-foreground">Send mood & voyage day every Sunday</p>
+            </div>
+            <button
+              onClick={handleToggle}
+              className={`relative w-14 h-7 rounded-full transition-colors ${enabled ? "bg-primary" : "bg-muted"}`}
+            >
+              <span className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform ${enabled ? "translate-x-7" : "translate-x-0.5"}`} />
+            </button>
+          </div>
+
+          {/* Send personal message */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Send size={14} className="text-primary" />
+              <p className="text-xs font-medium text-foreground">Send Message to Family Now</p>
+            </div>
+            <textarea
+              value={personalMessage}
+              onChange={(e) => setPersonalMessage(e.target.value)}
+              placeholder="Write a short personal note..."
+              className="w-full bg-secondary text-foreground text-sm rounded-xl px-4 py-3 placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary min-h-[80px] resize-none"
+            />
+            <div className="flex items-center justify-between">
+              <p className={`text-[11px] ${msgWordCount > 100 ? "text-red-400" : "text-muted-foreground"}`}>
+                {msgWordCount}/100 words
+              </p>
+              <button
+                onClick={handleSendMessage}
+                disabled={!personalMessage.trim() || msgWordCount > 100 || sending}
+                className="flex items-center gap-1.5 bg-primary text-primary-foreground text-xs font-medium rounded-lg px-4 py-2 disabled:opacity-30 transition-opacity"
+              >
+                <Mail size={12} />
+                {sending ? "Sending..." : "Send Now"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Privacy notice */}
+      <div className="bg-secondary/50 rounded-xl p-3">
+        <p className="text-[10px] text-muted-foreground leading-relaxed">
+          Your conversation content is never included in family emails. Only mood and voyage day are shared — and only if you choose to enable this feature. You can disable at any time.
+        </p>
       </div>
     </div>
   );

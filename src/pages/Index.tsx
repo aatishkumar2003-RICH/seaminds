@@ -149,7 +149,7 @@ const Index = () => {
         ) : screen === "academy" ? (
           <Academy />
         ) : (
-          <Community profileId={profileId} shipName={shipName} manningAgency={manningAgency} />
+          <Community profileId={profileId} shipName={shipName} manningAgency={manningAgency} firstName={firstName} voyageStartDate={voyageStartDate} />
         )}
       </div>
 
