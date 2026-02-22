@@ -23,6 +23,7 @@ const AssessmentFlow = ({ profileId, firstName, rank, shipName, assessmentId, on
 
   const goNext = () => setStep((s) => Math.min(s + 1, TOTAL_STEPS));
   const goBack = () => setStep((s) => Math.max(s - 1, 1));
+  const skipToEnd = () => setStep(TOTAL_STEPS);
 
   return (
     <div className="flex flex-col h-full">
@@ -41,6 +42,7 @@ const AssessmentFlow = ({ profileId, firstName, rank, shipName, assessmentId, on
             assessmentId={assessmentId}
             profileId={profileId}
             onNext={goNext}
+            onSkipToEnd={skipToEnd}
           />
         )}
         {step === 2 && (
@@ -50,6 +52,7 @@ const AssessmentFlow = ({ profileId, firstName, rank, shipName, assessmentId, on
             profileId={profileId}
             assessmentId={assessmentId}
             onNext={goNext}
+            onSkipToEnd={skipToEnd}
           />
         )}
         {step === 3 && (
@@ -59,18 +62,21 @@ const AssessmentFlow = ({ profileId, firstName, rank, shipName, assessmentId, on
             shipName={shipName}
             assessmentId={assessmentId}
             onNext={goNext}
+            onSkipToEnd={skipToEnd}
           />
         )}
         {step === 4 && (
           <CommunicationAssessment
             assessmentId={assessmentId}
             onNext={goNext}
+            onSkipToEnd={skipToEnd}
           />
         )}
         {step === 5 && (
           <BehaviouralProfile
             assessmentId={assessmentId}
             onNext={goNext}
+            onSkipToEnd={skipToEnd}
           />
         )}
         {step === 6 && (

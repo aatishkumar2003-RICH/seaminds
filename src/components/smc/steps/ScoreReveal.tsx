@@ -83,18 +83,23 @@ const ScoreReveal = ({ assessmentId, firstName, rank, onComplete }: Props) => {
         clearInterval(interval);
         setDisplayScore(finalScore);
         // Save to DB
-        supabase
-          .from("smc_assessments")
-          .update({
-            overall_score: finalScore,
-            experience_score: DEMO_SCORES.experience,
-            score_band: band,
-            certificate_id: certId,
-            status: "completed",
-            completed_at: new Date().toISOString(),
-          })
-          .eq("id", assessmentId)
-          .then(() => setPhase("done"));
+        try {
+          supabase
+            .from("smc_assessments")
+            .update({
+              overall_score: finalScore,
+              experience_score: DEMO_SCORES.experience,
+              score_band: band,
+              certificate_id: certId,
+              status: "completed",
+              completed_at: new Date().toISOString(),
+            })
+            .eq("id", assessmentId)
+            .then(() => setPhase("done"));
+        } catch (err) {
+          console.log("DB write error (non-blocking):", err);
+          setPhase("done");
+        }
       }
     }, duration / steps);
 

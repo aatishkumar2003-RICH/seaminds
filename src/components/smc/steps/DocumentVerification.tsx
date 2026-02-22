@@ -9,16 +9,19 @@ interface Props {
   profileId: string;
   assessmentId: string;
   onNext: () => void;
+  onSkipToEnd?: () => void;
 }
 
-const DocumentVerification = ({ firstName, rank, profileId, assessmentId, onNext }: Props) => {
+const DocumentVerification = ({ firstName, rank, profileId, assessmentId, onNext, onSkipToEnd }: Props) => {
   const [issueNote, setIssueNote] = useState("");
 
   const handleContinue = async () => {
-    await supabase
-      .from("smc_assessments")
-      .update({ doc_upload_status: "verified", current_step: 3 })
-      .eq("id", assessmentId);
+    try {
+      await supabase
+        .from("smc_assessments")
+        .update({ doc_upload_status: "verified", current_step: 3 })
+        .eq("id", assessmentId);
+    } catch (err) { console.log("DB write error (non-blocking):", err); }
     onNext();
   };
 
@@ -67,6 +70,13 @@ const DocumentVerification = ({ firstName, rank, profileId, assessmentId, onNext
           className="w-full bg-primary text-primary-foreground font-bold py-4 rounded-xl text-base hover:bg-primary/90 transition-colors"
         >
           Continue to Technical Assessment →
+        </button>
+
+        <button
+          onClick={onSkipToEnd || onNext}
+          className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors py-2"
+        >
+          Skip to Certificate (testing only)
         </button>
       </div>
     </div>

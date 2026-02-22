@@ -9,6 +9,7 @@ interface Props {
   shipName: string;
   assessmentId: string;
   onNext: () => void;
+  onSkipToEnd?: () => void;
 }
 
 const QUESTIONS_BY_RANK: Record<string, string[]> = {
@@ -116,7 +117,7 @@ interface Message {
   text: string;
 }
 
-const TechnicalAssessment = ({ firstName, rank, shipName, assessmentId, onNext }: Props) => {
+const TechnicalAssessment = ({ firstName, rank, shipName, assessmentId, onNext, onSkipToEnd }: Props) => {
   const questions = getQuestions(rank);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -176,10 +177,12 @@ const TechnicalAssessment = ({ firstName, rank, shipName, assessmentId, onNext }
   };
 
   const handleContinue = async () => {
-    await supabase
-      .from("smc_assessments")
-      .update({ technical_score: 4.42, current_step: 4 })
-      .eq("id", assessmentId);
+    try {
+      await supabase
+        .from("smc_assessments")
+        .update({ technical_score: 4.42, current_step: 4 })
+        .eq("id", assessmentId);
+    } catch (err) { console.log("DB write error (non-blocking):", err); }
     onNext();
   };
 
@@ -212,7 +215,7 @@ const TechnicalAssessment = ({ firstName, rank, shipName, assessmentId, onNext }
         ))}
       </div>
 
-      <div className="p-4 border-t border-border">
+      <div className="p-4 border-t border-border space-y-2">
         {!ready ? (
           <button
             onClick={handleReady}
@@ -245,6 +248,12 @@ const TechnicalAssessment = ({ firstName, rank, shipName, assessmentId, onNext }
             </button>
           </div>
         )}
+        <button
+          onClick={onSkipToEnd || onNext}
+          className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors py-1"
+        >
+          Skip to Certificate (testing only)
+        </button>
       </div>
     </div>
   );

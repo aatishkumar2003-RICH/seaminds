@@ -6,6 +6,7 @@ import StepProgressBar from "./StepProgressBar";
 interface Props {
   assessmentId: string;
   onNext: () => void;
+  onSkipToEnd?: () => void;
 }
 
 interface VoiceCard {
@@ -32,7 +33,7 @@ const CARDS: VoiceCard[] = [
   },
 ];
 
-const CommunicationAssessment = ({ assessmentId, onNext }: Props) => {
+const CommunicationAssessment = ({ assessmentId, onNext, onSkipToEnd }: Props) => {
   const [recordings, setRecordings] = useState<Record<string, boolean>>({});
   const [activeRecording, setActiveRecording] = useState<string | null>(null);
   const [timer, setTimer] = useState(0);
@@ -70,10 +71,12 @@ const CommunicationAssessment = ({ assessmentId, onNext }: Props) => {
   };
 
   const handleContinue = async () => {
-    await supabase
-      .from("smc_assessments")
-      .update({ english_score: 3.89, current_step: 5 })
-      .eq("id", assessmentId);
+    try {
+      await supabase
+        .from("smc_assessments")
+        .update({ english_score: 3.89, current_step: 5 })
+        .eq("id", assessmentId);
+    } catch (err) { console.log("DB write error (non-blocking):", err); }
     onNext();
   };
 
@@ -151,6 +154,13 @@ const CommunicationAssessment = ({ assessmentId, onNext }: Props) => {
             Continue →
           </button>
         )}
+
+        <button
+          onClick={onSkipToEnd || onNext}
+          className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors py-2"
+        >
+          Skip to Certificate (testing only)
+        </button>
       </div>
     </div>
   );
