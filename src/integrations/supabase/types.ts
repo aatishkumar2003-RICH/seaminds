@@ -94,6 +94,39 @@ export type Database = {
         }
         Relationships: []
       }
+      family_connections: {
+        Row: {
+          created_at: string
+          crew_profile_id: string
+          enabled: boolean
+          family_email: string
+          family_name: string
+          family_relation: string
+          id: string
+          last_email_sent_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          crew_profile_id: string
+          enabled?: boolean
+          family_email: string
+          family_name: string
+          family_relation: string
+          id?: string
+          last_email_sent_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          crew_profile_id?: string
+          enabled?: boolean
+          family_email?: string
+          family_name?: string
+          family_relation?: string
+          id?: string
+          last_email_sent_at?: string | null
+        }
+        Relationships: []
+      }
       manager_profiles: {
         Row: {
           company_name: string
