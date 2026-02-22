@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MessageCircle, LayoutDashboard, Briefcase, Newspaper } from "lucide-react";
+import { MessageCircle, LayoutDashboard, Briefcase, Newspaper, GraduationCap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import LandingScreen from "@/components/LandingScreen";
 import NameEntry from "@/components/NameEntry";
@@ -8,9 +8,10 @@ import CrewChat from "@/components/CrewChat";
 import WelfareDashboard from "@/components/WelfareDashboard";
 import Opportunities from "@/components/Opportunities";
 import News from "@/components/News";
+import Academy from "@/components/Academy";
 
 type AppState = "loading" | "landing" | "name-entry" | "welcome" | "main";
-type Screen = "chat" | "dashboard" | "opportunities" | "news";
+type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy";
 
 const PROFILE_KEY = "seamind_profile_id";
 
@@ -148,8 +149,10 @@ const Index = () => {
           <WelfareDashboard />
         ) : screen === "opportunities" ? (
           <Opportunities />
-        ) : (
+        ) : screen === "news" ? (
           <News />
+        ) : (
+          <Academy />
         )}
       </div>
 
@@ -160,7 +163,7 @@ const Index = () => {
             screen === "chat" ? "text-primary" : "text-muted-foreground"
           }`}
         >
-          <MessageCircle size={20} />
+          <MessageCircle size={18} />
           <span className="text-[10px] font-medium tracking-wide uppercase">Chat</span>
         </button>
         <button
@@ -169,7 +172,7 @@ const Index = () => {
             screen === "dashboard" ? "text-primary" : "text-muted-foreground"
           }`}
         >
-          <LayoutDashboard size={20} />
+          <LayoutDashboard size={18} />
           <span className="text-[10px] font-medium tracking-wide uppercase">Welfare</span>
         </button>
         <button
@@ -178,7 +181,7 @@ const Index = () => {
             screen === "opportunities" ? "text-primary" : "text-muted-foreground"
           }`}
         >
-          <Briefcase size={20} />
+          <Briefcase size={18} />
           <span className="text-[10px] font-medium tracking-wide uppercase">Jobs</span>
         </button>
         <button
@@ -187,8 +190,17 @@ const Index = () => {
             screen === "news" ? "text-primary" : "text-muted-foreground"
           }`}
         >
-          <Newspaper size={20} />
+          <Newspaper size={18} />
           <span className="text-[10px] font-medium tracking-wide uppercase">News</span>
+        </button>
+        <button
+          onClick={() => setScreen("academy")}
+          className={`flex flex-col items-center gap-1 transition-colors ${
+            screen === "academy" ? "text-primary" : "text-muted-foreground"
+          }`}
+        >
+          <GraduationCap size={18} />
+          <span className="text-[10px] font-medium tracking-wide uppercase">Academy</span>
         </button>
       </nav>
     </div>
