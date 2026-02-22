@@ -1,42 +1,64 @@
-import { Briefcase, MapPin, Calendar, Clock, Ship, Building2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+import { Search, FileText } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import FindWork from "@/components/opportunities/FindWork";
+import PostVacancy from "@/components/opportunities/PostVacancy";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 
-const LISTINGS = [
-  {
-    id: 1,
-    vesselType: "Bulk Carrier",
-    rank: "Chief Officer",
-    company: "Pacific Maritime Ltd",
-    contract: "4 months",
-    startDate: "March 2026",
-    location: "Singapore",
-  },
-  {
-    id: 2,
-    vesselType: "Container Ship",
-    rank: "AB Seaman",
-    company: "Global Crew Agency",
-    contract: "6 months",
-    startDate: "April 2026",
-    location: "Manila",
-  },
-  {
-    id: 3,
-    vesselType: "Tanker",
-    rank: "2nd Engineer",
-    company: "Ocean Manning Services",
-    contract: "5 months",
-    startDate: "March 2026",
-    location: "Mumbai",
-  },
-];
+interface OpportunitiesProps {
+  profileId: string;
+  firstName: string;
+  role: string;
+  nationality: string;
+  shipName: string;
+}
 
-const Opportunities = () => {
-  const handleApply = (rank: string, company: string) => {
+interface ContactNotification {
+  id: string;
+  company_name: string;
+  rank_required: string;
+  vessel_type: string;
+}
+
+const Opportunities = ({ profileId, firstName, role, nationality, shipName }: OpportunitiesProps) => {
+  const [notifications, setNotifications] = useState<ContactNotification[]>([]);
+  const [lastName, setLastName] = useState("");
+  const [yearsAtSea, setYearsAtSea] = useState("");
+
+  useEffect(() => {
+    loadProfileExtras();
+    loadNotifications();
+  }, []);
+
+  const loadProfileExtras = async () => {
+    const { data } = await supabase
+      .from("crew_profiles")
+      .select("last_name, years_at_sea")
+      .eq("id", profileId)
+      .single();
+    if (data) {
+      setLastName(data.last_name);
+      setYearsAtSea(data.years_at_sea);
+    }
+  };
+
+  const loadNotifications = async () => {
+    const { data } = await supabase
+      .from("contact_requests")
+      .select("id, company_name, rank_required, vessel_type")
+      .eq("crew_profile_id", profileId)
+      .eq("status", "pending");
+    if (data) setNotifications(data);
+  };
+
+  const handleNotificationResponse = async (id: string, accepted: boolean) => {
+    await supabase.from("contact_requests").update({ status: accepted ? "accepted" : "declined" }).eq("id", id);
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
     toast({
-      title: "Application Sent",
-      description: `Your interest in the ${rank} position at ${company} has been noted.`,
+      title: accepted ? "Contact Shared" : "Request Declined",
+      description: accepted ? "Your details have been shared with the company." : "No details were shared.",
     });
   };
 
@@ -44,52 +66,54 @@ const Opportunities = () => {
     <div className="flex flex-col h-full">
       <div className="p-4 border-b border-border">
         <h1 className="text-lg font-semibold text-foreground">Opportunities</h1>
-        <p className="text-xs text-muted-foreground mt-0.5">Browse available positions</p>
+        <p className="text-xs text-muted-foreground mt-0.5">Find work or post vacancies</p>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {LISTINGS.map((job) => (
-          <div
-            key={job.id}
-            className="rounded-xl bg-card border border-border p-4 space-y-3"
-          >
-            <div className="flex items-start justify-between">
-              <div>
-                <h2 className="font-semibold text-foreground">{job.rank}</h2>
-                <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground">
-                  <Building2 size={12} />
-                  <span>{job.company}</span>
-                </div>
-              </div>
-              <span className="text-[10px] uppercase tracking-wider font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
-                {job.vesselType}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1.5">
-                <Clock size={12} className="text-primary/70" />
-                <span>{job.contract}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Calendar size={12} className="text-primary/70" />
-                <span>{job.startDate}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <MapPin size={12} className="text-primary/70" />
-                <span>{job.location}</span>
+      {/* Contact Request Notifications */}
+      {notifications.length > 0 && (
+        <div className="px-4 pt-3 space-y-2">
+          {notifications.map((n) => (
+            <div key={n.id} className="rounded-xl bg-primary/10 border border-primary/20 p-3 space-y-2">
+              <p className="text-xs text-foreground">
+                <span className="font-semibold text-primary">{n.company_name}</span> is interested in your profile for a{" "}
+                <span className="font-semibold">{n.rank_required}</span> position on a {n.vessel_type}. Share your contact details?
+              </p>
+              <div className="flex gap-2">
+                <Button size="sm" className="flex-1 h-8 text-xs" onClick={() => handleNotificationResponse(n.id, true)}>Yes</Button>
+                <Button size="sm" variant="outline" className="flex-1 h-8 text-xs" onClick={() => handleNotificationResponse(n.id, false)}>No</Button>
               </div>
             </div>
+          ))}
+        </div>
+      )}
 
-            <Button
-              size="sm"
-              className="w-full"
-              onClick={() => handleApply(job.rank, job.company)}
-            >
-              Apply
-            </Button>
-          </div>
-        ))}
+      <div className="flex-1 overflow-y-auto">
+        <Tabs defaultValue="find" className="h-full flex flex-col">
+          <TabsList className="mx-4 mt-3 bg-secondary">
+            <TabsTrigger value="find" className="flex-1 gap-1.5 text-xs">
+              <Search size={14} /> Find Work
+            </TabsTrigger>
+            <TabsTrigger value="post" className="flex-1 gap-1.5 text-xs">
+              <FileText size={14} /> Post a Vacancy
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="find" className="flex-1 overflow-y-auto px-4 pb-4">
+            <FindWork
+              profileId={profileId}
+              firstName={firstName}
+              lastName={lastName}
+              role={role}
+              nationality={nationality}
+              yearsAtSea={yearsAtSea}
+              shipName={shipName}
+            />
+          </TabsContent>
+
+          <TabsContent value="post" className="flex-1 overflow-y-auto px-4 pb-4">
+            <PostVacancy />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
