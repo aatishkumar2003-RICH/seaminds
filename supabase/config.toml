@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions.voyage-report]
 verify_jwt = false
+
+[functions.create-smc-payment]
+verify_jwt = false
+
+[functions.verify-smc-payment]
+verify_jwt = false

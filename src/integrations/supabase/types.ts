@@ -336,6 +336,42 @@ export type Database = {
         }
         Relationships: []
       }
+      smc_payments: {
+        Row: {
+          amount_paid: number
+          assessment_unlocked: boolean
+          created_at: string
+          crew_profile_id: string | null
+          id: string
+          payment_type: string
+          status: string
+          stripe_session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount_paid?: number
+          assessment_unlocked?: boolean
+          created_at?: string
+          crew_profile_id?: string | null
+          id?: string
+          payment_type: string
+          status?: string
+          stripe_session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount_paid?: number
+          assessment_unlocked?: boolean
+          created_at?: string
+          crew_profile_id?: string | null
+          id?: string
+          payment_type?: string
+          status?: string
+          stripe_session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       voyage_reports: {
         Row: {
           ai_message: string | null
