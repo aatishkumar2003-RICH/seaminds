@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MessageCircle, LayoutDashboard, Briefcase, Newspaper, GraduationCap } from "lucide-react";
+import { MessageCircle, LayoutDashboard, Briefcase, Newspaper, GraduationCap, Compass } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import LandingScreen from "@/components/LandingScreen";
 import NameEntry from "@/components/NameEntry";
@@ -9,9 +9,10 @@ import WelfareDashboard from "@/components/WelfareDashboard";
 import Opportunities from "@/components/Opportunities";
 import News from "@/components/News";
 import Academy from "@/components/Academy";
+import Community from "@/components/Community";
 
 type AppState = "loading" | "landing" | "name-entry" | "welcome" | "main";
-type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy";
+type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "community";
 
 const PROFILE_KEY = "seamind_profile_id";
 
@@ -23,6 +24,7 @@ const Index = () => {
   const [role, setRole] = useState("");
   const [shipName, setShipName] = useState("");
   const [voyageStartDate, setVoyageStartDate] = useState("");
+  const [manningAgency, setManningAgency] = useState("");
 
   // Check for existing profile on load
   useEffect(() => {
@@ -35,7 +37,7 @@ const Index = () => {
     // Verify profile still exists
     supabase
       .from("crew_profiles")
-      .select("id, first_name, onboarded, role, ship_name, voyage_start_date")
+      .select("id, first_name, onboarded, role, ship_name, voyage_start_date, manning_agency")
       .eq("id", savedId)
       .single()
       .then(({ data, error }) => {
@@ -49,6 +51,7 @@ const Index = () => {
         setRole(data.role);
         setShipName(data.ship_name);
         setVoyageStartDate(data.voyage_start_date || "");
+        setManningAgency(data.manning_agency || "");
         if (!data.onboarded) {
           setAppState("welcome");
         } else {
@@ -66,6 +69,7 @@ const Index = () => {
     whatsappNumber: string;
     yearsAtSea: string;
     voyageStartDate: string;
+    manningAgency: string;
   }) => {
     const { data, error } = await supabase
       .from("crew_profiles")
@@ -78,6 +82,7 @@ const Index = () => {
         whatsapp_number: profile.whatsappNumber,
         years_at_sea: profile.yearsAtSea,
         voyage_start_date: profile.voyageStartDate || null,
+        manning_agency: profile.manningAgency || null,
       })
       .select("id")
       .single();
@@ -93,6 +98,7 @@ const Index = () => {
     setRole(profile.role);
     setShipName(profile.shipName);
     setVoyageStartDate(profile.voyageStartDate);
+    setManningAgency(profile.manningAgency);
     setAppState("welcome");
   };
 
@@ -151,8 +157,10 @@ const Index = () => {
           <Opportunities />
         ) : screen === "news" ? (
           <News />
-        ) : (
+        ) : screen === "academy" ? (
           <Academy />
+        ) : (
+          <Community profileId={profileId} shipName={shipName} manningAgency={manningAgency} />
         )}
       </div>
 
@@ -201,6 +209,15 @@ const Index = () => {
         >
           <GraduationCap size={18} />
           <span className="text-[10px] font-medium tracking-wide uppercase">Academy</span>
+        </button>
+        <button
+          onClick={() => setScreen("community")}
+          className={`flex flex-col items-center gap-1 transition-colors ${
+            screen === "community" ? "text-primary" : "text-muted-foreground"
+          }`}
+        >
+          <Compass size={18} />
+          <span className="text-[10px] font-medium tracking-wide uppercase">Community</span>
         </button>
       </nav>
     </div>

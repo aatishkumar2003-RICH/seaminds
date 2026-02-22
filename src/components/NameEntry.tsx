@@ -15,12 +15,17 @@ interface NameEntryProps {
     whatsappNumber: string;
     yearsAtSea: string;
     voyageStartDate: string;
+    manningAgency: string;
   }) => void;
 }
 
 const ROLES = ["Captain", "Officer", "Rating", "Engineer"];
 const GENDERS = ["Male", "Female", "Prefer not to say"];
 const YEARS_OPTIONS = ["Less than 1 year", "1-3 years", "3-7 years", "7-15 years", "15+ years"];
+const AGENCIES = [
+  "Fleet Management Ltd", "Anglo-Eastern", "Synergy Marine", "V.Group", "BSM",
+  "Wilhelmsen", "NYK", "Mitsui OSK", "Columbia Shipmanagement", "Maersk", "MSC", "Other",
+];
 const NATIONALITIES = [
   "Filipino", "Indian", "Indonesian", "Vietnamese", "Chinese",
   "Myanmar/Burmese", "Bangladeshi", "Ukrainian", "Russian", "Croatian",
@@ -59,6 +64,9 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [yearsAtSea, setYearsAtSea] = useState("");
   const [voyageStartDate, setVoyageStartDate] = useState<Date>();
+  const [manningAgency, setManningAgency] = useState("");
+  const [agencyFilter, setAgencyFilter] = useState("");
+  const [showAgencyDropdown, setShowAgencyDropdown] = useState(false);
 
   const canSubmit = firstName.trim() && shipName.trim() && role && nationality.trim() && phoneNumber.trim() && yearsAtSea && voyageStartDate;
 
@@ -74,6 +82,7 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
       whatsappNumber: `${countryCode}${phoneNumber.trim()}`,
       yearsAtSea,
       voyageStartDate: voyageStartDate ? format(voyageStartDate, "yyyy-MM-dd") : "",
+      manningAgency: manningAgency.trim(),
     });
   };
 
@@ -179,7 +188,42 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
                 </select>
                 <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               </div>
-            </div>
+          </div>
+
+          {/* Manning Agency */}
+          <div className="space-y-1.5 relative">
+            <label className={labelClass}>Manning Agency / Company</label>
+            <input
+              type="text"
+              value={manningAgency}
+              onChange={(e) => {
+                setManningAgency(e.target.value);
+                setAgencyFilter(e.target.value);
+                setShowAgencyDropdown(true);
+              }}
+              onFocus={() => setShowAgencyDropdown(true)}
+              onBlur={() => setTimeout(() => setShowAgencyDropdown(false), 150)}
+              placeholder="e.g. Anglo-Eastern"
+              className={inputClass}
+            />
+            {showAgencyDropdown && agencyFilter.length > 0 && (
+              <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl overflow-hidden shadow-lg max-h-40 overflow-y-auto">
+                {AGENCIES.filter((a) => a.toLowerCase().includes(agencyFilter.toLowerCase())).map((a) => (
+                  <button
+                    key={a}
+                    type="button"
+                    onMouseDown={() => {
+                      setManningAgency(a);
+                      setShowAgencyDropdown(false);
+                    }}
+                    className="w-full text-left text-sm px-4 py-2.5 text-foreground hover:bg-secondary transition-colors"
+                  >
+                    {a}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           </div>
 
           {/* Row 4: WhatsApp Number */}
