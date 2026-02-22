@@ -16,6 +16,8 @@ const Index = () => {
   const [screen, setScreen] = useState<Screen>("chat");
   const [profileId, setProfileId] = useState("");
   const [firstName, setFirstName] = useState("");
+  const [role, setRole] = useState("");
+  const [shipName, setShipName] = useState("");
 
   // Check for existing profile on load
   useEffect(() => {
@@ -28,7 +30,7 @@ const Index = () => {
     // Verify profile still exists
     supabase
       .from("crew_profiles")
-      .select("id, first_name, onboarded")
+      .select("id, first_name, onboarded, role, ship_name")
       .eq("id", savedId)
       .single()
       .then(({ data, error }) => {
@@ -39,6 +41,8 @@ const Index = () => {
         }
         setProfileId(data.id);
         setFirstName(data.first_name);
+        setRole(data.role);
+        setShipName(data.ship_name);
         if (!data.onboarded) {
           setAppState("welcome");
         } else {
@@ -78,6 +82,8 @@ const Index = () => {
     localStorage.setItem(PROFILE_KEY, data.id);
     setProfileId(data.id);
     setFirstName(profile.firstName);
+    setRole(profile.role);
+    setShipName(profile.shipName);
     setAppState("welcome");
   };
 
@@ -121,7 +127,7 @@ const Index = () => {
     <div className="flex flex-col h-screen max-w-md mx-auto bg-background">
       <div className="flex-1 overflow-hidden">
         {screen === "chat" ? (
-          <CrewChat profileId={profileId} firstName={firstName} />
+          <CrewChat profileId={profileId} firstName={firstName} role={role} shipName={shipName} />
         ) : (
           <WelfareDashboard />
         )}
