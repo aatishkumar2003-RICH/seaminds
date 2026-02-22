@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 interface NameEntryProps {
   onSubmit: (data: {
     firstName: string;
+    lastName: string;
     shipName: string;
     role: string;
     gender: string;
@@ -24,7 +25,8 @@ const GENDERS = ["Male", "Female", "Prefer not to say"];
 const YEARS_OPTIONS = ["Less than 1 year", "1-3 years", "3-7 years", "7-15 years", "15+ years"];
 const AGENCIES = [
   "Fleet Management Ltd", "Anglo-Eastern", "Synergy Marine", "V.Group", "BSM",
-  "Wilhelmsen", "NYK", "Mitsui OSK", "Columbia Shipmanagement", "Maersk", "MSC", "Other",
+  "Wilhelmsen", "Columbia Shipmanagement", "Maersk", "MSC", "NYK",
+  "Mitsui OSK", "Stolt-Nielsen", "Euronav", "Other",
 ];
 const NATIONALITIES = [
   "Filipino", "Indian", "Indonesian", "Vietnamese", "Chinese",
@@ -56,6 +58,7 @@ const labelClass = "text-xs text-muted-foreground uppercase tracking-wide";
 
 const NameEntry = ({ onSubmit }: NameEntryProps) => {
   const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [shipName, setShipName] = useState("");
   const [role, setRole] = useState("");
   const [gender, setGender] = useState("");
@@ -68,13 +71,16 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
   const [agencyFilter, setAgencyFilter] = useState("");
   const [showAgencyDropdown, setShowAgencyDropdown] = useState(false);
 
-  const canSubmit = firstName.trim() && shipName.trim() && role && nationality.trim() && phoneNumber.trim() && yearsAtSea && voyageStartDate;
-
+  const canSubmit =
+    firstName.trim() && lastName.trim() && shipName.trim() && role &&
+    nationality.trim() && phoneNumber.trim() && yearsAtSea &&
+    voyageStartDate && manningAgency.trim();
 
   const handleSubmit = () => {
     if (!canSubmit) return;
     onSubmit({
       firstName: firstName.trim(),
+      lastName: lastName.trim(),
       shipName: shipName.trim(),
       role,
       gender,
@@ -98,19 +104,25 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
         </div>
 
         <div className="space-y-4">
-          {/* Row 1: First Name + Ship Name */}
+          {/* Row 1: First Name + Last Name */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className={labelClass}>First Name *</label>
               <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="e.g. Rajan" className={inputClass} />
             </div>
             <div className="space-y-1.5">
-              <label className={labelClass}>Ship Name *</label>
-              <input type="text" value={shipName} onChange={(e) => setShipName(e.target.value)} placeholder="e.g. MV Pacific Star" className={inputClass} />
+              <label className={labelClass}>Last Name *</label>
+              <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="e.g. Santos" className={inputClass} />
             </div>
           </div>
 
-          {/* Row 1.5: Voyage Start Date */}
+          {/* Ship Name */}
+          <div className="space-y-1.5">
+            <label className={labelClass}>Ship Name *</label>
+            <input type="text" value={shipName} onChange={(e) => setShipName(e.target.value)} placeholder="e.g. MV Pacific Star" className={inputClass} />
+          </div>
+
+          {/* Voyage Start Date */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className={labelClass}>Voyage Start Date *</label>
@@ -143,7 +155,7 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
             <div />
           </div>
 
-          {/* Row 2: Role + Gender */}
+          {/* Role + Gender */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className={labelClass}>Your Role *</label>
@@ -167,7 +179,7 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
             </div>
           </div>
 
-          {/* Row 3: Nationality + Years at Sea */}
+          {/* Nationality + Manning Agency */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className={labelClass}>Nationality *</label>
@@ -179,6 +191,43 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
                 <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               </div>
             </div>
+            <div className="space-y-1.5 relative">
+              <label className={labelClass}>Manning Agency *</label>
+              <input
+                type="text"
+                value={manningAgency}
+                onChange={(e) => {
+                  setManningAgency(e.target.value);
+                  setAgencyFilter(e.target.value);
+                  setShowAgencyDropdown(true);
+                }}
+                onFocus={() => setShowAgencyDropdown(true)}
+                onBlur={() => setTimeout(() => setShowAgencyDropdown(false), 150)}
+                placeholder="e.g. Anglo-Eastern"
+                className={inputClass}
+              />
+              {showAgencyDropdown && (
+                <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl overflow-hidden shadow-lg max-h-40 overflow-y-auto">
+                  {AGENCIES.filter((a) => !agencyFilter || a.toLowerCase().includes(agencyFilter.toLowerCase())).map((a) => (
+                    <button
+                      key={a}
+                      type="button"
+                      onMouseDown={() => {
+                        setManningAgency(a);
+                        setShowAgencyDropdown(false);
+                      }}
+                      className="w-full text-left text-sm px-4 py-2.5 text-foreground hover:bg-secondary transition-colors"
+                    >
+                      {a}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Years at Sea */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className={labelClass}>Years at Sea *</label>
               <div className="relative">
@@ -188,45 +237,11 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
                 </select>
                 <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               </div>
+            </div>
+            <div />
           </div>
 
-          {/* Manning Agency */}
-          <div className="space-y-1.5 relative">
-            <label className={labelClass}>Manning Agency / Company</label>
-            <input
-              type="text"
-              value={manningAgency}
-              onChange={(e) => {
-                setManningAgency(e.target.value);
-                setAgencyFilter(e.target.value);
-                setShowAgencyDropdown(true);
-              }}
-              onFocus={() => setShowAgencyDropdown(true)}
-              onBlur={() => setTimeout(() => setShowAgencyDropdown(false), 150)}
-              placeholder="e.g. Anglo-Eastern"
-              className={inputClass}
-            />
-            {showAgencyDropdown && agencyFilter.length > 0 && (
-              <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl overflow-hidden shadow-lg max-h-40 overflow-y-auto">
-                {AGENCIES.filter((a) => a.toLowerCase().includes(agencyFilter.toLowerCase())).map((a) => (
-                  <button
-                    key={a}
-                    type="button"
-                    onMouseDown={() => {
-                      setManningAgency(a);
-                      setShowAgencyDropdown(false);
-                    }}
-                    className="w-full text-left text-sm px-4 py-2.5 text-foreground hover:bg-secondary transition-colors"
-                  >
-                    {a}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          </div>
-
-          {/* Row 4: WhatsApp Number */}
+          {/* WhatsApp Number */}
           <div className="space-y-1.5">
             <label className={labelClass}>WhatsApp Number *</label>
             <div className="flex gap-2">
