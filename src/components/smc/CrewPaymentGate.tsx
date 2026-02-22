@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Shield, Check, Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -20,21 +20,29 @@ const INCLUSIONS = [
   "Access to salary bidding marketplace",
 ];
 
-// Early access config
 const EARLY_ACCESS_TOTAL = 1000;
-const EARLY_ACCESS_USED = 153; // demo number — update as real signups happen
-const EARLY_ACCESS_REMAINING = EARLY_ACCESS_TOTAL - EARLY_ACCESS_USED;
 
 const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) => {
   const [loading, setLoading] = useState(false);
+  const [earlyAccessUsed, setEarlyAccessUsed] = useState<number | null>(null);
 
-  const isEarlyAccess = EARLY_ACCESS_REMAINING > 0;
+  useEffect(() => {
+    supabase
+      .from("smc_payments")
+      .select("id", { count: "exact", head: true })
+      .eq("payment_type", "early_access_free")
+      .then(({ count }) => {
+        setEarlyAccessUsed(count ?? 0);
+      });
+  }, []);
+
+  const remaining = earlyAccessUsed !== null ? EARLY_ACCESS_TOTAL - earlyAccessUsed : null;
+  const isEarlyAccess = remaining !== null && remaining > 0;
 
   const handleClaim = async () => {
     setLoading(true);
     try {
       if (isEarlyAccess) {
-        // Free early access — insert directly, no Stripe
         const { error } = await supabase.from("smc_payments").insert({
           crew_profile_id: profileId,
           amount_paid: 0,
@@ -45,7 +53,6 @@ const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) 
         if (error) throw error;
         onPaymentSuccess();
       } else {
-        // Standard $29 Stripe flow
         const { data, error } = await supabase.functions.invoke("create-smc-payment", {
           body: { product_key: "crew_assessment", crew_profile_id: profileId },
         });
@@ -64,7 +71,6 @@ const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
       <div className="p-6 space-y-6">
-        {/* Shield icon & heading */}
         <div className="flex flex-col items-center text-center pt-4">
           <div className="w-16 h-16 rounded-2xl bg-primary/15 flex items-center justify-center mb-4">
             <Shield size={32} className="text-primary" />
@@ -72,15 +78,13 @@ const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) 
           <h1 className="text-xl font-bold text-foreground">Get Your SeaMinds Certified Score</h1>
         </div>
 
-        {/* Early access counter */}
         {isEarlyAccess && (
           <div className="text-center space-y-1">
             <p className="text-sm font-semibold text-foreground">🎯 Early Access — Free for First 1,000 Crew</p>
-            <p className="text-lg font-bold text-primary gold-glow">{EARLY_ACCESS_REMAINING} spots remaining</p>
+            <p className="text-lg font-bold text-primary gold-glow">{remaining} spots remaining</p>
           </div>
         )}
 
-        {/* Benefit cards */}
         <div className="space-y-3">
           {BENEFITS.map((b, i) => (
             <div key={i} className="bg-secondary rounded-xl px-4 py-3 flex items-start gap-3">
@@ -90,7 +94,6 @@ const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) 
           ))}
         </div>
 
-        {/* Price */}
         <div className="text-center py-4">
           {isEarlyAccess ? (
             <>
@@ -106,7 +109,6 @@ const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) 
           )}
         </div>
 
-        {/* Inclusions */}
         <div className="bg-secondary/50 rounded-xl border border-border p-4 space-y-3">
           {INCLUSIONS.map((item, i) => (
             <div key={i} className="flex items-start gap-2.5">
@@ -116,10 +118,9 @@ const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) 
           ))}
         </div>
 
-        {/* CTA */}
         <button
           onClick={handleClaim}
-          disabled={loading}
+          disabled={loading || remaining === null}
           className="w-full bg-primary text-primary-foreground font-bold py-4 rounded-xl text-base flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors disabled:opacity-60"
         >
           {loading ? (
