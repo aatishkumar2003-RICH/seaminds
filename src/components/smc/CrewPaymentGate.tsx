@@ -41,18 +41,22 @@ const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) 
 
   const handleClaim = async () => {
     setLoading(true);
-    try {
-      if (isEarlyAccess) {
-        const { error } = await supabase.from("smc_payments").insert({
+    if (isEarlyAccess) {
+      // Navigate FIRST, database write in background
+      onPaymentSuccess();
+      try {
+        await supabase.from("smc_payments").insert({
           crew_profile_id: profileId,
           amount_paid: 0,
           payment_type: "early_access_free",
           status: "completed",
           assessment_unlocked: true,
         });
-        if (error) throw error;
-        onPaymentSuccess();
-      } else {
+      } catch (err) {
+        console.log("Payment record error (non-blocking):", err);
+      }
+    } else {
+      try {
         const { data, error } = await supabase.functions.invoke("create-smc-payment", {
           body: { product_key: "crew_assessment", crew_profile_id: profileId },
         });
@@ -60,12 +64,11 @@ const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) 
         if (data?.url) {
           window.open(data.url, "_blank");
         }
+      } catch (err) {
+        console.error("Payment error:", err);
       }
-    } catch (err) {
-      console.error("Payment error:", err);
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   return (

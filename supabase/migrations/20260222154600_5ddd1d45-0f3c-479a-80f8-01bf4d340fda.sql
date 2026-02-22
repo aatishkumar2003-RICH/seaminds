@@ -1,0 +1,1 @@
+ALTER TABLE public.smc_payments DROP CONSTRAINT IF EXISTS smc_payments_payment_type_check;

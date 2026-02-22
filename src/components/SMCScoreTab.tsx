@@ -27,7 +27,7 @@ const SMCScoreTab = ({ profileId, firstName, rank, shipName }: SMCScoreTabProps)
       .from("smc_assessments")
       .select("*")
       .eq("crew_profile_id", profileId)
-      .order("created_at", { ascending: false })
+      .order("started_at", { ascending: false })
       .limit(1)
       .maybeSingle();
 
