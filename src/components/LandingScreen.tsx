@@ -3,9 +3,10 @@ import { Button } from "@/components/ui/button";
 
 interface LandingScreenProps {
   onGetStarted: () => void;
+  onManagerLogin: () => void;
 }
 
-const LandingScreen = ({ onGetStarted }: LandingScreenProps) => {
+const LandingScreen = ({ onGetStarted, onManagerLogin }: LandingScreenProps) => {
   return (
     <div className="flex flex-col items-center justify-center h-full px-8 text-center">
       <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-8">
@@ -44,6 +45,13 @@ const LandingScreen = ({ onGetStarted }: LandingScreenProps) => {
       </Button>
 
       <p className="text-[11px] text-muted-foreground mt-4">Free for crew members</p>
+
+      <button
+        onClick={onManagerLogin}
+        className="mt-6 text-xs text-muted-foreground hover:text-primary underline underline-offset-2 transition-colors"
+      >
+        Manager Login
+      </button>
     </div>
   );
 };

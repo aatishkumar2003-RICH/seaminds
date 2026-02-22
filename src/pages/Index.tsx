@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { MessageCircle, LayoutDashboard, Briefcase, Newspaper, GraduationCap, Compass } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import LandingScreen from "@/components/LandingScreen";
@@ -17,6 +18,7 @@ type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "com
 const PROFILE_KEY = "seamind_profile_id";
 
 const Index = () => {
+  const navigate = useNavigate();
   const [appState, setAppState] = useState<AppState>("loading");
   const [screen, setScreen] = useState<Screen>("chat");
   const [profileId, setProfileId] = useState("");
@@ -26,42 +28,30 @@ const Index = () => {
   const [voyageStartDate, setVoyageStartDate] = useState("");
   const [manningAgency, setManningAgency] = useState("");
 
-  // Check for existing profile on load
   useEffect(() => {
     const savedId = localStorage.getItem(PROFILE_KEY);
-    if (!savedId) {
-      setAppState("landing");
-      return;
-    }
+    if (!savedId) { setAppState("landing"); return; }
 
-    // Verify profile still exists
     supabase
       .from("crew_profiles")
       .select("id, first_name, onboarded, role, ship_name, voyage_start_date, manning_agency")
       .eq("id", savedId)
       .single()
       .then(({ data, error }) => {
-        if (error || !data) {
-          localStorage.removeItem(PROFILE_KEY);
-          setAppState("landing");
-          return;
-        }
+        if (error || !data) { localStorage.removeItem(PROFILE_KEY); setAppState("landing"); return; }
         setProfileId(data.id);
         setFirstName(data.first_name);
         setRole(data.role);
         setShipName(data.ship_name);
         setVoyageStartDate(data.voyage_start_date || "");
         setManningAgency(data.manning_agency || "");
-        if (!data.onboarded) {
-          setAppState("welcome");
-        } else {
-          setAppState("main");
-        }
+        setAppState(data.onboarded ? "main" : "welcome");
       });
   }, []);
 
   const handleNameSubmit = async (profile: {
     firstName: string;
+    lastName: string;
     shipName: string;
     role: string;
     gender: string;
@@ -75,6 +65,7 @@ const Index = () => {
       .from("crew_profiles")
       .insert({
         first_name: profile.firstName,
+        last_name: profile.lastName,
         ship_name: profile.shipName,
         role: profile.role,
         gender: profile.gender || null,
@@ -87,10 +78,7 @@ const Index = () => {
       .select("id")
       .single();
 
-    if (error || !data) {
-      console.error("Failed to create profile:", error);
-      return;
-    }
+    if (error || !data) { console.error("Failed to create profile:", error); return; }
 
     localStorage.setItem(PROFILE_KEY, data.id);
     setProfileId(data.id);
@@ -103,10 +91,7 @@ const Index = () => {
   };
 
   const handleWelcomeComplete = async () => {
-    await supabase
-      .from("crew_profiles")
-      .update({ onboarded: true })
-      .eq("id", profileId);
+    await supabase.from("crew_profiles").update({ onboarded: true }).eq("id", profileId);
     setAppState("main");
   };
 
@@ -125,7 +110,7 @@ const Index = () => {
   if (appState === "landing") {
     return (
       <div className="h-screen max-w-md mx-auto bg-background">
-        <LandingScreen onGetStarted={() => setAppState("name-entry")} />
+        <LandingScreen onGetStarted={() => setAppState("name-entry")} onManagerLogin={() => navigate("/manager")} />
       </div>
     );
   }
@@ -165,57 +150,27 @@ const Index = () => {
       </div>
 
       <nav className="nav-glass flex items-center justify-around py-3 px-6">
-        <button
-          onClick={() => setScreen("chat")}
-          className={`flex flex-col items-center gap-1 transition-colors ${
-            screen === "chat" ? "text-primary" : "text-muted-foreground"
-          }`}
-        >
+        <button onClick={() => setScreen("chat")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "chat" ? "text-primary" : "text-muted-foreground"}`}>
           <MessageCircle size={18} />
           <span className="text-[10px] font-medium tracking-wide uppercase">Chat</span>
         </button>
-        <button
-          onClick={() => setScreen("dashboard")}
-          className={`flex flex-col items-center gap-1 transition-colors ${
-            screen === "dashboard" ? "text-primary" : "text-muted-foreground"
-          }`}
-        >
+        <button onClick={() => setScreen("dashboard")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "dashboard" ? "text-primary" : "text-muted-foreground"}`}>
           <LayoutDashboard size={18} />
           <span className="text-[10px] font-medium tracking-wide uppercase">Welfare</span>
         </button>
-        <button
-          onClick={() => setScreen("opportunities")}
-          className={`flex flex-col items-center gap-1 transition-colors ${
-            screen === "opportunities" ? "text-primary" : "text-muted-foreground"
-          }`}
-        >
+        <button onClick={() => setScreen("opportunities")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "opportunities" ? "text-primary" : "text-muted-foreground"}`}>
           <Briefcase size={18} />
           <span className="text-[10px] font-medium tracking-wide uppercase">Jobs</span>
         </button>
-        <button
-          onClick={() => setScreen("news")}
-          className={`flex flex-col items-center gap-1 transition-colors ${
-            screen === "news" ? "text-primary" : "text-muted-foreground"
-          }`}
-        >
+        <button onClick={() => setScreen("news")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "news" ? "text-primary" : "text-muted-foreground"}`}>
           <Newspaper size={18} />
           <span className="text-[10px] font-medium tracking-wide uppercase">News</span>
         </button>
-        <button
-          onClick={() => setScreen("academy")}
-          className={`flex flex-col items-center gap-1 transition-colors ${
-            screen === "academy" ? "text-primary" : "text-muted-foreground"
-          }`}
-        >
+        <button onClick={() => setScreen("academy")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "academy" ? "text-primary" : "text-muted-foreground"}`}>
           <GraduationCap size={18} />
           <span className="text-[10px] font-medium tracking-wide uppercase">Academy</span>
         </button>
-        <button
-          onClick={() => setScreen("community")}
-          className={`flex flex-col items-center gap-1 transition-colors ${
-            screen === "community" ? "text-primary" : "text-muted-foreground"
-          }`}
-        >
+        <button onClick={() => setScreen("community")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "community" ? "text-primary" : "text-muted-foreground"}`}>
           <Compass size={18} />
           <span className="text-[10px] font-medium tracking-wide uppercase">Community</span>
         </button>
