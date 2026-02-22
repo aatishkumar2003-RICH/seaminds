@@ -11,7 +11,7 @@ import Opportunities from "@/components/Opportunities";
 import News from "@/components/News";
 import Academy from "@/components/Academy";
 import Community from "@/components/Community";
-
+import SOSButton from "@/components/SOSButton";
 type AppState = "loading" | "landing" | "name-entry" | "welcome" | "main";
 type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "community";
 
@@ -110,6 +110,7 @@ const Index = () => {
   if (appState === "landing") {
     return (
       <div className="h-screen max-w-md mx-auto bg-background">
+        <SOSButton onOpenChat={() => { setAppState("main"); setScreen("chat"); }} />
         <LandingScreen onGetStarted={() => setAppState("name-entry")} onManagerLogin={() => navigate("/manager")} />
       </div>
     );
@@ -118,6 +119,7 @@ const Index = () => {
   if (appState === "name-entry") {
     return (
       <div className="h-screen max-w-md mx-auto bg-background">
+        <SOSButton onOpenChat={() => { setAppState("main"); setScreen("chat"); }} />
         <NameEntry onSubmit={handleNameSubmit} />
       </div>
     );
@@ -126,6 +128,7 @@ const Index = () => {
   if (appState === "welcome") {
     return (
       <div className="h-screen max-w-md mx-auto bg-background">
+        <SOSButton onOpenChat={() => { setAppState("main"); setScreen("chat"); }} />
         <WelcomeScreens onComplete={handleWelcomeComplete} />
       </div>
     );
@@ -133,6 +136,7 @@ const Index = () => {
 
   return (
     <div className="flex flex-col h-screen max-w-md mx-auto bg-background">
+      <SOSButton onOpenChat={() => setScreen("chat")} />
       <div className="flex-1 overflow-hidden">
         {screen === "chat" ? (
           <CrewChat profileId={profileId} firstName={firstName} role={role} shipName={shipName} voyageStartDate={voyageStartDate} />
