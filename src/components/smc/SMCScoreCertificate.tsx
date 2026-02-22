@@ -21,11 +21,11 @@ interface SMCScoreData {
 const DEMO_DATA: SMCScoreData = {
   overallScore: 4.17,
   subScores: [
-    { name: "Technical Competence", score: 4.42 },
-    { name: "Experience Integrity", score: 4.31 },
-    { name: "Communication Ability", score: 3.89 },
-    { name: "Behavioural Profile", score: 4.05 },
-    { name: "Wellness Consistency", score: 4.20 },
+    { name: "🔧 Technical Competence", score: 4.42 },
+    { name: "📄 Experience Integrity", score: 4.31 },
+    { name: "🗣️ Communication Ability", score: 3.89 },
+    { name: "🧠 Behavioural Profile", score: 4.05 },
+    { name: "💚 Wellness Consistency", score: 4.20 },
   ],
   crewName: "Rajan Kumar",
   rank: "Chief Officer",
@@ -54,11 +54,11 @@ function getBarColor(score: number) {
 }
 
 const ACADEMY_MAP: Record<string, string[]> = {
-  "Technical Competence": ["SIRE 2.0 Preparation", "PSC Inspection Readiness", "Vessel Type Specifics"],
-  "Experience Integrity": ["Voyage Documentation", "Sea Service Records", "Certification Updates"],
-  "Communication Ability": ["Bridge Communication", "ISM Code Procedures", "Emergency Response Drills"],
-  "Behavioural Profile": ["Human Factors Assessment", "Fatigue Management", "Team Leadership"],
-  "Wellness Consistency": ["Rest Hours Compliance", "Mental Health Awareness", "Physical Fitness"],
+  "🔧 Technical Competence": ["SIRE 2.0 Preparation", "PSC Inspection Readiness", "Vessel Type Specifics"],
+  "📄 Experience Integrity": ["Voyage Documentation", "Sea Service Records", "Certification Updates"],
+  "🗣️ Communication Ability": ["Bridge Communication", "ISM Code Procedures", "Emergency Response Drills"],
+  "🧠 Behavioural Profile": ["Human Factors Assessment", "Fatigue Management", "Team Leadership"],
+  "💚 Wellness Consistency": ["Rest Hours Compliance", "Mental Health Awareness", "Physical Fitness"],
 };
 
 interface SMCScoreCertificateProps {
@@ -169,7 +169,7 @@ const SMCScoreCertificate = ({ data = DEMO_DATA, onImproveScore }: SMCScoreCerti
               </div>
               <div className="h-2 bg-muted rounded-full overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all duration-700 ${getBarColor(sub.score)}`}
+                  className="h-full rounded-full transition-all duration-700 bg-primary"
                   style={{ width: `${(sub.score / 5) * 100}%` }}
                 />
               </div>

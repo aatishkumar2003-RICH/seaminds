@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { MessageCircle, LayoutDashboard, Briefcase, Newspaper, GraduationCap, Compass } from "lucide-react";
+import { MessageCircle, LayoutDashboard, Briefcase, Newspaper, GraduationCap, Compass, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import LandingScreen from "@/components/LandingScreen";
 import NameEntry from "@/components/NameEntry";
@@ -11,10 +11,11 @@ import Opportunities from "@/components/Opportunities";
 import News from "@/components/News";
 import Academy from "@/components/Academy";
 import Community from "@/components/Community";
+import SMCScoreTab from "@/components/SMCScoreTab";
 import SOSButton from "@/components/SOSButton";
 import VoyageReport from "@/components/VoyageReport";
 type AppState = "loading" | "landing" | "name-entry" | "welcome" | "main" | "voyage-report";
-type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "community";
+type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "community" | "smc";
 
 const PROFILE_KEY = "seamind_profile_id";
 
@@ -168,8 +169,10 @@ const Index = () => {
           <News />
         ) : screen === "academy" ? (
           <Academy />
-        ) : (
+        ) : screen === "community" ? (
           <Community profileId={profileId} shipName={shipName} manningAgency={manningAgency} firstName={firstName} voyageStartDate={voyageStartDate} onCompleteVoyage={() => setAppState("voyage-report")} />
+        ) : (
+          <SMCScoreTab profileId={profileId} />
         )}
       </div>
 
@@ -197,6 +200,10 @@ const Index = () => {
         <button onClick={() => setScreen("community")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "community" ? "text-primary" : "text-muted-foreground"}`}>
           <Compass size={18} />
           <span className="text-[10px] font-medium tracking-wide uppercase">Community</span>
+        </button>
+        <button onClick={() => setScreen("smc")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "smc" ? "text-primary" : "text-muted-foreground"}`}>
+          <Star size={18} />
+          <span className="text-[10px] font-medium tracking-wide uppercase">SMC</span>
         </button>
       </nav>
     </div>

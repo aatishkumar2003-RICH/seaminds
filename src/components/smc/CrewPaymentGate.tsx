@@ -9,15 +9,15 @@ interface CrewPaymentGateProps {
 
 const BENEFITS = [
   { emoji: "✅", text: "Verified by AI — not self-reported" },
-  { emoji: "✅", text: "Yours forever — portable across all companies" },
+  { emoji: "✅", text: "Portable — yours forever, not owned by any company" },
   { emoji: "✅", text: "Commands higher salary — proven competence" },
 ];
 
 const INCLUSIONS = [
-  "Complete 45-minute AI-conducted assessment",
-  "Score on 5 competency dimensions",
+  "45-minute AI assessment on WhatsApp",
+  "Score on 5 competency dimensions — to 2 decimal places",
   "Digital certificate with verification URL",
-  "Access to salary bidding marketplace (score 3.00+)",
+  "Access to salary bidding marketplace",
 ];
 
 const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) => {
@@ -83,7 +83,7 @@ const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) 
         {/* Price */}
         <div className="text-center py-4">
           <p className="text-4xl font-bold text-primary gold-glow">$29</p>
-          <p className="text-xs text-muted-foreground mt-1">one-time payment — valid 2 years</p>
+          <p className="text-xs text-muted-foreground mt-1">one-time payment · valid 2 years</p>
         </div>
 
         {/* Inclusions */}
@@ -111,7 +111,7 @@ const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) 
         </button>
 
         <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
-          Secure payment via Stripe. Accepted: Visa, Mastercard, Apple Pay, Google Pay.
+          Secure payment via Stripe · Visa · Mastercard · Apple Pay
         </p>
       </div>
     </div>
