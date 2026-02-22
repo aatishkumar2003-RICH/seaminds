@@ -12,18 +12,20 @@ interface Message {
 interface CrewChatProps {
   profileId: string;
   firstName: string;
+  role: string;
+  shipName: string;
 }
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 
-const CrewChat = ({ profileId, firstName }: CrewChatProps) => {
+const CrewChat = ({ profileId, firstName, role, shipName }: CrewChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const GREETING = `Hey ${firstName}, it's SeaMinds. 👋\n\nHow are you feeling today? No right or wrong answer — just checking in.`;
+  const FIRST_VISIT_GREETING = `Hey ${firstName}. ${role} on ${shipName} — that's a life most people can't imagine. I don't know your story yet, but I'm here and nothing you tell me goes anywhere else. What's been on your mind lately?`;
 
   // Load existing messages from DB
   useEffect(() => {
@@ -40,16 +42,95 @@ const CrewChat = ({ profileId, firstName }: CrewChatProps) => {
 
       if (data && data.length > 0) {
         setMessages(data.map((m) => ({ id: m.id, role: m.role as "assistant" | "user", content: m.content })));
+        
+        // Returning user — generate a contextual re-greeting via AI
+        setIsLoading(true);
+        try {
+          const existingMessages = data.map((m) => ({ role: m.role, content: m.content }));
+          const resp = await fetch(CHAT_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            body: JSON.stringify({
+              messages: [
+                ...existingMessages,
+                { role: "user", content: "[SYSTEM: The crew member has returned to the chat. Generate a warm, brief welcome-back message. Reference something specific from the previous conversation naturally. Start with their first name. Keep it to 2-3 sentences max. Do NOT repeat the safety protocols unless relevant.]" },
+              ],
+              profileId,
+            }),
+          });
+
+          if (resp.ok && resp.body) {
+            const reader = resp.body.getReader();
+            const decoder = new TextDecoder();
+            let textBuffer = "";
+            let assistantContent = "";
+            let streamDone = false;
+            const streamId = "welcome-stream";
+
+            while (!streamDone) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              textBuffer += decoder.decode(value, { stream: true });
+
+              let newlineIndex: number;
+              while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+                let line = textBuffer.slice(0, newlineIndex);
+                textBuffer = textBuffer.slice(newlineIndex + 1);
+                if (line.endsWith("\r")) line = line.slice(0, -1);
+                if (line.startsWith(":") || line.trim() === "") continue;
+                if (!line.startsWith("data: ")) continue;
+                const jsonStr = line.slice(6).trim();
+                if (jsonStr === "[DONE]") { streamDone = true; break; }
+                try {
+                  const parsed = JSON.parse(jsonStr);
+                  const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+                  if (content) {
+                    assistantContent += content;
+                    const current = assistantContent;
+                    setMessages((prev) => {
+                      const last = prev[prev.length - 1];
+                      if (last?.id === streamId) {
+                        return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: current } : m));
+                      }
+                      return [...prev, { id: streamId, role: "assistant", content: current }];
+                    });
+                  }
+                } catch {
+                  textBuffer = line + "\n" + textBuffer;
+                  break;
+                }
+              }
+            }
+
+            // Save the welcome-back message to DB
+            const { data: saved } = await supabase
+              .from("chat_messages")
+              .insert({ crew_profile_id: profileId, role: "assistant", content: assistantContent })
+              .select("id")
+              .single();
+
+            setMessages((prev) =>
+              prev.map((m) => (m.id === streamId ? { ...m, id: saved?.id || crypto.randomUUID() } : m))
+            );
+          }
+        } catch (e) {
+          console.error("Failed to generate welcome-back:", e);
+        } finally {
+          setIsLoading(false);
+        }
       } else {
-        // First time — insert greeting
+        // First time — insert personalized greeting
         const { data: inserted, error: insertErr } = await supabase
           .from("chat_messages")
-          .insert({ crew_profile_id: profileId, role: "assistant", content: GREETING })
+          .insert({ crew_profile_id: profileId, role: "assistant", content: FIRST_VISIT_GREETING })
           .select("id")
           .single();
 
         if (!insertErr && inserted) {
-          setMessages([{ id: inserted.id, role: "assistant", content: GREETING }]);
+          setMessages([{ id: inserted.id, role: "assistant", content: FIRST_VISIT_GREETING }]);
         }
       }
       setInitialLoading(false);
