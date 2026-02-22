@@ -146,7 +146,7 @@ const Index = () => {
         {screen === "chat" ? (
           <CrewChat profileId={profileId} firstName={firstName} role={role} shipName={shipName} voyageStartDate={voyageStartDate} />
         ) : screen === "dashboard" ? (
-          <WelfareDashboard />
+          <WelfareDashboard shipName={shipName} />
         ) : screen === "opportunities" ? (
           <Opportunities />
         ) : screen === "news" ? (
