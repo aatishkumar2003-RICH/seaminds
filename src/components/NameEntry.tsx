@@ -22,9 +22,13 @@ const ROLES = ["Captain", "Officer", "Rating", "Engineer"];
 const GENDERS = ["Male", "Female", "Prefer not to say"];
 const YEARS_OPTIONS = ["Less than 1 year", "1-3 years", "3-7 years", "7-15 years", "15+ years"];
 const NATIONALITIES = [
-  "Filipino", "Indian", "Indonesian", "Ukrainian", "Russian",
-  "Chinese", "Myanmar", "Bangladeshi", "Croatian", "Greek",
-  "British", "American", "Other",
+  "Filipino", "Indian", "Indonesian", "Vietnamese", "Chinese",
+  "Myanmar/Burmese", "Bangladeshi", "Ukrainian", "Russian", "Croatian",
+  "Greek", "Turkish", "Sri Lankan", "Pakistani", "Nepali",
+  "Thai", "Malaysian", "Cambodian", "Georgian", "Azerbaijani",
+  "Romanian", "Bulgarian", "Polish", "Latvian", "Lithuanian",
+  "Estonian", "Norwegian", "British", "American", "Australian",
+  "Nigerian", "Ghanaian", "Kenyan", "Brazilian", "Other",
 ];
 const COUNTRY_CODES = [
   { code: "+63", label: "🇵🇭 +63" },
