@@ -12,7 +12,8 @@ import News from "@/components/News";
 import Academy from "@/components/Academy";
 import Community from "@/components/Community";
 import SOSButton from "@/components/SOSButton";
-type AppState = "loading" | "landing" | "name-entry" | "welcome" | "main";
+import VoyageReport from "@/components/VoyageReport";
+type AppState = "loading" | "landing" | "name-entry" | "welcome" | "main" | "voyage-report";
 type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "community";
 
 const PROFILE_KEY = "seamind_profile_id";
@@ -27,6 +28,7 @@ const Index = () => {
   const [shipName, setShipName] = useState("");
   const [voyageStartDate, setVoyageStartDate] = useState("");
   const [manningAgency, setManningAgency] = useState("");
+  const [nationality, setNationality] = useState("");
 
   useEffect(() => {
     const savedId = localStorage.getItem(PROFILE_KEY);
@@ -34,7 +36,7 @@ const Index = () => {
 
     supabase
       .from("crew_profiles")
-      .select("id, first_name, onboarded, role, ship_name, voyage_start_date, manning_agency")
+      .select("id, first_name, onboarded, role, ship_name, voyage_start_date, manning_agency, nationality")
       .eq("id", savedId)
       .single()
       .then(({ data, error }) => {
@@ -45,6 +47,7 @@ const Index = () => {
         setShipName(data.ship_name);
         setVoyageStartDate(data.voyage_start_date || "");
         setManningAgency(data.manning_agency || "");
+        setNationality(data.nationality || "");
         setAppState(data.onboarded ? "main" : "welcome");
       });
   }, []);
@@ -87,6 +90,7 @@ const Index = () => {
     setShipName(profile.shipName);
     setVoyageStartDate(profile.voyageStartDate);
     setManningAgency(profile.manningAgency);
+    setNationality(profile.nationality);
     setAppState("welcome");
   };
 
@@ -134,6 +138,22 @@ const Index = () => {
     );
   }
 
+  if (appState === "voyage-report") {
+    return (
+      <div className="h-screen max-w-md mx-auto bg-background">
+        <VoyageReport
+          profileId={profileId}
+          firstName={firstName}
+          role={role}
+          shipName={shipName}
+          voyageStartDate={voyageStartDate}
+          nationality={nationality}
+          onClose={() => setAppState("main")}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-screen max-w-md mx-auto bg-background">
       <SOSButton onOpenChat={() => setScreen("chat")} />
@@ -149,7 +169,7 @@ const Index = () => {
         ) : screen === "academy" ? (
           <Academy />
         ) : (
-          <Community profileId={profileId} shipName={shipName} manningAgency={manningAgency} firstName={firstName} voyageStartDate={voyageStartDate} />
+          <Community profileId={profileId} shipName={shipName} manningAgency={manningAgency} firstName={firstName} voyageStartDate={voyageStartDate} onCompleteVoyage={() => setAppState("voyage-report")} />
         )}
       </div>
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Compass, Shield, Users, Ship, MapPin, AlertTriangle, CheckCircle, Heart, Send, Mail } from "lucide-react";
+import { Compass, Shield, Users, Ship, MapPin, AlertTriangle, CheckCircle, Heart, Send, Mail, Anchor } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -9,6 +9,7 @@ interface CommunityProps {
   profileId: string;
   firstName: string;
   voyageStartDate: string;
+  onCompleteVoyage: () => void;
 }
 
 const MOOD_WORDS = ["Tired", "Good", "Homesick", "Motivated", "Grateful", "Lonely", "Strong", "Bored", "Hopeful", "Calm"];
@@ -22,7 +23,7 @@ const SAFETY_CATEGORIES = [
   { id: "other", emoji: "🟣", label: "Other", desc: "Anything not listed above" },
 ];
 
-const Community = ({ shipName, manningAgency, profileId, firstName, voyageStartDate }: CommunityProps) => {
+const Community = ({ shipName, manningAgency, profileId, firstName, voyageStartDate, onCompleteVoyage }: CommunityProps) => {
   const [companyCount, setCompanyCount] = useState(0);
   const [vesselCount, setVesselCount] = useState(0);
   const [portInput, setPortInput] = useState("");
@@ -263,7 +264,27 @@ const Community = ({ shipName, manningAgency, profileId, firstName, voyageStartD
         {/* SECTION 4 — Family Connection */}
         <FamilyConnectionSection profileId={profileId} firstName={firstName} shipName={shipName} voyageStartDate={voyageStartDate} />
 
-        {/* SECTION 5 — Anonymous Safety Reporting */}
+        {/* SECTION 5 — Complete My Voyage */}
+        <div className="bg-card rounded-2xl border border-primary/30 p-6 space-y-4">
+          <p className="text-xs text-muted-foreground uppercase tracking-widest">Voyage Completion</p>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Anchor size={18} className="text-primary" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-foreground">Ready to sign off?</p>
+              <p className="text-[11px] text-muted-foreground">Generate your personal voyage summary report</p>
+            </div>
+          </div>
+          <button
+            onClick={onCompleteVoyage}
+            className="w-full bg-primary text-primary-foreground text-sm font-medium rounded-xl py-3 transition-opacity hover:opacity-90"
+          >
+            Complete My Voyage
+          </button>
+        </div>
+
+        {/* SECTION 6 — Anonymous Safety Reporting */}
         <SafetyReportSection shipName={shipName} manningAgency={manningAgency} />
 
         {/* Privacy Notice */}

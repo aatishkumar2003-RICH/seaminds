@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.family-email]
 verify_jwt = false
+
+[functions.voyage-report]
+verify_jwt = false

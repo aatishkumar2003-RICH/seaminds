@@ -178,6 +178,51 @@ export type Database = {
         }
         Relationships: []
       }
+      voyage_reports: {
+        Row: {
+          ai_message: string | null
+          created_at: string
+          crew_profile_id: string
+          id: string
+          longest_streak: number
+          mood_breakdown: Json
+          role: string
+          ship_name: string
+          total_checkins: number
+          total_days: number
+          voyage_end_date: string
+          voyage_start_date: string
+        }
+        Insert: {
+          ai_message?: string | null
+          created_at?: string
+          crew_profile_id: string
+          id?: string
+          longest_streak?: number
+          mood_breakdown?: Json
+          role: string
+          ship_name: string
+          total_checkins?: number
+          total_days?: number
+          voyage_end_date?: string
+          voyage_start_date: string
+        }
+        Update: {
+          ai_message?: string | null
+          created_at?: string
+          crew_profile_id?: string
+          id?: string
+          longest_streak?: number
+          mood_breakdown?: Json
+          role?: string
+          ship_name?: string
+          total_checkins?: number
+          total_days?: number
+          voyage_end_date?: string
+          voyage_start_date?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
