@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Anchor, ArrowUpDown, LogOut, AlertTriangle } from "lucide-react";
+import { Anchor, ArrowUpDown, LogOut, AlertTriangle, FileWarning } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface CrewRow {
@@ -14,6 +14,15 @@ interface CrewRow {
   moodEmoji: string;
   daysSinceCheckIn: number;
   isAlert: boolean;
+}
+
+interface SafetyReport {
+  id: string;
+  category: string;
+  description: string;
+  ship_name: string;
+  status: string;
+  created_at: string;
 }
 
 type SortKey = "shipName" | "mood" | "daysSinceCheckIn";
@@ -41,6 +50,7 @@ const ManagerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [sortKey, setSortKey] = useState<SortKey>("shipName");
   const [sortAsc, setSortAsc] = useState(true);
+  const [safetyReports, setSafetyReports] = useState<SafetyReport[]>([]);
 
   useEffect(() => {
     const load = async () => {
@@ -124,6 +134,15 @@ const ManagerDashboard = () => {
       });
 
       setCrewRows(rows);
+
+      // Fetch safety reports for this company
+      const { data: reports } = await supabase
+        .from("safety_reports")
+        .select("*")
+        .eq("manning_agency", profile.company_name)
+        .order("created_at", { ascending: false });
+      setSafetyReports(reports || []);
+
       setLoading(false);
     };
     load();
@@ -280,9 +299,62 @@ const ManagerDashboard = () => {
           </div>
         </div>
 
+        {/* Safety Reports */}
+        {safetyReports.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <FileWarning size={18} className="text-red-400" />
+              <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Anonymous Safety Reports</h2>
+              <span className="bg-red-500/15 text-red-400 text-xs font-bold px-2 py-0.5 rounded-full">{safetyReports.length}</span>
+            </div>
+            <div className="bg-secondary/50 rounded-xl border border-border overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left">
+                      <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase">Date</th>
+                      <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase">Ship</th>
+                      <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase">Category</th>
+                      <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase">Description</th>
+                      <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {safetyReports.map((report) => (
+                      <tr key={report.id} className="border-b border-border/50">
+                        <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+                          {new Date(report.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">{report.ship_name}</td>
+                        <td className="px-4 py-3 text-foreground font-medium capitalize">{report.category}</td>
+                        <td className="px-4 py-3 text-muted-foreground max-w-xs truncate">{report.description}</td>
+                        <td className="px-4 py-3">
+                          <select
+                            value={report.status}
+                            onChange={async (e) => {
+                              const newStatus = e.target.value;
+                              await supabase.from("safety_reports").update({ status: newStatus }).eq("id", report.id);
+                              setSafetyReports((prev) => prev.map((r) => r.id === report.id ? { ...r, status: newStatus } : r));
+                            }}
+                            className="bg-secondary text-foreground text-xs rounded-lg px-2 py-1 border border-border"
+                          >
+                            <option value="New">🔴 New</option>
+                            <option value="Under Review">🟡 Under Review</option>
+                            <option value="Resolved">🟢 Resolved</option>
+                          </select>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Privacy note */}
         <p className="text-xs text-muted-foreground text-center py-4">
-          Conversation content is always private and sealed. This dashboard shows mood indicators and check-in data only.
+          Conversation content is always private and sealed. This dashboard shows mood indicators, check-in data, and anonymous safety reports only.
         </p>
       </div>
     </div>
