@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { MessageCircle, LayoutDashboard, Briefcase, Newspaper } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import LandingScreen from "@/components/LandingScreen";
 import NameEntry from "@/components/NameEntry";
 import WelcomeScreens from "@/components/WelcomeScreens";
 import CrewChat from "@/components/CrewChat";
@@ -8,7 +9,7 @@ import WelfareDashboard from "@/components/WelfareDashboard";
 import Opportunities from "@/components/Opportunities";
 import News from "@/components/News";
 
-type AppState = "loading" | "name-entry" | "welcome" | "main";
+type AppState = "loading" | "landing" | "name-entry" | "welcome" | "main";
 type Screen = "chat" | "dashboard" | "opportunities" | "news";
 
 const PROFILE_KEY = "seamind_profile_id";
@@ -26,7 +27,7 @@ const Index = () => {
   useEffect(() => {
     const savedId = localStorage.getItem(PROFILE_KEY);
     if (!savedId) {
-      setAppState("name-entry");
+      setAppState("landing");
       return;
     }
 
@@ -39,7 +40,7 @@ const Index = () => {
       .then(({ data, error }) => {
         if (error || !data) {
           localStorage.removeItem(PROFILE_KEY);
-          setAppState("name-entry");
+          setAppState("landing");
           return;
         }
         setProfileId(data.id);
@@ -110,6 +111,14 @@ const Index = () => {
           <span className="w-2 h-2 rounded-full bg-primary pulse-dot" style={{ animationDelay: "0.3s" }} />
           <span className="w-2 h-2 rounded-full bg-primary pulse-dot" style={{ animationDelay: "0.6s" }} />
         </div>
+      </div>
+    );
+  }
+
+  if (appState === "landing") {
+    return (
+      <div className="h-screen max-w-md mx-auto bg-background">
+        <LandingScreen onGetStarted={() => setAppState("name-entry")} />
       </div>
     );
   }
