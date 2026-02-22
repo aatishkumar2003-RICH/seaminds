@@ -7,6 +7,7 @@ interface DocumentUploadProps {
   assessmentId: string;
   profileId: string;
   onNext: () => void;
+  onSkipToEnd?: () => void;
 }
 
 interface DocBox {
@@ -23,7 +24,7 @@ const DOCS: DocBox[] = [
   { key: "additional", label: "Additional Certificates", subtitle: "Tanker endorsements, GMDSS, others (optional)", required: false },
 ];
 
-const DocumentUpload = ({ assessmentId, profileId, onNext }: DocumentUploadProps) => {
+const DocumentUpload = ({ assessmentId, profileId, onNext, onSkipToEnd }: DocumentUploadProps) => {
   const [uploads, setUploads] = useState<Record<string, string>>({});
   const [analysing, setAnalysing] = useState(false);
 
@@ -39,11 +40,12 @@ const DocumentUpload = ({ assessmentId, profileId, onNext }: DocumentUploadProps
 
   const handleAnalyse = async () => {
     setAnalysing(true);
-    await supabase
-      .from("smc_assessments")
-      .update({ doc_upload_status: "uploaded", current_step: 2 })
-      .eq("id", assessmentId);
-    // Simulate AI analysis time
+    try {
+      await supabase
+        .from("smc_assessments")
+        .update({ doc_upload_status: "uploaded", current_step: 2 })
+        .eq("id", assessmentId);
+    } catch (err) { console.log("DB write error (non-blocking):", err); }
     await new Promise((r) => setTimeout(r, 3000));
     onNext();
   };
@@ -112,6 +114,13 @@ const DocumentUpload = ({ assessmentId, profileId, onNext }: DocumentUploadProps
           ) : (
             "Analyse My Documents →"
           )}
+        </button>
+
+        <button
+          onClick={onSkipToEnd || onNext}
+          className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors py-2"
+        >
+          Skip to Certificate (testing only)
         </button>
       </div>
     </div>
