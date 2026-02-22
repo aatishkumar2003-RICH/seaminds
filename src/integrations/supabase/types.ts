@@ -52,6 +52,7 @@ export type Database = {
           first_name: string
           gender: string | null
           id: string
+          last_name: string
           manning_agency: string | null
           nationality: string
           onboarded: boolean
@@ -66,6 +67,7 @@ export type Database = {
           first_name: string
           gender?: string | null
           id?: string
+          last_name?: string
           manning_agency?: string | null
           nationality?: string
           onboarded?: boolean
@@ -80,6 +82,7 @@ export type Database = {
           first_name?: string
           gender?: string | null
           id?: string
+          last_name?: string
           manning_agency?: string | null
           nationality?: string
           onboarded?: boolean
@@ -88,6 +91,27 @@ export type Database = {
           voyage_start_date?: string | null
           whatsapp_number?: string
           years_at_sea?: string
+        }
+        Relationships: []
+      }
+      manager_profiles: {
+        Row: {
+          company_name: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          company_name: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          company_name?: string
+          created_at?: string
+          id?: string
+          user_id?: string
         }
         Relationships: []
       }
