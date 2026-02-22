@@ -6,6 +6,7 @@ import SMCScoreCertificate from "../SMCScoreCertificate";
 interface Props {
   assessmentId: string;
   firstName: string;
+  lastName: string;
   rank: string;
   onComplete: () => void;
 }
@@ -45,7 +46,7 @@ function getScoreBand(score: number): string {
   return "FOUNDATION";
 }
 
-const ScoreReveal = ({ assessmentId, firstName, rank, onComplete }: Props) => {
+const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete }: Props) => {
   const [phase, setPhase] = useState<"loading" | "counting" | "done">("loading");
   const [displayScore, setDisplayScore] = useState(0);
 
@@ -136,6 +137,8 @@ const ScoreReveal = ({ assessmentId, firstName, rank, onComplete }: Props) => {
   const expiry = new Date(today);
   expiry.setFullYear(expiry.getFullYear() + 2);
 
+  const fullName = [firstName, lastName].filter(Boolean).join(" ");
+
   return (
     <SMCScoreCertificate
       data={{
@@ -147,7 +150,7 @@ const ScoreReveal = ({ assessmentId, firstName, rank, onComplete }: Props) => {
           { name: "🧠 Behavioural Profile", score: DEMO_SCORES.behavioural },
           { name: "💚 Wellness Consistency", score: DEMO_SCORES.wellness },
         ],
-        crewName: firstName,
+        crewName: fullName || "Complete your profile",
         rank,
         vesselType: "Tanker",
         assessmentDate: today.toISOString().split("T")[0],

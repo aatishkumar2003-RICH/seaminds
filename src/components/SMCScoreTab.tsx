@@ -7,13 +7,14 @@ import AssessmentFlow from "@/components/smc/AssessmentFlow";
 interface SMCScoreTabProps {
   profileId: string;
   firstName: string;
+  lastName: string;
   rank: string;
   shipName: string;
 }
 
 type View = "loading" | "payment" | "assessment" | "certificate";
 
-const SMCScoreTab = ({ profileId, firstName, rank, shipName }: SMCScoreTabProps) => {
+const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScoreTabProps) => {
   const [view, setView] = useState<View>("loading");
   const [assessmentId, setAssessmentId] = useState("");
 
@@ -78,6 +79,10 @@ const SMCScoreTab = ({ profileId, firstName, rank, shipName }: SMCScoreTabProps)
     if (data) {
       setAssessmentId(data.id);
       setView("assessment");
+    } else {
+      // Even if DB fails, still navigate
+      setAssessmentId("temp-" + Date.now());
+      setView("assessment");
     }
   };
 
@@ -102,6 +107,7 @@ const SMCScoreTab = ({ profileId, firstName, rank, shipName }: SMCScoreTabProps)
       <AssessmentFlow
         profileId={profileId}
         firstName={firstName}
+        lastName={lastName}
         rank={rank}
         shipName={shipName}
         assessmentId={assessmentId}
