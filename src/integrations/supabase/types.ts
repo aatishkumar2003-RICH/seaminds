@@ -46,6 +46,105 @@ export type Database = {
           },
         ]
       }
+      contact_requests: {
+        Row: {
+          company_name: string
+          created_at: string
+          crew_profile_id: string
+          id: string
+          manager_profile_id: string
+          rank_required: string
+          status: string
+          vacancy_id: string | null
+          vessel_type: string
+        }
+        Insert: {
+          company_name: string
+          created_at?: string
+          crew_profile_id: string
+          id?: string
+          manager_profile_id: string
+          rank_required: string
+          status?: string
+          vacancy_id?: string | null
+          vessel_type: string
+        }
+        Update: {
+          company_name?: string
+          created_at?: string
+          crew_profile_id?: string
+          id?: string
+          manager_profile_id?: string
+          rank_required?: string
+          status?: string
+          vacancy_id?: string | null
+          vessel_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_requests_crew_profile_id_fkey"
+            columns: ["crew_profile_id"]
+            isOneToOne: false
+            referencedRelation: "crew_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_requests_manager_profile_id_fkey"
+            columns: ["manager_profile_id"]
+            isOneToOne: false
+            referencedRelation: "manager_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_requests_vacancy_id_fkey"
+            columns: ["vacancy_id"]
+            isOneToOne: false
+            referencedRelation: "job_vacancies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crew_availability: {
+        Row: {
+          about_me: string | null
+          availability_date: string | null
+          created_at: string
+          crew_profile_id: string
+          id: string
+          preferred_vessel_type: string | null
+          updated_at: string
+          visible_to_employers: boolean
+        }
+        Insert: {
+          about_me?: string | null
+          availability_date?: string | null
+          created_at?: string
+          crew_profile_id: string
+          id?: string
+          preferred_vessel_type?: string | null
+          updated_at?: string
+          visible_to_employers?: boolean
+        }
+        Update: {
+          about_me?: string | null
+          availability_date?: string | null
+          created_at?: string
+          crew_profile_id?: string
+          id?: string
+          preferred_vessel_type?: string | null
+          updated_at?: string
+          visible_to_employers?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crew_availability_crew_profile_id_fkey"
+            columns: ["crew_profile_id"]
+            isOneToOne: true
+            referencedRelation: "crew_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crew_profiles: {
         Row: {
           created_at: string
@@ -126,6 +225,65 @@ export type Database = {
           last_email_sent_at?: string | null
         }
         Relationships: []
+      }
+      job_vacancies: {
+        Row: {
+          active: boolean
+          company_name: string
+          contract_duration: string
+          created_at: string
+          id: string
+          joining_port: string
+          manager_profile_id: string
+          rank_required: string
+          salary_max: number
+          salary_min: number
+          special_requirements: string | null
+          start_date: string
+          vessel_name: string
+          vessel_type: string
+        }
+        Insert: {
+          active?: boolean
+          company_name: string
+          contract_duration: string
+          created_at?: string
+          id?: string
+          joining_port: string
+          manager_profile_id: string
+          rank_required: string
+          salary_max?: number
+          salary_min?: number
+          special_requirements?: string | null
+          start_date: string
+          vessel_name: string
+          vessel_type: string
+        }
+        Update: {
+          active?: boolean
+          company_name?: string
+          contract_duration?: string
+          created_at?: string
+          id?: string
+          joining_port?: string
+          manager_profile_id?: string
+          rank_required?: string
+          salary_max?: number
+          salary_min?: number
+          special_requirements?: string | null
+          start_date?: string
+          vessel_name?: string
+          vessel_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_vacancies_manager_profile_id_fkey"
+            columns: ["manager_profile_id"]
+            isOneToOne: false
+            referencedRelation: "manager_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       manager_profiles: {
         Row: {

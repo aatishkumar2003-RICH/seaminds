@@ -163,7 +163,7 @@ const Index = () => {
         ) : screen === "dashboard" ? (
           <WelfareDashboard shipName={shipName} />
         ) : screen === "opportunities" ? (
-          <Opportunities />
+          <Opportunities profileId={profileId} firstName={firstName} role={role} nationality={nationality} shipName={shipName} />
         ) : screen === "news" ? (
           <News />
         ) : screen === "academy" ? (
