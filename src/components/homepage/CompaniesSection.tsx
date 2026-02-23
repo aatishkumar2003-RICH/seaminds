@@ -33,7 +33,7 @@ const CompaniesSection = () => {
           ))}
         </div>
 
-        <Button size="lg" onClick={() => navigate("/manager")} className="text-base px-8 h-12">
+        <Button size="lg" onClick={() => navigate("/app")} className="text-base px-8 h-12">
           Request Company Demo
         </Button>
       </div>
