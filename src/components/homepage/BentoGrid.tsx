@@ -156,11 +156,11 @@ const BentoGrid = () => {
           </div>
 
           <div className="glass-card rounded-xl p-5 md:p-6 flex flex-col justify-center">
-            <p className="text-xs uppercase tracking-[0.2em] text-primary font-semibold mb-2">Founder</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-primary font-semibold mb-2">Origin</p>
             <blockquote className="text-sm text-foreground italic leading-relaxed mb-3">
-              "I spent 27 years at sea. I watched good crew get overlooked and companies make bad hires. I built SeaMinds to fix both."
+              "Built from 12 months of structured research with 10,000+ seafarers across 35 countries. Every feature traces to a real need."
             </blockquote>
-            <p className="text-xs text-muted-foreground">— Captain Atish · Master Mariner · Jakarta</p>
+            <p className="text-xs text-muted-foreground">— The SeaMinds Research Coalition</p>
           </div>
         </div>
       </div>
