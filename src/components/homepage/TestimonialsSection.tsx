@@ -75,7 +75,7 @@ const TestimonialsSection = () => {
         </div>
 
         {/* Stat Cards */}
-        <div ref={statsRef} className="fade-in-on-scroll grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+        <div ref={statsRef} className="fade-in-on-scroll grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
           {stats.map((s) => (
             <div key={s.label} className="glass-card rounded-xl p-4 text-center">
               <div className="text-2xl md:text-3xl font-bold font-mono-score text-primary mb-1">{s.value}</div>
