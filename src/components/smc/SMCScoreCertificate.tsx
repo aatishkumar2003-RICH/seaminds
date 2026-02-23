@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Share2, TrendingUp, Award, ExternalLink, Shield, Download, Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { TrendingUp, ExternalLink, Shield, Download } from "lucide-react";
 
 interface SubScore {
   name: string;
@@ -81,55 +80,81 @@ interface SMCScoreCertificateProps {
 
 const SMCScoreCertificate = ({ data = DEMO_DATA, onImproveScore }: SMCScoreCertificateProps) => {
   const [showImprove, setShowImprove] = useState(false);
-  const [generating, setGenerating] = useState(false);
+  
   const band = getScoreBand(data.overallScore);
 
   const lowestSub = [...data.subScores].sort((a, b) => a.score - b.score)[0];
   const improvementTopics = ACADEMY_MAP[lowestSub.name] || [];
 
-  const handleShare = async () => {
-    setGenerating(true);
-    try {
-      const payload = {
-        crewName: data.crewName,
-        rank: data.rank,
-        vesselType: data.vesselType,
-        overallScore: data.overallScore,
-        subScores: data.subScores,
-        certificateId: data.certificateId,
-        assessmentDate: data.assessmentDate,
-        expiryDate: data.expiryDate,
-        scoreBand: band.label,
-      };
+  const handleDownloadCertificate = () => {
+    const subScoreRows = data.subScores
+      .map(
+        (sub) =>
+          `<div style="margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+              <span style="font-size:13px;color:#94a3b8">${sub.name}</span>
+              <span style="font-size:13px;font-weight:700;color:#e2e8f0">${sub.score.toFixed(2)}</span>
+            </div>
+            <div style="height:8px;background:#1e293b;border-radius:9999px;overflow:hidden">
+              <div style="height:100%;width:${(sub.score / 5) * 100}%;background:#D4AF37;border-radius:9999px"></div>
+            </div>
+          </div>`
+      )
+      .join("");
 
-      const { data: pdfData, error } = await supabase.functions.invoke("generate-certificate", {
-        body: payload,
-      });
+    const displayName = (!data.crewName || data.crewName === "Complete your profile") ? "—" : data.crewName;
+    const interpretation = getBandInterpretation(band.label);
 
-      if (error) throw error;
+    const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>SMC Certificate - ${data.certificateId}</title>
+<style>
+  @media print { .no-print { display:none!important } body { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
+  body { margin:0; padding:0; background:#0f172a; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; color:#e2e8f0; display:flex; flex-direction:column; align-items:center; }
+  .cert { width:700px; margin:40px auto; padding:48px; background:#0f172a; border:2px solid #D4AF37; border-radius:16px; position:relative; }
+  .cert::before { content:''; position:absolute; inset:6px; border:1px solid rgba(212,175,55,0.3); border-radius:12px; pointer-events:none; }
+  .shield { width:64px; height:64px; background:linear-gradient(135deg,#D4AF37,#C5941F,#D4AF37); border-radius:16px; display:flex; align-items:center; justify-content:center; margin:0 auto 12px; font-size:32px; }
+  .label { text-align:center; font-size:11px; letter-spacing:0.25em; font-weight:600; color:#D4AF37; text-transform:uppercase; }
+  .score { text-align:center; font-size:84px; font-weight:700; color:#D4AF37; line-height:1; margin:16px 0 8px; text-shadow:0 0 20px rgba(212,175,55,0.4); letter-spacing:-3px; }
+  .stars { text-align:center; font-size:18px; margin-bottom:4px; }
+  .band { text-align:center; font-size:14px; font-weight:700; text-transform:uppercase; letter-spacing:0.15em; color:#cbd5e1; }
+  .interp { text-align:center; font-size:12px; color:#94a3b8; margin-top:4px; }
+  .bars { background:rgba(30,41,59,0.5); border:1px solid #334155; border-radius:12px; padding:20px; margin:24px 0; }
+  .details { background:#1e293b; border:1px solid #334155; border-radius:12px; padding:20px; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:12px 24px; font-size:12px; }
+  .grid .lbl { color:#94a3b8; display:block; margin-bottom:2px; }
+  .grid .val { color:#e2e8f0; font-weight:500; }
+  .certid { font-family:monospace; color:#D4AF37; font-weight:600; font-size:11px; }
+  .verify { border-top:1px solid #334155; margin-top:12px; padding-top:8px; font-size:10px; color:#94a3b8; }
+  .verify a { color:#D4AF37; font-weight:500; text-decoration:none; }
+  .print-bar { text-align:center; margin:24px 0; }
+  .print-btn { background:linear-gradient(135deg,#D4AF37,#C5941F); color:#fff; border:none; padding:14px 40px; font-size:16px; font-weight:600; border-radius:12px; cursor:pointer; }
+</style></head><body>
+<div class="print-bar no-print"><button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button></div>
+<div class="cert">
+  <div class="shield">🛡️</div>
+  <div class="label">SeaMinds Certified Score</div>
+  <div class="score">${data.overallScore.toFixed(2)}</div>
+  <div class="stars">${band.stars}</div>
+  <div class="band">${band.label}</div>
+  <div class="interp">${interpretation}</div>
+  <div class="bars">${subScoreRows}</div>
+  <div class="details">
+    <div class="grid">
+      <div><span class="lbl">Name</span><span class="val">${displayName}</span></div>
+      <div><span class="lbl">Rank</span><span class="val">${data.rank}</span></div>
+      <div><span class="lbl">Vessel Type</span><span class="val">${data.vesselType}</span></div>
+      <div><span class="lbl">Assessment Date</span><span class="val">${new Date(data.assessmentDate).toLocaleDateString()}</span></div>
+      <div><span class="lbl">Expiry Date</span><span class="val">${new Date(data.expiryDate).toLocaleDateString()}</span></div>
+      <div><span class="lbl">Certificate ID</span><span class="certid">${data.certificateId}</span></div>
+    </div>
+    <div class="verify">Verification: <a href="https://seaminds.life/verify?id=${data.certificateId}" target="_blank">seaminds.life/verify</a></div>
+  </div>
+</div>
+</body></html>`;
 
-      // pdfData is an ArrayBuffer or Blob
-      const blob = pdfData instanceof Blob ? pdfData : new Blob([pdfData], { type: "application/pdf" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `SMC-Certificate-${data.certificateId}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("PDF generation failed:", err);
-      // Fallback: copy share text to clipboard
-      const text = `I just received my SeaMinds Certified Score: ${data.overallScore.toFixed(2)} ${band.stars} ${band.label} — verified maritime competency. View my certificate at seaminds.life/verify?id=${data.certificateId}`;
-      if (navigator.share) {
-        navigator.share({ title: "My SeaMinds Certified Score", text });
-      } else {
-        navigator.clipboard.writeText(text);
-      }
-    } finally {
-      setGenerating(false);
-    }
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    window.open(url, "_blank");
   };
 
   const nameIsPlaceholder = !data.crewName || data.crewName === "Complete your profile";
@@ -280,12 +305,11 @@ const SMCScoreCertificate = ({ data = DEMO_DATA, onImproveScore }: SMCScoreCerti
         {/* Action buttons */}
         <div className="flex gap-3">
           <button
-            onClick={handleShare}
-            disabled={generating}
-            className="flex-1 font-semibold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-colors text-white disabled:opacity-60"
+            onClick={handleDownloadCertificate}
+            className="flex-1 font-semibold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-colors text-white"
             style={{ background: "linear-gradient(135deg, #D4AF37 0%, #C5941F 100%)" }}
           >
-            {generating ? <><Loader2 size={16} className="animate-spin" /> Generating PDF...</> : <><Download size={16} /> Download Certificate</>}
+            <Download size={16} /> Download Certificate
           </button>
           <button
             onClick={() => { setShowImprove(true); onImproveScore?.(); }}
