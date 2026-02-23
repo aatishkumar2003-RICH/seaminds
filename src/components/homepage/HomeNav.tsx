@@ -5,21 +5,21 @@ import { Button } from "@/components/ui/button";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 
 const navLinks = [
-  { label: "For Seafarers", id: "features" },
-  { label: "For Companies", id: "companies" },
-  { label: "SMC Score", id: "smc-score" },
-  { label: "Wellness", id: "problem" },
-  { label: "Academy", id: "features" },
-  { label: "Jobs", id: "features" },
+  { label: "For Seafarers", path: "/app" },
+  { label: "For Companies", path: "/manager" },
+  { label: "SMC Score", path: "/app" },
+  { label: "Wellness", path: "/app" },
+  { label: "Academy", path: "/app" },
+  { label: "Jobs", path: "/app" },
 ];
 
 const HomeNav = () => {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const scrollTo = (id: string) => {
+  const goTo = (path: string) => {
     setMobileOpen(false);
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    navigate(path);
   };
 
   return (
@@ -33,7 +33,7 @@ const HomeNav = () => {
 
           <div className="hidden lg:flex items-center gap-5">
             {navLinks.map((l) => (
-              <button key={l.label} onClick={() => scrollTo(l.id)} className="text-sm text-muted-foreground hover:text-primary transition-colors">
+              <button key={l.label} onClick={() => goTo(l.path)} className="text-sm text-muted-foreground hover:text-primary transition-colors">
                 {l.label}
               </button>
             ))}
@@ -57,7 +57,7 @@ const HomeNav = () => {
       {mobileOpen && (
         <div className="lg:hidden bg-card border-t border-border px-4 pb-4 space-y-2">
           {navLinks.map((l) => (
-            <button key={l.label} onClick={() => scrollTo(l.id)} className="block w-full text-left py-2 text-sm text-muted-foreground hover:text-primary transition-colors">
+            <button key={l.label} onClick={() => goTo(l.path)} className="block w-full text-left py-2 text-sm text-muted-foreground hover:text-primary transition-colors">
               {l.label}
             </button>
           ))}

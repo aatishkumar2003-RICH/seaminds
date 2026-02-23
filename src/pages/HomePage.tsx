@@ -1,6 +1,7 @@
 import HomeNav from "@/components/homepage/HomeNav";
 import HeroSection from "@/components/homepage/HeroSection";
 import BentoGrid from "@/components/homepage/BentoGrid";
+import FounderSection from "@/components/homepage/FounderSection";
 import TestimonialsSection from "@/components/homepage/TestimonialsSection";
 import FinalCTA from "@/components/homepage/FinalCTA";
 import HomeFooter from "@/components/homepage/HomeFooter";
@@ -10,6 +11,7 @@ const HomePage = () => (
     <HomeNav />
     <HeroSection />
     <BentoGrid />
+    <FounderSection />
     <TestimonialsSection />
     <FinalCTA />
     <HomeFooter />
