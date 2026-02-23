@@ -151,4 +151,18 @@
     opacity: 1;
     transform: translateY(0);
   }
+
+  .animate-ticker {
+    animation: tickerScroll 60s linear infinite;
+    animation-play-state: var(--ticker-play, running);
+  }
+
+  .animate-ticker:hover {
+    animation-play-state: paused;
+  }
+
+  @keyframes tickerScroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
 }
