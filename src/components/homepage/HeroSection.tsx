@@ -18,7 +18,7 @@ const HeroSection = () => {
           Wellness · Career · Community · Certification
         </p>
         <p className="text-muted-foreground text-sm md:text-base max-w-xl mx-auto mb-8">
-          Built by a Master Mariner who spent 27 years at sea. Because nobody understood the problem better.
+          Built from 12 months of research with 10,000+ seafarers. Because the people at sea should design what the people at sea use.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">
