@@ -1,5 +1,6 @@
-import { Anchor, Shield, Heart, Globe } from "lucide-react";
+import { Shield, Heart, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import seamindsLogo from "@/assets/seaminds-logo.png";
 
 interface LandingScreenProps {
   onGetStarted: () => void;
@@ -9,11 +10,9 @@ interface LandingScreenProps {
 const LandingScreen = ({ onGetStarted, onManagerLogin }: LandingScreenProps) => {
   return (
     <div className="flex flex-col items-center justify-center h-full px-8 text-center">
-      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-8">
-        <Anchor size={32} className="text-primary" />
-      </div>
+      <img src={seamindsLogo} alt="SeaMinds Logo" className="w-24 h-24 mb-4" />
 
-      <h1 className="text-3xl font-bold text-foreground gold-glow mb-2">SeaMinds</h1>
+      <h1 className="text-3xl font-bold text-foreground gold-glow mb-1">SeaMinds</h1>
       <p className="text-muted-foreground text-sm mb-10">Your Private Companion at Sea</p>
 
       <div className="space-y-4 mb-10 w-full max-w-xs">
