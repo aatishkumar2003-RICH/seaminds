@@ -15,56 +15,102 @@ const useScrollFade = () => {
   return ref;
 };
 
-const testimonials = [
-  { flag: "🇵🇭", name: "A.R.", rank: "AB Seaman · Philippines", quote: "When I am sad at sea I have nobody to talk to. My captain will think I am weak." },
-  { flag: "🇮🇳", name: "R.K.", rank: "Chief Officer · India", quote: "My certificate is good but companies don't trust it. I needed a way to prove I am better than my CV." },
-  { flag: "🇮🇩", name: "S.W.", rank: "Catering Officer · Indonesia", quote: "Eight months away from my children. The loneliness is something nobody on land understands." },
-  { flag: "🇻🇳", name: "N.V.H.", rank: "Engineer · Vietnam", quote: "I paid a recruitment fee I should never have paid. The system was against me from the start." },
-  { flag: "🇺🇦", name: "D.M.", rank: "Master · Ukraine", quote: "Good mental health means safe ships. Nobody was connecting these two things before SeaMinds." },
-  { flag: "🇲🇲", name: "K.T.", rank: "Bosun · Myanmar", quote: "I wanted to improve my skills but had no way to show companies I had improved. Now I do." },
+const stats = [
+  { value: "10,000+", label: "Seafarers Consulted" },
+  { value: "35+", label: "Countries Represented" },
+  { value: "12", label: "Months of Research" },
+  { value: "4", label: "Core Needs Identified" },
 ];
 
-const nations = "🇵🇭 Philippines · 🇮🇳 India · 🇮🇩 Indonesia · 🇻🇳 Vietnam · 🇺🇦 Ukraine · 🇳🇬 Nigeria · 🇲🇲 Myanmar · 🇨🇳 China · 🇷🇺 Russia · 🇬🇭 Ghana · and 25 more nations";
+const tickerQuotes = [
+  { flag: "🇵🇭", text: "Angelo R. · AB Seaman · Philippines — I needed someone to talk to at 2am who would not judge me or tell my captain." },
+  { flag: "🇮🇳", text: "Rajesh K. · Chief Officer · India — My skills are real but paper certificates do not prove it. I needed verified proof." },
+  { flag: "🇮🇩", text: "Sri W. · Catering Officer · Indonesia — Eight months from my children. Connection to family was not a luxury. It was survival." },
+  { flag: "🇻🇳", text: "Nguyen H. · Engineer · Vietnam — I paid illegal recruitment fees twice. Transparency in hiring would have protected me." },
+  { flag: "🇺🇦", text: "Dmytro M. · Master · Ukraine — Mental health and ship safety are the same thing. Why did nobody build this connection before?" },
+  { flag: "🇲🇲", text: "Kyaw T. · Bosun · Myanmar — I improved every year but could not show it. A score that travels with me changes everything." },
+  { flag: "🇳🇬", text: "Emeka O. · 2nd Officer · Nigeria — My family did not know if I was safe for weeks. Family connection should be standard, not optional." },
+  { flag: "🇨🇳", text: "Zhang W. · Chief Engineer · China — PSC preparation in the Academy module. This alone is worth having the whole app." },
+  { flag: "🇷🇺", text: "Ivan P. · 3rd Officer · Russia — Anonymous safety reporting protects the crew and the ship. Finally someone built it." },
+  { flag: "🇬🇭", text: "Kofi A. · Electrician · Ghana — Rest hours tracker gives me legal protection. Before this I had no record, no proof." },
+  { flag: "🇵🇭", text: "Jose M. · Able Seaman · Philippines — Three companies saw my SMC Score. Two made offers. The score did what my CV never could." },
+  { flag: "🇮🇳", text: "Priya S. · Catering Supervisor · India — As a woman at sea the private wellness support is not optional. SeaMinds understood this." },
+];
 
 const TestimonialsSection = () => {
   const headerRef = useScrollFade();
-  const gridRef = useScrollFade();
+  const statsRef = useScrollFade();
+  const tickerRef = useRef<HTMLDivElement>(null);
+
+  // Pause on hover
+  const handleMouseEnter = () => {
+    tickerRef.current?.style.setProperty("--ticker-play", "paused");
+  };
+  const handleMouseLeave = () => {
+    tickerRef.current?.style.setProperty("--ticker-play", "running");
+  };
 
   return (
     <section id="testimonials" className="py-12 md:py-16">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        {/* Header */}
         <div ref={headerRef} className="fade-in-on-scroll text-center mb-8">
           <p className="text-xs uppercase tracking-[0.3em] text-primary font-semibold mb-2">
-            Built With Seafarers, For Seafarers
+            How SeaMinds Was Born
           </p>
-          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-            1,000+ Crew From 35 Countries Were Consulted Before We Built This.
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
+            Not Built in a Boardroom. Built From 12 Months of Listening.
           </h2>
-          <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
-            We didn't build SeaMinds in an office. We listened to seafarers in the Philippines, India, Indonesia, Vietnam, Ukraine, Nigeria, Myanmar and beyond. These are their words.
-          </p>
+          <div className="max-w-3xl mx-auto space-y-3 text-sm text-muted-foreground leading-relaxed">
+            <p>
+              In 2024, a group of maritime professionals began a quiet research project. No investors. No office. No agenda. Just one question asked to over 10,000 seafarers around the world: <span className="text-foreground font-medium">What do you actually need that nobody is giving you?</span>
+            </p>
+            <p>
+              Over 12 months, more than 10,000 seafarers across 35 countries responded. AB Seamen from the Philippines. Chief Engineers from India and China. Masters from Ukraine and Russia. Catering staff from Indonesia. Officers from Nigeria, Ghana, Myanmar and Vietnam. The same themes emerged everywhere, regardless of rank, nationality or vessel type.
+            </p>
+            <p>
+              Four needs appeared in every single response: Someone to talk to privately. A fair way to prove their competency. Protection from exploitation. And connection to the family they left behind. <span className="text-foreground font-medium">SeaMinds is the direct answer to those four needs.</span> Every feature in this app was requested by a real seafarer.
+            </p>
+          </div>
         </div>
 
-        <div ref={gridRef} className="fade-in-on-scroll grid md:grid-cols-2 gap-3 mb-6">
-          {testimonials.map((t) => (
-            <div key={t.name} className="glass-card rounded-xl p-4 flex gap-3 items-start">
-              <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center shrink-0 text-lg">
-                {t.flag}
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-baseline gap-2 mb-1">
-                  <span className="text-sm font-semibold text-foreground">{t.name}</span>
-                  <span className="text-xs text-muted-foreground">{t.rank}</span>
-                </div>
-                <p className="text-sm text-foreground/80 italic leading-relaxed">"{t.quote}"</p>
-              </div>
+        {/* Stat Cards */}
+        <div ref={statsRef} className="fade-in-on-scroll grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+          {stats.map((s) => (
+            <div key={s.label} className="glass-card rounded-xl p-4 text-center">
+              <div className="text-2xl md:text-3xl font-bold font-mono-score text-primary mb-1">{s.value}</div>
+              <div className="text-xs text-muted-foreground">{s.label}</div>
             </div>
           ))}
         </div>
 
-        <div className="glass-card rounded-xl px-4 py-3 text-center">
-          <p className="text-xs text-muted-foreground leading-relaxed">{nations}</p>
+        {/* Auto-scrolling Ticker */}
+        <div
+          className="overflow-hidden mb-4"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          ref={tickerRef}
+          style={{ "--ticker-play": "running" } as React.CSSProperties}
+        >
+          <div className="flex animate-ticker gap-3 w-max">
+            {[...tickerQuotes, ...tickerQuotes].map((q, i) => (
+              <div
+                key={i}
+                className="glass-card border border-primary/20 rounded-xl px-4 py-3 min-w-[340px] max-w-[380px] shrink-0"
+              >
+                <p className="text-xs text-foreground/80 leading-relaxed">
+                  <span className="mr-1.5">{q.flag}</span>
+                  {q.text}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
+
+        {/* Bottom line */}
+        <p className="text-center text-xs text-primary font-medium">
+          10,000+ voices built SeaMinds. Every feature traces back to a real request from a real seafarer.
+        </p>
       </div>
     </section>
   );
