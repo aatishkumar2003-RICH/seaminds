@@ -6,7 +6,7 @@ import seamindsLogo from "@/assets/seaminds-logo.png";
 
 const navLinks = [
   { label: "For Seafarers", path: "/app" },
-  { label: "For Companies", path: "/manager" },
+  { label: "For Companies", path: "/app" },
   { label: "SMC Score", path: "/app" },
   { label: "Wellness", path: "/app" },
   { label: "Academy", path: "/app" },
@@ -43,7 +43,7 @@ const HomeNav = () => {
             <Button size="sm" onClick={() => navigate("/app")}>
               Get Your Score
             </Button>
-            <Button size="sm" variant="outline" onClick={() => navigate("/manager")}>
+            <Button size="sm" variant="outline" onClick={() => navigate("/app")}>
               Company Login
             </Button>
           </div>
@@ -65,7 +65,7 @@ const HomeNav = () => {
             <Button size="sm" className="flex-1" onClick={() => { setMobileOpen(false); navigate("/app"); }}>
               Get Your Score
             </Button>
-            <Button size="sm" variant="outline" className="flex-1" onClick={() => { setMobileOpen(false); navigate("/manager"); }}>
+            <Button size="sm" variant="outline" className="flex-1" onClick={() => { setMobileOpen(false); navigate("/app"); }}>
               Company Login
             </Button>
           </div>
