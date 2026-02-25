@@ -1,4 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
+import useEmblaCarousel from "embla-carousel-react";
+import Autoplay from "embla-carousel-autoplay";
 
 const useScrollFade = () => {
   const ref = useRef<HTMLDivElement>(null);
@@ -37,7 +39,6 @@ const tickerQuotes: Quote[] = [
   { flag: "🇬🇭", name: "Kofi A.", rank: "Electrician", quote: "Rest hours tracker gives me legal protection. Before this I had no record, no proof.", country: "other" },
   { flag: "🇵🇭", name: "Jose M.", rank: "Able Seaman", quote: "Three companies saw my SMC Score. Two made offers. The score did what my CV never could.", country: "ph" },
   { flag: "🇮🇳", name: "Priya S.", rank: "Catering Supervisor", quote: "As a woman at sea the private wellness support is not optional. SeaMinds understood this.", country: "other" },
-  // Vietnamese Crew — Salary & International Visibility
   { flag: "🇻🇳", name: "Nguyen T.M.", rank: "Chief Officer", quote: "My SMC score opened doors with European operators. My salary jumped 40% in one contract.", country: "vn" },
   { flag: "🇻🇳", name: "Tran V.H.", rank: "2nd Engineer", quote: "Before SeaMinds, companies could not see my real skill. Now my score speaks for me in Singapore.", country: "vn" },
   { flag: "🇻🇳", name: "Le Q.D.", rank: "Master", quote: "I negotiated directly with a Greek owner using my SMC certificate. No manning agent involved.", country: "vn" },
@@ -48,7 +49,6 @@ const tickerQuotes: Quote[] = [
   { flag: "🇻🇳", name: "Bui V.N.", rank: "Oiler", quote: "Even as a rating, my verified score helped me move from local operator to international deep sea.", country: "vn" },
   { flag: "🇻🇳", name: "Nguyen K.T.", rank: "2nd Engineer", quote: "SeaMinds visibility means European and Middle Eastern companies find me. I do not chase them.", country: "vn" },
   { flag: "🇻🇳", name: "Dang T.H.", rank: "3rd Engineer", quote: "My score is my CV now. Companies compare me fairly to seafarers from any country. I win on merit.", country: "vn" },
-  // Filipino Crew — Mental Health & Better Job Opportunities
   { flag: "🇵🇭", name: "Santos R.C.", rank: "AB Seaman", quote: "Eight months at sea with no one to talk to. SeaMinds gave me a private space. I came home healthier.", country: "ph" },
   { flag: "🇵🇭", name: "Reyes M.P.", rank: "Chief Cook", quote: "I was hiding my anxiety from the captain. SeaMinds let me manage it quietly and professionally.", country: "ph" },
   { flag: "🇵🇭", name: "Dela Cruz J.", rank: "3rd Officer", quote: "My SMC score got me noticed by a Norwegian operator. Filipino officers deserve international rates.", country: "ph" },
@@ -59,7 +59,6 @@ const tickerQuotes: Quote[] = [
   { flag: "🇵🇭", name: "Villanueva D.", rank: "Motorman", quote: "I never thought a wellness app was for me. But after losing a crewmate to suicide, I understand now.", country: "ph" },
   { flag: "🇵🇭", name: "Cruz K.M.", rank: "3rd Engineer", quote: "My mental health score improved every voyage. My company noticed. They gave me better vessel assignment.", country: "ph" },
   { flag: "🇵🇭", name: "Aquino L.R.", rank: "Messman", quote: "SeaMinds treats every rank with dignity. As a messman I felt seen for the first time in my career.", country: "ph" },
-  // Indonesian Crew — Mental Health & Better Job Opportunities
   { flag: "🇮🇩", name: "Wibowo A.S.", rank: "Chief Engineer", quote: "Indonesian engineers are world class. SeaMinds gave me the verified proof to negotiate that salary.", country: "id" },
   { flag: "🇮🇩", name: "Santoso H.R.", rank: "2nd Officer", quote: "I was struggling silently for two voyages. The mood tracker helped me see the pattern and ask for help.", country: "id" },
   { flag: "🇮🇩", name: "Pratama D.N.", rank: "AB Seaman", quote: "Far from family for nine months. The family connection portal kept me sane and present for my children.", country: "id" },
@@ -82,14 +81,15 @@ const borderColors: Record<Quote["country"], string> = {
 const TestimonialsSection = () => {
   const headerRef = useScrollFade();
   const statsRef = useScrollFade();
-  const tickerRef = useRef<HTMLDivElement>(null);
 
-  const handleMouseEnter = () => {
-    tickerRef.current?.style.setProperty("--ticker-play", "paused");
-  };
-  const handleMouseLeave = () => {
-    tickerRef.current?.style.setProperty("--ticker-play", "running");
-  };
+  const autoplayPlugin = useRef(
+    Autoplay({ delay: 4000, stopOnInteraction: false, stopOnMouseEnter: true })
+  );
+
+  const [emblaRef] = useEmblaCarousel(
+    { loop: true, align: "start", slidesToScroll: 1, dragFree: false },
+    [autoplayPlugin.current]
+  );
 
   return (
     <section id="testimonials" className="py-12 md:py-16">
@@ -126,15 +126,9 @@ const TestimonialsSection = () => {
         </div>
 
         {/* Auto-scrolling Ticker */}
-        <div
-          className="overflow-hidden mb-4"
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-          ref={tickerRef}
-          style={{ "--ticker-play": "running" } as React.CSSProperties}
-        >
-          <div className="flex animate-ticker gap-4 w-max">
-            {[...tickerQuotes, ...tickerQuotes].map((q, i) => (
+        <div className="overflow-hidden mb-4" ref={emblaRef}>
+          <div className="flex gap-4">
+            {tickerQuotes.map((q, i) => (
               <div
                 key={i}
                 className={`rounded-xl px-5 py-4 min-w-[340px] max-w-[380px] shrink-0 border border-primary/20 border-l-4 bg-[#0D1B2A] ${borderColors[q.country]}`}
