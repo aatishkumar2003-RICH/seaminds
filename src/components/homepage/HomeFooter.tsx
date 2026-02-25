@@ -29,16 +29,16 @@ const HomeFooter = () => {
       links: [
         { label: "Maritime News", action: () => navigate("/app") },
         { label: "Safety Reports", action: () => navigate("/app") },
-        { label: "MLC 2006", action: () => {} },
-        { label: "Contact", action: () => {} },
+        { label: "MLC 2006", action: () => navigate("/app") },
+        { label: "Contact", action: () => navigate("/app") },
       ],
     },
     {
       title: "Company",
       links: [
-        { label: "About", action: () => {} },
-        { label: "Privacy Policy", action: () => {} },
-        { label: "Terms of Service", action: () => {} },
+        { label: "About", action: () => navigate("/app") },
+        { label: "Privacy Policy", action: () => navigate("/app") },
+        { label: "Terms of Service", action: () => navigate("/app") },
       ],
     },
   ];
