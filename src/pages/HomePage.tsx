@@ -19,6 +19,7 @@ const HomePage = () => {
     <TestimonialsSection />
     <FinalCTA />
     <HomeFooter />
+    </div>
   </div>
   );
 };
