@@ -6,15 +6,17 @@ import BentoGrid from "@/components/homepage/BentoGrid";
 import TestimonialsSection from "@/components/homepage/TestimonialsSection";
 import FinalCTA from "@/components/homepage/FinalCTA";
 import HomeFooter from "@/components/homepage/HomeFooter";
+import { useTimeOfDay } from "@/hooks/useTimeOfDay";
 
 const HomePage = () => {
+  const timeOfDay = useTimeOfDay();
   useEffect(() => { document.title = "SeaMinds"; }, []);
   return (
   <div className="min-h-screen animated-gradient-bg text-foreground relative">
-    <OceanBackground />
+    <OceanBackground timeOfDay={timeOfDay} />
     <div className="relative z-10">
     <HomeNav />
-    <HeroSection />
+    <HeroSection timeOfDay={timeOfDay} />
     <BentoGrid />
     <TestimonialsSection />
     <FinalCTA />

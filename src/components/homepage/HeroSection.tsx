@@ -1,15 +1,24 @@
 import { useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { type TimeOfDay, getGreeting } from "@/hooks/useTimeOfDay";
 
-const HeroSection = () => {
+interface Props {
+  timeOfDay?: TimeOfDay;
+}
+
+const HeroSection = ({ timeOfDay = "day" }: Props) => {
   const navigate = useNavigate();
+  const greeting = getGreeting(timeOfDay);
 
   return (
     <section className="relative pt-28 pb-16 md:pt-32 md:pb-20 overflow-hidden">
       <div className="relative max-w-5xl mx-auto px-4 sm:px-6 text-center">
         <p className="text-xs uppercase tracking-[0.3em] text-primary mb-4 font-mono-score">
           AI-Powered Maritime Platform
+        </p>
+        <p className="text-sm md:text-base text-primary/80 mb-2 font-medium tracking-wide">
+          {greeting}
         </p>
         <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-3">
           One Platform. Every Seafarer Needs.
