@@ -10,7 +10,9 @@ import HomeFooter from "@/components/homepage/HomeFooter";
 const HomePage = () => {
   useEffect(() => { document.title = "SeaMinds"; }, []);
   return (
-  <div className="min-h-screen animated-gradient-bg text-foreground">
+  <div className="min-h-screen animated-gradient-bg text-foreground relative">
+    <OceanBackground />
+    <div className="relative z-10">
     <HomeNav />
     <HeroSection />
     <BentoGrid />
