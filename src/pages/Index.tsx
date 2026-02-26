@@ -32,6 +32,20 @@ const Index = () => {
   const [manningAgency, setManningAgency] = useState("");
   const [nationality, setNationality] = useState("");
 
+  // Dynamic page title based on active screen
+  useEffect(() => {
+    const titles: Record<Screen, string> = {
+      chat: "SeaMinds | Wellness",
+      dashboard: "SeaMinds | Wellness",
+      opportunities: "SeaMinds | Opportunities",
+      news: "SeaMinds | News",
+      academy: "SeaMinds | Academy",
+      community: "SeaMinds | Community",
+      smc: "SeaMinds | SMC Score",
+    };
+    document.title = appState === "main" ? titles[screen] : "SeaMinds";
+  }, [screen, appState]);
+
   useEffect(() => {
     const savedId = localStorage.getItem(PROFILE_KEY);
     if (!savedId) { setAppState("landing"); return; }
