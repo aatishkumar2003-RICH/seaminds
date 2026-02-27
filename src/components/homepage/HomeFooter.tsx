@@ -38,7 +38,7 @@ const HomeFooter = () => {
       links: [
         { label: "About", action: () => navigate("/app") },
         { label: "Privacy Policy", action: () => navigate("/app") },
-        { label: "Terms of Service", action: () => navigate("/app") },
+        { label: "Terms of Service", action: () => navigate("/terms") },
       ],
     },
   ];
