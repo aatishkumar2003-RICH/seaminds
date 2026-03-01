@@ -335,6 +335,18 @@ const WelfareDashboard = ({ shipName, profileId, vesselImo, locationEnabled, onL
           </div>
         </div>
 
+        {/* Community Pulse */}
+        <CommunityPulse />
+
+        {/* Profile Settings */}
+        <ProfileSettings
+          profileId={profileId}
+          vesselImo={vesselImo}
+          locationEnabled={locationEnabled}
+          onLocationToggle={onLocationToggle}
+          onImoChange={onImoChange}
+        />
+
         {/* Privacy Notice */}
         <div className="flex items-start gap-3 bg-card rounded-2xl px-5 py-4 border border-border">
           <Shield size={16} className="text-primary flex-shrink-0 mt-0.5" />
