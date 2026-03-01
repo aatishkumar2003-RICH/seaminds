@@ -333,6 +333,63 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          company_name: string | null
+          created_at: string | null
+          currently_at_sea: boolean | null
+          department: string | null
+          email: string | null
+          full_name: string | null
+          home_country: string | null
+          home_country_code: string | null
+          id: string
+          last_seen: string | null
+          nationality: string | null
+          profile_completed: boolean | null
+          rank: string | null
+          total_sea_months: number | null
+          vessel_imo: string | null
+          vessel_type: string | null
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string | null
+          currently_at_sea?: boolean | null
+          department?: string | null
+          email?: string | null
+          full_name?: string | null
+          home_country?: string | null
+          home_country_code?: string | null
+          id: string
+          last_seen?: string | null
+          nationality?: string | null
+          profile_completed?: boolean | null
+          rank?: string | null
+          total_sea_months?: number | null
+          vessel_imo?: string | null
+          vessel_type?: string | null
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string | null
+          currently_at_sea?: boolean | null
+          department?: string | null
+          email?: string | null
+          full_name?: string | null
+          home_country?: string | null
+          home_country_code?: string | null
+          id?: string
+          last_seen?: string | null
+          nationality?: string | null
+          profile_completed?: boolean | null
+          rank?: string | null
+          total_sea_months?: number | null
+          vessel_imo?: string | null
+          vessel_type?: string | null
+        }
+        Relationships: []
+      }
       safety_reports: {
         Row: {
           category: string
