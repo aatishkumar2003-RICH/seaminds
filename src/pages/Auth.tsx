@@ -18,9 +18,13 @@ const Auth = () => {
   const navigate = useNavigate();
   const { authUser, loading } = useUser();
 
+  // Only redirect if user was already logged in when they landed on /auth
   useEffect(() => {
-    if (!loading && authUser) navigate("/app", { replace: true });
-  }, [authUser, loading, navigate]);
+    if (!loading && authUser) {
+      navigate("/app", { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

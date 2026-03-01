@@ -41,10 +41,10 @@ const HomeNav = () => {
           </div>
 
           <div className="hidden sm:flex items-center gap-3">
-            <Button size="sm" onClick={() => navigate("/app")}>
+            <Button size="sm" onClick={() => navigate("/auth")}>
               Get Your Score
             </Button>
-            <Button size="sm" variant="outline" onClick={() => navigate("/app")}>
+            <Button size="sm" variant="outline" onClick={() => navigate("/auth")}>
               Company Login
             </Button>
           </div>
@@ -63,10 +63,10 @@ const HomeNav = () => {
             </button>
           ))}
           <div className="flex gap-2 pt-2">
-            <Button size="sm" className="flex-1" onClick={() => { setMobileOpen(false); navigate("/app"); }}>
+            <Button size="sm" className="flex-1" onClick={() => { setMobileOpen(false); navigate("/auth"); }}>
               Get Your Score
             </Button>
-            <Button size="sm" variant="outline" className="flex-1" onClick={() => { setMobileOpen(false); navigate("/app"); }}>
+            <Button size="sm" variant="outline" className="flex-1" onClick={() => { setMobileOpen(false); navigate("/auth"); }}>
               Company Login
             </Button>
           </div>
