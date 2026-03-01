@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -13,8 +13,38 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    let mounted = true;
+
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!mounted) return;
+        if (session?.user) {
+          window.location.href = '/app';
+        } else {
+          setLoading(false);
+        }
+      } catch (err) {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    const timeout = setTimeout(() => {
+      if (mounted) setLoading(false);
+    }, 2000);
+
+    checkAuth();
+
+    return () => {
+      mounted = false;
+      clearTimeout(timeout);
+    };
+  }, []);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,14 +57,13 @@ const Auth = () => {
       return;
     }
 
-    // Check if profile complete
     const { data: profile } = await supabase
       .from("profiles")
       .select("full_name")
       .eq("id", data.user.id)
       .maybeSingle();
 
-    if (!profile?.full_name) {
+    if (!profile?.full_name || profile.full_name.trim() === '') {
       window.location.href = "/complete-profile";
     } else {
       window.location.href = "/app";
@@ -59,6 +88,14 @@ const Auth = () => {
     toast({ title: "Check your email", description: "We've sent you a confirmation link." });
     setSubmitting(false);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0D1B2A]">
+        <p className="text-muted-foreground">Please wait...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0D1B2A] px-4">
