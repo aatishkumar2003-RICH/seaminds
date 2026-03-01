@@ -191,6 +191,7 @@ const Index = () => {
       }}
     >
       <SOSButton onOpenChat={() => setScreen("chat")} />
+      <AuthGreetingBanner />
       <GreetingBanner firstName={firstName} location={locationEnabled ? location : null} />
       <div className="flex-1 overflow-hidden">
         {screen === "chat" ? (
