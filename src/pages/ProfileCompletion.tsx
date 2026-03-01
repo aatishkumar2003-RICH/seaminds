@@ -65,8 +65,8 @@ const ProfileCompletion = () => {
         return;
       }
 
-      const { error } = await supabase
-        .from("crew_profiles")
+      const { error } = await (supabase
+        .from("crew_profiles") as any)
         .update({
           first_name: fullName.trim(),
           role: rank,
@@ -77,7 +77,7 @@ const ProfileCompletion = () => {
           manning_agency: companyName.trim() || null,
           onboarded: true,
         })
-        .eq("user_id" as any, user.id);
+        .eq("user_id", user.id);
 
       if (error) {
         console.error("Save error:", error);
