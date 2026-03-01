@@ -15,8 +15,10 @@ import SMCScoreTab from "@/components/SMCScoreTab";
 import SOSButton from "@/components/SOSButton";
 import VoyageReport from "@/components/VoyageReport";
 import GreetingBanner from "@/components/GreetingBanner";
+import AuthGreetingBanner from "@/components/AuthGreetingBanner";
 import { useLocationDetection } from "@/hooks/useLocationDetection";
 import { getCountryTheme } from "@/lib/countryThemes";
+import { useUser } from "@/contexts/UserContext";
 type AppState = "loading" | "landing" | "name-entry" | "welcome" | "main" | "voyage-report";
 type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "community" | "smc";
 
@@ -189,6 +191,7 @@ const Index = () => {
       }}
     >
       <SOSButton onOpenChat={() => setScreen("chat")} />
+      <AuthGreetingBanner />
       <GreetingBanner firstName={firstName} location={locationEnabled ? location : null} />
       <div className="flex-1 overflow-hidden">
         {screen === "chat" ? (
