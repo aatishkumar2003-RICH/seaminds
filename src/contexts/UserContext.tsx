@@ -47,8 +47,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const { data } = await supabase
       .from("crew_profiles")
       .select("*")
-      .eq("user_id", userId)
-      .maybeSingle();
+      .eq("user_id" as any, userId)
+      .maybeSingle() as any;
     if (data) setUser(data as any);
     return data;
   }, []);

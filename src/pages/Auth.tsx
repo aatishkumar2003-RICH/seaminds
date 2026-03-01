@@ -26,7 +26,7 @@ return;
 const { data: profile } = await supabase
 .from("crew_profiles")
 .select("first_name, onboarded")
-.eq("user_id", data.user.id)
+.eq("user_id" as any, data.user.id)
 .maybeSingle() as any;
 if (!profile?.onboarded) {
 window.location.href = "/complete-profile";
