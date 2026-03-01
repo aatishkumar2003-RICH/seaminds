@@ -6,7 +6,7 @@ import seamindsLogo from "@/assets/seaminds-logo.png";
 
 const navLinks = [
   { label: "For Seafarers", path: "/app" },
-  { label: "For Companies", path: "/app" },
+  { label: "For Companies", path: "/companies" },
   { label: "SMC Score", path: "/app" },
   { label: "Wellness", path: "/app" },
   { label: "Academy", path: "/app" },
