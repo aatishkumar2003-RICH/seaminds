@@ -27,7 +27,7 @@ const { data: profile } = await supabase
 .from("crew_profiles")
 .select("first_name, onboarded")
 .eq("user_id", data.user.id)
-.maybeSingle();
+.maybeSingle() as any;
 if (!profile?.onboarded) {
 window.location.href = "/complete-profile";
 } else {
@@ -103,3 +103,5 @@ return (
 </div>
 );
 };
+
+export default Auth;
