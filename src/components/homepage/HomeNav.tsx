@@ -11,6 +11,7 @@ const navLinks = [
   { label: "Wellness", path: "/app" },
   { label: "Academy", path: "/app" },
   { label: "Jobs", path: "/app" },
+  { label: "Pricing", path: "/pricing" },
 ];
 
 const HomeNav = () => {
