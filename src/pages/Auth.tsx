@@ -13,38 +13,6 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    let mounted = true;
-
-    const checkAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!mounted) return;
-        if (session?.user) {
-          window.location.href = '/app';
-        } else {
-          setLoading(false);
-        }
-      } catch (err) {
-        if (mounted) setLoading(false);
-      }
-    };
-
-    const timeout = setTimeout(() => {
-      if (mounted) setLoading(false);
-    }, 2000);
-
-    checkAuth();
-
-    return () => {
-      mounted = false;
-      clearTimeout(timeout);
-    };
-  }, []);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
