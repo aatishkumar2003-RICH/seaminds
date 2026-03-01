@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
 import { Button } from "@/components/ui/button";
@@ -39,8 +38,7 @@ const COUNTRIES = [
 ];
 
 const ProfileCompletion = () => {
-  const { authUser, refreshProfile } = useUser();
-  const navigate = useNavigate();
+  const { authUser } = useUser();
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
 
@@ -54,6 +52,16 @@ const ProfileCompletion = () => {
   const [vesselImo, setVesselImo] = useState("");
   const [companyName, setCompanyName] = useState("");
 
+  // Safety net: force redirect if stuck saving for 5+ seconds
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (saving) {
+        window.location.href = '/app';
+      }
+    }, 5000);
+    return () => clearTimeout(timeout);
+  }, [saving]);
+
   const handleSave = async () => {
     if (saving) return;
     if (!fullName.trim() || !rank || !department || !nationality) {
@@ -66,7 +74,8 @@ const ProfileCompletion = () => {
     try {
       const { error } = await supabase
         .from("profiles")
-        .update({
+        .upsert({
+          id: authUser.id,
           full_name: fullName.trim(),
           rank,
           department,
@@ -77,16 +86,23 @@ const ProfileCompletion = () => {
           vessel_imo: currentlyAtSea && vesselImo ? vesselImo : null,
           company_name: companyName.trim() || null,
           profile_completed: true,
-        } as any)
-        .eq("id", authUser.id);
+        } as any, { onConflict: 'id' });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Save error:", error);
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+        setSaving(false);
+        return;
+      }
 
       toast({ title: `Welcome to SeaMinds, ${fullName.trim()}! 🚢` });
-      await refreshProfile();
-      setTimeout(() => navigate("/app", { replace: true }), 1000);
+
+      // Force full page reload to clear any stuck auth state
+      setTimeout(() => {
+        window.location.href = '/app';
+      }, 500);
     } catch (err: any) {
-      console.error("Profile save error:", err);
+      console.error("Unexpected error:", err);
       toast({ title: "Error", description: err.message, variant: "destructive" });
       setSaving(false);
     }
