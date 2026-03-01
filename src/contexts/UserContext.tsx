@@ -58,8 +58,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }, [authUser, fetchProfile]);
 
   useEffect(() => {
+    let mounted = true;
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        if (!mounted) return;
         if (session?.user) {
           setAuthUser(session.user);
           await fetchProfile(session.user.id);
@@ -67,19 +70,32 @@ export function UserProvider({ children }: { children: ReactNode }) {
           setAuthUser(null);
           setUser(null);
         }
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     );
 
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
       if (session?.user) {
         setAuthUser(session.user);
-        fetchProfile(session.user.id);
+        fetchProfile(session.user.id).finally(() => {
+          if (mounted) setLoading(false);
+        });
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    // Safety net — never stay loading forever
+    const timeout = setTimeout(() => {
+      if (mounted) setLoading(false);
+    }, 3000);
+
+    return () => {
+      mounted = false;
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, [fetchProfile]);
 
   const signOut = async () => {
