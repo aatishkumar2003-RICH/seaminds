@@ -61,38 +61,33 @@ const ProfileCompletion = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        window.location.href = "/auth";
+        window.location.href = '/auth';
         return;
       }
 
       const { error } = await (supabase
-        .from("crew_profiles") as any)
+        .from('crew_profiles') as any)
         .update({
-          first_name: fullName.trim(),
+          first_name: fullName.trim().split(' ')[0],
+          last_name: fullName.trim().split(' ').slice(1).join(' ') || '',
           role: rank,
-          nationality,
-          ship_name: vesselType || "Not specified",
+          nationality: nationality,
+          ship_name: vesselType || 'Not specified',
           years_at_sea: String(parseInt(totalSeaMonths) || 0),
           vessel_imo: currentlyAtSea && vesselImo ? vesselImo : null,
           manning_agency: companyName.trim() || null,
           onboarded: true,
         })
-        .eq("user_id", user.id);
+        .eq('user_id', user.id);
 
-      if (error) {
-        console.error("Save error:", error);
-        toast({ title: "Error", description: error.message, variant: "destructive" });
+      if (!error) {
+        window.location.href = '/app';
+      } else {
+        console.error('Profile save error:', error);
         setSaving(false);
-        return;
       }
-
-      toast({ title: `Welcome to SeaMinds, ${fullName.trim()}! 🚢` });
-      setTimeout(() => {
-        window.location.href = "/app";
-      }, 500);
     } catch (err: any) {
       console.error("Unexpected error:", err);
-      toast({ title: "Error", description: err.message, variant: "destructive" });
       setSaving(false);
     }
   };
