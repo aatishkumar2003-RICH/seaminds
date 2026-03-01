@@ -14,6 +14,9 @@ import Community from "@/components/Community";
 import SMCScoreTab from "@/components/SMCScoreTab";
 import SOSButton from "@/components/SOSButton";
 import VoyageReport from "@/components/VoyageReport";
+import GreetingBanner from "@/components/GreetingBanner";
+import { useLocationDetection } from "@/hooks/useLocationDetection";
+import { getCountryTheme } from "@/lib/countryThemes";
 type AppState = "loading" | "landing" | "name-entry" | "welcome" | "main" | "voyage-report";
 type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "community" | "smc";
 
@@ -31,6 +34,8 @@ const Index = () => {
   const [voyageStartDate, setVoyageStartDate] = useState("");
   const [manningAgency, setManningAgency] = useState("");
   const [nationality, setNationality] = useState("");
+  const [vesselImo, setVesselImo] = useState("");
+  const [locationEnabled, setLocationEnabled] = useState(true);
 
   // Dynamic page title based on active screen
   useEffect(() => {
