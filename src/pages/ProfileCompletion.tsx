@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useUser } from "@/contexts/UserContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,7 +37,6 @@ const COUNTRIES = [
 ];
 
 const ProfileCompletion = () => {
-  const { authUser } = useUser();
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
 
@@ -52,41 +50,35 @@ const ProfileCompletion = () => {
   const [vesselImo, setVesselImo] = useState("");
   const [companyName, setCompanyName] = useState("");
 
-  // Safety net: force redirect if stuck saving for 5+ seconds
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (saving) {
-        window.location.href = '/app';
-      }
-    }, 5000);
-    return () => clearTimeout(timeout);
-  }, [saving]);
-
   const handleSave = async () => {
     if (saving) return;
     if (!fullName.trim() || !rank || !department || !nationality) {
       toast({ title: "Required fields missing", description: "Please fill in all required fields.", variant: "destructive" });
       return;
     }
-    if (!authUser) return;
     setSaving(true);
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        window.location.href = "/auth";
+        return;
+      }
+
       const { error } = await supabase
         .from("profiles")
-        .upsert({
-          id: authUser.id,
+        .update({
           full_name: fullName.trim(),
           rank,
           department,
           nationality,
           vessel_type: vesselType || null,
           total_sea_months: parseInt(totalSeaMonths) || 0,
-          currently_at_sea: currentlyAtSea,
           vessel_imo: currentlyAtSea && vesselImo ? vesselImo : null,
           company_name: companyName.trim() || null,
-          profile_completed: true,
-        } as any, { onConflict: 'id' });
+          updated_at: new Date().toISOString(),
+        } as any)
+        .eq("id", user.id);
 
       if (error) {
         console.error("Save error:", error);
@@ -96,10 +88,8 @@ const ProfileCompletion = () => {
       }
 
       toast({ title: `Welcome to SeaMinds, ${fullName.trim()}! 🚢` });
-
-      // Force full page reload to clear any stuck auth state
       setTimeout(() => {
-        window.location.href = '/app';
+        window.location.href = "/app";
       }, 500);
     } catch (err: any) {
       console.error("Unexpected error:", err);
@@ -169,7 +159,6 @@ const ProfileCompletion = () => {
             <div className="space-y-2">
               <Label>Vessel IMO Number (optional)</Label>
               <Input value={vesselImo} onChange={(e) => setVesselImo(e.target.value.replace(/\D/g, "").slice(0, 7))} placeholder="e.g. 9876543" maxLength={7} />
-              <p className="text-xs text-muted-foreground">🚢 AIS Tracking — Coming Soon</p>
             </div>
           )}
 

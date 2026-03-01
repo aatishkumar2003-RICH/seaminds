@@ -6,49 +6,57 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Anchor, ArrowLeft } from "lucide-react";
-import { useUser } from "@/contexts/UserContext";
-import { useEffect } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { authUser, loading } = useUser();
 
-  // Only redirect if user was already logged in when they landed on /auth
-  useEffect(() => {
-    if (!loading && authUser) {
-      navigate("/app", { replace: true });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
 
-    if (isLogin) {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        toast({ title: "Login failed", description: error.message, variant: "destructive" });
-      } else {
-        navigate("/app");
-      }
-    } else {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: window.location.origin },
-      });
-      if (error) {
-        toast({ title: "Signup failed", description: error.message, variant: "destructive" });
-      } else {
-        toast({ title: "Check your email", description: "We've sent you a confirmation link." });
-      }
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      toast({ title: "Login failed", description: error.message, variant: "destructive" });
+      setSubmitting(false);
+      return;
     }
+
+    // Check if profile complete
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", data.user.id)
+      .maybeSingle();
+
+    if (!profile?.full_name) {
+      window.location.href = "/complete-profile";
+    } else {
+      window.location.href = "/app";
+    }
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password !== confirmPassword) {
+      toast({ title: "Passwords don't match", variant: "destructive" });
+      return;
+    }
+    setSubmitting(true);
+
+    const { error } = await supabase.auth.signUp({ email, password });
+    if (error) {
+      toast({ title: "Signup failed", description: error.message, variant: "destructive" });
+      setSubmitting(false);
+      return;
+    }
+
+    toast({ title: "Check your email", description: "We've sent you a confirmation link." });
     setSubmitting(false);
   };
 
@@ -64,51 +72,51 @@ const Auth = () => {
 
         <div className="text-center space-y-2">
           <Anchor className="mx-auto text-[#D4AF37]" size={32} />
-          <h1 className="text-2xl font-bold text-foreground">
-            {isLogin ? "Welcome Back" : "Join SeaMinds"}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {isLogin ? "Sign in to your account" : "Create your free account"}
-          </p>
+          <h1 className="text-2xl font-bold text-foreground">SeaMinds</h1>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="captain@example.com"
-              required
-              maxLength={255}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-              minLength={6}
-              maxLength={128}
-            />
-          </div>
-          <Button type="submit" className="w-full bg-[#D4AF37] hover:bg-[#C49B2F] text-[#0D1B2A] font-semibold" disabled={submitting}>
-            {submitting ? "Please wait..." : isLogin ? "Sign In" : "Create Account"}
-          </Button>
-        </form>
+        <Tabs defaultValue="signin" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="signin">Sign In</TabsTrigger>
+            <TabsTrigger value="signup">Sign Up</TabsTrigger>
+          </TabsList>
 
-        <p className="text-center text-sm text-muted-foreground">
-          {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-          <button onClick={() => setIsLogin(!isLogin)} className="text-[#D4AF37] hover:underline font-medium">
-            {isLogin ? "Sign Up" : "Sign In"}
-          </button>
-        </p>
+          <TabsContent value="signin">
+            <form onSubmit={handleSignIn} className="space-y-4 pt-2">
+              <div className="space-y-2">
+                <Label htmlFor="signin-email">Email</Label>
+                <Input id="signin-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="captain@example.com" required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="signin-password">Password</Label>
+                <Input id="signin-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required minLength={6} />
+              </div>
+              <Button type="submit" className="w-full bg-[#D4AF37] hover:bg-[#C49B2F] text-[#0D1B2A] font-semibold" disabled={submitting}>
+                {submitting ? "Please wait..." : "Sign In"}
+              </Button>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="signup">
+            <form onSubmit={handleSignUp} className="space-y-4 pt-2">
+              <div className="space-y-2">
+                <Label htmlFor="signup-email">Email</Label>
+                <Input id="signup-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="captain@example.com" required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="signup-password">Password</Label>
+                <Input id="signup-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required minLength={6} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="signup-confirm">Confirm Password</Label>
+                <Input id="signup-confirm" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" required minLength={6} />
+              </div>
+              <Button type="submit" className="w-full bg-[#D4AF37] hover:bg-[#C49B2F] text-[#0D1B2A] font-semibold" disabled={submitting}>
+                {submitting ? "Please wait..." : "Create Account"}
+              </Button>
+            </form>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

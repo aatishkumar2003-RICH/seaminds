@@ -18,8 +18,8 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (!authUser) return <Navigate to="/auth" replace />;
 
-  // If profile not completed, redirect to completion
-  if (user && !user.profile_completed) return <Navigate to="/complete-profile" replace />;
+  // If profile not completed (no full_name), redirect to completion
+  if (user && !user.full_name) return <Navigate to="/complete-profile" replace />;
 
   return <>{children}</>;
 };
