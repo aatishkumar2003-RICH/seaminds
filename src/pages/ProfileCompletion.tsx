@@ -55,6 +55,7 @@ const ProfileCompletion = () => {
   const [companyName, setCompanyName] = useState("");
 
   const handleSave = async () => {
+    if (saving) return;
     if (!fullName.trim() || !rank || !department || !nationality) {
       toast({ title: "Required fields missing", description: "Please fill in all required fields.", variant: "destructive" });
       return;
@@ -62,29 +63,33 @@ const ProfileCompletion = () => {
     if (!authUser) return;
     setSaving(true);
 
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        full_name: fullName.trim(),
-        rank,
-        department,
-        nationality,
-        vessel_type: vesselType || null,
-        total_sea_months: parseInt(totalSeaMonths) || 0,
-        currently_at_sea: currentlyAtSea,
-        vessel_imo: currentlyAtSea && vesselImo ? vesselImo : null,
-        company_name: companyName.trim() || null,
-        profile_completed: true,
-      } as any)
-      .eq("id", authUser.id);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          full_name: fullName.trim(),
+          rank,
+          department,
+          nationality,
+          vessel_type: vesselType || null,
+          total_sea_months: parseInt(totalSeaMonths) || 0,
+          currently_at_sea: currentlyAtSea,
+          vessel_imo: currentlyAtSea && vesselImo ? vesselImo : null,
+          company_name: companyName.trim() || null,
+          profile_completed: true,
+        } as any)
+        .eq("id", authUser.id);
 
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
+      if (error) throw error;
+
+      toast({ title: `Welcome to SeaMinds, ${fullName.trim()}! 🚢` });
       await refreshProfile();
-      navigate("/app", { replace: true });
+      setTimeout(() => navigate("/app", { replace: true }), 1000);
+    } catch (err: any) {
+      console.error("Profile save error:", err);
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   return (
