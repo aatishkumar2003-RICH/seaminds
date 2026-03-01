@@ -60,33 +60,39 @@ export function UserProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+    const init = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
         if (!mounted) return;
         if (session?.user) {
           setAuthUser(session.user);
           await fetchProfile(session.user.id);
-        } else {
+        }
+      } catch (err) {
+        console.error('Auth init error:', err);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    init();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!mounted) return;
+        if (event === 'SIGNED_IN' && session?.user) {
+          setAuthUser(session.user);
+          await fetchProfile(session.user.id);
+          setLoading(false);
+        }
+        if (event === 'SIGNED_OUT') {
           setAuthUser(null);
           setUser(null);
+          setLoading(false);
         }
-        if (mounted) setLoading(false);
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!mounted) return;
-      if (session?.user) {
-        setAuthUser(session.user);
-        fetchProfile(session.user.id).finally(() => {
-          if (mounted) setLoading(false);
-        });
-      } else {
-        setLoading(false);
-      }
-    });
-
-    // Safety net — never stay loading forever
     const timeout = setTimeout(() => {
       if (mounted) setLoading(false);
     }, 3000);

@@ -48,14 +48,23 @@ const Auth = () => {
     }
     setSubmitting(true);
 
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) {
       toast({ title: "Signup failed", description: error.message, variant: "destructive" });
       setSubmitting(false);
       return;
     }
 
-    toast({ title: "Check your email", description: "We've sent you a confirmation link." });
+    if (data.user) {
+      await supabase.from('profiles').upsert({
+        id: data.user.id,
+        email: data.user.email,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'id' });
+      window.location.href = '/complete-profile';
+      return;
+    }
     setSubmitting(false);
   };
 
