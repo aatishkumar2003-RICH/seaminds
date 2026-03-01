@@ -13,6 +13,7 @@ const HomeFooter = () => {
         { label: "Academy", action: () => navigate("/app") },
         { label: "Jobs", action: () => navigate("/app") },
         { label: "Community", action: () => navigate("/app") },
+        { label: "Pricing", action: () => navigate("/pricing") },
       ],
     },
     {
