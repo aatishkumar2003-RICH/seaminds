@@ -65,20 +65,19 @@ const ProfileCompletion = () => {
         return;
       }
 
-      const { error } = await supabase
-        .from("profiles")
+      const { error } = await (supabase
+        .from("crew_profiles") as any)
         .update({
-          full_name: fullName.trim(),
-          rank,
-          department,
+          first_name: fullName.trim(),
+          role: rank,
           nationality,
-          vessel_type: vesselType || null,
-          total_sea_months: parseInt(totalSeaMonths) || 0,
+          ship_name: vesselType || "Not specified",
+          years_at_sea: String(parseInt(totalSeaMonths) || 0),
           vessel_imo: currentlyAtSea && vesselImo ? vesselImo : null,
-          company_name: companyName.trim() || null,
-          updated_at: new Date().toISOString(),
-        } as any)
-        .eq("id", user.id);
+          manning_agency: companyName.trim() || null,
+          onboarded: true,
+        })
+        .eq("user_id", user.id);
 
       if (error) {
         console.error("Save error:", error);
