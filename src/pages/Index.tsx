@@ -14,6 +14,9 @@ import Community from "@/components/Community";
 import SMCScoreTab from "@/components/SMCScoreTab";
 import SOSButton from "@/components/SOSButton";
 import VoyageReport from "@/components/VoyageReport";
+import GreetingBanner from "@/components/GreetingBanner";
+import { useLocationDetection } from "@/hooks/useLocationDetection";
+import { getCountryTheme } from "@/lib/countryThemes";
 type AppState = "loading" | "landing" | "name-entry" | "welcome" | "main" | "voyage-report";
 type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "community" | "smc";
 
@@ -31,6 +34,8 @@ const Index = () => {
   const [voyageStartDate, setVoyageStartDate] = useState("");
   const [manningAgency, setManningAgency] = useState("");
   const [nationality, setNationality] = useState("");
+  const [vesselImo, setVesselImo] = useState("");
+  const [locationEnabled, setLocationEnabled] = useState(true);
 
   // Dynamic page title based on active screen
   useEffect(() => {
@@ -52,10 +57,10 @@ const Index = () => {
 
     supabase
       .from("crew_profiles")
-      .select("id, first_name, last_name, onboarded, role, ship_name, voyage_start_date, manning_agency, nationality")
+      .select("id, first_name, last_name, onboarded, role, ship_name, voyage_start_date, manning_agency, nationality, vessel_imo, location_enabled" as any)
       .eq("id", savedId)
       .single()
-      .then(({ data, error }) => {
+      .then(({ data, error }: any) => {
         if (error || !data) { localStorage.removeItem(PROFILE_KEY); setAppState("landing"); return; }
         setProfileId(data.id);
         setFirstName(data.first_name);
@@ -65,6 +70,8 @@ const Index = () => {
         setVoyageStartDate(data.voyage_start_date || "");
         setManningAgency(data.manning_agency || "");
         setNationality(data.nationality || "");
+        setVesselImo(data.vessel_imo || "");
+        setLocationEnabled(data.location_enabled !== false);
         setAppState(data.onboarded ? "main" : "welcome");
       });
   }, []);
@@ -115,6 +122,9 @@ const Index = () => {
     await supabase.from("crew_profiles").update({ onboarded: true }).eq("id", profileId);
     setAppState("main");
   };
+
+  const { location } = useLocationDetection(profileId, locationEnabled);
+  const countryTheme = getCountryTheme(location?.countryCode);
 
   if (appState === "loading") {
     return (
@@ -172,13 +182,19 @@ const Index = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen max-w-md mx-auto bg-background">
+    <div
+      className="flex flex-col h-screen max-w-md mx-auto bg-background relative"
+      style={{
+        backgroundImage: locationEnabled && location ? `linear-gradient(to bottom, ${countryTheme.accent}10, transparent 40%)` : undefined,
+      }}
+    >
       <SOSButton onOpenChat={() => setScreen("chat")} />
+      <GreetingBanner firstName={firstName} location={locationEnabled ? location : null} />
       <div className="flex-1 overflow-hidden">
         {screen === "chat" ? (
           <CrewChat profileId={profileId} firstName={firstName} role={role} shipName={shipName} voyageStartDate={voyageStartDate} />
         ) : screen === "dashboard" ? (
-          <WelfareDashboard shipName={shipName} />
+          <WelfareDashboard shipName={shipName} profileId={profileId} vesselImo={vesselImo} locationEnabled={locationEnabled} onLocationToggle={setLocationEnabled} onImoChange={setVesselImo} />
         ) : screen === "opportunities" ? (
           <Opportunities profileId={profileId} firstName={firstName} role={role} nationality={nationality} shipName={shipName} />
         ) : screen === "news" ? (

@@ -1,9 +1,16 @@
 import { useState, useEffect } from "react";
 import { Shield, TrendingUp, TrendingDown, Users, Globe, Calendar, UserCheck, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import CommunityPulse from "@/components/CommunityPulse";
+import ProfileSettings from "@/components/ProfileSettings";
 
 interface DashboardProps {
   shipName: string;
+  profileId: string;
+  vesselImo: string;
+  locationEnabled: boolean;
+  onLocationToggle: (enabled: boolean) => void;
+  onImoChange: (imo: string) => void;
 }
 
 interface MoodData {
@@ -28,7 +35,7 @@ const MLC_ITEMS = [
   "Welfare data reviewed weekly",
 ];
 
-const WelfareDashboard = ({ shipName }: DashboardProps) => {
+const WelfareDashboard = ({ shipName, profileId, vesselImo, locationEnabled, onLocationToggle, onImoChange }: DashboardProps) => {
   const [loading, setLoading] = useState(true);
   const [crewCount, setCrewCount] = useState(0);
   const [avgDaysIntoVoyage, setAvgDaysIntoVoyage] = useState(0);
@@ -327,6 +334,18 @@ const WelfareDashboard = ({ shipName }: DashboardProps) => {
             ))}
           </div>
         </div>
+
+        {/* Community Pulse */}
+        <CommunityPulse />
+
+        {/* Profile Settings */}
+        <ProfileSettings
+          profileId={profileId}
+          vesselImo={vesselImo}
+          locationEnabled={locationEnabled}
+          onLocationToggle={onLocationToggle}
+          onImoChange={onImoChange}
+        />
 
         {/* Privacy Notice */}
         <div className="flex items-start gap-3 bg-card rounded-2xl px-5 py-4 border border-border">
