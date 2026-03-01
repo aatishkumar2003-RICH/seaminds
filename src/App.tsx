@@ -9,6 +9,7 @@ import ManagerAuth from "./pages/ManagerAuth";
 import ManagerDashboard from "./pages/ManagerDashboard";
 import NotFound from "./pages/NotFound";
 import TermsOfService from "./pages/TermsOfService";
+import Pricing from "./pages/Pricing";
 
 const queryClient = new QueryClient();
 
