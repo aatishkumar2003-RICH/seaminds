@@ -123,6 +123,9 @@ const Index = () => {
     setAppState("main");
   };
 
+  const { location } = useLocationDetection(profileId, locationEnabled);
+  const countryTheme = getCountryTheme(location?.countryCode);
+
   if (appState === "loading") {
     return (
       <div className="flex items-center justify-center h-screen max-w-md mx-auto bg-background">
@@ -179,13 +182,19 @@ const Index = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen max-w-md mx-auto bg-background">
+    <div
+      className="flex flex-col h-screen max-w-md mx-auto bg-background relative"
+      style={{
+        backgroundImage: locationEnabled && location ? `linear-gradient(to bottom, ${countryTheme.accent}10, transparent 40%)` : undefined,
+      }}
+    >
       <SOSButton onOpenChat={() => setScreen("chat")} />
+      <GreetingBanner firstName={firstName} location={locationEnabled ? location : null} />
       <div className="flex-1 overflow-hidden">
         {screen === "chat" ? (
           <CrewChat profileId={profileId} firstName={firstName} role={role} shipName={shipName} voyageStartDate={voyageStartDate} />
         ) : screen === "dashboard" ? (
-          <WelfareDashboard shipName={shipName} />
+          <WelfareDashboard shipName={shipName} profileId={profileId} vesselImo={vesselImo} locationEnabled={locationEnabled} onLocationToggle={setLocationEnabled} onImoChange={setVesselImo} />
         ) : screen === "opportunities" ? (
           <Opportunities profileId={profileId} firstName={firstName} role={role} nationality={nationality} shipName={shipName} />
         ) : screen === "news" ? (
