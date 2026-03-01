@@ -57,10 +57,10 @@ const Index = () => {
 
     supabase
       .from("crew_profiles")
-      .select("id, first_name, last_name, onboarded, role, ship_name, voyage_start_date, manning_agency, nationality")
+      .select("id, first_name, last_name, onboarded, role, ship_name, voyage_start_date, manning_agency, nationality, vessel_imo, location_enabled" as any)
       .eq("id", savedId)
       .single()
-      .then(({ data, error }) => {
+      .then(({ data, error }: any) => {
         if (error || !data) { localStorage.removeItem(PROFILE_KEY); setAppState("landing"); return; }
         setProfileId(data.id);
         setFirstName(data.first_name);
@@ -70,6 +70,8 @@ const Index = () => {
         setVoyageStartDate(data.voyage_start_date || "");
         setManningAgency(data.manning_agency || "");
         setNationality(data.nationality || "");
+        setVesselImo(data.vessel_imo || "");
+        setLocationEnabled(data.location_enabled !== false);
         setAppState(data.onboarded ? "main" : "welcome");
       });
   }, []);
