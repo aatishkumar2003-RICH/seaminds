@@ -150,13 +150,21 @@ export type Database = {
           created_at: string
           first_name: string
           gender: string | null
+          home_city: string | null
+          home_country: string | null
+          home_country_code: string | null
           id: string
+          last_login_lat: number | null
+          last_login_lng: number | null
           last_name: string
+          last_seen: string | null
+          location_enabled: boolean
           manning_agency: string | null
           nationality: string
           onboarded: boolean
           role: string
           ship_name: string
+          vessel_imo: string | null
           voyage_start_date: string | null
           whatsapp_number: string
           years_at_sea: string
@@ -165,13 +173,21 @@ export type Database = {
           created_at?: string
           first_name: string
           gender?: string | null
+          home_city?: string | null
+          home_country?: string | null
+          home_country_code?: string | null
           id?: string
+          last_login_lat?: number | null
+          last_login_lng?: number | null
           last_name?: string
+          last_seen?: string | null
+          location_enabled?: boolean
           manning_agency?: string | null
           nationality?: string
           onboarded?: boolean
           role: string
           ship_name: string
+          vessel_imo?: string | null
           voyage_start_date?: string | null
           whatsapp_number?: string
           years_at_sea?: string
@@ -180,13 +196,21 @@ export type Database = {
           created_at?: string
           first_name?: string
           gender?: string | null
+          home_city?: string | null
+          home_country?: string | null
+          home_country_code?: string | null
           id?: string
+          last_login_lat?: number | null
+          last_login_lng?: number | null
           last_name?: string
+          last_seen?: string | null
+          location_enabled?: boolean
           manning_agency?: string | null
           nationality?: string
           onboarded?: boolean
           role?: string
           ship_name?: string
+          vessel_imo?: string | null
           voyage_start_date?: string | null
           whatsapp_number?: string
           years_at_sea?: string
