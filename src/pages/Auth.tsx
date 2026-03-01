@@ -23,8 +23,8 @@ toast({ title: "Login failed", description: error.message, variant: "destructive
 setSubmitting(false);
 return;
 }
-const { data: profile } = await supabase
-.from("crew_profiles")
+const { data: profile }: any = await (supabase
+.from("crew_profiles") as any)
 .select("first_name, onboarded")
 .eq("user_id", data.user.id)
 .maybeSingle();
@@ -103,3 +103,5 @@ return (
 </div>
 );
 };
+
+export default Auth;

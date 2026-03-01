@@ -45,11 +45,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const fetchProfile = useCallback(async (userId: string) => {
     const { data } = await supabase
-      .from("profiles")
+      .from("crew_profiles")
       .select("*")
-      .eq("id", userId)
+      .eq("user_id" as any, userId)
       .maybeSingle() as any;
-    if (data) setUser(data as UserProfile);
+    if (data) setUser(data as any);
     return data;
   }, []);
 
