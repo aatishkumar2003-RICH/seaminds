@@ -337,54 +337,57 @@ export type Database = {
         Row: {
           company_name: string | null
           created_at: string | null
-          currently_at_sea: boolean | null
           department: string | null
           email: string | null
           full_name: string | null
           home_country: string | null
           home_country_code: string | null
           id: string
+          is_company: boolean | null
           last_seen: string | null
+          location_personalisation: boolean | null
           nationality: string | null
-          profile_completed: boolean | null
           rank: string | null
           total_sea_months: number | null
+          updated_at: string | null
           vessel_imo: string | null
           vessel_type: string | null
         }
         Insert: {
           company_name?: string | null
           created_at?: string | null
-          currently_at_sea?: boolean | null
           department?: string | null
           email?: string | null
           full_name?: string | null
           home_country?: string | null
           home_country_code?: string | null
           id: string
+          is_company?: boolean | null
           last_seen?: string | null
+          location_personalisation?: boolean | null
           nationality?: string | null
-          profile_completed?: boolean | null
           rank?: string | null
           total_sea_months?: number | null
+          updated_at?: string | null
           vessel_imo?: string | null
           vessel_type?: string | null
         }
         Update: {
           company_name?: string | null
           created_at?: string | null
-          currently_at_sea?: boolean | null
           department?: string | null
           email?: string | null
           full_name?: string | null
           home_country?: string | null
           home_country_code?: string | null
           id?: string
+          is_company?: boolean | null
           last_seen?: string | null
+          location_personalisation?: boolean | null
           nationality?: string | null
-          profile_completed?: boolean | null
           rank?: string | null
           total_sea_months?: number | null
+          updated_at?: string | null
           vessel_imo?: string | null
           vessel_type?: string | null
         }
