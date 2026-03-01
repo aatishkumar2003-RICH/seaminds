@@ -19,7 +19,7 @@ const HomeFooter = () => {
     {
       title: "For Companies",
       links: [
-        { label: "Hire Crew", action: () => navigate("/app") },
+        { label: "Hire Crew", action: () => navigate("/companies") },
         { label: "Bulk Assessments", action: () => navigate("/app") },
         { label: "Company Login", action: () => navigate("/app") },
         { label: "Request Demo", action: () => navigate("/app") },
