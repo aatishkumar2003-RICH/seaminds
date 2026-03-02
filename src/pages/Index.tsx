@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { MessageCircle, LayoutDashboard, Briefcase, Newspaper, GraduationCap, Compass, Star } from "lucide-react";
+import { MessageCircle, LayoutDashboard, Briefcase, Newspaper, GraduationCap, Compass, Star, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import LandingScreen from "@/components/LandingScreen";
 import NameEntry from "@/components/NameEntry";
@@ -171,9 +171,24 @@ const Index = () => {
     );
   }
 
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    localStorage.removeItem(PROFILE_KEY);
+    window.location.href = '/';
+  };
+
   return (
     <div className="flex flex-col h-screen max-w-md mx-auto bg-background">
       <SOSButton onOpenChat={() => setScreen("chat")} />
+      <div className="flex justify-end px-4 pt-2">
+        <button
+          onClick={handleSignOut}
+          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <LogOut size={14} />
+          Sign Out
+        </button>
+      </div>
       <div className="flex-1 overflow-hidden">
         {screen === "chat" ? (
           <CrewChat profileId={profileId} firstName={firstName} role={role} shipName={shipName} voyageStartDate={voyageStartDate} />
