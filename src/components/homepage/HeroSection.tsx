@@ -31,10 +31,10 @@ const HeroSection = ({ timeOfDay = "day" }: Props) => {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">
-          <Button size="lg" onClick={() => navigate("/auth")} className="text-sm px-6 h-11">
+          <Button size="lg" onClick={() => navigate("/app")} className="text-sm px-6 h-11">
             I Am Crew — Get Started Free <ChevronRight className="ml-1 w-4 h-4" />
           </Button>
-          <Button size="lg" variant="outline" onClick={() => navigate("/auth")} className="text-sm px-6 h-11">
+          <Button size="lg" variant="outline" onClick={() => navigate("/app")} className="text-sm px-6 h-11">
             I Am a Company — Hire Verified Crew
           </Button>
         </div>
