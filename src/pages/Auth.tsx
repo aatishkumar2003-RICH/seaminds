@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Eye, EyeOff, Loader2, Anchor } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
+import seamindsLogo from "@/assets/seaminds-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -68,7 +69,7 @@ const Auth = () => {
 
         <div className="text-center space-y-3">
           <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center mx-auto">
-            <Anchor size={28} className="text-primary" />
+            <img src={seamindsLogo} alt="SeaMinds" className="w-9 h-9" />
           </div>
           <h1 className="text-xl font-semibold text-foreground">Welcome to SeaMinds</h1>
           <p className="text-sm text-muted-foreground">Your maritime wellness companion</p>
