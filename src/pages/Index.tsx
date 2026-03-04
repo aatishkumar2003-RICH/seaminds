@@ -59,7 +59,7 @@ const Index = () => {
       const { data, error } = await supabase
         .from("crew_profiles")
         .select("id, first_name, last_name, onboarded, role, ship_name, voyage_start_date, manning_agency, nationality")
-        .eq("user_id", userId)
+        .eq("id", userId)
         .single();
 
       if (!error && data) {
@@ -117,7 +117,7 @@ const Index = () => {
         manning_agency: profile.manningAgency || null,
         onboarded: false,
       })
-      .eq("user_id", userId)
+      .eq("id", userId)
       .select("id")
       .single();
 
