@@ -146,12 +146,9 @@ const Index = () => {
   }
 
   if (appState === "landing") {
-    return (
-      <div className="h-screen max-w-md mx-auto bg-background">
-        <SOSButton onOpenChat={() => { setAppState("main"); setScreen("chat"); }} />
-        <LandingScreen onGetStarted={() => setAppState("name-entry")} onManagerLogin={() => navigate("/manager")} />
-      </div>
-    );
+    // Fallback: redirect to auth if somehow we reach landing
+    window.location.href = '/auth';
+    return null;
   }
 
   if (appState === "name-entry") {
