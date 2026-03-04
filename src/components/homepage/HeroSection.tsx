@@ -32,36 +32,34 @@ const HeroSection = ({ timeOfDay = "day", isLoggedIn = false }: Props) => {
         </p>
 
         <div className="flex flex-col items-center gap-4 justify-center mb-8">
+          <div className="flex bg-secondary rounded-xl p-1 w-full max-w-xs">
+            <button
+              onClick={() => setTab("crew")}
+              className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${tab === "crew" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+            >
+              I Am Crew
+            </button>
+            <button
+              onClick={() => setTab("company")}
+              className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${tab === "company" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+            >
+              I Am a Company
+            </button>
+          </div>
           {isLoggedIn ? (
             <Button size="lg" onClick={() => { window.location.href = '/app'; }} className="text-sm px-6 h-11">
               Go to App <ChevronRight className="ml-1 w-4 h-4" />
             </Button>
           ) : (
-            <>
-              <div className="flex bg-secondary rounded-xl p-1 w-full max-w-xs">
-                <button
-                  onClick={() => setTab("crew")}
-                  className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${tab === "crew" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
-                >
-                  I Am Crew
-                </button>
-                <button
-                  onClick={() => setTab("company")}
-                  className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${tab === "company" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
-                >
-                  I Am a Company
-                </button>
-              </div>
-              {tab === "crew" ? (
-                <Button size="lg" onClick={() => { window.location.href = '/auth'; }} className="text-sm px-6 h-11">
-                  Get Started Free <ChevronRight className="ml-1 w-4 h-4" />
-                </Button>
-              ) : (
-                <Button size="lg" onClick={() => { window.location.href = '/auth'; }} className="text-sm px-6 h-11">
-                  Hire Verified Crew <ChevronRight className="ml-1 w-4 h-4" />
-                </Button>
-              )}
-            </>
+            tab === "crew" ? (
+              <Button size="lg" onClick={() => { window.location.href = '/auth'; }} className="text-sm px-6 h-11">
+                Get Started Free <ChevronRight className="ml-1 w-4 h-4" />
+              </Button>
+            ) : (
+              <Button size="lg" onClick={() => { window.location.href = '/auth'; }} className="text-sm px-6 h-11">
+                Hire Verified Crew <ChevronRight className="ml-1 w-4 h-4" />
+              </Button>
+            )
           )}
         </div>
 
