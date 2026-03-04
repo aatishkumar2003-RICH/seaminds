@@ -55,20 +55,43 @@ const Index = () => {
       }
 
       const userId = sessionData.session.user.id;
+      const userEmail = sessionData.session.user.email || "";
 
-      const { data, error } = await supabase
+      // Try to find existing profile by user_id
+      let { data } = await supabase
         .from("crew_profiles")
         .select("id, first_name, last_name, onboarded, role, ship_name, voyage_start_date, manning_agency, nationality")
-        .eq("id", userId)
-        .single();
+        .eq("user_id", userId)
+        .maybeSingle();
 
-      if (!error && data) {
+      // If no profile exists, create one now
+      if (!data) {
+        const { data: newProfile } = await supabase
+          .from("crew_profiles")
+          .insert({
+            user_id: userId,
+            email: userEmail,
+            first_name: "",
+            last_name: "",
+            role: "",
+            ship_name: "",
+            nationality: "",
+            whatsapp_number: "",
+            years_at_sea: "",
+            onboarded: false,
+          })
+          .select("id, first_name, last_name, onboarded, role, ship_name, voyage_start_date, manning_agency, nationality")
+          .single();
+        data = newProfile;
+      }
+
+      if (data) {
         localStorage.setItem(PROFILE_KEY, data.id);
         setProfileId(data.id);
-        setFirstName(data.first_name);
+        setFirstName(data.first_name || "");
         setLastName(data.last_name || "");
-        setRole(data.role);
-        setShipName(data.ship_name);
+        setRole(data.role || "");
+        setShipName(data.ship_name || "");
         setVoyageStartDate(data.voyage_start_date || "");
         setManningAgency(data.manning_agency || "");
         setNationality(data.nationality || "");
@@ -109,7 +132,6 @@ const Index = () => {
         last_name: profile.lastName,
         ship_name: profile.shipName,
         role: profile.role,
-        gender: profile.gender || null,
         nationality: profile.nationality,
         whatsapp_number: profile.whatsappNumber,
         years_at_sea: profile.yearsAtSea,
@@ -117,7 +139,7 @@ const Index = () => {
         manning_agency: profile.manningAgency || null,
         onboarded: false,
       })
-      .eq("id", userId)
+      .eq("user_id", userId)
       .select("id")
       .single();
 
