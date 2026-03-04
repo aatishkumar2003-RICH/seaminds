@@ -37,10 +37,12 @@ const Auth = () => {
     if (password !== confirmPassword) return;
     if (password.length < 6) { toast.error("Password must be at least 6 characters"); return; }
     setLoading(true);
-    const { error } = await supabase.auth.signUp({ email: email.trim(), password });
+    const { data, error } = await supabase.auth.signUp({ email: email.trim(), password });
     setLoading(false);
     if (error) { toast.error(error.message); return; }
-    toast.success("Account created! Check your email to verify.");
+    if (data?.user) {
+      window.location.href = '/complete-profile';
+    }
   };
 
   const handleForgotPassword = async () => {
@@ -77,7 +79,6 @@ const Auth = () => {
 
         {mode !== "forgot" ? (
           <>
-            {/* Tab toggle */}
             <div className="flex bg-secondary rounded-xl p-1">
               <button
                 onClick={() => setMode("login")}
