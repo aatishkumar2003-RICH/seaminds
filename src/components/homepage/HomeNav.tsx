@@ -44,7 +44,7 @@ const HomeNav = () => {
             <Button size="sm" onClick={() => navigate("/app")}>
               Get Your Score
             </Button>
-            <Button size="sm" variant="outline" onClick={() => navigate("/app")}>
+            <Button size="sm" variant="outline" onClick={() => { window.location.href = '/auth'; }}>
               Company Login
             </Button>
           </div>
@@ -66,7 +66,7 @@ const HomeNav = () => {
             <Button size="sm" className="flex-1" onClick={() => { setMobileOpen(false); navigate("/app"); }}>
               Get Your Score
             </Button>
-            <Button size="sm" variant="outline" className="flex-1" onClick={() => { setMobileOpen(false); navigate("/app"); }}>
+            <Button size="sm" variant="outline" className="flex-1" onClick={() => { setMobileOpen(false); window.location.href = '/auth'; }}>
               Company Login
             </Button>
           </div>

@@ -11,7 +11,7 @@ const FinalCTA = () => {
           The Ocean Does Not Wait. Neither Should You.
         </h2>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Button size="lg" onClick={() => navigate("/app")} className="text-sm px-6 h-11">
+          <Button size="lg" onClick={() => { window.location.href = '/auth'; }} className="text-sm px-6 h-11">
             Start Free — I Am Crew
           </Button>
           <Button size="lg" variant="outline" onClick={() => navigate("/app")} className="text-sm px-6 h-11">

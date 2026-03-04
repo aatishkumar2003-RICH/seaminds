@@ -38,7 +38,7 @@ const LandingScreen = ({ onGetStarted, onManagerLogin }: LandingScreenProps) => 
 
       <Button
         className="w-full max-w-xs h-12 text-base font-semibold"
-        onClick={onGetStarted}
+        onClick={() => { window.location.href = '/auth'; }}
       >
         Get Started
       </Button>
@@ -46,7 +46,7 @@ const LandingScreen = ({ onGetStarted, onManagerLogin }: LandingScreenProps) => 
       <p className="text-[11px] text-muted-foreground mt-4">Free for crew members</p>
 
       <button
-        onClick={onManagerLogin}
+        onClick={() => { window.location.href = '/auth'; }}
         className="mt-6 text-xs text-muted-foreground hover:text-primary underline underline-offset-2 transition-colors"
       >
         Manager Login
