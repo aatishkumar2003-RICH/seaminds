@@ -14,6 +14,7 @@ import Community from "@/components/Community";
 import SMCScoreTab from "@/components/SMCScoreTab";
 import SOSButton from "@/components/SOSButton";
 import VoyageReport from "@/components/VoyageReport";
+
 type AppState = "loading" | "landing" | "name-entry" | "welcome" | "main" | "voyage-report";
 type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "community" | "smc";
 
@@ -32,7 +33,6 @@ const Index = () => {
   const [manningAgency, setManningAgency] = useState("");
   const [nationality, setNationality] = useState("");
 
-  // Dynamic page title based on active screen
   useEffect(() => {
     const titles: Record<Screen, string> = {
       chat: "SeaMinds | Wellness",
@@ -48,39 +48,35 @@ const Index = () => {
 
   useEffect(() => {
     const init = async () => {
-      // First check localStorage for existing profile
-      const savedId = localStorage.getItem(PROFILE_KEY);
-      if (savedId) {
-        const { data, error } = await supabase
-          .from("crew_profiles")
-          .select("id, first_name, last_name, onboarded, role, ship_name, voyage_start_date, manning_agency, nationality")
-          .eq("id", savedId)
-          .single();
-
-        if (!error && data) {
-          setProfileId(data.id);
-          setFirstName(data.first_name);
-          setLastName(data.last_name || "");
-          setRole(data.role);
-          setShipName(data.ship_name);
-          setVoyageStartDate(data.voyage_start_date || "");
-          setManningAgency(data.manning_agency || "");
-          setNationality(data.nationality || "");
-          setAppState(data.onboarded ? "main" : "welcome");
-          return;
-        }
-        localStorage.removeItem(PROFILE_KEY);
-      }
-
-      // No saved profile — check if user is logged in via auth
       const { data: sessionData } = await supabase.auth.getSession();
-      if (sessionData.session) {
-        // User is authenticated but has no crew profile yet → go to name-entry
-        setAppState("name-entry");
-      } else {
-        // Not logged in at all → send to auth
+      if (!sessionData.session) {
         window.location.href = '/auth';
+        return;
       }
+
+      const userId = sessionData.session.user.id;
+
+      const { data, error } = await supabase
+        .from("crew_profiles")
+        .select("id, first_name, last_name, onboarded, role, ship_name, voyage_start_date, manning_agency, nationality")
+        .eq("user_id", userId)
+        .single();
+
+      if (!error && data) {
+        localStorage.setItem(PROFILE_KEY, data.id);
+        setProfileId(data.id);
+        setFirstName(data.first_name);
+        setLastName(data.last_name || "");
+        setRole(data.role);
+        setShipName(data.ship_name);
+        setVoyageStartDate(data.voyage_start_date || "");
+        setManningAgency(data.manning_agency || "");
+        setNationality(data.nationality || "");
+        setAppState(data.onboarded ? "main" : "name-entry");
+        return;
+      }
+
+      setAppState("name-entry");
     };
 
     init();
@@ -98,9 +94,17 @@ const Index = () => {
     voyageStartDate: string;
     manningAgency: string;
   }) => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) {
+      window.location.href = '/auth';
+      return;
+    }
+
+    const userId = sessionData.session.user.id;
+
     const { data, error } = await supabase
       .from("crew_profiles")
-      .insert({
+      .update({
         first_name: profile.firstName,
         last_name: profile.lastName,
         ship_name: profile.shipName,
@@ -111,11 +115,16 @@ const Index = () => {
         years_at_sea: profile.yearsAtSea,
         voyage_start_date: profile.voyageStartDate || null,
         manning_agency: profile.manningAgency || null,
+        onboarded: false,
       })
+      .eq("user_id", userId)
       .select("id")
       .single();
 
-    if (error || !data) { console.error("Failed to create profile:", error); return; }
+    if (error || !data) {
+      console.error("Failed to update profile:", error);
+      return;
+    }
 
     localStorage.setItem(PROFILE_KEY, data.id);
     setProfileId(data.id);
@@ -146,7 +155,6 @@ const Index = () => {
   }
 
   if (appState === "landing") {
-    // Fallback: redirect to auth if somehow we reach landing
     window.location.href = '/auth';
     return null;
   }
