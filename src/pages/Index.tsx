@@ -47,26 +47,43 @@ const Index = () => {
   }, [screen, appState]);
 
   useEffect(() => {
-    const savedId = localStorage.getItem(PROFILE_KEY);
-    if (!savedId) { setAppState("landing"); return; }
+    const init = async () => {
+      // First check localStorage for existing profile
+      const savedId = localStorage.getItem(PROFILE_KEY);
+      if (savedId) {
+        const { data, error } = await supabase
+          .from("crew_profiles")
+          .select("id, first_name, last_name, onboarded, role, ship_name, voyage_start_date, manning_agency, nationality")
+          .eq("id", savedId)
+          .single();
 
-    supabase
-      .from("crew_profiles")
-      .select("id, first_name, last_name, onboarded, role, ship_name, voyage_start_date, manning_agency, nationality")
-      .eq("id", savedId)
-      .single()
-      .then(({ data, error }) => {
-        if (error || !data) { localStorage.removeItem(PROFILE_KEY); setAppState("landing"); return; }
-        setProfileId(data.id);
-        setFirstName(data.first_name);
-        setLastName(data.last_name || "");
-        setRole(data.role);
-        setShipName(data.ship_name);
-        setVoyageStartDate(data.voyage_start_date || "");
-        setManningAgency(data.manning_agency || "");
-        setNationality(data.nationality || "");
-        setAppState(data.onboarded ? "main" : "welcome");
-      });
+        if (!error && data) {
+          setProfileId(data.id);
+          setFirstName(data.first_name);
+          setLastName(data.last_name || "");
+          setRole(data.role);
+          setShipName(data.ship_name);
+          setVoyageStartDate(data.voyage_start_date || "");
+          setManningAgency(data.manning_agency || "");
+          setNationality(data.nationality || "");
+          setAppState(data.onboarded ? "main" : "welcome");
+          return;
+        }
+        localStorage.removeItem(PROFILE_KEY);
+      }
+
+      // No saved profile — check if user is logged in via auth
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData.session) {
+        // User is authenticated but has no crew profile yet → go to name-entry
+        setAppState("name-entry");
+      } else {
+        // Not logged in at all → send to auth
+        window.location.href = '/auth';
+      }
+    };
+
+    init();
   }, []);
 
   const handleNameSubmit = async (profile: {
