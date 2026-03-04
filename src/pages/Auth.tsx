@@ -28,7 +28,7 @@ const Auth = () => {
       toast.error(error.message.includes("Invalid login") ? "Incorrect password. Try again." : error.message);
       return;
     }
-    navigate("/app");
+    window.location.href = '/app';
   };
 
   const handleSignup = async () => {

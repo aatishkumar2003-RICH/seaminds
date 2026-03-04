@@ -1,14 +1,13 @@
-import { useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { type TimeOfDay, getGreeting } from "@/hooks/useTimeOfDay";
 
 interface Props {
   timeOfDay?: TimeOfDay;
+  isLoggedIn?: boolean;
 }
 
-const HeroSection = ({ timeOfDay = "day" }: Props) => {
-  const navigate = useNavigate();
+const HeroSection = ({ timeOfDay = "day", isLoggedIn = false }: Props) => {
   const greeting = getGreeting(timeOfDay);
 
   return (
@@ -31,12 +30,20 @@ const HeroSection = ({ timeOfDay = "day" }: Props) => {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">
-          <Button size="lg" onClick={() => { window.location.href = '/auth'; }} className="text-sm px-6 h-11">
-            I Am Crew — Get Started Free <ChevronRight className="ml-1 w-4 h-4" />
-          </Button>
-          <Button size="lg" variant="outline" onClick={() => navigate("/app")} className="text-sm px-6 h-11">
-            I Am a Company — Hire Verified Crew
-          </Button>
+          {isLoggedIn ? (
+            <Button size="lg" onClick={() => { window.location.href = '/app'; }} className="text-sm px-6 h-11">
+              Go to App <ChevronRight className="ml-1 w-4 h-4" />
+            </Button>
+          ) : (
+            <>
+              <Button size="lg" onClick={() => { window.location.href = '/auth'; }} className="text-sm px-6 h-11">
+                I Am Crew — Get Started Free <ChevronRight className="ml-1 w-4 h-4" />
+              </Button>
+              <Button size="lg" variant="outline" onClick={() => { window.location.href = '/auth'; }} className="text-sm px-6 h-11">
+                I Am a Company — Hire Verified Crew
+              </Button>
+            </>
+          )}
         </div>
 
         <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-muted-foreground font-mono-score">
