@@ -1,16 +1,15 @@
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { type TimeOfDay, getGreeting } from "@/hooks/useTimeOfDay";
 
 interface Props {
   timeOfDay?: TimeOfDay;
-  isLoggedIn?: boolean;
 }
 
-const HeroSection = ({ timeOfDay = "day", isLoggedIn = false }: Props) => {
+const HeroSection = ({ timeOfDay = "day" }: Props) => {
+  const navigate = useNavigate();
   const greeting = getGreeting(timeOfDay);
-  const [tab, setTab] = useState<"crew" | "company">("crew");
 
   return (
     <section className="relative pt-28 pb-16 md:pt-32 md:pb-20 overflow-hidden">
@@ -31,36 +30,13 @@ const HeroSection = ({ timeOfDay = "day", isLoggedIn = false }: Props) => {
           Built from 12 months of research with 10,000+ seafarers. Because the people at sea should design what the people at sea use.
         </p>
 
-        <div className="flex flex-col items-center gap-4 justify-center mb-8">
-          <div className="flex bg-secondary rounded-xl p-1 w-full max-w-xs">
-            <button
-              onClick={() => setTab("crew")}
-              className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${tab === "crew" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
-            >
-              I Am Crew
-            </button>
-            <button
-              onClick={() => setTab("company")}
-              className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${tab === "company" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
-            >
-              I Am a Company
-            </button>
-          </div>
-          {isLoggedIn ? (
-            <Button size="lg" onClick={() => { window.location.href = '/app'; }} className="text-sm px-6 h-11">
-              Go to App <ChevronRight className="ml-1 w-4 h-4" />
-            </Button>
-          ) : (
-            tab === "crew" ? (
-              <Button size="lg" onClick={() => { window.location.href = '/auth'; }} className="text-sm px-6 h-11">
-                Get Started Free <ChevronRight className="ml-1 w-4 h-4" />
-              </Button>
-            ) : (
-              <Button size="lg" onClick={() => { window.location.href = '/auth'; }} className="text-sm px-6 h-11">
-                Hire Verified Crew <ChevronRight className="ml-1 w-4 h-4" />
-              </Button>
-            )
-          )}
+        <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">
+          <Button size="lg" onClick={() => navigate("/app")} className="text-sm px-6 h-11">
+            I Am Crew — Get Started Free <ChevronRight className="ml-1 w-4 h-4" />
+          </Button>
+          <Button size="lg" variant="outline" onClick={() => navigate("/app")} className="text-sm px-6 h-11">
+            I Am a Company — Hire Verified Crew
+          </Button>
         </div>
 
         <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-muted-foreground font-mono-score">

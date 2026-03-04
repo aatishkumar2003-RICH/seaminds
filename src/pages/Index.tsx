@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { MessageCircle, LayoutDashboard, Briefcase, Newspaper, GraduationCap, Compass, Star, LogOut } from "lucide-react";
+import { MessageCircle, LayoutDashboard, Briefcase, Newspaper, GraduationCap, Compass, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import LandingScreen from "@/components/LandingScreen";
 import NameEntry from "@/components/NameEntry";
@@ -14,7 +14,6 @@ import Community from "@/components/Community";
 import SMCScoreTab from "@/components/SMCScoreTab";
 import SOSButton from "@/components/SOSButton";
 import VoyageReport from "@/components/VoyageReport";
-
 type AppState = "loading" | "landing" | "name-entry" | "welcome" | "main" | "voyage-report";
 type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "community" | "smc";
 
@@ -33,6 +32,7 @@ const Index = () => {
   const [manningAgency, setManningAgency] = useState("");
   const [nationality, setNationality] = useState("");
 
+  // Dynamic page title based on active screen
   useEffect(() => {
     const titles: Record<Screen, string> = {
       chat: "SeaMinds | Wellness",
@@ -47,62 +47,26 @@ const Index = () => {
   }, [screen, appState]);
 
   useEffect(() => {
-    const init = async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) {
-        window.location.href = '/auth';
-        return;
-      }
+    const savedId = localStorage.getItem(PROFILE_KEY);
+    if (!savedId) { setAppState("landing"); return; }
 
-      const userId = sessionData.session.user.id;
-      const userEmail = sessionData.session.user.email || "";
-
-      // Try to find existing profile by user_id
-      let { data } = await (supabase
-        .from("crew_profiles") as any)
-        .select("id, first_name, last_name, onboarded, role, ship_name, voyage_start_date, manning_agency, nationality")
-        .eq("user_id", userId)
-        .maybeSingle();
-
-      // If no profile exists, create one now
-      if (!data) {
-        const { data: newProfile } = await (supabase
-          .from("crew_profiles") as any)
-          .insert({
-            user_id: userId,
-            email: userEmail,
-            first_name: "",
-            last_name: "",
-            role: "",
-            ship_name: "",
-            nationality: "",
-            whatsapp_number: "",
-            years_at_sea: "",
-            onboarded: false,
-          })
-          .select("id, first_name, last_name, onboarded, role, ship_name, voyage_start_date, manning_agency, nationality")
-          .single();
-        data = newProfile;
-      }
-
-      if (data) {
-        localStorage.setItem(PROFILE_KEY, data.id);
+    supabase
+      .from("crew_profiles")
+      .select("id, first_name, last_name, onboarded, role, ship_name, voyage_start_date, manning_agency, nationality")
+      .eq("id", savedId)
+      .single()
+      .then(({ data, error }) => {
+        if (error || !data) { localStorage.removeItem(PROFILE_KEY); setAppState("landing"); return; }
         setProfileId(data.id);
-        setFirstName(data.first_name || "");
+        setFirstName(data.first_name);
         setLastName(data.last_name || "");
-        setRole(data.role || "");
-        setShipName(data.ship_name || "");
+        setRole(data.role);
+        setShipName(data.ship_name);
         setVoyageStartDate(data.voyage_start_date || "");
         setManningAgency(data.manning_agency || "");
         setNationality(data.nationality || "");
-        setAppState(data.onboarded ? "main" : "name-entry");
-        return;
-      }
-
-      setAppState("name-entry");
-    };
-
-    init();
+        setAppState(data.onboarded ? "main" : "welcome");
+      });
   }, []);
 
   const handleNameSubmit = async (profile: {
@@ -117,36 +81,24 @@ const Index = () => {
     voyageStartDate: string;
     manningAgency: string;
   }) => {
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (!sessionData.session) {
-      window.location.href = '/auth';
-      return;
-    }
-
-    const userId = sessionData.session.user.id;
-
-    const { data, error } = await (supabase
-      .from("crew_profiles") as any)
-      .update({
+    const { data, error } = await supabase
+      .from("crew_profiles")
+      .insert({
         first_name: profile.firstName,
         last_name: profile.lastName,
         ship_name: profile.shipName,
         role: profile.role,
+        gender: profile.gender || null,
         nationality: profile.nationality,
         whatsapp_number: profile.whatsappNumber,
         years_at_sea: profile.yearsAtSea,
         voyage_start_date: profile.voyageStartDate || null,
         manning_agency: profile.manningAgency || null,
-        onboarded: false,
       })
-      .eq("user_id", userId)
       .select("id")
       .single();
 
-    if (error || !data) {
-      console.error("Failed to update profile:", error);
-      return;
-    }
+    if (error || !data) { console.error("Failed to create profile:", error); return; }
 
     localStorage.setItem(PROFILE_KEY, data.id);
     setProfileId(data.id);
@@ -177,8 +129,12 @@ const Index = () => {
   }
 
   if (appState === "landing") {
-    window.location.href = '/auth';
-    return null;
+    return (
+      <div className="h-screen max-w-md mx-auto bg-background">
+        <SOSButton onOpenChat={() => { setAppState("main"); setScreen("chat"); }} />
+        <LandingScreen onGetStarted={() => setAppState("name-entry")} onManagerLogin={() => navigate("/manager")} />
+      </div>
+    );
   }
 
   if (appState === "name-entry") {
@@ -215,24 +171,9 @@ const Index = () => {
     );
   }
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    localStorage.removeItem(PROFILE_KEY);
-    window.location.href = '/';
-  };
-
   return (
     <div className="flex flex-col h-screen max-w-md mx-auto bg-background">
       <SOSButton onOpenChat={() => setScreen("chat")} />
-      <div className="flex justify-end px-4 pt-2">
-        <button
-          onClick={handleSignOut}
-          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <LogOut size={14} />
-          Sign Out
-        </button>
-      </div>
       <div className="flex-1 overflow-hidden">
         {screen === "chat" ? (
           <CrewChat profileId={profileId} firstName={firstName} role={role} shipName={shipName} voyageStartDate={voyageStartDate} />

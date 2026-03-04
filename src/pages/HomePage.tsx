@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 import HomeNav from "@/components/homepage/HomeNav";
 import HeroSection from "@/components/homepage/HeroSection";
 import OceanBackground from "@/components/homepage/OceanBackground";
@@ -11,24 +10,16 @@ import { useTimeOfDay } from "@/hooks/useTimeOfDay";
 
 const HomePage = () => {
   const timeOfDay = useTimeOfDay();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  useEffect(() => {
-    document.title = "SeaMinds";
-    supabase.auth.getSession().then(({ data }) => {
-      setIsLoggedIn(!!data.session);
-    });
-  }, []);
-
+  useEffect(() => { document.title = "SeaMinds"; }, []);
   return (
   <div className="min-h-screen animated-gradient-bg text-foreground relative">
     <OceanBackground timeOfDay={timeOfDay} />
     <div className="relative z-10">
-    <HomeNav isLoggedIn={isLoggedIn} />
-    <HeroSection timeOfDay={timeOfDay} isLoggedIn={isLoggedIn} />
+    <HomeNav />
+    <HeroSection timeOfDay={timeOfDay} />
     <BentoGrid />
     <TestimonialsSection />
-    <FinalCTA isLoggedIn={isLoggedIn} />
+    <FinalCTA />
     <HomeFooter />
     </div>
   </div>
