@@ -148,6 +148,7 @@ export type Database = {
       crew_profiles: {
         Row: {
           created_at: string
+          email: string | null
           first_name: string
           gender: string | null
           home_city: string | null
@@ -164,6 +165,7 @@ export type Database = {
           onboarded: boolean
           role: string
           ship_name: string
+          user_id: string | null
           vessel_imo: string | null
           voyage_start_date: string | null
           whatsapp_number: string
@@ -171,6 +173,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          email?: string | null
           first_name: string
           gender?: string | null
           home_city?: string | null
@@ -187,6 +190,7 @@ export type Database = {
           onboarded?: boolean
           role: string
           ship_name: string
+          user_id?: string | null
           vessel_imo?: string | null
           voyage_start_date?: string | null
           whatsapp_number?: string
@@ -194,6 +198,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          email?: string | null
           first_name?: string
           gender?: string | null
           home_city?: string | null
@@ -210,6 +215,7 @@ export type Database = {
           onboarded?: boolean
           role?: string
           ship_name?: string
+          user_id?: string | null
           vessel_imo?: string | null
           voyage_start_date?: string | null
           whatsapp_number?: string
