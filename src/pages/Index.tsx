@@ -125,8 +125,8 @@ const Index = () => {
 
     const userId = sessionData.session.user.id;
 
-    const { data, error } = await supabase
-      .from("crew_profiles")
+    const { data, error } = await (supabase
+      .from("crew_profiles") as any)
       .update({
         first_name: profile.firstName,
         last_name: profile.lastName,
