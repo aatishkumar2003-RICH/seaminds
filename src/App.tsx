@@ -10,7 +10,6 @@ import ManagerDashboard from "./pages/ManagerDashboard";
 import NotFound from "./pages/NotFound";
 import TermsOfService from "./pages/TermsOfService";
 import Pricing from "./pages/Pricing";
-import Auth from "./pages/Auth";
 
 const queryClient = new QueryClient();
 
@@ -23,7 +22,6 @@ const App = () => (
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/app" element={<Index />} />
-          <Route path="/auth" element={<Auth />} />
           <Route path="/manager" element={<ManagerAuth />} />
           <Route path="/manager/dashboard" element={<ManagerDashboard />} />
           <Route path="/terms" element={<TermsOfService />} />
