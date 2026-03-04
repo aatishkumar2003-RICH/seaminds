@@ -58,16 +58,16 @@ const Index = () => {
       const userEmail = sessionData.session.user.email || "";
 
       // Try to find existing profile by user_id
-      let { data } = await supabase
-        .from("crew_profiles")
+      let { data } = await (supabase
+        .from("crew_profiles") as any)
         .select("id, first_name, last_name, onboarded, role, ship_name, voyage_start_date, manning_agency, nationality")
         .eq("user_id", userId)
         .maybeSingle();
 
       // If no profile exists, create one now
       if (!data) {
-        const { data: newProfile } = await supabase
-          .from("crew_profiles")
+        const { data: newProfile } = await (supabase
+          .from("crew_profiles") as any)
           .insert({
             user_id: userId,
             email: userEmail,
@@ -125,8 +125,8 @@ const Index = () => {
 
     const userId = sessionData.session.user.id;
 
-    const { data, error } = await supabase
-      .from("crew_profiles")
+    const { data, error } = await (supabase
+      .from("crew_profiles") as any)
       .update({
         first_name: profile.firstName,
         last_name: profile.lastName,
