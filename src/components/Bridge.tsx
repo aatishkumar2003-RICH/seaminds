@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { ArrowLeft, Search, Send, Loader2 } from "lucide-react";
+import { ArrowLeft, Search, Send, Loader2, Bookmark, Trash2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -139,7 +139,20 @@ const Bridge = () => {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const [showPocket, setShowPocket] = useState(false);
+  const [pocketItems, setPocketItems] = useState<{query: string; answer: string; savedAt: string}[]>([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const loadPocket = () => {
+    const items = JSON.parse(localStorage.getItem("bridge_pocket") || "[]");
+    setPocketItems(items);
+  };
+
+  const deletePocketItem = (index: number) => {
+    const updated = pocketItems.filter((_, i) => i !== index);
+    setPocketItems(updated);
+    localStorage.setItem("bridge_pocket", JSON.stringify(updated));
+  };
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -338,6 +351,56 @@ const Bridge = () => {
     );
   }
 
+  // Pocket view
+  if (showPocket) {
+    return (
+      <div className="flex flex-col h-full px-4 py-3 overflow-y-auto">
+        <button onClick={() => setShowPocket(false)} className="flex items-center gap-2 mb-4" style={{ color: "#D4AF37" }}>
+          <ArrowLeft size={18} /> <span className="text-sm font-medium">Back</span>
+        </button>
+        <div className="text-center mb-6">
+          <h2 className="text-lg font-bold" style={{ color: "#D4AF37" }}>💾 My Pocket</h2>
+          <p className="text-xs text-muted-foreground">{pocketItems.length} saved {pocketItems.length === 1 ? "item" : "items"}</p>
+        </div>
+        {pocketItems.length === 0 ? (
+          <div className="text-center text-muted-foreground text-sm mt-8">
+            <p>No saved items yet.</p>
+            <p className="text-xs mt-1">Use "Save to My Pocket" after any Bridge answer.</p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {pocketItems.map((item, i) => (
+              <div key={i} className="rounded-xl p-4" style={{ background: "rgba(13,27,42,0.85)", border: "1px solid rgba(212,175,55,0.15)" }}>
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <span className="text-sm font-semibold text-foreground flex-1">{item.query}</span>
+                  <button onClick={() => deletePocketItem(i)} className="shrink-0 text-muted-foreground hover:text-red-400 transition-colors">
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+                <p className="text-xs text-muted-foreground line-clamp-3">{item.answer}</p>
+                <p className="text-[10px] text-muted-foreground mt-2">{new Date(item.savedAt).toLocaleDateString()}</p>
+                <button
+                  onClick={() => {
+                    setMessages([
+                      { role: "user", content: item.query },
+                      { role: "assistant", content: item.answer },
+                    ]);
+                    setShowPocket(false);
+                    setShowChat(true);
+                  }}
+                  className="text-[11px] mt-2 font-medium"
+                  style={{ color: "#D4AF37" }}
+                >
+                  View full answer →
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   // Department drill-down
   if (activeDept) {
     return (
@@ -401,6 +464,15 @@ const Bridge = () => {
           </button>
         ))}
       </div>
+
+      {/* My Pocket button */}
+      <button
+        onClick={() => { loadPocket(); setShowPocket(true); }}
+        className="flex items-center justify-center gap-2 mb-4 py-2.5 rounded-xl text-sm w-full transition-colors"
+        style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#D4AF37", background: "rgba(13,27,42,0.5)" }}
+      >
+        <Bookmark size={14} /> My Pocket
+      </button>
 
       <div className="grid grid-cols-2 gap-3">
         {DEPARTMENTS.map((dept) => (
