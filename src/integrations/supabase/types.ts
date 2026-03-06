@@ -294,6 +294,7 @@ export type Database = {
           joining_port: string
           monthly_salary: string | null
           rank_required: string
+          status: string
           vessel_type: string
         }
         Insert: {
@@ -306,6 +307,7 @@ export type Database = {
           joining_port: string
           monthly_salary?: string | null
           rank_required: string
+          status?: string
           vessel_type: string
         }
         Update: {
@@ -318,6 +320,7 @@ export type Database = {
           joining_port?: string
           monthly_salary?: string | null
           rank_required?: string
+          status?: string
           vessel_type?: string
         }
         Relationships: []

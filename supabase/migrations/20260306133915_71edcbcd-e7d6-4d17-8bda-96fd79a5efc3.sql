@@ -1,0 +1,1 @@
+ALTER TABLE public.job_postings ADD COLUMN status text NOT NULL DEFAULT 'active';
