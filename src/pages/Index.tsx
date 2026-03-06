@@ -92,6 +92,7 @@ const Index = () => {
         );
         if (match) {
           setJobMatch(match);
+          setJobBadgeCount(prev => prev + 1);
           sessionStorage.setItem("seamind_job_match_shown", "1");
         }
       }
