@@ -139,7 +139,20 @@ const Bridge = () => {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const [showPocket, setShowPocket] = useState(false);
+  const [pocketItems, setPocketItems] = useState<{query: string; answer: string; savedAt: string}[]>([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const loadPocket = () => {
+    const items = JSON.parse(localStorage.getItem("bridge_pocket") || "[]");
+    setPocketItems(items);
+  };
+
+  const deletePocketItem = (index: number) => {
+    const updated = pocketItems.filter((_, i) => i !== index);
+    setPocketItems(updated);
+    localStorage.setItem("bridge_pocket", JSON.stringify(updated));
+  };
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
