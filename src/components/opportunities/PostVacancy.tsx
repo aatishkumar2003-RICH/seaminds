@@ -410,7 +410,7 @@ const PostVacancy = () => {
               <p>After payment, your vacancy goes live within 2 hours.</p>
               <p>
                 Send payment proof via WhatsApp:<br />
-                <strong className="text-foreground">+62-21-12345678</strong>
+                <strong className="text-foreground">+62-85219878989</strong>
               </p>
               <p>
                 Questions: <strong className="text-foreground">info@indossol.com</strong>
