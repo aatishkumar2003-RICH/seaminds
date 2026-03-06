@@ -172,6 +172,36 @@ export type Database = {
           },
         ]
       }
+      crew_documents: {
+        Row: {
+          category: string
+          created_at: string
+          crew_profile_id: string
+          file_name: string
+          id: string
+          source: string
+          storage_path: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          crew_profile_id: string
+          file_name: string
+          id?: string
+          source?: string
+          storage_path: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          crew_profile_id?: string
+          file_name?: string
+          id?: string
+          source?: string
+          storage_path?: string
+        }
+        Relationships: []
+      }
       crew_profiles: {
         Row: {
           created_at: string
