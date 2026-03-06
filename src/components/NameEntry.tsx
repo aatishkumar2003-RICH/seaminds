@@ -75,7 +75,7 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
 
   const canSubmit =
     firstName.trim() && lastName.trim() && shipName.trim() && role &&
-    nationality.trim() && yearsAtSea;
+    nationality.trim() && yearsAtSea && phoneNumber.trim();
 
   const handleSubmit = () => {
     if (!canSubmit) return;
@@ -252,7 +252,7 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
 
           {/* WhatsApp Number */}
           <div className="space-y-1.5">
-            <label className={labelClass}>WhatsApp Number</label>
+            <label className={labelClass}>WhatsApp Number *</label>
             <div className="flex gap-2">
               <div className="relative w-28 shrink-0">
                 <select value={countryCode} onChange={(e) => setCountryCode(e.target.value)} className={selectClass}>
