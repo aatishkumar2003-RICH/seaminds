@@ -1,0 +1,1 @@
+ALTER TABLE public.job_postings ADD COLUMN plan text NOT NULL DEFAULT 'single';

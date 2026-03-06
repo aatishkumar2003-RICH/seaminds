@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { UploadCloud, CheckCircle, Loader2 } from "lucide-react";
+import { UploadCloud, CheckCircle, Loader2, Star, X } from "lucide-react";
 
 const RANKS = [
   "Captain", "Chief Officer", "2nd Officer", "3rd Officer",
@@ -21,6 +21,14 @@ const DURATIONS = [
   "1-2 months", "3-4 months", "5-6 months", "7-8 months", "9-12 months", "Permanent",
 ];
 
+type PricingPlan = "single" | "monthly" | "annual";
+
+const PLANS: { id: PricingPlan; name: string; price: string; desc: string; popular?: boolean }[] = [
+  { id: "single", name: "Single Post", price: "$19", desc: "1 vacancy, visible 30 days" },
+  { id: "monthly", name: "Monthly", price: "$99/month", desc: "Unlimited posts for 30 days", popular: true },
+  { id: "annual", name: "Annual", price: "$799/year", desc: "Unlimited posts, 12 months" },
+];
+
 const PostVacancy = () => {
   const [rankRequired, setRankRequired] = useState("");
   const [vesselType, setVesselType] = useState("");
@@ -31,6 +39,8 @@ const PostVacancy = () => {
   const [companyName, setCompanyName] = useState("");
   const [additionalNotes, setAdditionalNotes] = useState("");
   const [posting, setPosting] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<PricingPlan>("single");
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   const [uploadedFileName, setUploadedFileName] = useState("");
   const [aiReading, setAiReading] = useState(false);
@@ -107,23 +117,18 @@ const PostVacancy = () => {
 
       const fuzzyMatch = (input: string, options: string[], aliases?: Record<string, string>): string | null => {
         const lower = input.toLowerCase().trim();
-        // Check aliases first
         if (aliases && aliases[lower]) return aliases[lower];
-        // Exact match
         const exact = options.find((o) => o.toLowerCase() === lower);
         if (exact) return exact;
-        // Contains match
         const contains = options.find(
           (o) => o.toLowerCase().includes(lower) || lower.includes(o.toLowerCase())
         );
         if (contains) return contains;
-        // Partial alias match
         if (aliases) {
           for (const [alias, mapped] of Object.entries(aliases)) {
             if (lower.includes(alias) || alias.includes(lower)) return mapped;
           }
         }
-        // Word overlap scoring
         const inputWords = lower.split(/[\s\-\/()]+/).filter(Boolean);
         let bestScore = 0;
         let bestMatch: string | null = null;
@@ -166,17 +171,19 @@ const PostVacancy = () => {
     }
   };
 
-  const handlePost = async () => {
+  const handlePostClick = () => {
     if (!rankRequired || !vesselType || !contractDuration || !joiningPort || !contactWhatsapp || !companyName) {
       toast({ title: "Missing Fields", description: "Please fill all required fields.", variant: "destructive" });
       return;
     }
-
     if (wordCount > 100) {
       toast({ title: "Too Long", description: "Additional notes must be 100 words or less.", variant: "destructive" });
       return;
     }
+    setShowPaymentModal(true);
+  };
 
+  const handleConfirmPayment = async () => {
     setPosting(true);
 
     const { error } = await supabase.from("job_postings" as any).insert({
@@ -188,16 +195,19 @@ const PostVacancy = () => {
       contact_whatsapp: contactWhatsapp,
       company_name: companyName,
       additional_notes: additionalNotes || null,
+      status: "pending_payment",
+      plan: selectedPlan,
     } as any);
 
     setPosting(false);
 
     if (error) {
-      toast({ title: "Error", description: "Failed to post vacancy.", variant: "destructive" });
+      toast({ title: "Error", description: "Failed to submit vacancy.", variant: "destructive" });
       return;
     }
 
-    toast({ title: "✅ Vacancy Posted", description: "Vacancy posted successfully. Crew will see it in Available Positions." });
+    setShowPaymentModal(false);
+    toast({ title: "✅ Received!", description: "Your vacancy goes live within 2 hours after payment confirmation." });
     setRankRequired("");
     setVesselType("");
     setContractDuration("");
@@ -208,7 +218,10 @@ const PostVacancy = () => {
     setAdditionalNotes("");
     setUploadedFileName("");
     setAiSuccess(false);
+    setSelectedPlan("single");
   };
+
+  const currentPlan = PLANS.find((p) => p.id === selectedPlan)!;
 
   return (
     <div className="space-y-4 pt-3">
@@ -311,10 +324,119 @@ const PostVacancy = () => {
           <p className={`text-[10px] ${wordCount > 100 ? "text-destructive" : "text-muted-foreground"}`}>{wordCount}/100 words</p>
         </div>
 
-        <Button className="w-full" onClick={handlePost} disabled={posting}>
-          {posting ? "Posting..." : "Post Vacancy"}
+        {/* Pricing Cards */}
+        <div className="space-y-2">
+          <label className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">Select Plan</label>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {PLANS.map((plan) => (
+              <button
+                key={plan.id}
+                onClick={() => setSelectedPlan(plan.id)}
+                className="relative rounded-xl p-4 text-left transition-all"
+                style={{
+                  border: selectedPlan === plan.id
+                    ? "2px solid #D4AF37"
+                    : plan.popular
+                    ? "1px solid rgba(212, 175, 55, 0.4)"
+                    : "1px solid hsl(var(--border))",
+                  background: selectedPlan === plan.id
+                    ? "rgba(212, 175, 55, 0.08)"
+                    : "hsl(var(--secondary))",
+                }}
+              >
+                {plan.popular && (
+                  <span
+                    className="absolute -top-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                    style={{ background: "#D4AF37", color: "#0a1929" }}
+                  >
+                    <Star size={10} fill="currentColor" /> POPULAR
+                  </span>
+                )}
+                <div className="text-lg font-bold text-foreground">{plan.price}</div>
+                <div className="text-sm font-medium text-foreground mt-0.5">{plan.name}</div>
+                <div className="text-[11px] text-muted-foreground mt-1">{plan.desc}</div>
+                <div
+                  className="mt-3 text-center text-xs font-semibold py-1.5 rounded-lg transition-colors"
+                  style={{
+                    background: selectedPlan === plan.id ? "#D4AF37" : "hsl(var(--muted))",
+                    color: selectedPlan === plan.id ? "#0a1929" : "hsl(var(--muted-foreground))",
+                  }}
+                >
+                  {selectedPlan === plan.id ? "✓ Selected" : "Select"}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <Button className="w-full" onClick={handlePostClick} disabled={posting}>
+          {posting ? "Submitting..." : "Post Vacancy →"}
         </Button>
       </div>
+
+      {/* Payment Instruction Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+          <div
+            className="relative w-full max-w-md rounded-2xl p-6 space-y-4"
+            style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
+          >
+            <button
+              onClick={() => setShowPaymentModal(false)}
+              className="absolute top-3 right-3"
+              style={{ background: "none", border: "none", cursor: "pointer" }}
+            >
+              <X size={18} className="text-muted-foreground" />
+            </button>
+
+            <h3 className="text-base font-bold text-foreground">Your vacancy is ready to publish.</h3>
+
+            <div
+              className="rounded-xl p-3"
+              style={{ background: "rgba(212, 175, 55, 0.1)", border: "1px solid rgba(212, 175, 55, 0.3)" }}
+            >
+              <p className="text-sm text-foreground font-medium">
+                Selected Plan: {currentPlan.name} — {currentPlan.price}
+              </p>
+            </div>
+
+            <div className="space-y-3 text-sm text-muted-foreground">
+              <p>
+                Pay via PayPal to: <strong className="text-foreground">info@indossol.com</strong>
+              </p>
+              <p>
+                Reference: <strong className="text-foreground">{companyName || "Company"} - {rankRequired || "Rank"}</strong>
+              </p>
+              <p>After payment, your vacancy goes live within 2 hours.</p>
+              <p>
+                Send payment proof via WhatsApp:<br />
+                <strong className="text-foreground">+62-21-12345678</strong>
+              </p>
+              <p>
+                Questions: <strong className="text-foreground">info@indossol.com</strong>
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2 pt-2">
+              <button
+                onClick={handleConfirmPayment}
+                disabled={posting}
+                className="w-full py-3 rounded-xl text-sm font-bold transition-colors disabled:opacity-50"
+                style={{ background: "#D4AF37", color: "#0a1929" }}
+              >
+                {posting ? "Submitting..." : "I Have Paid — Submit for Review"}
+              </button>
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                className="w-full py-2.5 rounded-xl text-sm font-medium text-muted-foreground"
+                style={{ background: "hsl(var(--muted))" }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
