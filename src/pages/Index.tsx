@@ -294,6 +294,7 @@ const Index = () => {
           <span className="text-[10px] font-medium tracking-wide uppercase">SMC</span>
         </button>
       </nav>
+      </div>
     </div>
   );
 };
