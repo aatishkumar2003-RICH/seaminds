@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { MessageCircle, LayoutDashboard, Briefcase, Newspaper, GraduationCap, Compass, Star, LogOut, Anchor } from "lucide-react";
+import { MessageCircle, LayoutDashboard, Briefcase, Newspaper, GraduationCap, Compass, Star, LogOut, Anchor, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import LandingScreen from "@/components/LandingScreen";
 import OceanBackground from "@/components/homepage/OceanBackground";
