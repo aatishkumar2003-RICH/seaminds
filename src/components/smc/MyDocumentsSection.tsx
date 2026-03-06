@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { FileText, Eye, Download, RefreshCw, Upload, Plus, Trash2, ChevronDown, Shield, Award, Anchor } from "lucide-react";
+import { FileText, Eye, Download, RefreshCw, Plus, Trash2, ChevronDown, Shield } from "lucide-react";
 import { toast } from "sonner";
 
 interface MyDocumentsSectionProps {
@@ -15,10 +15,10 @@ interface DocRecord {
   source: string;
   created_at: string;
   signedUrl?: string;
+  custom_label?: string;
 }
 
 const DOC_CATEGORIES = [
-  { value: "cv", label: "CV / Resume", icon: "📄" },
   { value: "coc", label: "Certificate of Competency (COC)", icon: "🎓" },
   { value: "cdc", label: "Continuous Discharge Certificate (CDC)", icon: "📋" },
   { value: "bst", label: "Basic Safety Training (BST)", icon: "🛡️" },
@@ -26,6 +26,8 @@ const DOC_CATEGORIES = [
   { value: "tanker", label: "Tanker Endorsement", icon: "⛽" },
   { value: "medical", label: "Medical Certificate", icon: "🏥" },
   { value: "sea_service", label: "Sea Service Record", icon: "⚓" },
+  { value: "other_stcw", label: "Other STCW Certificate", icon: "📜" },
+  { value: "other_non_stcw", label: "Other Non-STCW Certificate", icon: "📎" },
 ];
 
 const CATEGORY_LABELS: Record<string, string> = Object.fromEntries(
@@ -42,7 +44,10 @@ const MyDocumentsSection = ({ profileId }: MyDocumentsSectionProps) => {
   const [expanded, setExpanded] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("coc");
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+  const [customName, setCustomName] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const needsCustomName = selectedCategory === "other_stcw" || selectedCategory === "other_non_stcw";
 
   const loadDocuments = async () => {
     setLoading(true);
@@ -68,34 +73,7 @@ const MyDocumentsSection = ({ profileId }: MyDocumentsSectionProps) => {
       }
     }
 
-    // 2. Load CV from crew-cvs bucket
-    const { data: cvFiles } = await supabase.storage
-      .from("crew-cvs")
-      .list(profileId, { limit: 1 });
-
-    if (cvFiles && cvFiles.length > 0) {
-      const cvFile = cvFiles[0];
-      const cvPath = `${profileId}/${cvFile.name}`;
-      const { data: cvUrlData } = await supabase.storage
-        .from("crew-cvs")
-        .createSignedUrl(cvPath, 3600);
-
-      // Only add if not already tracked in crew_documents
-      const alreadyTracked = allDocs.some((d) => d.category === "cv");
-      if (!alreadyTracked) {
-        allDocs.unshift({
-          id: `cv-${cvFile.name}`,
-          category: "cv",
-          file_name: cvFile.name,
-          storage_path: cvPath,
-          source: "onboarding",
-          created_at: (cvFile as any).created_at || new Date().toISOString(),
-          signedUrl: cvUrlData?.signedUrl || undefined,
-        });
-      }
-    }
-
-    // 3. Load SMC assessment documents from smc-documents bucket
+    // 2. Load SMC assessment documents from smc-documents bucket
     const { data: smcAssessment } = await supabase
       .from("smc_assessments")
       .select("id")
@@ -113,11 +91,9 @@ const MyDocumentsSection = ({ profileId }: MyDocumentsSectionProps) => {
       if (smcFiles && smcFiles.length > 0) {
         for (const file of smcFiles) {
           const fullPath = `${smcPath}/${file.name}`;
-          // Check if already tracked
           const alreadyTracked = allDocs.some((d) => d.storage_path === fullPath);
           if (alreadyTracked) continue;
 
-          // Determine category from filename
           let category = "additional";
           if (file.name.startsWith("cdc")) category = "cdc";
           else if (file.name.startsWith("coc")) category = "coc";
@@ -159,18 +135,27 @@ const MyDocumentsSection = ({ profileId }: MyDocumentsSectionProps) => {
         .upload(path, file);
       if (uploadError) throw uploadError;
 
+      // For custom categories, store the custom name in the file_name field with a prefix
+      const displayName = needsCustomName && customName.trim()
+        ? `[${customName.trim()}] ${file.name}`
+        : file.name;
+
       const { error: dbError } = await supabase
         .from("crew_documents")
         .insert({
           crew_profile_id: profileId,
           category: selectedCategory,
-          file_name: file.name,
+          file_name: displayName,
           storage_path: path,
           source: "manual",
         });
       if (dbError) throw dbError;
 
-      toast.success(`${CATEGORY_LABELS[selectedCategory] || selectedCategory} uploaded`);
+      const label = needsCustomName && customName.trim()
+        ? customName.trim()
+        : CATEGORY_LABELS[selectedCategory] || selectedCategory;
+      toast.success(`${label} uploaded`);
+      setCustomName("");
       await loadDocuments();
       setShowCategoryPicker(false);
     } catch (e) {
@@ -188,19 +173,22 @@ const MyDocumentsSection = ({ profileId }: MyDocumentsSectionProps) => {
     }
 
     try {
-      if (doc.id.startsWith("cv-")) {
-        // Delete from crew-cvs bucket
-        await supabase.storage.from("crew-cvs").remove([doc.storage_path]);
-      } else {
-        // Delete from crew-documents bucket and DB
-        await supabase.storage.from("crew-documents").remove([doc.storage_path]);
-        await supabase.from("crew_documents").delete().eq("id", doc.id);
-      }
+      await supabase.storage.from("crew-documents").remove([doc.storage_path]);
+      await supabase.from("crew_documents").delete().eq("id", doc.id);
       toast.success("Document removed");
       await loadDocuments();
     } catch {
       toast.error("Failed to delete document");
     }
+  };
+
+  const getDisplayLabel = (doc: DocRecord) => {
+    // Extract custom name from file_name like "[Custom Name] original.pdf"
+    if ((doc.category === "other_stcw" || doc.category === "other_non_stcw") && doc.file_name.startsWith("[")) {
+      const endBracket = doc.file_name.indexOf("]");
+      if (endBracket > 0) return doc.file_name.substring(1, endBracket);
+    }
+    return CATEGORY_LABELS[doc.category] || doc.category;
   };
 
   const docCount = documents.length;
@@ -230,7 +218,6 @@ const MyDocumentsSection = ({ profileId }: MyDocumentsSectionProps) => {
       {/* Expanded content */}
       {expanded && (
         <div className="px-4 pb-4 space-y-3">
-          {/* Document list */}
           {documents.length === 0 && !loading && (
             <p className="text-xs text-muted-foreground text-center py-3">
               No documents uploaded yet
@@ -238,18 +225,17 @@ const MyDocumentsSection = ({ profileId }: MyDocumentsSectionProps) => {
           )}
 
           {documents.map((doc) => (
-            <div
-              key={doc.id}
-              className="flex items-center gap-3 bg-secondary/50 rounded-xl p-3"
-            >
+            <div key={doc.id} className="flex items-center gap-3 bg-secondary/50 rounded-xl p-3">
               <span className="text-lg shrink-0">
                 {CATEGORY_ICONS[doc.category] || "📎"}
               </span>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-foreground truncate">
-                  {CATEGORY_LABELS[doc.category] || doc.category}
+                  {getDisplayLabel(doc)}
                 </p>
-                <p className="text-[10px] text-muted-foreground truncate">{doc.file_name}</p>
+                <p className="text-[10px] text-muted-foreground truncate">
+                  {doc.file_name.startsWith("[") ? doc.file_name.replace(/^\[.*?\]\s*/, "") : doc.file_name}
+                </p>
                 {doc.source === "smc" && (
                   <span className="inline-flex items-center gap-0.5 text-[9px] text-primary mt-0.5">
                     <Shield size={8} /> SMC Assessment
@@ -291,7 +277,7 @@ const MyDocumentsSection = ({ profileId }: MyDocumentsSectionProps) => {
             </div>
           ))}
 
-          {/* Add document */}
+          {/* Hidden file input */}
           <input
             ref={fileRef}
             type="file"
@@ -308,13 +294,10 @@ const MyDocumentsSection = ({ profileId }: MyDocumentsSectionProps) => {
             <div className="bg-secondary/50 rounded-xl p-3 space-y-2">
               <p className="text-xs font-medium text-foreground">Select document type:</p>
               <div className="grid grid-cols-2 gap-1.5">
-                {DOC_CATEGORIES.filter((c) => c.value !== "cv").map((cat) => (
+                {DOC_CATEGORIES.map((cat) => (
                   <button
                     key={cat.value}
-                    onClick={() => {
-                      setSelectedCategory(cat.value);
-                      fileRef.current?.click();
-                    }}
+                    onClick={() => setSelectedCategory(cat.value)}
                     className={`flex items-center gap-2 text-left text-xs px-3 py-2 rounded-lg transition-colors ${
                       selectedCategory === cat.value
                         ? "bg-primary/20 text-primary border border-primary/30"
@@ -326,12 +309,42 @@ const MyDocumentsSection = ({ profileId }: MyDocumentsSectionProps) => {
                   </button>
                 ))}
               </div>
-              <button
-                onClick={() => setShowCategoryPicker(false)}
-                className="w-full text-xs text-muted-foreground py-1"
-              >
-                Cancel
-              </button>
+
+              {/* Custom name input for Other categories */}
+              {needsCustomName && (
+                <input
+                  type="text"
+                  value={customName}
+                  onChange={(e) => setCustomName(e.target.value)}
+                  placeholder="Enter certificate name..."
+                  className="w-full text-xs bg-background border border-border rounded-lg px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
+                />
+              )}
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    if (needsCustomName && !customName.trim()) {
+                      toast.error("Please enter a certificate name");
+                      return;
+                    }
+                    fileRef.current?.click();
+                  }}
+                  disabled={uploading}
+                  className="flex-1 text-xs font-medium bg-primary text-primary-foreground py-2 rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+                >
+                  {uploading ? "Uploading..." : "Choose File"}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowCategoryPicker(false);
+                    setCustomName("");
+                  }}
+                  className="text-xs text-muted-foreground px-3 py-2"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           ) : (
             <button
