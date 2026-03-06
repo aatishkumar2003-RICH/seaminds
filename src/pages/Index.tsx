@@ -439,6 +439,8 @@ const Index = () => {
           <Compass size={18} />
           <span className="text-[10px] font-medium tracking-wide uppercase">Community</span>
         </button>
+        <button onClick={() => setScreen("smc")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "smc" ? "text-primary" : "text-muted-foreground"}`}>
+          <Star size={18} />
           <span className="text-[10px] font-medium tracking-wide uppercase">SMC</span>
         </button>
       </nav>
