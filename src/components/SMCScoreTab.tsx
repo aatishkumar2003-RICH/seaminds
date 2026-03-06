@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { FileText, Eye, Download } from "lucide-react";
 import CrewPaymentGate from "@/components/smc/CrewPaymentGate";
 import SMCScoreCertificate from "@/components/smc/SMCScoreCertificate";
 import AssessmentFlow from "@/components/smc/AssessmentFlow";
@@ -14,6 +15,65 @@ interface SMCScoreTabProps {
 
 type View = "loading" | "payment" | "assessment" | "certificate";
 
+const CvDocumentCard = ({ profileId }: { profileId: string }) => {
+  const [cvUrl, setCvUrl] = useState<string | null>(null);
+  const [cvFileName, setCvFileName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const check = async () => {
+      const { data } = await supabase.storage
+        .from("crew-cvs")
+        .list(profileId, { limit: 1 });
+      if (data && data.length > 0) {
+        const file = data[0];
+        setCvFileName(file.name);
+        const { data: urlData } = await supabase.storage
+          .from("crew-cvs")
+          .createSignedUrl(`${profileId}/${file.name}`, 3600);
+        if (urlData?.signedUrl) setCvUrl(urlData.signedUrl);
+      }
+    };
+    check();
+  }, [profileId]);
+
+  if (!cvFileName) return null;
+
+  return (
+    <div className="mx-4 mb-4 bg-card rounded-2xl border border-border p-4">
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center">
+          <FileText size={16} className="text-primary" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-foreground">My CV</p>
+          <p className="text-xs text-muted-foreground truncate">{cvFileName}</p>
+        </div>
+        {cvUrl && (
+          <div className="flex gap-1.5">
+            <a
+              href={cvUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors"
+              title="View"
+            >
+              <Eye size={14} className="text-primary" />
+            </a>
+            <a
+              href={cvUrl}
+              download={cvFileName}
+              className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors"
+              title="Download"
+            >
+              <Download size={14} className="text-primary-foreground" />
+            </a>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScoreTabProps) => {
   const [view, setView] = useState<View>("loading");
   const [assessmentId, setAssessmentId] = useState("");
@@ -23,7 +83,6 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
   }, [profileId]);
 
   const checkStatus = async () => {
-    // Check for completed assessment first
     const { data: assessment } = await supabase
       .from("smc_assessments")
       .select("*")
@@ -44,7 +103,6 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
       return;
     }
 
-    // Check for payment
     const { data: payment } = await supabase
       .from("smc_payments")
       .select("*")
@@ -53,7 +111,6 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
       .maybeSingle();
 
     if (payment) {
-      // Payment exists but no assessment — create one
       const { data: newAssessment } = await supabase
         .from("smc_assessments")
         .insert({ crew_profile_id: profileId, status: "in_progress", current_step: 1 })
@@ -70,7 +127,6 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
   };
 
   const handlePaymentSuccess = async () => {
-    // Create assessment record
     const { data } = await supabase
       .from("smc_assessments")
       .insert({ crew_profile_id: profileId, status: "in_progress", current_step: 1 })
@@ -80,7 +136,6 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
       setAssessmentId(data.id);
       setView("assessment");
     } else {
-      // Even if DB fails, still navigate
       setAssessmentId("temp-" + Date.now());
       setView("assessment");
     }
@@ -98,26 +153,28 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
     );
   }
 
-  if (view === "payment") {
-    return <CrewPaymentGate profileId={profileId} onPaymentSuccess={handlePaymentSuccess} />;
-  }
-
-  if (view === "assessment") {
-    return (
-      <AssessmentFlow
-        profileId={profileId}
-        firstName={firstName}
-        lastName={lastName}
-        rank={rank}
-        shipName={shipName}
-        assessmentId={assessmentId}
-        onComplete={() => setView("certificate")}
-      />
-    );
-  }
-
-  // certificate view
-  return <SMCScoreCertificate />;
+  return (
+    <div className="flex flex-col h-full">
+      <CvDocumentCard profileId={profileId} />
+      <div className="flex-1 overflow-hidden">
+        {view === "payment" ? (
+          <CrewPaymentGate profileId={profileId} onPaymentSuccess={handlePaymentSuccess} />
+        ) : view === "assessment" ? (
+          <AssessmentFlow
+            profileId={profileId}
+            firstName={firstName}
+            lastName={lastName}
+            rank={rank}
+            shipName={shipName}
+            assessmentId={assessmentId}
+            onComplete={() => setView("certificate")}
+          />
+        ) : (
+          <SMCScoreCertificate />
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default SMCScoreTab;
