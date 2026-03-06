@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { CalendarIcon, Ship, Anchor, Globe, Clock, MapPin, DollarSign, Check, AlertTriangle, Award } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,19 @@ interface Vacancy {
   min_smc_score: number | null;
 }
 
+interface JobPosting {
+  id: string;
+  rank_required: string;
+  vessel_type: string;
+  contract_duration: string;
+  monthly_salary: string | null;
+  joining_port: string;
+  contact_whatsapp: string;
+  company_name: string;
+  additional_notes: string | null;
+  created_at: string;
+}
+
 // Demo SMC score for development
 const DEMO_SMC_SCORE = 4.17;
 
@@ -50,6 +63,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
   const [aboutMe, setAboutMe] = useState("");
   const [visible, setVisible] = useState(false);
   const [vacancies, setVacancies] = useState<Vacancy[]>([]);
+  const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -58,9 +72,13 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
   }, []);
 
   const loadData = async () => {
-    const [availRes, vacRes] = await Promise.all([
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const [availRes, vacRes, postingsRes] = await Promise.all([
       supabase.from("crew_availability").select("*").eq("crew_profile_id", profileId).maybeSingle(),
       supabase.from("job_vacancies").select("*").eq("active", true).order("created_at", { ascending: false }),
+      supabase.from("job_postings").select("*").gte("created_at", thirtyDaysAgo.toISOString()).order("created_at", { ascending: false }),
     ]);
 
     if (availRes.data) {
@@ -71,6 +89,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     }
 
     if (vacRes.data) setVacancies(vacRes.data);
+    if (postingsRes.data) setJobPostings(postingsRes.data);
     setLoading(false);
   };
 
@@ -227,16 +246,66 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
         )}
       </div>
 
-      {/* Job Listings */}
+      {/* Job Postings from job_postings table */}
       <div className="space-y-3">
         <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide px-1">Available Positions</h3>
-        {vacancies.length === 0 ? (
+        {jobPostings.length === 0 ? (
           <div className="rounded-xl bg-card border border-border p-6 text-center">
             <Ship size={24} className="text-muted-foreground mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">No vacancies posted yet. Check back soon.</p>
+            <p className="text-sm text-muted-foreground">No positions available yet. Check back soon.</p>
           </div>
         ) : (
-          vacancies.map((v) => (
+          jobPostings.map((jp) => {
+            const whatsappNumber = jp.contact_whatsapp.replace(/[^0-9]/g, "");
+            const whatsappText = encodeURIComponent(
+              `Hi, I am interested in the ${jp.rank_required} position. My name is ${firstName} ${lastName}, ${role}, ${nationality}, ${yearsAtSea} experience.`
+            );
+            const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappText}`;
+            const postedAgo = formatDistanceToNow(new Date(jp.created_at), { addSuffix: true });
+
+            return (
+              <div
+                key={jp.id}
+                className="rounded-xl bg-card p-4 space-y-3"
+                style={{ border: "1.5px solid #1a3a5c" }}
+              >
+                <div>
+                  <h4 style={{ color: "#D4AF37", fontSize: "18px", fontWeight: "bold" }}>{jp.rank_required}</h4>
+                  <p className="text-sm text-foreground mt-0.5">{jp.company_name}</p>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {jp.vessel_type} · {jp.contract_duration}
+                </p>
+                <div className="space-y-1.5 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <span>📍</span>
+                    <span>{jp.joining_port}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <DollarSign size={12} className="text-primary/70" />
+                    <span>{jp.monthly_salary ? `$${jp.monthly_salary}/month` : "Negotiable"}</span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground/60">Posted {postedAgo}</p>
+                </div>
+                {jp.additional_notes && (
+                  <p className="text-[11px] text-muted-foreground italic">{jp.additional_notes}</p>
+                )}
+                <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="block">
+                  <Button size="sm" className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold text-sm h-10">
+                    Apply via WhatsApp
+                  </Button>
+                </a>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Manager Job Vacancies (legacy) */}
+      {vacancies.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide px-1">Manager Vacancies</h3>
+          {vacancies.map((v) => (
             <div key={v.id} className="rounded-xl bg-card border border-border p-4 space-y-3">
               <div className="flex items-start justify-between">
                 <div>
@@ -293,9 +362,9 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                 );
               })()}
             </div>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
