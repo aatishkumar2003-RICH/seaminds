@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from "react";
-import { Undo2, Trash2, Send, Pencil, Circle, MoveRight, Type } from "lucide-react";
+import { Undo2, Trash2, Send, Pencil, Circle, MoveRight, Type, ZoomIn, ZoomOut, Maximize } from "lucide-react";
 
 type Props = {
   imageSrc: string;
@@ -29,9 +29,13 @@ const drawArrowhead = (ctx: CanvasRenderingContext2D, from: DrawPoint, to: DrawP
   ctx.stroke();
 };
 
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 5;
+
 const PhotoAnnotator = ({ imageSrc, onSubmit, onCancel }: Props) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [color, setColor] = useState("#FF0000");
   const [brushSize, setBrushSize] = useState(3);
@@ -39,10 +43,20 @@ const PhotoAnnotator = ({ imageSrc, onSubmit, onCancel }: Props) => {
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const currentStroke = useRef<DrawPoint[]>([]);
   const arrowStart = useRef<DrawPoint | null>(null);
+  const arrowEnd = useRef<DrawPoint | null>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const [canvasReady, setCanvasReady] = useState(false);
   const [textInput, setTextInput] = useState<{ pos: DrawPoint; value: string } | null>(null);
   const textInputRef = useRef<HTMLInputElement>(null);
+
+  // Zoom & pan state
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState<DrawPoint>({ x: 0, y: 0 });
+  const isPinching = useRef(false);
+  const lastPinchDist = useRef(0);
+  const lastPinchCenter = useRef<DrawPoint>({ x: 0, y: 0 });
+  const isPanning = useRef(false);
+  const lastPanPoint = useRef<DrawPoint>({ x: 0, y: 0 });
 
   useEffect(() => {
     const img = new Image();
@@ -111,6 +125,24 @@ const PhotoAnnotator = ({ imageSrc, onSubmit, onCancel }: Props) => {
     if (textInput && textInputRef.current) textInputRef.current.focus();
   }, [textInput]);
 
+  // Clamp pan so canvas doesn't go off-screen
+  const clampPan = useCallback((p: DrawPoint, z: number): DrawPoint => {
+    const canvas = canvasRef.current;
+    const viewport = viewportRef.current;
+    if (!canvas || !viewport) return p;
+    const vw = viewport.clientWidth;
+    const vh = viewport.clientHeight;
+    const cw = canvas.width * z;
+    const ch = canvas.height * z;
+    const maxX = Math.max(0, (cw - vw) / 2);
+    const maxY = Math.max(0, (ch - vh) / 2);
+    return {
+      x: Math.max(-maxX, Math.min(maxX, p.x)),
+      y: Math.max(-maxY, Math.min(maxY, p.y)),
+    };
+  }, []);
+
+  // Convert screen coordinates to canvas coordinates (accounting for zoom + pan)
   const getPos = (e: React.TouchEvent | React.MouseEvent): DrawPoint | null => {
     const canvas = canvasRef.current;
     if (!canvas) return null;
@@ -124,9 +156,135 @@ const PhotoAnnotator = ({ imageSrc, onSubmit, onCancel }: Props) => {
     return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
   };
 
-  const arrowEnd = useRef<DrawPoint | null>(null);
+  const getTouchDist = (touches: React.TouchList): number => {
+    if (touches.length < 2) return 0;
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.hypot(dx, dy);
+  };
 
-  const startDrawFixed = (e: React.TouchEvent | React.MouseEvent) => {
+  const getTouchCenter = (touches: React.TouchList): DrawPoint => {
+    if (touches.length < 2) return { x: touches[0].clientX, y: touches[0].clientY };
+    return {
+      x: (touches[0].clientX + touches[1].clientX) / 2,
+      y: (touches[0].clientY + touches[1].clientY) / 2,
+    };
+  };
+
+  // Touch handlers that distinguish pinch/pan from drawing
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length >= 2) {
+      // Pinch or two-finger pan
+      e.preventDefault();
+      isPinching.current = true;
+      lastPinchDist.current = getTouchDist(e.touches);
+      lastPinchCenter.current = getTouchCenter(e.touches);
+      // Cancel any in-progress drawing
+      if (isDrawing) {
+        setIsDrawing(false);
+        currentStroke.current = [];
+        arrowStart.current = null;
+        arrowEnd.current = null;
+      }
+      return;
+    }
+    // Single finger: if zoomed in, allow pan with two-finger or just draw
+    if (zoom > 1 && tool === "draw") {
+      // Still allow drawing with single finger even when zoomed
+    }
+    startDraw(e);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length >= 2 && isPinching.current) {
+      e.preventDefault();
+      const newDist = getTouchDist(e.touches);
+      const newCenter = getTouchCenter(e.touches);
+
+      // Zoom
+      if (lastPinchDist.current > 0) {
+        const scaleFactor = newDist / lastPinchDist.current;
+        setZoom(prev => {
+          const next = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, prev * scaleFactor));
+          return next;
+        });
+      }
+
+      // Pan
+      const dx = newCenter.x - lastPinchCenter.current.x;
+      const dy = newCenter.y - lastPinchCenter.current.y;
+      setPan(prev => clampPan({ x: prev.x + dx, y: prev.y + dy }, zoom));
+
+      lastPinchDist.current = newDist;
+      lastPinchCenter.current = newCenter;
+      return;
+    }
+    moveDraw(e);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (e.touches.length < 2) {
+      isPinching.current = false;
+      lastPinchDist.current = 0;
+    }
+    if (e.touches.length === 0) {
+      endDraw();
+    }
+  };
+
+  // Mouse wheel zoom
+  const handleWheel = useCallback((e: WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    setZoom(prev => {
+      const next = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, prev * delta));
+      // Re-clamp pan for new zoom
+      setPan(p => clampPan(p, next));
+      return next;
+    });
+  }, [clampPan]);
+
+  useEffect(() => {
+    const vp = viewportRef.current;
+    if (!vp) return;
+    vp.addEventListener("wheel", handleWheel, { passive: false });
+    return () => vp.removeEventListener("wheel", handleWheel);
+  }, [handleWheel]);
+
+  // Middle-mouse / right-click pan for desktop
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button === 1 || (e.button === 0 && e.altKey)) {
+      // Pan mode
+      e.preventDefault();
+      isPanning.current = true;
+      lastPanPoint.current = { x: e.clientX, y: e.clientY };
+      return;
+    }
+    startDraw(e);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (isPanning.current) {
+      e.preventDefault();
+      const dx = e.clientX - lastPanPoint.current.x;
+      const dy = e.clientY - lastPanPoint.current.y;
+      setPan(prev => clampPan({ x: prev.x + dx, y: prev.y + dy }, zoom));
+      lastPanPoint.current = { x: e.clientX, y: e.clientY };
+      return;
+    }
+    moveDraw(e);
+  };
+
+  const handleMouseUp = (e: React.MouseEvent) => {
+    if (isPanning.current) {
+      isPanning.current = false;
+      return;
+    }
+    endDraw();
+  };
+
+  // Drawing handlers (tool-based)
+  const startDraw = (e: React.TouchEvent | React.MouseEvent) => {
     e.preventDefault();
     const pos = getPos(e);
     if (!pos) return;
@@ -144,7 +302,7 @@ const PhotoAnnotator = ({ imageSrc, onSubmit, onCancel }: Props) => {
     currentStroke.current = [pos];
   };
 
-  const moveDrawFixed = (e: React.TouchEvent | React.MouseEvent) => {
+  const moveDraw = (e: React.TouchEvent | React.MouseEvent) => {
     e.preventDefault();
     if (!isDrawing) return;
     const pos = getPos(e);
@@ -182,7 +340,7 @@ const PhotoAnnotator = ({ imageSrc, onSubmit, onCancel }: Props) => {
     ctx.stroke();
   };
 
-  const endDrawFixed = () => {
+  const endDraw = () => {
     if (!isDrawing) return;
     setIsDrawing(false);
 
@@ -250,8 +408,29 @@ const PhotoAnnotator = ({ imageSrc, onSubmit, onCancel }: Props) => {
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
   };
 
+  const resetZoom = () => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  };
+
+  const zoomIn = () => {
+    setZoom(prev => {
+      const next = Math.min(MAX_ZOOM, prev * 1.3);
+      setPan(p => clampPan(p, next));
+      return next;
+    });
+  };
+
+  const zoomOut = () => {
+    setZoom(prev => {
+      const next = Math.max(MIN_ZOOM, prev / 1.3);
+      setPan(p => clampPan(p, next));
+      return next;
+    });
+  };
+
   const handleSubmit = () => {
-    redraw(); // ensure final state
+    redraw();
     const canvas = canvasRef.current;
     if (!canvas) return;
     onSubmit(canvas.toDataURL("image/jpeg", 0.9));
@@ -278,20 +457,76 @@ const PhotoAnnotator = ({ imageSrc, onSubmit, onCancel }: Props) => {
         </button>
       </div>
 
-      {/* Canvas */}
-      <div ref={containerRef} className="flex-1 overflow-hidden flex items-center justify-center px-4 py-3 relative">
-        <canvas
-          ref={canvasRef}
-          className="rounded-xl touch-none"
-          style={{ maxWidth: "100%", maxHeight: "100%", cursor: tool === "text" ? "text" : "crosshair" }}
-          onMouseDown={startDrawFixed}
-          onMouseMove={moveDrawFixed}
-          onMouseUp={endDrawFixed}
-          onMouseLeave={endDrawFixed}
-          onTouchStart={startDrawFixed}
-          onTouchMove={moveDrawFixed}
-          onTouchEnd={endDrawFixed}
-        />
+      {/* Canvas viewport */}
+      <div
+        ref={containerRef}
+        className="flex-1 overflow-hidden flex items-center justify-center px-4 py-3 relative"
+      >
+        <div
+          ref={viewportRef}
+          className="relative overflow-hidden rounded-xl"
+          style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
+        >
+          <canvas
+            ref={canvasRef}
+            className="rounded-xl"
+            style={{
+              maxWidth: "100%",
+              maxHeight: "100%",
+              cursor: tool === "text" ? "text" : zoom > 1 ? "grab" : "crosshair",
+              transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
+              transformOrigin: "center center",
+              touchAction: "none",
+            }}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={() => { isPanning.current = false; endDraw(); }}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          />
+        </div>
+
+        {/* Zoom controls overlay */}
+        <div className="absolute top-2 right-6 flex flex-col gap-1" style={{ zIndex: 20 }}>
+          <button
+            onClick={zoomIn}
+            disabled={zoom >= MAX_ZOOM}
+            className="flex items-center justify-center rounded-lg border border-border disabled:opacity-30 transition-colors"
+            style={{ width: 32, height: 32, background: "rgba(13,27,42,0.85)" }}
+          >
+            <ZoomIn size={16} style={{ color: "#D4AF37" }} />
+          </button>
+          <button
+            onClick={zoomOut}
+            disabled={zoom <= MIN_ZOOM}
+            className="flex items-center justify-center rounded-lg border border-border disabled:opacity-30 transition-colors"
+            style={{ width: 32, height: 32, background: "rgba(13,27,42,0.85)" }}
+          >
+            <ZoomOut size={16} style={{ color: "#D4AF37" }} />
+          </button>
+          {zoom > 1 && (
+            <button
+              onClick={resetZoom}
+              className="flex items-center justify-center rounded-lg border border-border transition-colors"
+              style={{ width: 32, height: 32, background: "rgba(13,27,42,0.85)" }}
+            >
+              <Maximize size={14} style={{ color: "#D4AF37" }} />
+            </button>
+          )}
+        </div>
+
+        {/* Zoom level indicator */}
+        {zoom > 1 && (
+          <div
+            className="absolute bottom-2 left-6 text-[10px] font-mono px-2 py-1 rounded"
+            style={{ background: "rgba(13,27,42,0.85)", color: "#D4AF37", zIndex: 20 }}
+          >
+            {Math.round(zoom * 100)}%
+          </div>
+        )}
+
         {/* Text input overlay */}
         {textInput && canvasRef.current && (() => {
           const canvas = canvasRef.current!;
@@ -301,7 +536,7 @@ const PhotoAnnotator = ({ imageSrc, onSubmit, onCancel }: Props) => {
           const left = rect.left - (containerRef.current?.getBoundingClientRect().left || 0) + textInput.pos.x * scaleX;
           const top = rect.top - (containerRef.current?.getBoundingClientRect().top || 0) + textInput.pos.y * scaleY;
           return (
-            <div className="absolute" style={{ left, top, zIndex: 10 }}>
+            <div className="absolute" style={{ left, top, zIndex: 30 }}>
               <input
                 ref={textInputRef}
                 value={textInput.value}
@@ -395,9 +630,10 @@ const PhotoAnnotator = ({ imageSrc, onSubmit, onCancel }: Props) => {
         </div>
 
         <p className="text-[10px] text-muted-foreground text-center">
-          {tool === "draw" ? "Draw freehand to highlight areas of concern" :
-           tool === "arrow" ? "Drag to draw an arrow pointing to equipment" :
-           "Tap anywhere to add a text label"}
+          {tool === "draw" ? "Draw freehand to highlight areas" :
+           tool === "arrow" ? "Drag to draw an arrow" :
+           "Tap to add a text label"}
+          {" · Pinch or scroll to zoom · Alt+drag to pan"}
         </p>
       </div>
     </div>
