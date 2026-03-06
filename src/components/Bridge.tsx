@@ -276,36 +276,9 @@ const Bridge = () => {
             </div>
           )}
           {/* Save to Pocket */}
-          {messages.length >= 2 && messages[messages.length - 1]?.role === "assistant" && !isLoading && (() => {
-            const [saved, setSaved] = React.useState(false);
-            const handleSave = () => {
-              const lastUser = [...messages].reverse().find(m => m.role === "user")?.content || "";
-              const lastAssistant = [...messages].reverse().find(m => m.role === "assistant")?.content || "";
-              const existing = JSON.parse(localStorage.getItem("bridge_pocket") || "[]");
-              existing.push({ query: lastUser, answer: lastAssistant, savedAt: new Date().toISOString() });
-              localStorage.setItem("bridge_pocket", JSON.stringify(existing));
-              setSaved(true);
-              setTimeout(() => setSaved(false), 2000);
-            };
-            return (
-              <div className="flex justify-center" style={{ marginTop: 20, marginBottom: 12 }}>
-                <button
-                  onClick={handleSave}
-                  className="rounded transition-colors"
-                  style={{
-                    border: saved ? "1px solid #22c55e" : "1px solid rgba(255,255,255,0.2)",
-                    color: saved ? "#22c55e" : "#e2e8f0",
-                    padding: "6px 16px",
-                    fontSize: 13,
-                    background: "transparent",
-                    cursor: "pointer",
-                  }}
-                >
-                  {saved ? "✓ Saved to Pocket" : "💾 Save to My Pocket"}
-                </button>
-              </div>
-            );
-          })()}
+          {messages.length >= 2 && messages[messages.length - 1]?.role === "assistant" && !isLoading && (
+            <SaveToPocket messages={messages} />
+          )}
           <div ref={chatEndRef} />
         </div>
 
