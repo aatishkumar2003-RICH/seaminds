@@ -303,6 +303,17 @@ const Bridge = () => {
     setRawPhotoSrc(null);
   };
 
+  // Annotator view
+  if (rawPhotoSrc) {
+    return (
+      <PhotoAnnotator
+        imageSrc={rawPhotoSrc}
+        onSubmit={submitDiagnosis}
+        onCancel={() => setRawPhotoSrc(null)}
+      />
+    );
+  }
+
   // Diagnosis result view
   if (diagnosisImage && (diagnosisLoading || diagnosisResult)) {
     const ytUrl = diagnosisQuery ? `https://www.youtube.com/results?search_query=maritime+${encodeURIComponent(diagnosisQuery)}` : "";
