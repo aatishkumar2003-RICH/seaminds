@@ -41,12 +41,12 @@ const HomeNav = () => {
           </div>
 
           <div className="hidden sm:flex items-center gap-3">
-            <Button size="sm" onClick={() => navigate("/app")}>
-              Get Your Score
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => navigate("/app")}>
-              Company Login
-            </Button>
+          <Button size="sm" onClick={() => window.location.href = '/app'}>
+            Get Your Score
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => window.location.href = '/app'}>
+            Company Login
+          </Button>
           </div>
 
           <button className="lg:hidden text-foreground" onClick={() => setMobileOpen(!mobileOpen)}>
@@ -63,10 +63,10 @@ const HomeNav = () => {
             </button>
           ))}
           <div className="flex gap-2 pt-2">
-            <Button size="sm" className="flex-1" onClick={() => { setMobileOpen(false); navigate("/app"); }}>
+            <Button size="sm" className="flex-1" onClick={() => { setMobileOpen(false); window.location.href = '/app'; }}>
               Get Your Score
             </Button>
-            <Button size="sm" variant="outline" className="flex-1" onClick={() => { setMobileOpen(false); navigate("/app"); }}>
+            <Button size="sm" variant="outline" className="flex-1" onClick={() => { setMobileOpen(false); window.location.href = '/app'; }}>
               Company Login
             </Button>
           </div>

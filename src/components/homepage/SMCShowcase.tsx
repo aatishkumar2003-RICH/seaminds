@@ -76,7 +76,7 @@ const SMCShowcase = () => {
               ))}
             </ul>
 
-            <Button size="lg" onClick={() => navigate("/app")} className="text-base px-8 h-12">
+            <Button size="lg" onClick={() => window.location.href = '/app'} className="text-base px-8 h-12">
               Claim Your Free Assessment <ChevronRight className="ml-1 w-4 h-4" />
             </Button>
           </div>
