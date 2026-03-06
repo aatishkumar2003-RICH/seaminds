@@ -140,15 +140,15 @@ const PostVacancy = () => {
       };
 
       if (r.rankRequired) {
-        const match = fuzzyMatch(r.rankRequired, RANKS);
+        const match = fuzzyMatch(r.rankRequired, RANKS, RANK_ALIASES);
         if (match) setRankRequired(match);
       }
       if (r.vesselType) {
-        const match = fuzzyMatch(r.vesselType, VESSEL_TYPES);
+        const match = fuzzyMatch(r.vesselType, VESSEL_TYPES, VESSEL_ALIASES);
         if (match) setVesselType(match);
       }
       if (r.contractDuration) {
-        const match = fuzzyMatch(r.contractDuration, DURATIONS);
+        const match = fuzzyMatch(r.contractDuration, DURATIONS, DURATION_ALIASES);
         if (match) setContractDuration(match);
       }
       if (r.monthlySalary) setMonthlySalary(r.monthlySalary);
