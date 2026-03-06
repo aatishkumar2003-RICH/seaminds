@@ -74,7 +74,6 @@ const DEPARTMENTS = [
   ]},
 ];
 
-type Msg = { role: "user" | "assistant"; content: string };
 
 async function streamBridgeChat({
   messages,
