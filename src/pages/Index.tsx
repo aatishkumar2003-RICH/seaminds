@@ -216,8 +216,8 @@ const Index = () => {
       {/* Nationality / ship / clock watermark */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
         <div className="flex flex-col items-center gap-1 select-none">
-          <span className="text-6xl">{NATIONALITY_FLAGS[nationality] || "🌊"}</span>
-          <span className="uppercase tracking-widest text-[14px] opacity-60" style={{ color: "#D4AF37" }}>{shipName}</span>
+          <span className="text-5xl">{NATIONALITY_FLAGS[nationality] || "🌊"}</span>
+          <span className="uppercase tracking-widest text-[16px] opacity-70" style={{ color: "#D4AF37" }}>{shipName}</span>
           <span className="text-xs text-muted-foreground opacity-50">{utcTime}</span>
         </div>
       </div>
