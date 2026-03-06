@@ -148,45 +148,75 @@ export type Database = {
       crew_profiles: {
         Row: {
           created_at: string
+          email: string | null
           first_name: string
           gender: string | null
+          home_city: string | null
+          home_country: string | null
+          home_country_code: string | null
           id: string
+          last_login_lat: number | null
+          last_login_lng: number | null
           last_name: string
+          last_seen: string | null
+          location_enabled: boolean
           manning_agency: string | null
           nationality: string
           onboarded: boolean
           role: string
           ship_name: string
+          user_id: string | null
+          vessel_imo: string | null
           voyage_start_date: string | null
           whatsapp_number: string
           years_at_sea: string
         }
         Insert: {
           created_at?: string
+          email?: string | null
           first_name: string
           gender?: string | null
+          home_city?: string | null
+          home_country?: string | null
+          home_country_code?: string | null
           id?: string
+          last_login_lat?: number | null
+          last_login_lng?: number | null
           last_name?: string
+          last_seen?: string | null
+          location_enabled?: boolean
           manning_agency?: string | null
           nationality?: string
           onboarded?: boolean
           role: string
           ship_name: string
+          user_id?: string | null
+          vessel_imo?: string | null
           voyage_start_date?: string | null
           whatsapp_number?: string
           years_at_sea?: string
         }
         Update: {
           created_at?: string
+          email?: string | null
           first_name?: string
           gender?: string | null
+          home_city?: string | null
+          home_country?: string | null
+          home_country_code?: string | null
           id?: string
+          last_login_lat?: number | null
+          last_login_lng?: number | null
           last_name?: string
+          last_seen?: string | null
+          location_enabled?: boolean
           manning_agency?: string | null
           nationality?: string
           onboarded?: boolean
           role?: string
           ship_name?: string
+          user_id?: string | null
+          vessel_imo?: string | null
           voyage_start_date?: string | null
           whatsapp_number?: string
           years_at_sea?: string
@@ -306,6 +336,66 @@ export type Database = {
           created_at?: string
           id?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          company_name: string | null
+          created_at: string | null
+          department: string | null
+          email: string | null
+          full_name: string | null
+          home_country: string | null
+          home_country_code: string | null
+          id: string
+          is_company: boolean | null
+          last_seen: string | null
+          location_personalisation: boolean | null
+          nationality: string | null
+          rank: string | null
+          total_sea_months: number | null
+          updated_at: string | null
+          vessel_imo: string | null
+          vessel_type: string | null
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string | null
+          department?: string | null
+          email?: string | null
+          full_name?: string | null
+          home_country?: string | null
+          home_country_code?: string | null
+          id: string
+          is_company?: boolean | null
+          last_seen?: string | null
+          location_personalisation?: boolean | null
+          nationality?: string | null
+          rank?: string | null
+          total_sea_months?: number | null
+          updated_at?: string | null
+          vessel_imo?: string | null
+          vessel_type?: string | null
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string | null
+          department?: string | null
+          email?: string | null
+          full_name?: string | null
+          home_country?: string | null
+          home_country_code?: string | null
+          id?: string
+          is_company?: boolean | null
+          last_seen?: string | null
+          location_personalisation?: boolean | null
+          nationality?: string | null
+          rank?: string | null
+          total_sea_months?: number | null
+          updated_at?: string | null
+          vessel_imo?: string | null
+          vessel_type?: string | null
         }
         Relationships: []
       }
