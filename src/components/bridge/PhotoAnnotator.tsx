@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from "react";
-import { Undo2, Trash2, Send, Pencil, Circle, MoveRight, Type, ZoomIn, ZoomOut, Maximize } from "lucide-react";
+import { Undo2, Trash2, Send, Pencil, Circle, MoveRight, Type, ZoomIn, ZoomOut, Maximize, Square } from "lucide-react";
 
 type Props = {
   imageSrc: string;
@@ -11,12 +11,14 @@ const COLORS = ["#FF0000", "#D4AF37", "#00FF00", "#00BFFF", "#FFFFFF"];
 const BRUSH_SIZES = [3, 6, 12];
 
 type DrawPoint = { x: number; y: number };
-type Tool = "draw" | "arrow" | "text";
+type Tool = "draw" | "arrow" | "text" | "circle" | "rect";
 
 type Annotation =
   | { type: "stroke"; points: DrawPoint[]; color: string; size: number }
   | { type: "arrow"; from: DrawPoint; to: DrawPoint; color: string; size: number }
-  | { type: "text"; pos: DrawPoint; text: string; color: string; fontSize: number };
+  | { type: "text"; pos: DrawPoint; text: string; color: string; fontSize: number }
+  | { type: "circle"; center: DrawPoint; radius: number; color: string; size: number }
+  | { type: "rect"; from: DrawPoint; to: DrawPoint; color: string; size: number };
 
 const drawArrowhead = (ctx: CanvasRenderingContext2D, from: DrawPoint, to: DrawPoint, size: number) => {
   const angle = Math.atan2(to.y - from.y, to.x - from.x);
@@ -104,6 +106,18 @@ const PhotoAnnotator = ({ imageSrc, onSubmit, onCancel }: Props) => {
       ctx.lineWidth = 3;
       ctx.strokeText(a.text, a.pos.x, a.pos.y);
       ctx.fillText(a.text, a.pos.x, a.pos.y);
+    } else if (a.type === "circle") {
+      ctx.beginPath();
+      ctx.strokeStyle = a.color;
+      ctx.lineWidth = a.size;
+      ctx.arc(a.center.x, a.center.y, a.radius, 0, Math.PI * 2);
+      ctx.stroke();
+    } else if (a.type === "rect") {
+      ctx.beginPath();
+      ctx.strokeStyle = a.color;
+      ctx.lineWidth = a.size;
+      ctx.rect(a.from.x, a.from.y, a.to.x - a.from.x, a.to.y - a.from.y);
+      ctx.stroke();
     }
   }, []);
 
@@ -292,7 +306,7 @@ const PhotoAnnotator = ({ imageSrc, onSubmit, onCancel }: Props) => {
       setTextInput({ pos, value: "" });
       return;
     }
-    if (tool === "arrow") {
+    if (tool === "arrow" || tool === "circle" || tool === "rect") {
       arrowStart.current = pos;
       arrowEnd.current = pos;
       setIsDrawing(true);
@@ -308,20 +322,31 @@ const PhotoAnnotator = ({ imageSrc, onSubmit, onCancel }: Props) => {
     const pos = getPos(e);
     if (!pos) return;
 
-    if (tool === "arrow" && arrowStart.current) {
+    if ((tool === "arrow" || tool === "circle" || tool === "rect") && arrowStart.current) {
       arrowEnd.current = pos;
       redraw();
       const canvas = canvasRef.current;
       const ctx = canvas?.getContext("2d");
       if (!ctx) return;
-      ctx.beginPath();
       ctx.strokeStyle = color;
       ctx.lineWidth = brushSize;
       ctx.lineCap = "round";
-      ctx.moveTo(arrowStart.current.x, arrowStart.current.y);
-      ctx.lineTo(pos.x, pos.y);
-      ctx.stroke();
-      drawArrowhead(ctx, arrowStart.current, pos, brushSize);
+      if (tool === "arrow") {
+        ctx.beginPath();
+        ctx.moveTo(arrowStart.current.x, arrowStart.current.y);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+        drawArrowhead(ctx, arrowStart.current, pos, brushSize);
+      } else if (tool === "circle") {
+        const r = Math.hypot(pos.x - arrowStart.current.x, pos.y - arrowStart.current.y);
+        ctx.beginPath();
+        ctx.arc(arrowStart.current.x, arrowStart.current.y, r, 0, Math.PI * 2);
+        ctx.stroke();
+      } else if (tool === "rect") {
+        ctx.beginPath();
+        ctx.rect(arrowStart.current.x, arrowStart.current.y, pos.x - arrowStart.current.x, pos.y - arrowStart.current.y);
+        ctx.stroke();
+      }
       return;
     }
 
@@ -344,16 +369,34 @@ const PhotoAnnotator = ({ imageSrc, onSubmit, onCancel }: Props) => {
     if (!isDrawing) return;
     setIsDrawing(false);
 
-    if (tool === "arrow" && arrowStart.current && arrowEnd.current) {
+    if ((tool === "arrow" || tool === "circle" || tool === "rect") && arrowStart.current && arrowEnd.current) {
       const dist = Math.hypot(arrowEnd.current.x - arrowStart.current.x, arrowEnd.current.y - arrowStart.current.y);
       if (dist > 5) {
-        setAnnotations(prev => [...prev, {
-          type: "arrow",
-          from: { ...arrowStart.current! },
-          to: { ...arrowEnd.current! },
-          color,
-          size: brushSize,
-        }]);
+        if (tool === "arrow") {
+          setAnnotations(prev => [...prev, {
+            type: "arrow",
+            from: { ...arrowStart.current! },
+            to: { ...arrowEnd.current! },
+            color,
+            size: brushSize,
+          }]);
+        } else if (tool === "circle") {
+          setAnnotations(prev => [...prev, {
+            type: "circle",
+            center: { ...arrowStart.current! },
+            radius: dist,
+            color,
+            size: brushSize,
+          }]);
+        } else if (tool === "rect") {
+          setAnnotations(prev => [...prev, {
+            type: "rect",
+            from: { ...arrowStart.current! },
+            to: { ...arrowEnd.current! },
+            color,
+            size: brushSize,
+          }]);
+        }
       }
       arrowStart.current = null;
       arrowEnd.current = null;
@@ -439,6 +482,8 @@ const PhotoAnnotator = ({ imageSrc, onSubmit, onCancel }: Props) => {
   const TOOLS: { id: Tool; icon: typeof Pencil; label: string }[] = [
     { id: "draw", icon: Pencil, label: "Draw" },
     { id: "arrow", icon: MoveRight, label: "Arrow" },
+    { id: "circle", icon: Circle, label: "Circle" },
+    { id: "rect", icon: Square, label: "Rect" },
     { id: "text", icon: Type, label: "Text" },
   ];
 
@@ -632,6 +677,8 @@ const PhotoAnnotator = ({ imageSrc, onSubmit, onCancel }: Props) => {
         <p className="text-[10px] text-muted-foreground text-center">
           {tool === "draw" ? "Draw freehand to highlight areas" :
            tool === "arrow" ? "Drag to draw an arrow" :
+           tool === "circle" ? "Drag from center outward to draw a circle" :
+           tool === "rect" ? "Drag corner to corner to draw a rectangle" :
            "Tap to add a text label"}
           {" · Pinch or scroll to zoom · Alt+drag to pan"}
         </p>
