@@ -296,6 +296,7 @@ export type Database = {
           plan: string
           rank_required: string
           status: string
+          verified: boolean
           vessel_type: string
         }
         Insert: {
@@ -310,6 +311,7 @@ export type Database = {
           plan?: string
           rank_required: string
           status?: string
+          verified?: boolean
           vessel_type: string
         }
         Update: {
@@ -324,6 +326,7 @@ export type Database = {
           plan?: string
           rank_required?: string
           status?: string
+          verified?: boolean
           vessel_type?: string
         }
         Relationships: []
