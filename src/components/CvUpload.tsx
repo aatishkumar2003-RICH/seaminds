@@ -129,12 +129,19 @@ const CvUpload = ({ onParsed }: CvUploadProps) => {
           </>
         )}
         {status === "reading" && (
-          <>
-            <div className="text-sm text-muted-foreground mb-1">{fileName}</div>
-            <div className="font-bold text-base animate-pulse" style={{ color: "#D4AF37" }}>
+          <div className="flex flex-col items-center gap-3">
+            <div
+              className="w-10 h-10 rounded-full border-[3px] border-muted"
+              style={{
+                borderTopColor: "#D4AF37",
+                animation: "spin 0.8s linear infinite",
+              }}
+            />
+            <div className="text-sm text-muted-foreground">{fileName}</div>
+            <div className="font-bold text-base" style={{ color: "#D4AF37" }}>
               🤖 AI Reading CV...
             </div>
-          </>
+          </div>
         )}
         {status === "success" && (
           <div className="font-medium text-sm" style={{ color: "#22c55e" }}>
