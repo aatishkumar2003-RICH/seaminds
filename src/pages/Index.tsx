@@ -81,7 +81,8 @@ const Index = () => {
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
       const { data } = await supabase
         .from("job_postings")
-        .select("rank_required, vessel_type, joining_port")
+        .select("rank_required, vessel_type, joining_port, status")
+        .neq("status", "pending_payment")
         .gte("created_at", sevenDaysAgo)
         .order("created_at", { ascending: false })
         .limit(3);
@@ -110,7 +111,8 @@ const Index = () => {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "job_postings" },
         (payload) => {
-          const newJob = payload.new as { rank_required: string; vessel_type: string; joining_port: string };
+          const newJob = payload.new as { rank_required: string; vessel_type: string; joining_port: string; status: string };
+          if (newJob.status === "pending_payment") return;
           if (
             newJob.rank_required === "Any Rank" ||
             newJob.rank_required.toLowerCase() === role.toLowerCase()
