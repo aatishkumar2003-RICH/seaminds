@@ -208,7 +208,21 @@ const Index = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen max-w-md mx-auto bg-background">
+    <div className="flex flex-col h-screen max-w-md mx-auto bg-background relative">
+      <div className="absolute inset-0 opacity-20 pointer-events-none z-0">
+        <OceanBackground timeOfDay={timeOfDay} />
+      </div>
+
+      {/* Nationality / ship / clock watermark */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+        <div className="flex flex-col items-center gap-1 select-none">
+          <span className="text-6xl">{NATIONALITY_FLAGS[nationality] || "🌊"}</span>
+          <span className="uppercase tracking-widest text-[14px] opacity-60" style={{ color: "#D4AF37" }}>{shipName}</span>
+          <span className="text-xs text-muted-foreground opacity-50">{utcTime}</span>
+        </div>
+      </div>
+
+      <div className="relative z-10 flex flex-col h-full">
       <SOSButton onOpenChat={() => setScreen("chat")} />
 
       {/* Top bar */}
