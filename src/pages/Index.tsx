@@ -21,8 +21,17 @@ type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "com
 
 const PROFILE_KEY = "seamind_profile_id";
 
+const NATIONALITY_FLAGS: Record<string, string> = {
+  Filipino: "🇵🇭", Indian: "🇮🇳", Indonesian: "🇮🇩", Ukrainian: "🇺🇦", Russian: "🇷🇺",
+  Chinese: "🇨🇳", Greek: "🇬🇷", British: "🇬🇧", Myanmar: "🇲🇲", Thai: "🇹🇭",
+  Vietnamese: "🇻🇳", Pakistani: "🇵🇰", Bangladeshi: "🇧🇩", "Sri Lankan": "🇱🇰",
+  Croatian: "🇭🇷", Polish: "🇵🇱", Turkish: "🇹🇷", Kiribati: "🇰🇮", Tuvalu: "🇹🇻",
+  Fijian: "🇫🇯", Maldivian: "🇲🇻", Ghanaian: "🇬🇭", Nigerian: "🇳🇬",
+};
+
 const Index = () => {
   const navigate = useNavigate();
+  const timeOfDay = useTimeOfDay();
   const [appState, setAppState] = useState<AppState>("loading");
   const [screen, setScreen] = useState<Screen>("chat");
   const [profileId, setProfileId] = useState("");
@@ -34,6 +43,17 @@ const Index = () => {
   const [manningAgency, setManningAgency] = useState("");
   const [nationality, setNationality] = useState("");
   const [showSignOffConfirm, setShowSignOffConfirm] = useState(false);
+  const [utcTime, setUtcTime] = useState("");
+
+  useEffect(() => {
+    const tick = () => {
+      const now = new Date();
+      setUtcTime(now.toISOString().slice(11, 19) + " UTC");
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
 
   // Dynamic page title based on active screen
   useEffect(() => {
