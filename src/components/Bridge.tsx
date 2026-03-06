@@ -250,6 +250,62 @@ const Bridge = () => {
               </div>
             );
           })()}
+          {/* Official References */}
+          {messages.length >= 2 && messages[messages.length - 1]?.role === "assistant" && !isLoading && (
+            <div style={{ marginTop: 20 }}>
+              <h3 style={{ color: "#D4AF37", fontSize: 14, fontWeight: 700, marginBottom: 12 }}>📋 Official References</h3>
+              {[
+                { name: "IMO Official Site", url: "https://www.imo.org" },
+                { name: "gCaptain Maritime News", url: "https://gcaptain.com" },
+                { name: "Marine Insight Guides", url: "https://www.marineinsight.com" },
+                { name: "BIMCO Resources", url: "https://www.bimco.org" },
+              ].map((ref, i) => (
+                <div
+                  key={i}
+                  onClick={() => window.open(ref.url, "_blank")}
+                  className="flex items-center justify-between cursor-pointer py-3"
+                  style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}
+                >
+                  <div className="flex items-center gap-2">
+                    <span style={{ fontSize: 14 }}>📄</span>
+                    <span className="text-sm text-foreground">{ref.name}</span>
+                  </div>
+                  <span style={{ color: "#D4AF37", fontSize: 14 }}>→</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {/* Save to Pocket */}
+          {messages.length >= 2 && messages[messages.length - 1]?.role === "assistant" && !isLoading && (() => {
+            const [saved, setSaved] = React.useState(false);
+            const handleSave = () => {
+              const lastUser = [...messages].reverse().find(m => m.role === "user")?.content || "";
+              const lastAssistant = [...messages].reverse().find(m => m.role === "assistant")?.content || "";
+              const existing = JSON.parse(localStorage.getItem("bridge_pocket") || "[]");
+              existing.push({ query: lastUser, answer: lastAssistant, savedAt: new Date().toISOString() });
+              localStorage.setItem("bridge_pocket", JSON.stringify(existing));
+              setSaved(true);
+              setTimeout(() => setSaved(false), 2000);
+            };
+            return (
+              <div className="flex justify-center" style={{ marginTop: 20, marginBottom: 12 }}>
+                <button
+                  onClick={handleSave}
+                  className="rounded transition-colors"
+                  style={{
+                    border: saved ? "1px solid #22c55e" : "1px solid rgba(255,255,255,0.2)",
+                    color: saved ? "#22c55e" : "#e2e8f0",
+                    padding: "6px 16px",
+                    fontSize: 13,
+                    background: "transparent",
+                    cursor: "pointer",
+                  }}
+                >
+                  {saved ? "✓ Saved to Pocket" : "💾 Save to My Pocket"}
+                </button>
+              </div>
+            );
+          })()}
           <div ref={chatEndRef} />
         </div>
 
