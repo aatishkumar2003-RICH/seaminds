@@ -356,7 +356,7 @@ const Index = () => {
               <strong>{jobMatch.vessel_type}</strong> vessel. Joining: {jobMatch.joining_port}
             </span>
             <button
-              onClick={() => { setScreen("opportunities"); setJobMatch(null); }}
+              onClick={() => { setScreen("opportunities"); setJobMatch(null); setJobBadgeCount(0); }}
               style={{
                 background: "#D4AF37",
                 color: "#0a1929",
