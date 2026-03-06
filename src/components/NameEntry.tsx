@@ -73,8 +73,7 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
 
   const canSubmit =
     firstName.trim() && lastName.trim() && shipName.trim() && role &&
-    nationality.trim() && phoneNumber.trim() && yearsAtSea &&
-    voyageStartDate && manningAgency.trim();
+    nationality.trim() && yearsAtSea;
 
   const handleSubmit = () => {
     if (!canSubmit) return;
@@ -125,7 +124,7 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
           {/* Voyage Start Date */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className={labelClass}>Voyage Start Date *</label>
+              <label className={labelClass}>Voyage Start Date</label>
               <Popover>
                 <PopoverTrigger asChild>
                   <button
@@ -192,7 +191,7 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
               </div>
             </div>
             <div className="space-y-1.5 relative">
-              <label className={labelClass}>Manning Agency *</label>
+              <label className={labelClass}>Manning Agency</label>
               <input
                 type="text"
                 value={manningAgency}
@@ -243,7 +242,7 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
 
           {/* WhatsApp Number */}
           <div className="space-y-1.5">
-            <label className={labelClass}>WhatsApp Number *</label>
+            <label className={labelClass}>WhatsApp Number</label>
             <div className="flex gap-2">
               <div className="relative w-28 shrink-0">
                 <select value={countryCode} onChange={(e) => setCountryCode(e.target.value)} className={selectClass}>
