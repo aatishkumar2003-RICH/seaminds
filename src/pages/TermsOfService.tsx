@@ -1,50 +1,97 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 
-const clauses = [
-  { title: "1. Acceptance of Terms", body: "By accessing or using the SeaMinds platform, you agree to be bound by these Terms of Service. If you do not agree, you must not use the platform." },
-  { title: "2. Eligibility", body: "SeaMinds is available to seafarers, maritime professionals, and authorised company representatives. You must be at least 18 years old to create an account." },
-  { title: "3. User Accounts", body: "You are responsible for maintaining the confidentiality of your account credentials. You agree to provide accurate, current, and complete information during registration." },
-  { title: "4. Privacy & Confidentiality", body: "All conversations with the SeaMinds AI companion are private and confidential. Your personal data is processed in accordance with our Privacy Policy and applicable data protection laws including GDPR." },
-  { title: "5. SMC Score Assessments", body: "The SeaMinds Competency (SMC) Score is an indicative assessment tool. While we strive for accuracy, scores should be used as guidance alongside professional judgement. Assessment results remain your property." },
-  { title: "6. Acceptable Use", body: "You agree not to misuse the platform, including but not limited to: submitting false documents, impersonating others, attempting to manipulate assessment scores, or using the service for any unlawful purpose." },
-  { title: "7. Intellectual Property", body: "All content, designs, logos, and technology on SeaMinds are owned by SeaMinds or its licensors. You may not reproduce, distribute, or create derivative works without written permission." },
-  { title: "8. Payment & Refunds", body: "Certain features require payment. All fees are stated in USD unless otherwise indicated. Refund requests must be submitted within 14 days of purchase and are subject to our refund policy." },
-  { title: "9. Data Protection & MLC 2006 Compliance", body: "SeaMinds operates in compliance with the Maritime Labour Convention (MLC) 2006. We are committed to protecting seafarer welfare rights and ensuring data is never shared with employers without explicit consent." },
-  { title: "10. Limitation of Liability", body: "SeaMinds provides information and tools for guidance purposes. We are not liable for decisions made based on platform content. The platform is provided 'as is' without warranties of any kind." },
-  { title: "11. Termination", body: "We reserve the right to suspend or terminate accounts that violate these terms. You may delete your account at any time. Upon termination, your data will be handled in accordance with our Privacy Policy." },
-  { title: "12. Changes to Terms", body: "We may update these Terms of Service from time to time. Continued use of the platform after changes constitutes acceptance. We will notify users of material changes via email or in-app notification." },
+const sections = [
+  {
+    title: "1. Acceptance of Terms",
+    body: "By accessing or using the SeaMinds platform, you agree to be bound by these Terms of Service. If you do not agree with any part of these terms, you must discontinue use of the platform immediately. These terms apply to all users including seafarers, maritime professionals, and company representatives.",
+  },
+  {
+    title: "2. Use of Service",
+    body: "SeaMinds provides AI-powered wellness support, competency assessments (SMC Score), maritime academy resources, job matching, and community tools for seafarers and maritime companies. You agree to use the platform only for lawful purposes and in accordance with these terms. You must not misuse the service, submit false documents, impersonate others, or attempt to manipulate assessment scores.",
+  },
+  {
+    title: "3. Privacy and Data",
+    body: "Your privacy is paramount. All conversations with the SeaMinds AI companion are private and confidential under our Sealed Envelope Principle — wellness data is never shared with employers without your explicit written consent. Personal data is processed in accordance with our Privacy Policy, GDPR, and the Maritime Labour Convention (MLC) 2006 seafarer welfare standards. You retain ownership of your assessment results and personal information at all times.",
+  },
+  {
+    title: "4. Wellness Disclaimer",
+    body: "SeaMinds provides AI-powered wellness support tools for informational and self-help purposes only. These tools are not a substitute for professional medical advice, diagnosis, or treatment. If you are experiencing a medical or mental health emergency, please contact your vessel's medical officer, use the SOS emergency feature, or call local emergency services immediately. SeaMinds does not guarantee any specific health outcomes from using the wellness features.",
+  },
+  {
+    title: "5. Intellectual Property",
+    body: "All content, designs, logos, software, assessments, and technology on the SeaMinds platform are owned by SeaMinds or its licensors and are protected by international copyright and intellectual property laws. You may not reproduce, distribute, modify, or create derivative works from any SeaMinds content without prior written permission. The SMC Score methodology and certification system are proprietary to SeaMinds.",
+  },
+  {
+    title: "6. Limitation of Liability",
+    body: "SeaMinds provides information, tools, and assessments for guidance purposes. The platform is provided 'as is' without warranties of any kind, express or implied. SeaMinds shall not be liable for any direct, indirect, incidental, or consequential damages arising from your use of the platform, reliance on assessment scores, or decisions made based on platform content. Our total liability shall not exceed the amount paid by you in the twelve months preceding the claim.",
+  },
+  {
+    title: "7. Governing Law",
+    body: "These Terms of Service shall be governed by and construed in accordance with the laws of the Republic of Indonesia. Any disputes arising from or relating to these terms or your use of the platform shall be subject to the exclusive jurisdiction of the courts of Jakarta, Indonesia. Where applicable, the Maritime Labour Convention (MLC) 2006 provisions shall supplement these terms in matters relating to seafarer welfare and rights.",
+  },
+  {
+    title: "8. Contact",
+    body: "If you have any questions about these Terms of Service, please contact us at legal@seaminds.com. For urgent seafarer welfare matters, use the SOS feature within the app for immediate assistance. We aim to respond to all enquiries within 48 hours.",
+  },
 ];
 
 const TermsOfService = () => {
-  const navigate = useNavigate();
-  useEffect(() => { document.title = "SeaMinds | Terms of Service"; }, []);
+  useEffect(() => {
+    document.title = "SeaMinds | Terms of Service";
+  }, []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen" style={{ backgroundColor: "#0D1B2A" }}>
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
-        <Button variant="ghost" size="sm" className="mb-8" onClick={() => navigate(-1)}>
-          <ArrowLeft className="w-4 h-4 mr-1" /> Back
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mb-8 text-gray-300 hover:text-white hover:bg-white/10"
+          onClick={() => (window.location.href = "/")}
+        >
+          <ArrowLeft className="w-4 h-4 mr-1" /> Back to Homepage
         </Button>
 
-        <h1 className="text-3xl font-bold gold-glow mb-2">Terms of Service</h1>
-        <p className="text-muted-foreground text-sm mb-8">Last updated: February 2026</p>
-        <Separator className="mb-8" />
+        <h1
+          className="text-3xl font-bold mb-2"
+          style={{ color: "#D4AF37" }}
+        >
+          Terms of Service
+        </h1>
+        <p className="text-sm mb-8" style={{ color: "#8899AA" }}>
+          Last updated: March 2026
+        </p>
+        <div
+          className="h-px w-full mb-8"
+          style={{ backgroundColor: "#D4AF37", opacity: 0.25 }}
+        />
 
         <div className="space-y-8">
-          {clauses.map((c) => (
-            <section key={c.title}>
-              <h2 className="text-lg font-semibold text-primary mb-2">{c.title}</h2>
-              <p className="text-sm text-muted-foreground leading-relaxed">{c.body}</p>
+          {sections.map((s) => (
+            <section key={s.title}>
+              <h2
+                className="text-lg font-semibold mb-2"
+                style={{ color: "#D4AF37" }}
+              >
+                {s.title}
+              </h2>
+              <p
+                className="text-sm leading-relaxed"
+                style={{ color: "#A0AEC0" }}
+              >
+                {s.body}
+              </p>
             </section>
           ))}
         </div>
 
-        <Separator className="my-10" />
-        <p className="text-xs text-muted-foreground text-center">
+        <div
+          className="h-px w-full my-10"
+          style={{ backgroundColor: "#D4AF37", opacity: 0.25 }}
+        />
+        <p className="text-xs text-center" style={{ color: "#8899AA" }}>
           © 2026 SeaMinds. Built by a Master Mariner. MLC 2006 Compliant.
         </p>
       </div>
