@@ -17,6 +17,7 @@ interface NameEntryProps {
     yearsAtSea: string;
     voyageStartDate: string;
     manningAgency: string;
+    vesselImo: string;
   }) => void;
 }
 
@@ -68,6 +69,7 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
   const [yearsAtSea, setYearsAtSea] = useState("");
   const [voyageStartDate, setVoyageStartDate] = useState<Date>();
   const [manningAgency, setManningAgency] = useState("");
+  const [vesselImo, setVesselImo] = useState("");
   const [agencyFilter, setAgencyFilter] = useState("");
   const [showAgencyDropdown, setShowAgencyDropdown] = useState(false);
 
@@ -88,6 +90,7 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
       yearsAtSea,
       voyageStartDate: voyageStartDate ? format(voyageStartDate, "yyyy-MM-dd") : "",
       manningAgency: manningAgency.trim(),
+      vesselImo: vesselImo.trim(),
     });
   };
 
@@ -120,6 +123,13 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
             <label className={labelClass}>Ship Name *</label>
             <input type="text" value={shipName} onChange={(e) => setShipName(e.target.value)} placeholder="e.g. MV Pacific Star" className={inputClass} />
           </div>
+
+          {/* Vessel IMO Number */}
+          <div className="space-y-1.5">
+            <label className={labelClass}>Vessel IMO Number (optional)</label>
+            <input type="text" value={vesselImo} onChange={(e) => setVesselImo(e.target.value)} placeholder="e.g. 9234567" className={inputClass} />
+          </div>
+
 
           {/* Voyage Start Date */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
