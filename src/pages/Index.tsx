@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { MessageCircle, LayoutDashboard, Briefcase, Newspaper, GraduationCap, Compass, Star } from "lucide-react";
+import { MessageCircle, LayoutDashboard, Briefcase, Newspaper, GraduationCap, Compass, Star, LogOut, Anchor } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import LandingScreen from "@/components/LandingScreen";
 import NameEntry from "@/components/NameEntry";
@@ -31,6 +31,7 @@ const Index = () => {
   const [voyageStartDate, setVoyageStartDate] = useState("");
   const [manningAgency, setManningAgency] = useState("");
   const [nationality, setNationality] = useState("");
+  const [showSignOffConfirm, setShowSignOffConfirm] = useState(false);
 
   // Dynamic page title based on active screen
   useEffect(() => {
@@ -173,9 +174,42 @@ const Index = () => {
     );
   }
 
+
+  const handleSignOut = () => {
+    localStorage.removeItem(PROFILE_KEY);
+    window.location.href = "/";
+  };
+
+  const handleSignOff = async () => {
+    await supabase.from("crew_profiles").update({ onboarded: false }).eq("id", profileId);
+    window.location.reload();
+  };
+
   return (
     <div className="flex flex-col h-screen max-w-md mx-auto bg-background">
       <SOSButton onOpenChat={() => setScreen("chat")} />
+
+      {/* Top bar */}
+      <div className="flex items-center justify-end gap-3 px-4 py-2">
+        <button onClick={() => setShowSignOffConfirm(true)} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+          <Anchor size={14} /> Sign Off
+        </button>
+        <button onClick={handleSignOut} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+          <LogOut size={14} /> Sign Out
+        </button>
+      </div>
+
+      {/* Sign Off confirmation */}
+      {showSignOffConfirm && (
+        <div className="mx-4 mb-2 p-3 rounded-xl bg-secondary border border-border text-sm">
+          <p className="text-foreground mb-2">End current voyage and update details?</p>
+          <div className="flex gap-2">
+            <button onClick={handleSignOff} className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium">Yes</button>
+            <button onClick={() => setShowSignOffConfirm(false)} className="px-3 py-1.5 rounded-lg bg-muted text-muted-foreground text-xs font-medium">Cancel</button>
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 overflow-hidden">
         {screen === "chat" ? (
           <CrewChat profileId={profileId} firstName={firstName} role={role} shipName={shipName} voyageStartDate={voyageStartDate} />
