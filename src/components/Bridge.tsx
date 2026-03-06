@@ -465,6 +465,15 @@ const Bridge = () => {
         ))}
       </div>
 
+      {/* My Pocket button */}
+      <button
+        onClick={() => { loadPocket(); setShowPocket(true); }}
+        className="flex items-center justify-center gap-2 mb-4 py-2.5 rounded-xl text-sm w-full transition-colors"
+        style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#D4AF37", background: "rgba(13,27,42,0.5)" }}
+      >
+        <Bookmark size={14} /> My Pocket
+      </button>
+
       <div className="grid grid-cols-2 gap-3">
         {DEPARTMENTS.map((dept) => (
           <button
