@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from "react";
-import { Undo2, Trash2, Send, Pencil, Circle } from "lucide-react";
+import { Undo2, Trash2, Send, Pencil, Circle, MoveRight, Type } from "lucide-react";
 
 type Props = {
   imageSrc: string;
@@ -11,7 +11,23 @@ const COLORS = ["#FF0000", "#D4AF37", "#00FF00", "#00BFFF", "#FFFFFF"];
 const BRUSH_SIZES = [3, 6, 12];
 
 type DrawPoint = { x: number; y: number };
-type Stroke = { points: DrawPoint[]; color: string; size: number };
+type Tool = "draw" | "arrow" | "text";
+
+type Annotation =
+  | { type: "stroke"; points: DrawPoint[]; color: string; size: number }
+  | { type: "arrow"; from: DrawPoint; to: DrawPoint; color: string; size: number }
+  | { type: "text"; pos: DrawPoint; text: string; color: string; fontSize: number };
+
+const drawArrowhead = (ctx: CanvasRenderingContext2D, from: DrawPoint, to: DrawPoint, size: number) => {
+  const angle = Math.atan2(to.y - from.y, to.x - from.x);
+  const headLen = Math.max(size * 4, 14);
+  ctx.beginPath();
+  ctx.moveTo(to.x, to.y);
+  ctx.lineTo(to.x - headLen * Math.cos(angle - Math.PI / 6), to.y - headLen * Math.sin(angle - Math.PI / 6));
+  ctx.moveTo(to.x, to.y);
+  ctx.lineTo(to.x - headLen * Math.cos(angle + Math.PI / 6), to.y - headLen * Math.sin(angle + Math.PI / 6));
+  ctx.stroke();
+};
 
 const PhotoAnnotator = ({ imageSrc, onSubmit, onCancel }: Props) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -19,12 +35,15 @@ const PhotoAnnotator = ({ imageSrc, onSubmit, onCancel }: Props) => {
   const [isDrawing, setIsDrawing] = useState(false);
   const [color, setColor] = useState("#FF0000");
   const [brushSize, setBrushSize] = useState(3);
-  const [strokes, setStrokes] = useState<Stroke[]>([]);
+  const [tool, setTool] = useState<Tool>("draw");
+  const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const currentStroke = useRef<DrawPoint[]>([]);
+  const arrowStart = useRef<DrawPoint | null>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const [canvasReady, setCanvasReady] = useState(false);
+  const [textInput, setTextInput] = useState<{ pos: DrawPoint; value: string } | null>(null);
+  const textInputRef = useRef<HTMLInputElement>(null);
 
-  // Load image and set canvas dimensions
   useEffect(() => {
     const img = new Image();
     img.crossOrigin = "anonymous";
@@ -33,7 +52,6 @@ const PhotoAnnotator = ({ imageSrc, onSubmit, onCancel }: Props) => {
       const canvas = canvasRef.current;
       const container = containerRef.current;
       if (!canvas || !container) return;
-
       const maxW = container.clientWidth;
       const maxH = 400;
       const scale = Math.min(maxW / img.width, maxH / img.height, 1);
@@ -44,33 +62,54 @@ const PhotoAnnotator = ({ imageSrc, onSubmit, onCancel }: Props) => {
     img.src = imageSrc;
   }, [imageSrc]);
 
+  const renderAnnotation = useCallback((ctx: CanvasRenderingContext2D, a: Annotation) => {
+    if (a.type === "stroke") {
+      if (a.points.length < 2) return;
+      ctx.beginPath();
+      ctx.strokeStyle = a.color;
+      ctx.lineWidth = a.size;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.moveTo(a.points[0].x, a.points[0].y);
+      for (let i = 1; i < a.points.length; i++) ctx.lineTo(a.points[i].x, a.points[i].y);
+      ctx.stroke();
+    } else if (a.type === "arrow") {
+      ctx.beginPath();
+      ctx.strokeStyle = a.color;
+      ctx.lineWidth = a.size;
+      ctx.lineCap = "round";
+      ctx.moveTo(a.from.x, a.from.y);
+      ctx.lineTo(a.to.x, a.to.y);
+      ctx.stroke();
+      drawArrowhead(ctx, a.from, a.to, a.size);
+    } else if (a.type === "text") {
+      const fs = a.fontSize;
+      ctx.font = `bold ${fs}px sans-serif`;
+      ctx.fillStyle = a.color;
+      ctx.strokeStyle = "rgba(0,0,0,0.7)";
+      ctx.lineWidth = 3;
+      ctx.strokeText(a.text, a.pos.x, a.pos.y);
+      ctx.fillText(a.text, a.pos.x, a.pos.y);
+    }
+  }, []);
+
   const redraw = useCallback(() => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     const img = imgRef.current;
     if (!canvas || !ctx || !img) return;
-
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-    for (const stroke of strokes) {
-      if (stroke.points.length < 2) continue;
-      ctx.beginPath();
-      ctx.strokeStyle = stroke.color;
-      ctx.lineWidth = stroke.size;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
-      for (let i = 1; i < stroke.points.length; i++) {
-        ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
-      }
-      ctx.stroke();
-    }
-  }, [strokes]);
+    for (const a of annotations) renderAnnotation(ctx, a);
+  }, [annotations, renderAnnotation]);
 
   useEffect(() => {
     if (canvasReady) redraw();
   }, [canvasReady, redraw]);
+
+  useEffect(() => {
+    if (textInput && textInputRef.current) textInputRef.current.focus();
+  }, [textInput]);
 
   const getPos = (e: React.TouchEvent | React.MouseEvent): DrawPoint | null => {
     const canvas = canvasRef.current;
@@ -78,7 +117,6 @@ const PhotoAnnotator = ({ imageSrc, onSubmit, onCancel }: Props) => {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-
     if ("touches" in e) {
       const touch = e.touches[0];
       return { x: (touch.clientX - rect.left) * scaleX, y: (touch.clientY - rect.top) * scaleY };
@@ -86,22 +124,50 @@ const PhotoAnnotator = ({ imageSrc, onSubmit, onCancel }: Props) => {
     return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
   };
 
-  const startDraw = (e: React.TouchEvent | React.MouseEvent) => {
+  const arrowEnd = useRef<DrawPoint | null>(null);
+
+  const startDrawFixed = (e: React.TouchEvent | React.MouseEvent) => {
     e.preventDefault();
     const pos = getPos(e);
     if (!pos) return;
+    if (tool === "text") {
+      setTextInput({ pos, value: "" });
+      return;
+    }
+    if (tool === "arrow") {
+      arrowStart.current = pos;
+      arrowEnd.current = pos;
+      setIsDrawing(true);
+      return;
+    }
     setIsDrawing(true);
     currentStroke.current = [pos];
   };
 
-  const moveDraw = (e: React.TouchEvent | React.MouseEvent) => {
+  const moveDrawFixed = (e: React.TouchEvent | React.MouseEvent) => {
     e.preventDefault();
     if (!isDrawing) return;
     const pos = getPos(e);
     if (!pos) return;
-    currentStroke.current.push(pos);
 
-    // Live preview
+    if (tool === "arrow" && arrowStart.current) {
+      arrowEnd.current = pos;
+      redraw();
+      const canvas = canvasRef.current;
+      const ctx = canvas?.getContext("2d");
+      if (!ctx) return;
+      ctx.beginPath();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = brushSize;
+      ctx.lineCap = "round";
+      ctx.moveTo(arrowStart.current.x, arrowStart.current.y);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+      drawArrowhead(ctx, arrowStart.current, pos, brushSize);
+      return;
+    }
+
+    currentStroke.current.push(pos);
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!ctx || currentStroke.current.length < 2) return;
@@ -116,19 +182,51 @@ const PhotoAnnotator = ({ imageSrc, onSubmit, onCancel }: Props) => {
     ctx.stroke();
   };
 
-  const endDraw = () => {
+  const endDrawFixed = () => {
     if (!isDrawing) return;
     setIsDrawing(false);
-    if (currentStroke.current.length > 0) {
-      setStrokes(prev => [...prev, { points: [...currentStroke.current], color, size: brushSize }]);
+
+    if (tool === "arrow" && arrowStart.current && arrowEnd.current) {
+      const dist = Math.hypot(arrowEnd.current.x - arrowStart.current.x, arrowEnd.current.y - arrowStart.current.y);
+      if (dist > 5) {
+        setAnnotations(prev => [...prev, {
+          type: "arrow",
+          from: { ...arrowStart.current! },
+          to: { ...arrowEnd.current! },
+          color,
+          size: brushSize,
+        }]);
+      }
+      arrowStart.current = null;
+      arrowEnd.current = null;
+      return;
+    }
+
+    if (tool === "draw" && currentStroke.current.length > 0) {
+      setAnnotations(prev => [...prev, { type: "stroke", points: [...currentStroke.current], color, size: brushSize }]);
     }
     currentStroke.current = [];
   };
 
+  const commitText = () => {
+    if (!textInput || !textInput.value.trim()) {
+      setTextInput(null);
+      return;
+    }
+    const fontSize = brushSize === 3 ? 16 : brushSize === 6 ? 22 : 30;
+    setAnnotations(prev => [...prev, {
+      type: "text",
+      pos: textInput.pos,
+      text: textInput.value.trim(),
+      color,
+      fontSize,
+    }]);
+    setTextInput(null);
+  };
+
   const undo = () => {
-    setStrokes(prev => {
+    setAnnotations(prev => {
       const next = prev.slice(0, -1);
-      // Redraw after state update
       setTimeout(() => {
         const canvas = canvasRef.current;
         const ctx = canvas?.getContext("2d");
@@ -136,26 +234,14 @@ const PhotoAnnotator = ({ imageSrc, onSubmit, onCancel }: Props) => {
         if (!canvas || !ctx || !img) return;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        for (const stroke of next) {
-          if (stroke.points.length < 2) continue;
-          ctx.beginPath();
-          ctx.strokeStyle = stroke.color;
-          ctx.lineWidth = stroke.size;
-          ctx.lineCap = "round";
-          ctx.lineJoin = "round";
-          ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
-          for (let i = 1; i < stroke.points.length; i++) {
-            ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
-          }
-          ctx.stroke();
-        }
+        for (const a of next) renderAnnotation(ctx, a);
       }, 0);
       return next;
     });
   };
 
   const clearAll = () => {
-    setStrokes([]);
+    setAnnotations([]);
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     const img = imgRef.current;
@@ -165,10 +251,17 @@ const PhotoAnnotator = ({ imageSrc, onSubmit, onCancel }: Props) => {
   };
 
   const handleSubmit = () => {
+    redraw(); // ensure final state
     const canvas = canvasRef.current;
     if (!canvas) return;
     onSubmit(canvas.toDataURL("image/jpeg", 0.9));
   };
+
+  const TOOLS: { id: Tool; icon: typeof Pencil; label: string }[] = [
+    { id: "draw", icon: Pencil, label: "Draw" },
+    { id: "arrow", icon: MoveRight, label: "Arrow" },
+    { id: "text", icon: Type, label: "Text" },
+  ];
 
   return (
     <div className="flex flex-col h-full">
@@ -186,27 +279,71 @@ const PhotoAnnotator = ({ imageSrc, onSubmit, onCancel }: Props) => {
       </div>
 
       {/* Canvas */}
-      <div ref={containerRef} className="flex-1 overflow-hidden flex items-center justify-center px-4 py-3">
+      <div ref={containerRef} className="flex-1 overflow-hidden flex items-center justify-center px-4 py-3 relative">
         <canvas
           ref={canvasRef}
           className="rounded-xl touch-none"
-          style={{ maxWidth: "100%", maxHeight: "100%", cursor: "crosshair" }}
-          onMouseDown={startDraw}
-          onMouseMove={moveDraw}
-          onMouseUp={endDraw}
-          onMouseLeave={endDraw}
-          onTouchStart={startDraw}
-          onTouchMove={moveDraw}
-          onTouchEnd={endDraw}
+          style={{ maxWidth: "100%", maxHeight: "100%", cursor: tool === "text" ? "text" : "crosshair" }}
+          onMouseDown={startDrawFixed}
+          onMouseMove={moveDrawFixed}
+          onMouseUp={endDrawFixed}
+          onMouseLeave={endDrawFixed}
+          onTouchStart={startDrawFixed}
+          onTouchMove={moveDrawFixed}
+          onTouchEnd={endDrawFixed}
         />
+        {/* Text input overlay */}
+        {textInput && canvasRef.current && (() => {
+          const canvas = canvasRef.current!;
+          const rect = canvas.getBoundingClientRect();
+          const scaleX = rect.width / canvas.width;
+          const scaleY = rect.height / canvas.height;
+          const left = rect.left - (containerRef.current?.getBoundingClientRect().left || 0) + textInput.pos.x * scaleX;
+          const top = rect.top - (containerRef.current?.getBoundingClientRect().top || 0) + textInput.pos.y * scaleY;
+          return (
+            <div className="absolute" style={{ left, top, zIndex: 10 }}>
+              <input
+                ref={textInputRef}
+                value={textInput.value}
+                onChange={e => setTextInput({ ...textInput, value: e.target.value })}
+                onKeyDown={e => { if (e.key === "Enter") commitText(); if (e.key === "Escape") setTextInput(null); }}
+                onBlur={commitText}
+                className="bg-black/70 text-white border rounded px-2 py-1 text-sm outline-none"
+                style={{ borderColor: color, color, minWidth: 100 }}
+                placeholder="Type label..."
+              />
+            </div>
+          );
+        })()}
       </div>
 
       {/* Toolbar */}
       <div className="px-4 py-3 border-t border-border space-y-3">
-        {/* Colors */}
+        {/* Tool selector */}
+        <div className="flex items-center gap-1 justify-center">
+          {TOOLS.map(t => {
+            const Icon = t.icon;
+            const active = tool === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => setTool(t.id)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                style={{
+                  background: active ? "rgba(212,175,55,0.2)" : "transparent",
+                  border: active ? "1px solid #D4AF37" : "1px solid rgba(255,255,255,0.1)",
+                  color: active ? "#D4AF37" : "rgba(255,255,255,0.5)",
+                }}
+              >
+                <Icon size={14} /> {t.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Colors + sizes */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
-            <Pencil size={14} className="text-muted-foreground mr-1" />
             {COLORS.map(c => (
               <button
                 key={c}
@@ -243,14 +380,14 @@ const PhotoAnnotator = ({ imageSrc, onSubmit, onCancel }: Props) => {
         <div className="flex gap-2">
           <button
             onClick={undo}
-            disabled={strokes.length === 0}
+            disabled={annotations.length === 0}
             className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm text-muted-foreground border border-border disabled:opacity-30 transition-colors"
           >
             <Undo2 size={14} /> Undo
           </button>
           <button
             onClick={clearAll}
-            disabled={strokes.length === 0}
+            disabled={annotations.length === 0}
             className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm text-muted-foreground border border-border disabled:opacity-30 transition-colors"
           >
             <Trash2 size={14} /> Clear
@@ -258,7 +395,9 @@ const PhotoAnnotator = ({ imageSrc, onSubmit, onCancel }: Props) => {
         </div>
 
         <p className="text-[10px] text-muted-foreground text-center">
-          Draw on the photo to highlight alarms, gauges, or areas of concern
+          {tool === "draw" ? "Draw freehand to highlight areas of concern" :
+           tool === "arrow" ? "Drag to draw an arrow pointing to equipment" :
+           "Tap anywhere to add a text label"}
         </p>
       </div>
     </div>
