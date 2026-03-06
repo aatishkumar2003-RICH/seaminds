@@ -293,6 +293,50 @@ const Index = () => {
       )}
 
       <div className="flex-1 overflow-hidden">
+        {/* Job match notification */}
+        {screen === "chat" && jobMatch && (
+          <div
+            style={{
+              border: "1px solid #D4AF37",
+              background: "rgba(26, 58, 92, 0.9)",
+              borderRadius: "10px",
+              padding: "10px",
+              margin: "0 16px 8px 16px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "8px",
+            }}
+          >
+            <span style={{ color: "white", fontSize: "12px", flex: 1 }}>
+              ⚓ New job match: <strong style={{ color: "#D4AF37" }}>{jobMatch.rank_required}</strong> on{" "}
+              <strong>{jobMatch.vessel_type}</strong> vessel. Joining: {jobMatch.joining_port}
+            </span>
+            <button
+              onClick={() => { setScreen("opportunities"); setJobMatch(null); }}
+              style={{
+                background: "#D4AF37",
+                color: "#0a1929",
+                borderRadius: "6px",
+                padding: "4px 10px",
+                fontSize: "11px",
+                fontWeight: "bold",
+                border: "none",
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+              }}
+            >
+              View
+            </button>
+            <button
+              onClick={() => setJobMatch(null)}
+              style={{ background: "none", border: "none", cursor: "pointer", padding: "2px" }}
+            >
+              <X size={14} color="#888" />
+            </button>
+          </div>
+        )}
+
         {screen === "chat" ? (
           <CrewChat profileId={profileId} firstName={firstName} role={role} shipName={shipName} voyageStartDate={voyageStartDate} />
         ) : screen === "dashboard" ? (
