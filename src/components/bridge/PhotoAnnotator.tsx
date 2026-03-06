@@ -124,92 +124,9 @@ const PhotoAnnotator = ({ imageSrc, onSubmit, onCancel }: Props) => {
     return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
   };
 
-  const startDraw = (e: React.TouchEvent | React.MouseEvent) => {
-    e.preventDefault();
-    const pos = getPos(e);
-    if (!pos) return;
-
-    if (tool === "text") {
-      setTextInput({ pos, value: "" });
-      return;
-    }
-    if (tool === "arrow") {
-      arrowStart.current = pos;
-      setIsDrawing(true);
-      return;
-    }
-    setIsDrawing(true);
-    currentStroke.current = [pos];
-  };
-
-  const moveDraw = (e: React.TouchEvent | React.MouseEvent) => {
-    e.preventDefault();
-    if (!isDrawing) return;
-    const pos = getPos(e);
-    if (!pos) return;
-
-    if (tool === "arrow" && arrowStart.current) {
-      // Preview arrow
-      redraw();
-      const canvas = canvasRef.current;
-      const ctx = canvas?.getContext("2d");
-      if (!ctx) return;
-      ctx.beginPath();
-      ctx.strokeStyle = color;
-      ctx.lineWidth = brushSize;
-      ctx.lineCap = "round";
-      ctx.moveTo(arrowStart.current.x, arrowStart.current.y);
-      ctx.lineTo(pos.x, pos.y);
-      ctx.stroke();
-      drawArrowhead(ctx, arrowStart.current, pos, brushSize);
-      return;
-    }
-
-    currentStroke.current.push(pos);
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (!ctx || currentStroke.current.length < 2) return;
-    const pts = currentStroke.current;
-    ctx.beginPath();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = brushSize;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.moveTo(pts[pts.length - 2].x, pts[pts.length - 2].y);
-    ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
-    ctx.stroke();
-  };
-
-  const endDraw = () => {
-    if (!isDrawing) return;
-    setIsDrawing(false);
-
-    if (tool === "arrow" && arrowStart.current) {
-      const last = currentStroke.current.length > 0
-        ? currentStroke.current[currentStroke.current.length - 1]
-        : null;
-      // Get final position from the canvas mouse/touch position
-      // We need to use the last rendered arrow endpoint
-      // Since we can't easily get it here, we store via a different approach
-    }
-
-    if (tool === "arrow" && arrowStart.current) {
-      // We need the end position - get it from the last canvas interaction
-      // The arrow end was drawn in moveDraw, so we grab from current canvas state
-      // Better: store arrow end in a ref
-    }
-
-    if (tool === "draw" && currentStroke.current.length > 0) {
-      setAnnotations(prev => [...prev, { type: "stroke", points: [...currentStroke.current], color, size: brushSize }]);
-    }
-    currentStroke.current = [];
-    arrowStart.current = null;
-  };
-
-  // Fix arrow: we need to track end position
   const arrowEnd = useRef<DrawPoint | null>(null);
 
-  const startDrawFixed = (e: React.TouchEvent | React.MouseEvent) => {
+  const startDrawHandler = (e: React.TouchEvent | React.MouseEvent) => {
     e.preventDefault();
     const pos = getPos(e);
     if (!pos) return;
