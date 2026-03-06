@@ -46,6 +46,7 @@ const Index = () => {
   const [showSignOffConfirm, setShowSignOffConfirm] = useState(false);
   const [utcTime, setUtcTime] = useState("");
   const [jobMatch, setJobMatch] = useState<{ rank_required: string; vessel_type: string; joining_port: string } | null>(null);
+  const [jobBadgeCount, setJobBadgeCount] = useState(0);
 
   useEffect(() => {
     const tick = () => {
