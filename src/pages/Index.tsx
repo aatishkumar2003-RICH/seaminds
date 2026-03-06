@@ -70,6 +70,33 @@ const Index = () => {
     document.title = appState === "main" ? titles[screen] : "SeaMinds";
   }, [screen, appState]);
 
+  // Job match notification
+  useEffect(() => {
+    if (appState !== "main" || !role) return;
+    if (sessionStorage.getItem("seamind_job_match_shown")) return;
+
+    const checkJobMatches = async () => {
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const { data } = await supabase
+        .from("job_postings")
+        .select("rank_required, vessel_type, joining_port")
+        .gte("created_at", sevenDaysAgo)
+        .order("created_at", { ascending: false })
+        .limit(3);
+
+      if (data) {
+        const match = data.find(
+          (j) => j.rank_required === "Any Rank" || j.rank_required.toLowerCase() === role.toLowerCase()
+        );
+        if (match) {
+          setJobMatch(match);
+          sessionStorage.setItem("seamind_job_match_shown", "1");
+        }
+      }
+    };
+    checkJobMatches();
+  }, [appState, role]);
+
   useEffect(() => {
     const savedId = localStorage.getItem(PROFILE_KEY);
     if (!savedId) { setAppState("landing"); return; }
