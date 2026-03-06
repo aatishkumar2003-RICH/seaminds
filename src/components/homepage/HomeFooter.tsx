@@ -31,7 +31,7 @@ const HomeFooter = () => {
         { label: "Maritime News", action: () => navigate("/app") },
         { label: "Safety Reports", action: () => navigate("/app") },
         { label: "MLC 2006", action: () => navigate("/app") },
-        { label: "Contact", action: () => navigate("/app") },
+        { label: "Contact", action: () => navigate("/contact") },
       ],
     },
     {
