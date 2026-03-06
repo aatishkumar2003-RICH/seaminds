@@ -111,7 +111,8 @@ const Index = () => {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "job_postings" },
         (payload) => {
-          const newJob = payload.new as { rank_required: string; vessel_type: string; joining_port: string };
+          const newJob = payload.new as { rank_required: string; vessel_type: string; joining_port: string; status: string };
+          if (newJob.status === "pending_payment") return;
           if (
             newJob.rank_required === "Any Rank" ||
             newJob.rank_required.toLowerCase() === role.toLowerCase()
