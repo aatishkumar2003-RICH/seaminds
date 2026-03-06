@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { ArrowLeft, Search, Send, Loader2, Bookmark, Trash2 } from "lucide-react";
+import { ArrowLeft, Search, Send, Loader2, Bookmark, Trash2, Camera } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -36,6 +36,7 @@ const SaveToPocket = ({ messages }: { messages: Msg[] }) => {
 };
 
 const BRIDGE_CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bridge-chat`;
+const DIAGNOSE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/diagnose-equipment`;
 
 const QUICK_TAPS = ["MARPOL", "SOLAS", "ISM Code", "MLC 2006", "STCW"];
 
@@ -142,6 +143,11 @@ const Bridge = () => {
   const [showPocket, setShowPocket] = useState(false);
   const [pocketItems, setPocketItems] = useState<{query: string; answer: string; savedAt: string}[]>([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [diagnosisImage, setDiagnosisImage] = useState<string | null>(null);
+  const [diagnosisLoading, setDiagnosisLoading] = useState(false);
+  const [diagnosisResult, setDiagnosisResult] = useState<string | null>(null);
+  const [diagnosisQuery, setDiagnosisQuery] = useState("");
 
   const loadPocket = () => {
     const items = JSON.parse(localStorage.getItem("bridge_pocket") || "[]");
@@ -207,6 +213,198 @@ const Bridge = () => {
   const handleBackToHome = () => {
     setShowChat(false);
   };
+
+  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const dataUrl = ev.target?.result as string;
+      setDiagnosisImage(dataUrl);
+      setDiagnosisLoading(true);
+      setDiagnosisResult(null);
+
+      const base64 = dataUrl.split(",")[1];
+      const mimeType = file.type || "image/jpeg";
+
+      let resultSoFar = "";
+      try {
+        const resp = await fetch(DIAGNOSE_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ image_base64: base64, mime_type: mimeType }),
+        });
+
+        if (!resp.ok || !resp.body) {
+          const body = await resp.json().catch(() => ({}));
+          setDiagnosisResult(`⚠️ ${body.error || "Failed to analyze image"}`);
+          setDiagnosisLoading(false);
+          return;
+        }
+
+        const streamReader = resp.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await streamReader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+
+          let idx: number;
+          while ((idx = buffer.indexOf("\n")) !== -1) {
+            let line = buffer.slice(0, idx);
+            buffer = buffer.slice(idx + 1);
+            if (line.endsWith("\r")) line = line.slice(0, -1);
+            if (!line.startsWith("data: ")) continue;
+            const json = line.slice(6).trim();
+            if (json === "[DONE]") break;
+            try {
+              const parsed = JSON.parse(json);
+              const content = parsed.choices?.[0]?.delta?.content;
+              if (content) {
+                resultSoFar += content;
+                setDiagnosisResult(resultSoFar);
+              }
+            } catch {
+              buffer = line + "\n" + buffer;
+              break;
+            }
+          }
+        }
+
+        // Extract equipment/fault for YouTube query
+        const equipMatch = resultSoFar.match(/\*\*EQUIPMENT IDENTIFIED:\*\*\s*(.+)/);
+        const faultMatch = resultSoFar.match(/\*\*FAULT\/CONDITION DETECTED:\*\*\s*(.+)/);
+        const equip = equipMatch?.[1]?.trim() || "ship equipment";
+        const fault = faultMatch?.[1]?.trim() || "fault diagnosis";
+        setDiagnosisQuery(`${equip} ${fault}`);
+      } catch (err) {
+        setDiagnosisResult(`⚠️ ${err instanceof Error ? err.message : "Unknown error"}`);
+      }
+      setDiagnosisLoading(false);
+    };
+    reader.readAsDataURL(file);
+    // Reset file input so same file can be selected again
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleNewDiagnosis = () => {
+    setDiagnosisImage(null);
+    setDiagnosisResult(null);
+    setDiagnosisQuery("");
+  };
+
+  // Diagnosis result view
+  if (diagnosisImage && (diagnosisLoading || diagnosisResult)) {
+    const ytUrl = diagnosisQuery ? `https://www.youtube.com/results?search_query=maritime+${encodeURIComponent(diagnosisQuery)}` : "";
+    const ytCards = diagnosisQuery ? [
+      `${diagnosisQuery} — Full Explanation`,
+      `${diagnosisQuery} — Step by Step Guide`,
+      `${diagnosisQuery} — IMO Requirements`,
+    ] : [];
+    return (
+      <div className="flex flex-col h-full">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
+          <button onClick={handleNewDiagnosis} style={{ color: "#D4AF37" }}>
+            <ArrowLeft size={18} />
+          </button>
+          <div>
+            <h2 className="text-sm font-bold" style={{ color: "#D4AF37" }}>EQUIPMENT DIAGNOSIS</h2>
+            <p className="text-[10px] text-muted-foreground">AI Photo Analysis</p>
+          </div>
+          <button
+            onClick={handleNewDiagnosis}
+            className="ml-auto text-[10px] text-muted-foreground hover:text-foreground px-2 py-1 rounded"
+          >
+            New Diagnosis
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
+          {/* Image preview */}
+          <img
+            src={diagnosisImage}
+            alt="Equipment"
+            className="w-full rounded-xl object-cover"
+            style={{ maxHeight: 200 }}
+          />
+          {/* Loading */}
+          {diagnosisLoading && !diagnosisResult && (
+            <div className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm text-muted-foreground" style={{ background: "rgba(13,27,42,0.8)" }}>
+              <Loader2 size={14} className="animate-spin" /> 🔍 Analysing equipment...
+            </div>
+          )}
+          {/* Result */}
+          {diagnosisResult && (
+            <div
+              className="rounded-xl px-4 py-3 text-sm"
+              style={{ background: "rgba(13,27,42,0.8)", border: "1px solid rgba(255,255,255,0.05)" }}
+            >
+              <div className="prose prose-sm prose-invert max-w-none [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm [&_strong]:text-[#D4AF37]">
+                <ReactMarkdown>{diagnosisResult}</ReactMarkdown>
+              </div>
+            </div>
+          )}
+          {/* YouTube section */}
+          {diagnosisResult && !diagnosisLoading && ytCards.length > 0 && (
+            <div style={{ marginTop: 20 }}>
+              <h3 style={{ color: "#D4AF37", fontSize: 14, fontWeight: 700, marginBottom: 12 }}>▶ Watch on YouTube</h3>
+              {ytCards.map((title, i) => (
+                <div
+                  key={i}
+                  onClick={() => window.open(ytUrl, "_blank")}
+                  className="flex items-center gap-3 rounded-lg cursor-pointer"
+                  style={{ background: "rgba(13,27,42,0.85)", borderLeft: "2px solid #FF0000", padding: 12, marginBottom: 8 }}
+                >
+                  <span style={{ color: "#FF0000", fontSize: 18, flexShrink: 0 }}>▶</span>
+                  <div>
+                    <div className="text-sm text-foreground">{title}</div>
+                    <div className="text-[11px] text-muted-foreground">Search on YouTube →</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {/* Official References */}
+          {diagnosisResult && !diagnosisLoading && (
+            <div style={{ marginTop: 20 }}>
+              <h3 style={{ color: "#D4AF37", fontSize: 14, fontWeight: 700, marginBottom: 12 }}>📋 Official References</h3>
+              {[
+                { name: "IMO Official Site", url: "https://www.imo.org" },
+                { name: "gCaptain Maritime News", url: "https://gcaptain.com" },
+                { name: "Marine Insight Guides", url: "https://www.marineinsight.com" },
+                { name: "BIMCO Resources", url: "https://www.bimco.org" },
+              ].map((ref, i) => (
+                <div
+                  key={i}
+                  onClick={() => window.open(ref.url, "_blank")}
+                  className="flex items-center justify-between cursor-pointer py-3"
+                  style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}
+                >
+                  <div className="flex items-center gap-2">
+                    <span style={{ fontSize: 14 }}>📄</span>
+                    <span className="text-sm text-foreground">{ref.name}</span>
+                  </div>
+                  <span style={{ color: "#D4AF37", fontSize: 14 }}>→</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {/* Save to Pocket */}
+          {diagnosisResult && !diagnosisLoading && (
+            <SaveToPocket messages={[
+              { role: "user", content: `Equipment Photo Diagnosis` },
+              { role: "assistant", content: diagnosisResult },
+            ]} />
+          )}
+        </div>
+      </div>
+    );
+  }
 
   // Chat view
   if (showChat) {
@@ -464,6 +662,27 @@ const Bridge = () => {
           </button>
         ))}
       </div>
+
+      {/* Camera / Photo Diagnose button */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={handlePhotoSelect}
+      />
+      <button
+        onClick={() => fileInputRef.current?.click()}
+        className="flex items-center gap-3 w-full rounded-xl mb-4 transition-colors text-left"
+        style={{ border: "1px solid #D4AF37", background: "transparent", padding: 14 }}
+      >
+        <Camera size={22} style={{ color: "#D4AF37", flexShrink: 0 }} />
+        <div>
+          <div className="text-sm font-semibold" style={{ color: "#D4AF37" }}>Diagnose Equipment from Photo</div>
+          <div className="text-[10px] text-muted-foreground mt-0.5">Photo any alarm, gauge or display — AI gives technical diagnosis</div>
+        </div>
+      </button>
 
       {/* My Pocket button */}
       <button
