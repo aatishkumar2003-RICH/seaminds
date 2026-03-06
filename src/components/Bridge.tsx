@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { ArrowLeft, Search, Send, Loader2 } from "lucide-react";
+import { ArrowLeft, Search, Send, Loader2, Bookmark, Trash2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 type Msg = { role: "user" | "assistant"; content: string };
