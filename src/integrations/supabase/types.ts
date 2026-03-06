@@ -283,6 +283,45 @@ export type Database = {
         }
         Relationships: []
       }
+      job_postings: {
+        Row: {
+          additional_notes: string | null
+          company_name: string
+          contact_whatsapp: string
+          contract_duration: string
+          created_at: string
+          id: string
+          joining_port: string
+          monthly_salary: string | null
+          rank_required: string
+          vessel_type: string
+        }
+        Insert: {
+          additional_notes?: string | null
+          company_name: string
+          contact_whatsapp: string
+          contract_duration: string
+          created_at?: string
+          id?: string
+          joining_port: string
+          monthly_salary?: string | null
+          rank_required: string
+          vessel_type: string
+        }
+        Update: {
+          additional_notes?: string | null
+          company_name?: string
+          contact_whatsapp?: string
+          contract_duration?: string
+          created_at?: string
+          id?: string
+          joining_port?: string
+          monthly_salary?: string | null
+          rank_required?: string
+          vessel_type?: string
+        }
+        Relationships: []
+      }
       job_vacancies: {
         Row: {
           active: boolean
