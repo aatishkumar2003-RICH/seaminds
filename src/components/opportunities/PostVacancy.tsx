@@ -310,6 +310,7 @@ const PostVacancy = () => {
         <div className="space-y-1.5">
           <label className="text-xs text-muted-foreground">Company Name *</label>
           <Input value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="e.g. Pacific Shipping Co." className="text-sm" />
+          <p className="text-[10px] text-muted-foreground">After payment verification, your company receives a ✓ Verified badge on all listings. Crew trust verified companies.</p>
         </div>
 
         <div className="space-y-1.5">
