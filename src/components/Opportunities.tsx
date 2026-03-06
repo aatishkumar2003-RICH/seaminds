@@ -87,6 +87,32 @@ const Opportunities = ({ profileId, firstName, role, nationality, shipName }: Op
         </div>
       )}
 
+      {/* Telegram Banner */}
+      <div className="mx-4 mt-3" style={{
+        background: "#0D2A1B",
+        border: "1px solid #2D6A4F",
+        borderRadius: "8px",
+        padding: "10px 14px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+      }}>
+        <span style={{ color: "white", fontSize: "13px" }}>📢 Get instant job alerts</span>
+        <a href="https://t.me/seamindsjobs" target="_blank" rel="noopener noreferrer"
+          style={{
+            background: "#2D6A4F",
+            color: "white",
+            borderRadius: "6px",
+            padding: "4px 10px",
+            fontSize: "12px",
+            marginLeft: "8px",
+            textDecoration: "none",
+            whiteSpace: "nowrap",
+          }}>
+          Join SeaMinds Jobs on Telegram →
+        </a>
+      </div>
+
       <div className="flex-1 overflow-y-auto">
         <Tabs defaultValue="find" className="h-full flex flex-col">
           <TabsList className="mx-4 mt-3 bg-secondary">
