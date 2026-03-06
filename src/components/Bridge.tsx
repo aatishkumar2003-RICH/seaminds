@@ -663,6 +663,27 @@ const Bridge = () => {
         ))}
       </div>
 
+      {/* Camera / Photo Diagnose button */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={handlePhotoSelect}
+      />
+      <button
+        onClick={() => fileInputRef.current?.click()}
+        className="flex items-center gap-3 w-full rounded-xl mb-4 transition-colors text-left"
+        style={{ border: "1px solid #D4AF37", background: "transparent", padding: 14 }}
+      >
+        <Camera size={22} style={{ color: "#D4AF37", flexShrink: 0 }} />
+        <div>
+          <div className="text-sm font-semibold" style={{ color: "#D4AF37" }}>Diagnose Equipment from Photo</div>
+          <div className="text-[10px] text-muted-foreground mt-0.5">Photo any alarm, gauge or display — AI gives technical diagnosis</div>
+        </div>
+      </button>
+
       {/* My Pocket button */}
       <button
         onClick={() => { loadPocket(); setShowPocket(true); }}
