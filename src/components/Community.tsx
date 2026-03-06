@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Compass, Shield, Users, Ship, MapPin, AlertTriangle, CheckCircle, Heart, Send, Mail, Anchor, FileText, Download, Eye } from "lucide-react";
+import MyDocumentsSection from "@/components/smc/MyDocumentsSection";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -261,8 +262,8 @@ const Community = ({ shipName, manningAgency, profileId, firstName, voyageStartD
           )}
         </div>
 
-        {/* SECTION — My Documents (CV) */}
-        <MyCvSection profileId={profileId} />
+        {/* SECTION — My Documents */}
+        <MyDocumentsSection profileId={profileId} />
 
         {/* SECTION 4 — Family Connection */}
         <FamilyConnectionSection profileId={profileId} firstName={firstName} shipName={shipName} voyageStartDate={voyageStartDate} />
