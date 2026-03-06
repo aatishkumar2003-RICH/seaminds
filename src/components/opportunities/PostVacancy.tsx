@@ -68,16 +68,61 @@ const PostVacancy = () => {
 
       const r = data.result;
 
-      const fuzzyMatch = (input: string, options: string[]): string | null => {
+      const RANK_ALIASES: Record<string, string> = {
+        "c/e": "Chief Engineer", "ce": "Chief Engineer", "chief eng": "Chief Engineer",
+        "c/o": "Chief Officer", "co": "Chief Officer", "chief off": "Chief Officer", "chief mate": "Chief Officer",
+        "2/o": "2nd Officer", "2o": "2nd Officer", "second officer": "2nd Officer", "2nd mate": "2nd Officer",
+        "3/o": "3rd Officer", "3o": "3rd Officer", "third officer": "3rd Officer", "3rd mate": "3rd Officer",
+        "2/e": "2nd Engineer", "2e": "2nd Engineer", "second engineer": "2nd Engineer",
+        "3/e": "3rd Engineer", "3e": "3rd Engineer", "third engineer": "3rd Engineer",
+        "4/e": "4th Engineer", "4e": "4th Engineer", "fourth engineer": "4th Engineer",
+        "master": "Captain", "capt": "Captain",
+        "ab": "AB Seaman", "able seaman": "AB Seaman", "able bodied": "AB Seaman",
+        "os": "OS", "ordinary seaman": "OS",
+        "eto": "ETO", "electro technical officer": "ETO",
+        "bsn": "Bosun", "boatswain": "Bosun",
+      };
+
+      const VESSEL_ALIASES: Record<string, string> = {
+        "bulker": "Bulk Carrier", "bulk": "Bulk Carrier",
+        "container ship": "Container", "containership": "Container",
+        "oil tanker": "Tanker (Oil)", "crude tanker": "Tanker (Oil)", "product tanker": "Tanker (Oil)",
+        "chemical tanker": "Tanker (Chemical)", "chem tanker": "Tanker (Chemical)",
+        "lng": "LNG/LPG", "lpg": "LNG/LPG", "gas carrier": "LNG/LPG", "lng carrier": "LNG/LPG",
+        "ro-ro": "RORO", "ro ro": "RORO", "roll on": "RORO",
+        "general cargo ship": "General Cargo", "gencargo": "General Cargo",
+        "offshore vessel": "Offshore", "osv": "Offshore", "ahts": "Offshore", "psv": "Offshore",
+        "cruise ship": "Cruise", "passenger": "Cruise",
+        "tugboat": "Tug", "tug boat": "Tug",
+      };
+
+      const DURATION_ALIASES: Record<string, string> = {
+        "1 month": "1-2 months", "2 months": "1-2 months",
+        "3 months": "3-4 months", "4 months": "3-4 months",
+        "5 months": "5-6 months", "6 months": "5-6 months",
+        "7 months": "7-8 months", "8 months": "7-8 months",
+        "9 months": "9-12 months", "10 months": "9-12 months", "11 months": "9-12 months", "12 months": "9-12 months",
+        "1 year": "9-12 months", "permanent contract": "Permanent", "full time": "Permanent",
+      };
+
+      const fuzzyMatch = (input: string, options: string[], aliases?: Record<string, string>): string | null => {
         const lower = input.toLowerCase().trim();
+        // Check aliases first
+        if (aliases && aliases[lower]) return aliases[lower];
         // Exact match
         const exact = options.find((o) => o.toLowerCase() === lower);
         if (exact) return exact;
-        // Contains match (option contains input or input contains option)
+        // Contains match
         const contains = options.find(
           (o) => o.toLowerCase().includes(lower) || lower.includes(o.toLowerCase())
         );
         if (contains) return contains;
+        // Partial alias match
+        if (aliases) {
+          for (const [alias, mapped] of Object.entries(aliases)) {
+            if (lower.includes(alias) || alias.includes(lower)) return mapped;
+          }
+        }
         // Word overlap scoring
         const inputWords = lower.split(/[\s\-\/()]+/).filter(Boolean);
         let bestScore = 0;
