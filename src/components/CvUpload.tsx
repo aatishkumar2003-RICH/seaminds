@@ -12,6 +12,7 @@ interface CvUploadProps {
     shipName?: string;
     whatsappNumber?: string;
   }) => void;
+  onFileReady?: (file: File) => void;
 }
 
 const RANK_MAP: Record<string, string> = {
@@ -44,7 +45,7 @@ const YEARS_MAP: Record<string, string> = {
   "15+ years": "15+ years",
 };
 
-const CvUpload = ({ onParsed }: CvUploadProps) => {
+const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
   const [status, setStatus] = useState<"idle" | "reading" | "success" | "error">("idle");
   const [fileName, setFileName] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
@@ -87,6 +88,7 @@ const CvUpload = ({ onParsed }: CvUploadProps) => {
       if (cv.whatsapp || cv.phone) mapped.whatsappNumber = cv.whatsapp || cv.phone;
 
       onParsed(mapped);
+      onFileReady?.(file);
       setStatus("success");
     } catch (e) {
       console.error("CV parse error:", e);
