@@ -1,6 +1,4 @@
-import { useEffect, useRef, useCallback } from "react";
-import useEmblaCarousel from "embla-carousel-react";
-import Autoplay from "embla-carousel-autoplay";
+import { useEffect, useRef } from "react";
 
 const useScrollFade = () => {
   const ref = useRef<HTMLDivElement>(null);
@@ -78,18 +76,28 @@ const borderColors: Record<Quote["country"], string> = {
   other: "border-l-primary/40",
 };
 
+const QuoteCard = ({ q }: { q: Quote }) => (
+  <div
+    className={`rounded-xl px-5 py-4 min-w-[340px] max-w-[380px] shrink-0 border border-primary/20 border-l-4 bg-[#0D1B2A] ${borderColors[q.country]}`}
+  >
+    <div className="flex items-center gap-2 mb-2">
+      <span className="text-base">{q.flag}</span>
+      <span className="text-sm font-semibold text-primary">{q.name}</span>
+      <span className="text-xs text-primary/60">·</span>
+      <span className="text-xs text-muted-foreground">{q.rank}</span>
+    </div>
+    <p className="text-xs text-foreground/80 leading-relaxed italic">"{q.quote}"</p>
+  </div>
+);
+
 const TestimonialsSection = () => {
   const headerRef = useScrollFade();
   const statsRef = useScrollFade();
 
-  const autoplayPlugin = useRef(
-    Autoplay({ delay: 4000, stopOnInteraction: false, stopOnMouseEnter: true })
-  );
-
-  const [emblaRef] = useEmblaCarousel(
-    { loop: true, align: "start", slidesToScroll: 1, dragFree: false },
-    [autoplayPlugin.current]
-  );
+  // Split quotes into two rows for visual variety
+  const half = Math.ceil(tickerQuotes.length / 2);
+  const row1 = tickerQuotes.slice(0, half);
+  const row2 = tickerQuotes.slice(half);
 
   return (
     <section id="testimonials" className="py-12 md:py-16">
@@ -125,23 +133,23 @@ const TestimonialsSection = () => {
           ))}
         </div>
 
-        {/* Auto-scrolling Ticker */}
-        <div className="overflow-hidden mb-4" ref={emblaRef}>
-          <div className="flex gap-4">
-            {tickerQuotes.map((q, i) => (
-              <div
-                key={i}
-                className={`rounded-xl px-5 py-4 min-w-[340px] max-w-[380px] shrink-0 border border-primary/20 border-l-4 bg-[#0D1B2A] ${borderColors[q.country]}`}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-base">{q.flag}</span>
-                  <span className="text-sm font-semibold text-primary">{q.name}</span>
-                  <span className="text-xs text-primary/60">·</span>
-                  <span className="text-xs text-muted-foreground">{q.rank}</span>
-                </div>
-                <p className="text-xs text-foreground/80 leading-relaxed italic">"{q.quote}"</p>
-              </div>
-            ))}
+        {/* Continuous CSS ticker - Row 1 */}
+        <div className="overflow-hidden mb-3 ticker-container">
+          <div className="ticker-track">
+            <div className="flex gap-4 ticker-row-1">
+              {row1.map((q, i) => <QuoteCard key={`a-${i}`} q={q} />)}
+              {row1.map((q, i) => <QuoteCard key={`b-${i}`} q={q} />)}
+            </div>
+          </div>
+        </div>
+
+        {/* Continuous CSS ticker - Row 2 (slightly slower, opposite feel) */}
+        <div className="overflow-hidden mb-4 ticker-container">
+          <div className="ticker-track">
+            <div className="flex gap-4 ticker-row-2">
+              {row2.map((q, i) => <QuoteCard key={`c-${i}`} q={q} />)}
+              {row2.map((q, i) => <QuoteCard key={`d-${i}`} q={q} />)}
+            </div>
           </div>
         </div>
 
@@ -150,6 +158,23 @@ const TestimonialsSection = () => {
           Built with the maritime community. For the maritime community.
         </p>
       </div>
+
+      <style>{`
+        .ticker-container:hover .ticker-row-1,
+        .ticker-container:hover .ticker-row-2 {
+          animation-play-state: paused;
+        }
+        .ticker-row-1 {
+          animation: ticker-scroll 120s linear infinite;
+        }
+        .ticker-row-2 {
+          animation: ticker-scroll 140s linear infinite;
+        }
+        @keyframes ticker-scroll {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+      `}</style>
     </section>
   );
 };
