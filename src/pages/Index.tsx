@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { MessageCircle, LayoutDashboard, Briefcase, Newspaper, GraduationCap, Compass, Star, LogOut, Anchor } from "lucide-react";
+import { MessageCircle, LayoutDashboard, Briefcase, Newspaper, GraduationCap, Compass, Star, LogOut, Anchor, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import LandingScreen from "@/components/LandingScreen";
 import OceanBackground from "@/components/homepage/OceanBackground";
@@ -44,6 +44,7 @@ const Index = () => {
   const [nationality, setNationality] = useState("");
   const [showSignOffConfirm, setShowSignOffConfirm] = useState(false);
   const [utcTime, setUtcTime] = useState("");
+  const [jobMatch, setJobMatch] = useState<{ rank_required: string; vessel_type: string; joining_port: string } | null>(null);
 
   useEffect(() => {
     const tick = () => {
@@ -68,6 +69,33 @@ const Index = () => {
     };
     document.title = appState === "main" ? titles[screen] : "SeaMinds";
   }, [screen, appState]);
+
+  // Job match notification
+  useEffect(() => {
+    if (appState !== "main" || !role) return;
+    if (sessionStorage.getItem("seamind_job_match_shown")) return;
+
+    const checkJobMatches = async () => {
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const { data } = await supabase
+        .from("job_postings")
+        .select("rank_required, vessel_type, joining_port")
+        .gte("created_at", sevenDaysAgo)
+        .order("created_at", { ascending: false })
+        .limit(3);
+
+      if (data) {
+        const match = data.find(
+          (j) => j.rank_required === "Any Rank" || j.rank_required.toLowerCase() === role.toLowerCase()
+        );
+        if (match) {
+          setJobMatch(match);
+          sessionStorage.setItem("seamind_job_match_shown", "1");
+        }
+      }
+    };
+    checkJobMatches();
+  }, [appState, role]);
 
   useEffect(() => {
     const savedId = localStorage.getItem(PROFILE_KEY);
@@ -265,6 +293,50 @@ const Index = () => {
       )}
 
       <div className="flex-1 overflow-hidden">
+        {/* Job match notification */}
+        {screen === "chat" && jobMatch && (
+          <div
+            style={{
+              border: "1px solid #D4AF37",
+              background: "rgba(26, 58, 92, 0.9)",
+              borderRadius: "10px",
+              padding: "10px",
+              margin: "0 16px 8px 16px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "8px",
+            }}
+          >
+            <span style={{ color: "white", fontSize: "12px", flex: 1 }}>
+              ⚓ New job match: <strong style={{ color: "#D4AF37" }}>{jobMatch.rank_required}</strong> on{" "}
+              <strong>{jobMatch.vessel_type}</strong> vessel. Joining: {jobMatch.joining_port}
+            </span>
+            <button
+              onClick={() => { setScreen("opportunities"); setJobMatch(null); }}
+              style={{
+                background: "#D4AF37",
+                color: "#0a1929",
+                borderRadius: "6px",
+                padding: "4px 10px",
+                fontSize: "11px",
+                fontWeight: "bold",
+                border: "none",
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+              }}
+            >
+              View
+            </button>
+            <button
+              onClick={() => setJobMatch(null)}
+              style={{ background: "none", border: "none", cursor: "pointer", padding: "2px" }}
+            >
+              <X size={14} color="#888" />
+            </button>
+          </div>
+        )}
+
         {screen === "chat" ? (
           <CrewChat profileId={profileId} firstName={firstName} role={role} shipName={shipName} voyageStartDate={voyageStartDate} />
         ) : screen === "dashboard" ? (
