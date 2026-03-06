@@ -246,75 +246,65 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
         )}
       </div>
 
-      {/* Job Listings */}
+      {/* Job Postings from job_postings table */}
       <div className="space-y-3">
         <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide px-1">Available Positions</h3>
-        {vacancies.length === 0 ? (
+        {jobPostings.length === 0 ? (
           <div className="rounded-xl bg-card border border-border p-6 text-center">
             <Ship size={24} className="text-muted-foreground mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">No vacancies posted yet. Check back soon.</p>
+            <p className="text-sm text-muted-foreground">No positions available yet. Check back soon.</p>
           </div>
         ) : (
-          vacancies.map((v) => (
-            <div key={v.id} className="rounded-xl bg-card border border-border p-4 space-y-3">
-              <div className="flex items-start justify-between">
+          jobPostings.map((jp) => {
+            const whatsappNumber = jp.contact_whatsapp.replace(/[^0-9]/g, "");
+            const whatsappText = encodeURIComponent(
+              `Hi, I am interested in the ${jp.rank_required} position. My name is ${firstName} ${lastName}, ${role}, ${nationality}, ${yearsAtSea} experience.`
+            );
+            const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappText}`;
+            const postedAgo = formatDistanceToNow(new Date(jp.created_at), { addSuffix: true });
+
+            return (
+              <div
+                key={jp.id}
+                className="rounded-xl bg-card p-4 space-y-3"
+                style={{ border: "1.5px solid #1a3a5c" }}
+              >
                 <div>
-                  <h4 className="font-semibold text-foreground">{v.rank_required}</h4>
-                  <p className="text-xs text-muted-foreground mt-0.5">{v.company_name}</p>
+                  <h4 style={{ color: "#D4AF37", fontSize: "18px", fontWeight: "bold" }}>{jp.rank_required}</h4>
+                  <p className="text-sm text-foreground mt-0.5">{jp.company_name}</p>
                 </div>
-                <span className="text-[10px] uppercase tracking-wider font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
-                  {v.vessel_type}
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
-                <div className="flex items-center gap-1.5">
-                  <Ship size={12} className="text-primary/70" />
-                  <span>{v.vessel_name}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Clock size={12} className="text-primary/70" />
-                  <span>{v.contract_duration}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <CalendarIcon size={12} className="text-primary/70" />
-                  <span>{v.start_date ? format(new Date(v.start_date), "MMM yyyy") : "TBD"}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <MapPin size={12} className="text-primary/70" />
-                  <span>{v.joining_port}</span>
-                </div>
-                <div className="flex items-center gap-1.5 col-span-2">
-                  <DollarSign size={12} className="text-primary/70" />
-                  <span>${v.salary_min.toLocaleString()} – ${v.salary_max.toLocaleString()} /mo</span>
-                </div>
-                {v.min_smc_score && (
-                  <div className="flex items-center gap-1.5 col-span-2">
-                    <Award size={12} className="text-primary/70" />
-                    <span>Min SMC Score: {v.min_smc_score.toFixed(2)}</span>
+                <p className="text-xs text-muted-foreground">
+                  {jp.vessel_type} · {jp.contract_duration}
+                </p>
+                <div className="space-y-1.5 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <span>📍</span>
+                    <span>{jp.joining_port}</span>
                   </div>
+                  <div className="flex items-center gap-1.5">
+                    <DollarSign size={12} className="text-primary/70" />
+                    <span>{jp.monthly_salary ? `$${jp.monthly_salary}/month` : "Negotiable"}</span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground/60">Posted {postedAgo}</p>
+                </div>
+                {jp.additional_notes && (
+                  <p className="text-[11px] text-muted-foreground italic">{jp.additional_notes}</p>
                 )}
+                <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="block">
+                  <Button size="sm" className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold text-sm h-10">
+                    Apply via WhatsApp
+                  </Button>
+                </a>
               </div>
-              {(() => {
-                const meetsScore = !v.min_smc_score || DEMO_SMC_SCORE >= v.min_smc_score;
-                if (meetsScore) {
-                  return <Button size="sm" className="w-full" onClick={() => handleApply(v)}>Apply Now</Button>;
-                }
-                return (
-                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 space-y-1">
-                    <div className="flex items-center gap-1.5">
-                      <AlertTriangle size={12} className="text-amber-400" />
-                      <span className="text-xs font-medium text-amber-300">Score Required: {v.min_smc_score?.toFixed(2)}</span>
-                    </div>
-                    <p className="text-[11px] text-muted-foreground">
-                      Your Score: <span className="text-foreground font-medium">{DEMO_SMC_SCORE.toFixed(2)}</span> — Visit Academy to Improve
-                    </p>
-                  </div>
-                );
-              })()}
-            </div>
-          ))
+            );
+          })
         )}
       </div>
+
+      {/* Manager Job Vacancies (legacy) */}
+      {vacancies.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide px-1">Manager Vacancies</h3>
     </div>
   );
 };
