@@ -213,13 +213,31 @@ const Index = () => {
         <OceanBackground timeOfDay={timeOfDay} />
       </div>
 
-      {/* Nationality / ship / clock watermark */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-        <div className="flex flex-col items-center gap-1 select-none">
-          <span className="text-5xl">{NATIONALITY_FLAGS[nationality] || "🌊"}</span>
-          <span className="uppercase tracking-widest text-[16px] opacity-70" style={{ color: "#D4AF37" }}>{shipName}</span>
-          <span className="text-xs text-muted-foreground opacity-50">{utcTime}</span>
-        </div>
+      <div
+        style={{
+          position: 'fixed',
+          bottom: '120px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          textAlign: 'center',
+          pointerEvents: 'none',
+          zIndex: 0,
+          opacity: 0.6,
+        }}
+      >
+        <div style={{ fontSize: '3rem' }}>{NATIONALITY_FLAGS[nationality] || "🌊"}</div>
+        <div style={{ 
+          color: '#D4AF37', 
+          fontSize: '14px', 
+          letterSpacing: '0.2em',
+          textTransform: 'uppercase',
+          marginTop: '8px'
+        }}>{shipName}</div>
+        <div style={{ 
+          color: '#888', 
+          fontSize: '11px',
+          marginTop: '4px'
+        }}>{utcTime}</div>
       </div>
 
       <div className="relative z-10 flex flex-col h-full">
