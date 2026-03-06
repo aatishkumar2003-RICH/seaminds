@@ -67,16 +67,43 @@ const PostVacancy = () => {
       }
 
       const r = data.result;
+
+      const fuzzyMatch = (input: string, options: string[]): string | null => {
+        const lower = input.toLowerCase().trim();
+        // Exact match
+        const exact = options.find((o) => o.toLowerCase() === lower);
+        if (exact) return exact;
+        // Contains match (option contains input or input contains option)
+        const contains = options.find(
+          (o) => o.toLowerCase().includes(lower) || lower.includes(o.toLowerCase())
+        );
+        if (contains) return contains;
+        // Word overlap scoring
+        const inputWords = lower.split(/[\s\-\/()]+/).filter(Boolean);
+        let bestScore = 0;
+        let bestMatch: string | null = null;
+        for (const option of options) {
+          const optWords = option.toLowerCase().split(/[\s\-\/()]+/).filter(Boolean);
+          const overlap = inputWords.filter((w) => optWords.some((ow) => ow.includes(w) || w.includes(ow))).length;
+          const score = overlap / Math.max(inputWords.length, optWords.length);
+          if (score > bestScore && score >= 0.4) {
+            bestScore = score;
+            bestMatch = option;
+          }
+        }
+        return bestMatch;
+      };
+
       if (r.rankRequired) {
-        const match = RANKS.find((rank) => rank.toLowerCase() === r.rankRequired.toLowerCase());
+        const match = fuzzyMatch(r.rankRequired, RANKS);
         if (match) setRankRequired(match);
       }
       if (r.vesselType) {
-        const match = VESSEL_TYPES.find((v) => v.toLowerCase() === r.vesselType.toLowerCase());
+        const match = fuzzyMatch(r.vesselType, VESSEL_TYPES);
         if (match) setVesselType(match);
       }
       if (r.contractDuration) {
-        const match = DURATIONS.find((d) => d.toLowerCase() === r.contractDuration.toLowerCase());
+        const match = fuzzyMatch(r.contractDuration, DURATIONS);
         if (match) setContractDuration(match);
       }
       if (r.monthlySalary) setMonthlySalary(r.monthlySalary);
