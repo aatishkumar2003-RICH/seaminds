@@ -351,6 +351,56 @@ const Bridge = () => {
     );
   }
 
+  // Pocket view
+  if (showPocket) {
+    return (
+      <div className="flex flex-col h-full px-4 py-3 overflow-y-auto">
+        <button onClick={() => setShowPocket(false)} className="flex items-center gap-2 mb-4" style={{ color: "#D4AF37" }}>
+          <ArrowLeft size={18} /> <span className="text-sm font-medium">Back</span>
+        </button>
+        <div className="text-center mb-6">
+          <h2 className="text-lg font-bold" style={{ color: "#D4AF37" }}>💾 My Pocket</h2>
+          <p className="text-xs text-muted-foreground">{pocketItems.length} saved {pocketItems.length === 1 ? "item" : "items"}</p>
+        </div>
+        {pocketItems.length === 0 ? (
+          <div className="text-center text-muted-foreground text-sm mt-8">
+            <p>No saved items yet.</p>
+            <p className="text-xs mt-1">Use "Save to My Pocket" after any Bridge answer.</p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {pocketItems.map((item, i) => (
+              <div key={i} className="rounded-xl p-4" style={{ background: "rgba(13,27,42,0.85)", border: "1px solid rgba(212,175,55,0.15)" }}>
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <span className="text-sm font-semibold text-foreground flex-1">{item.query}</span>
+                  <button onClick={() => deletePocketItem(i)} className="shrink-0 text-muted-foreground hover:text-red-400 transition-colors">
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+                <p className="text-xs text-muted-foreground line-clamp-3">{item.answer}</p>
+                <p className="text-[10px] text-muted-foreground mt-2">{new Date(item.savedAt).toLocaleDateString()}</p>
+                <button
+                  onClick={() => {
+                    setMessages([
+                      { role: "user", content: item.query },
+                      { role: "assistant", content: item.answer },
+                    ]);
+                    setShowPocket(false);
+                    setShowChat(true);
+                  }}
+                  className="text-[11px] mt-2 font-medium"
+                  style={{ color: "#D4AF37" }}
+                >
+                  View full answer →
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   // Department drill-down
   if (activeDept) {
     return (
