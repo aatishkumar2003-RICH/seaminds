@@ -115,6 +115,7 @@ const Index = () => {
             newJob.rank_required.toLowerCase() === role.toLowerCase()
           ) {
             setJobMatch({ rank_required: newJob.rank_required, vessel_type: newJob.vessel_type, joining_port: newJob.joining_port });
+            setJobBadgeCount(prev => prev + 1);
             
             // Play notification sound
             try {
@@ -404,8 +405,15 @@ const Index = () => {
           <LayoutDashboard size={18} />
           <span className="text-[10px] font-medium tracking-wide uppercase">Welfare</span>
         </button>
-        <button onClick={() => setScreen("opportunities")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "opportunities" ? "text-primary" : "text-muted-foreground"}`}>
-          <Briefcase size={18} />
+        <button onClick={() => { setScreen("opportunities"); setJobBadgeCount(0); }} className={`relative flex flex-col items-center gap-1 transition-colors ${screen === "opportunities" ? "text-primary" : "text-muted-foreground"}`}>
+          <div className="relative">
+            <Briefcase size={18} />
+            {jobBadgeCount > 0 && (
+              <span className="absolute -top-1.5 -right-2.5 bg-[#D4AF37] text-[#0a1929] text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
+                {jobBadgeCount}
+              </span>
+            )}
+          </div>
           <span className="text-[10px] font-medium tracking-wide uppercase">Jobs</span>
         </button>
         <button onClick={() => setScreen("news")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "news" ? "text-primary" : "text-muted-foreground"}`}>
