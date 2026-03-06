@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
+import { UploadCloud, CheckCircle, Loader2 } from "lucide-react";
 
 const RANKS = [
   "Captain", "Chief Officer", "2nd Officer", "3rd Officer",
@@ -31,7 +32,67 @@ const PostVacancy = () => {
   const [additionalNotes, setAdditionalNotes] = useState("");
   const [posting, setPosting] = useState(false);
 
+  const [uploadedFileName, setUploadedFileName] = useState("");
+  const [aiReading, setAiReading] = useState(false);
+  const [aiSuccess, setAiSuccess] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const wordCount = additionalNotes.trim().split(/\s+/).filter(Boolean).length;
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadedFileName(file.name);
+    setAiReading(true);
+    setAiSuccess(false);
+
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result.split(",")[1]);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const { data, error } = await supabase.functions.invoke("parse-flier", {
+        body: { imageBase64: base64, mimeType: file.type },
+      });
+
+      if (error || !data?.result) {
+        throw new Error("Failed");
+      }
+
+      const r = data.result;
+      if (r.rankRequired) {
+        const match = RANKS.find((rank) => rank.toLowerCase() === r.rankRequired.toLowerCase());
+        if (match) setRankRequired(match);
+      }
+      if (r.vesselType) {
+        const match = VESSEL_TYPES.find((v) => v.toLowerCase() === r.vesselType.toLowerCase());
+        if (match) setVesselType(match);
+      }
+      if (r.contractDuration) {
+        const match = DURATIONS.find((d) => d.toLowerCase() === r.contractDuration.toLowerCase());
+        if (match) setContractDuration(match);
+      }
+      if (r.monthlySalary) setMonthlySalary(r.monthlySalary);
+      if (r.joiningPort) setJoiningPort(r.joiningPort);
+      if (r.companyName) setCompanyName(r.companyName);
+      if (r.contactWhatsapp) setContactWhatsapp(r.contactWhatsapp);
+      if (r.additionalNotes) setAdditionalNotes(r.additionalNotes);
+
+      setAiSuccess(true);
+      toast({ title: "✓ Flier read successfully", description: "Please review and edit the fields below." });
+    } catch {
+      toast({ title: "Could not read flier", description: "Please fill fields manually.", variant: "destructive" });
+    } finally {
+      setAiReading(false);
+    }
+  };
 
   const handlePost = async () => {
     if (!rankRequired || !vesselType || !contractDuration || !joiningPort || !contactWhatsapp || !companyName) {
@@ -73,12 +134,48 @@ const PostVacancy = () => {
     setContactWhatsapp("");
     setCompanyName("");
     setAdditionalNotes("");
+    setUploadedFileName("");
+    setAiSuccess(false);
   };
 
   return (
     <div className="space-y-4 pt-3">
       <div className="rounded-xl bg-card border border-border p-4 space-y-4">
         <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Post a Vacancy</h3>
+
+        {/* Flier Upload */}
+        <div
+          onClick={() => !aiReading && fileInputRef.current?.click()}
+          className="rounded-xl border-2 border-dashed cursor-pointer flex flex-col items-center justify-center py-5 px-4 gap-2 transition-colors"
+          style={{ borderColor: "#1a3a5c", background: "rgba(26, 58, 92, 0.15)" }}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,application/pdf"
+            className="hidden"
+            onChange={handleFileUpload}
+          />
+          {aiReading ? (
+            <>
+              <Loader2 size={28} className="text-green-400 animate-spin" />
+              <p className="text-green-400 text-sm font-medium">AI Reading Flier...</p>
+              <p className="text-muted-foreground text-[11px]">{uploadedFileName}</p>
+            </>
+          ) : aiSuccess ? (
+            <>
+              <CheckCircle size={28} className="text-green-400" />
+              <p className="text-green-400 text-sm font-medium">✓ Flier read successfully</p>
+              <p className="text-muted-foreground text-[11px]">{uploadedFileName}</p>
+            </>
+          ) : (
+            <>
+              <UploadCloud size={28} className="text-muted-foreground" />
+              <p className="text-foreground text-sm font-medium">Upload Job Flier (PDF or Image)</p>
+              <p className="text-muted-foreground text-[11px]">AI will read your flier and fill the form automatically</p>
+            </>
+          )}
+        </div>
 
         <div className="space-y-1.5">
           <label className="text-xs text-muted-foreground">Rank Required *</label>
