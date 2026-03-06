@@ -126,7 +126,7 @@ const PhotoAnnotator = ({ imageSrc, onSubmit, onCancel }: Props) => {
 
   const arrowEnd = useRef<DrawPoint | null>(null);
 
-  const startDrawHandler = (e: React.TouchEvent | React.MouseEvent) => {
+  const startDrawFixed = (e: React.TouchEvent | React.MouseEvent) => {
     e.preventDefault();
     const pos = getPos(e);
     if (!pos) return;
