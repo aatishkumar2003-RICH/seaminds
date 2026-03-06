@@ -299,6 +299,113 @@ const Bridge = () => {
     setDiagnosisQuery("");
   };
 
+  // Diagnosis result view
+  if (diagnosisImage && (diagnosisLoading || diagnosisResult)) {
+    const ytUrl = diagnosisQuery ? `https://www.youtube.com/results?search_query=maritime+${encodeURIComponent(diagnosisQuery)}` : "";
+    const ytCards = diagnosisQuery ? [
+      `${diagnosisQuery} — Full Explanation`,
+      `${diagnosisQuery} — Step by Step Guide`,
+      `${diagnosisQuery} — IMO Requirements`,
+    ] : [];
+    return (
+      <div className="flex flex-col h-full">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
+          <button onClick={handleNewDiagnosis} style={{ color: "#D4AF37" }}>
+            <ArrowLeft size={18} />
+          </button>
+          <div>
+            <h2 className="text-sm font-bold" style={{ color: "#D4AF37" }}>EQUIPMENT DIAGNOSIS</h2>
+            <p className="text-[10px] text-muted-foreground">AI Photo Analysis</p>
+          </div>
+          <button
+            onClick={handleNewDiagnosis}
+            className="ml-auto text-[10px] text-muted-foreground hover:text-foreground px-2 py-1 rounded"
+          >
+            New Diagnosis
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
+          {/* Image preview */}
+          <img
+            src={diagnosisImage}
+            alt="Equipment"
+            className="w-full rounded-xl object-cover"
+            style={{ maxHeight: 200 }}
+          />
+          {/* Loading */}
+          {diagnosisLoading && !diagnosisResult && (
+            <div className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm text-muted-foreground" style={{ background: "rgba(13,27,42,0.8)" }}>
+              <Loader2 size={14} className="animate-spin" /> 🔍 Analysing equipment...
+            </div>
+          )}
+          {/* Result */}
+          {diagnosisResult && (
+            <div
+              className="rounded-xl px-4 py-3 text-sm"
+              style={{ background: "rgba(13,27,42,0.8)", border: "1px solid rgba(255,255,255,0.05)" }}
+            >
+              <div className="prose prose-sm prose-invert max-w-none [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm [&_strong]:text-[#D4AF37]">
+                <ReactMarkdown>{diagnosisResult}</ReactMarkdown>
+              </div>
+            </div>
+          )}
+          {/* YouTube section */}
+          {diagnosisResult && !diagnosisLoading && ytCards.length > 0 && (
+            <div style={{ marginTop: 20 }}>
+              <h3 style={{ color: "#D4AF37", fontSize: 14, fontWeight: 700, marginBottom: 12 }}>▶ Watch on YouTube</h3>
+              {ytCards.map((title, i) => (
+                <div
+                  key={i}
+                  onClick={() => window.open(ytUrl, "_blank")}
+                  className="flex items-center gap-3 rounded-lg cursor-pointer"
+                  style={{ background: "rgba(13,27,42,0.85)", borderLeft: "2px solid #FF0000", padding: 12, marginBottom: 8 }}
+                >
+                  <span style={{ color: "#FF0000", fontSize: 18, flexShrink: 0 }}>▶</span>
+                  <div>
+                    <div className="text-sm text-foreground">{title}</div>
+                    <div className="text-[11px] text-muted-foreground">Search on YouTube →</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {/* Official References */}
+          {diagnosisResult && !diagnosisLoading && (
+            <div style={{ marginTop: 20 }}>
+              <h3 style={{ color: "#D4AF37", fontSize: 14, fontWeight: 700, marginBottom: 12 }}>📋 Official References</h3>
+              {[
+                { name: "IMO Official Site", url: "https://www.imo.org" },
+                { name: "gCaptain Maritime News", url: "https://gcaptain.com" },
+                { name: "Marine Insight Guides", url: "https://www.marineinsight.com" },
+                { name: "BIMCO Resources", url: "https://www.bimco.org" },
+              ].map((ref, i) => (
+                <div
+                  key={i}
+                  onClick={() => window.open(ref.url, "_blank")}
+                  className="flex items-center justify-between cursor-pointer py-3"
+                  style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}
+                >
+                  <div className="flex items-center gap-2">
+                    <span style={{ fontSize: 14 }}>📄</span>
+                    <span className="text-sm text-foreground">{ref.name}</span>
+                  </div>
+                  <span style={{ color: "#D4AF37", fontSize: 14 }}>→</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {/* Save to Pocket */}
+          {diagnosisResult && !diagnosisLoading && (
+            <SaveToPocket messages={[
+              { role: "user", content: `Equipment Photo Diagnosis` },
+              { role: "assistant", content: diagnosisResult },
+            ]} />
+          )}
+        </div>
+      </div>
+    );
+  }
+
   // Chat view
   if (showChat) {
     return (
