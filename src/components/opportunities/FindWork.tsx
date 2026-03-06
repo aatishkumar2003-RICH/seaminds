@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { CalendarIcon, Ship, Anchor, Globe, Clock, MapPin, DollarSign, Check, AlertTriangle, Award } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,19 @@ interface Vacancy {
   min_smc_score: number | null;
 }
 
+interface JobPosting {
+  id: string;
+  rank_required: string;
+  vessel_type: string;
+  contract_duration: string;
+  monthly_salary: string | null;
+  joining_port: string;
+  contact_whatsapp: string;
+  company_name: string;
+  additional_notes: string | null;
+  created_at: string;
+}
+
 // Demo SMC score for development
 const DEMO_SMC_SCORE = 4.17;
 
@@ -50,6 +63,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
   const [aboutMe, setAboutMe] = useState("");
   const [visible, setVisible] = useState(false);
   const [vacancies, setVacancies] = useState<Vacancy[]>([]);
+  const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
