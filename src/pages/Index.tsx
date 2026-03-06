@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { MessageCircle, LayoutDashboard, Briefcase, Newspaper, GraduationCap, Compass, Star, LogOut, Anchor } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import LandingScreen from "@/components/LandingScreen";
+import OceanBackground from "@/components/homepage/OceanBackground";
+import { useTimeOfDay } from "@/hooks/useTimeOfDay";
 import NameEntry from "@/components/NameEntry";
 import WelcomeScreens from "@/components/WelcomeScreens";
 import CrewChat from "@/components/CrewChat";
@@ -19,8 +21,17 @@ type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "com
 
 const PROFILE_KEY = "seamind_profile_id";
 
+const NATIONALITY_FLAGS: Record<string, string> = {
+  Filipino: "🇵🇭", Indian: "🇮🇳", Indonesian: "🇮🇩", Ukrainian: "🇺🇦", Russian: "🇷🇺",
+  Chinese: "🇨🇳", Greek: "🇬🇷", British: "🇬🇧", Myanmar: "🇲🇲", Thai: "🇹🇭",
+  Vietnamese: "🇻🇳", Pakistani: "🇵🇰", Bangladeshi: "🇧🇩", "Sri Lankan": "🇱🇰",
+  Croatian: "🇭🇷", Polish: "🇵🇱", Turkish: "🇹🇷", Kiribati: "🇰🇮", Tuvalu: "🇹🇻",
+  Fijian: "🇫🇯", Maldivian: "🇲🇻", Ghanaian: "🇬🇭", Nigerian: "🇳🇬",
+};
+
 const Index = () => {
   const navigate = useNavigate();
+  const timeOfDay = useTimeOfDay();
   const [appState, setAppState] = useState<AppState>("loading");
   const [screen, setScreen] = useState<Screen>("chat");
   const [profileId, setProfileId] = useState("");
@@ -32,6 +43,17 @@ const Index = () => {
   const [manningAgency, setManningAgency] = useState("");
   const [nationality, setNationality] = useState("");
   const [showSignOffConfirm, setShowSignOffConfirm] = useState(false);
+  const [utcTime, setUtcTime] = useState("");
+
+  useEffect(() => {
+    const tick = () => {
+      const now = new Date();
+      setUtcTime(now.toISOString().slice(11, 19) + " UTC");
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
 
   // Dynamic page title based on active screen
   useEffect(() => {
@@ -186,7 +208,21 @@ const Index = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen max-w-md mx-auto bg-background">
+    <div className="flex flex-col h-screen max-w-md mx-auto bg-background relative">
+      <div className="absolute inset-0 opacity-20 pointer-events-none z-0">
+        <OceanBackground timeOfDay={timeOfDay} />
+      </div>
+
+      {/* Nationality / ship / clock watermark */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+        <div className="flex flex-col items-center gap-1 select-none">
+          <span className="text-6xl">{NATIONALITY_FLAGS[nationality] || "🌊"}</span>
+          <span className="uppercase tracking-widest text-[14px] opacity-60" style={{ color: "#D4AF37" }}>{shipName}</span>
+          <span className="text-xs text-muted-foreground opacity-50">{utcTime}</span>
+        </div>
+      </div>
+
+      <div className="relative z-10 flex flex-col h-full">
       <SOSButton onOpenChat={() => setScreen("chat")} />
 
       {/* Top bar */}
@@ -258,6 +294,7 @@ const Index = () => {
           <span className="text-[10px] font-medium tracking-wide uppercase">SMC</span>
         </button>
       </nav>
+      </div>
     </div>
   );
 };
