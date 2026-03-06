@@ -2,6 +2,39 @@ import { useState, useRef, useEffect } from "react";
 import { ArrowLeft, Search, Send, Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
+type Msg = { role: "user" | "assistant"; content: string };
+
+const SaveToPocket = ({ messages }: { messages: Msg[] }) => {
+  const [saved, setSaved] = useState(false);
+  const handleSave = () => {
+    const lastUser = [...messages].reverse().find(m => m.role === "user")?.content || "";
+    const lastAssistant = [...messages].reverse().find(m => m.role === "assistant")?.content || "";
+    const existing = JSON.parse(localStorage.getItem("bridge_pocket") || "[]");
+    existing.push({ query: lastUser, answer: lastAssistant, savedAt: new Date().toISOString() });
+    localStorage.setItem("bridge_pocket", JSON.stringify(existing));
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+  return (
+    <div className="flex justify-center" style={{ marginTop: 20, marginBottom: 12 }}>
+      <button
+        onClick={handleSave}
+        className="rounded transition-colors"
+        style={{
+          border: saved ? "1px solid #22c55e" : "1px solid rgba(255,255,255,0.2)",
+          color: saved ? "#22c55e" : "#e2e8f0",
+          padding: "6px 16px",
+          fontSize: 13,
+          background: "transparent",
+          cursor: "pointer",
+        }}
+      >
+        {saved ? "✓ Saved to Pocket" : "💾 Save to My Pocket"}
+      </button>
+    </div>
+  );
+};
+
 const BRIDGE_CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bridge-chat`;
 
 const QUICK_TAPS = ["MARPOL", "SOLAS", "ISM Code", "MLC 2006", "STCW"];
