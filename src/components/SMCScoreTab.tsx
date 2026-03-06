@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { FileText, Eye, Download } from "lucide-react";
+import { FileText, Eye, Download, RefreshCw, Upload } from "lucide-react";
+import { toast } from "sonner";
 import CrewPaymentGate from "@/components/smc/CrewPaymentGate";
 import SMCScoreCertificate from "@/components/smc/SMCScoreCertificate";
 import AssessmentFlow from "@/components/smc/AssessmentFlow";
@@ -18,58 +19,136 @@ type View = "loading" | "payment" | "assessment" | "certificate";
 const CvDocumentCard = ({ profileId }: { profileId: string }) => {
   const [cvUrl, setCvUrl] = useState<string | null>(null);
   const [cvFileName, setCvFileName] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [hasFile, setHasFile] = useState<boolean | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const loadCv = async () => {
+    const { data } = await supabase.storage
+      .from("crew-cvs")
+      .list(profileId, { limit: 1 });
+    if (data && data.length > 0) {
+      const file = data[0];
+      setCvFileName(file.name);
+      setHasFile(true);
+      const { data: urlData } = await supabase.storage
+        .from("crew-cvs")
+        .createSignedUrl(`${profileId}/${file.name}`, 3600);
+      if (urlData?.signedUrl) setCvUrl(urlData.signedUrl);
+    } else {
+      setHasFile(false);
+    }
+  };
 
   useEffect(() => {
-    const check = async () => {
-      const { data } = await supabase.storage
-        .from("crew-cvs")
-        .list(profileId, { limit: 1 });
-      if (data && data.length > 0) {
-        const file = data[0];
-        setCvFileName(file.name);
-        const { data: urlData } = await supabase.storage
-          .from("crew-cvs")
-          .createSignedUrl(`${profileId}/${file.name}`, 3600);
-        if (urlData?.signedUrl) setCvUrl(urlData.signedUrl);
-      }
-    };
-    check();
+    loadCv();
   }, [profileId]);
 
-  if (!cvFileName) return null;
+  const handleUpload = async (file: File) => {
+    setUploading(true);
+    try {
+      // Remove old file if exists
+      if (cvFileName) {
+        await supabase.storage
+          .from("crew-cvs")
+          .remove([`${profileId}/${cvFileName}`]);
+      }
+
+      const ext = file.name.split(".").pop() || "pdf";
+      const path = `${profileId}/cv.${ext}`;
+      const { error } = await supabase.storage
+        .from("crew-cvs")
+        .upload(path, file, { upsert: true });
+
+      if (error) throw error;
+
+      toast.success("CV uploaded successfully");
+      await loadCv();
+    } catch (e) {
+      console.error("CV upload error:", e);
+      toast.error("Failed to upload CV");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  if (hasFile === null) return null;
 
   return (
     <div className="mx-4 mb-4 bg-card rounded-2xl border border-border p-4">
-      <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center">
-          <FileText size={16} className="text-primary" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-foreground">My CV</p>
-          <p className="text-xs text-muted-foreground truncate">{cvFileName}</p>
-        </div>
-        {cvUrl && (
-          <div className="flex gap-1.5">
-            <a
-              href={cvUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors"
-              title="View"
-            >
-              <Eye size={14} className="text-primary" />
-            </a>
-            <a
-              href={cvUrl}
-              download={cvFileName}
-              className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors"
-              title="Download"
-            >
-              <Download size={14} className="text-primary-foreground" />
-            </a>
+      <input
+        ref={fileRef}
+        type="file"
+        accept=".pdf,image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleUpload(file);
+        }}
+      />
+
+      {hasFile && cvFileName ? (
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center">
+            <FileText size={16} className="text-primary" />
           </div>
-        )}
-      </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-foreground">My CV</p>
+            <p className="text-xs text-muted-foreground truncate">{cvFileName}</p>
+          </div>
+          <div className="flex gap-1.5">
+            {cvUrl && (
+              <>
+                <a
+                  href={cvUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors"
+                  title="View"
+                >
+                  <Eye size={14} className="text-primary" />
+                </a>
+                <a
+                  href={cvUrl}
+                  download={cvFileName}
+                  className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors"
+                  title="Download"
+                >
+                  <Download size={14} className="text-primary-foreground" />
+                </a>
+              </>
+            )}
+            <button
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+              className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors disabled:opacity-50"
+              title="Replace CV"
+            >
+              {uploading ? (
+                <RefreshCw size={14} className="text-primary-foreground animate-spin" />
+              ) : (
+                <RefreshCw size={14} className="text-primary-foreground" />
+              )}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading}
+          className="w-full flex items-center gap-3 text-left"
+        >
+          <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center">
+            <Upload size={16} className="text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-foreground">
+              {uploading ? "Uploading..." : "Upload Your CV"}
+            </p>
+            <p className="text-xs text-muted-foreground">PDF or photo — tap to upload</p>
+          </div>
+        </button>
+      )}
     </div>
   );
 };
