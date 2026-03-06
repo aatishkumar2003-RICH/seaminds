@@ -304,6 +304,74 @@ const Community = ({ shipName, manningAgency, profileId, firstName, voyageStartD
   );
 };
 
+/* My CV Sub-component */
+const MyCvSection = ({ profileId }: { profileId: string }) => {
+  const [cvUrl, setCvUrl] = useState<string | null>(null);
+  const [cvFileName, setCvFileName] = useState<string | null>(null);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    const checkCv = async () => {
+      // List files in the profile's CV folder
+      const { data } = await supabase.storage
+        .from("crew-cvs")
+        .list(profileId, { limit: 1 });
+
+      if (data && data.length > 0) {
+        const file = data[0];
+        setCvFileName(file.name);
+        const { data: urlData } = await supabase.storage
+          .from("crew-cvs")
+          .createSignedUrl(`${profileId}/${file.name}`, 3600);
+        if (urlData?.signedUrl) {
+          setCvUrl(urlData.signedUrl);
+        }
+      }
+      setChecking(false);
+    };
+    checkCv();
+  }, [profileId]);
+
+  if (checking) return null;
+  if (!cvFileName) return null;
+
+  return (
+    <div className="bg-card rounded-2xl border border-border p-6">
+      <p className="text-xs text-muted-foreground uppercase tracking-widest mb-3">My Documents</p>
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
+          <FileText size={18} className="text-primary" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-foreground">Uploaded CV</p>
+          <p className="text-xs text-muted-foreground truncate">{cvFileName}</p>
+        </div>
+        {cvUrl && (
+          <div className="flex gap-2">
+            <a
+              href={cvUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors"
+              title="View CV"
+            >
+              <Eye size={16} className="text-primary" />
+            </a>
+            <a
+              href={cvUrl}
+              download={cvFileName}
+              className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors"
+              title="Download CV"
+            >
+              <Download size={16} className="text-primary-foreground" />
+            </a>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 /* Family Connection Sub-component */
 const FAMILY_EMAIL_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/family-email`;
 
