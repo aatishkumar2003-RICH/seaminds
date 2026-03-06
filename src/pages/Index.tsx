@@ -244,7 +244,7 @@ const Index = () => {
       <SOSButton onOpenChat={() => setScreen("chat")} />
 
       {/* Top bar */}
-      <div className="flex items-center justify-end gap-3 px-4 py-2">
+      <div className="flex items-center justify-start gap-3 pl-4 pr-16 py-2">
         <button onClick={() => setShowSignOffConfirm(true)} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
           <Anchor size={14} /> Sign Off
         </button>
