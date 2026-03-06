@@ -216,89 +216,91 @@ const Bridge = () => {
     setShowChat(false);
   };
 
-  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     const reader = new FileReader();
-    reader.onload = async (ev) => {
-      const dataUrl = ev.target?.result as string;
-      setDiagnosisImage(dataUrl);
-      setDiagnosisLoading(true);
-      setDiagnosisResult(null);
-
-      const base64 = dataUrl.split(",")[1];
-      const mimeType = file.type || "image/jpeg";
-
-      let resultSoFar = "";
-      try {
-        const resp = await fetch(DIAGNOSE_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({ image_base64: base64, mime_type: mimeType }),
-        });
-
-        if (!resp.ok || !resp.body) {
-          const body = await resp.json().catch(() => ({}));
-          setDiagnosisResult(`⚠️ ${body.error || "Failed to analyze image"}`);
-          setDiagnosisLoading(false);
-          return;
-        }
-
-        const streamReader = resp.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
-
-        while (true) {
-          const { done, value } = await streamReader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-
-          let idx: number;
-          while ((idx = buffer.indexOf("\n")) !== -1) {
-            let line = buffer.slice(0, idx);
-            buffer = buffer.slice(idx + 1);
-            if (line.endsWith("\r")) line = line.slice(0, -1);
-            if (!line.startsWith("data: ")) continue;
-            const json = line.slice(6).trim();
-            if (json === "[DONE]") break;
-            try {
-              const parsed = JSON.parse(json);
-              const content = parsed.choices?.[0]?.delta?.content;
-              if (content) {
-                resultSoFar += content;
-                setDiagnosisResult(resultSoFar);
-              }
-            } catch {
-              buffer = line + "\n" + buffer;
-              break;
-            }
-          }
-        }
-
-        // Extract equipment/fault for YouTube query
-        const equipMatch = resultSoFar.match(/\*\*EQUIPMENT IDENTIFIED:\*\*\s*(.+)/);
-        const faultMatch = resultSoFar.match(/\*\*FAULT\/CONDITION DETECTED:\*\*\s*(.+)/);
-        const equip = equipMatch?.[1]?.trim() || "ship equipment";
-        const fault = faultMatch?.[1]?.trim() || "fault diagnosis";
-        setDiagnosisQuery(`${equip} ${fault}`);
-      } catch (err) {
-        setDiagnosisResult(`⚠️ ${err instanceof Error ? err.message : "Unknown error"}`);
-      }
-      setDiagnosisLoading(false);
+    reader.onload = (ev) => {
+      setRawPhotoSrc(ev.target?.result as string);
     };
     reader.readAsDataURL(file);
-    // Reset file input so same file can be selected again
     if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const submitDiagnosis = async (annotatedDataUrl: string) => {
+    setRawPhotoSrc(null);
+    setDiagnosisImage(annotatedDataUrl);
+    setDiagnosisLoading(true);
+    setDiagnosisResult(null);
+
+    const base64 = annotatedDataUrl.split(",")[1];
+    const mimeType = annotatedDataUrl.startsWith("data:image/png") ? "image/png" : "image/jpeg";
+
+    let resultSoFar = "";
+    try {
+      const resp = await fetch(DIAGNOSE_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ image_base64: base64, mime_type: mimeType }),
+      });
+
+      if (!resp.ok || !resp.body) {
+        const body = await resp.json().catch(() => ({}));
+        setDiagnosisResult(`⚠️ ${body.error || "Failed to analyze image"}`);
+        setDiagnosisLoading(false);
+        return;
+      }
+
+      const streamReader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await streamReader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        let idx: number;
+        while ((idx = buffer.indexOf("\n")) !== -1) {
+          let line = buffer.slice(0, idx);
+          buffer = buffer.slice(idx + 1);
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (!line.startsWith("data: ")) continue;
+          const json = line.slice(6).trim();
+          if (json === "[DONE]") break;
+          try {
+            const parsed = JSON.parse(json);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              resultSoFar += content;
+              setDiagnosisResult(resultSoFar);
+            }
+          } catch {
+            buffer = line + "\n" + buffer;
+            break;
+          }
+        }
+      }
+
+      const equipMatch = resultSoFar.match(/\*\*EQUIPMENT IDENTIFIED:\*\*\s*(.+)/);
+      const faultMatch = resultSoFar.match(/\*\*FAULT\/CONDITION DETECTED:\*\*\s*(.+)/);
+      const equip = equipMatch?.[1]?.trim() || "ship equipment";
+      const fault = faultMatch?.[1]?.trim() || "fault diagnosis";
+      setDiagnosisQuery(`${equip} ${fault}`);
+    } catch (err) {
+      setDiagnosisResult(`⚠️ ${err instanceof Error ? err.message : "Unknown error"}`);
+    }
+    setDiagnosisLoading(false);
   };
 
   const handleNewDiagnosis = () => {
     setDiagnosisImage(null);
     setDiagnosisResult(null);
     setDiagnosisQuery("");
+    setRawPhotoSrc(null);
   };
 
   // Diagnosis result view
