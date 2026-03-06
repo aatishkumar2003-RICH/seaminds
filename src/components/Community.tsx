@@ -261,6 +261,9 @@ const Community = ({ shipName, manningAgency, profileId, firstName, voyageStartD
           )}
         </div>
 
+        {/* SECTION — My Documents (CV) */}
+        <MyCvSection profileId={profileId} />
+
         {/* SECTION 4 — Family Connection */}
         <FamilyConnectionSection profileId={profileId} firstName={firstName} shipName={shipName} voyageStartDate={voyageStartDate} />
 
