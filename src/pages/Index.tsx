@@ -80,6 +80,7 @@ const Index = () => {
     yearsAtSea: string;
     voyageStartDate: string;
     manningAgency: string;
+    vesselImo: string;
   }) => {
     const { data, error } = await supabase
       .from("crew_profiles")
@@ -94,6 +95,7 @@ const Index = () => {
         years_at_sea: profile.yearsAtSea,
         voyage_start_date: profile.voyageStartDate || null,
         manning_agency: profile.manningAgency || null,
+        vessel_imo: profile.vesselImo || null,
       })
       .select("id")
       .single();
