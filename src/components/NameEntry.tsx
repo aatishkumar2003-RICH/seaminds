@@ -19,7 +19,7 @@ interface NameEntryProps {
     voyageStartDate: string;
     manningAgency: string;
     vesselImo: string;
-  }) => void;
+  }, cvFile?: File) => void;
 }
 
 const ROLES = ["Captain", "Officer", "Rating", "Engineer"];
@@ -73,6 +73,7 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
   const [vesselImo, setVesselImo] = useState("");
   const [agencyFilter, setAgencyFilter] = useState("");
   const [showAgencyDropdown, setShowAgencyDropdown] = useState(false);
+  const [cvFile, setCvFile] = useState<File | undefined>();
 
   const canSubmit =
     firstName.trim() && lastName.trim() && shipName.trim() && role &&
@@ -92,7 +93,7 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
       voyageStartDate: voyageStartDate ? format(voyageStartDate, "yyyy-MM-dd") : "",
       manningAgency: manningAgency.trim(),
       vesselImo: vesselImo.trim(),
-    });
+    }, cvFile);
   };
 
   return (
@@ -119,6 +120,7 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
               if (data.vesselImo) setVesselImo(data.vesselImo);
               if (data.whatsappNumber) setPhoneNumber(data.whatsappNumber);
             }}
+            onFileReady={(file) => setCvFile(file)}
           />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

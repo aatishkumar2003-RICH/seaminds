@@ -179,7 +179,7 @@ const Index = () => {
     voyageStartDate: string;
     manningAgency: string;
     vesselImo: string;
-  }) => {
+  }, cvFile?: File) => {
     const { data, error } = await supabase
       .from("crew_profiles")
       .insert({
@@ -208,6 +208,19 @@ const Index = () => {
     setVoyageStartDate(profile.voyageStartDate);
     setManningAgency(profile.manningAgency);
     setNationality(profile.nationality);
+
+    // Upload CV file to storage if provided
+    if (cvFile) {
+      const ext = cvFile.name.split(".").pop() || "pdf";
+      const path = `${data.id}/cv.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("crew-cvs")
+        .upload(path, cvFile, { upsert: true });
+      if (uploadError) {
+        console.error("CV upload error:", uploadError);
+      }
+    }
+
     setAppState("welcome");
   };
 
