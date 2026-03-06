@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { ArrowLeft, Search, Send, Loader2, Bookmark, Trash2, Camera } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import PhotoAnnotator from "./bridge/PhotoAnnotator";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -148,6 +149,7 @@ const Bridge = () => {
   const [diagnosisLoading, setDiagnosisLoading] = useState(false);
   const [diagnosisResult, setDiagnosisResult] = useState<string | null>(null);
   const [diagnosisQuery, setDiagnosisQuery] = useState("");
+  const [rawPhotoSrc, setRawPhotoSrc] = useState<string | null>(null);
 
   const loadPocket = () => {
     const items = JSON.parse(localStorage.getItem("bridge_pocket") || "[]");
