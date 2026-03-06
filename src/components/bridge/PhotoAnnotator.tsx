@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from "react";
-import { Undo2, Trash2, Send, Pencil, Circle, MoveRight, Type, ZoomIn, ZoomOut, Maximize } from "lucide-react";
+import { Undo2, Trash2, Send, Pencil, Circle, MoveRight, Type, ZoomIn, ZoomOut, Maximize, Square } from "lucide-react";
 
 type Props = {
   imageSrc: string;
@@ -11,12 +11,14 @@ const COLORS = ["#FF0000", "#D4AF37", "#00FF00", "#00BFFF", "#FFFFFF"];
 const BRUSH_SIZES = [3, 6, 12];
 
 type DrawPoint = { x: number; y: number };
-type Tool = "draw" | "arrow" | "text";
+type Tool = "draw" | "arrow" | "text" | "circle" | "rect";
 
 type Annotation =
   | { type: "stroke"; points: DrawPoint[]; color: string; size: number }
   | { type: "arrow"; from: DrawPoint; to: DrawPoint; color: string; size: number }
-  | { type: "text"; pos: DrawPoint; text: string; color: string; fontSize: number };
+  | { type: "text"; pos: DrawPoint; text: string; color: string; fontSize: number }
+  | { type: "circle"; center: DrawPoint; radius: number; color: string; size: number }
+  | { type: "rect"; from: DrawPoint; to: DrawPoint; color: string; size: number };
 
 const drawArrowhead = (ctx: CanvasRenderingContext2D, from: DrawPoint, to: DrawPoint, size: number) => {
   const angle = Math.atan2(to.y - from.y, to.x - from.x);
@@ -104,6 +106,18 @@ const PhotoAnnotator = ({ imageSrc, onSubmit, onCancel }: Props) => {
       ctx.lineWidth = 3;
       ctx.strokeText(a.text, a.pos.x, a.pos.y);
       ctx.fillText(a.text, a.pos.x, a.pos.y);
+    } else if (a.type === "circle") {
+      ctx.beginPath();
+      ctx.strokeStyle = a.color;
+      ctx.lineWidth = a.size;
+      ctx.arc(a.center.x, a.center.y, a.radius, 0, Math.PI * 2);
+      ctx.stroke();
+    } else if (a.type === "rect") {
+      ctx.beginPath();
+      ctx.strokeStyle = a.color;
+      ctx.lineWidth = a.size;
+      ctx.rect(a.from.x, a.from.y, a.to.x - a.from.x, a.to.y - a.from.y);
+      ctx.stroke();
     }
   }, []);
 
