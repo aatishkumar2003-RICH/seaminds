@@ -52,6 +52,7 @@ interface JobPosting {
   company_name: string;
   additional_notes: string | null;
   created_at: string;
+  verified: boolean;
 }
 
 // Demo SMC score for development
@@ -271,7 +272,15 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
               >
                 <div>
                   <h4 style={{ color: "#D4AF37", fontSize: "18px", fontWeight: "bold" }}>{jp.rank_required}</h4>
-                  <p className="text-sm text-foreground mt-0.5">{jp.company_name}</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <p className="text-sm text-foreground">{jp.company_name}</p>
+                    {jp.verified && (
+                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "rgba(59,130,246,0.12)", color: "#3B82F6", fontSize: "11px", fontWeight: 600 }}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        ✓ Verified
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {jp.vessel_type} · {jp.contract_duration}
