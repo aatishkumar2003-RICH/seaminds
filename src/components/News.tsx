@@ -29,9 +29,9 @@ const COUNTRIES: { key: CountryKey; name: string; flag: string; feedUrl: string;
 ];
 
 const MARITIME_FEEDS = [
-  "https://maritime-executive.com/rss",
   "https://splash247.com/feed",
-  "https://www.tradewindsnews.com/rss",
+  "https://gcaptain.com/feed",
+  "https://www.seatrade-maritime.com/rss.xml",
 ];
 
 function timeAgo(dateStr: string): string {
