@@ -219,6 +219,37 @@ const Bridge = () => {
               </div>
             </div>
           )}
+          {/* YouTube Videos Section - show after AI has responded */}
+          {messages.length >= 2 && messages[messages.length - 1]?.role === "assistant" && !isLoading && (() => {
+            const lastUserMsg = [...messages].reverse().find(m => m.role === "user");
+            if (!lastUserMsg) return null;
+            const q = lastUserMsg.content;
+            const ytUrl = `https://www.youtube.com/results?search_query=maritime+${encodeURIComponent(q)}`;
+            const cards = [
+              `${q} — Full Explanation`,
+              `${q} — Step by Step Guide`,
+              `${q} — IMO Requirements`,
+            ];
+            return (
+              <div style={{ marginTop: 20 }}>
+                <h3 style={{ color: "#D4AF37", fontSize: 14, fontWeight: 700, marginBottom: 12 }}>▶ Watch on YouTube</h3>
+                {cards.map((title, i) => (
+                  <div
+                    key={i}
+                    onClick={() => window.open(ytUrl, "_blank")}
+                    className="flex items-center gap-3 rounded-lg cursor-pointer"
+                    style={{ background: "rgba(13,27,42,0.85)", borderLeft: "2px solid #FF0000", padding: 12, marginBottom: 8 }}
+                  >
+                    <span style={{ color: "#FF0000", fontSize: 18, flexShrink: 0 }}>▶</span>
+                    <div>
+                      <div className="text-sm text-foreground">{title}</div>
+                      <div className="text-[11px] text-muted-foreground">Search on YouTube →</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
           <div ref={chatEndRef} />
         </div>
 
