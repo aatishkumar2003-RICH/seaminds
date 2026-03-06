@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { MessageCircle, LayoutDashboard, Briefcase, Newspaper, GraduationCap, Compass, Star, LogOut, Anchor } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import LandingScreen from "@/components/LandingScreen";
+import OceanBackground from "@/components/homepage/OceanBackground";
+import { useTimeOfDay } from "@/hooks/useTimeOfDay";
 import NameEntry from "@/components/NameEntry";
 import WelcomeScreens from "@/components/WelcomeScreens";
 import CrewChat from "@/components/CrewChat";
