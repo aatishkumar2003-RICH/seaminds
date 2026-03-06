@@ -1,5 +1,8 @@
-import { useState } from "react";
-import { ArrowLeft, Search } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { ArrowLeft, Search, Send, Loader2 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+
+const BRIDGE_CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bridge-chat`;
 
 const QUICK_TAPS = ["MARPOL", "SOLAS", "ISM Code", "MLC 2006", "STCW"];
 
@@ -38,19 +41,212 @@ const DEPARTMENTS = [
   ]},
 ];
 
+type Msg = { role: "user" | "assistant"; content: string };
+
+async function streamBridgeChat({
+  messages,
+  onDelta,
+  onDone,
+  onError,
+}: {
+  messages: Msg[];
+  onDelta: (text: string) => void;
+  onDone: () => void;
+  onError: (err: string) => void;
+}) {
+  const resp = await fetch(BRIDGE_CHAT_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+    },
+    body: JSON.stringify({ messages }),
+  });
+
+  if (!resp.ok) {
+    const body = await resp.json().catch(() => ({}));
+    onError(body.error || "Failed to get response");
+    return;
+  }
+
+  if (!resp.body) { onError("No response body"); return; }
+
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    let idx: number;
+    while ((idx = buffer.indexOf("\n")) !== -1) {
+      let line = buffer.slice(0, idx);
+      buffer = buffer.slice(idx + 1);
+      if (line.endsWith("\r")) line = line.slice(0, -1);
+      if (!line.startsWith("data: ")) continue;
+      const json = line.slice(6).trim();
+      if (json === "[DONE]") { onDone(); return; }
+      try {
+        const parsed = JSON.parse(json);
+        const content = parsed.choices?.[0]?.delta?.content;
+        if (content) onDelta(content);
+      } catch {
+        buffer = line + "\n" + buffer;
+        break;
+      }
+    }
+  }
+  onDone();
+}
+
 const Bridge = () => {
   const [searchValue, setSearchValue] = useState("");
   const [activeDept, setActiveDept] = useState<typeof DEPARTMENTS[number] | null>(null);
+  const [messages, setMessages] = useState<Msg[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const sendQuery = async (query: string) => {
+    if (!query.trim() || isLoading) return;
+    const userMsg: Msg = { role: "user", content: query.trim() };
+    const newMessages = [...messages, userMsg];
+    setMessages(newMessages);
+    setSearchValue("");
+    setShowChat(true);
+    setIsLoading(true);
+
+    let assistantSoFar = "";
+    const upsertAssistant = (chunk: string) => {
+      assistantSoFar += chunk;
+      setMessages(prev => {
+        const last = prev[prev.length - 1];
+        if (last?.role === "assistant") {
+          return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: assistantSoFar } : m));
+        }
+        return [...prev, { role: "assistant", content: assistantSoFar }];
+      });
+    };
+
+    await streamBridgeChat({
+      messages: newMessages,
+      onDelta: upsertAssistant,
+      onDone: () => setIsLoading(false),
+      onError: (err) => {
+        setMessages(prev => [...prev, { role: "assistant", content: `⚠️ ${err}` }]);
+        setIsLoading(false);
+      },
+    });
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    sendQuery(searchValue);
+  };
 
   const handleChipClick = (question: string) => {
-    setSearchValue(question);
     setActiveDept(null);
+    sendQuery(question);
   };
 
   const handleQuickTap = (term: string) => {
-    setSearchValue(term);
+    sendQuery(`Explain ${term} — key points every seafarer should know`);
   };
 
+  const handleBackToHome = () => {
+    setShowChat(false);
+  };
+
+  // Chat view
+  if (showChat) {
+    return (
+      <div className="flex flex-col h-full">
+        {/* Chat header */}
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
+          <button onClick={handleBackToHome} style={{ color: "#D4AF37" }}>
+            <ArrowLeft size={18} />
+          </button>
+          <div>
+            <h2 className="text-sm font-bold" style={{ color: "#D4AF37" }}>BRIDGE</h2>
+            <p className="text-[10px] text-muted-foreground">Technical Reference AI</p>
+          </div>
+          {messages.length > 0 && (
+            <button
+              onClick={() => { setMessages([]); setShowChat(false); }}
+              className="ml-auto text-[10px] text-muted-foreground hover:text-foreground px-2 py-1 rounded"
+            >
+              New Query
+            </button>
+          )}
+        </div>
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
+          {messages.map((msg, i) => (
+            <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div
+                className={`max-w-[85%] rounded-xl px-4 py-3 text-sm ${
+                  msg.role === "user"
+                    ? "text-foreground"
+                    : ""
+                }`}
+                style={
+                  msg.role === "user"
+                    ? { background: "rgba(212,175,55,0.15)", border: "1px solid rgba(212,175,55,0.3)" }
+                    : { background: "rgba(13,27,42,0.8)", border: "1px solid rgba(255,255,255,0.05)" }
+                }
+              >
+                {msg.role === "assistant" ? (
+                  <div className="prose prose-sm prose-invert max-w-none [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm [&_strong]:text-[#D4AF37]">
+                    <ReactMarkdown>{msg.content}</ReactMarkdown>
+                  </div>
+                ) : (
+                  msg.content
+                )}
+              </div>
+            </div>
+          ))}
+          {isLoading && messages[messages.length - 1]?.role === "user" && (
+            <div className="flex justify-start">
+              <div className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm text-muted-foreground" style={{ background: "rgba(13,27,42,0.8)" }}>
+                <Loader2 size={14} className="animate-spin" /> Searching references...
+              </div>
+            </div>
+          )}
+          <div ref={chatEndRef} />
+        </div>
+
+        {/* Input */}
+        <form onSubmit={handleSubmit} className="px-4 py-3 border-t border-border">
+          <div className="flex gap-2">
+            <input
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              placeholder="Ask a follow-up question..."
+              disabled={isLoading}
+              className="flex-1 px-3 py-2.5 rounded-xl text-sm bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[#D4AF37] disabled:opacity-50"
+            />
+            <button
+              type="submit"
+              disabled={!searchValue.trim() || isLoading}
+              className="px-3 py-2.5 rounded-xl transition-colors disabled:opacity-30"
+              style={{ background: "#D4AF37", color: "#0D1B2A" }}
+            >
+              <Send size={16} />
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  // Department drill-down
   if (activeDept) {
     return (
       <div className="flex flex-col h-full px-4 py-3 overflow-y-auto">
@@ -78,26 +274,29 @@ const Bridge = () => {
     );
   }
 
+  // Home view
   return (
     <div className="flex flex-col h-full px-4 py-3 overflow-y-auto">
-      {/* Header */}
       <div className="text-center mb-4">
         <h1 className="text-xl font-bold tracking-wider" style={{ color: "#D4AF37" }}>BRIDGE</h1>
         <p className="text-xs text-muted-foreground">Technical Reference & Guidance</p>
       </div>
 
-      {/* Search */}
-      <div className="relative mb-3">
+      <form onSubmit={handleSubmit} className="relative mb-3">
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <input
           value={searchValue}
           onChange={(e) => setSearchValue(e.target.value)}
           placeholder="Ask any technical question..."
-          className="w-full pl-9 pr-3 py-2.5 rounded-xl text-sm bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[#D4AF37]"
+          className="w-full pl-9 pr-10 py-2.5 rounded-xl text-sm bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[#D4AF37]"
         />
-      </div>
+        {searchValue.trim() && (
+          <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded" style={{ color: "#D4AF37" }}>
+            <Send size={16} />
+          </button>
+        )}
+      </form>
 
-      {/* Quick taps */}
       <div className="flex gap-2 mb-5 overflow-x-auto pb-1">
         {QUICK_TAPS.map((t) => (
           <button
@@ -111,7 +310,6 @@ const Bridge = () => {
         ))}
       </div>
 
-      {/* Department grid */}
       <div className="grid grid-cols-2 gap-3">
         {DEPARTMENTS.map((dept) => (
           <button
