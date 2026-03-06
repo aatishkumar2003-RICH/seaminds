@@ -14,11 +14,12 @@ import Opportunities from "@/components/Opportunities";
 import News from "@/components/News";
 import Academy from "@/components/Academy";
 import Community from "@/components/Community";
+import Bridge from "@/components/Bridge";
 import SMCScoreTab from "@/components/SMCScoreTab";
 import SOSButton from "@/components/SOSButton";
 import VoyageReport from "@/components/VoyageReport";
 type AppState = "loading" | "landing" | "name-entry" | "welcome" | "main" | "voyage-report";
-type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "community" | "smc";
+type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "bridge" | "community" | "smc";
 
 const PROFILE_KEY = "seamind_profile_id";
 
@@ -66,6 +67,7 @@ const Index = () => {
       opportunities: "SeaMinds | Opportunities",
       news: "SeaMinds | News",
       academy: "SeaMinds | Academy",
+      bridge: "SeaMinds | Bridge",
       community: "SeaMinds | Community",
       smc: "SeaMinds | SMC Score",
     };
@@ -392,6 +394,8 @@ const Index = () => {
           <News />
         ) : screen === "academy" ? (
           <Academy />
+        ) : screen === "bridge" ? (
+          <Bridge />
         ) : screen === "community" ? (
           <Community profileId={profileId} shipName={shipName} manningAgency={manningAgency} firstName={firstName} voyageStartDate={voyageStartDate} onCompleteVoyage={() => setAppState("voyage-report")} />
         ) : (
@@ -426,6 +430,10 @@ const Index = () => {
         <button onClick={() => setScreen("academy")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "academy" ? "text-primary" : "text-muted-foreground"}`}>
           <GraduationCap size={18} />
           <span className="text-[10px] font-medium tracking-wide uppercase">Academy</span>
+        </button>
+        <button onClick={() => setScreen("bridge")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "bridge" ? "text-primary" : "text-muted-foreground"}`}>
+          <Anchor size={18} />
+          <span className="text-[10px] font-medium tracking-wide uppercase">Bridge</span>
         </button>
         <button onClick={() => setScreen("community")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "community" ? "text-primary" : "text-muted-foreground"}`}>
           <Compass size={18} />
