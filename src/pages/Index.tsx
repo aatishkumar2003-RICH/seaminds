@@ -114,6 +114,19 @@ const Index = () => {
             newJob.rank_required.toLowerCase() === role.toLowerCase()
           ) {
             setJobMatch({ rank_required: newJob.rank_required, vessel_type: newJob.vessel_type, joining_port: newJob.joining_port });
+            
+            // Play notification sound
+            try {
+              const audio = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH2LkI2IhX99c2xjXmFsgImUm5uWkIeAd3BpZGFhaGyBk5ydnJiRiYB3bmdjYWVsiZOdnpyXkIiAdm5nZGJnbYuVnp+dl5CIgHZuZ2RjZ26Ml56fn5iPiIB2b2dlZGhvjZifn5+Yj4iAdm9nZWRpcI6Zn5+fmI+IgHZvZ2VlaXCPmp+fn5mPiIB2b2dmZWpxj5ufn5+Zj4h/dm9nZmVqcZCbn5+fmY+Hf3ZvZ2ZmanGQm5+gn5mPh392b2dmZmpxkJufoJ+Zj4d/dm9nZmZqcZCcn6CfmY+Hf3ZvZ2ZmanGRnJ+gn5mQh392b2dmZmpxkZyfoJ+ZkId/dm9nZmZqcZGcn6CfmpCHf3ZvZ2ZmanGRnJ+gn5qQh392b2dmZmpxkZyfoJ+akId/dm9nZmZqcZGcn6CfmpCHf3ZvZ2ZmanGRnJ+gn5qQh392cGdmZmpxkZyfoJ+akId/dm9nZmZqcQ==");
+              audio.volume = 0.5;
+              audio.play().catch(() => {});
+            } catch {}
+            
+            // Show toast notification
+            toast({
+              title: "⚓ New Job Match!",
+              description: `${newJob.rank_required} on ${newJob.vessel_type} — Joining: ${newJob.joining_port}`,
+            });
           }
         }
       )
