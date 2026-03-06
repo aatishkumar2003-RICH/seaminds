@@ -44,6 +44,7 @@ const Index = () => {
   const [nationality, setNationality] = useState("");
   const [showSignOffConfirm, setShowSignOffConfirm] = useState(false);
   const [utcTime, setUtcTime] = useState("");
+  const [jobMatch, setJobMatch] = useState<{ rank_required: string; vessel_type: string; joining_port: string } | null>(null);
 
   useEffect(() => {
     const tick = () => {
