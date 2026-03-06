@@ -305,6 +305,66 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
       {vacancies.length > 0 && (
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide px-1">Manager Vacancies</h3>
+          {vacancies.map((v) => (
+            <div key={v.id} className="rounded-xl bg-card border border-border p-4 space-y-3">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h4 className="font-semibold text-foreground">{v.rank_required}</h4>
+                  <p className="text-xs text-muted-foreground mt-0.5">{v.company_name}</p>
+                </div>
+                <span className="text-[10px] uppercase tracking-wider font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
+                  {v.vessel_type}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1.5">
+                  <Ship size={12} className="text-primary/70" />
+                  <span>{v.vessel_name}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Clock size={12} className="text-primary/70" />
+                  <span>{v.contract_duration}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <CalendarIcon size={12} className="text-primary/70" />
+                  <span>{v.start_date ? format(new Date(v.start_date), "MMM yyyy") : "TBD"}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <MapPin size={12} className="text-primary/70" />
+                  <span>{v.joining_port}</span>
+                </div>
+                <div className="flex items-center gap-1.5 col-span-2">
+                  <DollarSign size={12} className="text-primary/70" />
+                  <span>${v.salary_min.toLocaleString()} – ${v.salary_max.toLocaleString()} /mo</span>
+                </div>
+                {v.min_smc_score && (
+                  <div className="flex items-center gap-1.5 col-span-2">
+                    <Award size={12} className="text-primary/70" />
+                    <span>Min SMC Score: {v.min_smc_score.toFixed(2)}</span>
+                  </div>
+                )}
+              </div>
+              {(() => {
+                const meetsScore = !v.min_smc_score || DEMO_SMC_SCORE >= v.min_smc_score;
+                if (meetsScore) {
+                  return <Button size="sm" className="w-full" onClick={() => handleApply(v)}>Apply Now</Button>;
+                }
+                return (
+                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 space-y-1">
+                    <div className="flex items-center gap-1.5">
+                      <AlertTriangle size={12} className="text-amber-400" />
+                      <span className="text-xs font-medium text-amber-300">Score Required: {v.min_smc_score?.toFixed(2)}</span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">
+                      Your Score: <span className="text-foreground font-medium">{DEMO_SMC_SCORE.toFixed(2)}</span> — Visit Academy to Improve
+                    </p>
+                  </div>
+                );
+              })()}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
