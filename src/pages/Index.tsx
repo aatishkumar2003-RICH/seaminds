@@ -31,6 +31,7 @@ const Index = () => {
   const [voyageStartDate, setVoyageStartDate] = useState("");
   const [manningAgency, setManningAgency] = useState("");
   const [nationality, setNationality] = useState("");
+  const [showSignOffConfirm, setShowSignOffConfirm] = useState(false);
 
   // Dynamic page title based on active screen
   useEffect(() => {
@@ -173,7 +174,6 @@ const Index = () => {
     );
   }
 
-  const [showSignOffConfirm, setShowSignOffConfirm] = useState(false);
 
   const handleSignOut = () => {
     localStorage.removeItem(PROFILE_KEY);
