@@ -14,6 +14,7 @@ import Opportunities from "@/components/Opportunities";
 import News from "@/components/News";
 import Academy from "@/components/Academy";
 import Community from "@/components/Community";
+import Bridge from "@/components/Bridge";
 import SMCScoreTab from "@/components/SMCScoreTab";
 import SOSButton from "@/components/SOSButton";
 import VoyageReport from "@/components/VoyageReport";
