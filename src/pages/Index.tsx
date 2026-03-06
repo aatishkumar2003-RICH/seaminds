@@ -46,6 +46,7 @@ const Index = () => {
   const [showSignOffConfirm, setShowSignOffConfirm] = useState(false);
   const [utcTime, setUtcTime] = useState("");
   const [jobMatch, setJobMatch] = useState<{ rank_required: string; vessel_type: string; joining_port: string } | null>(null);
+  const [jobBadgeCount, setJobBadgeCount] = useState(0);
 
   useEffect(() => {
     const tick = () => {
@@ -91,6 +92,7 @@ const Index = () => {
         );
         if (match) {
           setJobMatch(match);
+          setJobBadgeCount(prev => prev + 1);
           sessionStorage.setItem("seamind_job_match_shown", "1");
         }
       }
@@ -114,6 +116,7 @@ const Index = () => {
             newJob.rank_required.toLowerCase() === role.toLowerCase()
           ) {
             setJobMatch({ rank_required: newJob.rank_required, vessel_type: newJob.vessel_type, joining_port: newJob.joining_port });
+            setJobBadgeCount(prev => prev + 1);
             
             // Play notification sound
             try {
@@ -353,7 +356,7 @@ const Index = () => {
               <strong>{jobMatch.vessel_type}</strong> vessel. Joining: {jobMatch.joining_port}
             </span>
             <button
-              onClick={() => { setScreen("opportunities"); setJobMatch(null); }}
+              onClick={() => { setScreen("opportunities"); setJobMatch(null); setJobBadgeCount(0); }}
               style={{
                 background: "#D4AF37",
                 color: "#0a1929",
@@ -403,8 +406,15 @@ const Index = () => {
           <LayoutDashboard size={18} />
           <span className="text-[10px] font-medium tracking-wide uppercase">Welfare</span>
         </button>
-        <button onClick={() => setScreen("opportunities")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "opportunities" ? "text-primary" : "text-muted-foreground"}`}>
-          <Briefcase size={18} />
+        <button onClick={() => { setScreen("opportunities"); setJobBadgeCount(0); }} className={`relative flex flex-col items-center gap-1 transition-colors ${screen === "opportunities" ? "text-primary" : "text-muted-foreground"}`}>
+          <div className="relative">
+            <Briefcase size={18} />
+            {jobBadgeCount > 0 && (
+              <span className="absolute -top-1.5 -right-2.5 bg-[#D4AF37] text-[#0a1929] text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
+                {jobBadgeCount}
+              </span>
+            )}
+          </div>
           <span className="text-[10px] font-medium tracking-wide uppercase">Jobs</span>
         </button>
         <button onClick={() => setScreen("news")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "news" ? "text-primary" : "text-muted-foreground"}`}>
