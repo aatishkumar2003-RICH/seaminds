@@ -70,7 +70,7 @@ const Index = () => {
     document.title = appState === "main" ? titles[screen] : "SeaMinds";
   }, [screen, appState]);
 
-  // Job match notification
+  // Job match notification — initial check
   useEffect(() => {
     if (appState !== "main" || !role) return;
     if (sessionStorage.getItem("seamind_job_match_shown")) return;
@@ -95,6 +95,32 @@ const Index = () => {
       }
     };
     checkJobMatches();
+  }, [appState, role]);
+
+  // Real-time job alerts
+  useEffect(() => {
+    if (appState !== "main" || !role) return;
+
+    const channel = supabase
+      .channel("job-alerts")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "job_postings" },
+        (payload) => {
+          const newJob = payload.new as { rank_required: string; vessel_type: string; joining_port: string };
+          if (
+            newJob.rank_required === "Any Rank" ||
+            newJob.rank_required.toLowerCase() === role.toLowerCase()
+          ) {
+            setJobMatch({ rank_required: newJob.rank_required, vessel_type: newJob.vessel_type, joining_port: newJob.joining_port });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [appState, role]);
 
   useEffect(() => {
