@@ -72,9 +72,13 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
   }, []);
 
   const loadData = async () => {
-    const [availRes, vacRes] = await Promise.all([
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const [availRes, vacRes, postingsRes] = await Promise.all([
       supabase.from("crew_availability").select("*").eq("crew_profile_id", profileId).maybeSingle(),
       supabase.from("job_vacancies").select("*").eq("active", true).order("created_at", { ascending: false }),
+      supabase.from("job_postings").select("*").gte("created_at", thirtyDaysAgo.toISOString()).order("created_at", { ascending: false }),
     ]);
 
     if (availRes.data) {
@@ -85,6 +89,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     }
 
     if (vacRes.data) setVacancies(vacRes.data);
+    if (postingsRes.data) setJobPostings(postingsRes.data);
     setLoading(false);
   };
 
