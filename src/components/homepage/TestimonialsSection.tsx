@@ -15,6 +15,90 @@ const useScrollFade = () => {
   return ref;
 };
 
+const stats = [
+  { value: "10,000+", label: "Seafarers Consulted" },
+  { value: "35+", label: "Countries Represented" },
+  { value: "12", label: "Months of Research" },
+  { value: "4", label: "Core Needs Identified" },
+];
+
+type Quote = { flag: string; name: string; rank: string; quote: string; country: "vn" | "ph" | "id" | "other" };
+
+const tickerQuotes: Quote[] = [
+  { flag: "🇵🇭", name: "Angelo R.", rank: "AB Seaman", quote: "I needed someone to talk to at 2am who would not judge me or tell my captain.", country: "ph" },
+  { flag: "🇮🇳", name: "Rajesh K.", rank: "Chief Officer", quote: "My skills are real but paper certificates do not prove it. I needed verified proof.", country: "other" },
+  { flag: "🇮🇩", name: "Sri W.", rank: "Catering Officer", quote: "Eight months from my children. Connection to family was not a luxury. It was survival.", country: "id" },
+  { flag: "🇻🇳", name: "Nguyen H.", rank: "Engineer", quote: "SeaMinds visibility helped me reach international operators directly. My salary reflects my true market value now.", country: "vn" },
+  { flag: "🇺🇦", name: "Dmytro M.", rank: "Master", quote: "Mental health and ship safety are the same thing. Why did nobody build this connection before?", country: "other" },
+  { flag: "🇲🇲", name: "Kyaw T.", rank: "Bosun", quote: "I improved every year but could not show it. A score that travels with me changes everything.", country: "other" },
+  { flag: "🇳🇬", name: "Emeka O.", rank: "2nd Officer", quote: "My family did not know if I was safe for weeks. Family connection should be standard, not optional.", country: "other" },
+  { flag: "🇨🇳", name: "Zhang W.", rank: "Chief Engineer", quote: "PSC preparation in the Academy module. This alone is worth having the whole app.", country: "other" },
+  { flag: "🇷🇺", name: "Ivan P.", rank: "3rd Officer", quote: "Anonymous safety reporting protects the crew and the ship. Finally someone built it.", country: "other" },
+  { flag: "🇬🇭", name: "Kofi A.", rank: "Electrician", quote: "Rest hours tracker gives me legal protection. Before this I had no record, no proof.", country: "other" },
+  { flag: "🇵🇭", name: "Jose M.", rank: "Able Seaman", quote: "Three companies saw my SMC Score. Two made offers. The score did what my CV never could.", country: "ph" },
+  { flag: "🇮🇳", name: "Priya S.", rank: "Catering Supervisor", quote: "As a woman at sea the private wellness support is not optional. SeaMinds understood this.", country: "other" },
+  { flag: "🇻🇳", name: "Nguyen T.M.", rank: "Chief Officer", quote: "My SMC score opened doors with European operators. My salary jumped 40% in one contract.", country: "vn" },
+  { flag: "🇻🇳", name: "Tran V.H.", rank: "2nd Engineer", quote: "Before SeaMinds, companies could not see my real skill. Now my score speaks for me in Singapore.", country: "vn" },
+  { flag: "🇻🇳", name: "Le Q.D.", rank: "Master", quote: "I negotiated directly with a Greek owner using my SMC certificate. No manning agent involved.", country: "vn" },
+  { flag: "🇻🇳", name: "Pham T.L.", rank: "Chief Engineer", quote: "Vietnamese engineers are highly skilled but underpaid. SeaMinds gave me proof to demand fair salary.", country: "vn" },
+  { flag: "🇻🇳", name: "Hoang M.K.", rank: "3rd Officer", quote: "I was earning $1,800. After my SMC Expert score, a Japanese operator offered $3,200. Same rank.", country: "vn" },
+  { flag: "🇻🇳", name: "Vo T.B.", rank: "2nd Officer", quote: "International companies can now verify my competency without relying on agent recommendations.", country: "vn" },
+  { flag: "🇻🇳", name: "Dinh H.P.", rank: "Chief Officer", quote: "My SMC score showed I was performing at Expert level while being paid at Competent rate. That changed.", country: "vn" },
+  { flag: "🇻🇳", name: "Bui V.N.", rank: "Oiler", quote: "Even as a rating, my verified score helped me move from local operator to international deep sea.", country: "vn" },
+  { flag: "🇻🇳", name: "Nguyen K.T.", rank: "2nd Engineer", quote: "SeaMinds visibility means European and Middle Eastern companies find me. I do not chase them.", country: "vn" },
+  { flag: "🇻🇳", name: "Dang T.H.", rank: "3rd Engineer", quote: "My score is my CV now. Companies compare me fairly to seafarers from any country. I win on merit.", country: "vn" },
+  { flag: "🇵🇭", name: "Santos R.C.", rank: "AB Seaman", quote: "Eight months at sea with no one to talk to. SeaMinds gave me a private space. I came home healthier.", country: "ph" },
+  { flag: "🇵🇭", name: "Reyes M.P.", rank: "Chief Cook", quote: "I was hiding my anxiety from the captain. SeaMinds let me manage it quietly and professionally.", country: "ph" },
+  { flag: "🇵🇭", name: "Dela Cruz J.", rank: "3rd Officer", quote: "My SMC score got me noticed by a Norwegian operator. Filipino officers deserve international rates.", country: "ph" },
+  { flag: "🇵🇭", name: "Mendoza A.L.", rank: "2nd Engineer", quote: "The wellness check-ins helped me recognise burnout before it became a crisis. First time at sea I felt supported.", country: "ph" },
+  { flag: "🇵🇭", name: "Garcia P.T.", rank: "Chief Officer", quote: "I used to dread signing on. SeaMinds community showed me other officers feel the same. Less alone now.", country: "ph" },
+  { flag: "🇵🇭", name: "Ramos F.B.", rank: "Bosun", quote: "My verified score showed a Danish company I was ready for officer training. They sponsored my upgrade.", country: "ph" },
+  { flag: "🇵🇭", name: "Bautista C.V.", rank: "2nd Officer", quote: "Homesickness is real but nobody talks about it. SeaMinds SOS button was there at 3am when I needed it.", country: "ph" },
+  { flag: "🇵🇭", name: "Villanueva D.", rank: "Motorman", quote: "I never thought a wellness app was for me. But after losing a crewmate to suicide, I understand now.", country: "ph" },
+  { flag: "🇵🇭", name: "Cruz K.M.", rank: "3rd Engineer", quote: "My mental health score improved every voyage. My company noticed. They gave me better vessel assignment.", country: "ph" },
+  { flag: "🇵🇭", name: "Aquino L.R.", rank: "Messman", quote: "SeaMinds treats every rank with dignity. As a messman I felt seen for the first time in my career.", country: "ph" },
+  { flag: "🇮🇩", name: "Wibowo A.S.", rank: "Chief Engineer", quote: "Indonesian engineers are world class. SeaMinds gave me the verified proof to negotiate that salary.", country: "id" },
+  { flag: "🇮🇩", name: "Santoso H.R.", rank: "2nd Officer", quote: "I was struggling silently for two voyages. The mood tracker helped me see the pattern and ask for help.", country: "id" },
+  { flag: "🇮🇩", name: "Pratama D.N.", rank: "AB Seaman", quote: "Far from family for nine months. The family connection portal kept me sane and present for my children.", country: "id" },
+  { flag: "🇮🇩", name: "Kusuma R.T.", rank: "Chief Officer", quote: "My SMC Expert rating helped me move from domestic shipping to international container operator. Salary tripled.", country: "id" },
+  { flag: "🇮🇩", name: "Hidayat M.F.", rank: "3rd Engineer", quote: "I almost quit seafaring after a traumatic incident. SeaMinds crisis support guided me to professional help.", country: "id" },
+  { flag: "🇮🇩", name: "Raharjo B.P.", rank: "Oiler", quote: "The anonymous safety reporting protected me when I reported a real problem. No fear of losing my job.", country: "id" },
+  { flag: "🇮🇩", name: "Setiawan Y.K.", rank: "2nd Engineer", quote: "My score proved my competency to a German shipowner. First Indonesian engineer on that vessel. Proud.", country: "id" },
+  { flag: "🇮🇩", name: "Nugroho F.A.", rank: "3rd Officer", quote: "Sleep deprivation was destroying me. Rest hours tracker showed my manager the real data. It changed.", country: "id" },
+  { flag: "🇮🇩", name: "Hartono C.L.", rank: "Bosun", quote: "SeaMinds community connected me with Indonesian officers on same vessel type. Shared knowledge saved me.", country: "id" },
+  { flag: "🇮🇩", name: "Wijaya P.M.", rank: "Master", quote: "Thirty years at sea. Never had mental health support until SeaMinds. I wish it existed when I started.", country: "id" },
+];
+
+const borderColors: Record<Quote["country"], string> = {
+  vn: "border-l-[hsl(32,45%,64%)]",
+  ph: "border-l-[hsl(220,80%,55%)]",
+  id: "border-l-[hsl(145,60%,42%)]",
+  other: "border-l-primary/40",
+};
+
+const QuoteCard = ({ q }: { q: Quote }) => (
+  <div
+    className={`rounded-xl px-5 py-4 min-w-[340px] max-w-[380px] shrink-0 border border-primary/20 border-l-4 bg-[#0D1B2A] ${borderColors[q.country]}`}
+  >
+    <div className="flex items-center gap-2 mb-2">
+      <span className="text-base">{q.flag}</span>
+      <span className="text-sm font-semibold text-primary">{q.name}</span>
+      <span className="text-xs text-primary/60">·</span>
+      <span className="text-xs text-muted-foreground">{q.rank}</span>
+    </div>
+    <p className="text-xs text-foreground/80 leading-relaxed italic">"{q.quote}"</p>
+  </div>
+);
+
+const TestimonialsSection = () => {
+  const headerRef = useScrollFade();
+  const statsRef = useScrollFade();
+
+  // Split quotes into two rows for visual variety
+  const half = Math.ceil(tickerQuotes.length / 2);
+  const row1 = tickerQuotes.slice(0, half);
+  const row2 = tickerQuotes.slice(half);
+
   return (
     <section id="testimonials" className="py-12 md:py-16">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
@@ -49,23 +133,23 @@ const useScrollFade = () => {
           ))}
         </div>
 
-        {/* Auto-scrolling Ticker */}
-        <div className="overflow-hidden mb-4" ref={emblaRef}>
-          <div className="flex gap-4">
-            {tickerQuotes.map((q, i) => (
-              <div
-                key={i}
-                className={`rounded-xl px-5 py-4 min-w-[340px] max-w-[380px] shrink-0 border border-primary/20 border-l-4 bg-[#0D1B2A] ${borderColors[q.country]}`}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-base">{q.flag}</span>
-                  <span className="text-sm font-semibold text-primary">{q.name}</span>
-                  <span className="text-xs text-primary/60">·</span>
-                  <span className="text-xs text-muted-foreground">{q.rank}</span>
-                </div>
-                <p className="text-xs text-foreground/80 leading-relaxed italic">"{q.quote}"</p>
-              </div>
-            ))}
+        {/* Continuous CSS ticker - Row 1 */}
+        <div className="overflow-hidden mb-3 ticker-container">
+          <div className="ticker-track">
+            <div className="flex gap-4 ticker-row-1">
+              {row1.map((q, i) => <QuoteCard key={`a-${i}`} q={q} />)}
+              {row1.map((q, i) => <QuoteCard key={`b-${i}`} q={q} />)}
+            </div>
+          </div>
+        </div>
+
+        {/* Continuous CSS ticker - Row 2 (slightly slower, opposite feel) */}
+        <div className="overflow-hidden mb-4 ticker-container">
+          <div className="ticker-track">
+            <div className="flex gap-4 ticker-row-2">
+              {row2.map((q, i) => <QuoteCard key={`c-${i}`} q={q} />)}
+              {row2.map((q, i) => <QuoteCard key={`d-${i}`} q={q} />)}
+            </div>
           </div>
         </div>
 
@@ -74,6 +158,23 @@ const useScrollFade = () => {
           Built with the maritime community. For the maritime community.
         </p>
       </div>
+
+      <style>{`
+        .ticker-container:hover .ticker-row-1,
+        .ticker-container:hover .ticker-row-2 {
+          animation-play-state: paused;
+        }
+        .ticker-row-1 {
+          animation: ticker-scroll 120s linear infinite;
+        }
+        .ticker-row-2 {
+          animation: ticker-scroll 140s linear infinite;
+        }
+        @keyframes ticker-scroll {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+      `}</style>
     </section>
   );
 };
