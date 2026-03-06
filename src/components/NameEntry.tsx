@@ -4,6 +4,7 @@ import { Anchor, ChevronDown, CalendarIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import CvUpload from "@/components/CvUpload";
 
 interface NameEntryProps {
   onSubmit: (data: {
@@ -106,7 +107,20 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
         </div>
 
         <div className="space-y-4">
-          {/* Row 1: First Name + Last Name */}
+          {/* CV Upload */}
+          <CvUpload
+            onParsed={(data) => {
+              if (data.firstName) setFirstName(data.firstName);
+              if (data.lastName) setLastName(data.lastName);
+              if (data.shipName) setShipName(data.shipName);
+              if (data.role) setRole(data.role);
+              if (data.nationality) setNationality(data.nationality);
+              if (data.yearsAtSea) setYearsAtSea(data.yearsAtSea);
+              if (data.vesselImo) setVesselImo(data.vesselImo);
+              if (data.whatsappNumber) setPhoneNumber(data.whatsappNumber);
+            }}
+          />
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className={labelClass}>First Name *</label>
