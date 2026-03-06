@@ -312,6 +312,8 @@ const PhotoAnnotator = ({ imageSrc, onSubmit, onCancel }: Props) => {
       setIsDrawing(true);
       return;
     }
+    setIsDrawing(true);
+    currentStroke.current = [pos];
   };
 
   const moveDraw = (e: React.TouchEvent | React.MouseEvent) => {
