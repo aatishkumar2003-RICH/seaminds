@@ -215,14 +215,14 @@ const Index = () => {
 
       <div
         style={{
-          position: 'fixed',
-          bottom: '120px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          textAlign: 'center',
-          pointerEvents: 'none',
-          zIndex: 0,
-          opacity: 0.6,
+    position: 'fixed',
+    bottom: '100px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    textAlign: 'center',
+    pointerEvents: 'none',
+    zIndex: 1,
+    opacity: 0.5,
         }}
       >
         <div style={{ fontSize: '3rem' }}>{NATIONALITY_FLAGS[nationality] || "🌊"}</div>
