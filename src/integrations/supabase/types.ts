@@ -293,6 +293,7 @@ export type Database = {
           id: string
           joining_port: string
           monthly_salary: string | null
+          plan: string
           rank_required: string
           status: string
           vessel_type: string
@@ -306,6 +307,7 @@ export type Database = {
           id?: string
           joining_port: string
           monthly_salary?: string | null
+          plan?: string
           rank_required: string
           status?: string
           vessel_type: string
@@ -319,6 +321,7 @@ export type Database = {
           id?: string
           joining_port?: string
           monthly_salary?: string | null
+          plan?: string
           rank_required?: string
           status?: string
           vessel_type?: string
