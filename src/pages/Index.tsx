@@ -19,7 +19,7 @@ import SMCScoreTab from "@/components/SMCScoreTab";
 import SOSButton from "@/components/SOSButton";
 import VoyageReport from "@/components/VoyageReport";
 type AppState = "loading" | "landing" | "name-entry" | "welcome" | "main" | "voyage-report";
-type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "community" | "smc";
+type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "bridge" | "community" | "smc";
 
 const PROFILE_KEY = "seamind_profile_id";
 
@@ -67,6 +67,7 @@ const Index = () => {
       opportunities: "SeaMinds | Opportunities",
       news: "SeaMinds | News",
       academy: "SeaMinds | Academy",
+      bridge: "SeaMinds | Bridge",
       community: "SeaMinds | Community",
       smc: "SeaMinds | SMC Score",
     };
