@@ -56,15 +56,24 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
         reader.readAsDataURL(file);
       });
 
-      const { data, error } = await supabase.functions.invoke("parse-cv-documents", {
+      const response = await supabase.functions.invoke("parse-cv-documents", {
         body: { file_base64: base64, mime_type: file.type },
       });
 
-      if (error || !data?.success) {
-        throw new Error(data?.error || "Could not read CV");
+      console.log("CV parse response:", JSON.stringify(response));
+
+      // supabase.functions.invoke returns { data, error }
+      // data is the parsed JSON body from the edge function
+      const payload = response.data;
+      
+      // Handle case where payload might be a string (double-encoded)
+      const resolved = typeof payload === "string" ? JSON.parse(payload) : payload;
+
+      if (response.error || !resolved?.success) {
+        throw new Error(resolved?.error || response.error?.message || "Could not read CV");
       }
 
-      const parsed = data.data;
+      const parsed = resolved.data;
 
       // Upsert into crew_cv_data
       const { error: dbError } = await supabase
