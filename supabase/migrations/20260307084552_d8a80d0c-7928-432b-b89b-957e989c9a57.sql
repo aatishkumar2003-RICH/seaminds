@@ -1,0 +1,1 @@
+ALTER TABLE crew_feedback ADD COLUMN IF NOT EXISTS rating integer;

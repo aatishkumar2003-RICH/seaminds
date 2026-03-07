@@ -240,6 +240,7 @@ export type Database = {
           nationality: string | null
           profile_id: string | null
           rank: string | null
+          rating: number | null
           raw_text: string
           ship_name: string | null
         }
@@ -250,6 +251,7 @@ export type Database = {
           nationality?: string | null
           profile_id?: string | null
           rank?: string | null
+          rating?: number | null
           raw_text: string
           ship_name?: string | null
         }
@@ -260,6 +262,7 @@ export type Database = {
           nationality?: string | null
           profile_id?: string | null
           rank?: string | null
+          rating?: number | null
           raw_text?: string
           ship_name?: string | null
         }

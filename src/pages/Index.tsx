@@ -56,6 +56,7 @@ const Index = () => {
   const [feedbackSummary, setFeedbackSummary] = useState("");
   const [feedbackLoading, setFeedbackLoading] = useState(false);
   const [feedbackDone, setFeedbackDone] = useState(false);
+  const [feedbackRating, setFeedbackRating] = useState(0);
 
   useEffect(() => {
     const tick = () => {
@@ -361,11 +362,11 @@ const Index = () => {
   );
 
   const handleFeedbackSubmit = async () => {
-    if (!feedbackText.trim()) return;
+    if (feedbackRating === 0) return;
     setFeedbackLoading(true);
     try {
       const { data: fnData, error: fnError } = await supabase.functions.invoke('summarize-feedback', {
-        body: { feedbackText }
+        body: { feedbackText: `Rating: ${feedbackRating}/5 stars\nComment: ${feedbackText}`, feedbackRating }
       });
       const summary = fnError ? "" : (fnData?.summary || "");
       setFeedbackSummary(summary);
@@ -373,6 +374,7 @@ const Index = () => {
         profile_id: profileId || null,
         raw_text: feedbackText,
         ai_summary: summary,
+        rating: feedbackRating,
         rank: role || null,
         nationality: nationality || null,
         ship_name: shipName || null,
@@ -426,7 +428,7 @@ const Index = () => {
         <button onClick={handleSignOut} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
           <LogOut size={14} /> Sign Out
         </button>
-        <button onClick={() => { setShowFeedback(true); setFeedbackDone(false); setFeedbackText(""); setFeedbackSummary(""); }} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+        <button onClick={() => { setShowFeedback(true); setFeedbackDone(false); setFeedbackText(""); setFeedbackSummary(""); setFeedbackRating(0); }} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
           ★ Feedback
         </button>
       </div>
@@ -558,26 +560,76 @@ const Index = () => {
       {showFeedback && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center px-4">
           <div className="bg-[#0D1B2A] border border-[#1e3a5f] rounded-2xl p-6 w-full max-w-sm">
-            <h3 className="text-[#D4AF37] font-bold text-lg mb-1">Share Your Experience</h3>
-            <p className="text-gray-400 text-xs mb-4">Your feedback helps us build a better platform for seafarers worldwide.</p>
             {!feedbackDone ? (
               <>
-                <textarea value={feedbackText} onChange={e => setFeedbackText(e.target.value)} placeholder="Tell us how SeaMinds is helping you at sea, what you'd like improved, or anything on your mind..." className="w-full bg-[#132236] border border-[#1e3a5f] rounded-xl px-4 py-3 text-white text-sm placeholder:text-gray-600 focus:border-[#D4AF37] focus:outline-none resize-none h-32 mb-4" />
+                <h3 className="text-[#D4AF37] font-bold text-lg mb-1 text-center">Rate Your Experience</h3>
+                <p className="text-gray-400 text-xs mb-5 text-center">How is SeaMinds helping you at sea?</p>
+                {/* Star Rating */}
+                <div className="flex justify-center gap-3 mb-5">
+                  {[1,2,3,4,5].map(star => (
+                    <button
+                      key={star}
+                      onClick={() => setFeedbackRating(star)}
+                      className="text-4xl transition-transform hover:scale-110"
+                      style={{ color: star <= feedbackRating ? '#D4AF37' : '#2a3f5a' }}
+                    >
+                      ★
+                    </button>
+                  ))}
+                </div>
+                {feedbackRating > 0 && (
+                  <p className="text-center text-xs text-gray-400 mb-4">
+                    {feedbackRating === 1 ? 'Poor — needs major improvement' :
+                     feedbackRating === 2 ? 'Fair — some issues' :
+                     feedbackRating === 3 ? 'Good — meets expectations' :
+                     feedbackRating === 4 ? 'Very Good — really helpful' :
+                     'Excellent — love it!'}
+                  </p>
+                )}
+                {/* Comment */}
+                <textarea
+                  value={feedbackText}
+                  onChange={e => setFeedbackText(e.target.value)}
+                  placeholder="Any specific comments? What helped most? What can we improve?"
+                  className="w-full bg-[#132236] border border-[#1e3a5f] rounded-xl px-4 py-3 text-white text-sm placeholder:text-gray-600 focus:border-[#D4AF37] focus:outline-none resize-none h-24 mb-4"
+                />
                 <div className="flex gap-3">
-                  <button onClick={() => setShowFeedback(false)} className="flex-1 py-2.5 rounded-xl border border-[#1e3a5f] text-gray-400 text-sm">Cancel</button>
-                  <button onClick={handleFeedbackSubmit} disabled={feedbackLoading || !feedbackText.trim()} className="flex-1 py-2.5 rounded-xl bg-[#D4AF37] text-[#0D1B2A] font-bold text-sm disabled:opacity-40">
-                    {feedbackLoading ? "Analysing..." : "Submit"}
+                  <button
+                    onClick={() => setShowFeedback(false)}
+                    className="flex-1 py-2.5 rounded-xl border border-[#1e3a5f] text-gray-400 text-sm"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleFeedbackSubmit}
+                    disabled={feedbackLoading || feedbackRating === 0}
+                    className="flex-1 py-2.5 rounded-xl bg-[#D4AF37] text-[#0D1B2A] font-bold text-sm disabled:opacity-40"
+                  >
+                    {feedbackLoading ? 'Analysing...' : 'Submit'}
                   </button>
                 </div>
               </>
             ) : (
               <>
-                <div className="bg-[#132236] rounded-xl p-4 mb-4">
-                  <p className="text-[#D4AF37] text-xs font-bold mb-2">AI REVIEW OF YOUR FEEDBACK</p>
-                  <p className="text-gray-300 text-sm whitespace-pre-line">{feedbackSummary}</p>
+                <div className="text-center mb-4">
+                  <div className="flex justify-center gap-1 mb-2">
+                    {[1,2,3,4,5].map(star => (
+                      <span key={star} className="text-2xl" style={{ color: star <= feedbackRating ? '#D4AF37' : '#2a3f5a' }}>★</span>
+                    ))}
+                  </div>
+                  <p className="text-green-400 text-sm font-semibold">Thank you for your feedback!</p>
                 </div>
-                <p className="text-gray-500 text-xs mb-4 text-center">Thank you. Your feedback is recorded and reviewed by our team.</p>
-                <button onClick={() => setShowFeedback(false)} className="w-full py-2.5 rounded-xl bg-[#D4AF37] text-[#0D1B2A] font-bold text-sm">Close</button>
+                <div className="bg-[#132236] rounded-xl p-4 mb-4">
+                  <p className="text-[#D4AF37] text-xs font-bold mb-2 tracking-wide">⚡ AI REVIEW</p>
+                  <p className="text-gray-300 text-sm whitespace-pre-line leading-relaxed">{feedbackSummary}</p>
+                </div>
+                <p className="text-gray-500 text-xs mb-4 text-center">Reviewed by SeaMinds team only.</p>
+                <button
+                  onClick={() => setShowFeedback(false)}
+                  className="w-full py-2.5 rounded-xl bg-[#D4AF37] text-[#0D1B2A] font-bold text-sm"
+                >
+                  Close
+                </button>
               </>
             )}
           </div>
