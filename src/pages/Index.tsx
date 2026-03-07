@@ -50,6 +50,7 @@ const Index = () => {
   const [utcTime, setUtcTime] = useState("");
   const [jobMatch, setJobMatch] = useState<{ rank_required: string; vessel_type: string; joining_port: string } | null>(null);
   const [jobBadgeCount, setJobBadgeCount] = useState(0);
+  const [targetScreen, setTargetScreen] = useState<Screen>("chat");
 
   useEffect(() => {
     const tick = () => {
@@ -189,64 +190,39 @@ const Index = () => {
   }, []);
 
   const handleNameSubmit = async (profile: {
-    firstName: string;
-    lastName: string;
-    shipName: string;
-    role: string;
-    gender: string;
-    nationality: string;
-    whatsappNumber: string;
-    yearsAtSea: string;
-    voyageStartDate: string;
-    manningAgency: string;
-    vesselImo: string;
+    firstName: string; lastName: string; shipName: string; role: string;
+    gender: string; nationality: string; whatsappNumber: string; yearsAtSea: string;
+    voyageStartDate: string; manningAgency: string; vesselImo: string;
   }, cvFile?: File) => {
-    const { data, error } = await supabase
-      .from("crew_profiles")
-      .insert({
-        first_name: profile.firstName,
-        last_name: profile.lastName,
-        ship_name: profile.shipName,
-        role: profile.role,
-        gender: profile.gender || null,
-        nationality: profile.nationality,
-        whatsapp_number: profile.whatsappNumber,
-        years_at_sea: profile.yearsAtSea,
-        voyage_start_date: profile.voyageStartDate || null,
-        manning_agency: profile.manningAgency || null,
-        vessel_imo: profile.vesselImo || null,
-      })
-      .select("id")
-      .single();
-
+    const { data: { session } } = await supabase.auth.getSession();
+    const uid = session?.user?.id;
+    const insertData: Record<string, any> = {
+      first_name: profile.firstName, last_name: profile.lastName,
+      ship_name: profile.shipName, role: profile.role,
+      gender: profile.gender || null, nationality: profile.nationality,
+      whatsapp_number: profile.whatsappNumber, years_at_sea: profile.yearsAtSea,
+      voyage_start_date: profile.voyageStartDate || null,
+      manning_agency: profile.manningAgency || null, vessel_imo: profile.vesselImo || null,
+      onboarded: true,
+    };
+    if (uid) insertData.id = uid;
+    const { data, error } = await supabase.from("crew_profiles").upsert(insertData as any).select("id").single();
     if (error || !data) { console.error("Failed to create profile:", error); return; }
-
     localStorage.setItem(PROFILE_KEY, data.id);
-    setProfileId(data.id);
-    setFirstName(profile.firstName);
-    setRole(profile.role);
-    setShipName(profile.shipName);
-    setVoyageStartDate(profile.voyageStartDate);
+    setProfileId(data.id); setFirstName(profile.firstName); setLastName(profile.lastName);
+    setRole(profile.role); setShipName(profile.shipName); setNationality(profile.nationality);
+    setWhatsappNumber(profile.whatsappNumber); setVoyageStartDate(profile.voyageStartDate);
     setManningAgency(profile.manningAgency);
-    setNationality(profile.nationality);
-
-    // Upload CV file to storage if provided
     if (cvFile) {
       const ext = cvFile.name.split(".").pop() || "pdf";
-      const path = `${data.id}/cv.${ext}`;
-      const { error: uploadError } = await supabase.storage
-        .from("crew-cvs")
-        .upload(path, cvFile, { upsert: true });
-      if (uploadError) {
-        console.error("CV upload error:", uploadError);
-      }
+      await supabase.storage.from("crew-cvs").upload(`${data.id}/cv.${ext}`, cvFile, { upsert: true });
     }
-
     setAppState("welcome");
   };
 
   const handleWelcomeComplete = async () => {
     await supabase.from("crew_profiles").update({ onboarded: true }).eq("id", profileId);
+    setScreen(targetScreen);
     setAppState("main");
   };
 
@@ -503,11 +479,11 @@ const Index = () => {
       </div>
 
       <nav className="nav-glass flex items-center justify-around py-3 px-6">
-        <button onClick={() => { if (!profileComplete) { setAppState("name-entry"); } else { setScreen("chat"); } }} className={`flex flex-col items-center gap-1 transition-colors ${screen === "chat" ? "text-primary" : "text-muted-foreground"}`}>
+        <button onClick={() => { if (!profileComplete) { setTargetScreen("chat"); setAppState("name-entry"); } else { setScreen("chat"); } }} className={`flex flex-col items-center gap-1 transition-colors ${screen === "chat" ? "text-primary" : "text-muted-foreground"}`}>
           <MessageCircle size={18} />
           <span className="text-[10px] font-medium tracking-wide uppercase">Chat</span>
         </button>
-        <button onClick={() => { if (!profileComplete) { setAppState("name-entry"); } else { setScreen("dashboard"); } }} className={`flex flex-col items-center gap-1 transition-colors ${screen === "dashboard" ? "text-primary" : "text-muted-foreground"}`}>
+        <button onClick={() => { if (!profileComplete) { setTargetScreen("dashboard"); setAppState("name-entry"); } else { setScreen("dashboard"); } }} className={`flex flex-col items-center gap-1 transition-colors ${screen === "dashboard" ? "text-primary" : "text-muted-foreground"}`}>
           <LayoutDashboard size={18} />
           <span className="text-[10px] font-medium tracking-wide uppercase">Welfare</span>
         </button>
@@ -542,7 +518,7 @@ const Index = () => {
           <Compass size={18} />
           <span className="text-[10px] font-medium tracking-wide uppercase">Community</span>
         </button>
-        <button onClick={() => { if (!profileComplete) { setAppState("name-entry"); } else { setScreen("smc"); } }} className={`flex flex-col items-center gap-1 transition-colors ${screen === "smc" ? "text-primary" : "text-muted-foreground"}`}>
+        <button onClick={() => { if (!profileComplete) { setTargetScreen("smc"); setAppState("name-entry"); } else { setScreen("smc"); } }} className={`flex flex-col items-center gap-1 transition-colors ${screen === "smc" ? "text-primary" : "text-muted-foreground"}`}>
           <Star size={18} />
           <span className="text-[10px] font-medium tracking-wide uppercase">SMC</span>
         </button>
