@@ -148,49 +148,43 @@ const Index = () => {
   }, [appState, role]);
 
   useEffect(() => {
-    const handleAuth = async (session: any) => {
-      if (!session?.user) {
-        const savedId = localStorage.getItem(PROFILE_KEY);
-        if (!savedId) { setAppState("landing"); return; }
-      }
-      const savedId = localStorage.getItem(PROFILE_KEY);
-      if (savedId) {
-        const { data, error } = await supabase
-          .from("crew_profiles")
-          .select("id, first_name, last_name, onboarded, role, ship_name, voyage_start_date, manning_agency, nationality, whatsapp_number")
-          .eq("id", savedId)
-          .single();
-        if (!error && data) {
-          setProfileId(data.id); setFirstName(data.first_name); setLastName(data.last_name || "");
-          setRole(data.role || ""); setShipName(data.ship_name || ""); setVoyageStartDate(data.voyage_start_date || "");
-          setManningAgency(data.manning_agency || ""); setNationality(data.nationality || ""); setWhatsappNumber(data.whatsapp_number || "");
-          setAppState(data.onboarded ? "main" : "welcome");
-          return;
-        }
-        localStorage.removeItem(PROFILE_KEY);
-      }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const savedId = localStorage.getItem('seamind_profile_id');
+      if (savedId) return;
       if (session?.user) {
-        const user = session.user;
-        const fullName = user.user_metadata?.full_name || user.email?.split("@")[0] || "Seafarer";
-        const parts = fullName.split(" ");
-        const fn = parts[0]; const ln = parts.slice(1).join(" ") || "";
-        const { data } = await supabase
-          .from("crew_profiles")
-          .insert({ id: user.id, first_name: fn, last_name: ln, role: "Seafarer", ship_name: "Not Set", onboarded: true })
-          .select("id").single();
-        if (data) {
-          localStorage.setItem(PROFILE_KEY, data.id);
-          setProfileId(data.id); setFirstName(fn); setLastName(ln);
-          setAppState("main"); setScreen("news"); return;
-        }
+        const fullName = session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Seafarer';
+        const fn = fullName.split(' ')[0];
+        setFirstName(fn);
+        setAppState('main');
+        setScreen('news');
       }
-      setAppState("landing");
-    };
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      handleAuth(session);
     });
 
+    const init = async () => {
+      const savedId = localStorage.getItem('seamind_profile_id');
+      if (savedId) {
+        const { data, error } = await supabase.from('crew_profiles').select('id, first_name, last_name, onboarded, role, ship_name, voyage_start_date, manning_agency, nationality, whatsapp_number').eq('id', savedId).single();
+        if (!error && data) {
+          setProfileId(data.id); setFirstName(data.first_name); setLastName(data.last_name || '');
+          setRole(data.role || ''); setShipName(data.ship_name || ''); setVoyageStartDate(data.voyage_start_date || '');
+          setManningAgency(data.manning_agency || ''); setNationality(data.nationality || ''); setWhatsappNumber(data.whatsapp_number || '');
+          setAppState(data.onboarded ? 'main' : 'welcome');
+          return;
+        }
+        localStorage.removeItem('seamind_profile_id');
+      }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const fullName = session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Seafarer';
+        setFirstName(fullName.split(' ')[0]);
+        setAppState('main');
+        setScreen('news');
+        return;
+      }
+      setAppState('landing');
+    };
+
+    init();
     return () => subscription.unsubscribe();
   }, []);
 
