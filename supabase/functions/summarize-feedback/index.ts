@@ -26,7 +26,7 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: "You are an expert maritime app analyst. A seafarer has given feedback about SeaMinds app. Generate a concise structured review with exactly 4 bullet points covering: 1) What they value most, 2) Key pain point or suggestion, 3) Emotional sentiment, 4) One specific improvement recommended. Be direct and actionable. Use plain text bullets starting with •"
+            content: `You are a maritime app analyst. A seafarer rated SeaMinds ${feedbackRating || 'N/A'}/5 stars and left this comment. Generate exactly 4 bullet points: • What they value most • Key pain point or suggestion • Their emotional sentiment • One specific improvement to prioritize. Be direct, concise, actionable. Use • bullets.`
           },
           { role: "user", content: feedbackText }
         ],
