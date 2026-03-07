@@ -431,7 +431,7 @@ const Bridge = () => {
             <ArrowLeft size={18} />
           </button>
           <div>
-            <h2 className="text-sm font-bold" style={{ color: "#D4AF37" }}>BRIDGE</h2>
+            <h2 className="text-sm font-bold" style={{ color: "#D4AF37" }}>PMS</h2>
             <p className="text-[10px] text-muted-foreground">Technical Reference AI</p>
           </div>
           {messages.length > 0 && (
@@ -646,8 +646,8 @@ const Bridge = () => {
   return (
     <div className="flex flex-col h-full px-4 py-3 overflow-y-auto">
       <div className="text-center mb-4">
-        <h1 className="text-xl font-bold tracking-wider" style={{ color: "#D4AF37" }}>BRIDGE</h1>
-        <p className="text-xs text-muted-foreground">Technical Reference & Guidance</p>
+        <h1 className="text-xl font-bold tracking-wider" style={{ color: "#D4AF37" }}>PMS</h1>
+        <p className="text-xs text-muted-foreground">Planned Maintenance & Reference</p>
       </div>
 
       <form onSubmit={handleSubmit} className="relative mb-3">

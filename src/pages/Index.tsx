@@ -76,7 +76,7 @@ const Index = () => {
       opportunities: "SeaMinds | Opportunities",
       news: "SeaMinds | News",
       academy: "SeaMinds | Academy",
-      bridge: "SeaMinds | Bridge",
+      bridge: "SeaMinds | PMS",
       community: "SeaMinds | Community",
       smc: "SeaMinds | SMC Score",
       resume: "SeaMinds | CV Builder",
@@ -544,7 +544,7 @@ const Index = () => {
         </button>
         <button onClick={() => setScreen("bridge")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "bridge" ? "text-primary" : "text-muted-foreground"}`}>
           <Anchor size={18} />
-          <span className="text-[10px] font-medium tracking-wide uppercase">Bridge</span>
+          <span className="text-[10px] font-medium tracking-wide uppercase">PMS</span>
         </button>
         <button onClick={() => setScreen("community")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "community" ? "text-primary" : "text-muted-foreground"}`}>
           <Compass size={18} />
