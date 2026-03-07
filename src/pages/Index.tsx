@@ -147,6 +147,16 @@ const Index = () => {
     };
   }, [appState, role]);
 
+  // Listen for auth state changes (e.g. Google OAuth redirect)
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN' && window.location.pathname !== '/app') {
+        navigate('/app');
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
   useEffect(() => {
     const savedId = localStorage.getItem(PROFILE_KEY);
     if (!savedId) { setAppState("landing"); return; }
