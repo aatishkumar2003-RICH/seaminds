@@ -232,6 +232,47 @@ export type Database = {
         }
         Relationships: []
       }
+      crew_feedback: {
+        Row: {
+          ai_summary: string | null
+          created_at: string | null
+          id: string
+          nationality: string | null
+          profile_id: string | null
+          rank: string | null
+          raw_text: string
+          ship_name: string | null
+        }
+        Insert: {
+          ai_summary?: string | null
+          created_at?: string | null
+          id?: string
+          nationality?: string | null
+          profile_id?: string | null
+          rank?: string | null
+          raw_text: string
+          ship_name?: string | null
+        }
+        Update: {
+          ai_summary?: string | null
+          created_at?: string | null
+          id?: string
+          nationality?: string | null
+          profile_id?: string | null
+          rank?: string | null
+          raw_text?: string
+          ship_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crew_feedback_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "crew_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crew_profiles: {
         Row: {
           created_at: string
