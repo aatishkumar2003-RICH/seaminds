@@ -6,22 +6,17 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `You are a maritime document expert. Extract data and return ONLY valid JSON:
-{
-  "certificates": [{"name":"","number":"","issue_date":"","expiry_date":"","issuing_authority":"","place":""}],
-  "sea_service": [{"vessel_name":"","vessel_type":"","flag":"","grt":"","rank":"","company":"","sign_on":"","sign_off":""}],
-  "medical": [{"cert_type":"","issue_date":"","expiry_date":"","issuing_authority":""}],
-  "education": [{"institution":"","qualification":"","year_from":"","year_to":""}]
-}
-Return ONLY the JSON object, no other text. Use empty arrays if a section has no data.`;
+const SYSTEM_PROMPT = `You are a maritime document expert. Extract data and return ONLY valid JSON no markdown:
+{"certificates":[{"name":"","number":"","issue_date":"","expiry_date":"","issuing_authority":"","place":""}],"sea_service":[{"vessel_name":"","vessel_type":"","flag":"","grt":"","rank":"","company":"","sign_on":"","sign_off":""}],"medical":[{"cert_type":"","issue_date":"","expiry_date":"","issuing_authority":""}],"education":[{"institution":"","qualification":"","year_from":"","year_to":""}]}
+Return ONLY the JSON object, no other text, no markdown fences. Use empty arrays if a section has no data.`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const { file_base64, mime_type } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not configured");
 
     const isPdf = mime_type === "application/pdf";
     const isImage = mime_type?.startsWith("image/");
@@ -37,19 +32,26 @@ serve(async (req) => {
       { type: "text", text: "Extract all certificates, sea service records, medical certificates, and education from this maritime CV/resume document. Return only the JSON object." },
     ];
 
-    userContent.push({
-      type: "image_url",
-      image_url: { url: `data:${mime_type};base64,${file_base64}` },
-    });
+    if (isPdf) {
+      userContent.push({
+        type: "file",
+        file: { filename: "cv.pdf", file_data: `data:application/pdf;base64,${file_base64}` },
+      });
+    } else {
+      userContent.push({
+        type: "image_url",
+        image_url: { url: `data:${mime_type};base64,${file_base64}` },
+      });
+    }
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "gpt-4o",
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: userContent },
@@ -69,8 +71,8 @@ serve(async (req) => {
         });
       }
       const t = await response.text();
-      console.error("AI gateway error:", response.status, t);
-      return new Response(JSON.stringify({ error: "AI gateway error" }), {
+      console.error("OpenAI API error:", response.status, t);
+      return new Response(JSON.stringify({ error: "AI processing error" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
