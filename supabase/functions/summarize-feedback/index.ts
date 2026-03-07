@@ -9,7 +9,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { feedbackText } = await req.json();
+    const { feedbackText, feedbackRating } = await req.json();
     if (!feedbackText) throw new Error("No feedback text provided");
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
