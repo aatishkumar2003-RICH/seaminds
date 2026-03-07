@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { FileText, Upload, RefreshCw, Eye, Check } from "lucide-react";
+import { Upload, RefreshCw, Check, FileText } from "lucide-react";
 import { toast } from "sonner";
 import CrewPaymentGate from "@/components/smc/CrewPaymentGate";
 import SMCScoreCertificate from "@/components/smc/SMCScoreCertificate";
@@ -16,54 +16,80 @@ interface SMCScoreTabProps {
 }
 
 type View = "loading" | "payment" | "assessment" | "certificate";
+type CvStatus = "idle" | "reading" | "done" | "error";
 
 const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScoreTabProps) => {
   const [view, setView] = useState<View>("loading");
   const [assessmentId, setAssessmentId] = useState("");
 
-  // CV state
-  const [cvFileName, setCvFileName] = useState<string | null>(null);
-  const [cvUrl, setCvUrl] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
+  // CV parse state
+  const [cvStatus, setCvStatus] = useState<CvStatus>("idle");
+  const [cvError, setCvError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     checkStatus();
-    loadCv();
+    checkExistingCvData();
   }, [profileId]);
 
-  const loadCv = async () => {
-    const { data: files } = await supabase.storage
-      .from("crew-cvs")
-      .list(profileId, { limit: 1 });
-    if (files && files.length > 0) {
-      setCvFileName(files[0].name);
-      const { data } = await supabase.storage
-        .from("crew-cvs")
-        .createSignedUrl(`${profileId}/${files[0].name}`, 3600);
-      setCvUrl(data?.signedUrl || null);
-    } else {
-      setCvFileName(null);
-      setCvUrl(null);
-    }
+  const checkExistingCvData = async () => {
+    const { data } = await supabase
+      .from("crew_cv_data")
+      .select("id")
+      .eq("user_id", profileId)
+      .maybeSingle();
+    if (data) setCvStatus("done");
   };
 
-  const handleCvUpload = async (file: File) => {
-    setUploading(true);
+  const handleCvParse = async (file: File) => {
+    setCvStatus("reading");
+    setCvError("");
+
     try {
-      if (cvFileName) {
-        await supabase.storage.from("crew-cvs").remove([`${profileId}/${cvFileName}`]);
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result.split(",")[1]);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const { data, error } = await supabase.functions.invoke("parse-cv-documents", {
+        body: { file_base64: base64, mime_type: file.type },
+      });
+
+      if (error || !data?.success) {
+        throw new Error(data?.error || "Could not read CV");
       }
-      const ext = file.name.split(".").pop() || "pdf";
-      const path = `${profileId}/cv.${ext}`;
-      const { error } = await supabase.storage.from("crew-cvs").upload(path, file, { upsert: true });
-      if (error) throw error;
-      toast.success("CV uploaded successfully");
-      await loadCv();
-    } catch {
-      toast.error("Failed to upload CV");
-    } finally {
-      setUploading(false);
+
+      const parsed = data.data;
+
+      // Upsert into crew_cv_data
+      const { error: dbError } = await supabase
+        .from("crew_cv_data")
+        .upsert(
+          {
+            user_id: profileId,
+            certificates: parsed.certificates || [],
+            sea_service: parsed.sea_service || [],
+            medical: parsed.medical || [],
+            education: parsed.education || [],
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id" }
+        );
+
+      if (dbError) throw dbError;
+
+      setCvStatus("done");
+      toast.success("CV parsed — certificates & sea service extracted");
+    } catch (e) {
+      console.error("CV parse error:", e);
+      setCvError(e instanceof Error ? e.message : "Could not read CV");
+      setCvStatus("error");
+      toast.error("Failed to parse CV");
     }
   };
 
@@ -143,65 +169,65 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
       <input
         ref={fileRef}
         type="file"
-        accept=".pdf,.doc,.docx,image/*"
+        accept=".pdf,image/*"
         className="hidden"
         onChange={(e) => {
           const f = e.target.files?.[0];
-          if (f) handleCvUpload(f);
+          if (f) handleCvParse(f);
           if (fileRef.current) fileRef.current.value = "";
         }}
       />
-      {cvFileName ? (
+
+      {cvStatus === "reading" ? (
+        <div className="bg-card rounded-2xl border border-border p-5 flex flex-col items-center gap-3">
+          <div
+            className="w-10 h-10 rounded-full border-[3px] border-muted"
+            style={{ borderTopColor: "hsl(var(--primary))", animation: "spin 0.8s linear infinite" }}
+          />
+          <p className="text-sm font-semibold text-primary">🤖 AI is reading your document...</p>
+          <p className="text-[10px] text-muted-foreground">Extracting certificates, sea service & more</p>
+        </div>
+      ) : cvStatus === "done" ? (
         <div className="bg-card rounded-2xl border border-border p-4 flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
             <Check size={16} className="text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-foreground">My CV</p>
-            <p className="text-[10px] text-muted-foreground truncate">{cvFileName}</p>
+            <p className="text-sm font-medium text-foreground">CV Parsed</p>
+            <p className="text-[10px] text-muted-foreground">Certificates & sea service extracted</p>
           </div>
-          <div className="flex gap-1.5">
-            {cvUrl && (
-              <a
-                href={cvUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors"
-                title="View CV"
-              >
-                <Eye size={14} className="text-primary" />
-              </a>
-            )}
-            <button
-              onClick={() => fileRef.current?.click()}
-              disabled={uploading}
-              className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors disabled:opacity-50"
-              title="Replace CV"
-            >
-              {uploading ? (
-                <RefreshCw size={14} className="text-muted-foreground animate-spin" />
-              ) : (
-                <RefreshCw size={14} className="text-muted-foreground" />
-              )}
-            </button>
-          </div>
+          <button
+            onClick={() => fileRef.current?.click()}
+            className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors"
+            title="Re-scan CV"
+          >
+            <RefreshCw size={14} className="text-muted-foreground" />
+          </button>
         </div>
+      ) : cvStatus === "error" ? (
+        <button
+          onClick={() => fileRef.current?.click()}
+          className="w-full bg-card rounded-2xl border border-dashed border-destructive/50 p-4 flex items-center gap-3 hover:border-destructive transition-colors"
+        >
+          <div className="w-9 h-9 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
+            <FileText size={16} className="text-destructive" />
+          </div>
+          <div className="text-left">
+            <p className="text-sm font-medium text-destructive">{cvError || "Failed to read CV"}</p>
+            <p className="text-[10px] text-muted-foreground">Tap to try again</p>
+          </div>
+        </button>
       ) : (
         <button
           onClick={() => fileRef.current?.click()}
-          disabled={uploading}
-          className="w-full bg-card rounded-2xl border border-dashed border-border p-4 flex items-center gap-3 hover:border-primary/50 transition-colors disabled:opacity-50"
+          className="w-full bg-card rounded-2xl border border-dashed border-border p-4 flex items-center gap-3 hover:border-primary/50 transition-colors"
         >
           <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center shrink-0">
-            {uploading ? (
-              <RefreshCw size={16} className="text-muted-foreground animate-spin" />
-            ) : (
-              <Upload size={16} className="text-primary" />
-            )}
+            <Upload size={16} className="text-primary" />
           </div>
           <div className="text-left">
             <p className="text-sm font-medium text-foreground">Upload Your CV</p>
-            <p className="text-[10px] text-muted-foreground">PDF, DOC, or image — required for SMC assessment</p>
+            <p className="text-[10px] text-muted-foreground">PDF or photo — AI extracts certificates & sea service</p>
           </div>
         </button>
       )}
