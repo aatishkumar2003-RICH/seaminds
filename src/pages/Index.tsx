@@ -51,6 +51,11 @@ const Index = () => {
   const [jobMatch, setJobMatch] = useState<{ rank_required: string; vessel_type: string; joining_port: string } | null>(null);
   const [jobBadgeCount, setJobBadgeCount] = useState(0);
   const [targetScreen, setTargetScreen] = useState<Screen>("chat");
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedbackText, setFeedbackText] = useState("");
+  const [feedbackSummary, setFeedbackSummary] = useState("");
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
+  const [feedbackDone, setFeedbackDone] = useState(false);
 
   useEffect(() => {
     const tick = () => {
@@ -399,6 +404,9 @@ const Index = () => {
         <button onClick={handleSignOut} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
           <LogOut size={14} /> Sign Out
         </button>
+        <button onClick={() => { setShowFeedback(true); setFeedbackDone(false); setFeedbackText(""); setFeedbackSummary(""); }} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+          ★ Feedback
+        </button>
       </div>
 
       {/* Sign Off confirmation */}
@@ -524,6 +532,35 @@ const Index = () => {
         </button>
       </nav>
       </div>
+
+      {showFeedback && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center px-4">
+          <div className="bg-[#0D1B2A] border border-[#1e3a5f] rounded-2xl p-6 w-full max-w-sm">
+            <h3 className="text-[#D4AF37] font-bold text-lg mb-1">Share Your Experience</h3>
+            <p className="text-gray-400 text-xs mb-4">Your feedback helps us build a better platform for seafarers worldwide.</p>
+            {!feedbackDone ? (
+              <>
+                <textarea value={feedbackText} onChange={e => setFeedbackText(e.target.value)} placeholder="Tell us how SeaMinds is helping you at sea, what you'd like improved, or anything on your mind..." className="w-full bg-[#132236] border border-[#1e3a5f] rounded-xl px-4 py-3 text-white text-sm placeholder:text-gray-600 focus:border-[#D4AF37] focus:outline-none resize-none h-32 mb-4" />
+                <div className="flex gap-3">
+                  <button onClick={() => setShowFeedback(false)} className="flex-1 py-2.5 rounded-xl border border-[#1e3a5f] text-gray-400 text-sm">Cancel</button>
+                  <button onClick={handleFeedbackSubmit} disabled={feedbackLoading || !feedbackText.trim()} className="flex-1 py-2.5 rounded-xl bg-[#D4AF37] text-[#0D1B2A] font-bold text-sm disabled:opacity-40">
+                    {feedbackLoading ? "Analysing..." : "Submit"}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="bg-[#132236] rounded-xl p-4 mb-4">
+                  <p className="text-[#D4AF37] text-xs font-bold mb-2">AI REVIEW OF YOUR FEEDBACK</p>
+                  <p className="text-gray-300 text-sm whitespace-pre-line">{feedbackSummary}</p>
+                </div>
+                <p className="text-gray-500 text-xs mb-4 text-center">Thank you. Your feedback is recorded and reviewed by our team.</p>
+                <button onClick={() => setShowFeedback(false)} className="w-full py-2.5 rounded-xl bg-[#D4AF37] text-[#0D1B2A] font-bold text-sm">Close</button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
