@@ -13,7 +13,7 @@ const HeroSection = ({ timeOfDay = "day" }: Props) => {
 
   return (
     <section className="relative pt-28 pb-16 md:pt-32 md:pb-20 overflow-hidden">
-      <div className="relative max-w-5xl mx-auto px-4 sm:px-6 text-center">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 text-center lg:text-left">
         <p className="text-xs uppercase tracking-[0.3em] text-primary mb-4 font-mono-score">
           AI-Powered Maritime Platform
         </p>
