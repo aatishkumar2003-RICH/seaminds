@@ -1,7 +1,7 @@
 import { Shield, Heart, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import seamindsLogo from "@/assets/seaminds-logo.png";
-import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
 
 interface LandingScreenProps {
   onGetStarted: () => void;
@@ -10,11 +10,8 @@ interface LandingScreenProps {
 
 const LandingScreen = ({ onGetStarted, onManagerLogin }: LandingScreenProps) => {
   const handleGoogleLogin = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin + '/app',
-      },
+    await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin + '/app',
     });
   };
 
