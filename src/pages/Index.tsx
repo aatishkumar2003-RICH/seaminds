@@ -45,6 +45,7 @@ const Index = () => {
   const [voyageStartDate, setVoyageStartDate] = useState("");
   const [manningAgency, setManningAgency] = useState("");
   const [nationality, setNationality] = useState("");
+  const [whatsappNumber, setWhatsappNumber] = useState("");
   const [showSignOffConfirm, setShowSignOffConfirm] = useState(false);
   const [utcTime, setUtcTime] = useState("");
   const [jobMatch, setJobMatch] = useState<{ rank_required: string; vessel_type: string; joining_port: string } | null>(null);
@@ -152,7 +153,7 @@ const Index = () => {
 
     supabase
       .from("crew_profiles")
-      .select("id, first_name, last_name, onboarded, role, ship_name, voyage_start_date, manning_agency, nationality")
+      .select("id, first_name, last_name, onboarded, role, ship_name, voyage_start_date, manning_agency, nationality, whatsapp_number")
       .eq("id", savedId)
       .single()
       .then(({ data, error }) => {
@@ -165,6 +166,7 @@ const Index = () => {
         setVoyageStartDate(data.voyage_start_date || "");
         setManningAgency(data.manning_agency || "");
         setNationality(data.nationality || "");
+        setWhatsappNumber(data.whatsapp_number || "");
         setAppState(data.onboarded ? "main" : "welcome");
       });
   }, []);
@@ -297,6 +299,47 @@ const Index = () => {
     window.location.reload();
   };
 
+  const profileComplete = !!(role && nationality && shipName && whatsappNumber);
+
+  const handleProfileGateUpdate = (field: string, value: string) => {
+    if (field === "rank") setRole(value);
+    else if (field === "nationality") setNationality(value);
+    else if (field === "shipName") setShipName(value);
+    else if (field === "whatsappNumber") setWhatsappNumber(value);
+  };
+
+  const saveProfileGate = async () => {
+    if (!role || !nationality || !shipName || !whatsappNumber) return;
+    await supabase.from("crew_profiles").update({
+      role,
+      nationality,
+      ship_name: shipName,
+      whatsapp_number: whatsappNumber,
+    }).eq("id", profileId);
+  };
+
+  const profileGateUI = (
+    <div className="flex flex-col h-full items-center justify-center bg-[#0D1B2A] px-6 text-center">
+      <div className="text-[#D4AF37] mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+      </div>
+      <h2 className="text-[#D4AF37] text-lg font-bold mb-2">Complete Your Profile</h2>
+      <p className="text-gray-400 text-sm mb-6">CHAT, WELFARE and COMMUNITY are personalised for you. We need 4 quick details.</p>
+      <div className="w-full max-w-sm space-y-3">
+        <select className="w-full bg-[#132236] border border-[#1e3a5f] rounded-xl px-4 py-3 text-white text-sm focus:border-[#D4AF37] focus:outline-none" value={role} onChange={e => handleProfileGateUpdate("rank", e.target.value)}>
+          <option value="">Select your rank...</option>
+          {["Captain / Master","Chief Officer","2nd Officer","3rd Officer","Chief Engineer","2nd Engineer","3rd Engineer","4th Engineer","ETO / EEO","Bosun","AB Seaman","Ordinary Seaman (OS)","Fitter","Oiler","Cook","Messman / Steward","Deck Cadet","Engine Cadet"].map(r => <option key={r} value={r}>{r}</option>)}
+        </select>
+        <input className="w-full bg-[#132236] border border-[#1e3a5f] rounded-xl px-4 py-3 text-white text-sm focus:border-[#D4AF37] focus:outline-none placeholder:text-gray-600" placeholder="Nationality (e.g. Filipino)" value={nationality} onChange={e => handleProfileGateUpdate("nationality", e.target.value)} />
+        <input className="w-full bg-[#132236] border border-[#1e3a5f] rounded-xl px-4 py-3 text-white text-sm focus:border-[#D4AF37] focus:outline-none placeholder:text-gray-600" placeholder="Ship Name (e.g. MV Pacific Star)" value={shipName} onChange={e => handleProfileGateUpdate("shipName", e.target.value)} />
+        <input className="w-full bg-[#132236] border border-[#1e3a5f] rounded-xl px-4 py-3 text-white text-sm focus:border-[#D4AF37] focus:outline-none placeholder:text-gray-600" placeholder="WhatsApp Number (+63...)" value={whatsappNumber} onChange={e => handleProfileGateUpdate("whatsappNumber", e.target.value)} />
+        <button onClick={saveProfileGate} className="w-full bg-[#D4AF37] text-[#0D1B2A] py-3 rounded-xl font-bold text-sm hover:bg-yellow-400 transition-colors">
+          Unlock My Tabs →
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="flex flex-col h-screen max-w-md mx-auto bg-background relative">
       <div className="absolute inset-0 opacity-20 pointer-events-none z-0">
@@ -400,9 +443,9 @@ const Index = () => {
         )}
 
         {screen === "chat" ? (
-          <CrewChat profileId={profileId} firstName={firstName} role={role} shipName={shipName} voyageStartDate={voyageStartDate} />
+          profileComplete ? <CrewChat profileId={profileId} firstName={firstName} role={role} shipName={shipName} voyageStartDate={voyageStartDate} /> : profileGateUI
         ) : screen === "dashboard" ? (
-          <WelfareDashboard shipName={shipName} />
+          profileComplete ? <WelfareDashboard shipName={shipName} /> : profileGateUI
         ) : screen === "opportunities" ? (
           <Opportunities profileId={profileId} firstName={firstName} role={role} nationality={nationality} shipName={shipName} />
         ) : screen === "news" ? (
@@ -412,7 +455,7 @@ const Index = () => {
         ) : screen === "bridge" ? (
           <Bridge />
         ) : screen === "community" ? (
-          <Community profileId={profileId} shipName={shipName} manningAgency={manningAgency} firstName={firstName} voyageStartDate={voyageStartDate} onCompleteVoyage={() => setAppState("voyage-report")} />
+          profileComplete ? <Community profileId={profileId} shipName={shipName} manningAgency={manningAgency} firstName={firstName} voyageStartDate={voyageStartDate} onCompleteVoyage={() => setAppState("voyage-report")} /> : profileGateUI
         ) : screen === "resume" ? (
           <ResumeBuilder />
         ) : (
