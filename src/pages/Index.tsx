@@ -503,11 +503,11 @@ const Index = () => {
       </div>
 
       <nav className="nav-glass flex items-center justify-around py-3 px-6">
-        <button onClick={() => setScreen("chat")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "chat" ? "text-primary" : "text-muted-foreground"}`}>
+        <button onClick={() => { if (!profileComplete) { setAppState("name-entry"); } else { setScreen("chat"); } }} className={`flex flex-col items-center gap-1 transition-colors ${screen === "chat" ? "text-primary" : "text-muted-foreground"}`}>
           <MessageCircle size={18} />
           <span className="text-[10px] font-medium tracking-wide uppercase">Chat</span>
         </button>
-        <button onClick={() => setScreen("dashboard")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "dashboard" ? "text-primary" : "text-muted-foreground"}`}>
+        <button onClick={() => { if (!profileComplete) { setAppState("name-entry"); } else { setScreen("dashboard"); } }} className={`flex flex-col items-center gap-1 transition-colors ${screen === "dashboard" ? "text-primary" : "text-muted-foreground"}`}>
           <LayoutDashboard size={18} />
           <span className="text-[10px] font-medium tracking-wide uppercase">Welfare</span>
         </button>
@@ -542,7 +542,7 @@ const Index = () => {
           <Compass size={18} />
           <span className="text-[10px] font-medium tracking-wide uppercase">Community</span>
         </button>
-        <button onClick={() => setScreen("smc")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "smc" ? "text-primary" : "text-muted-foreground"}`}>
+        <button onClick={() => { if (!profileComplete) { setAppState("name-entry"); } else { setScreen("smc"); } }} className={`flex flex-col items-center gap-1 transition-colors ${screen === "smc" ? "text-primary" : "text-muted-foreground"}`}>
           <Star size={18} />
           <span className="text-[10px] font-medium tracking-wide uppercase">SMC</span>
         </button>
