@@ -1,6 +1,7 @@
 import { Shield, Heart, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import seamindsLogo from "@/assets/seaminds-logo.png";
+import { supabase } from "@/integrations/supabase/client";
 
 interface LandingScreenProps {
   onGetStarted: () => void;
