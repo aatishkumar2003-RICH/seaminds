@@ -318,6 +318,22 @@ const SMCScoreCertificate = ({ data = DEMO_DATA, onImproveScore }: SMCScoreCerti
             <TrendingUp size={16} /> Improve My Score
           </button>
         </div>
+
+        <a
+          href={`whatsapp://send?text=I scored ${data.overallScore}/5 on my SeaMinds SMC Competency Assessment! Band: ${band.label}. Verify my certificate: https://seaminds.life/verify?id=${data.certificateId}`}
+          className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold text-sm mt-3"
+          style={{ background: "#25D366", color: "white" }}
+        >
+          📱 Share on WhatsApp
+        </a>
+
+        <a
+          href={`whatsapp://send?text=Dear Manning Agent, I completed my SeaMinds SMC Assessment. Score: ${data.overallScore}/5 | Band: ${band.label} | Certificate: https://seaminds.life/verify?id=${data.certificateId} — ${data.crewName} | ${data.rank}`}
+          className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold text-sm mt-2"
+          style={{ background: "transparent", border: "1px solid #25D366", color: "#25D366" }}
+        >
+          📋 Share with Manning Agent
+        </a>
       </div>
     </div>
   );
