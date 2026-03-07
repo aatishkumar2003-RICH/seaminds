@@ -74,13 +74,13 @@ const BentoGrid = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-4">
 
         {/* Row 1: Problem stats */}
-        <div ref={ref1} className="fade-in-on-scroll grid grid-cols-3 gap-3">
+        <div ref={ref1} className="fade-in-on-scroll grid grid-cols-3 gap-3 md:gap-6">
           {[
             { icon: Anchor, stat: "1 in 4", desc: "depression at sea" },
             { icon: Heart, stat: "20%", desc: "suicidal thoughts" },
             { icon: Home, stat: "8 months", desc: "away from family" },
           ].map((s) => (
-            <div key={s.stat} className="glass-card rounded-xl p-4 md:p-6 text-center">
+            <div key={s.stat} className="glass-card rounded-xl p-4 md:p-8 text-center">
               <s.icon className="w-5 h-5 text-primary mx-auto mb-2" />
               <div className="text-2xl md:text-3xl font-bold text-foreground font-mono-score mb-1">{s.stat}</div>
               <p className="text-xs text-muted-foreground">{s.desc}</p>
