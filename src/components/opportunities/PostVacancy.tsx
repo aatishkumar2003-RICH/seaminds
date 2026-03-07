@@ -33,7 +33,9 @@ const PostVacancy = () => {
   const [rankRequired, setRankRequired] = useState("");
   const [vesselType, setVesselType] = useState("");
   const [contractDuration, setContractDuration] = useState("");
-  const [monthlySalary, setMonthlySalary] = useState("");
+  const [salaryMin, setSalaryMin] = useState("");
+  const [salaryMax, setSalaryMax] = useState("");
+  const [salaryNegotiable, setSalaryNegotiable] = useState(false);
   const [joiningPort, setJoiningPort] = useState("");
   const [contactWhatsapp, setContactWhatsapp] = useState("");
   const [companyName, setCompanyName] = useState("");
@@ -156,7 +158,7 @@ const PostVacancy = () => {
         const match = fuzzyMatch(r.contractDuration, DURATIONS, DURATION_ALIASES);
         if (match) setContractDuration(match);
       }
-      if (r.monthlySalary) setMonthlySalary(r.monthlySalary);
+      if (r.monthlySalary) { const nums = r.monthlySalary.replace(/[^0-9\-]/g, "").split("-"); if (nums[0]) setSalaryMin(nums[0]); if (nums[1]) setSalaryMax(nums[1]); }
       if (r.joiningPort) setJoiningPort(r.joiningPort);
       if (r.companyName) setCompanyName(r.companyName);
       if (r.contactWhatsapp) setContactWhatsapp(r.contactWhatsapp);
@@ -190,7 +192,7 @@ const PostVacancy = () => {
       rank_required: rankRequired,
       vessel_type: vesselType,
       contract_duration: contractDuration,
-      monthly_salary: monthlySalary || null,
+      monthly_salary: salaryNegotiable ? "Negotiable" : (salaryMin && salaryMax ? `$${salaryMin}–$${salaryMax}/mo` : salaryMin ? `From $${salaryMin}/mo` : null),
       joining_port: joiningPort,
       contact_whatsapp: contactWhatsapp,
       company_name: companyName,
@@ -211,7 +213,7 @@ const PostVacancy = () => {
     setRankRequired("");
     setVesselType("");
     setContractDuration("");
-    setMonthlySalary("");
+    setSalaryMin(""); setSalaryMax(""); setSalaryNegotiable(false);
     setJoiningPort("");
     setContactWhatsapp("");
     setCompanyName("");
@@ -293,8 +295,35 @@ const PostVacancy = () => {
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs text-muted-foreground">Monthly Salary USD <span className="text-muted-foreground/60">(optional)</span></label>
-          <Input value={monthlySalary} onChange={(e) => setMonthlySalary(e.target.value)} placeholder="e.g. 3500" className="text-sm" />
+          <label className="text-xs text-muted-foreground">Monthly Salary Range USD <span className="text-muted-foreground/60">(optional)</span></label>
+          <div className="flex items-center gap-2">
+            <Input
+              value={salaryMin}
+              onChange={(e) => setSalaryMin(e.target.value.replace(/[^0-9]/g, ""))}
+              placeholder="Min e.g. 3000"
+              className="text-sm"
+              disabled={salaryNegotiable}
+            />
+            <span className="text-muted-foreground text-sm font-medium">—</span>
+            <Input
+              value={salaryMax}
+              onChange={(e) => setSalaryMax(e.target.value.replace(/[^0-9]/g, ""))}
+              placeholder="Max e.g. 5000"
+              className="text-sm"
+              disabled={salaryNegotiable}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => { setSalaryNegotiable(!salaryNegotiable); setSalaryMin(""); setSalaryMax(""); }}
+            className="flex items-center gap-2 mt-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <div className="w-4 h-4 rounded border flex items-center justify-center transition-colors"
+              style={{ borderColor: salaryNegotiable ? '#D4AF37' : 'var(--border)', background: salaryNegotiable ? '#D4AF37' : 'transparent' }}>
+              {salaryNegotiable && <span style={{ color: '#0D1B2A', fontSize: '10px', fontWeight: 'bold', lineHeight: 1 }}>✓</span>}
+            </div>
+            Negotiable / Undisclosed
+          </button>
         </div>
 
         <div className="space-y-1.5">
