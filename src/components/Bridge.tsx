@@ -431,7 +431,7 @@ const Bridge = () => {
             <ArrowLeft size={18} />
           </button>
           <div>
-            <h2 className="text-sm font-bold" style={{ color: "#D4AF37" }}>BRIDGE</h2>
+            <h2 className="text-sm font-bold" style={{ color: "#D4AF37" }}>PMS</h2>
             <p className="text-[10px] text-muted-foreground">Technical Reference AI</p>
           </div>
           {messages.length > 0 && (
