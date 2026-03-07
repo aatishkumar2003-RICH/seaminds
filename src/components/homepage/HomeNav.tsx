@@ -5,12 +5,10 @@ import { Button } from "@/components/ui/button";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 
 const navLinks = [
-  { label: "For Seafarers", path: "/app" },
-  { label: "For Companies", path: "/app" },
-  { label: "SMC Score", path: "/app" },
-  { label: "Wellness", path: "/app" },
-  { label: "Academy", path: "/app" },
-  { label: "Jobs", path: "/app" },
+  { label: "For Seafarers", href: "#seafarers" },
+  { label: "For Companies", href: "#companies" },
+  { label: "SMC Score", href: "#smc" },
+  { label: "Jobs", href: "#jobs" },
   { label: "Pricing", path: "/pricing" },
 ];
 
@@ -18,9 +16,14 @@ const HomeNav = () => {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const goTo = (path: string) => {
+  const handleNav = (link: typeof navLinks[0]) => {
     setMobileOpen(false);
-    navigate(path);
+    if ('path' in link && link.path) {
+      navigate(link.path);
+    } else if ('href' in link && link.href) {
+      const el = document.querySelector(link.href);
+      if (el) el.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   return (
@@ -32,9 +35,9 @@ const HomeNav = () => {
             <span className="text-lg font-bold text-foreground gold-glow">SeaMinds</span>
           </div>
 
-          <div className="hidden lg:flex items-center gap-5">
+          <div className="hidden md:flex items-center gap-6">
             {navLinks.map((l) => (
-              <button key={l.label} onClick={() => goTo(l.path)} className="text-sm text-muted-foreground hover:text-primary transition-colors">
+              <button key={l.label} onClick={() => handleNav(l)} className="text-sm font-medium transition-colors" style={{ color: "#94a3b8" }} onMouseEnter={e => (e.currentTarget.style.color = "#D4AF37")} onMouseLeave={e => (e.currentTarget.style.color = "#94a3b8")}>
                 {l.label}
               </button>
             ))}
@@ -49,16 +52,16 @@ const HomeNav = () => {
           </Button>
           </div>
 
-          <button className="lg:hidden text-foreground" onClick={() => setMobileOpen(!mobileOpen)}>
+          <button className="md:hidden text-foreground" onClick={() => setMobileOpen(!mobileOpen)}>
             {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
       </div>
 
       {mobileOpen && (
-        <div className="lg:hidden bg-card border-t border-border px-4 pb-4 space-y-2">
+        <div className="md:hidden bg-card border-t border-border px-4 pb-4 space-y-2">
           {navLinks.map((l) => (
-            <button key={l.label} onClick={() => goTo(l.path)} className="block w-full text-left py-2 text-sm text-muted-foreground hover:text-primary transition-colors">
+            <button key={l.label} onClick={() => handleNav(l)} className="block w-full text-left py-2 text-sm text-muted-foreground hover:text-primary transition-colors">
               {l.label}
             </button>
           ))}
