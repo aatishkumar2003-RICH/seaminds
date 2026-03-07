@@ -5,12 +5,10 @@ import { Button } from "@/components/ui/button";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 
 const navLinks = [
-  { label: "For Seafarers", path: "/app" },
-  { label: "For Companies", path: "/app" },
-  { label: "SMC Score", path: "/app" },
-  { label: "Wellness", path: "/app" },
-  { label: "Academy", path: "/app" },
-  { label: "Jobs", path: "/app" },
+  { label: "For Seafarers", href: "#seafarers" },
+  { label: "For Companies", href: "#companies" },
+  { label: "SMC Score", href: "#smc" },
+  { label: "Jobs", href: "#jobs" },
   { label: "Pricing", path: "/pricing" },
 ];
 
