@@ -176,6 +176,7 @@ const Bridge = () => {
   const [diagnosisResult, setDiagnosisResult] = useState<string | null>(null);
   const [diagnosisQuery, setDiagnosisQuery] = useState("");
   const [rawPhotoSrc, setRawPhotoSrc] = useState<string | null>(null);
+  const [activeEquipment, setActiveEquipment] = useState<null | {name:string; code:string; critical:boolean; tasks:string[]}>(null);
 
   const loadPocket = () => {
     const items = JSON.parse(localStorage.getItem("bridge_pocket") || "[]");
@@ -640,6 +641,42 @@ const Bridge = () => {
     );
   }
 
+  // Equipment detail view
+  if (activeEquipment) {
+    return (
+      <div className="flex flex-col h-full px-4 py-3 overflow-y-auto">
+        <button onClick={() => setActiveEquipment(null)} className="flex items-center gap-2 mb-4" style={{ color: "#D4AF37" }}>
+          <ArrowLeft size={18} />
+          <span className="text-sm font-medium">Back</span>
+        </button>
+        <div className="text-center mb-4">
+          <div className="text-xs font-mono mb-1" style={{ color: "#D4AF37" }}>{activeEquipment.code}</div>
+          <h2 className="text-lg font-bold text-foreground">{activeEquipment.name}</h2>
+          {activeEquipment.critical && <span style={{ background: "rgba(239,68,68,0.15)", color: "#ef4444", fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 20 }}>⚠ SAFETY CRITICAL — ISM §10</span>}
+        </div>
+        <div className="rounded-xl overflow-hidden mb-4" style={{ border: "1px solid rgba(212,175,55,0.2)" }}>
+          <div className="px-3 py-2" style={{ background: "rgba(212,175,55,0.1)" }}>
+            <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#D4AF37" }}>Maintenance Schedule</span>
+          </div>
+          {activeEquipment.tasks.map((task, i) => {
+            const [interval, ...rest] = task.split(" — ");
+            return (
+              <div key={i} className="px-3 py-2.5 flex gap-3" style={{ borderTop: i > 0 ? "1px solid rgba(255,255,255,0.05)" : "none", background: i % 2 === 0 ? "rgba(13,27,42,0.8)" : "rgba(13,27,42,0.6)" }}>
+                <span className="text-[11px] font-bold shrink-0 w-20" style={{ color: "#D4AF37" }}>{interval}</span>
+                <span className="text-[11px] text-foreground">{rest.join(" — ")}</span>
+              </div>
+            );
+          })}
+        </div>
+        <button onClick={() => { const name = activeEquipment.name; setActiveEquipment(null); handleChipClick(`Explain step-by-step maintenance procedure for ${name} on a merchant vessel. Include safety precautions, tools required, and IMO/Class regulatory references.`); }}
+          className="w-full py-3 rounded-xl font-bold text-sm"
+          style={{ background: "linear-gradient(135deg, #D4AF37, #C5941F)", color: "#0D1B2A" }}>
+          🤖 Ask AI — How to Perform This Maintenance
+        </button>
+      </div>
+    );
+  }
+
   // Department drill-down
   if (activeDept) {
     return (
@@ -655,7 +692,7 @@ const Bridge = () => {
         <div className="flex flex-col gap-2">
           {activeDept.equipment.map((eq) => (
             <button key={eq.code}
-              onClick={() => handleChipClick(`Explain full maintenance procedure for ${eq.name} (${eq.code}) on a merchant vessel — list all tasks, IMO/Class intervals (running hours and calendar), safety precautions, and regulatory references. Format as a clear maintenance schedule table.`)}
+              onClick={() => setActiveEquipment(eq)}
               className="text-left text-sm px-4 py-3 rounded-xl transition-colors"
               style={{ background: "rgba(13,27,42,0.8)", border: `1px solid ${eq.critical ? "rgba(239,68,68,0.5)" : "rgba(212,175,55,0.3)"}`, color: "#e2e8f0" }}>
               <div className="flex items-center justify-between mb-1">
