@@ -1,0 +1,1 @@
+ALTER TABLE public.crew_cv_data ADD CONSTRAINT crew_cv_data_user_id_unique UNIQUE (user_id);
