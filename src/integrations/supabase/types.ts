@@ -172,6 +172,36 @@ export type Database = {
           },
         ]
       }
+      crew_cv_data: {
+        Row: {
+          certificates: Json | null
+          education: Json | null
+          id: string
+          medical: Json | null
+          sea_service: Json | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          certificates?: Json | null
+          education?: Json | null
+          id?: string
+          medical?: Json | null
+          sea_service?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          certificates?: Json | null
+          education?: Json | null
+          id?: string
+          medical?: Json | null
+          sea_service?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       crew_documents: {
         Row: {
           category: string
