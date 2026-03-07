@@ -35,9 +35,9 @@ const HomeNav = () => {
             <span className="text-lg font-bold text-foreground gold-glow">SeaMinds</span>
           </div>
 
-          <div className="hidden lg:flex items-center gap-5">
+          <div className="hidden md:flex items-center gap-6">
             {navLinks.map((l) => (
-              <button key={l.label} onClick={() => goTo(l.path)} className="text-sm text-muted-foreground hover:text-primary transition-colors">
+              <button key={l.label} onClick={() => handleNav(l)} className="text-sm font-medium transition-colors" style={{ color: "#94a3b8" }} onMouseEnter={e => (e.currentTarget.style.color = "#D4AF37")} onMouseLeave={e => (e.currentTarget.style.color = "#94a3b8")}>
                 {l.label}
               </button>
             ))}
