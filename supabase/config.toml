@@ -23,3 +23,15 @@ verify_jwt = false
 
 [functions.parse-flier]
 verify_jwt = false
+
+[functions.parse-cv]
+verify_jwt = false
+
+[functions.parse-cv-documents]
+verify_jwt = false
+
+[functions.bridge-chat]
+verify_jwt = false
+
+[functions.diagnose-equipment]
+verify_jwt = false
