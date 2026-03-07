@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
-import { MessageCircle, LayoutDashboard, Briefcase, Newspaper, GraduationCap, Compass, Star, LogOut, Anchor, X } from "lucide-react";
+import { MessageCircle, LayoutDashboard, Briefcase, Newspaper, GraduationCap, Compass, Star, LogOut, Anchor, X, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import LandingScreen from "@/components/LandingScreen";
 import OceanBackground from "@/components/homepage/OceanBackground";
@@ -16,10 +16,11 @@ import Academy from "@/components/Academy";
 import Community from "@/components/Community";
 import Bridge from "@/components/Bridge";
 import SMCScoreTab from "@/components/SMCScoreTab";
+import ResumeBuilder from "@/components/ResumeBuilder";
 import SOSButton from "@/components/SOSButton";
 import VoyageReport from "@/components/VoyageReport";
 type AppState = "loading" | "landing" | "name-entry" | "welcome" | "main" | "voyage-report";
-type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "bridge" | "community" | "smc";
+type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "bridge" | "community" | "smc" | "resume";
 
 const PROFILE_KEY = "seamind_profile_id";
 
@@ -411,6 +412,8 @@ const Index = () => {
           <Bridge />
         ) : screen === "community" ? (
           <Community profileId={profileId} shipName={shipName} manningAgency={manningAgency} firstName={firstName} voyageStartDate={voyageStartDate} onCompleteVoyage={() => setAppState("voyage-report")} />
+        ) : screen === "resume" ? (
+          <ResumeBuilder />
         ) : (
           <SMCScoreTab profileId={profileId} firstName={firstName} lastName={lastName} rank={role} shipName={shipName} />
         )}
@@ -435,6 +438,10 @@ const Index = () => {
             )}
           </div>
           <span className="text-[10px] font-medium tracking-wide uppercase">Jobs</span>
+        </button>
+        <button onClick={() => setScreen("resume")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "resume" ? "text-primary" : "text-muted-foreground"}`}>
+          <FileText size={18} />
+          <span className="text-[10px] font-medium tracking-wide uppercase">CV</span>
         </button>
         <button onClick={() => setScreen("news")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "news" ? "text-primary" : "text-muted-foreground"}`}>
           <Newspaper size={18} />
