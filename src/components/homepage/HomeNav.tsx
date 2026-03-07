@@ -16,9 +16,14 @@ const HomeNav = () => {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const goTo = (path: string) => {
+  const handleNav = (link: typeof navLinks[0]) => {
     setMobileOpen(false);
-    navigate(path);
+    if ('path' in link && link.path) {
+      navigate(link.path);
+    } else if ('href' in link && link.href) {
+      const el = document.querySelector(link.href);
+      if (el) el.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   return (
