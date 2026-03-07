@@ -206,7 +206,7 @@ const Index = () => {
       onboarded: true,
     };
     if (uid) insertData.id = uid;
-    const { data, error } = await supabase.from("crew_profiles").upsert(insertData).select("id").single();
+    const { data, error } = await supabase.from("crew_profiles").upsert(insertData as any).select("id").single();
     if (error || !data) { console.error("Failed to create profile:", error); return; }
     localStorage.setItem(PROFILE_KEY, data.id);
     setProfileId(data.id); setFirstName(profile.firstName); setLastName(profile.lastName);
