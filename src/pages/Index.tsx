@@ -192,7 +192,7 @@ const Index = () => {
         const ln = parts.slice(1).join(" ") || "";
         const { data, error } = await supabase
           .from("crew_profiles")
-          .insert({ first_name: fn, last_name: ln, onboarded: true })
+          .insert({ first_name: fn, last_name: ln, role: "", ship_name: "", onboarded: true })
           .select("id")
           .single();
         if (data) {
