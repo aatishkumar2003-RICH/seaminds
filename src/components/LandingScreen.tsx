@@ -13,7 +13,7 @@ const LandingScreen = ({ onGetStarted, onManagerLogin }: LandingScreenProps) => 
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin + '/app',
+        redirectTo: 'https://seaminds.life/app',
       },
     });
   };
