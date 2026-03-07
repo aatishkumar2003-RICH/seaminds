@@ -1,5 +1,5 @@
+import { useState } from "react";
 import { Shield, Heart, Globe } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -16,6 +16,18 @@ const LandingScreen = ({ onGetStarted, onManagerLogin }: LandingScreenProps) => 
         redirectTo: 'https://seaminds.life/app',
       },
     });
+  };
+
+  const [showEmail, setShowEmail] = useState(false);
+  const [email, setEmail] = useState("");
+  const [emailSent, setEmailSent] = useState(false);
+  const handleEmailLogin = async () => {
+    if (!email) return;
+    await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: 'https://seaminds.life/app' }
+    });
+    setEmailSent(true);
   };
 
   return (
@@ -60,12 +72,35 @@ const LandingScreen = ({ onGetStarted, onManagerLogin }: LandingScreenProps) => 
         <div className="flex-1 h-px bg-gray-700" />
       </div>
 
-      <Button
-        className="w-full max-w-xs h-12 text-base font-semibold"
-        onClick={onGetStarted}
-      >
-        Sign in with Email
-      </Button>
+      {!showEmail ? (
+        <button
+          onClick={() => setShowEmail(true)}
+          className="w-full max-w-xs h-12 text-base font-semibold bg-primary text-primary-foreground rounded-md flex items-center justify-center hover:opacity-90 transition-opacity"
+        >
+          Sign in with Email
+        </button>
+      ) : emailSent ? (
+        <div className="w-full max-w-xs text-center space-y-2">
+          <p className="text-primary font-semibold">✓ Magic link sent!</p>
+          <p className="text-muted-foreground text-xs">Check your email and click the link to sign in.</p>
+        </div>
+      ) : (
+        <div className="w-full max-w-xs space-y-3">
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="your@email.com"
+            className="w-full h-12 bg-secondary text-foreground rounded-md px-4 text-sm outline-none focus:ring-1 focus:ring-primary"
+          />
+          <button
+            onClick={handleEmailLogin}
+            className="w-full h-12 text-base font-semibold bg-primary text-primary-foreground rounded-md hover:opacity-90 transition-opacity"
+          >
+            Send Magic Link
+          </button>
+        </div>
+      )}
 
       <p className="text-[11px] text-muted-foreground mt-4">Free for crew members</p>
 
