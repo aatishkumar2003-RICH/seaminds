@@ -176,7 +176,7 @@ const Index = () => {
         const fn = parts[0]; const ln = parts.slice(1).join(" ") || "";
         const { data } = await supabase
           .from("crew_profiles")
-          .insert({ first_name: fn, last_name: ln, role: "", ship_name: "", onboarded: true })
+          .insert({ id: user.id, first_name: fn, last_name: ln, role: "", ship_name: "", onboarded: true })
           .select("id").single();
         if (data) {
           localStorage.setItem(PROFILE_KEY, data.id);
