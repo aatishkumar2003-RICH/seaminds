@@ -327,12 +327,34 @@ const Index = () => {
 
   const saveProfileGate = async () => {
     if (!role || !nationality || !shipName || !whatsappNumber) return;
-    await supabase.from("crew_profiles").update({
-      role,
-      nationality,
-      ship_name: shipName,
-      whatsapp_number: whatsappNumber,
-    }).eq("id", profileId);
+    const dbRole = role.includes("Captain") || role.includes("Master") ? "Captain"
+      : role.includes("Engineer") || role.includes("ETO") ? "Engineer"
+      : role.includes("Officer") ? "Officer"
+      : "Rating";
+    if (profileId) {
+      await supabase.from("crew_profiles").update({
+        role: dbRole, nationality, ship_name: shipName, whatsapp_number: whatsappNumber
+      }).eq("id", profileId);
+    } else {
+      const { data: { session } } = await supabase.auth.getSession();
+      const uid = session?.user?.id;
+      if (!uid) return;
+      const { data: existing } = await supabase.from("crew_profiles").select("id").eq("id", uid).maybeSingle();
+      if (existing) {
+        await supabase.from("crew_profiles").update({
+          role: dbRole, nationality, ship_name: shipName, whatsapp_number: whatsappNumber
+        }).eq("id", uid);
+        localStorage.setItem("seamind_profile_id", uid);
+        setProfileId(uid);
+      } else {
+        const { data } = await supabase.from("crew_profiles").insert({
+          id: uid, first_name: firstName, last_name: lastName,
+          role: dbRole, nationality, ship_name: shipName,
+          whatsapp_number: whatsappNumber, onboarded: true
+        }).select("id").single();
+        if (data) { localStorage.setItem("seamind_profile_id", data.id); setProfileId(data.id); }
+      }
+    }
   };
 
   const profileGateUI = (
