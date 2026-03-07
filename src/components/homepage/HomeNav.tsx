@@ -52,16 +52,16 @@ const HomeNav = () => {
           </Button>
           </div>
 
-          <button className="lg:hidden text-foreground" onClick={() => setMobileOpen(!mobileOpen)}>
+          <button className="md:hidden text-foreground" onClick={() => setMobileOpen(!mobileOpen)}>
             {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
       </div>
 
       {mobileOpen && (
-        <div className="lg:hidden bg-card border-t border-border px-4 pb-4 space-y-2">
+        <div className="md:hidden bg-card border-t border-border px-4 pb-4 space-y-2">
           {navLinks.map((l) => (
-            <button key={l.label} onClick={() => goTo(l.path)} className="block w-full text-left py-2 text-sm text-muted-foreground hover:text-primary transition-colors">
+            <button key={l.label} onClick={() => handleNav(l)} className="block w-full text-left py-2 text-sm text-muted-foreground hover:text-primary transition-colors">
               {l.label}
             </button>
           ))}
