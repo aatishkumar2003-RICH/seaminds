@@ -360,6 +360,28 @@ const Index = () => {
     </div>
   );
 
+  const handleFeedbackSubmit = async () => {
+    if (!feedbackText.trim()) return;
+    setFeedbackLoading(true);
+    try {
+      const { data: fnData, error: fnError } = await supabase.functions.invoke('summarize-feedback', {
+        body: { feedbackText }
+      });
+      const summary = fnError ? "" : (fnData?.summary || "");
+      setFeedbackSummary(summary);
+      await supabase.from("crew_feedback" as any).insert({
+        profile_id: profileId || null,
+        raw_text: feedbackText,
+        ai_summary: summary,
+        rank: role || null,
+        nationality: nationality || null,
+        ship_name: shipName || null,
+      });
+      setFeedbackDone(true);
+    } catch (e) { console.error(e); }
+    setFeedbackLoading(false);
+  };
+
   return (
     <div className="flex flex-col h-screen max-w-md mx-auto bg-background relative">
       <div className="absolute inset-0 opacity-20 pointer-events-none z-0">
