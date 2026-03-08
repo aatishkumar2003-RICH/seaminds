@@ -34,7 +34,7 @@ const HeroSection = ({ timeOfDay = "day" }: Props) => {
             </p>
             {/* Feature pills — auto-scrolling ticker on desktop */}
             <div className="mb-6 overflow-hidden scrollbar-hide">
-              <div className="flex flex-row flex-nowrap gap-2 lg:animate-pill-drift pb-1 overflow-x-auto lg:overflow-visible" style={{ scrollbarWidth: "none" }}>
+              <div className="flex flex-row flex-nowrap gap-2 justify-center lg:animate-pill-drift pb-1 overflow-x-auto lg:overflow-visible" style={{ scrollbarWidth: "none" }}>
                 {[...Array(2)].flatMap((_, dupeIdx) =>
                   [
                     "🔥 Streak Tracker", "⏱ MLC Rest Hours", "📜 Cert Wallet", "💰 Salary Check",
