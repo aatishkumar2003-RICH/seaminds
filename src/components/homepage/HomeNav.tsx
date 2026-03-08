@@ -10,6 +10,7 @@ const navLinks = [
   { label: "SMC Score", href: "#smc" },
   { label: "Jobs", href: "#jobs" },
   { label: "Pricing", path: "/pricing" },
+  { label: "Colleges", path: "/colleges" },
 ];
 
 const HomeNav = () => {
