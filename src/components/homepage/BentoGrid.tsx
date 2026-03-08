@@ -70,7 +70,7 @@ const BentoGrid = () => {
   const ref3 = useScrollFade();
 
   return (
-    <section className="py-12 md:py-16">
+    <section className="py-12 md:py-16 mt-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-4">
 
         {/* Row 1: Problem stats */}

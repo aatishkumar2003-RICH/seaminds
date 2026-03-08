@@ -40,17 +40,17 @@ const HowItWorksSection = () => {
   }, []);
 
   return (
-    <section className="max-w-5xl mx-auto px-6 py-16">
+    <section className="max-w-5xl mx-auto px-6 py-16 mt-0">
       <div className="text-center mb-12">
         <h2 className="text-2xl font-bold text-foreground mb-2">Get Started in 3 Minutes</h2>
         <p className="text-sm text-muted-foreground">No paperwork. No company approval needed. Just you.</p>
       </div>
 
-      <div ref={containerRef} className="grid md:grid-cols-3 gap-8 mb-12">
+      <div ref={containerRef} className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-12">
         {steps.map((s, i) => (
           <div
             key={s.num}
-            className="step-card fade-in-on-scroll rounded-2xl p-6 transition-all"
+            className="step-card fade-in-on-scroll rounded-2xl p-6 transition-all min-h-[200px]"
             style={{
               background: "hsl(var(--navy-deep) / 0.6)",
               border: "1px solid hsl(var(--primary) / 0.15)",
