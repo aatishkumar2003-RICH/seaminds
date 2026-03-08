@@ -781,7 +781,7 @@ const Index = () => {
           <MessageCircle size={16} />
           <span className="text-[9px] font-medium tracking-wide uppercase">Chat</span>
         </button>
-        <button onClick={() => setScreen("resthours")} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "resthours" ? "text-primary" : "text-muted-foreground"}`}>
+        <button onClick={() => { if (!profileComplete) { setTargetScreen("resthours"); setAppState("name-entry"); } else { setScreen("resthours"); } }} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "resthours" ? "text-primary" : "text-muted-foreground"}`}>
           <span className="text-sm leading-none">⏱</span>
           <span className="text-[9px] font-medium tracking-wide uppercase">Rest</span>
         </button>
