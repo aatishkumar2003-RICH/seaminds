@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { Send } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useWellnessStreak } from "@/hooks/useWellnessStreak";
+import StreakDisplay from "@/components/chat/StreakDisplay";
 
 interface Message {
   id: string;
@@ -26,6 +28,7 @@ const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: Cre
   const [initialLoading, setInitialLoading] = useState(true);
   const [showMoodButtons, setShowMoodButtons] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { streak, recordCheckin } = useWellnessStreak(profileId);
 
   const FIRST_VISIT_GREETING = `Hey ${firstName}. ${role} on ${shipName} — that's a life most people can't imagine. I don't know your story yet, but I'm here and nothing you tell me goes anywhere else. What's been on your mind lately?`;
 
@@ -279,6 +282,7 @@ const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: Cre
 
   const handleMoodSelect = (mood: { emoji: string; label: string }) => {
     setShowMoodButtons(false);
+    recordCheckin();
     sendMessage(`I'm feeling ${mood.label.toLowerCase()}`);
   };
 
@@ -314,6 +318,13 @@ const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: Cre
           <a href="tel:+442073232737" className="underline" style={{ color: "#D4AF37" }}>+44 20 7323 2737</a>
         </p>
       </div>
+
+      {/* Wellness Streak */}
+      <StreakDisplay
+        currentStreak={streak.currentStreak}
+        longestStreak={streak.longestStreak}
+        checkedInToday={streak.checkedInToday}
+      />
 
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3">

@@ -743,6 +743,36 @@ export type Database = {
         }
         Relationships: []
       }
+      wellness_streaks: {
+        Row: {
+          created_at: string
+          crew_profile_id: string
+          current_streak: number
+          id: string
+          last_checkin_date: string
+          longest_streak: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          crew_profile_id: string
+          current_streak?: number
+          id?: string
+          last_checkin_date?: string
+          longest_streak?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          crew_profile_id?: string
+          current_streak?: number
+          id?: string
+          last_checkin_date?: string
+          longest_streak?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
