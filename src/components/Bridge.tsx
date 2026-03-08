@@ -219,7 +219,7 @@ const Bridge = () => {
     await streamBridgeChat({
       messages: newMessages,
       onDelta: upsertAssistant,
-      onDone: () => setIsLoading(false),
+      onDone: () => { setIsLoading(false); setMessageCount(prev => prev + 1); },
       onError: (err) => {
         setMessages(prev => [...prev, { role: "assistant", content: `⚠️ ${err}` }]);
         setIsLoading(false);
