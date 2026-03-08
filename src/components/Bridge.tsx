@@ -465,7 +465,7 @@ const Bridge = () => {
           </div>
           {messages.length > 0 && (
             <button
-              onClick={() => { setMessages([]); setShowChat(false); }}
+              onClick={() => { setMessages([]); setShowChat(false); setMessageCount(0); }}
               className="ml-auto text-[10px] text-muted-foreground hover:text-foreground px-2 py-1 rounded"
             >
               New Query
