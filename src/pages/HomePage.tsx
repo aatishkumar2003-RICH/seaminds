@@ -5,6 +5,7 @@ import OceanBackground from "@/components/homepage/OceanBackground";
 import AppPreviewSection from "@/components/homepage/AppPreviewSection";
 import HowItWorksSection from "@/components/homepage/HowItWorksSection";
 import BentoGrid from "@/components/homepage/BentoGrid";
+import CompaniesB2BSection from "@/components/homepage/CompaniesB2BSection";
 import TestimonialsSection from "@/components/homepage/TestimonialsSection";
 import FinalCTA from "@/components/homepage/FinalCTA";
 import HomeFooter from "@/components/homepage/HomeFooter";
