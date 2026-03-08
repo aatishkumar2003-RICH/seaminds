@@ -250,6 +250,7 @@ const Index = () => {
     firstName: string; lastName: string; shipName: string; role: string;
     gender: string; nationality: string; whatsappNumber: string; yearsAtSea: string;
     voyageStartDate: string; manningAgency: string; vesselImo: string;
+    manningAgentPhone: string; portOfJoining: string; vesselType: string;
   }, cvFile?: File) => {
     const { data: { session } } = await supabase.auth.getSession();
     const uid = session?.user?.id;
@@ -260,6 +261,9 @@ const Index = () => {
       whatsapp_number: profile.whatsappNumber, years_at_sea: profile.yearsAtSea,
       voyage_start_date: profile.voyageStartDate || null,
       manning_agency: profile.manningAgency || null, vessel_imo: profile.vesselImo || null,
+      manning_agent_phone: profile.manningAgentPhone || null,
+      port_of_joining: profile.portOfJoining || null,
+      vessel_type: profile.vesselType || null,
       onboarded: true,
     };
     if (uid) insertData.id = uid;

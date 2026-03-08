@@ -19,8 +19,16 @@ interface NameEntryProps {
     voyageStartDate: string;
     manningAgency: string;
     vesselImo: string;
+    manningAgentPhone: string;
+    portOfJoining: string;
+    vesselType: string;
   }, cvFile?: File) => void;
 }
+
+const VESSEL_TYPES = [
+  "Bulk Carrier", "Container", "Tanker", "LNG/LPG", "General Cargo",
+  "Passenger/Cruise", "Offshore", "Ro-Ro", "Other",
+];
 
 const ROLES = ["Captain", "Officer", "Rating", "Engineer"];
 const GENDERS = ["Male", "Female", "Prefer not to say"];
@@ -74,6 +82,10 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
   const [agencyFilter, setAgencyFilter] = useState("");
   const [showAgencyDropdown, setShowAgencyDropdown] = useState(false);
   const [cvFile, setCvFile] = useState<File | undefined>();
+  const [manningAgentPhone, setManningAgentPhone] = useState("");
+  const [agentCountryCode, setAgentCountryCode] = useState("+63");
+  const [portOfJoiningVal, setPortOfJoiningVal] = useState("");
+  const [vesselTypeVal, setVesselTypeVal] = useState("");
 
   const canSubmit =
     firstName.trim() && lastName.trim() && shipName.trim() && role &&
@@ -93,6 +105,9 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
       voyageStartDate: voyageStartDate ? format(voyageStartDate, "yyyy-MM-dd") : "",
       manningAgency: manningAgency.trim(),
       vesselImo: vesselImo.trim(),
+      manningAgentPhone: manningAgentPhone.trim() ? `${agentCountryCode}${manningAgentPhone.trim()}` : "",
+      portOfJoining: portOfJoiningVal.trim(),
+      vesselType: vesselTypeVal,
     }, cvFile);
   };
 
@@ -251,7 +266,44 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
             </div>
           </div>
 
-          {/* Years at Sea */}
+          {/* Manning Agent Phone */}
+          <div className="space-y-1.5">
+            <label className={labelClass}>Manning Agent Phone (WhatsApp preferred)</label>
+            <div className="flex gap-2">
+              <div className="relative w-28 shrink-0">
+                <select value={agentCountryCode} onChange={(e) => setAgentCountryCode(e.target.value)} className={selectClass}>
+                  {COUNTRY_CODES.map((c) => <option key={c.code} value={c.code}>{c.label}</option>)}
+                </select>
+                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+              </div>
+              <input
+                type="tel"
+                value={manningAgentPhone}
+                onChange={(e) => setManningAgentPhone(e.target.value.replace(/[^0-9]/g, ""))}
+                placeholder="9171234567"
+                className={inputClass}
+              />
+            </div>
+          </div>
+
+          {/* Port of Joining + Vessel Type */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className={labelClass}>Port of Joining</label>
+              <input type="text" value={portOfJoiningVal} onChange={(e) => setPortOfJoiningVal(e.target.value)} placeholder="e.g. Singapore" className={inputClass} />
+            </div>
+            <div className="space-y-1.5">
+              <label className={labelClass}>Vessel Type</label>
+              <div className="relative">
+                <select value={vesselTypeVal} onChange={(e) => setVesselTypeVal(e.target.value)} className={selectClass}>
+                  <option value="">Select vessel type</option>
+                  {VESSEL_TYPES.map((v) => <option key={v} value={v}>{v}</option>)}
+                </select>
+                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className={labelClass}>Years at Sea *</label>

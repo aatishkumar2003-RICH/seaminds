@@ -1,0 +1,1 @@
+ALTER TABLE public.crew_profiles ADD COLUMN IF NOT EXISTS manning_agent_phone text;
