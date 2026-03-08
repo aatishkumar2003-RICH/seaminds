@@ -6,6 +6,12 @@ import { supabase } from "@/integrations/supabase/client";
 
 type CountryKey = "india" | "philippines" | "indonesia" | "ukraine" | "russia" | "china" | "myanmar" | "bangladesh" | "croatia" | "greece" | "uk" | "usa";
 
+const decodeHTML = (html: string) => {
+  const txt = document.createElement('textarea');
+  txt.innerHTML = html;
+  return txt.value;
+};
+
 interface FeedItem {
   title: string;
   summary: string;
