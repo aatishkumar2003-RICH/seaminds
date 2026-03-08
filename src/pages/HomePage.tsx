@@ -23,6 +23,7 @@ const HomePage = () => {
     <AppPreviewSection />
     <HowItWorksSection />
     <BentoGrid />
+    <CompaniesB2BSection />
     <TestimonialsSection />
     <FinalCTA />
     <HomeFooter />
