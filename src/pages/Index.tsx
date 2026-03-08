@@ -204,7 +204,7 @@ const Index = () => {
   }, [appState, role]);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const savedId = localStorage.getItem('seamind_profile_id');
       if (savedId) return;
       if (session?.user) {
@@ -217,29 +217,50 @@ const Index = () => {
     });
 
     const init = async () => {
-      const savedId = localStorage.getItem('seamind_profile_id');
-      if (savedId) {
-        const { data, error } = await supabase.from('crew_profiles').select('id, first_name, last_name, onboarded, role, ship_name, voyage_start_date, manning_agency, nationality, whatsapp_number, vessel_type, port_of_joining, onboarding_complete').eq('id', savedId).single();
-        if (!error && data) {
-          setProfileId(data.id); setFirstName(data.first_name); setLastName(data.last_name || '');
-          setRole(data.role || ''); setShipName(data.ship_name || ''); setVoyageStartDate(data.voyage_start_date || '');
-          setManningAgency(data.manning_agency || ''); setNationality(data.nationality || ''); setWhatsappNumber(data.whatsapp_number || '');
-          setVesselType((data as any).vessel_type || ''); setPortOfJoining((data as any).port_of_joining || '');
-          setOnboardingComplete(!!(data as any).onboarding_complete);
-          setAppState(data.onboarded ? 'main' : 'welcome');
+      // Fallback: if init hangs for 4 seconds, show landing
+      const fallbackTimer = setTimeout(() => {
+        console.warn('[SeaMinds] Init timeout — showing landing');
+        setAppState('landing');
+      }, 4000);
+
+      try {
+        const savedId = localStorage.getItem('seamind_profile_id');
+        if (savedId) {
+          const { data, error } = await supabase.from('crew_profiles').select('id, first_name, last_name, onboarded, role, ship_name, voyage_start_date, manning_agency, nationality, whatsapp_number, vessel_type, port_of_joining, onboarding_complete').eq('id', savedId).single();
+          if (!error && data) {
+            setProfileId(data.id); setFirstName(data.first_name); setLastName(data.last_name || '');
+            setRole(data.role || ''); setShipName(data.ship_name || ''); setVoyageStartDate(data.voyage_start_date || '');
+            setManningAgency(data.manning_agency || ''); setNationality(data.nationality || ''); setWhatsappNumber(data.whatsapp_number || '');
+            setVesselType((data as any).vessel_type || ''); setPortOfJoining((data as any).port_of_joining || '');
+            setOnboardingComplete(!!(data as any).onboarding_complete);
+            clearTimeout(fallbackTimer);
+            setAppState(data.onboarded ? 'main' : 'welcome');
+            return;
+          }
+          localStorage.removeItem('seamind_profile_id');
+        }
+
+        // Race getSession against a timeout to avoid hanging
+        const sessionResult = await Promise.race([
+          supabase.auth.getSession(),
+          new Promise<null>(resolve => setTimeout(() => resolve(null), 3000)),
+        ]);
+
+        clearTimeout(fallbackTimer);
+
+        if (sessionResult && 'data' in sessionResult && sessionResult.data?.session?.user) {
+          const fullName = sessionResult.data.session.user.user_metadata?.full_name || sessionResult.data.session.user.email?.split('@')[0] || 'Seafarer';
+          setFirstName(fullName.split(' ')[0]);
+          setAppState('main');
+          setScreen('news');
           return;
         }
-        localStorage.removeItem('seamind_profile_id');
+        setAppState('landing');
+      } catch (e) {
+        console.error('[SeaMinds] Init error:', e);
+        clearTimeout(fallbackTimer);
+        setAppState('landing');
       }
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        const fullName = session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Seafarer';
-        setFirstName(fullName.split(' ')[0]);
-        setAppState('main');
-        setScreen('news');
-        return;
-      }
-      setAppState('landing');
     };
 
     init();
