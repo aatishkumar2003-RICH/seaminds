@@ -82,6 +82,10 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
   const [agencyFilter, setAgencyFilter] = useState("");
   const [showAgencyDropdown, setShowAgencyDropdown] = useState(false);
   const [cvFile, setCvFile] = useState<File | undefined>();
+  const [manningAgentPhone, setManningAgentPhone] = useState("");
+  const [agentCountryCode, setAgentCountryCode] = useState("+63");
+  const [portOfJoiningVal, setPortOfJoiningVal] = useState("");
+  const [vesselTypeVal, setVesselTypeVal] = useState("");
 
   const canSubmit =
     firstName.trim() && lastName.trim() && shipName.trim() && role &&
