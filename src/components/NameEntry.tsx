@@ -105,6 +105,9 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
       voyageStartDate: voyageStartDate ? format(voyageStartDate, "yyyy-MM-dd") : "",
       manningAgency: manningAgency.trim(),
       vesselImo: vesselImo.trim(),
+      manningAgentPhone: manningAgentPhone.trim() ? `${agentCountryCode}${manningAgentPhone.trim()}` : "",
+      portOfJoining: portOfJoiningVal.trim(),
+      vesselType: vesselTypeVal,
     }, cvFile);
   };
 
