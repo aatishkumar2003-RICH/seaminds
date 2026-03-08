@@ -507,7 +507,7 @@ const Bridge = () => {
             </div>
           )}
           {/* Go Deeper card */}
-          {messageCount >= 3 && messages[messages.length - 1]?.role === "assistant" && !isLoading && (() => {
+          {messageCount === 3 && messages[messages.length - 1]?.role === "assistant" && !isLoading && (() => {
             const lastUserMsg = [...messages].reverse().find(m => m.role === "user");
             if (!lastUserMsg) return null;
             return (
