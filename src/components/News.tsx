@@ -214,7 +214,7 @@ const News = () => {
                     rel="noopener noreferrer"
                     className="block rounded-xl bg-card border border-border p-4 space-y-2 hover:border-primary/30 transition-colors"
                   >
-                    <h3 className="font-semibold text-foreground text-sm leading-snug">{article.title}</h3>
+                    <h3 className="font-semibold text-foreground text-sm leading-snug">{decodeHTML(article.title)}</h3>
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary" className="text-[10px] uppercase tracking-wider">
                         {countryInfo?.name}
