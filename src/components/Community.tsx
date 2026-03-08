@@ -292,6 +292,23 @@ const Community = ({ shipName, manningAgency, profileId, firstName, voyageStartD
         {/* SECTION 6 — Anonymous Safety Reporting */}
         <SafetyReportSection shipName={shipName} manningAgency={manningAgency} />
 
+        {/* SECTION — Rate Your Vessel */}
+        <div className="bg-card rounded-2xl border border-border p-6">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-lg">⭐</div>
+            <div>
+              <p className="text-sm font-medium text-foreground">Rate Your Vessel</p>
+              <p className="text-[11px] text-muted-foreground">Anonymous reviews by seafarers, for seafarers</p>
+            </div>
+          </div>
+          <button
+            onClick={onOpenVesselRating}
+            className="w-full bg-primary text-primary-foreground text-sm font-medium rounded-xl py-3 transition-opacity hover:opacity-90"
+          >
+            Rate a Vessel →
+          </button>
+        </div>
+
         {/* Privacy Notice */}
         <div className="flex items-start gap-3 bg-card rounded-2xl px-5 py-4 border border-border">
           <Shield size={16} className="text-primary flex-shrink-0 mt-0.5" />
