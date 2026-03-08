@@ -282,6 +282,7 @@ const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: Cre
 
   const handleMoodSelect = (mood: { emoji: string; label: string }) => {
     setShowMoodButtons(false);
+    recordCheckin();
     sendMessage(`I'm feeling ${mood.label.toLowerCase()}`);
   };
 
