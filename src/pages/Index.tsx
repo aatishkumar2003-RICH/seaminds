@@ -517,7 +517,9 @@ const Index = () => {
         ) : screen === "bridge" ? (
           <Bridge />
         ) : screen === "community" ? (
-          profileComplete ? <Community profileId={profileId} shipName={shipName} manningAgency={manningAgency} firstName={firstName} voyageStartDate={voyageStartDate} onCompleteVoyage={() => setAppState("voyage-report")} /> : profileGateUI
+          profileComplete ? <Community profileId={profileId} shipName={shipName} manningAgency={manningAgency} firstName={firstName} voyageStartDate={voyageStartDate} onCompleteVoyage={() => setAppState("voyage-report")} onOpenVesselRating={() => setScreen("vesselrating")} /> : profileGateUI
+        ) : screen === "vesselrating" ? (
+          <VesselRating onBack={() => setScreen("community")} />
         ) : screen === "resume" ? (
           <ResumeBuilder />
         ) : screen === "certs" ? (
