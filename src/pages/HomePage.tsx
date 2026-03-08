@@ -18,6 +18,7 @@ const HomePage = () => {
     <div className="relative z-10">
     <HomeNav />
     <HeroSection timeOfDay={timeOfDay} />
+    <AppPreviewSection />
     <BentoGrid />
     <TestimonialsSection />
     <FinalCTA />
