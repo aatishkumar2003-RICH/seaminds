@@ -28,6 +28,8 @@ const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: Cre
   const [initialLoading, setInitialLoading] = useState(true);
   const [showMoodButtons, setShowMoodButtons] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { streak, recordCheckin } = useWellnessStreak(profileId);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const FIRST_VISIT_GREETING = `Hey ${firstName}. ${role} on ${shipName} — that's a life most people can't imagine. I don't know your story yet, but I'm here and nothing you tell me goes anywhere else. What's been on your mind lately?`;
 
