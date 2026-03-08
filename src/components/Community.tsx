@@ -11,6 +11,7 @@ interface CommunityProps {
   firstName: string;
   voyageStartDate: string;
   onCompleteVoyage: () => void;
+  onOpenVesselRating: () => void;
 }
 
 const MOOD_WORDS = ["Tired", "Good", "Homesick", "Motivated", "Grateful", "Lonely", "Strong", "Bored", "Hopeful", "Calm"];

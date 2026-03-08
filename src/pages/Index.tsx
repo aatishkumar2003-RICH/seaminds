@@ -87,6 +87,7 @@ const Index = () => {
       resume: "SeaMinds | CV Builder",
       certs: "SeaMinds | Certificates",
       resthours: "SeaMinds | Rest Hours",
+      vesselrating: "SeaMinds | Vessel Rating",
     };
     document.title = appState === "main" ? titles[screen] : "SeaMinds";
   }, [screen, appState]);
