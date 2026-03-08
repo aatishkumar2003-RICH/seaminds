@@ -511,6 +511,8 @@ const Index = () => {
           <ResumeBuilder />
         ) : screen === "certs" ? (
           <CertWallet />
+        ) : screen === "resthours" ? (
+          <RestHoursTracker />
         ) : (
           <SMCScoreTab profileId={profileId} firstName={firstName} lastName={lastName} rank={role} shipName={shipName} />
         )}
