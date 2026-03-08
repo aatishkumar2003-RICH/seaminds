@@ -18,7 +18,20 @@ function extractText(xml: string, tag: string): string {
 
   const regex = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, 'i');
   const match = xml.match(regex);
-  return match ? match[1].replace(/<[^>]+>/g, '').trim() : '';
+  return match ? decodeEntities(match[1].replace(/<[^>]+>/g, '').trim()) : '';
+}
+
+function decodeEntities(text: string): string {
+  return text
+    .replace(/&#(\d+);/g, (_m, code) => String.fromCharCode(Number(code)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_m, code) => String.fromCharCode(parseInt(code, 16)))
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&apos;/g, "'");
 }
 
 function parseRSS(xml: string, limit: number = 5): FeedItem[] {
@@ -36,16 +49,9 @@ function parseRSS(xml: string, limit: number = 5): FeedItem[] {
     const link = extractText(itemXml, 'link');
     
     // Clean summary - strip HTML tags, limit length
-    const summary = description
-      .replace(/<[^>]+>/g, '')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .replace(/&nbsp;/g, ' ')
-      .substring(0, 200)
-      .trim();
+    const summary = decodeEntities(
+      description.replace(/<[^>]+>/g, '')
+    ).substring(0, 200).trim();
     
     if (title) {
       items.push({ title, summary, pubDate, link });
@@ -70,16 +76,9 @@ function parseAtom(xml: string, limit: number = 5): FeedItem[] {
     const linkMatch = entryXml.match(/<link[^>]*href="([^"]*)"[^>]*\/?>|<link[^>]*>([^<]*)<\/link>/i);
     const link = linkMatch ? (linkMatch[1] || linkMatch[2] || '') : '';
     
-    const cleanSummary = summary
-      .replace(/<[^>]+>/g, '')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .replace(/&nbsp;/g, ' ')
-      .substring(0, 200)
-      .trim();
+    const cleanSummary = decodeEntities(
+      summary.replace(/<[^>]+>/g, '')
+    ).substring(0, 200).trim();
     
     if (title) {
       items.push({ title, summary: cleanSummary, pubDate, link });
