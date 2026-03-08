@@ -164,7 +164,7 @@ const WelfareDashboard = ({ shipName }: DashboardProps) => {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-5 pt-12 pb-4 border-b border-border">
+      <div className="px-5 pt-4 lg:pt-8 pb-4 border-b border-border">
         <p className="text-sm text-muted-foreground tracking-wide uppercase">Welfare Officer</p>
         <h1 className="text-xl font-semibold text-foreground">Dashboard</h1>
         <p className="text-xs text-muted-foreground mt-1">{shipName}</p>
