@@ -746,9 +746,9 @@ const Index = () => {
         )}
 
         {screen === "chat" ? (
-          profileComplete ? <CrewChat profileId={profileId} firstName={firstName} role={role} shipName={shipName} voyageStartDate={voyageStartDate} /> : profileGateUI
+          profileComplete ? (onboardingComplete ? <CrewChat profileId={profileId} firstName={firstName} role={role} shipName={shipName} voyageStartDate={voyageStartDate} /> : vesselOnboardingUI) : profileGateUI
         ) : screen === "dashboard" ? (
-          profileComplete ? <WelfareDashboard shipName={shipName} /> : profileGateUI
+          profileComplete ? (onboardingComplete ? <WelfareDashboard shipName={shipName} /> : vesselOnboardingUI) : profileGateUI
         ) : screen === "opportunities" ? (
           <Opportunities profileId={profileId} firstName={firstName} role={role} nationality={nationality} shipName={shipName} />
         ) : screen === "news" ? (
@@ -758,7 +758,7 @@ const Index = () => {
         ) : screen === "bridge" ? (
           <Bridge />
         ) : screen === "community" ? (
-          profileComplete ? <Community profileId={profileId} shipName={shipName} manningAgency={manningAgency} firstName={firstName} voyageStartDate={voyageStartDate} onCompleteVoyage={() => setAppState("voyage-report")} onOpenVesselRating={() => setScreen("vesselrating")} /> : profileGateUI
+          profileComplete ? (onboardingComplete ? <Community profileId={profileId} shipName={shipName} manningAgency={manningAgency} firstName={firstName} voyageStartDate={voyageStartDate} onCompleteVoyage={() => setAppState("voyage-report")} onOpenVesselRating={() => setScreen("vesselrating")} /> : vesselOnboardingUI) : profileGateUI
         ) : screen === "vesselrating" ? (
           <VesselRating onBack={() => setScreen("community")} />
         ) : screen === "resume" ? (
@@ -766,7 +766,7 @@ const Index = () => {
         ) : screen === "certs" ? (
           <CertWallet />
         ) : screen === "resthours" ? (
-          <RestHoursTracker onNavigate={(s: Screen) => setScreen(s)} />
+          onboardingComplete ? <RestHoursTracker onNavigate={(s: Screen) => setScreen(s)} /> : vesselOnboardingUI
         ) : (
           <SMCScoreTab profileId={profileId} firstName={firstName} lastName={lastName} rank={role} shipName={shipName} />
         )}
