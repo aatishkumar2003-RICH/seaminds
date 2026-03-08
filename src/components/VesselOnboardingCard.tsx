@@ -61,7 +61,7 @@ const VesselOnboardingCard = ({ profileId, existingShipName, existingRole, onCom
     "w-full bg-[#132236] border border-[#1e3a5f] rounded-xl px-4 py-3 text-white text-sm focus:border-[#D4AF37] focus:outline-none placeholder:text-gray-600";
 
   return (
-    <div className="flex flex-col h-full items-center justify-center px-6 text-center" style={{ background: "#0D1B2A" }}>
+    <div className="flex flex-col h-full items-center justify-start overflow-y-auto px-6 py-8 text-center" style={{ background: "#0D1B2A" }}>
       <div className="text-[#D4AF37] mb-4">
         <Ship size={48} strokeWidth={1.5} />
       </div>
