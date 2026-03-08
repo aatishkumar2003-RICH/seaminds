@@ -33,8 +33,8 @@ const HeroSection = ({ timeOfDay = "day" }: Props) => {
               Built from 12 months of research with 10,000+ seafarers. Because the people at sea should design what the people at sea use.
             </p>
             {/* Feature pills */}
-            <div className="mb-6 overflow-x-auto lg:overflow-visible scrollbar-hide">
-              <div className="flex lg:flex-wrap gap-2 animate-pill-drift">
+            <div className="mb-6 overflow-x-auto scrollbar-hide">
+              <div className="flex flex-row flex-nowrap gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
                 {[
                   "🔥 Streak Tracker", "⏱ MLC Rest Hours", "📜 Cert Wallet", "💰 Salary Check",
                   "🔧 PMS Equipment", "🤖 AI Wellness", "🏆 SMC Score", "💼 Jobs Board",
