@@ -29,7 +29,7 @@ const HeroSection = ({ timeOfDay = "day" }: Props) => {
             <p className="text-lg md:text-xl text-primary gold-glow mb-3 font-semibold">
               Wellness · Career · Community · Certification
             </p>
-            <p className="text-muted-foreground text-sm md:text-base max-w-xl mx-auto lg:mx-0 mb-8">
+            <p className="text-muted-foreground text-sm md:text-base max-w-xl mx-auto mb-8">
               Built from 12 months of research with 10,000+ seafarers. Because the people at sea should design what the people at sea use.
             </p>
             {/* Feature pills — auto-scrolling ticker on desktop */}
