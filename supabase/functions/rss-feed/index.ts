@@ -49,16 +49,9 @@ function parseRSS(xml: string, limit: number = 5): FeedItem[] {
     const link = extractText(itemXml, 'link');
     
     // Clean summary - strip HTML tags, limit length
-    const summary = description
-      .replace(/<[^>]+>/g, '')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .replace(/&nbsp;/g, ' ')
-      .substring(0, 200)
-      .trim();
+    const summary = decodeEntities(
+      description.replace(/<[^>]+>/g, '')
+    ).substring(0, 200).trim();
     
     if (title) {
       items.push({ title, summary, pubDate, link });
