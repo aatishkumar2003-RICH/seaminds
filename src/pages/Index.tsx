@@ -773,9 +773,9 @@ const Index = () => {
       </div>
 
       <nav className="nav-glass flex items-center gap-1 py-2 px-2 overflow-x-auto scrollbar-hide lg:hidden">
-        <button onClick={() => { if (!profileComplete) { setTargetScreen("chat"); setAppState("name-entry"); } else { setScreen("chat"); } }} className={`flex flex-col items-center gap-1 transition-colors ${screen === "chat" ? "text-primary" : "text-muted-foreground"}`}>
-          <MessageCircle size={18} />
-          <span className="text-[10px] font-medium tracking-wide uppercase">Chat</span>
+        <button onClick={() => { if (!profileComplete) { setTargetScreen("chat"); setAppState("name-entry"); } else { setScreen("chat"); } }} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "chat" ? "text-primary" : "text-muted-foreground"}`}>
+          <MessageCircle size={16} />
+          <span className="text-[9px] font-medium tracking-wide uppercase">Chat</span>
         </button>
         <button onClick={() => setScreen("resthours")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "resthours" ? "text-primary" : "text-muted-foreground"}`}>
           <span className="text-base leading-none">⏱</span>
