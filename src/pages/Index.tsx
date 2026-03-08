@@ -112,7 +112,24 @@ const Index = () => {
     return () => clearTimeout(timer);
   }, [appState]);
 
-  // Job match notification — initial check
+  // Fetch SMC score
+  useEffect(() => {
+    if (appState !== "main" || !profileId) return;
+    const fetchSmc = async () => {
+      const { data } = await supabase
+        .from("smc_assessments")
+        .select("overall_score")
+        .eq("crew_profile_id", profileId)
+        .eq("status", "completed")
+        .order("completed_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (data?.overall_score != null) setSmcScore(Number(data.overall_score));
+    };
+    fetchSmc();
+  }, [appState, profileId]);
+
+
   useEffect(() => {
     if (appState !== "main" || !role) return;
     if (sessionStorage.getItem("seamind_job_match_shown")) return;
