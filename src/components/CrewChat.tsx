@@ -260,6 +260,7 @@ const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: Cre
       setMessages((prev) =>
         prev.map((m) => (m.id === streamId ? { ...m, id: savedAssistant?.id || crypto.randomUUID() } : m))
       );
+      setMessageCount(prev => prev + 1);
     } catch (e: any) {
       console.error("Chat error:", e);
       toast.error(e.message || "Failed to get response");
