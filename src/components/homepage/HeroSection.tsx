@@ -32,26 +32,28 @@ const HeroSection = ({ timeOfDay = "day" }: Props) => {
             <p className="text-muted-foreground text-sm md:text-base max-w-xl mx-auto lg:mx-0 mb-8">
               Built from 12 months of research with 10,000+ seafarers. Because the people at sea should design what the people at sea use.
             </p>
-            {/* Feature pills */}
-            <div className="mb-6 overflow-x-auto scrollbar-hide">
-              <div className="flex flex-row flex-nowrap gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
-                {[
-                  "🔥 Streak Tracker", "⏱ MLC Rest Hours", "📜 Cert Wallet", "💰 Salary Check",
-                  "🔧 PMS Equipment", "🤖 AI Wellness", "🏆 SMC Score", "💼 Jobs Board",
-                  "📷 Photo Diagnosis", "🎓 Academy",
-                ].map((pill) => (
-                  <button
-                    key={pill}
-                    onClick={() => document.getElementById("features-section")?.scrollIntoView({ behavior: "smooth" })}
-                    className="shrink-0 rounded-full px-3.5 py-1.5 text-[11px] font-semibold whitespace-nowrap text-primary transition-colors hover:bg-primary/15"
-                    style={{
-                      border: "1px solid hsl(var(--primary) / 0.5)",
-                      background: "hsl(var(--primary) / 0.08)",
-                    }}
-                  >
-                    {pill}
-                  </button>
-                ))}
+            {/* Feature pills — auto-scrolling ticker on desktop */}
+            <div className="mb-6 overflow-hidden scrollbar-hide">
+              <div className="flex flex-row flex-nowrap gap-2 lg:animate-pill-drift pb-1 overflow-x-auto lg:overflow-visible" style={{ scrollbarWidth: "none" }}>
+                {[...Array(2)].flatMap((_, dupeIdx) =>
+                  [
+                    "🔥 Streak Tracker", "⏱ MLC Rest Hours", "📜 Cert Wallet", "💰 Salary Check",
+                    "🔧 PMS Equipment", "🤖 AI Wellness", "🏆 SMC Score", "💼 Jobs Board",
+                    "📷 Photo Diagnosis", "🎓 Academy",
+                  ].map((pill) => (
+                    <button
+                      key={`${pill}-${dupeIdx}`}
+                      onClick={() => document.getElementById("features-section")?.scrollIntoView({ behavior: "smooth" })}
+                      className="shrink-0 rounded-full px-3.5 py-1.5 text-[11px] font-semibold whitespace-nowrap text-primary transition-colors hover:bg-primary/15"
+                      style={{
+                        border: "1px solid hsl(var(--primary) / 0.5)",
+                        background: "hsl(var(--primary) / 0.08)",
+                      }}
+                    >
+                      {pill}
+                    </button>
+                  ))
+                )}
               </div>
             </div>
 

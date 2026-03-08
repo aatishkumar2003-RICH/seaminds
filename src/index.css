@@ -241,11 +241,14 @@
   }
 
   .animate-pill-drift {
-    animation: pillDrift 8s ease-in-out infinite;
+    animation: pillDrift 30s linear infinite;
+  }
+  .animate-pill-drift:hover {
+    animation-play-state: paused;
   }
   @keyframes pillDrift {
-    0%, 100% { transform: translateX(0); }
-    50% { transform: translateX(-20px); }
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
   }
 
   .scrollbar-hide {
