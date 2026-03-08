@@ -307,6 +307,14 @@ const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: Cre
         )}
       </div>
 
+      {/* AI Disclaimer */}
+      <div className="px-4 py-1.5" style={{ background: "rgba(13,27,42,0.6)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+        <p className="text-[10px] text-muted-foreground text-center leading-tight">
+          ⚕️ This AI is not a medical professional. If you are in crisis, contact ISWAN:{" "}
+          <a href="tel:+442073232737" className="underline" style={{ color: "#D4AF37" }}>+44 20 7323 2737</a>
+        </p>
+      </div>
+
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
         {messages.map((msg) => (
