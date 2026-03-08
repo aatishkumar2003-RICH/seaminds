@@ -820,7 +820,7 @@ const Index = () => {
           <Compass size={16} />
           <span className="text-[9px] font-medium tracking-wide uppercase">Community</span>
         </button>
-        <button onClick={() => { if (!profileComplete) { setTargetScreen("smc"); setAppState("name-entry"); } else { setScreen("smc"); } }} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "smc" ? "text-primary" : "text-muted-foreground"}`}>
+        <button onClick={() => setScreen("smc")} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "smc" ? "text-primary" : "text-muted-foreground"}`}>
           <Star size={16} />
           <span className="text-[9px] font-medium tracking-wide uppercase">SMC</span>
         </button>
