@@ -101,6 +101,16 @@ const Index = () => {
     return () => clearTimeout(timer);
   }, [appState]);
 
+  // Push notification permission — 2 minute delay, once per user
+  useEffect(() => {
+    if (appState !== "main") return;
+    if (localStorage.getItem("seaminds_notif_asked")) return;
+    if (!("Notification" in window)) return;
+    if (Notification.permission !== "default") return;
+    const timer = setTimeout(() => setShowNotifPrompt(true), 120000);
+    return () => clearTimeout(timer);
+  }, [appState]);
+
   // Job match notification — initial check
   useEffect(() => {
     if (appState !== "main" || !role) return;
