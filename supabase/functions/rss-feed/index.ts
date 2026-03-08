@@ -18,7 +18,20 @@ function extractText(xml: string, tag: string): string {
 
   const regex = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, 'i');
   const match = xml.match(regex);
-  return match ? match[1].replace(/<[^>]+>/g, '').trim() : '';
+  return match ? decodeEntities(match[1].replace(/<[^>]+>/g, '').trim()) : '';
+}
+
+function decodeEntities(text: string): string {
+  return text
+    .replace(/&#(\d+);/g, (_m, code) => String.fromCharCode(Number(code)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_m, code) => String.fromCharCode(parseInt(code, 16)))
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&apos;/g, "'");
 }
 
 function parseRSS(xml: string, limit: number = 5): FeedItem[] {
