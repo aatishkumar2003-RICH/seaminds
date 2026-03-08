@@ -23,6 +23,7 @@ import CertWallet from "@/components/CertWallet";
 import RestHoursTracker from "@/components/RestHoursTracker";
 import VesselRating from "@/components/VesselRating";
 import NPSSurvey from "@/components/NPSSurvey";
+import VesselOnboardingCard from "@/components/VesselOnboardingCard";
 type AppState = "loading" | "landing" | "name-entry" | "welcome" | "main" | "voyage-report";
 type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "bridge" | "community" | "smc" | "resume" | "certs" | "resthours" | "vesselrating";
 
@@ -64,6 +65,9 @@ const Index = () => {
   const [showNPS, setShowNPS] = useState(false);
   const [showNotifPrompt, setShowNotifPrompt] = useState(false);
   const [smcScore, setSmcScore] = useState<number | null>(null);
+  const [onboardingComplete, setOnboardingComplete] = useState(false);
+  const [vesselType, setVesselType] = useState("");
+  const [portOfJoining, setPortOfJoining] = useState("");
 
   useEffect(() => {
     const tick = () => {
@@ -215,11 +219,13 @@ const Index = () => {
     const init = async () => {
       const savedId = localStorage.getItem('seamind_profile_id');
       if (savedId) {
-        const { data, error } = await supabase.from('crew_profiles').select('id, first_name, last_name, onboarded, role, ship_name, voyage_start_date, manning_agency, nationality, whatsapp_number').eq('id', savedId).single();
+        const { data, error } = await supabase.from('crew_profiles').select('id, first_name, last_name, onboarded, role, ship_name, voyage_start_date, manning_agency, nationality, whatsapp_number, vessel_type, port_of_joining, onboarding_complete').eq('id', savedId).single();
         if (!error && data) {
           setProfileId(data.id); setFirstName(data.first_name); setLastName(data.last_name || '');
           setRole(data.role || ''); setShipName(data.ship_name || ''); setVoyageStartDate(data.voyage_start_date || '');
           setManningAgency(data.manning_agency || ''); setNationality(data.nationality || ''); setWhatsappNumber(data.whatsapp_number || '');
+          setVesselType((data as any).vessel_type || ''); setPortOfJoining((data as any).port_of_joining || '');
+          setOnboardingComplete(!!(data as any).onboarding_complete);
           setAppState(data.onboarded ? 'main' : 'welcome');
           return;
         }
@@ -406,6 +412,22 @@ const Index = () => {
     </div>
   );
 
+  const handleVesselOnboardingComplete = (data: { vesselName: string; vesselType: string; rank: string; portOfJoining: string }) => {
+    setShipName(data.vesselName);
+    setVesselType(data.vesselType);
+    setRole(data.rank);
+    setPortOfJoining(data.portOfJoining);
+    setOnboardingComplete(true);
+  };
+
+  const vesselOnboardingUI = (
+    <VesselOnboardingCard
+      profileId={profileId}
+      existingShipName={shipName}
+      existingRole={role}
+      onComplete={handleVesselOnboardingComplete}
+    />
+  );
   const handleFeedbackSubmit = async () => {
     if (feedbackRating === 0) return;
     setFeedbackLoading(true);
@@ -724,9 +746,9 @@ const Index = () => {
         )}
 
         {screen === "chat" ? (
-          profileComplete ? <CrewChat profileId={profileId} firstName={firstName} role={role} shipName={shipName} voyageStartDate={voyageStartDate} /> : profileGateUI
+          profileComplete ? (onboardingComplete ? <CrewChat profileId={profileId} firstName={firstName} role={role} shipName={shipName} voyageStartDate={voyageStartDate} /> : vesselOnboardingUI) : profileGateUI
         ) : screen === "dashboard" ? (
-          profileComplete ? <WelfareDashboard shipName={shipName} /> : profileGateUI
+          profileComplete ? (onboardingComplete ? <WelfareDashboard shipName={shipName} /> : vesselOnboardingUI) : profileGateUI
         ) : screen === "opportunities" ? (
           <Opportunities profileId={profileId} firstName={firstName} role={role} nationality={nationality} shipName={shipName} />
         ) : screen === "news" ? (
@@ -736,7 +758,7 @@ const Index = () => {
         ) : screen === "bridge" ? (
           <Bridge />
         ) : screen === "community" ? (
-          profileComplete ? <Community profileId={profileId} shipName={shipName} manningAgency={manningAgency} firstName={firstName} voyageStartDate={voyageStartDate} onCompleteVoyage={() => setAppState("voyage-report")} onOpenVesselRating={() => setScreen("vesselrating")} /> : profileGateUI
+          profileComplete ? (onboardingComplete ? <Community profileId={profileId} shipName={shipName} manningAgency={manningAgency} firstName={firstName} voyageStartDate={voyageStartDate} onCompleteVoyage={() => setAppState("voyage-report")} onOpenVesselRating={() => setScreen("vesselrating")} /> : vesselOnboardingUI) : profileGateUI
         ) : screen === "vesselrating" ? (
           <VesselRating onBack={() => setScreen("community")} />
         ) : screen === "resume" ? (
@@ -744,7 +766,7 @@ const Index = () => {
         ) : screen === "certs" ? (
           <CertWallet />
         ) : screen === "resthours" ? (
-          <RestHoursTracker onNavigate={(s: Screen) => setScreen(s)} />
+          onboardingComplete ? <RestHoursTracker onNavigate={(s: Screen) => setScreen(s)} /> : vesselOnboardingUI
         ) : (
           <SMCScoreTab profileId={profileId} firstName={firstName} lastName={lastName} rank={role} shipName={shipName} />
         )}
