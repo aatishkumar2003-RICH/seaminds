@@ -319,6 +319,13 @@ const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: Cre
         </p>
       </div>
 
+      {/* Wellness Streak */}
+      <StreakDisplay
+        currentStreak={streak.currentStreak}
+        longestStreak={streak.longestStreak}
+        checkedInToday={streak.checkedInToday}
+      />
+
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
         {messages.map((msg) => (
