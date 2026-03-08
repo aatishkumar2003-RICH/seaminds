@@ -23,7 +23,7 @@ import CertWallet from "@/components/CertWallet";
 import RestHoursTracker from "@/components/RestHoursTracker";
 import NPSSurvey from "@/components/NPSSurvey";
 type AppState = "loading" | "landing" | "name-entry" | "welcome" | "main" | "voyage-report";
-type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "bridge" | "community" | "smc" | "resume" | "certs" | "resthours";
+type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "bridge" | "community" | "smc" | "resume" | "certs" | "resthours" | "vesselrating";
 
 const PROFILE_KEY = "seamind_profile_id";
 
