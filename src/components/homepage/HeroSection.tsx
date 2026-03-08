@@ -57,7 +57,7 @@ const HeroSection = ({ timeOfDay = "day" }: Props) => {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start mb-8">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">
               <Button size="lg" onClick={() => window.location.href = '/app'} className="text-sm px-6 h-11">
                 I Am Crew — Get Started Free <ChevronRight className="ml-1 w-4 h-4" />
               </Button>
