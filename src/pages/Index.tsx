@@ -19,6 +19,7 @@ import SMCScoreTab from "@/components/SMCScoreTab";
 import ResumeBuilder from "@/components/ResumeBuilder";
 import SOSButton from "@/components/SOSButton";
 import VoyageReport from "@/components/VoyageReport";
+import CertWallet from "@/components/CertWallet";
 type AppState = "loading" | "landing" | "name-entry" | "welcome" | "main" | "voyage-report";
 type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "bridge" | "community" | "smc" | "resume";
 
