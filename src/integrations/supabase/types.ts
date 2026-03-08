@@ -292,6 +292,7 @@ export type Database = {
           last_seen: string | null
           location_enabled: boolean
           manning_agency: string | null
+          manning_agent_phone: string | null
           nationality: string
           onboarded: boolean
           onboarding_complete: boolean
@@ -320,6 +321,7 @@ export type Database = {
           last_seen?: string | null
           location_enabled?: boolean
           manning_agency?: string | null
+          manning_agent_phone?: string | null
           nationality?: string
           onboarded?: boolean
           onboarding_complete?: boolean
@@ -348,6 +350,7 @@ export type Database = {
           last_seen?: string | null
           location_enabled?: boolean
           manning_agency?: string | null
+          manning_agent_phone?: string | null
           nationality?: string
           onboarded?: boolean
           onboarding_complete?: boolean
