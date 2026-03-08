@@ -20,6 +20,7 @@ const HomePage = () => {
     <HomeNav />
     <HeroSection timeOfDay={timeOfDay} />
     <AppPreviewSection />
+    <HowItWorksSection />
     <BentoGrid />
     <TestimonialsSection />
     <FinalCTA />
