@@ -504,8 +504,8 @@ const Index = () => {
                 </button>
                 <button onClick={() => setScreen("smc")} style={cardStyle} className="flex-1">
                   <div className="text-lg">🏆</div>
-                  <div className="text-sm font-bold" style={{ color: "#D4AF37" }}>Get Score</div>
-                  <div className="text-[9px] text-muted-foreground">SMC</div>
+                  <div className="text-sm font-bold" style={{ color: "#D4AF37" }}>{smcScore !== null ? smcScore : "Get Score"}</div>
+                  <div className="text-[9px] text-muted-foreground">{smcScore !== null ? "SMC Score" : "SMC"}</div>
                 </button>
               </>
             );
