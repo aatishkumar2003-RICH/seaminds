@@ -65,6 +65,9 @@ const Index = () => {
   const [showNPS, setShowNPS] = useState(false);
   const [showNotifPrompt, setShowNotifPrompt] = useState(false);
   const [smcScore, setSmcScore] = useState<number | null>(null);
+  const [onboardingComplete, setOnboardingComplete] = useState(false);
+  const [vesselType, setVesselType] = useState("");
+  const [portOfJoining, setPortOfJoining] = useState("");
 
   useEffect(() => {
     const tick = () => {
