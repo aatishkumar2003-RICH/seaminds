@@ -6,6 +6,12 @@ import { supabase } from "@/integrations/supabase/client";
 
 type CountryKey = "india" | "philippines" | "indonesia" | "ukraine" | "russia" | "china" | "myanmar" | "bangladesh" | "croatia" | "greece" | "uk" | "usa";
 
+const decodeHTML = (html: string) => {
+  const txt = document.createElement('textarea');
+  txt.innerHTML = html;
+  return txt.value;
+};
+
 interface FeedItem {
   title: string;
   summary: string;
@@ -208,7 +214,7 @@ const News = () => {
                     rel="noopener noreferrer"
                     className="block rounded-xl bg-card border border-border p-4 space-y-2 hover:border-primary/30 transition-colors"
                   >
-                    <h3 className="font-semibold text-foreground text-sm leading-snug">{article.title}</h3>
+                    <h3 className="font-semibold text-foreground text-sm leading-snug">{decodeHTML(article.title)}</h3>
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary" className="text-[10px] uppercase tracking-wider">
                         {countryInfo?.name}
@@ -218,7 +224,7 @@ const News = () => {
                       )}
                     </div>
                     {article.summary && (
-                      <p className="text-xs text-muted-foreground leading-relaxed">{article.summary}</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">{decodeHTML(article.summary)}</p>
                     )}
                   </a>
                 ))}
@@ -265,7 +271,7 @@ const News = () => {
                   rel="noopener noreferrer"
                   className="block rounded-xl bg-card border border-border p-4 space-y-2 hover:border-primary/30 transition-colors"
                 >
-                  <h3 className="font-semibold text-foreground text-sm leading-snug">{article.title}</h3>
+                  <h3 className="font-semibold text-foreground text-sm leading-snug">{decodeHTML(article.title)}</h3>
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="text-[10px] uppercase tracking-wider">Maritime</Badge>
                     {article.pubDate && (
@@ -273,7 +279,7 @@ const News = () => {
                     )}
                   </div>
                   {article.summary && (
-                    <p className="text-xs text-muted-foreground leading-relaxed">{article.summary}</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{decodeHTML(article.summary)}</p>
                   )}
                 </a>
               ))
