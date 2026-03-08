@@ -568,7 +568,7 @@ const Index = () => {
           </div>
 
         {/* Quick Stats Row */}
-        <div className="flex gap-2 mt-2 overflow-x-auto pb-1 -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
+        <div className="flex gap-2 mt-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide" style={{ scrollbarWidth: "none" }}>
           {(() => {
             const certsRaw = localStorage.getItem("seaminds_certs");
             const certs: { expiryDate: string }[] = certsRaw ? (() => { try { return JSON.parse(certsRaw); } catch { return []; } })() : [];
@@ -772,57 +772,57 @@ const Index = () => {
         )}
       </div>
 
-      <nav className="nav-glass flex items-center justify-around py-3 px-6 lg:hidden">
-        <button onClick={() => { if (!profileComplete) { setTargetScreen("chat"); setAppState("name-entry"); } else { setScreen("chat"); } }} className={`flex flex-col items-center gap-1 transition-colors ${screen === "chat" ? "text-primary" : "text-muted-foreground"}`}>
-          <MessageCircle size={18} />
-          <span className="text-[10px] font-medium tracking-wide uppercase">Chat</span>
+      <nav className="nav-glass flex items-center gap-1 py-2 px-2 overflow-x-auto scrollbar-hide lg:hidden">
+        <button onClick={() => { if (!profileComplete) { setTargetScreen("chat"); setAppState("name-entry"); } else { setScreen("chat"); } }} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "chat" ? "text-primary" : "text-muted-foreground"}`}>
+          <MessageCircle size={16} />
+          <span className="text-[9px] font-medium tracking-wide uppercase">Chat</span>
         </button>
-        <button onClick={() => setScreen("resthours")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "resthours" ? "text-primary" : "text-muted-foreground"}`}>
-          <span className="text-base leading-none">⏱</span>
-          <span className="text-[10px] font-medium tracking-wide uppercase">Rest</span>
+        <button onClick={() => setScreen("resthours")} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "resthours" ? "text-primary" : "text-muted-foreground"}`}>
+          <span className="text-sm leading-none">⏱</span>
+          <span className="text-[9px] font-medium tracking-wide uppercase">Rest</span>
         </button>
-        <button onClick={() => { if (!profileComplete) { setTargetScreen("dashboard"); setAppState("name-entry"); } else { setScreen("dashboard"); } }} className={`flex flex-col items-center gap-1 transition-colors ${screen === "dashboard" ? "text-primary" : "text-muted-foreground"}`}>
-          <LayoutDashboard size={18} />
-          <span className="text-[10px] font-medium tracking-wide uppercase">Welfare</span>
+        <button onClick={() => { if (!profileComplete) { setTargetScreen("dashboard"); setAppState("name-entry"); } else { setScreen("dashboard"); } }} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "dashboard" ? "text-primary" : "text-muted-foreground"}`}>
+          <LayoutDashboard size={16} />
+          <span className="text-[9px] font-medium tracking-wide uppercase">Welfare</span>
         </button>
-        <button onClick={() => { setScreen("opportunities"); setJobBadgeCount(0); }} className={`relative flex flex-col items-center gap-1 transition-colors ${screen === "opportunities" ? "text-primary" : "text-muted-foreground"}`}>
+        <button onClick={() => { setScreen("opportunities"); setJobBadgeCount(0); }} className={`relative flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "opportunities" ? "text-primary" : "text-muted-foreground"}`}>
           <div className="relative">
-            <Briefcase size={18} />
+            <Briefcase size={16} />
             {jobBadgeCount > 0 && (
-              <span className="absolute -top-1.5 -right-2.5 bg-[#D4AF37] text-[#0a1929] text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
+              <span className="absolute -top-1.5 -right-2.5 bg-[#D4AF37] text-[#0a1929] text-[8px] font-bold rounded-full min-w-[14px] h-3.5 flex items-center justify-center px-0.5">
                 {jobBadgeCount}
               </span>
             )}
           </div>
-          <span className="text-[10px] font-medium tracking-wide uppercase">Jobs</span>
+          <span className="text-[9px] font-medium tracking-wide uppercase">Jobs</span>
         </button>
-        <button onClick={() => setScreen("resume")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "resume" ? "text-primary" : "text-muted-foreground"}`}>
-          <FileText size={18} />
-          <span className="text-[10px] font-medium tracking-wide uppercase">CV</span>
+        <button onClick={() => setScreen("resume")} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "resume" ? "text-primary" : "text-muted-foreground"}`}>
+          <FileText size={16} />
+          <span className="text-[9px] font-medium tracking-wide uppercase">CV</span>
         </button>
-        <button onClick={() => setScreen("news")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "news" ? "text-primary" : "text-muted-foreground"}`}>
-          <Newspaper size={18} />
-          <span className="text-[10px] font-medium tracking-wide uppercase">News</span>
+        <button onClick={() => setScreen("news")} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "news" ? "text-primary" : "text-muted-foreground"}`}>
+          <Newspaper size={16} />
+          <span className="text-[9px] font-medium tracking-wide uppercase">News</span>
         </button>
-        <button onClick={() => setScreen("academy")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "academy" ? "text-primary" : "text-muted-foreground"}`}>
-          <GraduationCap size={18} />
-          <span className="text-[10px] font-medium tracking-wide uppercase">Academy</span>
+        <button onClick={() => setScreen("academy")} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "academy" ? "text-primary" : "text-muted-foreground"}`}>
+          <GraduationCap size={16} />
+          <span className="text-[9px] font-medium tracking-wide uppercase">Academy</span>
         </button>
-        <button onClick={() => setScreen("bridge")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "bridge" ? "text-primary" : "text-muted-foreground"}`}>
-          <Anchor size={18} />
-          <span className="text-[10px] font-medium tracking-wide uppercase">PMS</span>
+        <button onClick={() => setScreen("bridge")} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "bridge" ? "text-primary" : "text-muted-foreground"}`}>
+          <Anchor size={16} />
+          <span className="text-[9px] font-medium tracking-wide uppercase">PMS</span>
         </button>
-        <button onClick={() => setScreen("community")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "community" ? "text-primary" : "text-muted-foreground"}`}>
-          <Compass size={18} />
-          <span className="text-[10px] font-medium tracking-wide uppercase">Community</span>
+        <button onClick={() => setScreen("community")} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "community" ? "text-primary" : "text-muted-foreground"}`}>
+          <Compass size={16} />
+          <span className="text-[9px] font-medium tracking-wide uppercase">Community</span>
         </button>
-        <button onClick={() => { if (!profileComplete) { setTargetScreen("smc"); setAppState("name-entry"); } else { setScreen("smc"); } }} className={`flex flex-col items-center gap-1 transition-colors ${screen === "smc" ? "text-primary" : "text-muted-foreground"}`}>
-          <Star size={18} />
-          <span className="text-[10px] font-medium tracking-wide uppercase">SMC</span>
+        <button onClick={() => { if (!profileComplete) { setTargetScreen("smc"); setAppState("name-entry"); } else { setScreen("smc"); } }} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "smc" ? "text-primary" : "text-muted-foreground"}`}>
+          <Star size={16} />
+          <span className="text-[9px] font-medium tracking-wide uppercase">SMC</span>
         </button>
-        <button onClick={() => setScreen("certs")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "certs" ? "text-primary" : "text-muted-foreground"}`}>
-          <span className="text-base leading-none">📜</span>
-          <span className="text-[10px] font-medium tracking-wide uppercase">Certs</span>
+        <button onClick={() => setScreen("certs")} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "certs" ? "text-primary" : "text-muted-foreground"}`}>
+          <span className="text-sm leading-none">📜</span>
+          <span className="text-[9px] font-medium tracking-wide uppercase">Certs</span>
         </button>
       </nav>
       </div>

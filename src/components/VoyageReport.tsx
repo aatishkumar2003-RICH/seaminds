@@ -230,7 +230,7 @@ const VoyageReport = ({ profileId, firstName, role, shipName, voyageStartDate, n
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-5 pt-12 pb-4 border-b border-border text-center">
+      <div className="px-5 pt-4 lg:pt-8 pb-4 border-b border-border text-center">
         <Anchor size={24} className="text-primary mx-auto mb-2" />
         <h1 className="text-xl font-bold text-foreground">Voyage Complete — Well Done {firstName}</h1>
         <p className="text-xs text-muted-foreground mt-1">Here is your personal SeaMinds voyage summary</p>

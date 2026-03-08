@@ -304,7 +304,7 @@ const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: Cre
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-5 pt-12 pb-4 border-b border-border">
+      <div className="px-5 pt-4 lg:pt-8 pb-4 border-b border-border">
         <p className="text-sm text-muted-foreground tracking-wide uppercase">{getTimeGreeting()}</p>
         <h1 className="text-xl font-semibold text-foreground">{firstName}</h1>
         {voyageStartDate && (
