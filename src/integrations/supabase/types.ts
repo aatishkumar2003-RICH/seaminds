@@ -294,10 +294,13 @@ export type Database = {
           manning_agency: string | null
           nationality: string
           onboarded: boolean
+          onboarding_complete: boolean
+          port_of_joining: string | null
           role: string
           ship_name: string
           user_id: string | null
           vessel_imo: string | null
+          vessel_type: string | null
           voyage_start_date: string | null
           whatsapp_number: string
           years_at_sea: string
@@ -319,10 +322,13 @@ export type Database = {
           manning_agency?: string | null
           nationality?: string
           onboarded?: boolean
+          onboarding_complete?: boolean
+          port_of_joining?: string | null
           role: string
           ship_name: string
           user_id?: string | null
           vessel_imo?: string | null
+          vessel_type?: string | null
           voyage_start_date?: string | null
           whatsapp_number?: string
           years_at_sea?: string
@@ -344,10 +350,13 @@ export type Database = {
           manning_agency?: string | null
           nationality?: string
           onboarded?: boolean
+          onboarding_complete?: boolean
+          port_of_joining?: string | null
           role?: string
           ship_name?: string
           user_id?: string | null
           vessel_imo?: string | null
+          vessel_type?: string | null
           voyage_start_date?: string | null
           whatsapp_number?: string
           years_at_sea?: string
