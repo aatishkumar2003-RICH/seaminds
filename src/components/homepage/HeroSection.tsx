@@ -64,9 +64,9 @@ const HeroSection = ({ timeOfDay = "day" }: Props) => {
               </Button>
             </div>
 
-            <div className="flex flex-wrap justify-center lg:justify-start gap-x-4 gap-y-1 text-xs text-muted-foreground font-mono-score">
+            <div className="flex flex-row flex-nowrap gap-6 text-xs text-muted-foreground font-mono-score overflow-hidden whitespace-nowrap">
               {["1,890,000 seafarers need this", "25% suffer depression at sea", "0 platforms built for them"].map((stat, i) => (
-                <span key={i} className="flex items-center gap-1.5">
+                <span key={i} className="flex items-center gap-1.5 shrink-0">
                   <span className="w-1 h-1 rounded-full bg-primary shrink-0" />
                   {stat}
                 </span>

@@ -50,7 +50,7 @@ const HowItWorksSection = () => {
         {steps.map((s, i) => (
           <div
             key={s.num}
-            className="step-card fade-in-on-scroll rounded-2xl p-6 transition-all"
+            className="step-card fade-in-on-scroll rounded-2xl p-6 transition-all min-h-[200px]"
             style={{
               background: "hsl(var(--navy-deep) / 0.6)",
               border: "1px solid hsl(var(--primary) / 0.15)",
