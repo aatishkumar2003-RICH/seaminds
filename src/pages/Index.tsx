@@ -816,13 +816,13 @@ const Index = () => {
           <Compass size={16} />
           <span className="text-[9px] font-medium tracking-wide uppercase">Community</span>
         </button>
-        <button onClick={() => { if (!profileComplete) { setTargetScreen("smc"); setAppState("name-entry"); } else { setScreen("smc"); } }} className={`flex flex-col items-center gap-1 transition-colors ${screen === "smc" ? "text-primary" : "text-muted-foreground"}`}>
-          <Star size={18} />
-          <span className="text-[10px] font-medium tracking-wide uppercase">SMC</span>
+        <button onClick={() => { if (!profileComplete) { setTargetScreen("smc"); setAppState("name-entry"); } else { setScreen("smc"); } }} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "smc" ? "text-primary" : "text-muted-foreground"}`}>
+          <Star size={16} />
+          <span className="text-[9px] font-medium tracking-wide uppercase">SMC</span>
         </button>
-        <button onClick={() => setScreen("certs")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "certs" ? "text-primary" : "text-muted-foreground"}`}>
-          <span className="text-base leading-none">📜</span>
-          <span className="text-[10px] font-medium tracking-wide uppercase">Certs</span>
+        <button onClick={() => setScreen("certs")} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "certs" ? "text-primary" : "text-muted-foreground"}`}>
+          <span className="text-sm leading-none">📜</span>
+          <span className="text-[9px] font-medium tracking-wide uppercase">Certs</span>
         </button>
       </nav>
       </div>
