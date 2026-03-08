@@ -772,7 +772,7 @@ const Index = () => {
         )}
       </div>
 
-      <nav className="nav-glass flex items-center justify-around py-3 px-6 lg:hidden">
+      <nav className="nav-glass flex items-center gap-1 py-2 px-2 overflow-x-auto scrollbar-hide lg:hidden">
         <button onClick={() => { if (!profileComplete) { setTargetScreen("chat"); setAppState("name-entry"); } else { setScreen("chat"); } }} className={`flex flex-col items-center gap-1 transition-colors ${screen === "chat" ? "text-primary" : "text-muted-foreground"}`}>
           <MessageCircle size={18} />
           <span className="text-[10px] font-medium tracking-wide uppercase">Chat</span>
