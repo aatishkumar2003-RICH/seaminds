@@ -753,6 +753,10 @@ const Index = () => {
           profileComplete ? (onboardingComplete ? <CrewChat profileId={profileId} firstName={firstName} role={role} shipName={shipName} voyageStartDate={voyageStartDate} /> : vesselOnboardingUI) : profileGateUI
         ) : screen === "dashboard" ? (
           profileComplete ? (onboardingComplete ? <WelfareDashboard shipName={shipName} /> : vesselOnboardingUI) : profileGateUI
+        ) : screen === "resthours" ? (
+          profileComplete ? (onboardingComplete ? <RestHoursTracker onNavigate={(s: Screen) => setScreen(s)} /> : vesselOnboardingUI) : profileGateUI
+        ) : screen === "community" ? (
+          profileComplete ? (onboardingComplete ? <Community profileId={profileId} shipName={shipName} manningAgency={manningAgency} firstName={firstName} voyageStartDate={voyageStartDate} onCompleteVoyage={() => setAppState("voyage-report")} onOpenVesselRating={() => setScreen("vesselrating")} /> : vesselOnboardingUI) : profileGateUI
         ) : screen === "opportunities" ? (
           <Opportunities profileId={profileId} firstName={firstName} role={role} nationality={nationality} shipName={shipName} />
         ) : screen === "news" ? (
@@ -761,19 +765,15 @@ const Index = () => {
           <Academy />
         ) : screen === "bridge" ? (
           <Bridge />
-        ) : screen === "community" ? (
-          profileComplete ? (onboardingComplete ? <Community profileId={profileId} shipName={shipName} manningAgency={manningAgency} firstName={firstName} voyageStartDate={voyageStartDate} onCompleteVoyage={() => setAppState("voyage-report")} onOpenVesselRating={() => setScreen("vesselrating")} /> : vesselOnboardingUI) : profileGateUI
         ) : screen === "vesselrating" ? (
           <VesselRating onBack={() => setScreen("community")} />
         ) : screen === "resume" ? (
           <ResumeBuilder />
         ) : screen === "certs" ? (
           <CertWallet />
-        ) : screen === "resthours" ? (
-          onboardingComplete ? <RestHoursTracker onNavigate={(s: Screen) => setScreen(s)} /> : vesselOnboardingUI
-        ) : (
+        ) : screen === "smc" ? (
           <SMCScoreTab profileId={profileId} firstName={firstName} lastName={lastName} rank={role} shipName={shipName} />
-        )}
+        ) : null}
       </div>
 
       <nav className="nav-glass flex items-center gap-1 py-2 px-2 overflow-x-auto scrollbar-hide lg:hidden">
