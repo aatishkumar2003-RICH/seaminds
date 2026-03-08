@@ -523,6 +523,10 @@ const Index = () => {
           <MessageCircle size={18} />
           <span className="text-[10px] font-medium tracking-wide uppercase">Chat</span>
         </button>
+        <button onClick={() => setScreen("resthours")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "resthours" ? "text-primary" : "text-muted-foreground"}`}>
+          <span className="text-base leading-none">⏱</span>
+          <span className="text-[10px] font-medium tracking-wide uppercase">Rest</span>
+        </button>
         <button onClick={() => { if (!profileComplete) { setTargetScreen("dashboard"); setAppState("name-entry"); } else { setScreen("dashboard"); } }} className={`flex flex-col items-center gap-1 transition-colors ${screen === "dashboard" ? "text-primary" : "text-muted-foreground"}`}>
           <LayoutDashboard size={18} />
           <span className="text-[10px] font-medium tracking-wide uppercase">Welfare</span>
