@@ -6,6 +6,7 @@ import CrewPaymentGate from "@/components/smc/CrewPaymentGate";
 import SMCScoreCertificate from "@/components/smc/SMCScoreCertificate";
 import AssessmentFlow from "@/components/smc/AssessmentFlow";
 import MyDocumentsSection from "@/components/smc/MyDocumentsSection";
+import SalaryBenchmark from "@/components/SalaryBenchmark";
 
 interface SMCScoreTabProps {
   profileId: string;
