@@ -40,7 +40,7 @@ const HowItWorksSection = () => {
   }, []);
 
   return (
-    <section className="max-w-5xl mx-auto px-6 py-16">
+    <section className="max-w-5xl mx-auto px-6 py-16 mt-0">
       <div className="text-center mb-12">
         <h2 className="text-2xl font-bold text-foreground mb-2">Get Started in 3 Minutes</h2>
         <p className="text-sm text-muted-foreground">No paperwork. No company approval needed. Just you.</p>
