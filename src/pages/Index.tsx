@@ -21,6 +21,7 @@ import SOSButton from "@/components/SOSButton";
 import VoyageReport from "@/components/VoyageReport";
 import CertWallet from "@/components/CertWallet";
 import RestHoursTracker from "@/components/RestHoursTracker";
+import NPSSurvey from "@/components/NPSSurvey";
 type AppState = "loading" | "landing" | "name-entry" | "welcome" | "main" | "voyage-report";
 type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "bridge" | "community" | "smc" | "resume" | "certs" | "resthours";
 
@@ -59,6 +60,7 @@ const Index = () => {
   const [feedbackLoading, setFeedbackLoading] = useState(false);
   const [feedbackDone, setFeedbackDone] = useState(false);
   const [feedbackRating, setFeedbackRating] = useState(0);
+  const [showNPS, setShowNPS] = useState(false);
 
   useEffect(() => {
     const tick = () => {
@@ -87,6 +89,14 @@ const Index = () => {
     };
     document.title = appState === "main" ? titles[screen] : "SeaMinds";
   }, [screen, appState]);
+
+  // NPS survey — 3 minute delay, once per user
+  useEffect(() => {
+    if (appState !== "main") return;
+    if (localStorage.getItem("seaminds_nps_shown")) return;
+    const timer = setTimeout(() => setShowNPS(true), 180000);
+    return () => clearTimeout(timer);
+  }, [appState]);
 
   // Job match notification — initial check
   useEffect(() => {
@@ -651,6 +661,7 @@ const Index = () => {
           </div>
         </div>
       )}
+      {showNPS && <NPSSurvey firstName={firstName} onDismiss={() => setShowNPS(false)} />}
     </div>
   );
 };

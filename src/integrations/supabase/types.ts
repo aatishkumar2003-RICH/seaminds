@@ -518,6 +518,27 @@ export type Database = {
         }
         Relationships: []
       }
+      nps_responses: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          score: number
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          score: number
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          score?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           company_name: string | null
