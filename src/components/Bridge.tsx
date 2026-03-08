@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { ArrowLeft, Search, Send, Loader2, Bookmark, Trash2, Camera } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import PhotoAnnotator from "./bridge/PhotoAnnotator";
+import GoDeepCard from "./GoDeepCard";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
