@@ -362,6 +362,19 @@ const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: Cre
           </div>
         )}
 
+        {/* Go Deeper card after 5 AI replies */}
+        {messageCount >= 5 && messages[messages.length - 1]?.role === "assistant" && !isLoading && (() => {
+          const lastUserMsg = [...messages].reverse().find(m => m.role === "user");
+          if (!lastUserMsg) return null;
+          return (
+            <GoDeepCard
+              lastQuery={lastUserMsg.content}
+              header="💡 Explore more support resources"
+              subtext="Open this topic in a free AI with no message limits"
+            />
+          );
+        })()}
+
         {showMoodButtons && !isLoading && (
           <div className="chat-fade-in flex flex-wrap gap-2 justify-center py-2">
             {MOOD_OPTIONS.map((mood) => (
