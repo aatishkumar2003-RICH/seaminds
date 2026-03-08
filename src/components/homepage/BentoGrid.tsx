@@ -129,7 +129,6 @@ const BentoGrid = () => {
             </Button>
           </div>
         </div>
-        </div>
       </div>
     </section>
   );
