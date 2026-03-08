@@ -558,6 +558,10 @@ const Index = () => {
           <Star size={18} />
           <span className="text-[10px] font-medium tracking-wide uppercase">SMC</span>
         </button>
+        <button onClick={() => setScreen("certs")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "certs" ? "text-primary" : "text-muted-foreground"}`}>
+          <span className="text-base leading-none">📜</span>
+          <span className="text-[10px] font-medium tracking-wide uppercase">Certs</span>
+        </button>
       </nav>
       </div>
 
