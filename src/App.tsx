@@ -11,6 +11,7 @@ import NotFound from "./pages/NotFound";
 import TermsOfService from "./pages/TermsOfService";
 import Pricing from "./pages/Pricing";
 import Contact from "./pages/Contact";
+import CollegePage from "./pages/CollegePage";
 
 const queryClient = new QueryClient();
 
