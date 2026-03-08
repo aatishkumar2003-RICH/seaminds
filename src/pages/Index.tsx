@@ -60,6 +60,7 @@ const Index = () => {
   const [feedbackLoading, setFeedbackLoading] = useState(false);
   const [feedbackDone, setFeedbackDone] = useState(false);
   const [feedbackRating, setFeedbackRating] = useState(0);
+  const [showNPS, setShowNPS] = useState(false);
 
   useEffect(() => {
     const tick = () => {
