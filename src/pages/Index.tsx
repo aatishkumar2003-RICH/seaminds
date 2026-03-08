@@ -507,6 +507,8 @@ const Index = () => {
           profileComplete ? <Community profileId={profileId} shipName={shipName} manningAgency={manningAgency} firstName={firstName} voyageStartDate={voyageStartDate} onCompleteVoyage={() => setAppState("voyage-report")} /> : profileGateUI
         ) : screen === "resume" ? (
           <ResumeBuilder />
+        ) : screen === "certs" ? (
+          <CertWallet />
         ) : (
           <SMCScoreTab profileId={profileId} firstName={firstName} lastName={lastName} rank={role} shipName={shipName} />
         )}
