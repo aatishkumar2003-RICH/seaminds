@@ -412,6 +412,22 @@ const Index = () => {
     </div>
   );
 
+  const handleVesselOnboardingComplete = (data: { vesselName: string; vesselType: string; rank: string; portOfJoining: string }) => {
+    setShipName(data.vesselName);
+    setVesselType(data.vesselType);
+    setRole(data.rank);
+    setPortOfJoining(data.portOfJoining);
+    setOnboardingComplete(true);
+  };
+
+  const vesselOnboardingUI = (
+    <VesselOnboardingCard
+      profileId={profileId}
+      existingShipName={shipName}
+      existingRole={role}
+      onComplete={handleVesselOnboardingComplete}
+    />
+  );
   const handleFeedbackSubmit = async () => {
     if (feedbackRating === 0) return;
     setFeedbackLoading(true);
