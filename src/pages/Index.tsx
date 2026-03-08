@@ -21,6 +21,7 @@ import SOSButton from "@/components/SOSButton";
 import VoyageReport from "@/components/VoyageReport";
 import CertWallet from "@/components/CertWallet";
 import RestHoursTracker from "@/components/RestHoursTracker";
+import VesselRating from "@/components/VesselRating";
 import NPSSurvey from "@/components/NPSSurvey";
 type AppState = "loading" | "landing" | "name-entry" | "welcome" | "main" | "voyage-report";
 type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "bridge" | "community" | "smc" | "resume" | "certs" | "resthours" | "vesselrating";
