@@ -120,7 +120,7 @@ const VesselRating = ({ onBack }: VesselRatingProps) => {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-5 pt-12 pb-4 border-b border-border">
+      <div className="px-5 pt-4 lg:pt-8 pb-4 border-b border-border">
         <button onClick={onBack} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-3 transition-colors">
           <ArrowLeft size={14} /> Back to Community
         </button>

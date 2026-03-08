@@ -146,7 +146,7 @@ const Community = ({ shipName, manningAgency, profileId, firstName, voyageStartD
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-5 pt-12 pb-4 border-b border-border">
+      <div className="px-5 pt-4 lg:pt-8 pb-4 border-b border-border">
         <div className="flex items-center gap-2">
           <Compass size={20} className="text-primary" />
           <h1 className="text-xl font-semibold text-foreground">Community</h1>
