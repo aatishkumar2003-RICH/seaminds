@@ -63,6 +63,7 @@ const Index = () => {
   const [feedbackRating, setFeedbackRating] = useState(0);
   const [showNPS, setShowNPS] = useState(false);
   const [showNotifPrompt, setShowNotifPrompt] = useState(false);
+  const [smcScore, setSmcScore] = useState<number | null>(null);
 
   useEffect(() => {
     const tick = () => {
