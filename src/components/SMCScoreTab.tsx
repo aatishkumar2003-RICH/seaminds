@@ -6,6 +6,7 @@ import CrewPaymentGate from "@/components/smc/CrewPaymentGate";
 import SMCScoreCertificate from "@/components/smc/SMCScoreCertificate";
 import AssessmentFlow from "@/components/smc/AssessmentFlow";
 import MyDocumentsSection from "@/components/smc/MyDocumentsSection";
+import SalaryBenchmark from "@/components/SalaryBenchmark";
 
 interface SMCScoreTabProps {
   profileId: string;
@@ -21,6 +22,7 @@ type CvStatus = "idle" | "reading" | "done" | "error";
 const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScoreTabProps) => {
   const [view, setView] = useState<View>("loading");
   const [assessmentId, setAssessmentId] = useState("");
+  const [salaryOpen, setSalaryOpen] = useState(false);
 
   // CV parse state
   const [cvStatus, setCvStatus] = useState<CvStatus>("idle");
@@ -246,6 +248,21 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
   return (
     <div className="flex flex-col h-full">
       <CvCard />
+      {/* Salary Check Button */}
+      <div className="px-4 py-2">
+        <button
+          onClick={() => setSalaryOpen(true)}
+          className="w-full py-3 rounded-xl font-bold text-sm transition-all"
+          style={{
+            background: "rgba(212,175,55,0.1)",
+            border: "1.5px solid #D4AF37",
+            color: "#D4AF37",
+          }}
+        >
+          💰 Salary Check
+        </button>
+      </div>
+      <SalaryBenchmark open={salaryOpen} onClose={() => setSalaryOpen(false)} />
       {view === "certificate" && (
         <div className="pt-1">
           <MyDocumentsSection profileId={profileId} />
