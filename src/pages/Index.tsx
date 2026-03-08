@@ -417,30 +417,86 @@ const Index = () => {
         <OceanBackground timeOfDay={timeOfDay} />
       </div>
 
-      {/* Greeting Header + Quick Stats */}
-      {(() => {
-        const certsRaw = localStorage.getItem("seaminds_certs");
-        const certs: { expiryDate: string }[] = certsRaw ? JSON.parse(certsRaw) : [];
-        const expiringSoon = certs.filter(c => {
-          const d = Math.ceil((new Date(c.expiryDate).getTime() - Date.now()) / 86400000);
-          return d >= 0 && d < 90;
-        }).length;
-
-        const restRaw = localStorage.getItem("seaminds_rest_today");
-        const restHours = restRaw ? parseFloat(restRaw) : 0;
-
-        const streakRaw = localStorage.getItem("seaminds_streak");
-        const streakCount = streakRaw ? parseInt(streakRaw, 10) : 0;
-
-        return null; // rendered below
-      })()}
-
-
       <div className="relative z-10 flex flex-col h-full">
       <SOSButton onOpenChat={() => setScreen("chat")} />
 
+      {/* Greeting Header */}
+      <div className="px-4 pt-2 pb-1">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">{NATIONALITY_FLAGS[nationality] || "🌊"}</span>
+            <span className="font-bold text-sm" style={{ color: "#D4AF37" }}>{firstName || "Seafarer"}</span>
+            {role && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: "rgba(212,175,55,0.15)", color: "#D4AF37" }}>
+                {role}
+              </span>
+            )}
+          </div>
+          <span className="text-xs font-mono text-muted-foreground">{utcTime}</span>
+        </div>
+
+        {/* Quick Stats Row */}
+        <div className="flex gap-2 mt-2 overflow-x-auto pb-1 -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
+          {(() => {
+            const certsRaw = localStorage.getItem("seaminds_certs");
+            const certs: { expiryDate: string }[] = certsRaw ? (() => { try { return JSON.parse(certsRaw); } catch { return []; } })() : [];
+            const expiringSoon = certs.filter(c => {
+              const d = Math.ceil((new Date(c.expiryDate).getTime() - Date.now()) / 86400000);
+              return d >= 0 && d < 90;
+            }).length;
+
+            const restRaw = localStorage.getItem("seaminds_rest_today");
+            const restHours = restRaw ? parseFloat(restRaw) : 0;
+
+            const streakRaw = localStorage.getItem("seaminds_streak");
+            const streakCount = streakRaw ? parseInt(streakRaw, 10) : 0;
+
+            const cardStyle = {
+              background: "rgba(13,27,42,0.8)",
+              border: "1px solid rgba(212,175,55,0.15)",
+              borderRadius: "12px",
+              padding: "10px",
+              minWidth: "80px",
+              textAlign: "center" as const,
+              flexShrink: 0,
+            };
+
+            return (
+              <>
+                <button onClick={() => setScreen("chat")} style={cardStyle} className="flex-1">
+                  <div className="text-lg">🔥</div>
+                  <div className="text-sm font-bold" style={{ color: "#D4AF37" }}>{streakCount}</div>
+                  <div className="text-[9px] text-muted-foreground">day streak</div>
+                </button>
+                <button onClick={() => setScreen("certs")} style={{
+                  ...cardStyle,
+                  border: expiringSoon > 0 ? "1px solid rgba(245,158,11,0.4)" : cardStyle.border,
+                }} className="flex-1">
+                  <div className="text-lg">📜</div>
+                  <div className="text-sm font-bold" style={{ color: expiringSoon > 0 ? "#f59e0b" : "#22c55e" }}>{expiringSoon}</div>
+                  <div className="text-[9px] text-muted-foreground">expiring soon</div>
+                </button>
+                <button onClick={() => setScreen("resthours")} style={{
+                  ...cardStyle,
+                  border: restHours < 10 && restHours > 0 ? "1px solid rgba(239,68,68,0.4)" : cardStyle.border,
+                }} className="flex-1">
+                  <div className="text-lg">⏱</div>
+                  <div className="text-sm font-bold" style={{ color: restHours >= 10 ? "#22c55e" : restHours > 0 ? "#ef4444" : "#888" }}>{restHours || "—"}</div>
+                  <div className="text-[9px] text-muted-foreground">hrs rest today</div>
+                </button>
+                <button onClick={() => setScreen("smc")} style={cardStyle} className="flex-1">
+                  <div className="text-lg">🏆</div>
+                  <div className="text-sm font-bold" style={{ color: "#D4AF37" }}>Get Score</div>
+                  <div className="text-[9px] text-muted-foreground">SMC</div>
+                </button>
+              </>
+            );
+          })()}
+        </div>
+      </div>
+
       {/* Top bar */}
-      <div className="flex items-center justify-start gap-3 pl-4 pr-16 py-2">
+      <div className="flex items-center justify-start gap-3 pl-4 pr-16 py-1">
         <button onClick={() => setShowSignOffConfirm(true)} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
           <Anchor size={14} /> Sign Off
         </button>
