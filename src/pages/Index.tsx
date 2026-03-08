@@ -81,6 +81,7 @@ const Index = () => {
       community: "SeaMinds | Community",
       smc: "SeaMinds | SMC Score",
       resume: "SeaMinds | CV Builder",
+      certs: "SeaMinds | Certificates",
     };
     document.title = appState === "main" ? titles[screen] : "SeaMinds";
   }, [screen, appState]);
