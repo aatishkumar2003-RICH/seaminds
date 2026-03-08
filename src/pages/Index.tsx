@@ -94,7 +94,7 @@ const Index = () => {
   useEffect(() => {
     if (appState !== "main") return;
     if (localStorage.getItem("seaminds_nps_shown")) return;
-    const timer = setTimeout(() => setShowNPS(true), 5000); // TODO: revert to 180000
+    const timer = setTimeout(() => setShowNPS(true), 180000);
     return () => clearTimeout(timer);
   }, [appState]);
 
