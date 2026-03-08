@@ -119,7 +119,7 @@ const AppPreviewSection = () => {
   const Preview = previewComponents[activeTab];
 
   return (
-    <section className="relative" style={{ background: "linear-gradient(to bottom, transparent, hsl(var(--navy-deep) / 0.8))" }}>
+    <section id="features-section" className="relative" style={{ background: "linear-gradient(to bottom, transparent, hsl(var(--navy-deep) / 0.8))" }}>
       <div className="max-w-5xl mx-auto px-6 py-16">
         <div className="flex flex-col lg:flex-row items-center gap-12">
           {/* Left */}
