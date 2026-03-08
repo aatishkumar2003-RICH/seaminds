@@ -719,6 +719,51 @@ export type Database = {
         }
         Relationships: []
       }
+      vessel_ratings: {
+        Row: {
+          accommodation: number
+          comment: string | null
+          company: string | null
+          created_at: string
+          food: number
+          id: string
+          internet: number
+          officers: number
+          safety: number
+          vessel_name: string
+          vessel_type: string
+          work_hours: number
+        }
+        Insert: {
+          accommodation: number
+          comment?: string | null
+          company?: string | null
+          created_at?: string
+          food: number
+          id?: string
+          internet: number
+          officers: number
+          safety: number
+          vessel_name: string
+          vessel_type: string
+          work_hours: number
+        }
+        Update: {
+          accommodation?: number
+          comment?: string | null
+          company?: string | null
+          created_at?: string
+          food?: number
+          id?: string
+          internet?: number
+          officers?: number
+          safety?: number
+          vessel_name?: string
+          vessel_type?: string
+          work_hours?: number
+        }
+        Relationships: []
+      }
       voyage_reports: {
         Row: {
           ai_message: string | null

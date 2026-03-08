@@ -21,9 +21,10 @@ import SOSButton from "@/components/SOSButton";
 import VoyageReport from "@/components/VoyageReport";
 import CertWallet from "@/components/CertWallet";
 import RestHoursTracker from "@/components/RestHoursTracker";
+import VesselRating from "@/components/VesselRating";
 import NPSSurvey from "@/components/NPSSurvey";
 type AppState = "loading" | "landing" | "name-entry" | "welcome" | "main" | "voyage-report";
-type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "bridge" | "community" | "smc" | "resume" | "certs" | "resthours";
+type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "bridge" | "community" | "smc" | "resume" | "certs" | "resthours" | "vesselrating";
 
 const PROFILE_KEY = "seamind_profile_id";
 
@@ -86,6 +87,7 @@ const Index = () => {
       resume: "SeaMinds | CV Builder",
       certs: "SeaMinds | Certificates",
       resthours: "SeaMinds | Rest Hours",
+      vesselrating: "SeaMinds | Vessel Rating",
     };
     document.title = appState === "main" ? titles[screen] : "SeaMinds";
   }, [screen, appState]);
@@ -516,7 +518,9 @@ const Index = () => {
         ) : screen === "bridge" ? (
           <Bridge />
         ) : screen === "community" ? (
-          profileComplete ? <Community profileId={profileId} shipName={shipName} manningAgency={manningAgency} firstName={firstName} voyageStartDate={voyageStartDate} onCompleteVoyage={() => setAppState("voyage-report")} /> : profileGateUI
+          profileComplete ? <Community profileId={profileId} shipName={shipName} manningAgency={manningAgency} firstName={firstName} voyageStartDate={voyageStartDate} onCompleteVoyage={() => setAppState("voyage-report")} onOpenVesselRating={() => setScreen("vesselrating")} /> : profileGateUI
+        ) : screen === "vesselrating" ? (
+          <VesselRating onBack={() => setScreen("community")} />
         ) : screen === "resume" ? (
           <ResumeBuilder />
         ) : screen === "certs" ? (
