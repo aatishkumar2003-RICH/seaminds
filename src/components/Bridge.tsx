@@ -168,6 +168,7 @@ const Bridge = () => {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const [messageCount, setMessageCount] = useState(0);
   const [showPocket, setShowPocket] = useState(false);
   const [pocketItems, setPocketItems] = useState<{query: string; answer: string; savedAt: string}[]>([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
