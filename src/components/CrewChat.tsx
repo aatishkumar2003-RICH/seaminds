@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { Send } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useWellnessStreak } from "@/hooks/useWellnessStreak";
+import StreakDisplay from "@/components/chat/StreakDisplay";
 
 interface Message {
   id: string;
