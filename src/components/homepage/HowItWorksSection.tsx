@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 
 const steps = [
@@ -23,7 +23,21 @@ const steps = [
 ];
 
 const HowItWorksSection = () => {
-  const navigate = useNavigate();
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) entry.target.classList.add("visible");
+        });
+      },
+      { threshold: 0.15 }
+    );
+    const cards = containerRef.current?.querySelectorAll(".step-card");
+    cards?.forEach((card) => observer.observe(card));
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <section className="max-w-5xl mx-auto px-6 py-16">
@@ -32,14 +46,15 @@ const HowItWorksSection = () => {
         <p className="text-sm text-muted-foreground">No paperwork. No company approval needed. Just you.</p>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-8 mb-12">
-        {steps.map((s) => (
+      <div ref={containerRef} className="grid md:grid-cols-3 gap-8 mb-12">
+        {steps.map((s, i) => (
           <div
             key={s.num}
-            className="rounded-2xl p-6 transition-colors"
+            className="step-card fade-in-on-scroll rounded-2xl p-6 transition-all"
             style={{
               background: "hsl(var(--navy-deep) / 0.6)",
               border: "1px solid hsl(var(--primary) / 0.15)",
+              transitionDelay: `${i * 150}ms`,
             }}
             onMouseEnter={(e) => (e.currentTarget.style.borderColor = "hsl(var(--primary) / 0.4)")}
             onMouseLeave={(e) => (e.currentTarget.style.borderColor = "hsl(var(--primary) / 0.15)")}
