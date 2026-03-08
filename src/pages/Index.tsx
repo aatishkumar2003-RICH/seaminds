@@ -458,14 +458,14 @@ const Index = () => {
   const navItems: { icon: string; label: string; screen: Screen; gated?: boolean }[] = [
     { icon: "💬", label: "Chat", screen: "chat", gated: true },
     { icon: "❤️", label: "Welfare", screen: "dashboard", gated: true },
-    { icon: "⏱", label: "Rest Hours", screen: "resthours" },
+    { icon: "⏱", label: "Rest Hours", screen: "resthours", gated: true },
     { icon: "💼", label: "Jobs", screen: "opportunities" },
     { icon: "📄", label: "CV", screen: "resume" },
     { icon: "📰", label: "News", screen: "news" },
     { icon: "🎓", label: "Academy", screen: "academy" },
     { icon: "🔧", label: "PMS", screen: "bridge" },
     { icon: "👥", label: "Community", screen: "community", gated: true },
-    { icon: "🏆", label: "SMC", screen: "smc", gated: true },
+    { icon: "🏆", label: "SMC", screen: "smc" },
     { icon: "📜", label: "Certs", screen: "certs" },
   ];
 
