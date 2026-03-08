@@ -76,16 +76,9 @@ function parseAtom(xml: string, limit: number = 5): FeedItem[] {
     const linkMatch = entryXml.match(/<link[^>]*href="([^"]*)"[^>]*\/?>|<link[^>]*>([^<]*)<\/link>/i);
     const link = linkMatch ? (linkMatch[1] || linkMatch[2] || '') : '';
     
-    const cleanSummary = summary
-      .replace(/<[^>]+>/g, '')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .replace(/&nbsp;/g, ' ')
-      .substring(0, 200)
-      .trim();
+    const cleanSummary = decodeEntities(
+      summary.replace(/<[^>]+>/g, '')
+    ).substring(0, 200).trim();
     
     if (title) {
       items.push({ title, summary: cleanSummary, pubDate, link });
