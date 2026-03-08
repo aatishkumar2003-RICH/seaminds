@@ -661,6 +661,7 @@ const Index = () => {
           </div>
         </div>
       )}
+      {showNPS && <NPSSurvey firstName={firstName} onDismiss={() => setShowNPS(false)} />}
     </div>
   );
 };
