@@ -20,8 +20,9 @@ import ResumeBuilder from "@/components/ResumeBuilder";
 import SOSButton from "@/components/SOSButton";
 import VoyageReport from "@/components/VoyageReport";
 import CertWallet from "@/components/CertWallet";
+import RestHoursTracker from "@/components/RestHoursTracker";
 type AppState = "loading" | "landing" | "name-entry" | "welcome" | "main" | "voyage-report";
-type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "bridge" | "community" | "smc" | "resume" | "certs";
+type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "bridge" | "community" | "smc" | "resume" | "certs" | "resthours";
 
 const PROFILE_KEY = "seamind_profile_id";
 
@@ -82,6 +83,7 @@ const Index = () => {
       smc: "SeaMinds | SMC Score",
       resume: "SeaMinds | CV Builder",
       certs: "SeaMinds | Certificates",
+      resthours: "SeaMinds | Rest Hours",
     };
     document.title = appState === "main" ? titles[screen] : "SeaMinds";
   }, [screen, appState]);
@@ -509,6 +511,8 @@ const Index = () => {
           <ResumeBuilder />
         ) : screen === "certs" ? (
           <CertWallet />
+        ) : screen === "resthours" ? (
+          <RestHoursTracker />
         ) : (
           <SMCScoreTab profileId={profileId} firstName={firstName} lastName={lastName} rank={role} shipName={shipName} />
         )}
@@ -518,6 +522,10 @@ const Index = () => {
         <button onClick={() => { if (!profileComplete) { setTargetScreen("chat"); setAppState("name-entry"); } else { setScreen("chat"); } }} className={`flex flex-col items-center gap-1 transition-colors ${screen === "chat" ? "text-primary" : "text-muted-foreground"}`}>
           <MessageCircle size={18} />
           <span className="text-[10px] font-medium tracking-wide uppercase">Chat</span>
+        </button>
+        <button onClick={() => setScreen("resthours")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "resthours" ? "text-primary" : "text-muted-foreground"}`}>
+          <span className="text-base leading-none">⏱</span>
+          <span className="text-[10px] font-medium tracking-wide uppercase">Rest</span>
         </button>
         <button onClick={() => { if (!profileComplete) { setTargetScreen("dashboard"); setAppState("name-entry"); } else { setScreen("dashboard"); } }} className={`flex flex-col items-center gap-1 transition-colors ${screen === "dashboard" ? "text-primary" : "text-muted-foreground"}`}>
           <LayoutDashboard size={18} />
