@@ -242,10 +242,7 @@ const RestHoursTracker = ({ onNavigate }: RestHoursTrackerProps) => {
           </p>
           <div className="flex gap-3">
             <button
-              onClick={() => {
-                // Navigate to community/safety reporting - dispatch custom event
-                window.dispatchEvent(new CustomEvent("navigate-screen", { detail: "community" }));
-              }}
+              onClick={() => onNavigate?.("community")}
               className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
               style={{
                 background: "rgba(239,68,68,0.15)",

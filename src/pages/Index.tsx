@@ -512,7 +512,7 @@ const Index = () => {
         ) : screen === "certs" ? (
           <CertWallet />
         ) : screen === "resthours" ? (
-          <RestHoursTracker />
+          <RestHoursTracker onNavigate={(s: Screen) => setScreen(s)} />
         ) : (
           <SMCScoreTab profileId={profileId} firstName={firstName} lastName={lastName} rank={role} shipName={shipName} />
         )}
