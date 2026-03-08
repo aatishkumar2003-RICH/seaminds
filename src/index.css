@@ -238,5 +238,20 @@
     0% { opacity: 0; transform: scale(0.8); }
     50% { opacity: 0.6; transform: scale(1.2); }
     100% { opacity: 0.1; transform: scale(0.9); }
+
+  .animate-pill-drift {
+    animation: pillDrift 8s ease-in-out infinite;
+  }
+  @keyframes pillDrift {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(-20px); }
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }

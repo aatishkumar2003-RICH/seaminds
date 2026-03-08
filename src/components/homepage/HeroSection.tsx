@@ -32,6 +32,28 @@ const HeroSection = ({ timeOfDay = "day" }: Props) => {
             <p className="text-muted-foreground text-sm md:text-base max-w-xl mx-auto lg:mx-0 mb-8">
               Built from 12 months of research with 10,000+ seafarers. Because the people at sea should design what the people at sea use.
             </p>
+            {/* Feature pills */}
+            <div className="mb-6 overflow-x-auto lg:overflow-visible scrollbar-hide">
+              <div className="flex lg:flex-wrap gap-2 animate-pill-drift">
+                {[
+                  "🔥 Streak Tracker", "⏱ MLC Rest Hours", "📜 Cert Wallet", "💰 Salary Check",
+                  "🔧 PMS Equipment", "🤖 AI Wellness", "🏆 SMC Score", "💼 Jobs Board",
+                  "📷 Photo Diagnosis", "🎓 Academy",
+                ].map((pill) => (
+                  <button
+                    key={pill}
+                    onClick={() => document.getElementById("features-section")?.scrollIntoView({ behavior: "smooth" })}
+                    className="shrink-0 rounded-full px-3.5 py-1.5 text-[11px] font-semibold whitespace-nowrap text-primary transition-colors hover:bg-primary/15"
+                    style={{
+                      border: "1px solid hsl(var(--primary) / 0.5)",
+                      background: "hsl(var(--primary) / 0.08)",
+                    }}
+                  >
+                    {pill}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start mb-8">
               <Button size="lg" onClick={() => window.location.href = '/app'} className="text-sm px-6 h-11">
