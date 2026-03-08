@@ -812,9 +812,9 @@ const Index = () => {
           <Anchor size={16} />
           <span className="text-[9px] font-medium tracking-wide uppercase">PMS</span>
         </button>
-        <button onClick={() => setScreen("community")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "community" ? "text-primary" : "text-muted-foreground"}`}>
-          <Compass size={18} />
-          <span className="text-[10px] font-medium tracking-wide uppercase">Community</span>
+        <button onClick={() => setScreen("community")} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "community" ? "text-primary" : "text-muted-foreground"}`}>
+          <Compass size={16} />
+          <span className="text-[9px] font-medium tracking-wide uppercase">Community</span>
         </button>
         <button onClick={() => { if (!profileComplete) { setTargetScreen("smc"); setAppState("name-entry"); } else { setScreen("smc"); } }} className={`flex flex-col items-center gap-1 transition-colors ${screen === "smc" ? "text-primary" : "text-muted-foreground"}`}>
           <Star size={18} />
