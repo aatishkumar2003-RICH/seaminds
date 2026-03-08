@@ -493,6 +493,55 @@ const Index = () => {
             );
           })()}
         </div>
+
+        {/* Daily Motivational Quote */}
+        {(() => {
+          const SEAFARER_QUOTES = [
+            { text: "A smooth sea never made a skilled sailor.", author: "Franklin D. Roosevelt" },
+            { text: "The pessimist complains about the wind; the optimist expects it to change; the realist adjusts the sails.", author: "William Arthur Ward" },
+            { text: "Twenty years from now you will be more disappointed by the things you didn't do than by the ones you did.", author: "Mark Twain" },
+            { text: "The sea, once it casts its spell, holds one in its net of wonder forever.", author: "Jacques Cousteau" },
+            { text: "He that would learn to pray, let him go to sea.", author: "George Herbert" },
+            { text: "I can't control the wind, but I can adjust my sails.", author: "Ricky Skaggs" },
+            { text: "The ocean stirs the heart, inspires the imagination and brings eternal joy to the soul.", author: "Wyland" },
+            { text: "There is nothing more enticing, disenchanting, and enslaving than the life at sea.", author: "Joseph Conrad" },
+            { text: "To reach a port we must set sail. Sail, not tie at anchor. Sail, not drift.", author: "Franklin D. Roosevelt" },
+            { text: "In one drop of water are found all the secrets of all the oceans.", author: "Kahlil Gibran" },
+            { text: "The cure for anything is salt water: sweat, tears, or the sea.", author: "Isak Dinesen" },
+            { text: "A ship in harbour is safe, but that is not what ships are built for.", author: "John A. Shedd" },
+            { text: "It is not the ship so much as the skillful sailing that assures the prosperous voyage.", author: "George William Curtis" },
+            { text: "The wind and the waves are always on the side of the ablest navigator.", author: "Edmund Gibbon" },
+            { text: "Land was created to provide a place for boats to visit.", author: "Brooks Atkinson" },
+            { text: "Only the guy who isn't rowing has time to rock the boat.", author: "Jean-Paul Sartre" },
+            { text: "We must free ourselves of the hope that the sea will ever rest. We must learn to sail in high winds.", author: "Aristotle Onassis" },
+            { text: "The sea lives in every one of us.", author: "Robert Wyland" },
+            { text: "You can never cross the ocean until you have the courage to lose sight of the shore.", author: "Christopher Columbus" },
+            { text: "Not all treasure is silver and gold, mate.", author: "Captain Jack Sparrow" },
+            { text: "Being at sea is like being in a world that only knows how to breathe.", author: "Unknown" },
+            { text: "A rising tide lifts all boats.", author: "John F. Kennedy" },
+            { text: "Calm seas and a prosperous voyage.", author: "William Shakespeare" },
+            { text: "To me, the sea is like a person — like a child that I've known a long time.", author: "Gertrude Ederle" },
+            { text: "No man will be a sailor who has contrivance enough to get himself into a jail.", author: "Samuel Johnson" },
+            { text: "Any fool can carry on, but a wise man knows how to shorten sail in time.", author: "Joseph Conrad" },
+            { text: "The goal is not to sail the boat, but rather to help the boat sail herself.", author: "John Rousmaniere" },
+            { text: "Those who live by the sea can hardly form a single thought of which the sea would not be part.", author: "Hermann Broch" },
+            { text: "At sea, I learned how little a person needs, not how much.", author: "Robin Lee Graham" },
+            { text: "There are good ships and wood ships, ships that sail the sea, but the best ships are friendships, may they always be.", author: "Irish Proverb" },
+            { text: "The voice of the sea speaks to the soul.", author: "Kate Chopin" },
+          ];
+          const dayIndex = Math.floor(Date.now() / 86400000) % SEAFARER_QUOTES.length;
+          const quote = SEAFARER_QUOTES[dayIndex];
+          return (
+            <div className="mt-2 px-1 py-2 rounded-xl" style={{ background: "rgba(13,27,42,0.5)", border: "1px solid rgba(212,175,55,0.08)" }}>
+              <p className="text-[11px] text-muted-foreground italic leading-relaxed text-center">
+                "{quote.text}"
+              </p>
+              <p className="text-[10px] text-center mt-1" style={{ color: "rgba(212,175,55,0.6)" }}>
+                — {quote.author}
+              </p>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Top bar */}
