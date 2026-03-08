@@ -343,8 +343,36 @@ const Index = () => {
   }
 
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
+    // Clear local state immediately
     localStorage.removeItem(PROFILE_KEY);
+    
+    // Force redirect within 2 seconds regardless of network
+    const forceRedirect = setTimeout(() => {
+      window.location.href = "/";
+    }, 2000);
+
+    try {
+      // Clear all Supabase session keys
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('sb-') || key.startsWith('supabase'))) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+
+      // Try supabase signOut but don't wait forever
+      await Promise.race([
+        supabase.auth.signOut(),
+        new Promise(resolve => setTimeout(resolve, 1500)),
+      ]);
+    } catch (e) {
+      console.warn("Sign out error (forcing redirect):", e);
+    }
+
+    clearTimeout(forceRedirect);
     window.location.href = "/";
   };
 
