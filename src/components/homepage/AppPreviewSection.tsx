@@ -121,39 +121,38 @@ const AppPreviewSection = () => {
   return (
     <section id="features-section" className="relative" style={{ background: "linear-gradient(to bottom, transparent, hsl(var(--navy-deep) / 0.8))" }}>
       <div className="max-w-5xl mx-auto px-6 py-16">
-        <div className="flex flex-col lg:flex-row items-center gap-12">
-          {/* Left */}
-          <div className="lg:w-1/2 w-full">
-            <h2 className="text-3xl font-bold text-foreground mb-8">Everything a Seafarer Needs</h2>
-            <div className="flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0">
-              {tabs.map((t, i) => (
-                <button
-                  key={i}
-                  onClick={() => setActiveTab(i)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg text-left text-sm font-medium transition-all whitespace-nowrap
-                    ${activeTab === i
-                      ? "border-l-2 border-primary text-primary bg-primary/5"
-                      : "border-l-2 border-transparent text-muted-foreground hover:text-foreground"
-                    }`}
-                >
-                  <span className="text-base">{t.emoji}</span>
-                  {t.label}
-                </button>
-              ))}
-            </div>
+        <h2 className="text-3xl font-bold text-foreground mb-8 lg:mb-12">Everything a Seafarer Needs</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-start">
+          {/* Left — Tab buttons */}
+          <div className="flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0">
+            {tabs.map((t, i) => (
+              <button
+                key={i}
+                onClick={() => setActiveTab(i)}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-left text-sm font-medium transition-all duration-200 whitespace-nowrap w-auto lg:w-full flex-shrink-0
+                  ${activeTab === i
+                    ? "border-l-[3px] border-primary text-primary"
+                    : "border-l-[3px] border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                style={activeTab === i ? { background: "rgba(212,175,55,0.1)" } : undefined}
+              >
+                <span className="text-base">{t.emoji}</span>
+                {t.label}
+              </button>
+            ))}
           </div>
 
-          {/* Right - Phone mockup */}
-          <div className="lg:w-1/2 flex justify-center">
+          {/* Right — Phone mockup */}
+          <div className="flex justify-center">
             <div
               className="relative overflow-hidden flex flex-col"
               style={{
-                width: 280,
-                height: 520,
+                width: 300,
+                minHeight: 520,
                 borderRadius: 24,
                 border: "2px solid hsl(var(--primary))",
                 background: "hsl(var(--navy-deep))",
-                boxShadow: "0 0 40px hsl(var(--primary) / 0.2)",
+                boxShadow: "0 0 60px rgba(212,175,55,0.15)",
               }}
             >
               {/* Status bar */}
