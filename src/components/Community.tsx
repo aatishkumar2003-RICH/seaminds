@@ -303,9 +303,9 @@ const Community = ({ shipName, manningAgency, profileId, firstName, voyageStartD
           </div>
           <button
             onClick={onOpenVesselRating}
-            className="w-full bg-primary text-primary-foreground text-sm font-medium rounded-xl py-3 transition-opacity hover:opacity-90"
+            className="w-full border-2 border-primary bg-card text-primary text-sm font-bold rounded-xl py-3 transition-all hover:bg-primary hover:text-primary-foreground"
           >
-            Rate a Vessel →
+            ⭐ Rate a Vessel →
           </button>
         </div>
 
