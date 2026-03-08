@@ -9,6 +9,7 @@ import ManagerAuth from "./pages/ManagerAuth";
 import ManagerDashboard from "./pages/ManagerDashboard";
 import NotFound from "./pages/NotFound";
 import TermsOfService from "./pages/TermsOfService";
+import { Navigate } from "react-router-dom";
 import Pricing from "./pages/Pricing";
 import Contact from "./pages/Contact";
 import CollegePage from "./pages/CollegePage";
@@ -30,6 +31,9 @@ const App = () => (
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/colleges" element={<CollegePage />} />
+          <Route path="/for-companies" element={<Navigate to="/#companies" replace />} />
+          <Route path="/smc-score" element={<Navigate to="/#smc" replace />} />
+          <Route path="/jobs" element={<Navigate to="/app" replace />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

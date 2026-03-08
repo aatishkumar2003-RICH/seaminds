@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import HomeNav from "@/components/homepage/HomeNav";
 import HeroSection from "@/components/homepage/HeroSection";
@@ -16,21 +16,39 @@ import { supabase } from "@/integrations/supabase/client";
 const HomePage = () => {
   const timeOfDay = useTimeOfDay();
   const navigate = useNavigate();
+  const [authReady, setAuthReady] = useState(false);
+
   useEffect(() => { document.title = "SeaMinds"; }, []);
 
-  // Redirect authenticated users to /app
+  // Check auth and redirect authenticated users to /app
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        navigate('/app');
+        navigate('/app', { replace: true });
+      } else {
+        setAuthReady(true);
       }
     });
-    // Also check on mount
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) navigate('/app');
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        navigate('/app', { replace: true });
+      }
     });
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  if (!authReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <span className="text-sm text-muted-foreground">Loading…</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
   <div className="min-h-screen animated-gradient-bg text-foreground relative">
     <OceanBackground timeOfDay={timeOfDay} />
