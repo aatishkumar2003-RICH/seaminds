@@ -96,20 +96,21 @@ const Opportunities = ({ profileId, firstName, role, nationality, shipName }: Op
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
+        gap: "8px",
       }}>
-        <span style={{ color: "white", fontSize: "13px" }}>📢 Get instant job alerts</span>
+        <span style={{ color: "white", fontSize: "12px", flexShrink: 1, minWidth: 0 }}>📢 Get instant job alerts</span>
         <a href="https://t.me/seamindsjobs" target="_blank" rel="noopener noreferrer"
           style={{
             background: "#2D6A4F",
             color: "white",
             borderRadius: "6px",
             padding: "4px 10px",
-            fontSize: "12px",
-            marginLeft: "8px",
+            fontSize: "11px",
             textDecoration: "none",
             whiteSpace: "nowrap",
+            flexShrink: 0,
           }}>
-          Join SeaMinds Jobs on Telegram →
+          Join Telegram →
         </a>
       </div>
 

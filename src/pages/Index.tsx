@@ -395,7 +395,7 @@ const Index = () => {
   };
 
   const profileGateUI = (
-    <div className="flex flex-col h-full items-center justify-center bg-[#0D1B2A] px-6 text-center">
+    <div className="flex flex-col h-full items-center justify-start overflow-y-auto bg-[#0D1B2A] px-6 py-8 text-center">
       <div className="text-[#D4AF37] mb-4">
         <svg xmlns="http://www.w3.org/2000/svg" width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
       </div>
@@ -545,7 +545,7 @@ const Index = () => {
       </aside>
 
       {/* === MAIN CONTENT AREA === */}
-      <div className="flex-1 flex flex-col h-screen max-w-md lg:max-w-none mx-auto lg:mx-0 relative overflow-hidden">
+      <div className="flex-1 flex flex-col h-screen w-full max-w-md lg:max-w-none mx-auto lg:mx-0 relative overflow-hidden">
         <div className="absolute inset-0 opacity-20 pointer-events-none z-0">
           <OceanBackground timeOfDay={timeOfDay} />
         </div>
@@ -668,7 +668,7 @@ const Index = () => {
           const dayIndex = Math.floor(Date.now() / 86400000) % SEAFARER_QUOTES.length;
           const quote = SEAFARER_QUOTES[dayIndex];
           return (
-            <div className="mt-2 px-1 py-2 rounded-xl" style={{ background: "rgba(13,27,42,0.5)", border: "1px solid rgba(212,175,55,0.08)" }}>
+            <div className="mt-2 px-1 py-2 rounded-xl hidden sm:block" style={{ background: "rgba(13,27,42,0.5)", border: "1px solid rgba(212,175,55,0.08)" }}>
               <p className="text-[11px] text-muted-foreground italic leading-relaxed text-center">
                 "{quote.text}"
               </p>
