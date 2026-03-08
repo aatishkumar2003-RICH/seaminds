@@ -13,7 +13,7 @@ const LandingScreen = ({ onGetStarted, onManagerLogin }: LandingScreenProps) => 
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: 'https://seaminds.life/app',
+        redirectTo: `${window.location.origin}/app`,
       },
     });
   };
@@ -25,7 +25,7 @@ const LandingScreen = ({ onGetStarted, onManagerLogin }: LandingScreenProps) => 
     if (!email) return;
     await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: 'https://seaminds.life/app' }
+      options: { emailRedirectTo: `${window.location.origin}/app` }
     });
     setEmailSent(true);
   };
