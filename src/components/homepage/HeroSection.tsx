@@ -16,7 +16,7 @@ const HeroSection = ({ timeOfDay = "day" }: Props) => {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
         <div className="max-w-3xl mx-auto">
           {/* Left column */}
-          <div className="text-center lg:text-left">
+          <div className="text-center">
             <p className="text-xs uppercase tracking-[0.3em] text-primary mb-4 font-mono-score">
               AI-Powered Maritime Platform
             </p>
