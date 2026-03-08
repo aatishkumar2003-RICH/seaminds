@@ -279,7 +279,7 @@ const News = () => {
                     )}
                   </div>
                   {article.summary && (
-                    <p className="text-xs text-muted-foreground leading-relaxed">{article.summary}</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{decodeHTML(article.summary)}</p>
                   )}
                 </a>
               ))
