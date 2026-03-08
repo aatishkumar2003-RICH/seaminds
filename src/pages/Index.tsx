@@ -568,7 +568,7 @@ const Index = () => {
           </div>
 
         {/* Quick Stats Row */}
-        <div className="flex gap-2 mt-2 overflow-x-auto pb-1 -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
+        <div className="flex gap-2 mt-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide" style={{ scrollbarWidth: "none" }}>
           {(() => {
             const certsRaw = localStorage.getItem("seaminds_certs");
             const certs: { expiryDate: string }[] = certsRaw ? (() => { try { return JSON.parse(certsRaw); } catch { return []; } })() : [];
