@@ -169,6 +169,13 @@ const CertWallet = () => {
     );
   }
 
+  const expiringSoonCount = certs.filter((c) => {
+    const d = getDaysRemaining(c.expiryDate);
+    return d < 90;
+  }).length;
+
+  const sortedCerts = [...certs].sort((a, b) => getDaysRemaining(a.expiryDate) - getDaysRemaining(b.expiryDate));
+
   return (
     <div className="flex flex-col h-full px-4 py-3 overflow-y-auto">
       <div className="mb-4">
@@ -180,6 +187,22 @@ const CertWallet = () => {
         </p>
       </div>
 
+      {expiringSoonCount > 0 && (
+        <div
+          className="mb-4"
+          style={{
+            background: "rgba(239,68,68,0.1)",
+            border: "1px solid rgba(239,68,68,0.4)",
+            borderRadius: 8,
+            padding: 10,
+          }}
+        >
+          <p style={{ color: "#fca5a5", fontSize: 12 }}>
+            ⚠️ {expiringSoonCount} certificate(s) expiring soon — check below
+          </p>
+        </div>
+      )}
+
       {certs.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
           <div className="text-4xl mb-3">📋</div>
@@ -190,11 +213,10 @@ const CertWallet = () => {
         </div>
       ) : (
         <div className="space-y-3 flex-1">
-          {certs
-            .sort((a, b) => getDaysRemaining(a.expiryDate) - getDaysRemaining(b.expiryDate))
-            .map((cert) => {
+          {sortedCerts.map((cert) => {
               const days = getDaysRemaining(cert.expiryDate);
               const isExpired = days < 0;
+              const isNearExpiry = days >= 0 && days < 90;
               const badgeColor = isExpired
                 ? "#ef4444"
                 : days < 30
@@ -232,6 +254,17 @@ const CertWallet = () => {
                           year: "numeric",
                         })}
                       </p>
+                      {(isExpired || isNearExpiry) && (
+                        <a
+                          href={`https://www.google.com/search?q=${encodeURIComponent(cert.name + " renewal centre")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs underline mt-1.5 inline-block"
+                          style={{ color: "#D4AF37", border: "none" }}
+                        >
+                          Find Renewal Centre →
+                        </a>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <span
@@ -256,7 +289,6 @@ const CertWallet = () => {
             })}
         </div>
       )}
-
       <div className="pt-4 pb-2">
         <button
           onClick={() => setShowForm(true)}
