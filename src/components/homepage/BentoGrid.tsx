@@ -129,33 +129,6 @@ const BentoGrid = () => {
             </Button>
           </div>
         </div>
-
-        {/* Row 3: For Companies compact card */}
-        <div ref={ref3} className="fade-in-on-scroll">
-          <div className="glass-card rounded-xl p-5 md:p-6">
-            <h3 className="text-lg font-bold text-foreground mb-3">For Companies</h3>
-            <div className="space-y-3">
-              {[
-                { icon: ShieldCheck, title: "Verify Before You Hire", desc: "AI-verified competency scores. Reduce vetting 70%." },
-                { icon: BarChart3, title: "Reduce PSC Risk", desc: "One avoided deficiency saves more than the cost." },
-              ].map((b) => (
-                <div key={b.title} className="flex gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                    <b.icon className="w-4 h-4 text-primary" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-semibold text-foreground">{b.title}</h4>
-                    <p className="text-xs text-muted-foreground">{b.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <Button size="sm" variant="outline" onClick={() => navigate("/app")} className="mt-4 text-xs">
-              Request Company Demo
-            </Button>
-          </div>
-
-        </div>
       </div>
     </section>
   );
