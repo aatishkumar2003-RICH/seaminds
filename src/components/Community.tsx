@@ -25,7 +25,7 @@ const SAFETY_CATEGORIES = [
   { id: "other", emoji: "🟣", label: "Other", desc: "Anything not listed above" },
 ];
 
-const Community = ({ shipName, manningAgency, profileId, firstName, voyageStartDate, onCompleteVoyage }: CommunityProps) => {
+const Community = ({ shipName, manningAgency, profileId, firstName, voyageStartDate, onCompleteVoyage, onOpenVesselRating }: CommunityProps) => {
   const [companyCount, setCompanyCount] = useState(0);
   const [vesselCount, setVesselCount] = useState(0);
   const [portInput, setPortInput] = useState("");
