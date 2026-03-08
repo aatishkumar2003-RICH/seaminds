@@ -417,32 +417,24 @@ const Index = () => {
         <OceanBackground timeOfDay={timeOfDay} />
       </div>
 
-      <div
-        style={{
-    position: 'fixed',
-    bottom: '100px',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    textAlign: 'center',
-    pointerEvents: 'none',
-    zIndex: 1,
-    opacity: 0.5,
-        }}
-      >
-        <div style={{ fontSize: '3rem' }}>{NATIONALITY_FLAGS[nationality] || "🌊"}</div>
-        <div style={{ 
-          color: '#D4AF37', 
-          fontSize: '14px', 
-          letterSpacing: '0.2em',
-          textTransform: 'uppercase',
-          marginTop: '8px'
-        }}>{shipName}</div>
-        <div style={{ 
-          color: '#888', 
-          fontSize: '11px',
-          marginTop: '4px'
-        }}>{utcTime}</div>
-      </div>
+      {/* Greeting Header + Quick Stats */}
+      {(() => {
+        const certsRaw = localStorage.getItem("seaminds_certs");
+        const certs: { expiryDate: string }[] = certsRaw ? JSON.parse(certsRaw) : [];
+        const expiringSoon = certs.filter(c => {
+          const d = Math.ceil((new Date(c.expiryDate).getTime() - Date.now()) / 86400000);
+          return d >= 0 && d < 90;
+        }).length;
+
+        const restRaw = localStorage.getItem("seaminds_rest_today");
+        const restHours = restRaw ? parseFloat(restRaw) : 0;
+
+        const streakRaw = localStorage.getItem("seaminds_streak");
+        const streakCount = streakRaw ? parseInt(streakRaw, 10) : 0;
+
+        return null; // rendered below
+      })()}
+
 
       <div className="relative z-10 flex flex-col h-full">
       <SOSButton onOpenChat={() => setScreen("chat")} />
