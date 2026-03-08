@@ -22,6 +22,7 @@ type CvStatus = "idle" | "reading" | "done" | "error";
 const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScoreTabProps) => {
   const [view, setView] = useState<View>("loading");
   const [assessmentId, setAssessmentId] = useState("");
+  const [salaryOpen, setSalaryOpen] = useState(false);
 
   // CV parse state
   const [cvStatus, setCvStatus] = useState<CvStatus>("idle");
