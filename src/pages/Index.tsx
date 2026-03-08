@@ -62,6 +62,7 @@ const Index = () => {
   const [feedbackDone, setFeedbackDone] = useState(false);
   const [feedbackRating, setFeedbackRating] = useState(0);
   const [showNPS, setShowNPS] = useState(false);
+  const [showNotifPrompt, setShowNotifPrompt] = useState(false);
 
   useEffect(() => {
     const tick = () => {
@@ -97,6 +98,16 @@ const Index = () => {
     if (appState !== "main") return;
     if (localStorage.getItem("seaminds_nps_shown")) return;
     const timer = setTimeout(() => setShowNPS(true), 180000);
+    return () => clearTimeout(timer);
+  }, [appState]);
+
+  // Push notification permission — 2 minute delay, once per user
+  useEffect(() => {
+    if (appState !== "main") return;
+    if (localStorage.getItem("seaminds_notif_asked")) return;
+    if (!("Notification" in window)) return;
+    if (Notification.permission !== "default") return;
+    const timer = setTimeout(() => setShowNotifPrompt(true), 120000);
     return () => clearTimeout(timer);
   }, [appState]);
 
@@ -666,6 +677,54 @@ const Index = () => {
         </div>
       )}
       {showNPS && <NPSSurvey firstName={firstName} onDismiss={() => setShowNPS(false)} />}
+
+      {/* Push Notification Permission Prompt */}
+      {showNotifPrompt && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
+          <div className="bg-card border-t border-border rounded-t-2xl p-6 w-full max-w-md animate-in slide-in-from-bottom-4 space-y-4">
+            <div className="text-center">
+              <p className="text-4xl mb-3">🔔</p>
+              <h3 className="text-foreground font-bold text-lg">Stay on top of your wellness</h3>
+              <p className="text-muted-foreground text-sm mt-2 leading-relaxed">
+                Get a daily check-in reminder and certificate expiry alerts — even when you're on watch.
+              </p>
+            </div>
+            <button
+              onClick={async () => {
+                localStorage.setItem("seaminds_notif_asked", "true");
+                try {
+                  const result = await Notification.requestPermission();
+                  if (result === "granted") {
+                    toast({ title: "✅ Reminders enabled" });
+                    setTimeout(() => {
+                      new Notification("SeaMinds Daily Check-in", {
+                        body: "How are you feeling today, Captain? Tap to log your mood 🔥",
+                        icon: "/favicon.ico",
+                      });
+                    }, 86400000);
+                  }
+                } catch (e) {
+                  console.error("Notification permission error:", e);
+                }
+                setShowNotifPrompt(false);
+              }}
+              className="w-full py-3 rounded-xl font-bold text-sm transition-colors"
+              style={{ background: "#D4AF37", color: "#0D1B2A" }}
+            >
+              🔔 Enable Reminders
+            </button>
+            <button
+              onClick={() => {
+                localStorage.setItem("seaminds_notif_asked", "true");
+                setShowNotifPrompt(false);
+              }}
+              className="w-full py-2 text-sm text-muted-foreground"
+            >
+              Not now
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
