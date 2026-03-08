@@ -28,6 +28,7 @@ const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: Cre
   const [isLoading, setIsLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [showMoodButtons, setShowMoodButtons] = useState(false);
+  const [messageCount, setMessageCount] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { streak, recordCheckin } = useWellnessStreak(profileId);
 
