@@ -160,14 +160,21 @@ const TestimonialsSection = () => {
       </div>
 
       <style>{`
+        .ticker-track {
+          width: max-content;
+        }
         .ticker-container:hover .ticker-row-1,
         .ticker-container:hover .ticker-row-2 {
           animation-play-state: paused;
         }
         .ticker-row-1 {
+          display: flex;
+          width: max-content;
           animation: ticker-scroll 120s linear infinite;
         }
         .ticker-row-2 {
+          display: flex;
+          width: max-content;
           animation: ticker-scroll 140s linear infinite;
         }
         @keyframes ticker-scroll {
