@@ -506,6 +506,18 @@ const Bridge = () => {
               </div>
             </div>
           )}
+          {/* Go Deeper card */}
+          {messageCount >= 3 && messages[messages.length - 1]?.role === "assistant" && !isLoading && (() => {
+            const lastUserMsg = [...messages].reverse().find(m => m.role === "user");
+            if (!lastUserMsg) return null;
+            return (
+              <GoDeepCard
+                lastQuery={lastUserMsg.content}
+                header="🔍 Want to research further?"
+                subtext="Open this topic in a free AI with no message limits"
+              />
+            );
+          })()}
           {/* YouTube Videos Section - show after AI has responded */}
           {messages.length >= 2 && messages[messages.length - 1]?.role === "assistant" && !isLoading && (() => {
             const lastUserMsg = [...messages].reverse().find(m => m.role === "user");
