@@ -90,6 +90,14 @@ const Index = () => {
     document.title = appState === "main" ? titles[screen] : "SeaMinds";
   }, [screen, appState]);
 
+  // NPS survey — 3 minute delay, once per user
+  useEffect(() => {
+    if (appState !== "main") return;
+    if (localStorage.getItem("seaminds_nps_shown")) return;
+    const timer = setTimeout(() => setShowNPS(true), 180000);
+    return () => clearTimeout(timer);
+  }, [appState]);
+
   // Job match notification — initial check
   useEffect(() => {
     if (appState !== "main" || !role) return;
