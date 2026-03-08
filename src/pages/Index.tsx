@@ -19,8 +19,9 @@ import SMCScoreTab from "@/components/SMCScoreTab";
 import ResumeBuilder from "@/components/ResumeBuilder";
 import SOSButton from "@/components/SOSButton";
 import VoyageReport from "@/components/VoyageReport";
+import CertWallet from "@/components/CertWallet";
 type AppState = "loading" | "landing" | "name-entry" | "welcome" | "main" | "voyage-report";
-type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "bridge" | "community" | "smc" | "resume";
+type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "bridge" | "community" | "smc" | "resume" | "certs";
 
 const PROFILE_KEY = "seamind_profile_id";
 
@@ -80,6 +81,7 @@ const Index = () => {
       community: "SeaMinds | Community",
       smc: "SeaMinds | SMC Score",
       resume: "SeaMinds | CV Builder",
+      certs: "SeaMinds | Certificates",
     };
     document.title = appState === "main" ? titles[screen] : "SeaMinds";
   }, [screen, appState]);
@@ -505,6 +507,8 @@ const Index = () => {
           profileComplete ? <Community profileId={profileId} shipName={shipName} manningAgency={manningAgency} firstName={firstName} voyageStartDate={voyageStartDate} onCompleteVoyage={() => setAppState("voyage-report")} /> : profileGateUI
         ) : screen === "resume" ? (
           <ResumeBuilder />
+        ) : screen === "certs" ? (
+          <CertWallet />
         ) : (
           <SMCScoreTab profileId={profileId} firstName={firstName} lastName={lastName} rank={role} shipName={shipName} />
         )}
@@ -553,6 +557,10 @@ const Index = () => {
         <button onClick={() => { if (!profileComplete) { setTargetScreen("smc"); setAppState("name-entry"); } else { setScreen("smc"); } }} className={`flex flex-col items-center gap-1 transition-colors ${screen === "smc" ? "text-primary" : "text-muted-foreground"}`}>
           <Star size={18} />
           <span className="text-[10px] font-medium tracking-wide uppercase">SMC</span>
+        </button>
+        <button onClick={() => setScreen("certs")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "certs" ? "text-primary" : "text-muted-foreground"}`}>
+          <span className="text-base leading-none">📜</span>
+          <span className="text-[10px] font-medium tracking-wide uppercase">Certs</span>
         </button>
       </nav>
       </div>
