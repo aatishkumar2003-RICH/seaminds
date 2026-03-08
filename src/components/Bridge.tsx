@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { ArrowLeft, Search, Send, Loader2, Bookmark, Trash2, Camera } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import PhotoAnnotator from "./bridge/PhotoAnnotator";
+import GoDeepCard from "./GoDeepCard";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -167,6 +168,7 @@ const Bridge = () => {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const [messageCount, setMessageCount] = useState(0);
   const [showPocket, setShowPocket] = useState(false);
   const [pocketItems, setPocketItems] = useState<{query: string; answer: string; savedAt: string}[]>([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -217,7 +219,7 @@ const Bridge = () => {
     await streamBridgeChat({
       messages: newMessages,
       onDelta: upsertAssistant,
-      onDone: () => setIsLoading(false),
+      onDone: () => { setIsLoading(false); setMessageCount(prev => prev + 1); },
       onError: (err) => {
         setMessages(prev => [...prev, { role: "assistant", content: `⚠️ ${err}` }]);
         setIsLoading(false);
@@ -463,7 +465,7 @@ const Bridge = () => {
           </div>
           {messages.length > 0 && (
             <button
-              onClick={() => { setMessages([]); setShowChat(false); }}
+              onClick={() => { setMessages([]); setShowChat(false); setMessageCount(0); }}
               className="ml-auto text-[10px] text-muted-foreground hover:text-foreground px-2 py-1 rounded"
             >
               New Query
@@ -504,6 +506,18 @@ const Bridge = () => {
               </div>
             </div>
           )}
+          {/* Go Deeper card */}
+          {messageCount >= 3 && messages[messages.length - 1]?.role === "assistant" && !isLoading && (() => {
+            const lastUserMsg = [...messages].reverse().find(m => m.role === "user");
+            if (!lastUserMsg) return null;
+            return (
+              <GoDeepCard
+                lastQuery={lastUserMsg.content}
+                header="🔍 Want to research further?"
+                subtext="Open this topic in a free AI with no message limits"
+              />
+            );
+          })()}
           {/* YouTube Videos Section - show after AI has responded */}
           {messages.length >= 2 && messages[messages.length - 1]?.role === "assistant" && !isLoading && (() => {
             const lastUserMsg = [...messages].reverse().find(m => m.role === "user");

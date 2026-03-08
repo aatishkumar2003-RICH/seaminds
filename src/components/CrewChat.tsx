@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useWellnessStreak } from "@/hooks/useWellnessStreak";
 import StreakDisplay from "@/components/chat/StreakDisplay";
+import GoDeepCard from "@/components/GoDeepCard";
 
 interface Message {
   id: string;
@@ -27,6 +28,7 @@ const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: Cre
   const [isLoading, setIsLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [showMoodButtons, setShowMoodButtons] = useState(false);
+  const [messageCount, setMessageCount] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { streak, recordCheckin } = useWellnessStreak(profileId);
 
@@ -258,6 +260,7 @@ const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: Cre
       setMessages((prev) =>
         prev.map((m) => (m.id === streamId ? { ...m, id: savedAssistant?.id || crypto.randomUUID() } : m))
       );
+      setMessageCount(prev => prev + 1);
     } catch (e: any) {
       console.error("Chat error:", e);
       toast.error(e.message || "Failed to get response");
@@ -358,6 +361,19 @@ const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: Cre
             </div>
           </div>
         )}
+
+        {/* Go Deeper card after 5 AI replies */}
+        {messageCount >= 5 && messages[messages.length - 1]?.role === "assistant" && !isLoading && (() => {
+          const lastUserMsg = [...messages].reverse().find(m => m.role === "user");
+          if (!lastUserMsg) return null;
+          return (
+            <GoDeepCard
+              lastQuery={lastUserMsg.content}
+              header="💡 Explore more support resources"
+              subtext="Open this topic in a free AI with no message limits"
+            />
+          );
+        })()}
 
         {showMoodButtons && !isLoading && (
           <div className="chat-fade-in flex flex-wrap gap-2 justify-center py-2">
