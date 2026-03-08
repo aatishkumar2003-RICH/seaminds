@@ -9,7 +9,11 @@ const STORAGE_KEY = "seaminds_rest_logs";
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-const RestHoursTracker = () => {
+interface RestHoursTrackerProps {
+  onNavigate?: (screen: string) => void;
+}
+
+const RestHoursTracker = ({ onNavigate }: RestHoursTrackerProps) => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [now, setNow] = useState(new Date());
 
