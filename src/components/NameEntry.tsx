@@ -19,8 +19,16 @@ interface NameEntryProps {
     voyageStartDate: string;
     manningAgency: string;
     vesselImo: string;
+    manningAgentPhone: string;
+    portOfJoining: string;
+    vesselType: string;
   }, cvFile?: File) => void;
 }
+
+const VESSEL_TYPES = [
+  "Bulk Carrier", "Container", "Tanker", "LNG/LPG", "General Cargo",
+  "Passenger/Cruise", "Offshore", "Ro-Ro", "Other",
+];
 
 const ROLES = ["Captain", "Officer", "Rating", "Engineer"];
 const GENDERS = ["Male", "Female", "Prefer not to say"];
