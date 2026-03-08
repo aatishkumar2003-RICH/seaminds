@@ -63,6 +63,7 @@ const Index = () => {
   const [feedbackRating, setFeedbackRating] = useState(0);
   const [showNPS, setShowNPS] = useState(false);
   const [showNotifPrompt, setShowNotifPrompt] = useState(false);
+  const [smcScore, setSmcScore] = useState<number | null>(null);
 
   useEffect(() => {
     const tick = () => {
@@ -111,7 +112,24 @@ const Index = () => {
     return () => clearTimeout(timer);
   }, [appState]);
 
-  // Job match notification — initial check
+  // Fetch SMC score
+  useEffect(() => {
+    if (appState !== "main" || !profileId) return;
+    const fetchSmc = async () => {
+      const { data } = await supabase
+        .from("smc_assessments")
+        .select("overall_score")
+        .eq("crew_profile_id", profileId)
+        .eq("status", "completed")
+        .order("completed_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (data?.overall_score != null) setSmcScore(Number(data.overall_score));
+    };
+    fetchSmc();
+  }, [appState, profileId]);
+
+
   useEffect(() => {
     if (appState !== "main" || !role) return;
     if (sessionStorage.getItem("seamind_job_match_shown")) return;
@@ -486,8 +504,8 @@ const Index = () => {
                 </button>
                 <button onClick={() => setScreen("smc")} style={cardStyle} className="flex-1">
                   <div className="text-lg">🏆</div>
-                  <div className="text-sm font-bold" style={{ color: "#D4AF37" }}>Get Score</div>
-                  <div className="text-[9px] text-muted-foreground">SMC</div>
+                  <div className="text-sm font-bold" style={{ color: "#D4AF37" }}>{smcScore !== null ? smcScore : "Get Score"}</div>
+                  <div className="text-[9px] text-muted-foreground">{smcScore !== null ? "SMC Score" : "SMC"}</div>
                 </button>
               </>
             );
