@@ -796,9 +796,9 @@ const Index = () => {
           </div>
           <span className="text-[9px] font-medium tracking-wide uppercase">Jobs</span>
         </button>
-        <button onClick={() => setScreen("resume")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "resume" ? "text-primary" : "text-muted-foreground"}`}>
-          <FileText size={18} />
-          <span className="text-[10px] font-medium tracking-wide uppercase">CV</span>
+        <button onClick={() => setScreen("resume")} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "resume" ? "text-primary" : "text-muted-foreground"}`}>
+          <FileText size={16} />
+          <span className="text-[9px] font-medium tracking-wide uppercase">CV</span>
         </button>
         <button onClick={() => setScreen("news")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "news" ? "text-primary" : "text-muted-foreground"}`}>
           <Newspaper size={18} />
