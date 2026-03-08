@@ -785,16 +785,16 @@ const Index = () => {
           <LayoutDashboard size={16} />
           <span className="text-[9px] font-medium tracking-wide uppercase">Welfare</span>
         </button>
-        <button onClick={() => { setScreen("opportunities"); setJobBadgeCount(0); }} className={`relative flex flex-col items-center gap-1 transition-colors ${screen === "opportunities" ? "text-primary" : "text-muted-foreground"}`}>
+        <button onClick={() => { setScreen("opportunities"); setJobBadgeCount(0); }} className={`relative flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "opportunities" ? "text-primary" : "text-muted-foreground"}`}>
           <div className="relative">
-            <Briefcase size={18} />
+            <Briefcase size={16} />
             {jobBadgeCount > 0 && (
-              <span className="absolute -top-1.5 -right-2.5 bg-[#D4AF37] text-[#0a1929] text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
+              <span className="absolute -top-1.5 -right-2.5 bg-[#D4AF37] text-[#0a1929] text-[8px] font-bold rounded-full min-w-[14px] h-3.5 flex items-center justify-center px-0.5">
                 {jobBadgeCount}
               </span>
             )}
           </div>
-          <span className="text-[10px] font-medium tracking-wide uppercase">Jobs</span>
+          <span className="text-[9px] font-medium tracking-wide uppercase">Jobs</span>
         </button>
         <button onClick={() => setScreen("resume")} className={`flex flex-col items-center gap-1 transition-colors ${screen === "resume" ? "text-primary" : "text-muted-foreground"}`}>
           <FileText size={18} />
