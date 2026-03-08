@@ -668,7 +668,7 @@ const Index = () => {
           const dayIndex = Math.floor(Date.now() / 86400000) % SEAFARER_QUOTES.length;
           const quote = SEAFARER_QUOTES[dayIndex];
           return (
-            <div className="mt-2 px-1 py-2 rounded-xl" style={{ background: "rgba(13,27,42,0.5)", border: "1px solid rgba(212,175,55,0.08)" }}>
+            <div className="mt-2 px-1 py-2 rounded-xl hidden sm:block" style={{ background: "rgba(13,27,42,0.5)", border: "1px solid rgba(212,175,55,0.08)" }}>
               <p className="text-[11px] text-muted-foreground italic leading-relaxed text-center">
                 "{quote.text}"
               </p>
