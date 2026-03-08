@@ -816,7 +816,7 @@ const Index = () => {
           <Anchor size={16} />
           <span className="text-[9px] font-medium tracking-wide uppercase">PMS</span>
         </button>
-        <button onClick={() => setScreen("community")} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "community" ? "text-primary" : "text-muted-foreground"}`}>
+        <button onClick={() => { if (!profileComplete) { setTargetScreen("community"); setAppState("name-entry"); } else { setScreen("community"); } }} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "community" ? "text-primary" : "text-muted-foreground"}`}>
           <Compass size={16} />
           <span className="text-[9px] font-medium tracking-wide uppercase">Community</span>
         </button>
