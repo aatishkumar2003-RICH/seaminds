@@ -219,11 +219,13 @@ const Index = () => {
     const init = async () => {
       const savedId = localStorage.getItem('seamind_profile_id');
       if (savedId) {
-        const { data, error } = await supabase.from('crew_profiles').select('id, first_name, last_name, onboarded, role, ship_name, voyage_start_date, manning_agency, nationality, whatsapp_number').eq('id', savedId).single();
+        const { data, error } = await supabase.from('crew_profiles').select('id, first_name, last_name, onboarded, role, ship_name, voyage_start_date, manning_agency, nationality, whatsapp_number, vessel_type, port_of_joining, onboarding_complete').eq('id', savedId).single();
         if (!error && data) {
           setProfileId(data.id); setFirstName(data.first_name); setLastName(data.last_name || '');
           setRole(data.role || ''); setShipName(data.ship_name || ''); setVoyageStartDate(data.voyage_start_date || '');
           setManningAgency(data.manning_agency || ''); setNationality(data.nationality || ''); setWhatsappNumber(data.whatsapp_number || '');
+          setVesselType((data as any).vessel_type || ''); setPortOfJoining((data as any).port_of_joining || '');
+          setOnboardingComplete(!!(data as any).onboarding_complete);
           setAppState(data.onboarded ? 'main' : 'welcome');
           return;
         }
