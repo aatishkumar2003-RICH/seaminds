@@ -363,7 +363,7 @@ const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: Cre
         )}
 
         {/* Go Deeper card after 5 AI replies */}
-        {messageCount >= 5 && messages[messages.length - 1]?.role === "assistant" && !isLoading && (() => {
+        {messageCount === 5 && messages[messages.length - 1]?.role === "assistant" && !isLoading && (() => {
           const lastUserMsg = [...messages].reverse().find(m => m.role === "user");
           if (!lastUserMsg) return null;
           return (
