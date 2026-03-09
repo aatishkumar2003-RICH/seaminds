@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Ship } from "lucide-react";
+import { Ship, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -7,6 +7,7 @@ interface VesselOnboardingCardProps {
   profileId: string;
   existingShipName?: string;
   existingRole?: string;
+  onBack?: () => void;
   onComplete: (data: { vesselName: string; vesselType: string; rank: string; portOfJoining: string }) => void;
 }
 
@@ -23,7 +24,7 @@ const VESSEL_TYPES = [
   "Cruise Ship", "Offshore / AHTS", "Tug / Barge", "Passenger / Ferry", "Other",
 ];
 
-const VesselOnboardingCard = ({ profileId, existingShipName, existingRole, onComplete }: VesselOnboardingCardProps) => {
+const VesselOnboardingCard = ({ profileId, existingShipName, existingRole, onBack, onComplete }: VesselOnboardingCardProps) => {
   const [vesselName, setVesselName] = useState(existingShipName || "");
   const [vesselType, setVesselType] = useState("");
   const [rank, setRank] = useState(existingRole || "");
@@ -61,11 +62,22 @@ const VesselOnboardingCard = ({ profileId, existingShipName, existingRole, onCom
     "w-full bg-[#132236] border border-[#1e3a5f] rounded-xl px-4 py-3 text-white text-sm focus:border-[#D4AF37] focus:outline-none placeholder:text-gray-600";
 
   return (
-    <div className="flex flex-col h-full items-center justify-start overflow-y-auto px-6 py-8 text-center" style={{ background: "#0D1B2A" }}>
-      <div className="text-[#D4AF37] mb-4">
+    <div className="flex flex-col flex-1 min-h-0 overflow-y-auto px-6 pb-8 text-center" style={{ background: "#0D1B2A" }}>
+      {/* Header row with back arrow */}
+      <div className="flex items-center justify-between sticky top-0 py-3 z-10" style={{ background: "#0D1B2A" }}>
+        {onBack ? (
+          <button onClick={onBack} className="p-1.5 -ml-1.5" aria-label="Back to News">
+            <ArrowLeft size={20} color="#D4AF37" />
+          </button>
+        ) : <div className="w-8" />}
+        <span className="text-sm font-semibold" style={{ color: "#D4AF37" }}>Complete Your Profile</span>
+        <div className="w-8" />
+      </div>
+
+      <div className="text-primary mb-4 mt-2">
         <Ship size={48} strokeWidth={1.5} />
       </div>
-      <h2 className="text-lg font-bold mb-1" style={{ color: "#D4AF37" }}>Let's get started</h2>
+      <h2 className="text-lg font-bold mb-1 text-primary">Let's get started</h2>
       <p className="text-sm mb-6" style={{ color: "#9CA3AF" }}>
         Tell us about your vessel so we can personalise your experience.
       </p>
