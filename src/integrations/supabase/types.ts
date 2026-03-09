@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      auth_rate_limits: {
+        Row: {
+          attempt_count: number
+          id: string
+          ip_address: string
+          last_attempt: string
+          window_start: string
+        }
+        Insert: {
+          attempt_count?: number
+          id?: string
+          ip_address: string
+          last_attempt?: string
+          window_start?: string
+        }
+        Update: {
+          attempt_count?: number
+          id?: string
+          ip_address?: string
+          last_attempt?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           content: string
