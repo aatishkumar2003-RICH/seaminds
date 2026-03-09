@@ -40,6 +40,7 @@ const ManagerAuth = () => {
 
   const handleSignup = async () => {
     if (!email.trim() || !password || !companyName || !accessCode) return;
+    if (!(await checkRateLimit())) return;
 
     if (accessCode !== VALID_ACCESS_CODE) {
       toast.error("Invalid access code. Contact SeaMinds for manager access.");

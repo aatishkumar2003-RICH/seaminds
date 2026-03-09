@@ -25,6 +25,7 @@ const LandingScreen = ({ onGetStarted, onManagerLogin }: LandingScreenProps) => 
   const [emailSent, setEmailSent] = useState(false);
   const handleEmailLogin = async () => {
     if (!email) return;
+    if (!(await checkRateLimit())) return;
     await supabase.auth.signInWithOtp({
       email,
       options: { emailRedirectTo: `${window.location.origin}/app` }
