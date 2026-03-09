@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Anchor, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { checkRateLimit } from "@/lib/rateLimiter";
 
 const VALID_ACCESS_CODE = "SEAMINDS2026";
 
