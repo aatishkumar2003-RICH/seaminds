@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Ship } from "lucide-react";
+import { Ship, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -7,6 +7,7 @@ interface VesselOnboardingCardProps {
   profileId: string;
   existingShipName?: string;
   existingRole?: string;
+  onBack?: () => void;
   onComplete: (data: { vesselName: string; vesselType: string; rank: string; portOfJoining: string }) => void;
 }
 
