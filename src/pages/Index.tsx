@@ -478,6 +478,7 @@ const Index = () => {
       profileId={profileId}
       existingShipName={shipName}
       existingRole={role}
+      onBack={() => setScreen("news")}
       onComplete={handleVesselOnboardingComplete}
     />
   );
