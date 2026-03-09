@@ -27,6 +27,7 @@ const ManagerAuth = () => {
 
   const handleLogin = async () => {
     if (!email.trim() || !password) return;
+    if (!(await checkRateLimit())) return;
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     if (error) {
