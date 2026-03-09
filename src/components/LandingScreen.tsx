@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Shield, Heart, Globe } from "lucide-react";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 import { supabase } from "@/integrations/supabase/client";
+import { checkRateLimit } from "@/lib/rateLimiter";
 
 interface LandingScreenProps {
   onGetStarted: () => void;
