@@ -24,7 +24,7 @@ const VESSEL_TYPES = [
   "Cruise Ship", "Offshore / AHTS", "Tug / Barge", "Passenger / Ferry", "Other",
 ];
 
-const VesselOnboardingCard = ({ profileId, existingShipName, existingRole, onComplete }: VesselOnboardingCardProps) => {
+const VesselOnboardingCard = ({ profileId, existingShipName, existingRole, onBack, onComplete }: VesselOnboardingCardProps) => {
   const [vesselName, setVesselName] = useState(existingShipName || "");
   const [vesselType, setVesselType] = useState("");
   const [rank, setRank] = useState(existingRole || "");
