@@ -600,7 +600,7 @@ const Index = () => {
           <OceanBackground timeOfDay={timeOfDay} />
         </div>
 
-        <div className="relative z-10 flex flex-col h-full">
+        <div className="relative z-10 flex flex-col flex-1 min-h-0">
         {/* SOS only on mobile */}
         <div className="lg:hidden">
           <SOSButton onOpenChat={() => setScreen("chat")} />
