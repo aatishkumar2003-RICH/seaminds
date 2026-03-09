@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Shield, Heart, Globe } from "lucide-react";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 import { supabase } from "@/integrations/supabase/client";
+import { checkRateLimit } from "@/lib/rateLimiter";
 
 interface LandingScreenProps {
   onGetStarted: () => void;
@@ -10,6 +11,7 @@ interface LandingScreenProps {
 
 const LandingScreen = ({ onGetStarted, onManagerLogin }: LandingScreenProps) => {
   const handleGoogleLogin = async () => {
+    if (!(await checkRateLimit())) return;
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -23,6 +25,7 @@ const LandingScreen = ({ onGetStarted, onManagerLogin }: LandingScreenProps) => 
   const [emailSent, setEmailSent] = useState(false);
   const handleEmailLogin = async () => {
     if (!email) return;
+    if (!(await checkRateLimit())) return;
     await supabase.auth.signInWithOtp({
       email,
       options: { emailRedirectTo: `${window.location.origin}/app` }

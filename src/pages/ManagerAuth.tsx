@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Anchor, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { checkRateLimit } from "@/lib/rateLimiter";
 
 const VALID_ACCESS_CODE = "SEAMINDS2026";
 
@@ -26,6 +27,7 @@ const ManagerAuth = () => {
 
   const handleLogin = async () => {
     if (!email.trim() || !password) return;
+    if (!(await checkRateLimit())) return;
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     if (error) {
@@ -38,6 +40,7 @@ const ManagerAuth = () => {
 
   const handleSignup = async () => {
     if (!email.trim() || !password || !companyName || !accessCode) return;
+    if (!(await checkRateLimit())) return;
 
     if (accessCode !== VALID_ACCESS_CODE) {
       toast.error("Invalid access code. Contact SeaMinds for manager access.");
