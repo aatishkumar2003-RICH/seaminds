@@ -253,28 +253,22 @@ const Index = () => {
           setFirstName(fullName.split(' ')[0]);
 
           const uid = sessionResult.data.session.user.id;
-          const { data: prof } = await supabase
-            .from('crew_profiles')
-            .select('id, first_name, last_name, role, ship_name, voyage_start_date, manning_agency, nationality, whatsapp_number, vessel_type, port_of_joining, onboarding_complete, onboarded')
-            .eq('id', uid)
-            .maybeSingle();
+          const { data: prof } = await supabase.from('crew_profiles').select('id, first_name, last_name, role, ship_name, voyage_start_date, manning_agency, nationality, whatsapp_number, vessel_type, port_of_joining, onboarding_complete, onboarded').eq('id', uid).maybeSingle();
           if (prof) {
-            localStorage.setItem('seamind_profile_id', prof.id);
             setProfileId(prof.id);
-            setFirstName(prof.first_name || '');
-            setLastName((prof as any).last_name || '');
-            setRole((prof as any).role || '');
-            setShipName((prof as any).ship_name || '');
-            setVoyageStartDate((prof as any).voyage_start_date || '');
-            setManningAgency((prof as any).manning_agency || '');
-            setNationality((prof as any).nationality || '');
-            setWhatsappNumber((prof as any).whatsapp_number || '');
+            setFirstName(prof.first_name);
+            setLastName(prof.last_name || '');
+            setRole(prof.role || '');
+            setShipName(prof.ship_name || '');
+            setVoyageStartDate(prof.voyage_start_date || '');
+            setManningAgency(prof.manning_agency || '');
+            setNationality(prof.nationality || '');
+            setWhatsappNumber(prof.whatsapp_number || '');
             setVesselType((prof as any).vessel_type || '');
             setPortOfJoining((prof as any).port_of_joining || '');
             setOnboardingComplete(!!(prof as any).onboarding_complete);
-            clearTimeout(fallbackTimer);
-            setAppState((prof as any).onboarded ? 'main' : 'welcome');
-            setScreen('news');
+            localStorage.setItem('seamind_profile_id', prof.id);
+            setAppState(prof.onboarded ? 'main' : 'welcome');
             return;
           }
 
