@@ -492,6 +492,7 @@ const Index = () => {
     setRole(data.rank);
     setPortOfJoining(data.portOfJoining);
     setOnboardingComplete(true);
+    localStorage.setItem('seamind_profile_id', profileId);
   };
 
   const vesselOnboardingUI = (
