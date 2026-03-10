@@ -232,7 +232,7 @@ const Index = () => {
             setRole(data.role || ''); setShipName(data.ship_name || ''); setVoyageStartDate(data.voyage_start_date || '');
             setManningAgency(data.manning_agency || ''); setNationality(data.nationality || ''); setWhatsappNumber(data.whatsapp_number || '');
             setVesselType((data as any).vessel_type || ''); setPortOfJoining((data as any).port_of_joining || '');
-            setOnboardingComplete(!!(data as any).onboarding_complete);
+            setOnboardingComplete(data.onboarded === true ? true : !!(data as any).onboarding_complete);
             clearTimeout(fallbackTimer);
             setAppState(data.onboarded ? 'main' : 'welcome');
             return;
