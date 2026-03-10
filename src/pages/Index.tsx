@@ -266,7 +266,7 @@ const Index = () => {
             setWhatsappNumber(prof.whatsapp_number || '');
             setVesselType((prof as any).vessel_type || '');
             setPortOfJoining((prof as any).port_of_joining || '');
-            setOnboardingComplete(!!(prof as any).onboarding_complete);
+            setOnboardingComplete(prof.onboarded === true ? true : !!(prof as any).onboarding_complete);
             localStorage.setItem('seamind_profile_id', prof.id);
             setAppState(prof.onboarded ? 'main' : 'welcome');
             return;
