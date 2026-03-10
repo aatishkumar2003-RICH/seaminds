@@ -31,7 +31,7 @@ const VesselOnboardingCard = ({ profileId, existingShipName, existingRole, onBac
   const [portOfJoining, setPortOfJoining] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const canSubmit = vesselName.trim() && vesselType && rank && portOfJoining.trim();
+  const canSubmit = vesselName.trim() && vesselType && rank;
 
   const handleSubmit = async () => {
     if (!canSubmit || saving) return;
