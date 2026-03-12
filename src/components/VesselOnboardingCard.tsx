@@ -33,23 +33,32 @@ const VesselOnboardingCard = ({ profileId, existingShipName, existingRole, onBac
 
   const canSubmit = vesselName.trim() && vesselType && rank;
 
+  const normalizeRole = (selectedRank: string) => {
+    const r = selectedRank.toLowerCase();
+    if (r.includes("captain") || r.includes("master")) return "Captain";
+    if (r.includes("engineer") || r.includes("eto") || r.includes("eeo")) return "Engineer";
+    if (r.includes("officer")) return "Officer";
+    return "Rating";
+  };
+
   const handleSubmit = async () => {
     if (!canSubmit || saving) return;
     setSaving(true);
     try {
+      const normalizedRole = normalizeRole(rank);
       const { error } = await supabase
         .from("crew_profiles")
         .update({
           ship_name: vesselName.trim(),
           vessel_type: vesselType,
-          role: rank,
+          role: normalizedRole,
           port_of_joining: portOfJoining.trim(),
           onboarding_complete: true,
         } as any)
         .eq("id", profileId);
 
       if (error) throw error;
-      onComplete({ vesselName: vesselName.trim(), vesselType, rank, portOfJoining: portOfJoining.trim() });
+      onComplete({ vesselName: vesselName.trim(), vesselType, rank: normalizedRole, portOfJoining: portOfJoining.trim() });
     } catch (e: any) {
       console.error("Onboarding save failed:", e);
       toast.error("Failed to save — please try again");
