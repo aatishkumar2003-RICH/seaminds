@@ -287,7 +287,7 @@ const Index = () => {
       vessel_type: profile.vesselType || null,
       onboarded: true,
     };
-    if (uid) insertData.id = uid;
+    if (uid) { insertData.id = uid; insertData.user_id = uid; }
     const { data, error } = await supabase.from("crew_profiles").upsert(insertData as any).select("id").single();
     if (error || !data) { console.error("Failed to create profile:", error); return; }
     localStorage.setItem(PROFILE_KEY, data.id);
