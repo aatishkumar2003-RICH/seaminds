@@ -287,7 +287,7 @@ const Index = () => {
       vessel_type: profile.vesselType || null,
       onboarded: true,
     };
-    if (uid) insertData.id = uid;
+    if (uid) { insertData.id = uid; insertData.user_id = uid; }
     const { data, error } = await supabase.from("crew_profiles").upsert(insertData as any).select("id").single();
     if (error || !data) { console.error("Failed to create profile:", error); return; }
     localStorage.setItem(PROFILE_KEY, data.id);
@@ -434,10 +434,10 @@ const Index = () => {
         setProfileId(uid);
       } else {
         const { data } = await supabase.from("crew_profiles").insert({
-          id: uid, first_name: firstName, last_name: lastName,
+          id: uid, user_id: uid, first_name: firstName, last_name: lastName,
           role: dbRole, nationality, ship_name: shipName,
           whatsapp_number: whatsappNumber, onboarded: true
-        }).select("id").single();
+        } as any).select("id").single();
         if (data) { localStorage.setItem("seamind_profile_id", data.id); setProfileId(data.id); }
       }
     }
