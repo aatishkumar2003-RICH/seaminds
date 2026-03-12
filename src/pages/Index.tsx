@@ -232,7 +232,7 @@ const Index = () => {
             setRole(data.role || ''); setShipName(data.ship_name || ''); setVoyageStartDate(data.voyage_start_date || '');
             setManningAgency(data.manning_agency || ''); setNationality(data.nationality || ''); setWhatsappNumber(data.whatsapp_number || '');
             setVesselType((data as any).vessel_type || ''); setPortOfJoining((data as any).port_of_joining || '');
-            setOnboardingComplete(data.onboarded === true ? true : !!(data as any).onboarding_complete);
+            setOnboardingComplete(!!(data as any).onboarding_complete);
             clearTimeout(fallbackTimer);
             setAppState(data.onboarded ? 'main' : 'welcome');
             return;
@@ -266,7 +266,7 @@ const Index = () => {
             setWhatsappNumber(prof.whatsapp_number || '');
             setVesselType((prof as any).vessel_type || '');
             setPortOfJoining((prof as any).port_of_joining || '');
-            setOnboardingComplete(prof.onboarded === true ? true : !!(prof as any).onboarding_complete);
+            setOnboardingComplete(!!(prof as any).onboarding_complete);
             localStorage.setItem('seamind_profile_id', prof.id);
             setAppState(prof.onboarded ? 'main' : 'welcome');
             return;
@@ -492,7 +492,6 @@ const Index = () => {
     setRole(data.rank);
     setPortOfJoining(data.portOfJoining);
     setOnboardingComplete(true);
-    localStorage.setItem('seamind_profile_id', profileId);
   };
 
   const vesselOnboardingUI = (
