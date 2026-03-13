@@ -70,6 +70,11 @@ const Index = () => {
   const [vesselType, setVesselType] = useState("");
   const [portOfJoining, setPortOfJoining] = useState("");
 
+  const navigateTo = (next: Screen) => {
+    setPrevScreen(screen);
+    setScreen(next);
+  };
+
   useEffect(() => {
     const tick = () => {
       const now = new Date();
