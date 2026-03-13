@@ -616,6 +616,15 @@ const Index = () => {
         <div className="px-4 lg:px-8 pt-2 lg:pt-4 pb-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
+              {prevScreen && (
+                <button
+                  onClick={() => { setScreen(prevScreen); setPrevScreen(null); }}
+                  className="md:hidden flex items-center gap-1 text-sm mr-2"
+                  style={{ color: '#D4AF37' }}
+                >
+                  ← Back
+                </button>
+              )}
               <span className="text-xl">{NATIONALITY_FLAGS[nationality] || "🌊"}</span>
               <span className="font-bold text-sm" style={{ color: "#D4AF37" }}>{firstName || "Seafarer"}</span>
               {role && (
