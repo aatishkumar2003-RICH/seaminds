@@ -42,6 +42,7 @@ const Index = () => {
   const timeOfDay = useTimeOfDay();
   const [appState, setAppState] = useState<AppState>("loading");
   const [screen, setScreen] = useState<Screen>("chat");
+  const [prevScreen, setPrevScreen] = useState<Screen | null>(null);
   const [profileId, setProfileId] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -68,6 +69,11 @@ const Index = () => {
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [vesselType, setVesselType] = useState("");
   const [portOfJoining, setPortOfJoining] = useState("");
+
+  const navigateTo = (next: Screen) => {
+    setPrevScreen(screen);
+    setScreen(next);
+  };
 
   useEffect(() => {
     const tick = () => {
@@ -610,6 +616,15 @@ const Index = () => {
         <div className="px-4 lg:px-8 pt-2 lg:pt-4 pb-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
+              {prevScreen && (
+                <button
+                  onClick={() => { setScreen(prevScreen); setPrevScreen(null); }}
+                  className="md:hidden flex items-center gap-1 text-sm mr-2"
+                  style={{ color: '#D4AF37' }}
+                >
+                  ← Back
+                </button>
+              )}
               <span className="text-xl">{NATIONALITY_FLAGS[nationality] || "🌊"}</span>
               <span className="font-bold text-sm" style={{ color: "#D4AF37" }}>{firstName || "Seafarer"}</span>
               {role && (
@@ -827,19 +842,19 @@ const Index = () => {
       </div>
 
       <nav className="nav-glass flex items-center gap-1 py-2 px-2 overflow-x-auto scrollbar-hide lg:hidden">
-        <button onClick={() => { if (!profileComplete) { setTargetScreen("chat"); setAppState("name-entry"); } else { setScreen("chat"); } }} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "chat" ? "text-primary" : "text-muted-foreground"}`}>
+        <button onClick={() => { if (!profileComplete) { setTargetScreen("chat"); setAppState("name-entry"); } else { navigateTo("chat"); } }} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "chat" ? "text-primary" : "text-muted-foreground"}`}>
           <MessageCircle size={16} />
           <span className="text-[9px] font-medium tracking-wide uppercase">Chat</span>
         </button>
-        <button onClick={() => { if (!profileComplete) { setTargetScreen("resthours"); setAppState("name-entry"); } else { setScreen("resthours"); } }} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "resthours" ? "text-primary" : "text-muted-foreground"}`}>
+        <button onClick={() => { if (!profileComplete) { setTargetScreen("resthours"); setAppState("name-entry"); } else { navigateTo("resthours"); } }} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "resthours" ? "text-primary" : "text-muted-foreground"}`}>
           <span className="text-sm leading-none">⏱</span>
           <span className="text-[9px] font-medium tracking-wide uppercase">Rest</span>
         </button>
-        <button onClick={() => { if (!profileComplete) { setTargetScreen("dashboard"); setAppState("name-entry"); } else { setScreen("dashboard"); } }} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "dashboard" ? "text-primary" : "text-muted-foreground"}`}>
+        <button onClick={() => { if (!profileComplete) { setTargetScreen("dashboard"); setAppState("name-entry"); } else { navigateTo("dashboard"); } }} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "dashboard" ? "text-primary" : "text-muted-foreground"}`}>
           <LayoutDashboard size={16} />
           <span className="text-[9px] font-medium tracking-wide uppercase">Welfare</span>
         </button>
-        <button onClick={() => { setScreen("opportunities"); setJobBadgeCount(0); }} className={`relative flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "opportunities" ? "text-primary" : "text-muted-foreground"}`}>
+        <button onClick={() => { navigateTo("opportunities"); setJobBadgeCount(0); }} className={`relative flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "opportunities" ? "text-primary" : "text-muted-foreground"}`}>
           <div className="relative">
             <Briefcase size={16} />
             {jobBadgeCount > 0 && (
@@ -850,31 +865,31 @@ const Index = () => {
           </div>
           <span className="text-[9px] font-medium tracking-wide uppercase">Jobs</span>
         </button>
-        <button onClick={() => setScreen("resume")} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "resume" ? "text-primary" : "text-muted-foreground"}`}>
+        <button onClick={() => navigateTo("resume")} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "resume" ? "text-primary" : "text-muted-foreground"}`}>
           <FileText size={16} />
           <span className="text-[9px] font-medium tracking-wide uppercase">CV</span>
         </button>
-        <button onClick={() => setScreen("news")} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "news" ? "text-primary" : "text-muted-foreground"}`}>
+        <button onClick={() => navigateTo("news")} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "news" ? "text-primary" : "text-muted-foreground"}`}>
           <Newspaper size={16} />
           <span className="text-[9px] font-medium tracking-wide uppercase">News</span>
         </button>
-        <button onClick={() => setScreen("academy")} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "academy" ? "text-primary" : "text-muted-foreground"}`}>
+        <button onClick={() => navigateTo("academy")} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "academy" ? "text-primary" : "text-muted-foreground"}`}>
           <GraduationCap size={16} />
           <span className="text-[9px] font-medium tracking-wide uppercase">Academy</span>
         </button>
-        <button onClick={() => setScreen("bridge")} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "bridge" ? "text-primary" : "text-muted-foreground"}`}>
+        <button onClick={() => navigateTo("bridge")} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "bridge" ? "text-primary" : "text-muted-foreground"}`}>
           <Anchor size={16} />
           <span className="text-[9px] font-medium tracking-wide uppercase">PMS</span>
         </button>
-        <button onClick={() => { if (!profileComplete) { setTargetScreen("community"); setAppState("name-entry"); } else { setScreen("community"); } }} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "community" ? "text-primary" : "text-muted-foreground"}`}>
+        <button onClick={() => { if (!profileComplete) { setTargetScreen("community"); setAppState("name-entry"); } else { navigateTo("community"); } }} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "community" ? "text-primary" : "text-muted-foreground"}`}>
           <Compass size={16} />
           <span className="text-[9px] font-medium tracking-wide uppercase">Community</span>
         </button>
-        <button onClick={() => setScreen("smc")} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "smc" ? "text-primary" : "text-muted-foreground"}`}>
+        <button onClick={() => navigateTo("smc")} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "smc" ? "text-primary" : "text-muted-foreground"}`}>
           <Star size={16} />
           <span className="text-[9px] font-medium tracking-wide uppercase">SMC</span>
         </button>
-        <button onClick={() => setScreen("certs")} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "certs" ? "text-primary" : "text-muted-foreground"}`}>
+        <button onClick={() => navigateTo("certs")} className={`flex flex-col items-center gap-0.5 transition-colors flex-shrink-0 min-w-[3rem] px-1 ${screen === "certs" ? "text-primary" : "text-muted-foreground"}`}>
           <span className="text-sm leading-none">📜</span>
           <span className="text-[9px] font-medium tracking-wide uppercase">Certs</span>
         </button>
