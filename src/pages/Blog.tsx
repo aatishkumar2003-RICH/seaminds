@@ -23,14 +23,14 @@ interface BlogPost {
 const LANGUAGES = [
   { value: "all", label: "All" },
   { value: "en", label: "English" },
-  { value: "fil", label: "Filipino" },
+  { value: "tl", label: "Filipino" },
   { value: "hi", label: "Hindi" },
   { value: "id", label: "Bahasa Indonesia" },
 ];
 
 const LANG_LABELS: Record<string, string> = {
   en: "English",
-  fil: "Filipino",
+  tl: "Filipino",
   hi: "Hindi",
   id: "Bahasa",
 };
