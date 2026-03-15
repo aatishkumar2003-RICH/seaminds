@@ -51,6 +51,7 @@ const Contact = () => {
       return;
     }
     setSubmitted(true);
+    trackEvent("contact_form_submit", { subject: result.data.subject });
   };
 
   const labelStyle = { color: "#A0AEC0" };

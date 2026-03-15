@@ -183,6 +183,7 @@ const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: Cre
     const userMsg: Message = { id: savedUser.id, role: "user", content: userContent };
     const updatedMessages = [...messages, userMsg];
     setMessages(updatedMessages);
+    trackEvent("crew_chat_message", { message_count: updatedMessages.length });
 
     let assistantSoFar = "";
     const streamId = "streaming";
