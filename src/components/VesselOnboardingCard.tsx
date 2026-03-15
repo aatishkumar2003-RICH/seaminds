@@ -29,6 +29,8 @@ const VesselOnboardingCard = ({ profileId, existingShipName, existingRole, onBac
   const [vesselType, setVesselType] = useState("");
   const [rank, setRank] = useState(existingRole || "");
   const [portOfJoining, setPortOfJoining] = useState("");
+  const [passportNumber, setPassportNumber] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
   const [saving, setSaving] = useState(false);
 
   const canSubmit = vesselName.trim() && vesselType && rank;
@@ -54,6 +56,8 @@ const VesselOnboardingCard = ({ profileId, existingShipName, existingRole, onBac
           role: normalizedRole,
           port_of_joining: portOfJoining.trim(),
           onboarding_complete: true,
+          ...(passportNumber ? { passport_number: passportNumber } : {}),
+          ...(dateOfBirth ? { date_of_birth: dateOfBirth } : {}),
         } as any)
         .eq("id", profileId);
 
@@ -127,6 +131,29 @@ const VesselOnboardingCard = ({ profileId, existingShipName, existingRole, onBac
           value={portOfJoining}
           onChange={(e) => setPortOfJoining(e.target.value)}
         />
+
+        <div style={{ marginBottom: '12px' }}>
+          <label style={{ color: '#D4AF37', fontSize: '13px', display: 'block', marginBottom: '4px' }}>
+            Passport Number <span style={{ color: '#888', fontWeight: 'normal' }}>(optional)</span>
+          </label>
+          <input
+            value={passportNumber}
+            onChange={e => setPassportNumber(e.target.value.toUpperCase())}
+            placeholder="e.g. A12345678"
+            className={inputClass}
+          />
+        </div>
+        <div style={{ marginBottom: '12px' }}>
+          <label style={{ color: '#D4AF37', fontSize: '13px', display: 'block', marginBottom: '4px' }}>
+            Date of Birth <span style={{ color: '#888', fontWeight: 'normal' }}>(optional)</span>
+          </label>
+          <input
+            type="date"
+            value={dateOfBirth}
+            onChange={e => setDateOfBirth(e.target.value)}
+            className={inputClass}
+          />
+        </div>
 
         <button
           onClick={handleSubmit}
