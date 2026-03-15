@@ -335,6 +335,27 @@ const CertWallet = ({ profileId }: CertWalletProps) => {
           Add Certificate
         </button>
       </div>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent style={{ background: "#0D1B2A", border: "1px solid rgba(212,175,55,0.3)" }}>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-foreground">Delete Certificate?</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              Are you sure you want to delete <strong className="text-foreground">{deleteTarget?.name}</strong>? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-border text-muted-foreground">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="font-bold"
+              style={{ background: "#ef4444", color: "#fff" }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
