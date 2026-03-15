@@ -35,10 +35,17 @@ Deno.serve(async (req) => {
 
   const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
   const { question, answer, rank, experience_tier, ship_specialisation, department } = await req.json();
-  if (!answer || answer.trim().length < 3) {
+  const sanitize = (str: string, maxLen: number) => (str || '').toString().substring(0, maxLen).trim();
+  const cleanQuestion = sanitize(question, 500);
+  const cleanAnswer = sanitize(answer, 2000);
+  const cleanRank = sanitize(rank, 100);
+  const cleanTier = sanitize(experience_tier, 50);
+  const cleanSpec = sanitize(ship_specialisation, 50);
+  const cleanDept = sanitize(department, 50);
+  if (!cleanAnswer || cleanAnswer.length < 3) {
     return new Response(JSON.stringify({ score: 0, strength_level: "WEAK", red_flag: false, red_flag_category: null, red_flag_evidence: null, follow_up_question: "Could you please elaborate on your answer?" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
-  const prompt = `You are a senior maritime superintendent evaluating a seafarer interview answer. Candidate: ${rank}, ${experience_tier} tier, ${ship_specialisation} vessel, ${department} department. Question: ${question} Answer: ${answer} Return ONLY valid JSON (no markdown): { "score": 0-10, "strength_level": "STRONG|ADEQUATE|WEAK", "red_flag": true/false, "red_flag_category": null or "Safety" or "Attitude" or "Compliance" or "Knowledge", "red_flag_evidence": null or exact quote, "follow_up_question": null or one follow-up question string if score is below 5 } Scoring: 8-10=correct and detailed, 5-7=partial or lacking depth, 0-4=incorrect or dangerous or no real answer. Red flag: unsafe thinking, blaming others, ignoring procedures, wrong emergency answer, commercial over safety.`;
+  const prompt = `You are a senior maritime superintendent evaluating a seafarer interview answer. Candidate: ${cleanRank}, ${cleanTier} tier, ${cleanSpec} vessel, ${cleanDept} department. Question: ${cleanQuestion} Answer: ${cleanAnswer} Return ONLY valid JSON (no markdown): { "score": 0-10, "strength_level": "STRONG|ADEQUATE|WEAK", "red_flag": true/false, "red_flag_category": null or "Safety" or "Attitude" or "Compliance" or "Knowledge", "red_flag_evidence": null or exact quote, "follow_up_question": null or one follow-up question string if score is below 5 } Scoring: 8-10=correct and detailed, 5-7=partial or lacking depth, 0-4=incorrect or dangerous or no real answer. Red flag: unsafe thinking, blaming others, ignoring procedures, wrong emergency answer, commercial over safety.`;
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${OPENAI_API_KEY}` },
