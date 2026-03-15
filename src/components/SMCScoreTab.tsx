@@ -278,6 +278,7 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
           <MyDocumentsSection profileId={profileId} />
         </div>
       )}
+      <DigitalCvSummary profileId={profileId} cvStatus={cvStatus} />
       <div className="flex-1 overflow-hidden">
         {view === "payment" ? (
           <CrewPaymentGate profileId={profileId} onPaymentSuccess={handlePaymentSuccess} />
