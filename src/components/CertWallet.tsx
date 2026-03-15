@@ -41,7 +41,7 @@ const CertWallet = ({ profileId }: CertWalletProps) => {
   const [issueDate, setIssueDate] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
   const [certNumber, setCertNumber] = useState("");
-
+  const [deleteTarget, setDeleteTarget] = useState<Cert | null>(null);
   const fetchCerts = useCallback(async () => {
     if (!profileId) return;
     const { data, error } = await supabase
