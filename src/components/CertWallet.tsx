@@ -1,5 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ArrowLeft, Plus, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 interface Cert {
   id: string;
@@ -9,7 +11,9 @@ interface Cert {
   certNumber: string;
 }
 
-const STORAGE_KEY = "seaminds_certs";
+interface CertWalletProps {
+  profileId: string;
+}
 
 const SUGGESTED_CERTS = [
   "STCW Basic Safety",
@@ -28,24 +32,41 @@ const getDaysRemaining = (expiryDate: string) => {
   return Math.ceil((expiry.getTime() - now.getTime()) / 86400000);
 };
 
-const CertWallet = () => {
+const CertWallet = ({ profileId }: CertWalletProps) => {
   const [certs, setCerts] = useState<Cert[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
   const [issueDate, setIssueDate] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
   const [certNumber, setCertNumber] = useState("");
 
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) setCerts(JSON.parse(saved));
-    } catch {}
-  }, []);
+  const fetchCerts = useCallback(async () => {
+    if (!profileId) return;
+    const { data, error } = await supabase
+      .from("crew_cv_data")
+      .select("certificates")
+      .eq("user_id", profileId)
+      .maybeSingle();
+    if (!error && data?.certificates) {
+      setCerts(data.certificates as unknown as Cert[]);
+    }
+    setLoading(false);
+  }, [profileId]);
 
-  const saveCerts = (updated: Cert[]) => {
+  useEffect(() => { fetchCerts(); }, [fetchCerts]);
+
+  const upsertCerts = async (updated: Cert[]) => {
     setCerts(updated);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    const { error } = await supabase
+      .from("crew_cv_data")
+      .upsert(
+        { user_id: profileId, certificates: updated as any, updated_at: new Date().toISOString() },
+        { onConflict: "user_id" }
+      );
+    if (error) {
+      toast({ title: "Error saving certificates", description: error.message, variant: "destructive" });
+    }
   };
 
   const handleSave = () => {
@@ -57,7 +78,7 @@ const CertWallet = () => {
       expiryDate,
       certNumber: certNumber.trim(),
     };
-    saveCerts([...certs, newCert]);
+    upsertCerts([...certs, newCert]);
     setName("");
     setIssueDate("");
     setExpiryDate("");
@@ -66,8 +87,16 @@ const CertWallet = () => {
   };
 
   const handleDelete = (id: string) => {
-    saveCerts(certs.filter((c) => c.id !== id));
+    upsertCerts(certs.filter((c) => c.id !== id));
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (showForm) {
     return (
