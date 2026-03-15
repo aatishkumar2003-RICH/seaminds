@@ -1,13 +1,16 @@
 import { useState, useRef } from "react";
-import { Mic, Square, Check } from "lucide-react";
+import { Mic, Square, Check, Loader2, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import StepProgressBar from "./StepProgressBar";
 
 interface Props {
   assessmentId: string;
   questions?: string[];
-  onNext: () => void;
+  onNext: (question?: string, answer?: string) => void;
   onSkipToEnd?: () => void;
+  evaluating?: boolean;
+  pendingFollowUp?: string | null;
+  onFollowUpAnswer?: (answer: string) => void;
 }
 
 interface VoiceCard {
@@ -34,13 +37,14 @@ const DEFAULT_CARDS: VoiceCard[] = [
   },
 ];
 
-const CommunicationAssessment = ({ assessmentId, questions: questionsProp, onNext, onSkipToEnd }: Props) => {
+const CommunicationAssessment = ({ assessmentId, questions: questionsProp, onNext, onSkipToEnd, evaluating, pendingFollowUp, onFollowUpAnswer }: Props) => {
   const CARDS: VoiceCard[] = (questionsProp && questionsProp.length >= 3)
     ? questionsProp.slice(0, 3).map((q, i) => ({ id: DEFAULT_CARDS[i].id, title: DEFAULT_CARDS[i].title, prompt: q }))
     : DEFAULT_CARDS;
   const [recordings, setRecordings] = useState<Record<string, boolean>>({});
   const [activeRecording, setActiveRecording] = useState<string | null>(null);
   const [timer, setTimer] = useState(0);
+  const [followUpInput, setFollowUpInput] = useState("");
   const mediaRef = useRef<MediaRecorder | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -84,6 +88,13 @@ const CommunicationAssessment = ({ assessmentId, questions: questionsProp, onNex
     onNext();
   };
 
+  const handleFollowUpSubmit = () => {
+    if (!followUpInput.trim() || !onFollowUpAnswer) return;
+    const answer = followUpInput.trim();
+    setFollowUpInput("");
+    onFollowUpAnswer(answer);
+  };
+
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
   return (
@@ -95,6 +106,36 @@ const CommunicationAssessment = ({ assessmentId, questions: questionsProp, onNex
           <h1 className="text-lg font-bold text-foreground">Communication Assessment</h1>
           <p className="text-sm text-muted-foreground">Record 3 voice responses. Maximum 60 seconds each. Speak clearly.</p>
         </div>
+
+        {evaluating && (
+          <div className="flex items-center justify-center gap-2 py-2">
+            <Loader2 size={14} className="animate-spin text-primary" />
+            <span className="text-xs text-muted-foreground">Evaluating your answer...</span>
+          </div>
+        )}
+
+        {pendingFollowUp && (
+          <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 space-y-3">
+            <p className="text-xs font-semibold text-primary">Follow-up Question</p>
+            <p className="text-sm text-foreground">{pendingFollowUp}</p>
+            <div className="flex gap-2">
+              <input
+                value={followUpInput}
+                onChange={(e) => setFollowUpInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleFollowUpSubmit()}
+                placeholder="Answer the follow-up..."
+                className="flex-1 bg-secondary border border-primary/30 rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground"
+              />
+              <button
+                onClick={handleFollowUpSubmit}
+                disabled={!followUpInput.trim()}
+                className="bg-primary text-primary-foreground rounded-xl px-4 hover:bg-primary/90 transition-colors disabled:opacity-40"
+              >
+                <Send size={18} />
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="space-y-4">
           {CARDS.map((card) => {
@@ -160,7 +201,7 @@ const CommunicationAssessment = ({ assessmentId, questions: questionsProp, onNex
         )}
 
         <button
-          onClick={onSkipToEnd || onNext}
+          onClick={onSkipToEnd || (() => onNext())}
           className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors py-2"
         >
           Skip to Certificate (testing only)

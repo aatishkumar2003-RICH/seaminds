@@ -1,13 +1,16 @@
 import { useState, useRef, useEffect } from "react";
-import { Send } from "lucide-react";
+import { Send, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import StepProgressBar from "./StepProgressBar";
 
 interface Props {
   assessmentId: string;
   questions?: string[];
-  onNext: () => void;
+  onNext: (question?: string, answer?: string) => void;
   onSkipToEnd?: () => void;
+  evaluating?: boolean;
+  pendingFollowUp?: string | null;
+  onFollowUpAnswer?: (answer: string) => void;
 }
 
 const FALLBACK_QUESTIONS = [
@@ -28,20 +31,21 @@ interface Message {
   text: string;
 }
 
-const BehaviouralProfile = ({ assessmentId, questions: questionsProp, onNext, onSkipToEnd }: Props) => {
+const BehaviouralProfile = ({ assessmentId, questions: questionsProp, onNext, onSkipToEnd, evaluating, pendingFollowUp, onFollowUpAnswer }: Props) => {
   const activeQuestions = (questionsProp && questionsProp.length > 0) ? questionsProp : FALLBACK_QUESTIONS;
   const [messages, setMessages] = useState<Message[]>([
     { role: "ai", text: "Now let's understand your professional profile. I'll ask 10 questions about how you work. There are no right or wrong answers — only honest ones." },
     { role: "ai", text: activeQuestions[0] },
   ]);
   const [input, setInput] = useState("");
+  const [followUpInput, setFollowUpInput] = useState("");
   const [qIndex, setQIndex] = useState(0);
   const [complete, setComplete] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages]);
+  }, [messages, pendingFollowUp]);
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -76,6 +80,14 @@ const BehaviouralProfile = ({ assessmentId, questions: questionsProp, onNext, on
     onNext();
   };
 
+  const handleFollowUpSubmit = () => {
+    if (!followUpInput.trim() || !onFollowUpAnswer) return;
+    const answer = followUpInput.trim();
+    setFollowUpInput("");
+    setMessages((prev) => [...prev, { role: "user", text: answer }]);
+    onFollowUpAnswer(answer);
+  };
+
   return (
     <div className="flex flex-col h-full">
       <div className="p-6 pb-2 space-y-4">
@@ -103,10 +115,45 @@ const BehaviouralProfile = ({ assessmentId, questions: questionsProp, onNext, on
             </div>
           </div>
         ))}
+
+        {evaluating && (
+          <div className="flex justify-start">
+            <div className="bg-[hsl(var(--ai-bubble))] rounded-2xl rounded-bl-md px-4 py-3 flex items-center gap-2">
+              <Loader2 size={14} className="animate-spin text-primary" />
+              <span className="text-xs text-muted-foreground">Evaluating your answer...</span>
+            </div>
+          </div>
+        )}
+
+        {pendingFollowUp && (
+          <div className="flex justify-start">
+            <div className="max-w-[85%] rounded-2xl px-4 py-3 text-sm bg-primary/10 border border-primary/30 rounded-bl-md space-y-2">
+              <p className="text-xs font-semibold text-primary">Follow-up Question</p>
+              <p className="text-foreground">{pendingFollowUp}</p>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="p-4 border-t border-border space-y-2">
-        {complete ? (
+        {pendingFollowUp ? (
+          <div className="flex gap-2">
+            <input
+              value={followUpInput}
+              onChange={(e) => setFollowUpInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleFollowUpSubmit()}
+              placeholder="Answer the follow-up..."
+              className="flex-1 bg-secondary border border-primary/30 rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground"
+            />
+            <button
+              onClick={handleFollowUpSubmit}
+              disabled={!followUpInput.trim()}
+              className="bg-primary text-primary-foreground rounded-xl px-4 hover:bg-primary/90 transition-colors disabled:opacity-40"
+            >
+              <Send size={18} />
+            </button>
+          </div>
+        ) : complete ? (
           <button
             onClick={handleComplete}
             className="w-full bg-primary text-primary-foreground font-bold py-3.5 rounded-xl hover:bg-primary/90 transition-colors"
@@ -121,10 +168,11 @@ const BehaviouralProfile = ({ assessmentId, questions: questionsProp, onNext, on
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
               placeholder="Type your answer..."
               className="flex-1 bg-secondary border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground"
+              disabled={evaluating}
             />
             <button
               onClick={handleSend}
-              disabled={!input.trim()}
+              disabled={!input.trim() || evaluating}
               className="bg-primary text-primary-foreground rounded-xl px-4 hover:bg-primary/90 transition-colors disabled:opacity-40"
             >
               <Send size={18} />
@@ -132,7 +180,7 @@ const BehaviouralProfile = ({ assessmentId, questions: questionsProp, onNext, on
           </div>
         )}
         <button
-          onClick={onSkipToEnd || onNext}
+          onClick={onSkipToEnd || (() => onNext())}
           className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors py-1"
         >
           Skip to Certificate (testing only)
