@@ -126,6 +126,7 @@ const BlogPost = () => {
               <meta name="twitter:description" content={desc} />
               {post.image_url && <meta name="twitter:image" content={post.image_url} />}
               <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+              <script type="application/ld+json">{JSON.stringify(breadcrumbLd)}</script>
             </>
           );
         })()}
