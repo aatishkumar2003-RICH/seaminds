@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { trackEvent } from "@/lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload, RefreshCw, Check, FileText, Anchor, Award, HeartPulse } from "lucide-react";
 import { toast } from "sonner";
@@ -165,6 +166,7 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
       setAssessmentId("temp-" + Date.now());
       setView("assessment");
     }
+    trackEvent("smc_assessment_start", { rank });
   };
 
   if (view === "loading") {

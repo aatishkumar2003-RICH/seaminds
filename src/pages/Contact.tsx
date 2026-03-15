@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { trackEvent } from "@/lib/analytics";
 import { ArrowLeft, Mail, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +51,7 @@ const Contact = () => {
       return;
     }
     setSubmitted(true);
+    trackEvent("contact_form_submit", { subject: result.data.subject });
   };
 
   const labelStyle = { color: "#A0AEC0" };
