@@ -26,6 +26,10 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   const [step, setStep] = useState(1);
   const [aiQuestions, setAiQuestions] = useState<{ technical: string[]; communication: string[]; behavioural: string[] } | null>(null);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
+  const [transcript, setTranscript] = useState<Array<{question:string,answer:string,score:number,redFlag:boolean,redFlagCategory:string|null,followUp:string|null}>>([]);
+  const [redFlags, setRedFlags] = useState<Array<{category:string,evidence:string,question:string,answer:string}>>([]);
+  const [pendingFollowUp, setPendingFollowUp] = useState<string|null>(null);
+  const [evaluating, setEvaluating] = useState(false);
 
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -41,13 +45,52 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     fetchQuestions();
   }, [rank]);
 
-  const goNext = () => setStep((s) => Math.min(s + 1, TOTAL_STEPS));
+  const goNext = async (question?: string, answer?: string) => {
+    if (question && answer) {
+      setEvaluating(true);
+      try {
+        const { data } = await supabase.functions.invoke('evaluate-answer', {
+          body: {
+            question, answer,
+            rank,
+            experience_tier: (aiQuestions as any)?.candidate_context?.experience_tier || 'MID',
+            ship_specialisation: (aiQuestions as any)?.candidate_context?.ship_specialisation || 'GENERAL',
+            department: (aiQuestions as any)?.candidate_context?.department || 'DECK',
+          }
+        });
+        const entry = {
+          question, answer,
+          score: data?.score || 5,
+          redFlag: data?.red_flag || false,
+          redFlagCategory: data?.red_flag_category || null,
+          followUp: data?.follow_up_question || null,
+        };
+        setTranscript(prev => [...prev, entry]);
+        if (data?.red_flag && data?.red_flag_evidence) {
+          setRedFlags(prev => [...prev, { category: data.red_flag_category, evidence: data.red_flag_evidence, question, answer }]);
+        }
+        if (data?.follow_up_question) {
+          setPendingFollowUp(data.follow_up_question);
+          setEvaluating(false);
+          return;
+        }
+      } catch { /* silent fail — continue to next step */ }
+      finally { setEvaluating(false); }
+    }
+    setPendingFollowUp(null);
+    setStep(prev => prev + 1);
+  };
+
+  const handleFollowUpAnswer = (followUpAnswer: string) => {
+    setPendingFollowUp(null);
+    setStep(prev => prev + 1);
+  };
+
   const goBack = () => setStep((s) => Math.max(s - 1, 1));
   const skipToEnd = () => setStep(TOTAL_STEPS);
 
   return (
     <div className="flex flex-col h-full">
-      {/* Back button — hidden on final step */}
       {step < TOTAL_STEPS && (
         <div className="p-4 pb-0">
           <button onClick={goBack} className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 text-sm">
@@ -68,7 +111,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
           <DocumentUpload
             assessmentId={assessmentId}
             profileId={profileId}
-            onNext={goNext}
+            onNext={() => goNext()}
             onSkipToEnd={skipToEnd}
           />
         )}
@@ -78,7 +121,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
             rank={rank}
             profileId={profileId}
             assessmentId={assessmentId}
-            onNext={goNext}
+            onNext={() => goNext()}
             onSkipToEnd={skipToEnd}
           />
         )}
@@ -91,6 +134,9 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
             questions={aiQuestions?.technical}
             onNext={goNext}
             onSkipToEnd={skipToEnd}
+            evaluating={evaluating}
+            pendingFollowUp={pendingFollowUp}
+            onFollowUpAnswer={handleFollowUpAnswer}
           />
         )}
         {step === 4 && (
@@ -99,6 +145,9 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
             questions={aiQuestions?.communication}
             onNext={goNext}
             onSkipToEnd={skipToEnd}
+            evaluating={evaluating}
+            pendingFollowUp={pendingFollowUp}
+            onFollowUpAnswer={handleFollowUpAnswer}
           />
         )}
         {step === 5 && (
@@ -107,6 +156,9 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
             questions={aiQuestions?.behavioural}
             onNext={goNext}
             onSkipToEnd={skipToEnd}
+            evaluating={evaluating}
+            pendingFollowUp={pendingFollowUp}
+            onFollowUpAnswer={handleFollowUpAnswer}
           />
         )}
         {step === 6 && (
