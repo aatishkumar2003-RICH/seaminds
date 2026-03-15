@@ -30,7 +30,7 @@ const BlogPost = () => {
       // Try slug first, then id
       let { data } = await supabase
         .from("blog_posts")
-        .select("id, title, content, image_url, language, created_at, region")
+        .select("id, title, content, excerpt, image_url, language, created_at, region")
         .eq("slug", slug)
         .eq("published", true)
         .maybeSingle();
