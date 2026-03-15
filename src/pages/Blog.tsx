@@ -76,10 +76,12 @@ const Blog = () => {
         <meta property="og:description" content="Maritime insights, updates and knowledge for seafarers worldwide. Read articles in English, Filipino, Hindi and Bahasa Indonesia." />
         <meta property="og:url" content="https://seaminds.life/blog" />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+        <meta property="og:image" content="https://seaminds.life/og-image.png" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="SeaMinds Blog — Maritime Insights for Seafarers" />
         <meta name="twitter:description" content="Maritime insights, updates and knowledge for seafarers worldwide." />
+        <meta name="twitter:image" content="https://seaminds.life/og-image.png" />
+        <link rel="alternate" type="application/rss+xml" title="SeaMinds Blog RSS" href="https://seaminds.life/rss.xml" />
         <script type="application/ld+json">{JSON.stringify({
           "@context": "https://schema.org",
           "@type": "BreadcrumbList",

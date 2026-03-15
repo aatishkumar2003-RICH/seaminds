@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Helmet } from "react-helmet-async";
 import HomeNav from "@/components/homepage/HomeNav";
 import HomeFooter from "@/components/homepage/HomeFooter";
 import { useEffect } from "react";
