@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_profiles: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      admin_settings: {
+        Row: {
+          key: string
+          updated_at: string | null
+          value: string
+        }
+        Insert: {
+          key: string
+          updated_at?: string | null
+          value: string
+        }
+        Update: {
+          key?: string
+          updated_at?: string | null
+          value?: string
+        }
+        Relationships: []
+      }
       auth_rate_limits: {
         Row: {
           attempt_count: number
@@ -345,6 +381,8 @@ export type Database = {
       crew_profiles: {
         Row: {
           created_at: string
+          crew_unique_id: string | null
+          date_of_birth: string | null
           email: string | null
           first_name: string
           gender: string | null
@@ -362,6 +400,7 @@ export type Database = {
           nationality: string
           onboarded: boolean
           onboarding_complete: boolean
+          passport_number: string | null
           port_of_joining: string | null
           role: string
           ship_name: string
@@ -374,6 +413,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          crew_unique_id?: string | null
+          date_of_birth?: string | null
           email?: string | null
           first_name: string
           gender?: string | null
@@ -391,6 +432,7 @@ export type Database = {
           nationality?: string
           onboarded?: boolean
           onboarding_complete?: boolean
+          passport_number?: string | null
           port_of_joining?: string | null
           role: string
           ship_name: string
@@ -403,6 +445,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          crew_unique_id?: string | null
+          date_of_birth?: string | null
           email?: string | null
           first_name?: string
           gender?: string | null
@@ -420,6 +464,7 @@ export type Database = {
           nationality?: string
           onboarded?: boolean
           onboarding_complete?: boolean
+          passport_number?: string | null
           port_of_joining?: string | null
           role?: string
           ship_name?: string
@@ -429,6 +474,51 @@ export type Database = {
           voyage_start_date?: string | null
           whatsapp_number?: string
           years_at_sea?: string
+        }
+        Relationships: []
+      }
+      discount_codes: {
+        Row: {
+          active: boolean | null
+          applies_to: string
+          code: string
+          created_at: string | null
+          created_by: string | null
+          discount_type: string
+          discount_value: number
+          id: string
+          max_uses: number | null
+          uses_count: number | null
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          applies_to?: string
+          code: string
+          created_at?: string | null
+          created_by?: string | null
+          discount_type: string
+          discount_value: number
+          id?: string
+          max_uses?: number | null
+          uses_count?: number | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          applies_to?: string
+          code?: string
+          created_at?: string | null
+          created_by?: string | null
+          discount_type?: string
+          discount_value?: number
+          id?: string
+          max_uses?: number | null
+          uses_count?: number | null
+          valid_from?: string | null
+          valid_until?: string | null
         }
         Relationships: []
       }
