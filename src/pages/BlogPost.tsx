@@ -88,6 +88,20 @@ const BlogPost = () => {
       <Helmet>
         {(() => {
           const desc = post.excerpt || post.content.replace(/\n/g, " ").trim().slice(0, 155) + "…";
+          const jsonLd = {
+            "@context": "https://schema.org",
+            "@type": "Article",
+            headline: post.title,
+            description: desc,
+            url: `https://seaminds.life/blog/${slug}`,
+            datePublished: post.created_at,
+            publisher: {
+              "@type": "Organization",
+              name: "SeaMinds",
+              url: "https://seaminds.life",
+            },
+            ...(post.image_url ? { image: post.image_url } : {}),
+          };
           return (
             <>
               <title>{post.title} — SeaMinds Blog</title>
@@ -102,6 +116,7 @@ const BlogPost = () => {
               <meta name="twitter:title" content={post.title} />
               <meta name="twitter:description" content={desc} />
               {post.image_url && <meta name="twitter:image" content={post.image_url} />}
+              <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
             </>
           );
         })()}
