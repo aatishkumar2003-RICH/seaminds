@@ -102,6 +102,15 @@ const BlogPost = () => {
             },
             ...(post.image_url ? { image: post.image_url } : {}),
           };
+          const breadcrumbLd = {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Home", item: "https://seaminds.life" },
+              { "@type": "ListItem", position: 2, name: "Blog", item: "https://seaminds.life/blog" },
+              { "@type": "ListItem", position: 3, name: post.title, item: `https://seaminds.life/blog/${slug}` },
+            ],
+          };
           return (
             <>
               <title>{post.title} — SeaMinds Blog</title>
@@ -117,6 +126,7 @@ const BlogPost = () => {
               <meta name="twitter:description" content={desc} />
               {post.image_url && <meta name="twitter:image" content={post.image_url} />}
               <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+              <script type="application/ld+json">{JSON.stringify(breadcrumbLd)}</script>
             </>
           );
         })()}

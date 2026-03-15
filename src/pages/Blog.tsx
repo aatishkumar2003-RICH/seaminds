@@ -80,6 +80,14 @@ const Blog = () => {
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="SeaMinds Blog — Maritime Insights for Seafarers" />
         <meta name="twitter:description" content="Maritime insights, updates and knowledge for seafarers worldwide." />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://seaminds.life" },
+            { "@type": "ListItem", "position": 2, "name": "Blog", "item": "https://seaminds.life/blog" }
+          ]
+        })}</script>
       </Helmet>
       <HomeNav />
       <div className="max-w-5xl mx-auto px-4 pt-24 pb-16">
