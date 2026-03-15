@@ -116,6 +116,7 @@ const LandingScreen = ({ onGetStarted, onManagerLogin }: LandingScreenProps) => 
         </div>
       ) : (
         <div className="w-full max-w-xs space-y-3">
+          {error && <p className="text-destructive text-xs text-center">{error}</p>}
           <input
             type="email"
             value={email}
