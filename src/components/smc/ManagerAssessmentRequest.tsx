@@ -22,11 +22,12 @@ const ManagerAssessmentRequest = ({ crewProfileId, crewName }: ManagerAssessment
   const [checkingCode, setCheckingCode] = useState(false);
 
   const basePrice = 49;
-  const finalPrice = discountApplied
+  const applyDiscount = (price: number) => discountApplied
     ? discountApplied.type === 'percent'
-      ? Math.max(0, basePrice - (basePrice * discountApplied.value / 100))
-      : Math.max(0, basePrice - discountApplied.value)
-    : basePrice;
+      ? Math.max(0, price - (price * discountApplied.value / 100))
+      : Math.max(0, price - discountApplied.value)
+    : price;
+  const finalPrice = applyDiscount(basePrice);
 
   const applyDiscountCode = async () => {
     if (!discountCode.trim()) return;
