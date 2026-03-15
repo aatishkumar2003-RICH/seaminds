@@ -15,6 +15,7 @@ import Contact from "./pages/Contact";
 import CollegePage from "./pages/CollegePage";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
+import AdminDashboard from "./pages/AdminDashboard";
 
 const queryClient = new QueryClient();
 
