@@ -5,6 +5,7 @@ import StepProgressBar from "./StepProgressBar";
 
 interface Props {
   assessmentId: string;
+  questions?: string[];
   onNext: () => void;
   onSkipToEnd?: () => void;
 }

@@ -8,6 +8,7 @@ interface Props {
   rank: string;
   shipName: string;
   assessmentId: string;
+  questions?: string[];
   onNext: () => void;
   onSkipToEnd?: () => void;
 }
