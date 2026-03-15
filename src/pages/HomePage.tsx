@@ -86,6 +86,7 @@ const HomePage = () => {
         <meta name="description" content="The digital platform for seafarers — wellness, career tools, competency scoring and maritime community." />
         <link rel="canonical" href="https://seaminds.life" />
         <script type="application/ld+json">{JSON.stringify(organizationLd)}</script>
+        <script type="application/ld+json">{JSON.stringify(faqLd)}</script>
       </Helmet>
       <OceanBackground timeOfDay={timeOfDay} />
       <div className="relative z-10">
