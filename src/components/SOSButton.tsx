@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { trackEvent } from "@/lib/analytics";
 import { Phone, ExternalLink, MessageCircle, X, ShieldAlert } from "lucide-react";
 
 interface SOSButtonProps {
