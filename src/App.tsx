@@ -32,6 +32,7 @@ const App = () => (
           <Route path="/manager" element={<ManagerAuth />} />
           <Route path="/manager/dashboard" element={<ManagerDashboard />} />
           <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/colleges" element={<CollegePage />} />

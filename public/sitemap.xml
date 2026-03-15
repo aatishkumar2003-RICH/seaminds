@@ -36,6 +36,11 @@
     <priority>0.4</priority>
   </url>
   <url>
+    <loc>https://seaminds.life/privacy</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
+  </url>
+  <url>
     <loc>https://seaminds.life/manager</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
