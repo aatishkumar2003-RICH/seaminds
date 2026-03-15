@@ -14,3 +14,6 @@ User-agent: *
 Allow: /
 
 Sitemap: https://seaminds.life/sitemap.xml
+
+# RSS Feed
+# https://seaminds.life/rss.xml
