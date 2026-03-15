@@ -297,12 +297,6 @@ const TechnicalAssessment = ({ firstName, rank, shipName, assessmentId, question
             </button>
           </div>
         )}
-        <button
-          onClick={onSkipToEnd || (() => onNext())}
-          className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors py-1"
-        >
-          Skip to Certificate (testing only)
-        </button>
       </div>
     </div>
   );

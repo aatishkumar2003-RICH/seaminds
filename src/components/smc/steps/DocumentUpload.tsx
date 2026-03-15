@@ -116,12 +116,6 @@ const DocumentUpload = ({ assessmentId, profileId, onNext, onSkipToEnd }: Docume
           )}
         </button>
 
-        <button
-          onClick={onSkipToEnd || onNext}
-          className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors py-2"
-        >
-          Skip to Certificate (testing only)
-        </button>
       </div>
     </div>
   );
