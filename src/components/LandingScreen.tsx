@@ -23,13 +23,40 @@ const LandingScreen = ({ onGetStarted, onManagerLogin }: LandingScreenProps) => 
   const [showEmail, setShowEmail] = useState(false);
   const [email, setEmail] = useState("");
   const [emailSent, setEmailSent] = useState(false);
+  const [error, setError] = useState("");
   const handleEmailLogin = async () => {
     if (!email) return;
     if (!(await checkRateLimit())) return;
-    await supabase.auth.signInWithOtp({
+    setError("");
+
+    // Rate limit check
+    const windowStart = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    const { count } = await supabase.from('auth_rate_limits').select('*', { count: 'exact', head: true }).eq('ip_address', `login:${email}`).gte('last_attempt', windowStart);
+    if ((count || 0) >= 5) {
+      setError('Too many login attempts. Please wait 10 minutes before trying again.');
+      return;
+    }
+
+    const { error: authError } = await supabase.auth.signInWithOtp({
       email,
       options: { emailRedirectTo: `${window.location.origin}/app` }
     });
+    if (authError) {
+      setError(authError.message);
+      // Log failed attempt
+      const rl = await supabase.from('auth_rate_limits').select('*').eq('ip_address', `login:${email}`).maybeSingle();
+      const now = new Date().toISOString();
+      if (rl.data) {
+        if (new Date(rl.data.window_start).getTime() < Date.now() - 10 * 60 * 1000) {
+          await supabase.from('auth_rate_limits').update({ attempt_count: 1, window_start: now, last_attempt: now }).eq('ip_address', `login:${email}`);
+        } else {
+          await supabase.from('auth_rate_limits').update({ attempt_count: rl.data.attempt_count + 1, last_attempt: now }).eq('ip_address', `login:${email}`);
+        }
+      } else {
+        await supabase.from('auth_rate_limits').insert({ ip_address: `login:${email}`, attempt_count: 1, window_start: now, last_attempt: now });
+      }
+      return;
+    }
     setEmailSent(true);
   };
 
@@ -89,6 +116,7 @@ const LandingScreen = ({ onGetStarted, onManagerLogin }: LandingScreenProps) => 
         </div>
       ) : (
         <div className="w-full max-w-xs space-y-3">
+          {error && <p className="text-destructive text-xs text-center">{error}</p>}
           <input
             type="email"
             value={email}
