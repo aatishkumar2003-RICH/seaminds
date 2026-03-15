@@ -38,7 +38,7 @@ const BlogPost = () => {
       if (!data) {
         const res = await supabase
           .from("blog_posts")
-          .select("id, title, content, image_url, language, created_at, region")
+          .select("id, title, content, excerpt, image_url, language, created_at, region")
           .eq("id", slug)
           .eq("published", true)
           .maybeSingle();
