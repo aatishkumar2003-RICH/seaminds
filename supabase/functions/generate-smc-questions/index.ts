@@ -8,6 +8,20 @@ const corsHeaders = {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  // ── Rate limiting ──
+  const clientIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+  const rateLimitKey = `generate-smc:${clientIP}`;
+  const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+  const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const { createClient } = await import('jsr:@supabase/supabase-js@2');
+  const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+  const windowStart = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+  const { count } = await adminClient.from('auth_rate_limits').select('*', { count: 'exact', head: true }).eq('identifier', rateLimitKey).gte('attempted_at', windowStart);
+  if ((count || 0) >= 10) {
+    return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please wait before continuing.' }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
+  await adminClient.from('auth_rate_limits').insert({ identifier: rateLimitKey, attempted_at: new Date().toISOString() });
+
   const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
   const { rank, vesselType, yearsExperience, department } = await req.json();
 
