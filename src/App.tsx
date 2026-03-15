@@ -14,6 +14,7 @@ import Pricing from "./pages/Pricing";
 import Contact from "./pages/Contact";
 import CollegePage from "./pages/CollegePage";
 import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/contact" element={<Contact />} />
           <Route path="/colleges" element={<CollegePage />} />
           <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/for-companies" element={<Navigate to="/#companies" replace />} />
           <Route path="/smc-score" element={<Navigate to="/#smc" replace />} />
           <Route path="/jobs" element={<Navigate to="/app" replace />} />
