@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { trackEvent } from "@/lib/analytics";
 import { Shield, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import SMCScoreCertificate from "../SMCScoreCertificate";
