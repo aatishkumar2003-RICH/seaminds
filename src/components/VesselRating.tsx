@@ -98,6 +98,7 @@ const VesselRating = ({ onBack }: VesselRatingProps) => {
       return;
     }
     setSubmitted(true);
+    trackEvent("vessel_rating_submit", { vessel_type: vesselType });
     toast.success("Rating submitted anonymously!");
     loadRecent();
   };
