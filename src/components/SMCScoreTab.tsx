@@ -300,4 +300,121 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
   );
 };
 
+interface CvData {
+  certificates?: { id?: string; name?: string; expiryDate?: string; issueDate?: string; certNumber?: string; [key: string]: any }[];
+  sea_service?: { vessel_name?: string; vesselName?: string; rank?: string; duration?: string; from?: string; to?: string; [key: string]: any }[];
+  medical?: { name?: string; status?: string; expiryDate?: string; [key: string]: any }[];
+}
+
+const DigitalCvSummary = ({ profileId, cvStatus }: { profileId: string; cvStatus: CvStatus }) => {
+  const [cvData, setCvData] = useState<CvData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = useCallback(async () => {
+    if (!profileId) return;
+    const { data } = await supabase
+      .from("crew_cv_data")
+      .select("certificates, sea_service, medical")
+      .eq("user_id", profileId)
+      .maybeSingle();
+    if (data) setCvData(data as unknown as CvData);
+    else setCvData(null);
+    setLoading(false);
+  }, [profileId]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  // Re-fetch when CV parse completes
+  useEffect(() => {
+    if (cvStatus === "done") { setLoading(true); fetchData(); }
+  }, [cvStatus, fetchData]);
+
+  if (loading) return null;
+
+  const hasCerts = cvData?.certificates && cvData.certificates.length > 0;
+  const hasService = cvData?.sea_service && cvData.sea_service.length > 0;
+  const hasMedical = cvData?.medical && cvData.medical.length > 0;
+  const hasData = hasCerts || hasService || hasMedical;
+
+  return (
+    <div className="mx-4 my-3 rounded-2xl p-4" style={{ background: "#0D1B2A", border: "1px solid rgba(212,175,55,0.2)" }}>
+      <h3 className="text-sm font-bold mb-3 flex items-center gap-2" style={{ color: "#D4AF37" }}>
+        <FileText size={15} /> Digital CV Summary
+      </h3>
+
+      {!hasData ? (
+        <p className="text-xs text-center py-4" style={{ color: "#64748B" }}>
+          Upload your CV above to see your Digital CV summary here.
+        </p>
+      ) : (
+        <div className="space-y-4">
+          {/* Certificates */}
+          {hasCerts && (
+            <div>
+              <h4 className="text-xs font-semibold mb-2 flex items-center gap-1.5" style={{ color: "#D4AF37" }}>
+                <Award size={13} /> Certificates
+              </h4>
+              <div className="space-y-1.5">
+                {cvData!.certificates!.map((c, i) => (
+                  <div key={c.id || i} className="flex items-center justify-between rounded-lg px-3 py-2" style={{ background: "rgba(255,255,255,0.03)" }}>
+                    <span className="text-xs text-foreground truncate mr-2">{c.name || "Unnamed"}</span>
+                    {c.expiryDate && (
+                      <span className="text-[10px] shrink-0" style={{ color: "#94A3B8" }}>
+                        Exp: {new Date(c.expiryDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Sea Service */}
+          {hasService && (
+            <div>
+              <h4 className="text-xs font-semibold mb-2 flex items-center gap-1.5" style={{ color: "#D4AF37" }}>
+                <Anchor size={13} /> Sea Service
+              </h4>
+              <div className="space-y-1.5">
+                {cvData!.sea_service!.map((s, i) => (
+                  <div key={i} className="flex items-center justify-between rounded-lg px-3 py-2" style={{ background: "rgba(255,255,255,0.03)" }}>
+                    <div className="min-w-0 mr-2">
+                      <span className="text-xs text-foreground truncate block">{s.vessel_name || s.vesselName || "Unknown vessel"}</span>
+                      {s.rank && <span className="text-[10px]" style={{ color: "#94A3B8" }}>{s.rank}</span>}
+                    </div>
+                    {(s.duration || (s.from && s.to)) && (
+                      <span className="text-[10px] shrink-0" style={{ color: "#94A3B8" }}>
+                        {s.duration || `${s.from} – ${s.to}`}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Medical */}
+          {hasMedical && (
+            <div>
+              <h4 className="text-xs font-semibold mb-2 flex items-center gap-1.5" style={{ color: "#D4AF37" }}>
+                <HeartPulse size={13} /> Medical
+              </h4>
+              <div className="space-y-1.5">
+                {cvData!.medical!.map((m, i) => (
+                  <div key={i} className="flex items-center justify-between rounded-lg px-3 py-2" style={{ background: "rgba(255,255,255,0.03)" }}>
+                    <span className="text-xs text-foreground truncate mr-2">{m.name || "Medical Certificate"}</span>
+                    <span className="text-[10px] shrink-0" style={{ color: m.status === "Expired" ? "#ef4444" : "#22c55e" }}>
+                      {m.status || (m.expiryDate ? `Exp: ${new Date(m.expiryDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}` : "Valid")}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default SMCScoreTab;
