@@ -32,6 +32,9 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
   useEffect(() => {
     checkStatus();
     checkExistingCvData();
+    supabase.from("crew_profiles").select("crew_unique_id").eq("id", profileId).maybeSingle().then(({ data }) => {
+      if (data?.crew_unique_id) setCrewUniqueId(data.crew_unique_id);
+    });
   }, [profileId]);
 
   const checkExistingCvData = async () => {
