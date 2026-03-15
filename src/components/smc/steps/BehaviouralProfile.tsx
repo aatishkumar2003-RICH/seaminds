@@ -10,7 +10,7 @@ interface Props {
   onSkipToEnd?: () => void;
 }
 
-const QUESTIONS = [
+const FALLBACK_QUESTIONS = [
   "Tell me about a time you disagreed with a senior officer's decision. What did you do?",
   "You notice a colleague cutting corners on a safety procedure because they are tired and want to finish quickly. How do you handle it?",
   "You are 50 days into a voyage and two crew members in your department have had a serious argument. As their supervisor, what do you do?",
