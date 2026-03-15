@@ -835,7 +835,7 @@ const Index = () => {
         ) : screen === "resume" ? (
           <ResumeBuilder />
         ) : screen === "certs" ? (
-          <CertWallet />
+          <CertWallet profileId={profileId} />
         ) : screen === "smc" ? (
           <SMCScoreTab profileId={profileId} firstName={firstName} lastName={lastName} rank={role} shipName={shipName} />
         ) : null}
