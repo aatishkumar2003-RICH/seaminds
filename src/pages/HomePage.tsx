@@ -68,20 +68,26 @@ const HomePage = () => {
   }
 
   return (
-  <div className="min-h-screen animated-gradient-bg text-foreground relative">
-    <OceanBackground timeOfDay={timeOfDay} />
-    <div className="relative z-10">
-    <HomeNav />
-    <HeroSection timeOfDay={timeOfDay} />
-    <AppPreviewSection />
-    <HowItWorksSection />
-    <BentoGrid />
-    <CompaniesB2BSection />
-    <TestimonialsSection />
-    <FinalCTA />
-    <HomeFooter />
+    <div className="min-h-screen animated-gradient-bg text-foreground relative">
+      <Helmet>
+        <title>SeaMinds — The Seafarer's Digital Platform</title>
+        <meta name="description" content="The digital platform for seafarers — wellness, career tools, competency scoring and maritime community." />
+        <link rel="canonical" href="https://seaminds.life" />
+        <script type="application/ld+json">{JSON.stringify(organizationLd)}</script>
+      </Helmet>
+      <OceanBackground timeOfDay={timeOfDay} />
+      <div className="relative z-10">
+        <HomeNav />
+        <HeroSection timeOfDay={timeOfDay} />
+        <AppPreviewSection />
+        <HowItWorksSection />
+        <BentoGrid />
+        <CompaniesB2BSection />
+        <TestimonialsSection />
+        <FinalCTA />
+        <HomeFooter />
+      </div>
     </div>
-  </div>
   );
 };
 
