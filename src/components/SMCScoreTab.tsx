@@ -166,6 +166,7 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
       setAssessmentId("temp-" + Date.now());
       setView("assessment");
     }
+    trackEvent("smc_assessment_start", { rank });
   };
 
   if (view === "loading") {
