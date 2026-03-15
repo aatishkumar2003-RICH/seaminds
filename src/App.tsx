@@ -36,6 +36,7 @@ const App = () => (
           <Route path="/colleges" element={<CollegePage />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
+          <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/for-companies" element={<Navigate to="/#companies" replace />} />
           <Route path="/smc-score" element={<Navigate to="/#smc" replace />} />
           <Route path="/jobs" element={<Navigate to="/app" replace />} />
