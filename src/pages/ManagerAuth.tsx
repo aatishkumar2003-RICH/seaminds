@@ -28,10 +28,31 @@ const ManagerAuth = () => {
   const handleLogin = async () => {
     if (!email.trim() || !password) return;
     if (!(await checkRateLimit())) return;
+
+    // Rate limit check
+    const windowStart = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    const { count } = await supabase.from('auth_rate_limits').select('*', { count: 'exact', head: true }).eq('ip_address', `login:${email.trim()}`).gte('last_attempt', windowStart);
+    if ((count || 0) >= 5) {
+      toast.error('Too many login attempts. Please wait 10 minutes before trying again.');
+      return;
+    }
+
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     if (error) {
       toast.error(error.message);
+      // Log failed attempt
+      const rl = await supabase.from('auth_rate_limits').select('*').eq('ip_address', `login:${email.trim()}`).maybeSingle();
+      const now = new Date().toISOString();
+      if (rl.data) {
+        if (new Date(rl.data.window_start).getTime() < Date.now() - 10 * 60 * 1000) {
+          await supabase.from('auth_rate_limits').update({ attempt_count: 1, window_start: now, last_attempt: now }).eq('ip_address', `login:${email.trim()}`);
+        } else {
+          await supabase.from('auth_rate_limits').update({ attempt_count: rl.data.attempt_count + 1, last_attempt: now }).eq('ip_address', `login:${email.trim()}`);
+        }
+      } else {
+        await supabase.from('auth_rate_limits').insert({ ip_address: `login:${email.trim()}`, attempt_count: 1, window_start: now, last_attempt: now });
+      }
       setLoading(false);
       return;
     }
