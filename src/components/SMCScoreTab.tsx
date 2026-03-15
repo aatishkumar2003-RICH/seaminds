@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { trackEvent } from "@/lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload, RefreshCw, Check, FileText, Anchor, Award, HeartPulse } from "lucide-react";
 import { toast } from "sonner";
