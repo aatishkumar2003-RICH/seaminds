@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { trackEvent } from "@/lib/analytics";
 import { Shield, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import SMCScoreCertificate from "../SMCScoreCertificate";
@@ -111,6 +112,7 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, tran
         clearInterval(interval);
         setDisplayScore(finalScore);
         setPhase("done");
+        trackEvent("smc_assessment_complete", { score: finalScore, band, rank });
         try {
           supabase
             .from("smc_assessments")
