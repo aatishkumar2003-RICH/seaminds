@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.evaluate-answer]
 verify_jwt = false
+
+[functions.generate-report]
+verify_jwt = false
