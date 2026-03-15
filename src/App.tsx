@@ -9,6 +9,7 @@ import ManagerAuth from "./pages/ManagerAuth";
 import ManagerDashboard from "./pages/ManagerDashboard";
 import NotFound from "./pages/NotFound";
 import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import { Navigate } from "react-router-dom";
 import Pricing from "./pages/Pricing";
 import Contact from "./pages/Contact";
