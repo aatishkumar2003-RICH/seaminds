@@ -112,6 +112,7 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, tran
         clearInterval(interval);
         setDisplayScore(finalScore);
         setPhase("done");
+        trackEvent("smc_assessment_complete", { score: finalScore, band, rank });
         try {
           supabase
             .from("smc_assessments")
