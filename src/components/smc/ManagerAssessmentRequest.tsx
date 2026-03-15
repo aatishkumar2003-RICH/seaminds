@@ -69,9 +69,7 @@ const ManagerAssessmentRequest = ({ crewProfileId, crewName }: ManagerAssessment
       });
       if (error) throw error;
       if (data?.url) window.open(data.url, "_blank");
-      if (productKey === "manager_assessment") {
-        await incrementDiscountUses();
-      }
+      await incrementDiscountUses();
     } catch (err) {
       console.error("Payment error:", err);
     } finally {
