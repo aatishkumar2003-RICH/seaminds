@@ -206,7 +206,7 @@ Detect the language the crew member writes in and respond in that exact same lan
 - For any other language, mirror it back.
 Maintain the same warm tone, maritime knowledge, and MLC 2006 expertise regardless of language. The critical safety responses must also be delivered in the crew member's language.`;
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {

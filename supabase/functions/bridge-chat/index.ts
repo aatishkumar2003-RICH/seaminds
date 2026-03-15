@@ -27,7 +27,7 @@ KNOWLEDGE AREAS:
 
 Always answer in the language the user writes in.`;
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {

@@ -48,7 +48,7 @@ function getBandInterpretation(label: string): string {
   return map[label] || "";
 }
 
-serve(async (req: Request) => {
+Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }

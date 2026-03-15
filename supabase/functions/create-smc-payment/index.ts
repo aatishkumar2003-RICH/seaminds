@@ -32,7 +32,7 @@ const PAYMENT_TYPES: Record<string, string> = {
   pack_50: "bulk",
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }

@@ -37,7 +37,7 @@ Analyze this image and respond in this EXACT format:
 
 Be technically precise. Read every visible number and code. If unclear, say so honestly.`;
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
