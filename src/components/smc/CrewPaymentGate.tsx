@@ -25,6 +25,10 @@ const EARLY_ACCESS_TOTAL = 1000;
 const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) => {
   const [loading, setLoading] = useState(false);
   const [earlyAccessUsed, setEarlyAccessUsed] = useState<number | null>(null);
+  const [discountCode, setDiscountCode] = useState('');
+  const [discountApplied, setDiscountApplied] = useState<{type:string,value:number,label:string} | null>(null);
+  const [discountError, setDiscountError] = useState('');
+  const [checkingCode, setCheckingCode] = useState(false);
 
   useEffect(() => {
     supabase
@@ -39,10 +43,34 @@ const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) 
   const remaining = earlyAccessUsed !== null ? EARLY_ACCESS_TOTAL - earlyAccessUsed : null;
   const isEarlyAccess = remaining !== null && remaining > 0;
 
+  const basePrice = 29;
+  const finalPrice = discountApplied
+    ? discountApplied.type === 'percent'
+      ? Math.max(0, basePrice - (basePrice * discountApplied.value / 100))
+      : Math.max(0, basePrice - discountApplied.value)
+    : basePrice;
+
+  const applyDiscountCode = async () => {
+    if (!discountCode.trim()) return;
+    setCheckingCode(true);
+    setDiscountError('');
+    const { data } = await supabase.from('discount_codes')
+      .select('*')
+      .eq('code', discountCode.trim().toUpperCase())
+      .eq('active', true)
+      .maybeSingle();
+    if (!data) { setDiscountError('Invalid or expired code.'); setCheckingCode(false); return; }
+    if (data.valid_until && new Date(data.valid_until) < new Date()) { setDiscountError('This code has expired.'); setCheckingCode(false); return; }
+    if (data.max_uses !== null && (data.uses_count ?? 0) >= data.max_uses) { setDiscountError('This code has reached its maximum uses.'); setCheckingCode(false); return; }
+    if (data.applies_to !== 'all' && data.applies_to !== 'self_assessment') { setDiscountError('This code does not apply to this product.'); setCheckingCode(false); return; }
+    const label = data.discount_type === 'percent' ? `${data.discount_value}% off` : `$${data.discount_value} off`;
+    setDiscountApplied({ type: data.discount_type, value: Number(data.discount_value), label });
+    setCheckingCode(false);
+  };
+
   const handleClaim = async () => {
     setLoading(true);
     if (isEarlyAccess) {
-      // Navigate FIRST, database write in background
       onPaymentSuccess();
       try {
         await supabase.from("smc_payments").insert({
@@ -58,11 +86,24 @@ const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) 
     } else {
       try {
         const { data, error } = await supabase.functions.invoke("create-smc-payment", {
-          body: { product_key: "crew_assessment", crew_profile_id: profileId },
+          body: { product_key: "crew_assessment", crew_profile_id: profileId, amount: finalPrice },
         });
         if (error) throw error;
         if (data?.url) {
           window.open(data.url, "_blank");
+        }
+        // Increment discount code uses on successful payment initiation
+        if (discountApplied && discountCode) {
+          const codeUpper = discountCode.trim().toUpperCase();
+          const { data: codeRow } = await supabase.from('discount_codes')
+            .select('uses_count')
+            .eq('code', codeUpper)
+            .maybeSingle();
+          if (codeRow) {
+            await supabase.from('discount_codes')
+              .update({ uses_count: (codeRow.uses_count ?? 0) + 1 })
+              .eq('code', codeUpper);
+          }
         }
       } catch (err) {
         console.error("Payment error:", err);
@@ -100,13 +141,21 @@ const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) 
         <div className="text-center py-4">
           {isEarlyAccess ? (
             <>
-              <p className="text-lg text-muted-foreground line-through">$29</p>
+              <p className="text-lg text-muted-foreground line-through">${basePrice}</p>
               <p className="text-5xl font-bold text-primary gold-glow">FREE</p>
               <p className="text-xs text-muted-foreground mt-2">Early Access · Limited to first 1,000 crew · No credit card needed</p>
             </>
           ) : (
             <>
-              <p className="text-4xl font-bold text-primary gold-glow">$29</p>
+              {discountApplied && finalPrice < basePrice ? (
+                <>
+                  <p className="text-lg text-muted-foreground line-through">${basePrice}</p>
+                  <p className="text-4xl font-bold text-primary gold-glow">${finalPrice.toFixed(2)}</p>
+                  <p className="text-xs mt-1" style={{ color: '#2ecc71' }}>{discountApplied.label}</p>
+                </>
+              ) : (
+                <p className="text-4xl font-bold text-primary gold-glow">${basePrice}</p>
+              )}
               <p className="text-xs text-muted-foreground mt-1">one-time payment · valid 2 years</p>
             </>
           )}
@@ -121,6 +170,26 @@ const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) 
           ))}
         </div>
 
+        {/* Discount code input — only show when not early access */}
+        {!isEarlyAccess && (
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '6px' }}>
+              <input
+                value={discountCode}
+                onChange={e => { setDiscountCode(e.target.value.toUpperCase()); setDiscountApplied(null); setDiscountError(''); }}
+                placeholder="Discount code (optional)"
+                style={{ flex:1, background:'#1a2e47', border:'1px solid #D4AF37', color:'white', padding:'8px 12px', borderRadius:'6px', fontSize:'13px' }}
+              />
+              <button onClick={applyDiscountCode} disabled={checkingCode}
+                style={{ background:'#D4AF37', color:'#0D1B2A', border:'none', padding:'8px 16px', borderRadius:'6px', fontWeight:'bold', cursor:'pointer', fontSize:'13px' }}>
+                {checkingCode ? '...' : 'Apply'}
+              </button>
+            </div>
+            {discountError && <div style={{ color:'#e74c3c', fontSize:'12px' }}>{discountError}</div>}
+            {discountApplied && <div style={{ color:'#2ecc71', fontSize:'12px' }}>✓ {discountApplied.label} applied!</div>}
+          </div>
+        )}
+
         <button
           onClick={handleClaim}
           disabled={loading || remaining === null}
@@ -131,12 +200,12 @@ const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) 
           ) : (
             <Sparkles size={18} />
           )}
-          {loading ? "Processing..." : isEarlyAccess ? "Claim My Free Assessment" : "Pay $29 — Start My Assessment"}
+          {loading ? "Processing..." : isEarlyAccess ? "Claim My Free Assessment" : `Pay $${finalPrice.toFixed(2)} — Start My Assessment`}
         </button>
 
         {isEarlyAccess ? (
           <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
-            After 1,000 crew — standard price $29. Lock in your free assessment now.
+            After 1,000 crew — standard price ${basePrice}. Lock in your free assessment now.
           </p>
         ) : (
           <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
