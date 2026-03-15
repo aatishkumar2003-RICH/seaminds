@@ -30,6 +30,26 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   const [redFlags, setRedFlags] = useState<Array<{category:string,evidence:string,question:string,answer:string}>>([]);
   const [pendingFollowUp, setPendingFollowUp] = useState<string|null>(null);
   const [evaluating, setEvaluating] = useState(false);
+  const [preForm, setPreForm] = useState<{reasonForLeaving:string,expectedSalary:string,availabilityDate:string,medicalFit:boolean,accidentHistory:string,pscDetention:boolean,nearMiss:boolean,safetyViolation:boolean}>({ reasonForLeaving:'', expectedSalary:'', availabilityDate:'', medicalFit:true, accidentHistory:'', pscDetention:false, nearMiss:false, safetyViolation:false });
+  const [preFormDone, setPreFormDone] = useState(false);
+
+  const handlePreFormSubmit = async () => {
+    try {
+      await supabase.from('interview_pre_form' as any).insert({
+        crew_profile_id: profileId,
+        assessment_id: assessmentId,
+        reason_for_leaving: preForm.reasonForLeaving,
+        expected_salary: preForm.expectedSalary,
+        availability_date: preForm.availabilityDate || null,
+        medical_fit: preForm.medicalFit,
+        accident_history: preForm.accidentHistory || null,
+        psc_detention: preForm.pscDetention,
+        near_miss: preForm.nearMiss,
+        safety_violation: preForm.safetyViolation,
+      } as any);
+    } catch { /* silent — non-blocking */ }
+    setPreFormDone(true);
+  };
 
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -88,6 +108,123 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
 
   const goBack = () => setStep((s) => Math.max(s - 1, 1));
   const skipToEnd = () => setStep(TOTAL_STEPS);
+
+  if (!preFormDone) {
+    return (
+      <div className="flex flex-col h-full overflow-y-auto" style={{ background: '#0b1929' }}>
+        <div className="p-5 flex flex-col gap-4 max-w-lg mx-auto w-full">
+          <div className="text-center mb-2">
+            <p className="text-xs uppercase tracking-[0.2em] font-medium" style={{ color: '#D4AF37' }}>Pre-Interview Form</p>
+            <p className="text-[11px] text-muted-foreground mt-1">Help us personalise your assessment</p>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <label className="flex flex-col gap-1">
+              <span className="text-xs font-medium text-muted-foreground">Why did you leave your last company?</span>
+              <input
+                type="text"
+                value={preForm.reasonForLeaving}
+                onChange={e => setPreForm(p => ({ ...p, reasonForLeaving: e.target.value }))}
+                className="w-full rounded-lg px-3 py-2.5 text-sm text-foreground border border-border focus:outline-none focus:border-[#D4AF37]"
+                style={{ background: '#132238' }}
+                placeholder="e.g. Contract ended, better opportunity..."
+              />
+            </label>
+
+            <label className="flex flex-col gap-1">
+              <span className="text-xs font-medium text-muted-foreground">Expected salary (USD/month)</span>
+              <input
+                type="text"
+                value={preForm.expectedSalary}
+                onChange={e => setPreForm(p => ({ ...p, expectedSalary: e.target.value }))}
+                className="w-full rounded-lg px-3 py-2.5 text-sm text-foreground border border-border focus:outline-none focus:border-[#D4AF37]"
+                style={{ background: '#132238' }}
+                placeholder="e.g. 3500"
+              />
+            </label>
+
+            <label className="flex flex-col gap-1">
+              <span className="text-xs font-medium text-muted-foreground">Available from</span>
+              <input
+                type="date"
+                value={preForm.availabilityDate}
+                onChange={e => setPreForm(p => ({ ...p, availabilityDate: e.target.value }))}
+                className="w-full rounded-lg px-3 py-2.5 text-sm text-foreground border border-border focus:outline-none focus:border-[#D4AF37]"
+                style={{ background: '#132238', colorScheme: 'dark' }}
+              />
+            </label>
+
+            <label className="flex items-center gap-3 py-2">
+              <input
+                type="checkbox"
+                checked={preForm.medicalFit}
+                onChange={e => setPreForm(p => ({ ...p, medicalFit: e.target.checked }))}
+                className="w-4 h-4 rounded accent-[#D4AF37]"
+              />
+              <span className="text-sm text-foreground">I am medically fit for sea duty</span>
+            </label>
+
+            <label className="flex flex-col gap-1">
+              <span className="text-xs font-medium text-muted-foreground">Any accident or incident history? (leave blank if none)</span>
+              <textarea
+                value={preForm.accidentHistory}
+                onChange={e => setPreForm(p => ({ ...p, accidentHistory: e.target.value }))}
+                className="w-full rounded-lg px-3 py-2.5 text-sm text-foreground border border-border focus:outline-none focus:border-[#D4AF37] resize-none"
+                style={{ background: '#132238' }}
+                rows={2}
+                placeholder="Describe any incidents..."
+              />
+            </label>
+
+            <label className="flex items-center gap-3 py-1">
+              <input
+                type="checkbox"
+                checked={preForm.pscDetention}
+                onChange={e => setPreForm(p => ({ ...p, pscDetention: e.target.checked }))}
+                className="w-4 h-4 rounded accent-[#D4AF37]"
+              />
+              <span className="text-sm text-foreground">I have been involved in a PSC detention</span>
+            </label>
+
+            <label className="flex items-center gap-3 py-1">
+              <input
+                type="checkbox"
+                checked={preForm.nearMiss}
+                onChange={e => setPreForm(p => ({ ...p, nearMiss: e.target.checked }))}
+                className="w-4 h-4 rounded accent-[#D4AF37]"
+              />
+              <span className="text-sm text-foreground">I have been involved in a near miss onboard</span>
+            </label>
+
+            <label className="flex items-center gap-3 py-1">
+              <input
+                type="checkbox"
+                checked={preForm.safetyViolation}
+                onChange={e => setPreForm(p => ({ ...p, safetyViolation: e.target.checked }))}
+                className="w-4 h-4 rounded accent-[#D4AF37]"
+              />
+              <span className="text-sm text-foreground">I have received a safety violation</span>
+            </label>
+          </div>
+
+          <button
+            onClick={handlePreFormSubmit}
+            className="w-full py-3 rounded-xl font-bold text-sm transition-all mt-2"
+            style={{ background: '#D4AF37', color: '#0b1929' }}
+          >
+            Begin Assessment
+          </button>
+          <button
+            onClick={() => setPreFormDone(true)}
+            className="text-xs text-center py-1 transition-colors"
+            style={{ color: '#888' }}
+          >
+            Skip
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full">
