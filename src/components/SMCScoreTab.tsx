@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Upload, RefreshCw, Check, FileText } from "lucide-react";
+import { Upload, RefreshCw, Check, FileText, Anchor, Award, HeartPulse } from "lucide-react";
 import { toast } from "sonner";
 import CrewPaymentGate from "@/components/smc/CrewPaymentGate";
 import SMCScoreCertificate from "@/components/smc/SMCScoreCertificate";
