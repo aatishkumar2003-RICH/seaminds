@@ -14,6 +14,7 @@ import Pricing from "./pages/Pricing";
 import Contact from "./pages/Contact";
 import CollegePage from "./pages/CollegePage";
 import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 
 const queryClient = new QueryClient();
 
