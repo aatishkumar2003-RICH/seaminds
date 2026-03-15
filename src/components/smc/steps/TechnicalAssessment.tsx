@@ -118,8 +118,8 @@ interface Message {
   text: string;
 }
 
-const TechnicalAssessment = ({ firstName, rank, shipName, assessmentId, onNext, onSkipToEnd }: Props) => {
-  const questions = getQuestions(rank);
+const TechnicalAssessment = ({ firstName, rank, shipName, assessmentId, questions: questionsProp, onNext, onSkipToEnd }: Props) => {
+  const activeQuestions = (questionsProp && questionsProp.length > 0) ? questionsProp : getQuestions(rank);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [qIndex, setQIndex] = useState(-1); // -1 = intro
@@ -143,7 +143,7 @@ const TechnicalAssessment = ({ firstName, rank, shipName, assessmentId, onNext, 
   const handleReady = () => {
     setReady(true);
     setQIndex(0);
-    setMessages((prev) => [...prev, { role: "user", text: "Yes, I'm ready." }, { role: "ai", text: questions[0] }]);
+    setMessages((prev) => [...prev, { role: "user", text: "Yes, I'm ready." }, { role: "ai", text: activeQuestions[0] }]);
   };
 
   const handleSend = () => {
@@ -160,11 +160,11 @@ const TechnicalAssessment = ({ firstName, rank, shipName, assessmentId, onNext, 
       "Noted. Here's the next one.",
     ];
 
-    if (next < questions.length) {
+    if (next < activeQuestions.length) {
       setMessages((prev) => [
         ...prev,
         { role: "user", text: answer },
-        { role: "ai", text: `${ack[next % ack.length]}\n\n${questions[next]}` },
+        { role: "ai", text: `${ack[next % ack.length]}\n\n${activeQuestions[next]}` },
       ]);
       setQIndex(next);
     } else {

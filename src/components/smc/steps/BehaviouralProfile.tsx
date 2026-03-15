@@ -10,7 +10,7 @@ interface Props {
   onSkipToEnd?: () => void;
 }
 
-const QUESTIONS = [
+const FALLBACK_QUESTIONS = [
   "Tell me about a time you disagreed with a senior officer's decision. What did you do?",
   "You notice a colleague cutting corners on a safety procedure because they are tired and want to finish quickly. How do you handle it?",
   "You are 50 days into a voyage and two crew members in your department have had a serious argument. As their supervisor, what do you do?",
@@ -28,10 +28,11 @@ interface Message {
   text: string;
 }
 
-const BehaviouralProfile = ({ assessmentId, onNext, onSkipToEnd }: Props) => {
+const BehaviouralProfile = ({ assessmentId, questions: questionsProp, onNext, onSkipToEnd }: Props) => {
+  const activeQuestions = (questionsProp && questionsProp.length > 0) ? questionsProp : FALLBACK_QUESTIONS;
   const [messages, setMessages] = useState<Message[]>([
     { role: "ai", text: "Now let's understand your professional profile. I'll ask 10 questions about how you work. There are no right or wrong answers — only honest ones." },
-    { role: "ai", text: QUESTIONS[0] },
+    { role: "ai", text: activeQuestions[0] },
   ]);
   const [input, setInput] = useState("");
   const [qIndex, setQIndex] = useState(0);
@@ -48,11 +49,11 @@ const BehaviouralProfile = ({ assessmentId, onNext, onSkipToEnd }: Props) => {
     setInput("");
     const next = qIndex + 1;
 
-    if (next < QUESTIONS.length) {
+    if (next < activeQuestions.length) {
       setMessages((prev) => [
         ...prev,
         { role: "user", text: answer },
-        { role: "ai", text: QUESTIONS[next] },
+        { role: "ai", text: activeQuestions[next] },
       ]);
       setQIndex(next);
     } else {

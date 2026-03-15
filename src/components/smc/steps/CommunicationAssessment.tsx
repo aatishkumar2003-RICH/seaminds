@@ -16,7 +16,7 @@ interface VoiceCard {
   prompt: string;
 }
 
-const CARDS: VoiceCard[] = [
+const DEFAULT_CARDS: VoiceCard[] = [
   {
     id: "routine",
     title: "Routine Communication",
@@ -34,7 +34,10 @@ const CARDS: VoiceCard[] = [
   },
 ];
 
-const CommunicationAssessment = ({ assessmentId, onNext, onSkipToEnd }: Props) => {
+const CommunicationAssessment = ({ assessmentId, questions: questionsProp, onNext, onSkipToEnd }: Props) => {
+  const CARDS: VoiceCard[] = (questionsProp && questionsProp.length >= 3)
+    ? questionsProp.slice(0, 3).map((q, i) => ({ id: DEFAULT_CARDS[i].id, title: DEFAULT_CARDS[i].title, prompt: q }))
+    : DEFAULT_CARDS;
   const [recordings, setRecordings] = useState<Record<string, boolean>>({});
   const [activeRecording, setActiveRecording] = useState<string | null>(null);
   const [timer, setTimer] = useState(0);
