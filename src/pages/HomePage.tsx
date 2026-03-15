@@ -19,7 +19,17 @@ const HomePage = () => {
   const navigate = useNavigate();
   const [authReady, setAuthReady] = useState(false);
 
-  useEffect(() => { document.title = "SeaMinds"; }, []);
+  useEffect(() => { document.title = "SeaMinds — The Seafarer's Digital Platform"; }, []);
+
+  const organizationLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "SeaMinds",
+    url: "https://seaminds.life",
+    logo: "https://seaminds.life/seaminds-logo.png",
+    description: "The digital platform for seafarers — wellness, career tools, competency scoring and maritime community.",
+    sameAs: [],
+  };
 
   // Check auth and redirect authenticated users to /app (with 3s timeout)
   useEffect(() => {
