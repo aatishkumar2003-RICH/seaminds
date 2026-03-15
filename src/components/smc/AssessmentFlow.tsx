@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import DocumentUpload from "./steps/DocumentUpload";
 import DocumentVerification from "./steps/DocumentVerification";
 import TechnicalAssessment from "./steps/TechnicalAssessment";
@@ -14,13 +15,31 @@ interface AssessmentFlowProps {
   rank: string;
   shipName: string;
   assessmentId: string;
+  vesselType?: string;
+  yearsExperience?: number;
   onComplete: () => void;
 }
 
 const TOTAL_STEPS = 6;
 
-const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assessmentId, onComplete }: AssessmentFlowProps) => {
+const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assessmentId, vesselType, yearsExperience, onComplete }: AssessmentFlowProps) => {
   const [step, setStep] = useState(1);
+  const [aiQuestions, setAiQuestions] = useState<{ technical: string[]; communication: string[]; behavioural: string[] } | null>(null);
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
+
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      setLoadingQuestions(true);
+      try {
+        const { data } = await supabase.functions.invoke('generate-smc-questions', {
+          body: { rank, vesselType: vesselType || 'General Cargo', yearsExperience: yearsExperience || 5, department: 'Deck' }
+        });
+        if (data?.technical) setAiQuestions(data);
+      } catch (e) { console.error(e); }
+      finally { setLoadingQuestions(false); }
+    };
+    fetchQuestions();
+  }, [rank]);
 
   const goNext = () => setStep((s) => Math.min(s + 1, TOTAL_STEPS));
   const goBack = () => setStep((s) => Math.max(s - 1, 1));
@@ -38,7 +57,14 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
       )}
 
       <div className="flex-1 overflow-hidden">
-        {step === 1 && (
+        {step === 1 && loadingQuestions && (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-sm font-semibold animate-pulse" style={{ color: "#D4AF37" }}>
+              Preparing your personalised assessment...
+            </p>
+          </div>
+        )}
+        {step === 1 && !loadingQuestions && (
           <DocumentUpload
             assessmentId={assessmentId}
             profileId={profileId}
@@ -62,6 +88,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
             rank={rank}
             shipName={shipName}
             assessmentId={assessmentId}
+            questions={aiQuestions?.technical}
             onNext={goNext}
             onSkipToEnd={skipToEnd}
           />
@@ -69,6 +96,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
         {step === 4 && (
           <CommunicationAssessment
             assessmentId={assessmentId}
+            questions={aiQuestions?.communication}
             onNext={goNext}
             onSkipToEnd={skipToEnd}
           />
@@ -76,6 +104,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
         {step === 5 && (
           <BehaviouralProfile
             assessmentId={assessmentId}
+            questions={aiQuestions?.behavioural}
             onNext={goNext}
             onSkipToEnd={skipToEnd}
           />
