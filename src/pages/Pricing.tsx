@@ -91,6 +91,24 @@ const Pricing = () => {
 
   return (
     <div className="min-h-screen text-foreground" style={{ background: "linear-gradient(180deg, hsl(210 50% 8%) 0%, hsl(210 40% 12%) 50%, hsl(210 50% 8%) 100%)" }}>
+      <Helmet>
+        <title>SeaMinds Pricing — Plans for Seafarers & Companies</title>
+        <meta name="description" content="Simple, transparent pricing for seafarers and shipping companies. Free forever tier, Pro at $9/month, and Company plans." />
+        <link rel="canonical" href="https://seaminds.life/pricing" />
+        <meta property="og:title" content="SeaMinds Pricing — Plans for Seafarers & Companies" />
+        <meta property="og:description" content="Simple, transparent pricing for seafarers and shipping companies." />
+        <meta property="og:url" content="https://seaminds.life/pricing" />
+        <meta property="og:image" content="https://seaminds.life/og-image.png" />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          "mainEntity": faqs.map(f => ({
+            "@type": "Question",
+            "name": f.q,
+            "acceptedAnswer": { "@type": "Answer", "text": f.a }
+          }))
+        })}</script>
+      </Helmet>
       <HomeNav />
 
       <main className="pt-24 pb-16 px-4 sm:px-6">
