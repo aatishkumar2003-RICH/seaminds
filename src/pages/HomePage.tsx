@@ -31,6 +31,18 @@ const HomePage = () => {
     sameAs: [],
   };
 
+  const faqLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      { "@type": "Question", name: "What is SeaMinds?", acceptedAnswer: { "@type": "Answer", text: "SeaMinds is the digital platform for seafarers — offering AI wellness support, the SMC Command Score, maritime academy, job matching, and community tools." }},
+      { "@type": "Question", name: "Is my wellness data private?", acceptedAnswer: { "@type": "Answer", text: "Yes. SeaMinds follows the Sealed Envelope Principle — your wellness data and AI conversations are 100% private and never visible to employers or ship management." }},
+      { "@type": "Question", name: "What is the SMC Score?", acceptedAnswer: { "@type": "Answer", text: "The SeaMinds Command Score is an AI-verified competency rating from 0.00 to 5.00 that covers technical skills, communication, behaviour, and sea experience." }},
+      { "@type": "Question", name: "Is SeaMinds free?", acceptedAnswer: { "@type": "Answer", text: "Yes, SeaMinds offers a free tier with daily mood check-ins, AI wellness chat, community access, and basic job board. Pro and Company plans unlock additional features." }},
+      { "@type": "Question", name: "Is SeaMinds MLC 2006 compliant?", acceptedAnswer: { "@type": "Answer", text: "Yes. SeaMinds is built in full accordance with MLC 2006 seafarer welfare standards." }},
+    ],
+  };
+
   // Check auth and redirect authenticated users to /app (with 3s timeout)
   useEffect(() => {
     let timeout: ReturnType<typeof setTimeout>;
