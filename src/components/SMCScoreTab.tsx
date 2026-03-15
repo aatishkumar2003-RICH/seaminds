@@ -23,6 +23,7 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
   const [view, setView] = useState<View>("loading");
   const [assessmentId, setAssessmentId] = useState("");
   const [salaryOpen, setSalaryOpen] = useState(false);
+  const [crewUniqueId, setCrewUniqueId] = useState<string | null>(null);
 
   // CV parse state
   const [cvStatus, setCvStatus] = useState<CvStatus>("idle");
