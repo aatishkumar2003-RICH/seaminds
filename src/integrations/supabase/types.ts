@@ -465,6 +465,66 @@ export type Database = {
         }
         Relationships: []
       }
+      interview_pre_form: {
+        Row: {
+          accident_history: string | null
+          assessment_id: string | null
+          availability_date: string | null
+          created_at: string | null
+          crew_profile_id: string | null
+          expected_salary: string | null
+          id: string
+          medical_fit: boolean | null
+          near_miss: boolean | null
+          psc_detention: boolean | null
+          reason_for_leaving: string | null
+          safety_violation: boolean | null
+        }
+        Insert: {
+          accident_history?: string | null
+          assessment_id?: string | null
+          availability_date?: string | null
+          created_at?: string | null
+          crew_profile_id?: string | null
+          expected_salary?: string | null
+          id?: string
+          medical_fit?: boolean | null
+          near_miss?: boolean | null
+          psc_detention?: boolean | null
+          reason_for_leaving?: string | null
+          safety_violation?: boolean | null
+        }
+        Update: {
+          accident_history?: string | null
+          assessment_id?: string | null
+          availability_date?: string | null
+          created_at?: string | null
+          crew_profile_id?: string | null
+          expected_salary?: string | null
+          id?: string
+          medical_fit?: boolean | null
+          near_miss?: boolean | null
+          psc_detention?: boolean | null
+          reason_for_leaving?: string | null
+          safety_violation?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interview_pre_form_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "smc_assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "interview_pre_form_crew_profile_id_fkey"
+            columns: ["crew_profile_id"]
+            isOneToOne: false
+            referencedRelation: "crew_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_postings: {
         Row: {
           additional_notes: string | null
