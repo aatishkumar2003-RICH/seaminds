@@ -9,14 +9,18 @@ interface Props {
   lastName: string;
   rank: string;
   onComplete: () => void;
+  transcript?: Array<{question:string,answer:string,score:number,redFlag:boolean,redFlagCategory:string|null,followUp:string|null}>;
+  redFlags?: Array<{category:string,evidence:string,question:string,answer:string}>;
+  candidateContext?: any;
 }
 
 interface Scores {
   technical: number;
-  experience: number;
+  safety: number;
+  operational: number;
+  leadership: number;
   communication: number;
-  behavioural: number;
-  wellness: number;
+  overall: number;
 }
 
 function getRankAbbrev(rank: string): string {
@@ -46,40 +50,46 @@ function getScoreBand(score: number): string {
   return "FOUNDATION";
 }
 
-const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete }: Props) => {
+const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, transcript, redFlags, candidateContext }: Props) => {
   const [phase, setPhase] = useState<"loading" | "counting" | "done">("loading");
   const [displayScore, setDisplayScore] = useState(0);
   const [scores, setScores] = useState<Scores | null>(null);
+  const [report, setReport] = useState<any>(null);
+  const [reportLoading, setReportLoading] = useState(false);
 
   useEffect(() => {
     supabase.functions
       .invoke("score-assessment", {
-        body: { rank, firstName, lastName },
+        body: { rank, firstName, transcript: transcript || [], candidateContext: candidateContext || {} },
       })
       .then(({ data, error }) => {
         if (error || !data?.scores) {
           const fallback: Scores = {
-            technical: +(3.85 + Math.random() * 0.8).toFixed(2),
-            experience: +(3.70 + Math.random() * 0.9).toFixed(2),
-            communication: +(3.60 + Math.random() * 0.7).toFixed(2),
-            behavioural: +(3.75 + Math.random() * 0.6).toFixed(2),
-            wellness: +(3.80 + Math.random() * 0.5).toFixed(2),
+            technical: 5,
+            safety: 5,
+            operational: 5,
+            leadership: 5,
+            communication: 5,
+            overall: 2.50,
           };
           setScores(fallback);
         } else {
           setScores(data.scores);
         }
         setTimeout(() => setPhase("counting"), 500);
+
+        // Generate report
+        setReportLoading(true);
+        supabase.functions.invoke('generate-report', {
+          body: { rank, firstName, transcript: transcript || [], scores: data?.scores || {}, redFlags: redFlags || [], candidateContext: candidateContext || {} }
+        }).then(({ data: rd }) => {
+          if (rd?.report) setReport(rd.report);
+          setReportLoading(false);
+        });
       });
   }, []);
 
-  const overall = scores
-    ? scores.technical * 0.3 +
-      scores.experience * 0.25 +
-      scores.communication * 0.2 +
-      scores.behavioural * 0.15 +
-      scores.wellness * 0.1
-    : 0;
+  const overall = scores?.overall ?? 0;
   const finalScore = Math.round(overall * 100) / 100;
 
   const year = new Date().getFullYear();
@@ -106,7 +116,7 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete }: Pr
             .from("smc_assessments")
             .update({
               overall_score: finalScore,
-              experience_score: scores.experience,
+              experience_score: scores.operational,
               score_band: band,
               certificate_id: certId,
               status: "completed",
@@ -158,24 +168,65 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete }: Pr
   const fullName = [firstName, lastName].filter(Boolean).join(" ");
 
   return (
-    <SMCScoreCertificate
-      data={{
-        overallScore: finalScore,
-        subScores: [
-          { name: "🔧 Technical Competence", score: scores.technical },
-          { name: "📄 Experience Integrity", score: scores.experience },
-          { name: "🗣️ Communication Ability", score: scores.communication },
-          { name: "🧠 Behavioural Profile", score: scores.behavioural },
-          { name: "💚 Wellness Consistency", score: scores.wellness },
-        ],
-        crewName: fullName || "Complete your profile",
-        rank,
-        vesselType: "Tanker",
-        assessmentDate: today.toISOString().split("T")[0],
-        expiryDate: expiry.toISOString().split("T")[0],
-        certificateId: certId,
-      }}
-    />
+    <div className="overflow-y-auto" style={{ maxHeight: '100%' }}>
+      <SMCScoreCertificate
+        data={{
+          overallScore: finalScore,
+          subScores: [
+            { name: "🔧 Technical Competence", score: scores.technical },
+            { name: "🛡️ Safety Awareness", score: scores.safety },
+            { name: "⚙️ Operational Knowledge", score: scores.operational },
+            { name: "👨‍✈️ Leadership & Teamwork", score: scores.leadership },
+            { name: "🗣️ Communication Ability", score: scores.communication },
+          ],
+          crewName: fullName || "Complete your profile",
+          rank,
+          vesselType: "Tanker",
+          assessmentDate: today.toISOString().split("T")[0],
+          expiryDate: expiry.toISOString().split("T")[0],
+          certificateId: certId,
+        }}
+      />
+      {reportLoading && (
+        <div style={{ textAlign:'center', color:'#D4AF37', padding:'16px', fontSize:'14px' }}>
+          Generating your assessment report...
+        </div>
+      )}
+      {report && (
+        <div style={{ marginTop:'24px', display:'flex', flexDirection:'column', gap:'16px' }}>
+          <div style={{ background:'#1a2e47', borderRadius:'8px', padding:'16px' }}>
+            <div style={{ color:'#D4AF37', fontWeight:'bold', marginBottom:'8px', fontSize:'14px' }}>FINDINGS</div>
+            {report.findings?.map((f: string, i: number) => (
+              <div key={i} style={{ color:'#e0e0e0', fontSize:'13px', marginBottom:'6px', paddingLeft:'8px', borderLeft:'2px solid #D4AF37' }}>{f}</div>
+            ))}
+          </div>
+          <div style={{ background:'#1a2e47', borderRadius:'8px', padding:'16px' }}>
+            <div style={{ color:'#D4AF37', fontWeight:'bold', marginBottom:'8px', fontSize:'14px' }}>PROFESSIONAL REMARKS</div>
+            <div style={{ color:'#e0e0e0', fontSize:'13px', lineHeight:'1.6', whiteSpace:'pre-line' }}>{report.remarks}</div>
+          </div>
+          {report.improvement_areas?.length > 0 && (
+            <div style={{ background:'#1a2e47', borderRadius:'8px', padding:'16px' }}>
+              <div style={{ color:'#D4AF37', fontWeight:'bold', marginBottom:'8px', fontSize:'14px' }}>IMPROVEMENT AREAS</div>
+              {report.improvement_areas.map((item: any, i: number) => (
+                <div key={i} style={{ marginBottom:'8px' }}>
+                  <span style={{ background: item.severity==='Critical'?'#c0392b':item.severity==='Moderate'?'#d4801a':'#555', color:'white', borderRadius:'4px', padding:'2px 6px', fontSize:'11px', marginRight:'8px' }}>{item.severity}</span>
+                  <span style={{ color:'#e0e0e0', fontSize:'13px', fontWeight:'bold' }}>{item.area}</span>
+                  <div style={{ color:'#aaa', fontSize:'12px', marginTop:'2px', paddingLeft:'4px' }}>{item.detail}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {report.training_recommendations?.length > 0 && (
+            <div style={{ background:'#1a2e47', borderRadius:'8px', padding:'16px' }}>
+              <div style={{ color:'#D4AF37', fontWeight:'bold', marginBottom:'8px', fontSize:'14px' }}>TRAINING RECOMMENDATIONS</div>
+              {report.training_recommendations.map((r: string, i: number) => (
+                <div key={i} style={{ color:'#e0e0e0', fontSize:'13px', marginBottom:'4px' }}>• {r}</div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 };
 
