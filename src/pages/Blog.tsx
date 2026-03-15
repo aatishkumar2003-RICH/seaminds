@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -67,6 +68,19 @@ const Blog = () => {
 
   return (
     <div className="min-h-screen" style={{ background: "#0D1B2A" }}>
+      <Helmet>
+        <title>SeaMinds Blog — Maritime Insights for Seafarers</title>
+        <meta name="description" content="Maritime insights, updates and knowledge for seafarers worldwide. Read articles in English, Filipino, Hindi and Bahasa Indonesia." />
+        <link rel="canonical" href="https://seaminds.life/blog" />
+        <meta property="og:title" content="SeaMinds Blog — Maritime Insights for Seafarers" />
+        <meta property="og:description" content="Maritime insights, updates and knowledge for seafarers worldwide. Read articles in English, Filipino, Hindi and Bahasa Indonesia." />
+        <meta property="og:url" content="https://seaminds.life/blog" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="SeaMinds Blog — Maritime Insights for Seafarers" />
+        <meta name="twitter:description" content="Maritime insights, updates and knowledge for seafarers worldwide." />
+      </Helmet>
       <HomeNav />
       <div className="max-w-5xl mx-auto px-4 pt-24 pb-16">
         <h1 className="text-3xl md:text-4xl font-bold mb-2" style={{ color: "#E0E6ED" }}>
