@@ -309,7 +309,7 @@ const CertWallet = ({ profileId }: CertWalletProps) => {
                         {badgeText}
                       </span>
                       <button
-                        onClick={() => handleDelete(cert.id)}
+                        onClick={() => setDeleteTarget(cert)}
                         className="p-1 rounded-full hover:bg-secondary transition-colors"
                       >
                         <X size={14} className="text-muted-foreground" />
