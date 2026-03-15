@@ -118,8 +118,8 @@ interface Message {
   text: string;
 }
 
-const TechnicalAssessment = ({ firstName, rank, shipName, assessmentId, onNext, onSkipToEnd }: Props) => {
-  const questions = getQuestions(rank);
+const TechnicalAssessment = ({ firstName, rank, shipName, assessmentId, questions: questionsProp, onNext, onSkipToEnd }: Props) => {
+  const activeQuestions = (questionsProp && questionsProp.length > 0) ? questionsProp : getQuestions(rank);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [qIndex, setQIndex] = useState(-1); // -1 = intro
