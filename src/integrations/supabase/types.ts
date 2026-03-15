@@ -44,8 +44,11 @@ export type Database = {
           created_at: string
           excerpt: string | null
           id: string
+          image_url: string | null
+          language: string
           published: boolean
           region: string | null
+          slug: string | null
           title: string
           updated_at: string
         }
@@ -54,8 +57,11 @@ export type Database = {
           created_at?: string
           excerpt?: string | null
           id?: string
+          image_url?: string | null
+          language?: string
           published?: boolean
           region?: string | null
+          slug?: string | null
           title: string
           updated_at?: string
         }
@@ -64,8 +70,11 @@ export type Database = {
           created_at?: string
           excerpt?: string | null
           id?: string
+          image_url?: string | null
+          language?: string
           published?: boolean
           region?: string | null
+          slug?: string | null
           title?: string
           updated_at?: string
         }
