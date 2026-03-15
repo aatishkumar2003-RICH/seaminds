@@ -49,11 +49,11 @@ const BehaviouralProfile = ({ assessmentId, questions: questionsProp, onNext, on
     setInput("");
     const next = qIndex + 1;
 
-    if (next < QUESTIONS.length) {
+    if (next < activeQuestions.length) {
       setMessages((prev) => [
         ...prev,
         { role: "user", text: answer },
-        { role: "ai", text: QUESTIONS[next] },
+        { role: "ai", text: activeQuestions[next] },
       ]);
       setQIndex(next);
     } else {

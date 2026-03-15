@@ -160,11 +160,11 @@ const TechnicalAssessment = ({ firstName, rank, shipName, assessmentId, question
       "Noted. Here's the next one.",
     ];
 
-    if (next < questions.length) {
+    if (next < activeQuestions.length) {
       setMessages((prev) => [
         ...prev,
         { role: "user", text: answer },
-        { role: "ai", text: `${ack[next % ack.length]}\n\n${questions[next]}` },
+        { role: "ai", text: `${ack[next % ack.length]}\n\n${activeQuestions[next]}` },
       ]);
       setQIndex(next);
     } else {
