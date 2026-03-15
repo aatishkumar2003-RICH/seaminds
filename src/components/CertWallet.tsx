@@ -87,8 +87,10 @@ const CertWallet = ({ profileId }: CertWalletProps) => {
     setShowForm(false);
   };
 
-  const handleDelete = (id: string) => {
-    upsertCerts(certs.filter((c) => c.id !== id));
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+    upsertCerts(certs.filter((c) => c.id !== deleteTarget.id));
+    setDeleteTarget(null);
   };
 
   if (loading) {
