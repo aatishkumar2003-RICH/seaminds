@@ -9,6 +9,7 @@ const navLinks = [
   { label: "For Companies", href: "#companies" },
   { label: "SMC Score", href: "#smc" },
   { label: "Jobs", href: "#jobs" },
+  { label: "Blog", path: "/blog" },
   { label: "Pricing", path: "/pricing" },
   { label: "Colleges", path: "/colleges" },
 ];
