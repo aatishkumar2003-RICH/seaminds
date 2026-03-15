@@ -29,6 +29,8 @@ const VesselOnboardingCard = ({ profileId, existingShipName, existingRole, onBac
   const [vesselType, setVesselType] = useState("");
   const [rank, setRank] = useState(existingRole || "");
   const [portOfJoining, setPortOfJoining] = useState("");
+  const [passportNumber, setPassportNumber] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
   const [saving, setSaving] = useState(false);
 
   const canSubmit = vesselName.trim() && vesselType && rank;
