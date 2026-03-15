@@ -22,11 +22,12 @@ const ManagerAssessmentRequest = ({ crewProfileId, crewName }: ManagerAssessment
   const [checkingCode, setCheckingCode] = useState(false);
 
   const basePrice = 49;
-  const finalPrice = discountApplied
+  const applyDiscount = (price: number) => discountApplied
     ? discountApplied.type === 'percent'
-      ? Math.max(0, basePrice - (basePrice * discountApplied.value / 100))
-      : Math.max(0, basePrice - discountApplied.value)
-    : basePrice;
+      ? Math.max(0, price - (price * discountApplied.value / 100))
+      : Math.max(0, price - discountApplied.value)
+    : price;
+  const finalPrice = applyDiscount(basePrice);
 
   const applyDiscountCode = async () => {
     if (!discountCode.trim()) return;
@@ -68,9 +69,7 @@ const ManagerAssessmentRequest = ({ crewProfileId, crewName }: ManagerAssessment
       });
       if (error) throw error;
       if (data?.url) window.open(data.url, "_blank");
-      if (productKey === "manager_assessment") {
-        await incrementDiscountUses();
-      }
+      await incrementDiscountUses();
     } catch (err) {
       console.error("Payment error:", err);
     } finally {
@@ -106,31 +105,49 @@ const ManagerAssessmentRequest = ({ crewProfileId, crewName }: ManagerAssessment
         <h2 className="text-lg font-bold text-foreground">Assessment Pack Pricing</h2>
         <p className="text-sm text-muted-foreground">Best for manning agencies and fleet operators.</p>
 
+        {/* Discount code input */}
+        <DiscountCodeInput />
+
         <div className="space-y-3">
-          {BULK_PACKS.map((pack) => (
-            <div key={pack.key} className="bg-secondary rounded-xl border border-border p-5 space-y-3">
-              <div className="flex items-baseline justify-between">
-                <div>
-                  <p className="text-lg font-bold text-foreground">{pack.count} Assessments</p>
-                  <p className="text-xs text-muted-foreground">${pack.perUnit.toFixed(2)} per assessment</p>
+          {BULK_PACKS.map((pack) => {
+            const discountedPrice = applyDiscount(pack.price);
+            const hasDiscount = discountApplied && discountedPrice < pack.price;
+            return (
+              <div key={pack.key} className="bg-secondary rounded-xl border border-border p-5 space-y-3">
+                <div className="flex items-baseline justify-between">
+                  <div>
+                    <p className="text-lg font-bold text-foreground">{pack.count} Assessments</p>
+                    <p className="text-xs text-muted-foreground">
+                      {hasDiscount
+                        ? `$${(discountedPrice / pack.count).toFixed(2)} per assessment`
+                        : `$${pack.perUnit.toFixed(2)} per assessment`}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    {hasDiscount ? (
+                      <>
+                        <p className="text-sm text-muted-foreground line-through">${pack.price}</p>
+                        <p className="text-2xl font-bold text-primary">${discountedPrice.toFixed(2)}</p>
+                      </>
+                    ) : (
+                      <p className="text-2xl font-bold text-primary">${pack.price}</p>
+                    )}
+                    <span className="inline-block bg-emerald-500/15 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full mt-1">
+                      Save {pack.savings}
+                    </span>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-primary">${pack.price}</p>
-                  <span className="inline-block bg-emerald-500/15 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full mt-1">
-                    Save {pack.savings}
-                  </span>
-                </div>
+                <button
+                  onClick={() => handlePayment(pack.key, discountedPrice)}
+                  disabled={loading === pack.key}
+                  className="w-full bg-primary text-primary-foreground font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors disabled:opacity-60"
+                >
+                  {loading === pack.key ? <Loader2 size={16} className="animate-spin" /> : <CreditCard size={16} />}
+                  {loading === pack.key ? "Processing..." : `Buy Now — $${discountedPrice.toFixed(2)}`}
+                </button>
               </div>
-              <button
-                onClick={() => handlePayment(pack.key)}
-                disabled={loading === pack.key}
-                className="w-full bg-primary text-primary-foreground font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors disabled:opacity-60"
-              >
-                {loading === pack.key ? <Loader2 size={16} className="animate-spin" /> : <CreditCard size={16} />}
-                {loading === pack.key ? "Processing..." : `Buy Now — $${pack.price}`}
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     );
