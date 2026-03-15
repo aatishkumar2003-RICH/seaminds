@@ -11,6 +11,7 @@ interface BlogPostData {
   id: string;
   title: string;
   content: string;
+  excerpt: string | null;
   image_url: string | null;
   language: string;
   created_at: string;
