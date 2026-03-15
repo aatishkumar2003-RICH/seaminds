@@ -28,10 +28,11 @@ interface Message {
   text: string;
 }
 
-const BehaviouralProfile = ({ assessmentId, onNext, onSkipToEnd }: Props) => {
+const BehaviouralProfile = ({ assessmentId, questions: questionsProp, onNext, onSkipToEnd }: Props) => {
+  const activeQuestions = (questionsProp && questionsProp.length > 0) ? questionsProp : FALLBACK_QUESTIONS;
   const [messages, setMessages] = useState<Message[]>([
     { role: "ai", text: "Now let's understand your professional profile. I'll ask 10 questions about how you work. There are no right or wrong answers — only honest ones." },
-    { role: "ai", text: QUESTIONS[0] },
+    { role: "ai", text: activeQuestions[0] },
   ]);
   const [input, setInput] = useState("");
   const [qIndex, setQIndex] = useState(0);
