@@ -16,7 +16,7 @@ interface VoiceCard {
   prompt: string;
 }
 
-const CARDS: VoiceCard[] = [
+const DEFAULT_CARDS: VoiceCard[] = [
   {
     id: "routine",
     title: "Routine Communication",
