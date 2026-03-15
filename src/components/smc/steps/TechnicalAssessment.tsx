@@ -143,7 +143,7 @@ const TechnicalAssessment = ({ firstName, rank, shipName, assessmentId, question
   const handleReady = () => {
     setReady(true);
     setQIndex(0);
-    setMessages((prev) => [...prev, { role: "user", text: "Yes, I'm ready." }, { role: "ai", text: questions[0] }]);
+    setMessages((prev) => [...prev, { role: "user", text: "Yes, I'm ready." }, { role: "ai", text: activeQuestions[0] }]);
   };
 
   const handleSend = () => {
