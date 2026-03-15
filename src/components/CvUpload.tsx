@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { trackEvent } from "@/lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
 
 interface CvUploadProps {
@@ -90,6 +91,7 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
       onParsed(mapped);
       onFileReady?.(file);
       setStatus("success");
+      trackEvent("cv_upload_success");
     } catch (e) {
       console.error("CV parse error:", e);
       setErrorMsg(e instanceof Error ? e.message : "Could not read CV. Please fill manually.");

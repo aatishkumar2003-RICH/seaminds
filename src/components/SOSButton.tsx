@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { trackEvent } from "@/lib/analytics";
 import { Phone, ExternalLink, MessageCircle, X, ShieldAlert } from "lucide-react";
 
 interface SOSButtonProps {
@@ -17,7 +18,7 @@ const SOSButton = ({ onOpenChat }: SOSButtonProps) => {
     <>
       {/* Floating SOS trigger */}
       <button
-        onClick={() => setOpen(true)}
+        onClick={() => { setOpen(true); trackEvent("sos_button_click"); }}
         className="fixed top-4 right-4 z-50 flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow-lg transition-colors"
         aria-label="SOS Emergency"
       >

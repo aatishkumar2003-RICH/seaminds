@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { trackEvent } from "@/lib/analytics";
 import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -97,6 +98,7 @@ const VesselRating = ({ onBack }: VesselRatingProps) => {
       return;
     }
     setSubmitted(true);
+    trackEvent("vessel_rating_submit", { vessel_type: vesselType });
     toast.success("Rating submitted anonymously!");
     loadRecent();
   };
