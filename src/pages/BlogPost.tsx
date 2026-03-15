@@ -86,18 +86,25 @@ const BlogPost = () => {
   return (
     <div className="min-h-screen" style={{ background: "#0D1B2A" }}>
       <Helmet>
-        <title>{post.title} — SeaMinds Blog</title>
-        <meta name="description" content={post.content.replace(/\n/g, " ").trim().slice(0, 155) + "…"} />
-        <link rel="canonical" href={`https://seaminds.life/blog/${slug}`} />
-        <meta property="og:title" content={post.title} />
-        <meta property="og:description" content={post.content.replace(/\n/g, " ").trim().slice(0, 155) + "…"} />
-        <meta property="og:url" content={`https://seaminds.life/blog/${slug}`} />
-        <meta property="og:type" content="article" />
-        {post.image_url && <meta property="og:image" content={post.image_url} />}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={post.title} />
-        <meta name="twitter:description" content={post.content.replace(/\n/g, " ").trim().slice(0, 155) + "…"} />
-        {post.image_url && <meta name="twitter:image" content={post.image_url} />}
+        {(() => {
+          const desc = post.excerpt || post.content.replace(/\n/g, " ").trim().slice(0, 155) + "…";
+          return (
+            <>
+              <title>{post.title} — SeaMinds Blog</title>
+              <meta name="description" content={desc} />
+              <link rel="canonical" href={`https://seaminds.life/blog/${slug}`} />
+              <meta property="og:title" content={post.title} />
+              <meta property="og:description" content={desc} />
+              <meta property="og:url" content={`https://seaminds.life/blog/${slug}`} />
+              <meta property="og:type" content="article" />
+              {post.image_url && <meta property="og:image" content={post.image_url} />}
+              <meta name="twitter:card" content="summary_large_image" />
+              <meta name="twitter:title" content={post.title} />
+              <meta name="twitter:description" content={desc} />
+              {post.image_url && <meta name="twitter:image" content={post.image_url} />}
+            </>
+          );
+        })()}
       </Helmet>
       <HomeNav />
       <article className="max-w-3xl mx-auto px-4 pt-24 pb-16">
