@@ -60,14 +60,24 @@ Deno.serve(async (req) => {
 
   // ── BUILD DEPARTMENT QUESTION STYLE ───────────────────────────────────
   let deptStyle = "";
-  if (isRating) deptStyle = "This is a RATING rank. Ask only procedural compliance questions: following orders, PPE, basic safety, permit to work, muster duties. NO leadership or technical depth questions.";
-  else if (isCatering) deptStyle = "This is a CATERING rank. Ask questions about food safety, galley hygiene, ISPS awareness, emergency duties, basic ship safety. NO technical navigation or engine questions.";
-  else if (dept.includes("ENGINE") || rankUpper.includes("ENGINEER") || rankUpper.includes("ETO")) deptStyle = "This is an ENGINE DEPARTMENT officer. Ask TECHNICAL DIAGNOSIS questions: machinery systems, alarm responses, maintenance procedures, overhaul sequences. NOT navigation or cargo questions.";
+  if (isRating) {
+    const ratingRole = rankUpper.includes('AB') ? 'Able Seaman (AB)' :
+      rankUpper.includes('OS') ? 'Ordinary Seaman (OS)' :
+      rankUpper.includes('OILER') ? 'Oiler' :
+      rankUpper.includes('FITTER') ? 'Fitter' :
+      rankUpper.includes('MOTORMAN') ? 'Motorman' : 'Rating';
+    deptStyle = `This is a ${ratingRole} rating. Ask ONLY procedural compliance and basic safety questions. Topics: personal safety equipment (PPE), permit to work system, muster duties and emergency stations, basic firefighting equipment locations, lifeboat/liferaft duties, watchkeeping basics, ISPS security awareness, reporting defects to officers, working at height safety, confined space entry basics. For Fitter/Motorman also ask: basic machinery maintenance, lubrication routines, tool safety. For AB also ask: mooring rope handling, anchor operations, lookout duties, helm orders. Do NOT ask navigation, cargo management, engine systems, or leadership questions. Questions must be simple and direct — ratings answer in practical terms not theory.`;
+  } else if (isCatering) {
+    const cateringRole = rankUpper.includes('CHIEF COOK') || rankUpper.includes('CHIEF_COOK') ? 'Chief Cook' :
+      rankUpper.includes('COOK') ? 'Cook' : 'Messman';
+    deptStyle = `This is a ${cateringRole} in the Catering Department. Ask questions about: food safety and hygiene (HACCP basics), galley cleanliness and sanitation, food storage temperatures, allergen awareness, galley fire prevention and fire extinguisher use, emergency muster duties, ISPS security awareness, personal hygiene standards, waste disposal procedures, MLC 2006 crew welfare provisions. For Chief Cook also ask: menu planning for crew nutrition, food budgeting, managing stores, crew dietary requirements. Do NOT ask technical navigation, engine, or cargo questions. Questions must be practical and relevant to daily galley and ship safety duties.`;
+  } else if (dept.includes("ENGINE") || rankUpper.includes("ENGINEER") || rankUpper.includes("ETO")) deptStyle = "This is an ENGINE DEPARTMENT officer. Ask TECHNICAL DIAGNOSIS questions: machinery systems, alarm responses, maintenance procedures, overhaul sequences. NOT navigation or cargo questions.";
   else deptStyle = "This is a DECK DEPARTMENT officer. Ask SCENARIO AND DECISION-MAKING questions: navigation situations, COLREGS, passage planning, cargo operations, safety management. NOT engine machinery questions.";
 
   const numTechnical = isRating || isCatering ? 4 : 5;
   const numComm = isRating || isCatering ? 2 : 3;
   const numBehav = isRating || isCatering ? 2 : 3;
+  const totalQ = numTechnical + numComm + numBehav;
 
   const userMessage = `Generate interview questions for a seafarer with this exact profile:
 Rank: ${rank}
@@ -81,7 +91,7 @@ DEPARTMENT STYLE: ${deptStyle}
 EXPERIENCE DEPTH: ${tierContext[experience_tier]}
 VESSEL SPECIALISATION: ${shipContext[ship_specialisation] || shipContext.GENERAL}
 
-Generate exactly ${numTechnical} technical questions, ${numComm} communication questions, and ${numBehav} behavioural questions.
+Generate exactly ${numTechnical} technical questions, ${numComm} communication questions, and ${numBehav} behavioural questions (${totalQ} total).
 Questions must be specific to this exact profile — NOT generic for all seafarers.
 A ${rank} on a ${vesselType} with ${yearsExperience} years should get completely different questions from a cadet on a bulk carrier.
 
