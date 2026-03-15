@@ -13,6 +13,7 @@ import { Navigate } from "react-router-dom";
 import Pricing from "./pages/Pricing";
 import Contact from "./pages/Contact";
 import CollegePage from "./pages/CollegePage";
+import Blog from "./pages/Blog";
 
 const queryClient = new QueryClient();
 
