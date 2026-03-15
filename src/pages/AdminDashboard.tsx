@@ -17,7 +17,7 @@ import { toast } from "@/components/ui/sonner";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
-const ADMIN_PIN = "seaminds2026admin";
+const ADMIN_PIN = "215151";
 const LS_KEY = "sm_admin_auth";
 
 /* ─── PIN Screen ─── */
