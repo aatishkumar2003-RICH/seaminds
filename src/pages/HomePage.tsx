@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import HomeNav from "@/components/homepage/HomeNav";
 import HeroSection from "@/components/homepage/HeroSection";
 import OceanBackground from "@/components/homepage/OceanBackground";
@@ -18,7 +19,17 @@ const HomePage = () => {
   const navigate = useNavigate();
   const [authReady, setAuthReady] = useState(false);
 
-  useEffect(() => { document.title = "SeaMinds"; }, []);
+  useEffect(() => { document.title = "SeaMinds — The Seafarer's Digital Platform"; }, []);
+
+  const organizationLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "SeaMinds",
+    url: "https://seaminds.life",
+    logo: "https://seaminds.life/seaminds-logo.png",
+    description: "The digital platform for seafarers — wellness, career tools, competency scoring and maritime community.",
+    sameAs: [],
+  };
 
   // Check auth and redirect authenticated users to /app (with 3s timeout)
   useEffect(() => {
@@ -57,20 +68,26 @@ const HomePage = () => {
   }
 
   return (
-  <div className="min-h-screen animated-gradient-bg text-foreground relative">
-    <OceanBackground timeOfDay={timeOfDay} />
-    <div className="relative z-10">
-    <HomeNav />
-    <HeroSection timeOfDay={timeOfDay} />
-    <AppPreviewSection />
-    <HowItWorksSection />
-    <BentoGrid />
-    <CompaniesB2BSection />
-    <TestimonialsSection />
-    <FinalCTA />
-    <HomeFooter />
+    <div className="min-h-screen animated-gradient-bg text-foreground relative">
+      <Helmet>
+        <title>SeaMinds — The Seafarer's Digital Platform</title>
+        <meta name="description" content="The digital platform for seafarers — wellness, career tools, competency scoring and maritime community." />
+        <link rel="canonical" href="https://seaminds.life" />
+        <script type="application/ld+json">{JSON.stringify(organizationLd)}</script>
+      </Helmet>
+      <OceanBackground timeOfDay={timeOfDay} />
+      <div className="relative z-10">
+        <HomeNav />
+        <HeroSection timeOfDay={timeOfDay} />
+        <AppPreviewSection />
+        <HowItWorksSection />
+        <BentoGrid />
+        <CompaniesB2BSection />
+        <TestimonialsSection />
+        <FinalCTA />
+        <HomeFooter />
+      </div>
     </div>
-  </div>
   );
 };
 
