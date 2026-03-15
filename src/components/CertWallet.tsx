@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { ArrowLeft, Plus, X } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -40,7 +41,7 @@ const CertWallet = ({ profileId }: CertWalletProps) => {
   const [issueDate, setIssueDate] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
   const [certNumber, setCertNumber] = useState("");
-
+  const [deleteTarget, setDeleteTarget] = useState<Cert | null>(null);
   const fetchCerts = useCallback(async () => {
     if (!profileId) return;
     const { data, error } = await supabase
@@ -86,8 +87,10 @@ const CertWallet = ({ profileId }: CertWalletProps) => {
     setShowForm(false);
   };
 
-  const handleDelete = (id: string) => {
-    upsertCerts(certs.filter((c) => c.id !== id));
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+    upsertCerts(certs.filter((c) => c.id !== deleteTarget.id));
+    setDeleteTarget(null);
   };
 
   if (loading) {
@@ -306,7 +309,7 @@ const CertWallet = ({ profileId }: CertWalletProps) => {
                         {badgeText}
                       </span>
                       <button
-                        onClick={() => handleDelete(cert.id)}
+                        onClick={() => setDeleteTarget(cert)}
                         className="p-1 rounded-full hover:bg-secondary transition-colors"
                       >
                         <X size={14} className="text-muted-foreground" />
@@ -332,6 +335,27 @@ const CertWallet = ({ profileId }: CertWalletProps) => {
           Add Certificate
         </button>
       </div>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent style={{ background: "#0D1B2A", border: "1px solid rgba(212,175,55,0.3)" }}>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-foreground">Delete Certificate?</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              Are you sure you want to delete <strong className="text-foreground">{deleteTarget?.name}</strong>? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-border text-muted-foreground">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="font-bold"
+              style={{ background: "#ef4444", color: "#fff" }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
