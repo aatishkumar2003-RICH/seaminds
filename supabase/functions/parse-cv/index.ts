@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -27,7 +27,7 @@ For rank use exactly one of: Captain, Chief Officer, 2nd Officer, 3rd Officer, C
 For yearsAtSea use format: Less than 1 year, 1-3 years, 3-7 years, 7-15 years, 15+ years
 Return ONLY the JSON object, no other text.`;
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {

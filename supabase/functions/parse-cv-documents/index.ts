@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,7 +10,7 @@ const SYSTEM_PROMPT = `You are a maritime document expert. Extract data and retu
 {"certificates":[{"name":"","number":"","issue_date":"","expiry_date":"","issuing_authority":"","place":""}],"sea_service":[{"vessel_name":"","vessel_type":"","flag":"","grt":"","rank":"","company":"","sign_on":"","sign_off":""}],"medical":[{"cert_type":"","issue_date":"","expiry_date":"","issuing_authority":""}],"education":[{"institution":"","qualification":"","year_from":"","year_to":""}]}
 Return ONLY the JSON object, no other text, no markdown fences. Use empty arrays if a section has no data.`;
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {

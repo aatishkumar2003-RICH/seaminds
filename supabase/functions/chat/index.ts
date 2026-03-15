@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
@@ -206,7 +206,7 @@ Detect the language the crew member writes in and respond in that exact same lan
 - For any other language, mirror it back.
 Maintain the same warm tone, maritime knowledge, and MLC 2006 expertise regardless of language. The critical safety responses must also be delivered in the crew member's language.`;
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
