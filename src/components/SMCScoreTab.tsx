@@ -250,6 +250,12 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
 
   return (
     <div className="flex flex-col h-full">
+      {crewUniqueId && (
+        <div className="mx-4 mt-3 mb-1 rounded-xl border px-4 py-3 flex items-center gap-3" style={{ background: 'rgba(212,175,55,0.08)', borderColor: '#D4AF37' }}>
+          <span className="text-xs font-semibold" style={{ color: '#D4AF37' }}>Your SeaMinds ID</span>
+          <span className="text-sm font-bold tracking-wide" style={{ color: '#D4AF37' }}>{crewUniqueId}</span>
+        </div>
+      )}
       <CvCard />
       {/* Salary Check Button */}
       <div className="px-4 py-2">

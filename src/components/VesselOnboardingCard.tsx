@@ -132,6 +132,29 @@ const VesselOnboardingCard = ({ profileId, existingShipName, existingRole, onBac
           onChange={(e) => setPortOfJoining(e.target.value)}
         />
 
+        <div style={{ marginBottom: '12px' }}>
+          <label style={{ color: '#D4AF37', fontSize: '13px', display: 'block', marginBottom: '4px' }}>
+            Passport Number <span style={{ color: '#888', fontWeight: 'normal' }}>(optional)</span>
+          </label>
+          <input
+            value={passportNumber}
+            onChange={e => setPassportNumber(e.target.value.toUpperCase())}
+            placeholder="e.g. A12345678"
+            className={inputClass}
+          />
+        </div>
+        <div style={{ marginBottom: '12px' }}>
+          <label style={{ color: '#D4AF37', fontSize: '13px', display: 'block', marginBottom: '4px' }}>
+            Date of Birth <span style={{ color: '#888', fontWeight: 'normal' }}>(optional)</span>
+          </label>
+          <input
+            type="date"
+            value={dateOfBirth}
+            onChange={e => setDateOfBirth(e.target.value)}
+            className={inputClass}
+          />
+        </div>
+
         <button
           onClick={handleSubmit}
           disabled={!canSubmit || saving}
