@@ -607,7 +607,7 @@ const Bridge = ({ profileId }: BridgeProps) => {
           )}
           {/* Save to Pocket */}
           {messages.length >= 2 && messages[messages.length - 1]?.role === "assistant" && !isLoading && (
-            <SaveToPocket messages={messages} />
+            <SaveToPocket messages={messages} onSaved={(item) => savePocket([...pocketItems, item])} />
           )}
           <div ref={chatEndRef} />
         </div>
