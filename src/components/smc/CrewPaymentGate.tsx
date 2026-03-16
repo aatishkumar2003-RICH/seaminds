@@ -24,6 +24,7 @@ const EARLY_ACCESS_TOTAL = 1000;
 
 const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) => {
   const [loading, setLoading] = useState(false);
+  const [basePrice, setBasePrice] = useState(29);
   const [earlyAccessUsed, setEarlyAccessUsed] = useState<number | null>(null);
   const [discountCode, setDiscountCode] = useState('');
   const [discountApplied, setDiscountApplied] = useState<{type:string,value:number,label:string} | null>(null);
@@ -40,10 +41,29 @@ const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) 
       });
   }, []);
 
+  useEffect(() => {
+    const fetchPrice = async () => {
+      const { data: profile } = await supabase.from('crew_profiles').select('nationality').eq('id', profileId).single();
+      const nationality = (profile?.nationality || '').toUpperCase().trim();
+      const countryMap: Record<string,string> = {
+        'PHILIPPINES':'PH','FILIPINO':'PH','INDONESIA':'ID','INDONESIAN':'ID',
+        'INDIA':'IN','INDIAN':'IN','MYANMAR':'MM','BURMESE':'MM',
+        'VIETNAM':'VN','VIETNAMESE':'VN','UKRAINE':'UA','UKRAINIAN':'UA',
+        'RUSSIA':'RU','RUSSIAN':'RU','CHINA':'CN','CHINESE':'CN',
+        'GREECE':'GR','GREEK':'GR','CROATIA':'HR','CROATIAN':'HR',
+        'NIGERIA':'NG','NIGERIAN':'NG','BANGLADESH':'BD','BANGLADESHI':'BD',
+      };
+      const code = countryMap[nationality] || 'DEFAULT';
+      const { data: cp } = await supabase.from('country_pricing').select('price_self_assessment').eq('country_code', code).eq('active', true).maybeSingle();
+      if (cp?.price_self_assessment) { setBasePrice(Number(cp.price_self_assessment)); return; }
+      const { data: def } = await supabase.from('country_pricing').select('price_self_assessment').eq('country_code', 'DEFAULT').single();
+      if (def?.price_self_assessment) setBasePrice(Number(def.price_self_assessment));
+    };
+    if (profileId) fetchPrice();
+  }, [profileId]);
+
   const remaining = earlyAccessUsed !== null ? EARLY_ACCESS_TOTAL - earlyAccessUsed : null;
   const isEarlyAccess = remaining !== null && remaining > 0;
-
-  const basePrice = 29;
   const finalPrice = discountApplied
     ? discountApplied.type === 'percent'
       ? Math.max(0, basePrice - (basePrice * discountApplied.value / 100))

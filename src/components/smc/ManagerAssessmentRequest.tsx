@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AlertTriangle, User, Package, ArrowLeft, Loader2, CreditCard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -21,7 +21,28 @@ const ManagerAssessmentRequest = ({ crewProfileId, crewName }: ManagerAssessment
   const [discountError, setDiscountError] = useState('');
   const [checkingCode, setCheckingCode] = useState(false);
 
-  const basePrice = 49;
+  const [basePrice, setBasePrice] = useState(49);
+
+  useEffect(() => {
+    const fetchPrice = async () => {
+      const { data: profile } = await supabase.from('crew_profiles').select('nationality').eq('id', crewProfileId).single();
+      const nationality = (profile?.nationality || '').toUpperCase().trim();
+      const countryMap: Record<string,string> = {
+        'PHILIPPINES':'PH','FILIPINO':'PH','INDONESIA':'ID','INDONESIAN':'ID',
+        'INDIA':'IN','INDIAN':'IN','MYANMAR':'MM','BURMESE':'MM',
+        'VIETNAM':'VN','VIETNAMESE':'VN','UKRAINE':'UA','UKRAINIAN':'UA',
+        'RUSSIA':'RU','RUSSIAN':'RU','CHINA':'CN','CHINESE':'CN',
+        'GREECE':'GR','GREEK':'GR','CROATIA':'HR','CROATIAN':'HR',
+        'NIGERIA':'NG','NIGERIAN':'NG','BANGLADESH':'BD','BANGLADESHI':'BD',
+      };
+      const code = countryMap[nationality] || 'DEFAULT';
+      const { data: cp } = await supabase.from('country_pricing').select('price_manager_assessment').eq('country_code', code).eq('active', true).maybeSingle();
+      if (cp?.price_manager_assessment) { setBasePrice(Number(cp.price_manager_assessment)); return; }
+      const { data: def } = await supabase.from('country_pricing').select('price_manager_assessment').eq('country_code', 'DEFAULT').single();
+      if (def?.price_manager_assessment) setBasePrice(Number(def.price_manager_assessment));
+    };
+    if (crewProfileId) fetchPrice();
+  }, [crewProfileId]);
   const applyDiscount = (price: number) => discountApplied
     ? discountApplied.type === 'percent'
       ? Math.max(0, price - (price * discountApplied.value / 100))
