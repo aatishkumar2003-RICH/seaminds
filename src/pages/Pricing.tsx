@@ -88,7 +88,22 @@ const faqs = [
 
 const Pricing = () => {
   const navigate = useNavigate();
+  const [prices, setPrices] = useState({ free: 0, pro: 9, company: 49 });
+
   useEffect(() => { document.title = "SeaMinds | Pricing"; }, []);
+
+  useEffect(() => {
+    supabase.from('admin_settings').select('key, value').then(({ data }) => {
+      if (!data) return;
+      const p: Record<string, number> = {};
+      data.forEach(r => { p[r.key] = Number(r.value); });
+      setPrices(prev => ({
+        free: p.price_free ?? prev.free,
+        pro: p.price_pro ?? prev.pro,
+        company: p.price_company ?? prev.company,
+      }));
+    });
+  }, []);
 
   return (
     <div className="min-h-screen text-foreground" style={{ background: "linear-gradient(180deg, hsl(210 50% 8%) 0%, hsl(210 40% 12%) 50%, hsl(210 50% 8%) 100%)" }}>
