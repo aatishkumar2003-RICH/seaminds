@@ -7,13 +7,14 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Helmet } from "react-helmet-async";
 import HomeNav from "@/components/homepage/HomeNav";
 import HomeFooter from "@/components/homepage/HomeFooter";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const tiers = [
   {
     name: "Free",
     subtitle: "First 1,000 crew members",
-    price: "$0",
+    getPrice: (p: any) => `$${p.free}`,
     period: "forever",
     icon: Anchor,
     features: [
@@ -30,7 +31,7 @@ const tiers = [
   {
     name: "Pro",
     subtitle: "Everything you need at sea",
-    price: "$9",
+    getPrice: (p: any) => `$${p.pro}`,
     period: "/month",
     icon: Ship,
     features: [
@@ -49,7 +50,7 @@ const tiers = [
   {
     name: "Company",
     subtitle: "Fleet-wide crew management",
-    price: "$49",
+    getPrice: (p: any) => `$${p.company}`,
     period: "/month",
     icon: Building2,
     features: [
@@ -87,7 +88,22 @@ const faqs = [
 
 const Pricing = () => {
   const navigate = useNavigate();
+  const [prices, setPrices] = useState({ free: 0, pro: 9, company: 49 });
+
   useEffect(() => { document.title = "SeaMinds | Pricing"; }, []);
+
+  useEffect(() => {
+    supabase.from('admin_settings').select('key, value').then(({ data }) => {
+      if (!data) return;
+      const p: Record<string, number> = {};
+      data.forEach(r => { p[r.key] = Number(r.value); });
+      setPrices(prev => ({
+        free: p.price_free ?? prev.free,
+        pro: p.price_pro ?? prev.pro,
+        company: p.price_company ?? prev.company,
+      }));
+    });
+  }, []);
 
   return (
     <div className="min-h-screen text-foreground" style={{ background: "linear-gradient(180deg, hsl(210 50% 8%) 0%, hsl(210 40% 12%) 50%, hsl(210 50% 8%) 100%)" }}>
@@ -157,7 +173,7 @@ const Pricing = () => {
                   <CardTitle className="text-xl font-bold text-foreground">{t.name}</CardTitle>
                   <CardDescription className="text-xs text-muted-foreground">{t.subtitle}</CardDescription>
                   <div className="mt-3">
-                    <span className="text-4xl font-bold" style={{ color: "#D4AF37" }}>{t.price}</span>
+                    <span className="text-4xl font-bold" style={{ color: "#D4AF37" }}>{t.getPrice(prices)}</span>
                     <span className="text-sm text-muted-foreground ml-1">{t.period}</span>
                   </div>
                 </CardHeader>
