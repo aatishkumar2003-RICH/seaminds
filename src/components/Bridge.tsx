@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { ArrowLeft, Search, Send, Loader2, Bookmark, Trash2, Camera } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
 import PhotoAnnotator from "./bridge/PhotoAnnotator";
 import GoDeepCard from "./GoDeepCard";
