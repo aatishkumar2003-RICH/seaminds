@@ -205,6 +205,7 @@ const PRICE_KEYS = [
   { key: "price_free", label: "Free Tier Price ($)" },
   { key: "price_pro", label: "Pro Tier Price ($/month)" },
   { key: "price_company", label: "Company Tier Price ($/month)" },
+  { key: "price_company_annual", label: "Company Annual Plan ($)" },
   { key: "price_self_assessment", label: "Self Assessment ($)" },
   { key: "price_manager_assessment", label: "Manager Assessment ($)" },
   { key: "price_job_single", label: "Job Single ($)" },
