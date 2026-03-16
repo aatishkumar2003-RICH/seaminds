@@ -595,7 +595,7 @@ const Index = () => {
             <LogOut size={14} /> Sign Out
           </button>
           <div className="w-full">
-            <SOSButton onOpenChat={() => setScreen("chat")} />
+            <SOSButton onOpenChat={() => setScreen("chat")} firstName={firstName} shipName={shipName} />
           </div>
         </div>
       </aside>
