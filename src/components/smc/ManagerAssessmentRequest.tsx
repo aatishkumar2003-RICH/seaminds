@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface ManagerAssessmentRequestProps {
   crewProfileId: string;
   crewName: string;
+  onPaymentSuccess?: () => void;
 }
 
 const BULK_PACKS = [
@@ -13,7 +14,7 @@ const BULK_PACKS = [
   { key: "pack_50", count: 50, price: 1499, perUnit: 29.98, savings: "39%" },
 ];
 
-const ManagerAssessmentRequest = ({ crewProfileId, crewName }: ManagerAssessmentRequestProps) => {
+const ManagerAssessmentRequest = ({ crewProfileId, crewName, onPaymentSuccess }: ManagerAssessmentRequestProps) => {
   const [view, setView] = useState<"options" | "bulk">("options");
   const [loading, setLoading] = useState<string | null>(null);
   const [discountCode, setDiscountCode] = useState('');
@@ -49,6 +50,12 @@ const ManagerAssessmentRequest = ({ crewProfileId, crewName }: ManagerAssessment
       : Math.max(0, price - discountApplied.value)
     : price;
   const finalPrice = applyDiscount(basePrice);
+
+  // Bypass payment gate when price is $0
+  if ((basePrice === 0 || finalPrice === 0) && onPaymentSuccess) {
+    onPaymentSuccess();
+    return null;
+  }
 
   const applyDiscountCode = async () => {
     if (!discountCode.trim()) return;
