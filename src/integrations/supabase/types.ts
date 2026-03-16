@@ -116,6 +116,35 @@ export type Database = {
         }
         Relationships: []
       }
+      bridge_pocket: {
+        Row: {
+          crew_profile_id: string | null
+          id: string
+          items: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          crew_profile_id?: string | null
+          id?: string
+          items?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          crew_profile_id?: string | null
+          id?: string
+          items?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bridge_pocket_crew_profile_id_fkey"
+            columns: ["crew_profile_id"]
+            isOneToOne: false
+            referencedRelation: "crew_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_messages: {
         Row: {
           content: string
@@ -230,6 +259,51 @@ export type Database = {
           message?: string
           name?: string
           subject?: string
+        }
+        Relationships: []
+      }
+      country_pricing: {
+        Row: {
+          active: boolean | null
+          country_code: string
+          country_name: string
+          currency: string | null
+          id: string
+          price_job_annual: number | null
+          price_job_monthly: number | null
+          price_job_single: number | null
+          price_manager_assessment: number | null
+          price_self_assessment: number | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          country_code: string
+          country_name: string
+          currency?: string | null
+          id?: string
+          price_job_annual?: number | null
+          price_job_monthly?: number | null
+          price_job_single?: number | null
+          price_manager_assessment?: number | null
+          price_self_assessment?: number | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          country_code?: string
+          country_name?: string
+          currency?: string | null
+          id?: string
+          price_job_annual?: number | null
+          price_job_monthly?: number | null
+          price_job_single?: number | null
+          price_manager_assessment?: number | null
+          price_self_assessment?: number | null
+          updated_at?: string | null
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -827,6 +901,35 @@ export type Database = {
         }
         Relationships: []
       }
+      rest_hours_data: {
+        Row: {
+          crew_profile_id: string | null
+          entries: Json | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          crew_profile_id?: string | null
+          entries?: Json | null
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          crew_profile_id?: string | null
+          entries?: Json | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rest_hours_data_crew_profile_id_fkey"
+            columns: ["crew_profile_id"]
+            isOneToOne: false
+            referencedRelation: "crew_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       safety_reports: {
         Row: {
           category: string
@@ -944,6 +1047,42 @@ export type Database = {
           status?: string
           stripe_session_id?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      sub_admins: {
+        Row: {
+          active: boolean | null
+          assigned_countries: string[] | null
+          created_at: string | null
+          email: string
+          id: string
+          last_login: string | null
+          name: string
+          permissions: Json | null
+          pin: string
+        }
+        Insert: {
+          active?: boolean | null
+          assigned_countries?: string[] | null
+          created_at?: string | null
+          email: string
+          id?: string
+          last_login?: string | null
+          name: string
+          permissions?: Json | null
+          pin: string
+        }
+        Update: {
+          active?: boolean | null
+          assigned_countries?: string[] | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          last_login?: string | null
+          name?: string
+          permissions?: Json | null
+          pin?: string
         }
         Relationships: []
       }
