@@ -450,7 +450,9 @@ function DiscountCodesTab() {
 function DPAContactsTab() {
   const [contacts, setContacts] = useState<any[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [editContact, setEditContact] = useState<any | null>(null);
   const [form, setForm] = useState({ name: "", phone: "", email: "", region: "Global", is_default: false, sort_order: "0" });
+  const [editForm, setEditForm] = useState({ name: "", phone: "", email: "", region: "" });
 
   const load = useCallback(async () => {
     const { data } = await supabase.from("dpa_contacts").select("*").order("sort_order", { ascending: true });
@@ -471,6 +473,22 @@ function DPAContactsTab() {
     load();
   };
 
+  const openEdit = (c: any) => {
+    setEditContact(c);
+    setEditForm({ name: c.name, phone: c.phone, email: c.email || "", region: c.region || "Global" });
+  };
+
+  const saveEdit = async () => {
+    if (!editContact) return;
+    const { error } = await supabase.from("dpa_contacts").update({
+      name: editForm.name, phone: editForm.phone, email: editForm.email || null, region: editForm.region || "Global",
+    }).eq("id", editContact.id);
+    if (error) { toast.error("Failed: " + error.message); return; }
+    toast.success("Contact updated");
+    setEditContact(null);
+    load();
+  };
+
   const toggleField = async (id: string, field: string, value: boolean) => {
     await supabase.from("dpa_contacts").update({ [field]: value }).eq("id", id);
     load();
@@ -485,7 +503,7 @@ function DPAContactsTab() {
     <div className="space-y-4">
       <div className="rounded-lg p-4 border" style={{ background: "#1B2838", borderColor: "#D4AF3744" }}>
         <p className="text-sm" style={{ color: "#D4AF37" }}>
-          ⚠️ Default contacts are shown to ALL crew. Add your company DPA number here — it will appear first when crew triggers SOS.
+          ⚠️ The first active contact with lowest sort order appears first in the SOS modal. Set your company DPA number here — crew will see it when they press SOS.
         </p>
       </div>
 
@@ -497,8 +515,8 @@ function DPAContactsTab() {
         <table className="w-full text-sm" style={{ color: "#E0E0E0" }}>
           <thead>
             <tr style={{ borderBottom: "1px solid #D4AF3744" }}>
-              {["Name", "Phone", "Email", "Region", "Default", "Active", "Sort", ""].map((h) => (
-                <th key={h} className="text-left p-2" style={{ color: "#D4AF37" }}>{h}</th>
+              {["Name", "Phone", "Email", "Region", "Default", "Active", "Sort", "", ""].map((h, i) => (
+                <th key={h + i} className="text-left p-2" style={{ color: "#D4AF37" }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -513,6 +531,12 @@ function DPAContactsTab() {
                 <td className="p-2"><Switch checked={c.active} onCheckedChange={(v) => toggleField(c.id, "active", v)} /></td>
                 <td className="p-2">{c.sort_order}</td>
                 <td className="p-2">
+                  <Button size="sm" variant="outline" onClick={() => openEdit(c)}
+                    style={{ borderColor: "#D4AF37", color: "#D4AF37" }}>
+                    Edit
+                  </Button>
+                </td>
+                <td className="p-2">
                   <Button size="icon" variant="ghost" onClick={() => deleteContact(c.id)}>
                     <Trash2 className="w-4 h-4 text-red-400" />
                   </Button>
@@ -523,6 +547,7 @@ function DPAContactsTab() {
         </table>
       </div>
 
+      {/* Add Contact Dialog */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent style={{ background: "#0D1B2A", borderColor: "#D4AF37" }}>
           <DialogHeader><DialogTitle style={{ color: "#D4AF37" }}>Add DPA Contact</DialogTitle></DialogHeader>
@@ -533,7 +558,7 @@ function DPAContactsTab() {
                 style={{ background: "#1B2838", color: "#E0E0E0", borderColor: "#D4AF37" }} />
             </div>
             <div>
-              <label className="text-sm" style={{ color: "#A0A0A0" }}>Phone *</label>
+              <label className="text-sm" style={{ color: "#A0A0A0" }}>Phone * (with + prefix)</label>
               <Input value={form.phone} onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))}
                 placeholder="+44 20 7323 2737" style={{ background: "#1B2838", color: "#E0E0E0", borderColor: "#D4AF37" }} />
             </div>
@@ -547,18 +572,50 @@ function DPAContactsTab() {
               <Input value={form.region} onChange={(e) => setForm(f => ({ ...f, region: e.target.value }))}
                 placeholder="Global" style={{ background: "#1B2838", color: "#E0E0E0", borderColor: "#D4AF37" }} />
             </div>
-            <div className="flex items-center gap-3">
-              <Switch checked={form.is_default} onCheckedChange={(v) => setForm(f => ({ ...f, is_default: v }))} />
-              <label className="text-sm" style={{ color: "#A0A0A0" }}>Is Default (shown to all crew)</label>
-            </div>
             <div>
               <label className="text-sm" style={{ color: "#A0A0A0" }}>Sort Order</label>
               <Input type="number" value={form.sort_order} onChange={(e) => setForm(f => ({ ...f, sort_order: e.target.value }))}
                 style={{ background: "#1B2838", color: "#E0E0E0", borderColor: "#D4AF37" }} />
             </div>
+            <div className="flex items-center gap-3">
+              <Switch checked={form.is_default} onCheckedChange={(v) => setForm(f => ({ ...f, is_default: v }))} />
+              <label className="text-sm" style={{ color: "#A0A0A0" }}>Is Default (shown to all crew)</label>
+            </div>
           </div>
           <DialogFooter>
             <Button onClick={create} disabled={!form.name || !form.phone} style={{ background: "#D4AF37", color: "#0D1B2A" }}>Add Contact</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Contact Dialog */}
+      <Dialog open={!!editContact} onOpenChange={() => setEditContact(null)}>
+        <DialogContent style={{ background: "#0D1B2A", borderColor: "#D4AF37" }}>
+          <DialogHeader><DialogTitle style={{ color: "#D4AF37" }}>Edit DPA Contact</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm" style={{ color: "#A0A0A0" }}>Name *</label>
+              <Input value={editForm.name} onChange={(e) => setEditForm(f => ({ ...f, name: e.target.value }))}
+                style={{ background: "#1B2838", color: "#E0E0E0", borderColor: "#D4AF37" }} />
+            </div>
+            <div>
+              <label className="text-sm" style={{ color: "#A0A0A0" }}>Phone *</label>
+              <Input value={editForm.phone} onChange={(e) => setEditForm(f => ({ ...f, phone: e.target.value }))}
+                style={{ background: "#1B2838", color: "#E0E0E0", borderColor: "#D4AF37" }} />
+            </div>
+            <div>
+              <label className="text-sm" style={{ color: "#A0A0A0" }}>Email</label>
+              <Input value={editForm.email} onChange={(e) => setEditForm(f => ({ ...f, email: e.target.value }))}
+                style={{ background: "#1B2838", color: "#E0E0E0", borderColor: "#D4AF37" }} />
+            </div>
+            <div>
+              <label className="text-sm" style={{ color: "#A0A0A0" }}>Region</label>
+              <Input value={editForm.region} onChange={(e) => setEditForm(f => ({ ...f, region: e.target.value }))}
+                style={{ background: "#1B2838", color: "#E0E0E0", borderColor: "#D4AF37" }} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={saveEdit} disabled={!editForm.name || !editForm.phone} style={{ background: "#D4AF37", color: "#0D1B2A" }}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
