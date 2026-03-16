@@ -14,7 +14,7 @@ const tiers = [
   {
     name: "Free",
     subtitle: "First 1,000 crew members",
-    price: "$0",
+    getPrice: (p: any) => `$${p.free}`,
     period: "forever",
     icon: Anchor,
     features: [
