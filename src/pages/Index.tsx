@@ -819,7 +819,7 @@ const Index = () => {
         ) : screen === "dashboard" ? (
           profileComplete ? (onboardingComplete ? <WelfareDashboard shipName={shipName} /> : vesselOnboardingUI) : profileGateUI
         ) : screen === "resthours" ? (
-          profileComplete ? (onboardingComplete ? <RestHoursTracker onNavigate={(s: Screen) => setScreen(s)} /> : vesselOnboardingUI) : profileGateUI
+          profileComplete ? (onboardingComplete ? <RestHoursTracker onNavigate={(s: Screen) => setScreen(s)} profileId={profileId} /> : vesselOnboardingUI) : profileGateUI
         ) : screen === "community" ? (
           profileComplete ? (onboardingComplete ? <Community profileId={profileId} shipName={shipName} manningAgency={manningAgency} firstName={firstName} voyageStartDate={voyageStartDate} onCompleteVoyage={() => setAppState("voyage-report")} onOpenVesselRating={() => setScreen("vesselrating")} /> : vesselOnboardingUI) : profileGateUI
         ) : screen === "opportunities" ? (
