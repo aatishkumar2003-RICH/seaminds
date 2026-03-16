@@ -50,7 +50,7 @@ const tiers = [
   {
     name: "Company",
     subtitle: "Fleet-wide crew management",
-    price: "$49",
+    getPrice: (p: any) => `$${p.company}`,
     period: "/month",
     icon: Building2,
     features: [
