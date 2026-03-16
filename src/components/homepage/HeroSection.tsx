@@ -15,7 +15,6 @@ const HeroSection = ({ timeOfDay = "day" }: Props) => {
     <section className="relative pt-28 pb-16 md:pt-32 md:pb-20 overflow-hidden">
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
         <div className="max-w-3xl mx-auto">
-          {/* Left column */}
           <div className="text-center">
             <p className="text-xs uppercase tracking-[0.3em] text-primary mb-4 font-mono-score">
               AI-Powered Maritime Platform
@@ -32,7 +31,6 @@ const HeroSection = ({ timeOfDay = "day" }: Props) => {
             <p className="text-muted-foreground text-sm md:text-base max-w-xl mx-auto mb-8">
               Built from 12 months of research with 10,000+ seafarers. Because the people at sea should design what the people at sea use.
             </p>
-            {/* Feature pills — auto-scrolling ticker on desktop */}
             <div className="mb-6 overflow-hidden scrollbar-hide">
               <div className="flex flex-row flex-nowrap gap-2 justify-center lg:animate-pill-drift pb-1 overflow-x-auto lg:overflow-visible" style={{ scrollbarWidth: "none" }}>
                 {[...Array(2)].flatMap((_, dupeIdx) =>
@@ -43,7 +41,7 @@ const HeroSection = ({ timeOfDay = "day" }: Props) => {
                   ].map((pill) => (
                     <button
                       key={`${pill}-${dupeIdx}`}
-                      onClick={() => document.getElementById("features-section")?.scrollIntoView({ behavior: "smooth" })}
+                      onClick={() => navigate('/app')}
                       className="shrink-0 rounded-full px-3.5 py-1.5 text-[11px] font-semibold whitespace-nowrap text-primary transition-colors hover:bg-primary/15"
                       style={{
                         border: "1px solid hsl(var(--primary) / 0.5)",
@@ -58,10 +56,10 @@ const HeroSection = ({ timeOfDay = "day" }: Props) => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">
-              <Button size="lg" onClick={() => window.location.href = '/app'} className="text-sm px-6 h-11">
+              <Button size="lg" onClick={() => navigate('/app')} className="text-sm px-6 h-11">
                 I Am Crew — Get Started Free <ChevronRight className="ml-1 w-4 h-4" />
               </Button>
-              <Button size="lg" variant="outline" onClick={() => window.location.href = '/app'} className="text-sm px-6 h-11">
+              <Button size="lg" variant="outline" onClick={() => navigate('/for-companies')} className="text-sm px-6 h-11">
                 I Am a Company — Hire Verified Crew
               </Button>
             </div>

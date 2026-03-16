@@ -8,10 +8,10 @@ const HomeFooter = () => {
     {
       title: "Platform",
       links: [
-        { label: "SMC Score", action: () => navigate("/app") },
+        { label: "SMC Score", action: () => navigate("/smc-score") },
         { label: "Wellness", action: () => navigate("/app") },
         { label: "Academy", action: () => navigate("/app") },
-        { label: "Jobs", action: () => navigate("/app") },
+        { label: "Jobs", action: () => navigate("/jobs") },
         { label: "Community", action: () => navigate("/app") },
         { label: "Pricing", action: () => navigate("/pricing") },
       ],
@@ -19,16 +19,16 @@ const HomeFooter = () => {
     {
       title: "For Companies",
       links: [
-        { label: "Hire Crew", action: () => navigate("/app") },
-        { label: "Bulk Assessments", action: () => navigate("/app") },
-        { label: "Company Login", action: () => navigate("/app") },
-        { label: "Request Demo", action: () => navigate("/app") },
+        { label: "Hire Crew", action: () => navigate("/for-companies") },
+        { label: "Bulk Assessments", action: () => navigate("/for-companies") },
+        { label: "Company Login", action: () => navigate("/manager") },
+        { label: "Request Demo", action: () => navigate("/for-companies") },
       ],
     },
     {
       title: "Resources",
       links: [
-        { label: "Maritime News", action: () => navigate("/app") },
+        { label: "Maritime News", action: () => navigate("/blog") },
         { label: "Safety Reports", action: () => navigate("/app") },
         { label: "MLC 2006", action: () => navigate("/app") },
         { label: "Contact", action: () => navigate("/contact") },
@@ -37,7 +37,7 @@ const HomeFooter = () => {
     {
       title: "Company",
       links: [
-        { label: "About", action: () => navigate("/app") },
+        { label: "About", action: () => navigate("/contact") },
         { label: "Privacy Policy", action: () => navigate("/privacy") },
         { label: "Terms of Service", action: () => navigate("/terms") },
       ],
