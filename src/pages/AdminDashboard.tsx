@@ -485,6 +485,8 @@ export default function AdminDashboard() {
       {tab === "crew" && <CrewSearchTab />}
       {tab === "pricing" && <PricingTab />}
       {tab === "discount" && <DiscountCodesTab />}
+      {tab === "country_pricing" && <CountryPricingTab />}
+      {tab === "sub_admins" && <SubAdminsTab />}
     </div>
   );
 }
