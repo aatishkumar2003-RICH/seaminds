@@ -14,7 +14,7 @@ const BULK_PACKS = [
   { key: "pack_50", count: 50, price: 1499, perUnit: 29.98, savings: "39%" },
 ];
 
-const ManagerAssessmentRequest = ({ crewProfileId, crewName }: ManagerAssessmentRequestProps) => {
+const ManagerAssessmentRequest = ({ crewProfileId, crewName, onPaymentSuccess }: ManagerAssessmentRequestProps) => {
   const [view, setView] = useState<"options" | "bulk">("options");
   const [loading, setLoading] = useState<string | null>(null);
   const [discountCode, setDiscountCode] = useState('');
