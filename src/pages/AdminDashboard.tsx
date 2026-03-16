@@ -457,6 +457,8 @@ export default function AdminDashboard() {
     { id: "crew" as const, label: "Crew Search" },
     { id: "pricing" as const, label: "Pricing" },
     { id: "discount" as const, label: "Discount Codes" },
+    { id: "country_pricing" as const, label: "Country Pricing" },
+    { id: "sub_admins" as const, label: "Sub-Admins" },
   ];
 
   return (
