@@ -51,6 +51,12 @@ const ManagerAssessmentRequest = ({ crewProfileId, crewName, onPaymentSuccess }:
     : price;
   const finalPrice = applyDiscount(basePrice);
 
+  // Bypass payment gate when price is $0
+  if ((basePrice === 0 || finalPrice === 0) && onPaymentSuccess) {
+    onPaymentSuccess();
+    return null;
+  }
+
   const applyDiscountCode = async () => {
     if (!discountCode.trim()) return;
     setCheckingCode(true);
