@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 
 const navLinks = [
-  { label: "For Seafarers", path: "/for-seafarers" },
+  { label: "For Seafarers", path: "/app" },
   { label: "For Companies", path: "/for-companies" },
   { label: "SMC Score", path: "/smc-score" },
   { label: "Jobs", path: "/jobs" },
