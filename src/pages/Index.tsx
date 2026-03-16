@@ -329,7 +329,7 @@ const Index = () => {
   if (appState === "landing") {
     return (
       <div className="h-screen max-w-md mx-auto bg-background">
-        <SOSButton onOpenChat={() => { setAppState("main"); setScreen("chat"); }} />
+        <SOSButton onOpenChat={() => { setAppState("main"); setScreen("chat"); }} firstName={firstName} shipName={shipName} />
         <LandingScreen onGetStarted={() => setAppState("name-entry")} onManagerLogin={() => navigate("/manager")} />
       </div>
     );
