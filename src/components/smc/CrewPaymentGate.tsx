@@ -70,6 +70,12 @@ const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) 
       : Math.max(0, basePrice - discountApplied.value)
     : basePrice;
 
+  // Bypass payment gate when price is $0
+  if (basePrice === 0 || finalPrice === 0) {
+    onPaymentSuccess();
+    return null;
+  }
+
   const applyDiscountCode = async () => {
     if (!discountCode.trim()) return;
     setCheckingCode(true);

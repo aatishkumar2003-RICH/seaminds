@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface ManagerAssessmentRequestProps {
   crewProfileId: string;
   crewName: string;
+  onPaymentSuccess?: () => void;
 }
 
 const BULK_PACKS = [
