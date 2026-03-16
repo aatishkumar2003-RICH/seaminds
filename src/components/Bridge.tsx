@@ -7,14 +7,13 @@ import GoDeepCard from "./GoDeepCard";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
-const SaveToPocket = ({ messages }: { messages: Msg[] }) => {
+const SaveToPocket = ({ messages, onSaved }: { messages: Msg[]; onSaved?: (item: any) => void }) => {
   const [saved, setSaved] = useState(false);
   const handleSave = () => {
     const lastUser = [...messages].reverse().find(m => m.role === "user")?.content || "";
     const lastAssistant = [...messages].reverse().find(m => m.role === "assistant")?.content || "";
-    const existing = JSON.parse(localStorage.getItem("bridge_pocket") || "[]");
-    existing.push({ query: lastUser, answer: lastAssistant, savedAt: new Date().toISOString() });
-    localStorage.setItem("bridge_pocket", JSON.stringify(existing));
+    const item = { query: lastUser, answer: lastAssistant, savedAt: new Date().toISOString() };
+    onSaved?.(item);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
