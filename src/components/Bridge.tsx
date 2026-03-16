@@ -204,11 +204,23 @@ const Bridge = ({ profileId }: BridgeProps) => {
       return;
     }
     supabase.from('bridge_pocket').select('items').eq('crew_profile_id', profileId).maybeSingle()
-      .then(({ data }) => {
-        if (data?.items) setPocketItems(data.items as any[]);
-        else {
+      .then(async ({ data }) => {
+        if (data?.items) {
+          setPocketItems(data.items as any[]);
+        } else {
           const local = localStorage.getItem('bridge_pocket');
-          if (local) try { setPocketItems(JSON.parse(local)); } catch {}
+          if (local) {
+            try {
+              const parsed = JSON.parse(local);
+              setPocketItems(parsed);
+              if (parsed.length > 0) {
+                await supabase.from('bridge_pocket').upsert(
+                  { crew_profile_id: profileId, items: parsed as any, updated_at: new Date().toISOString() },
+                  { onConflict: 'crew_profile_id' }
+                );
+              }
+            } catch {}
+          }
         }
       });
   }, [profileId]);
