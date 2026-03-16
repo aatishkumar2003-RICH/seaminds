@@ -1,15 +1,23 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ShieldCheck, BarChart3, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-const benefits = [
-  { icon: ShieldCheck, title: "Verify Before You Hire", desc: "Access AI-verified competency scores before the interview. Reduce vetting time by 70%." },
-  { icon: BarChart3, title: "Reduce PSC Risk", desc: "Hire crew with verified technical knowledge scores. One avoided deficiency saves more than the assessment cost." },
-  { icon: Package, title: "Bulk Assessment Packages", desc: "Assess your entire crew pool. From $399 for 10 assessments." },
-];
+import { supabase } from "@/integrations/supabase/client";
 
 const CompaniesSection = () => {
   const navigate = useNavigate();
+  const [companyPrice, setCompanyPrice] = useState(0);
+
+  useEffect(() => {
+    supabase.from('admin_settings').select('value').eq('key', 'price_company_annual').single()
+      .then(({ data }) => { if (data?.value) setCompanyPrice(Number(data.value)); });
+  }, []);
+
+  const benefits = [
+    { icon: ShieldCheck, title: "Verify Before You Hire", desc: "Access AI-verified competency scores before the interview. Reduce vetting time by 70%." },
+    { icon: BarChart3, title: "Reduce PSC Risk", desc: "Hire crew with verified technical knowledge scores. One avoided deficiency saves more than the assessment cost." },
+    { icon: Package, title: "Bulk Assessment Packages", desc: `Assess your entire crew pool. From ${companyPrice === 0 ? 'Free' : '$' + companyPrice} for 10 assessments.` },
+  ];
 
   return (
     <section id="companies" className="py-20 md:py-28" style={{ background: "hsl(0 0% 97%)" }}>
@@ -33,7 +41,7 @@ const CompaniesSection = () => {
           ))}
         </div>
 
-        <Button size="lg" onClick={() => window.location.href = '/app'} className="text-base px-8 h-12">
+        <Button size="lg" onClick={() => navigate('/for-companies')} className="text-base px-8 h-12">
           Request Company Demo
         </Button>
       </div>

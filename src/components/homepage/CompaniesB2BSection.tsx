@@ -1,5 +1,7 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 const benefits = [
   { icon: "🛡️", title: "Verified Crew Before You Hire", desc: "SMC scores give you certified competency data before signing any contract. Reduce vetting time 70%." },
@@ -19,6 +21,12 @@ const features = [
 
 const CompaniesB2BSection = () => {
   const navigate = useNavigate();
+  const [jobPrice, setJobPrice] = useState(0);
+
+  useEffect(() => {
+    supabase.from('admin_settings').select('value').eq('key', 'price_job_monthly').single()
+      .then(({ data }) => { if (data?.value) setJobPrice(Number(data.value)); });
+  }, []);
 
   return (
     <section id="companies" className="max-w-5xl mx-auto px-6 py-16">
@@ -51,7 +59,9 @@ const CompaniesB2BSection = () => {
             }}
           >
             <p className="text-sm text-muted-foreground mb-1">Company Plan</p>
-            <p className="text-3xl font-bold text-primary mb-1">$99 <span className="text-base font-normal text-muted-foreground">/ vessel / month</span></p>
+            <p className="text-3xl font-bold text-primary mb-1">
+              {jobPrice === 0 ? 'Free' : '$' + jobPrice} <span className="text-base font-normal text-muted-foreground">/ vessel / month</span>
+            </p>
             <p className="text-xs text-muted-foreground mb-6">Minimum 1 vessel. Cancel anytime.</p>
 
             <ul className="space-y-3 mb-8">
