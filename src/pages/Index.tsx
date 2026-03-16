@@ -829,7 +829,7 @@ const Index = () => {
         ) : screen === "academy" ? (
           <Academy />
         ) : screen === "bridge" ? (
-          <Bridge />
+          <Bridge profileId={profileId} />
         ) : screen === "vesselrating" ? (
           <VesselRating onBack={() => setScreen("community")} />
         ) : screen === "resume" ? (

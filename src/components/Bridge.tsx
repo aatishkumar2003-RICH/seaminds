@@ -162,7 +162,11 @@ async function streamBridgeChat({
   onDone();
 }
 
-const Bridge = () => {
+interface BridgeProps {
+  profileId?: string;
+}
+
+const Bridge = ({ profileId }: BridgeProps) => {
   const [searchValue, setSearchValue] = useState("");
   const [activeDept, setActiveDept] = useState<typeof EQUIPMENT_REGISTER[number] | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -180,15 +184,42 @@ const Bridge = () => {
   const [rawPhotoSrc, setRawPhotoSrc] = useState<string | null>(null);
   const [activeEquipment, setActiveEquipment] = useState<null | {name:string; code:string; critical:boolean; tasks:string[]}>(null);
 
+  const savePocket = async (updated: any[]) => {
+    setPocketItems(updated);
+    localStorage.setItem("bridge_pocket", JSON.stringify(updated));
+    if (profileId) {
+      await supabase.from('bridge_pocket').upsert(
+        { crew_profile_id: profileId, items: updated as any, updated_at: new Date().toISOString() },
+        { onConflict: 'crew_profile_id' }
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (!profileId) {
+      try {
+        const local = localStorage.getItem("bridge_pocket");
+        if (local) setPocketItems(JSON.parse(local));
+      } catch {}
+      return;
+    }
+    supabase.from('bridge_pocket').select('items').eq('crew_profile_id', profileId).maybeSingle()
+      .then(({ data }) => {
+        if (data?.items) setPocketItems(data.items as any[]);
+        else {
+          const local = localStorage.getItem('bridge_pocket');
+          if (local) try { setPocketItems(JSON.parse(local)); } catch {}
+        }
+      });
+  }, [profileId]);
+
   const loadPocket = () => {
-    const items = JSON.parse(localStorage.getItem("bridge_pocket") || "[]");
-    setPocketItems(items);
+    setShowPocket(true);
   };
 
   const deletePocketItem = (index: number) => {
     const updated = pocketItems.filter((_, i) => i !== index);
-    setPocketItems(updated);
-    localStorage.setItem("bridge_pocket", JSON.stringify(updated));
+    savePocket(updated);
   };
 
   useEffect(() => {
