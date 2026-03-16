@@ -28,11 +28,23 @@ const RestHoursTracker = ({ onNavigate, profileId }: RestHoursTrackerProps) => {
       return;
     }
     supabase.from('rest_hours_data').select('entries').eq('crew_profile_id', profileId).maybeSingle()
-      .then(({ data }) => {
-        if (data?.entries) setLogs(data.entries as unknown as LogEntry[]);
-        else {
+      .then(async ({ data }) => {
+        if (data?.entries) {
+          setLogs(data.entries as unknown as LogEntry[]);
+        } else {
           const local = localStorage.getItem(STORAGE_KEY);
-          if (local) try { setLogs(JSON.parse(local)); } catch {}
+          if (local) {
+            try {
+              const parsed = JSON.parse(local);
+              setLogs(parsed);
+              if (parsed.length > 0) {
+                await supabase.from('rest_hours_data').upsert(
+                  { crew_profile_id: profileId, entries: parsed as any, updated_at: new Date().toISOString() },
+                  { onConflict: 'crew_profile_id' }
+                );
+              }
+            } catch {}
+          }
         }
       });
   }, [profileId]);
