@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface LogEntry {
   type: "work" | "rest";
@@ -11,27 +12,45 @@ const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 interface RestHoursTrackerProps {
   onNavigate?: (screen: string) => void;
+  profileId?: string;
 }
 
-const RestHoursTracker = ({ onNavigate }: RestHoursTrackerProps) => {
+const RestHoursTracker = ({ onNavigate, profileId }: RestHoursTrackerProps) => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) setLogs(JSON.parse(saved));
-    } catch {}
-  }, []);
+    if (!profileId) {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) setLogs(JSON.parse(saved));
+      } catch {}
+      return;
+    }
+    supabase.from('rest_hours_data').select('entries').eq('crew_profile_id', profileId).maybeSingle()
+      .then(({ data }) => {
+        if (data?.entries) setLogs(data.entries as unknown as LogEntry[]);
+        else {
+          const local = localStorage.getItem(STORAGE_KEY);
+          if (local) try { setLogs(JSON.parse(local)); } catch {}
+        }
+      });
+  }, [profileId]);
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 30000);
     return () => clearInterval(id);
   }, []);
 
-  const saveLogs = (updated: LogEntry[]) => {
+  const saveLogs = async (updated: LogEntry[]) => {
     setLogs(updated);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    if (profileId) {
+      await supabase.from('rest_hours_data').upsert(
+        { crew_profile_id: profileId, entries: updated as any, updated_at: new Date().toISOString() },
+        { onConflict: 'crew_profile_id' }
+      );
+    }
   };
 
   const logEntry = (type: "work" | "rest") => {

@@ -1,19 +1,19 @@
 import { useState, useRef, useEffect } from "react";
 import { ArrowLeft, Search, Send, Loader2, Bookmark, Trash2, Camera } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
 import PhotoAnnotator from "./bridge/PhotoAnnotator";
 import GoDeepCard from "./GoDeepCard";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
-const SaveToPocket = ({ messages }: { messages: Msg[] }) => {
+const SaveToPocket = ({ messages, onSaved }: { messages: Msg[]; onSaved?: (item: any) => void }) => {
   const [saved, setSaved] = useState(false);
   const handleSave = () => {
     const lastUser = [...messages].reverse().find(m => m.role === "user")?.content || "";
     const lastAssistant = [...messages].reverse().find(m => m.role === "assistant")?.content || "";
-    const existing = JSON.parse(localStorage.getItem("bridge_pocket") || "[]");
-    existing.push({ query: lastUser, answer: lastAssistant, savedAt: new Date().toISOString() });
-    localStorage.setItem("bridge_pocket", JSON.stringify(existing));
+    const item = { query: lastUser, answer: lastAssistant, savedAt: new Date().toISOString() };
+    onSaved?.(item);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -162,7 +162,11 @@ async function streamBridgeChat({
   onDone();
 }
 
-const Bridge = () => {
+interface BridgeProps {
+  profileId?: string;
+}
+
+const Bridge = ({ profileId }: BridgeProps) => {
   const [searchValue, setSearchValue] = useState("");
   const [activeDept, setActiveDept] = useState<typeof EQUIPMENT_REGISTER[number] | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -180,15 +184,42 @@ const Bridge = () => {
   const [rawPhotoSrc, setRawPhotoSrc] = useState<string | null>(null);
   const [activeEquipment, setActiveEquipment] = useState<null | {name:string; code:string; critical:boolean; tasks:string[]}>(null);
 
+  const savePocket = async (updated: any[]) => {
+    setPocketItems(updated);
+    localStorage.setItem("bridge_pocket", JSON.stringify(updated));
+    if (profileId) {
+      await supabase.from('bridge_pocket').upsert(
+        { crew_profile_id: profileId, items: updated as any, updated_at: new Date().toISOString() },
+        { onConflict: 'crew_profile_id' }
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (!profileId) {
+      try {
+        const local = localStorage.getItem("bridge_pocket");
+        if (local) setPocketItems(JSON.parse(local));
+      } catch {}
+      return;
+    }
+    supabase.from('bridge_pocket').select('items').eq('crew_profile_id', profileId).maybeSingle()
+      .then(({ data }) => {
+        if (data?.items) setPocketItems(data.items as any[]);
+        else {
+          const local = localStorage.getItem('bridge_pocket');
+          if (local) try { setPocketItems(JSON.parse(local)); } catch {}
+        }
+      });
+  }, [profileId]);
+
   const loadPocket = () => {
-    const items = JSON.parse(localStorage.getItem("bridge_pocket") || "[]");
-    setPocketItems(items);
+    setShowPocket(true);
   };
 
   const deletePocketItem = (index: number) => {
     const updated = pocketItems.filter((_, i) => i !== index);
-    setPocketItems(updated);
-    localStorage.setItem("bridge_pocket", JSON.stringify(updated));
+    savePocket(updated);
   };
 
   useEffect(() => {
@@ -443,7 +474,7 @@ const Bridge = () => {
             <SaveToPocket messages={[
               { role: "user", content: `Equipment Photo Diagnosis` },
               { role: "assistant", content: diagnosisResult },
-            ]} />
+            ]} onSaved={(item) => savePocket([...pocketItems, item])} />
           )}
         </div>
       </div>
@@ -576,7 +607,7 @@ const Bridge = () => {
           )}
           {/* Save to Pocket */}
           {messages.length >= 2 && messages[messages.length - 1]?.role === "assistant" && !isLoading && (
-            <SaveToPocket messages={messages} />
+            <SaveToPocket messages={messages} onSaved={(item) => savePocket([...pocketItems, item])} />
           )}
           <div ref={chatEndRef} />
         </div>
