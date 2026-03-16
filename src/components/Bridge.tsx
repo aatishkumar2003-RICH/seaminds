@@ -474,7 +474,7 @@ const Bridge = ({ profileId }: BridgeProps) => {
             <SaveToPocket messages={[
               { role: "user", content: `Equipment Photo Diagnosis` },
               { role: "assistant", content: diagnosisResult },
-            ]} />
+            ]} onSaved={(item) => savePocket([...pocketItems, item])} />
           )}
         </div>
       </div>
