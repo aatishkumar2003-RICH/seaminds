@@ -16,6 +16,8 @@ import { Lock, Search, Trash2, CalendarIcon } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import CountryPricingTab from "@/components/admin/CountryPricingTab";
+import SubAdminsTab from "@/components/admin/SubAdminsTab";
 
 const ADMIN_PIN = "215151";
 const LS_KEY = "sm_admin_auth";
@@ -442,7 +444,7 @@ function DiscountCodesTab() {
 /* ─── Main Dashboard ─── */
 export default function AdminDashboard() {
   const [authed, setAuthed] = useState(localStorage.getItem(LS_KEY) === ADMIN_PIN);
-  const [tab, setTab] = useState<"crew" | "pricing" | "discount">("crew");
+  const [tab, setTab] = useState<"crew" | "pricing" | "discount" | "country_pricing" | "sub_admins">("crew");
 
   if (!authed) return <PinScreen onAuth={() => setAuthed(true)} />;
 
@@ -455,6 +457,8 @@ export default function AdminDashboard() {
     { id: "crew" as const, label: "Crew Search" },
     { id: "pricing" as const, label: "Pricing" },
     { id: "discount" as const, label: "Discount Codes" },
+    { id: "country_pricing" as const, label: "Country Pricing" },
+    { id: "sub_admins" as const, label: "Sub-Admins" },
   ];
 
   return (
@@ -481,6 +485,8 @@ export default function AdminDashboard() {
       {tab === "crew" && <CrewSearchTab />}
       {tab === "pricing" && <PricingTab />}
       {tab === "discount" && <DiscountCodesTab />}
+      {tab === "country_pricing" && <CountryPricingTab />}
+      {tab === "sub_admins" && <SubAdminsTab />}
     </div>
   );
 }
