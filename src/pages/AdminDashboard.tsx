@@ -16,6 +16,8 @@ import { Lock, Search, Trash2, CalendarIcon } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import CountryPricingTab from "@/components/admin/CountryPricingTab";
+import SubAdminsTab from "@/components/admin/SubAdminsTab";
 
 const ADMIN_PIN = "215151";
 const LS_KEY = "sm_admin_auth";
