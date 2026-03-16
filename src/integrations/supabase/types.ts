@@ -596,6 +596,42 @@ export type Database = {
         }
         Relationships: []
       }
+      dpa_contacts: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          email: string | null
+          id: string
+          is_default: boolean | null
+          name: string
+          phone: string
+          region: string | null
+          sort_order: number | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          is_default?: boolean | null
+          name: string
+          phone: string
+          region?: string | null
+          sort_order?: number | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          phone?: string
+          region?: string | null
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
       family_connections: {
         Row: {
           created_at: string

@@ -445,9 +445,130 @@ function DiscountCodesTab() {
 }
 
 /* ─── Main Dashboard ─── */
+/* ─── DPA Contacts Tab ─── */
+function DPAContactsTab() {
+  const [contacts, setContacts] = useState<any[]>([]);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ name: "", phone: "", email: "", region: "Global", is_default: false, sort_order: "0" });
+
+  const load = useCallback(async () => {
+    const { data } = await supabase.from("dpa_contacts").select("*").order("sort_order", { ascending: true });
+    setContacts(data || []);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const create = async () => {
+    const { error } = await supabase.from("dpa_contacts").insert({
+      name: form.name, phone: form.phone, email: form.email || null,
+      region: form.region || "Global", is_default: form.is_default, sort_order: Number(form.sort_order) || 0, active: true,
+    });
+    if (error) { toast.error("Failed: " + error.message); return; }
+    toast.success("Contact added");
+    setShowForm(false);
+    setForm({ name: "", phone: "", email: "", region: "Global", is_default: false, sort_order: "0" });
+    load();
+  };
+
+  const toggleField = async (id: string, field: string, value: boolean) => {
+    await supabase.from("dpa_contacts").update({ [field]: value }).eq("id", id);
+    load();
+  };
+
+  const deleteContact = async (id: string) => {
+    await supabase.from("dpa_contacts").delete().eq("id", id);
+    load();
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-lg p-4 border" style={{ background: "#1B2838", borderColor: "#D4AF3744" }}>
+        <p className="text-sm" style={{ color: "#D4AF37" }}>
+          ⚠️ Default contacts are shown to ALL crew. Add your company DPA number here — it will appear first when crew triggers SOS.
+        </p>
+      </div>
+
+      <Button onClick={() => setShowForm(true)} style={{ background: "#D4AF37", color: "#0D1B2A" }}>
+        Add DPA Contact
+      </Button>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm" style={{ color: "#E0E0E0" }}>
+          <thead>
+            <tr style={{ borderBottom: "1px solid #D4AF3744" }}>
+              {["Name", "Phone", "Email", "Region", "Default", "Active", "Sort", ""].map((h) => (
+                <th key={h} className="text-left p-2" style={{ color: "#D4AF37" }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {contacts.map((c) => (
+              <tr key={c.id} style={{ borderBottom: "1px solid #1B2838" }}>
+                <td className="p-2 font-semibold">{c.name}</td>
+                <td className="p-2 font-mono">{c.phone}</td>
+                <td className="p-2">{c.email || "—"}</td>
+                <td className="p-2"><Badge style={{ background: "#D4AF3733", color: "#D4AF37" }}>{c.region}</Badge></td>
+                <td className="p-2"><Switch checked={c.is_default} onCheckedChange={(v) => toggleField(c.id, "is_default", v)} /></td>
+                <td className="p-2"><Switch checked={c.active} onCheckedChange={(v) => toggleField(c.id, "active", v)} /></td>
+                <td className="p-2">{c.sort_order}</td>
+                <td className="p-2">
+                  <Button size="icon" variant="ghost" onClick={() => deleteContact(c.id)}>
+                    <Trash2 className="w-4 h-4 text-red-400" />
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent style={{ background: "#0D1B2A", borderColor: "#D4AF37" }}>
+          <DialogHeader><DialogTitle style={{ color: "#D4AF37" }}>Add DPA Contact</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm" style={{ color: "#A0A0A0" }}>Name *</label>
+              <Input value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))}
+                style={{ background: "#1B2838", color: "#E0E0E0", borderColor: "#D4AF37" }} />
+            </div>
+            <div>
+              <label className="text-sm" style={{ color: "#A0A0A0" }}>Phone *</label>
+              <Input value={form.phone} onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))}
+                placeholder="+44 20 7323 2737" style={{ background: "#1B2838", color: "#E0E0E0", borderColor: "#D4AF37" }} />
+            </div>
+            <div>
+              <label className="text-sm" style={{ color: "#A0A0A0" }}>Email</label>
+              <Input value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))}
+                style={{ background: "#1B2838", color: "#E0E0E0", borderColor: "#D4AF37" }} />
+            </div>
+            <div>
+              <label className="text-sm" style={{ color: "#A0A0A0" }}>Region</label>
+              <Input value={form.region} onChange={(e) => setForm(f => ({ ...f, region: e.target.value }))}
+                placeholder="Global" style={{ background: "#1B2838", color: "#E0E0E0", borderColor: "#D4AF37" }} />
+            </div>
+            <div className="flex items-center gap-3">
+              <Switch checked={form.is_default} onCheckedChange={(v) => setForm(f => ({ ...f, is_default: v }))} />
+              <label className="text-sm" style={{ color: "#A0A0A0" }}>Is Default (shown to all crew)</label>
+            </div>
+            <div>
+              <label className="text-sm" style={{ color: "#A0A0A0" }}>Sort Order</label>
+              <Input type="number" value={form.sort_order} onChange={(e) => setForm(f => ({ ...f, sort_order: e.target.value }))}
+                style={{ background: "#1B2838", color: "#E0E0E0", borderColor: "#D4AF37" }} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={create} disabled={!form.name || !form.phone} style={{ background: "#D4AF37", color: "#0D1B2A" }}>Add Contact</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+/* ─── Main Dashboard ─── */
 export default function AdminDashboard() {
   const [authed, setAuthed] = useState(localStorage.getItem(LS_KEY) === ADMIN_PIN);
-  const [tab, setTab] = useState<"crew" | "pricing" | "discount" | "country_pricing" | "sub_admins">("crew");
+  const [tab, setTab] = useState<"crew" | "pricing" | "discount" | "country_pricing" | "sub_admins" | "dpa">("crew");
 
   if (!authed) return <PinScreen onAuth={() => setAuthed(true)} />;
 
@@ -462,6 +583,7 @@ export default function AdminDashboard() {
     { id: "discount" as const, label: "Discount Codes" },
     { id: "country_pricing" as const, label: "Country Pricing" },
     { id: "sub_admins" as const, label: "Sub-Admins" },
+    { id: "dpa" as const, label: "SOS / DPA Contacts" },
   ];
 
   return (
@@ -473,7 +595,7 @@ export default function AdminDashboard() {
         </Button>
       </div>
 
-      <div className="flex gap-2 mb-6">
+      <div className="flex gap-2 mb-6 flex-wrap">
         {tabs.map((t) => (
           <Button key={t.id} onClick={() => setTab(t.id)}
             style={tab === t.id
@@ -490,6 +612,7 @@ export default function AdminDashboard() {
       {tab === "discount" && <DiscountCodesTab />}
       {tab === "country_pricing" && <CountryPricingTab />}
       {tab === "sub_admins" && <SubAdminsTab />}
+      {tab === "dpa" && <DPAContactsTab />}
     </div>
   );
 }

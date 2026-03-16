@@ -329,7 +329,7 @@ const Index = () => {
   if (appState === "landing") {
     return (
       <div className="h-screen max-w-md mx-auto bg-background">
-        <SOSButton onOpenChat={() => { setAppState("main"); setScreen("chat"); }} />
+        <SOSButton onOpenChat={() => { setAppState("main"); setScreen("chat"); }} firstName={firstName} shipName={shipName} />
         <LandingScreen onGetStarted={() => setAppState("name-entry")} onManagerLogin={() => navigate("/manager")} />
       </div>
     );
@@ -338,7 +338,7 @@ const Index = () => {
   if (appState === "name-entry") {
     return (
       <div className="h-screen max-w-md mx-auto bg-background">
-        <SOSButton onOpenChat={() => { setAppState("main"); setScreen("chat"); }} />
+        <SOSButton onOpenChat={() => { setAppState("main"); setScreen("chat"); }} firstName={firstName} shipName={shipName} />
         <NameEntry onSubmit={handleNameSubmit} />
       </div>
     );
@@ -347,7 +347,7 @@ const Index = () => {
   if (appState === "welcome") {
     return (
       <div className="h-screen max-w-md mx-auto bg-background">
-        <SOSButton onOpenChat={() => { setAppState("main"); setScreen("chat"); }} />
+        <SOSButton onOpenChat={() => { setAppState("main"); setScreen("chat"); }} firstName={firstName} shipName={shipName} />
         <WelcomeScreens onComplete={handleWelcomeComplete} />
       </div>
     );
@@ -595,7 +595,7 @@ const Index = () => {
             <LogOut size={14} /> Sign Out
           </button>
           <div className="w-full">
-            <SOSButton onOpenChat={() => setScreen("chat")} />
+            <SOSButton onOpenChat={() => setScreen("chat")} firstName={firstName} shipName={shipName} />
           </div>
         </div>
       </aside>
@@ -609,7 +609,7 @@ const Index = () => {
         <div className="relative z-10 flex flex-col flex-1 min-h-0">
         {/* SOS only on mobile */}
         <div className="lg:hidden">
-          <SOSButton onOpenChat={() => setScreen("chat")} />
+          <SOSButton onOpenChat={() => setScreen("chat")} firstName={firstName} shipName={shipName} />
         </div>
 
         {/* Greeting Header */}
