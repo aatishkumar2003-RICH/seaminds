@@ -173,7 +173,7 @@ const Pricing = () => {
                   <CardTitle className="text-xl font-bold text-foreground">{t.name}</CardTitle>
                   <CardDescription className="text-xs text-muted-foreground">{t.subtitle}</CardDescription>
                   <div className="mt-3">
-                    <span className="text-4xl font-bold" style={{ color: "#D4AF37" }}>{t.price}</span>
+                    <span className="text-4xl font-bold" style={{ color: "#D4AF37" }}>{t.getPrice(prices)}</span>
                     <span className="text-sm text-muted-foreground ml-1">{t.period}</span>
                   </div>
                 </CardHeader>
