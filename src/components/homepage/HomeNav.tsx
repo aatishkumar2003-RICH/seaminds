@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 
 const navLinks = [
-  { label: "For Seafarers", href: "#seafarers" },
-  { label: "For Companies", href: "#companies" },
-  { label: "SMC Score", href: "#smc" },
-  { label: "Jobs", href: "#jobs" },
+  { label: "For Seafarers", path: "/for-seafarers" },
+  { label: "For Companies", path: "/for-companies" },
+  { label: "SMC Score", path: "/smc-score" },
+  { label: "Jobs", path: "/jobs" },
   { label: "Blog", path: "/blog" },
   { label: "Pricing", path: "/pricing" },
   { label: "Colleges", path: "/colleges" },
@@ -20,12 +20,7 @@ const HomeNav = () => {
 
   const handleNav = (link: typeof navLinks[0]) => {
     setMobileOpen(false);
-    if ('path' in link && link.path) {
-      navigate(link.path);
-    } else if ('href' in link && link.href) {
-      const el = document.querySelector(link.href);
-      if (el) el.scrollIntoView({ behavior: "smooth" });
-    }
+    navigate(link.path);
   };
 
   return (
@@ -46,10 +41,10 @@ const HomeNav = () => {
           </div>
 
           <div className="hidden sm:flex items-center gap-3">
-          <Button size="sm" onClick={() => window.location.href = '/app'}>
+          <Button size="sm" onClick={() => navigate('/app')}>
             Get Your Score
           </Button>
-          <Button size="sm" variant="outline" onClick={() => window.location.href = '/app'}>
+          <Button size="sm" variant="outline" onClick={() => navigate('/manager')}>
             Company Login
           </Button>
           </div>
@@ -68,10 +63,10 @@ const HomeNav = () => {
             </button>
           ))}
           <div className="flex gap-2 pt-2">
-            <Button size="sm" className="flex-1" onClick={() => { setMobileOpen(false); window.location.href = '/app'; }}>
+            <Button size="sm" className="flex-1" onClick={() => { setMobileOpen(false); navigate('/app'); }}>
               Get Your Score
             </Button>
-            <Button size="sm" variant="outline" className="flex-1" onClick={() => { setMobileOpen(false); window.location.href = '/app'; }}>
+            <Button size="sm" variant="outline" className="flex-1" onClick={() => { setMobileOpen(false); navigate('/manager'); }}>
               Company Login
             </Button>
           </div>

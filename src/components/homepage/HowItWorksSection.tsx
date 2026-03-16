@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 const steps = [
@@ -23,6 +24,7 @@ const steps = [
 ];
 
 const HowItWorksSection = () => {
+  const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -70,7 +72,7 @@ const HowItWorksSection = () => {
       <div className="text-center">
         <Button
           size="lg"
-          onClick={() => (window.location.href = "/app")}
+          onClick={() => navigate("/app")}
           className="bg-primary text-primary-foreground hover:bg-primary/90 px-8"
         >
           Start Free — No Credit Card
