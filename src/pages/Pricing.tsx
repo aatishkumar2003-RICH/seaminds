@@ -31,7 +31,7 @@ const tiers = [
   {
     name: "Pro",
     subtitle: "Everything you need at sea",
-    price: "$9",
+    getPrice: (p: any) => `$${p.pro}`,
     period: "/month",
     icon: Ship,
     features: [
