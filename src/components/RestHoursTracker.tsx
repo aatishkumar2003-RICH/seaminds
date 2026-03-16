@@ -29,7 +29,7 @@ const RestHoursTracker = ({ onNavigate, profileId }: RestHoursTrackerProps) => {
     }
     supabase.from('rest_hours_data').select('entries').eq('crew_profile_id', profileId).maybeSingle()
       .then(({ data }) => {
-        if (data?.entries) setLogs(data.entries as LogEntry[]);
+        if (data?.entries) setLogs(data.entries as unknown as LogEntry[]);
         else {
           const local = localStorage.getItem(STORAGE_KEY);
           if (local) try { setLogs(JSON.parse(local)); } catch {}
