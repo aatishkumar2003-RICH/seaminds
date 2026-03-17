@@ -40,9 +40,10 @@ const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: Cre
     const load = async () => {
       const { data, error } = await supabase
         .from("chat_messages")
-        .select("id, role, content")
+        .select("id, role, content, created_at")
         .eq("crew_profile_id", profileId)
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: false })
+        .limit(20);
 
       if (error) {
         console.error("Failed to load messages:", error);
