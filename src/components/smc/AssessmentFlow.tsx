@@ -99,8 +99,11 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     const fetchQuestions = async () => {
       setLoadingQuestions(true);
       try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token || '';
         const { data } = await supabase.functions.invoke('generate-smc-questions', {
-          body: { rank, vesselType: vesselType || 'General Cargo', yearsExperience: yearsExperience || 5, department: 'Deck' }
+          body: { rank, vesselType: vesselType || 'General Cargo', yearsExperience: yearsExperience || 5, department: 'Deck' },
+          headers: { Authorization: `Bearer ${token}` },
         });
         if (data?.technical) { setAiQuestions(data); setTimerActive(true); }
       } catch (e) { console.error(e); }
@@ -113,6 +116,8 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     if (question && answer) {
       setEvaluating(true);
       try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token || '';
         const { data } = await supabase.functions.invoke('evaluate-answer', {
           body: {
             question, answer,
@@ -120,7 +125,8 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
             experience_tier: (aiQuestions as any)?.candidate_context?.experience_tier || 'MID',
             ship_specialisation: (aiQuestions as any)?.candidate_context?.ship_specialisation || 'GENERAL',
             department: (aiQuestions as any)?.candidate_context?.department || 'DECK',
-          }
+          },
+          headers: { Authorization: `Bearer ${token}` },
         });
         const entry = {
           question, answer,

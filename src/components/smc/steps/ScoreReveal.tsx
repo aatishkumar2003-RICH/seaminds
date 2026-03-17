@@ -59,42 +59,42 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, tran
   const [reportLoading, setReportLoading] = useState(false);
 
   useEffect(() => {
-    supabase.functions
-      .invoke("score-assessment", {
-        body: { rank, firstName, transcript: transcript || [], candidateContext: candidateContext || {} },
-      })
-      .then(({ data, error }) => {
-        if (error || !data?.scores) {
-          const fallback: Scores = {
-            technical: 5,
-            safety: 5,
-            operational: 5,
-            leadership: 5,
-            communication: 5,
-            overall: 2.50,
-          };
-          setScores(fallback);
-        } else {
-          setScores(data.scores);
-        }
-        setTimeout(() => setPhase("counting"), 500);
+    const run = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || '';
+      const authHeaders = { Authorization: `Bearer ${token}` };
 
-        // Generate report
-        setReportLoading(true);
-        supabase.functions.invoke('generate-report', {
-          body: { rank, firstName, transcript: transcript || [], scores: data?.scores || {}, redFlags: redFlags || [], candidateContext: candidateContext || {} }
-        }).then(({ data: rd }) => {
-          if (rd?.report) {
-            setReport(rd.report);
-            // Persist report to DB
-            supabase.from("smc_assessments").update({
-              report: rd.report,
-              recommendation: rd.report.recommendation || null,
-            } as any).eq("id", assessmentId).then(() => {});
-          }
-          setReportLoading(false);
-        });
+      const { data, error } = await supabase.functions.invoke("score-assessment", {
+        body: { rank, firstName, transcript: transcript || [], candidateContext: candidateContext || {} },
+        headers: authHeaders,
       });
+      if (error || !data?.scores) {
+        const fallback: Scores = {
+          technical: 5, safety: 5, operational: 5, leadership: 5, communication: 5, overall: 2.50,
+        };
+        setScores(fallback);
+      } else {
+        setScores(data.scores);
+      }
+      setTimeout(() => setPhase("counting"), 500);
+
+      // Generate report
+      setReportLoading(true);
+      supabase.functions.invoke('generate-report', {
+        body: { rank, firstName, transcript: transcript || [], scores: data?.scores || {}, redFlags: redFlags || [], candidateContext: candidateContext || {} },
+        headers: authHeaders,
+      }).then(({ data: rd }) => {
+        if (rd?.report) {
+          setReport(rd.report);
+          supabase.from("smc_assessments").update({
+            report: rd.report,
+            recommendation: rd.report.recommendation || null,
+          } as any).eq("id", assessmentId).then(() => {});
+        }
+        setReportLoading(false);
+      });
+    };
+    run();
   }, []);
 
   const overall = scores?.overall ?? 0;
