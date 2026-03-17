@@ -437,6 +437,14 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
 
         {/* Question content */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 pb-4">
+          <AnimatePresence mode="wait">
+          <motion.div
+            key={`q-${qIndex}`}
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -30 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+          >
           {/* ── MCQ ── */}
           {currentQ?.type === 'mcq' && (
             <div className="space-y-4">
