@@ -102,7 +102,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
         const { data } = await supabase.functions.invoke('generate-smc-questions', {
           body: { rank, vesselType: vesselType || 'General Cargo', yearsExperience: yearsExperience || 5, department: 'Deck' }
         });
-        if (data?.technical) setAiQuestions(data);
+        if (data?.technical) { setAiQuestions(data); setTimerActive(true); }
       } catch (e) { console.error(e); }
       finally { setLoadingQuestions(false); }
     };
