@@ -84,17 +84,17 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, tran
         body: { rank, firstName, transcript: transcript || [], scores: data?.scores || {}, redFlags: redFlags || [], candidateContext: candidateContext || {} },
         headers: authHeaders,
       }).then(({ data: rd }) => {
-          if (rd?.report) {
-            setReport(rd.report);
-            // Persist report to DB
-            supabase.from("smc_assessments").update({
-              report: rd.report,
-              recommendation: rd.report.recommendation || null,
-            } as any).eq("id", assessmentId).then(() => {});
-          }
-          setReportLoading(false);
-        });
+        if (rd?.report) {
+          setReport(rd.report);
+          supabase.from("smc_assessments").update({
+            report: rd.report,
+            recommendation: rd.report.recommendation || null,
+          } as any).eq("id", assessmentId).then(() => {});
+        }
+        setReportLoading(false);
       });
+    };
+    run();
   }, []);
 
   const overall = scores?.overall ?? 0;
