@@ -122,7 +122,7 @@ interface Message {
   text: string;
 }
 
-const TechnicalAssessment = ({ firstName, rank, shipName, assessmentId, questions: questionsProp, onNext, onSkipToEnd, evaluating, pendingFollowUp, onFollowUpAnswer }: Props) => {
+const TechnicalAssessment = ({ firstName, rank, shipName, assessmentId, questions: questionsProp, onNext, onSkipToEnd, evaluating, pendingFollowUp, onFollowUpAnswer, onRedFlag }: Props) => {
   const activeQuestions = (questionsProp && questionsProp.length > 0) ? questionsProp : getQuestions(rank);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -130,6 +130,7 @@ const TechnicalAssessment = ({ firstName, rank, shipName, assessmentId, question
   const [qIndex, setQIndex] = useState(-1);
   const [ready, setReady] = useState(false);
   const [complete, setComplete] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(90);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
