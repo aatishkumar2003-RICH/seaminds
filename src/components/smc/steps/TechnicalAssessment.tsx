@@ -14,6 +14,7 @@ interface Props {
   evaluating?: boolean;
   pendingFollowUp?: string | null;
   onFollowUpAnswer?: (answer: string) => void;
+  onRedFlag?: (flag: {category:string,evidence:string,severity?:string}) => void;
 }
 
 const QUESTIONS_BY_RANK: Record<string, string[]> = {
