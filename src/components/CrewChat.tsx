@@ -65,7 +65,7 @@ const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: Cre
         // Returning user — generate a contextual re-greeting via AI
         setIsLoading(true);
         try {
-          const existingMessages = data.map((m) => ({ role: m.role, content: m.content }));
+          const existingMessages = reversed.map((m) => ({ role: m.role, content: m.content }));
           const resp = await fetch(CHAT_URL, {
             method: "POST",
             headers: {
