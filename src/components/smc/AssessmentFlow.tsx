@@ -286,6 +286,17 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
       )}
 
       <div className="flex-1 overflow-hidden">
+        {timerActive && step >= 3 && step < TOTAL_STEPS && (
+          <div style={{ padding: '0 16px', marginTop: '8px', marginBottom: '0' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', fontSize:'12px', marginBottom:'4px', color: timeLeft <= 10 ? '#e74c3c' : timeLeft <= 30 ? '#f39c12' : '#D4AF37' }}>
+              <span>Time remaining</span>
+              <span style={{ fontWeight:'bold' }}>{timeLeft}s</span>
+            </div>
+            <div style={{ height:'4px', background:'#1a2e47', borderRadius:'2px' }}>
+              <div style={{ height:'100%', borderRadius:'2px', transition:'width 1s linear', width:`${(timeLeft/90)*100}%`, background: timeLeft <= 10 ? '#e74c3c' : timeLeft <= 30 ? '#f39c12' : '#D4AF37' }} />
+            </div>
+          </div>
+        )}
         {step === 1 && loadingQuestions && (
           <div className="flex items-center justify-center h-full">
             <p className="text-sm font-semibold animate-pulse" style={{ color: "#D4AF37" }}>
