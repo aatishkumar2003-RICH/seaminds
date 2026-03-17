@@ -270,7 +270,7 @@ const ManagerPaymentHistory = ({ managerUserId }: ManagerPaymentHistoryProps) =>
                   )}
                 </div>
               );
-            })()
+            })()}
 
             {/* Improvement Areas */}
             {(selectedReport.assessment as any).report?.improvement_areas?.length > 0 && (
