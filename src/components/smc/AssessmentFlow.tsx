@@ -248,6 +248,11 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
 
   return (
     <div className="flex flex-col h-full">
+      {tabSwitches >= 3 && (
+        <div className="px-4 py-2 text-xs text-center font-medium bg-destructive/20 text-destructive border-b border-destructive/30">
+          ⚠️ Multiple tab switches detected. This is noted in your assessment record.
+        </div>
+      )}
       {step < TOTAL_STEPS && (
         <div className="p-4 pb-0">
           <button onClick={goBack} className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 text-sm">
