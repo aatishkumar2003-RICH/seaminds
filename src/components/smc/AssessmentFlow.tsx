@@ -31,6 +31,8 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   const [pendingFollowUp, setPendingFollowUp] = useState<string|null>(null);
   const [evaluating, setEvaluating] = useState(false);
   const [tabSwitches, setTabSwitches] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(90);
+  const [timerActive, setTimerActive] = useState(false);
 
   // Tab switch / focus loss detection
   useEffect(() => {
@@ -50,6 +52,28 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     document.addEventListener('visibilitychange', handleVisibility);
     return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, []);
+
+  // Per-question countdown timer (90 seconds)
+  useEffect(() => {
+    if (!timerActive) return;
+    setTimeLeft(90);
+    const interval = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) { clearInterval(interval); goNext(); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [step, timerActive]);
+
+  // Paste detection handler
+  const handlePaste = () => {
+    setRedFlags((f: any[]) => [...f, {
+      category: 'INTEGRITY',
+      evidence: `Copy-paste detected on step ${step}`,
+      severity: 'LOW'
+    }]);
+  };
   const [preForm, setPreForm] = useState<{reasonForLeaving:string,expectedSalary:string,availabilityDate:string,medicalFit:boolean,accidentHistory:string,pscDetention:boolean,nearMiss:boolean,safetyViolation:boolean}>({ reasonForLeaving:'', expectedSalary:'', availabilityDate:'', medicalFit:true, accidentHistory:'', pscDetention:false, nearMiss:false, safetyViolation:false });
   const [preFormDone, setPreFormDone] = useState(false);
 
