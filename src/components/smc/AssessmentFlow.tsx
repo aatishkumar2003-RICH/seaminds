@@ -97,6 +97,15 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     }
   }, [qIndex, flatQuestions]);
 
+  // Show intro section card when questions flow starts
+  useEffect(() => {
+    if (flowStep === 'questions' && flatQuestions.length > 0 && !introShown.current) {
+      introShown.current = true;
+      setSectionCard({ type: 'mcq', label: '📋 Knowledge Assessment', num: 'Section 1', icon: '📋' });
+      setTimeout(() => setSectionCard(null), 2200);
+    }
+  }, [flowStep, flatQuestions]);
+
   // Tab switch detection
   useEffect(() => {
     const handleVisibility = () => {
