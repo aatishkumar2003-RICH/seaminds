@@ -62,6 +62,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   const [tabSwitches, setTabSwitches] = useState(0);
   const [sectionCard, setSectionCard] = useState<{ type: string; label: string; num: string; icon: string } | null>(null);
   const prevSectionType = useRef<string | null>(null);
+  const introShown = useRef(false);
 
   // Timer state
   const [timeLeft, setTimeLeft] = useState(60);
@@ -95,6 +96,15 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
       setTimerActive(false);
     }
   }, [qIndex, flatQuestions]);
+
+  // Show intro section card when questions flow starts
+  useEffect(() => {
+    if (flowStep === 'questions' && flatQuestions.length > 0 && !introShown.current) {
+      introShown.current = true;
+      setSectionCard({ type: 'mcq', label: '📋 Knowledge Assessment', num: 'Section 1', icon: '📋' });
+      setTimeout(() => setSectionCard(null), 2200);
+    }
+  }, [flowStep, flatQuestions]);
 
   // Tab switch detection
   useEffect(() => {
