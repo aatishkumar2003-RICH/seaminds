@@ -51,21 +51,32 @@ const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: Cre
 
       if (data && data.length > 0) {
         const reversed = [...data].reverse();
-        setMessages(reversed.map((m) => ({ id: m.id, role: m.role as "assistant" | "user", content: m.content })));
 
-        // Skip welcome-back if there's a recent assistant message (within 10 min)
-        const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
-        const hasRecentMessage = data.some(m => m.role === 'assistant' && m.created_at > tenMinutesAgo);
-        if (hasRecentMessage) {
+        // Clean up excess standalone welcome messages in DB
+        const welcomeIds = reversed
+          .filter((m, i) => m.role === 'assistant' && (i === 0 || reversed[i - 1]?.role === 'assistant'))
+          .slice(0, -1) // keep the most recent one
+          .map(m => m.id);
+        if (welcomeIds.length > 0) {
+          await supabase.from('chat_messages').delete().in('id', welcomeIds);
+        }
+
+        // Remove cleaned-up messages from local list
+        const cleaned = reversed.filter(m => !welcomeIds.includes(m.id));
+        setMessages(cleaned.map((m) => ({ id: m.id, role: m.role as "assistant" | "user", content: m.content })));
+
+        // Don't generate welcome if last message is already from assistant
+        const lastMsg = cleaned.at(-1);
+        if (lastMsg?.role === 'assistant') {
           setShowMoodButtons(true);
           setInitialLoading(false);
           return;
         }
-        
+
         // Returning user — generate a contextual re-greeting via AI
         setIsLoading(true);
         try {
-          const existingMessages = reversed.map((m) => ({ role: m.role, content: m.content }));
+          const existingMessages = cleaned.map((m) => ({ role: m.role, content: m.content }));
           const resp = await fetch(CHAT_URL, {
             method: "POST",
             headers: {
@@ -134,6 +145,10 @@ const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: Cre
             setMessages((prev) =>
               prev.map((m) => (m.id === streamId ? { ...m, id: saved?.id || crypto.randomUUID() } : m))
             );
+
+            // Purge messages older than 30 days
+            const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+            supabase.from('chat_messages').delete().eq('crew_profile_id', profileId).lt('created_at', thirtyDaysAgo);
           }
         } catch (e) {
           console.error("Failed to generate welcome-back:", e);
