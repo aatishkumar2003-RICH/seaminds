@@ -226,6 +226,55 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, tran
               ))}
             </div>
           )}
+          {redFlags && redFlags.length > 0 && (
+            <div style={{ background:'#1a2e47', borderRadius:'8px', padding:'16px' }}>
+              <div style={{ color:'#D4AF37', fontWeight:'bold', marginBottom:'8px', fontSize:'14px' }}>🔍 INTEGRITY FLAGS</div>
+              <p style={{ color:'#aaa', fontSize:'11px', marginBottom:'12px' }}>Automated monitoring detected the following during the assessment.</p>
+              {(() => {
+                const integrityFlags = redFlags.filter(f => f.category === 'INTEGRITY');
+                const tabSwitches = integrityFlags.filter(f => f.evidence?.includes('Tab switched'));
+                const pastes = integrityFlags.filter(f => f.evidence?.includes('Copy-paste'));
+                const otherFlags = redFlags.filter(f => f.category !== 'INTEGRITY');
+                return (
+                  <>
+                    {tabSwitches.length > 0 && (
+                      <div style={{ marginBottom:'10px', display:'flex', alignItems:'center', gap:'8px' }}>
+                        <span style={{ background: tabSwitches.length >= 3 ? '#c0392b' : '#d4801a', color:'white', borderRadius:'4px', padding:'2px 6px', fontSize:'11px', fontWeight:'bold' }}>
+                          {tabSwitches.length >= 3 ? 'HIGH' : 'MEDIUM'}
+                        </span>
+                        <span style={{ color:'#e0e0e0', fontSize:'13px' }}>
+                          Tab switches detected: <strong>{tabSwitches.length}</strong> time(s)
+                        </span>
+                      </div>
+                    )}
+                    {pastes.length > 0 && (
+                      <div style={{ marginBottom:'10px', display:'flex', alignItems:'center', gap:'8px' }}>
+                        <span style={{ background:'#555', color:'white', borderRadius:'4px', padding:'2px 6px', fontSize:'11px', fontWeight:'bold' }}>LOW</span>
+                        <span style={{ color:'#e0e0e0', fontSize:'13px' }}>
+                          Copy-paste detected: <strong>{pastes.length}</strong> time(s) — {pastes.map(p => p.evidence).join('; ')}
+                        </span>
+                      </div>
+                    )}
+                    {otherFlags.length > 0 && otherFlags.map((f, i) => (
+                      <div key={i} style={{ marginBottom:'8px' }}>
+                        <span style={{ background: f.severity === 'HIGH' ? '#c0392b' : f.severity === 'MEDIUM' ? '#d4801a' : '#555', color:'white', borderRadius:'4px', padding:'2px 6px', fontSize:'11px', marginRight:'8px' }}>{f.category}</span>
+                        <span style={{ color:'#e0e0e0', fontSize:'13px' }}>{f.evidence}</span>
+                      </div>
+                    ))}
+                    {tabSwitches.length === 0 && pastes.length === 0 && otherFlags.length === 0 && (
+                      <div style={{ color:'#4ade80', fontSize:'13px' }}>✓ No integrity concerns detected</div>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+          )}
+          {(!redFlags || redFlags.length === 0) && (
+            <div style={{ background:'#1a2e47', borderRadius:'8px', padding:'16px' }}>
+              <div style={{ color:'#D4AF37', fontWeight:'bold', marginBottom:'8px', fontSize:'14px' }}>🔍 INTEGRITY FLAGS</div>
+              <div style={{ color:'#4ade80', fontSize:'13px' }}>✓ No integrity concerns detected — clean assessment</div>
+            </div>
+          )}
         </div>
       )}
     </div>
