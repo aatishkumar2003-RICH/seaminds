@@ -129,7 +129,19 @@ const BehaviouralProfile = ({ assessmentId, questions: questionsProp, onNext, on
           <p className="text-xs text-muted-foreground">10 questions about how you work. No right or wrong answers — only honest ones.</p>
         </div>
         {!complete && (
-          <p className="text-xs text-center text-primary font-medium">{qIndex + 1} of 10 questions</p>
+          <div className="space-y-1">
+            <p className="text-xs text-center text-primary font-medium">{qIndex + 1} of 10 questions</p>
+            <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-1000"
+                style={{
+                  width: `${(timeLeft / 90) * 100}%`,
+                  backgroundColor: timeLeft > 30 ? '#D4AF37' : timeLeft > 10 ? '#F97316' : '#EF4444',
+                }}
+              />
+            </div>
+            <p className="text-[10px] text-center text-muted-foreground">{timeLeft}s remaining</p>
+          </div>
         )}
       </div>
 
