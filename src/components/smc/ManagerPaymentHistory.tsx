@@ -230,6 +230,48 @@ const ManagerPaymentHistory = ({ managerUserId }: ManagerPaymentHistoryProps) =>
               );
             })()}
 
+            {/* Integrity Flags */}
+            {(() => {
+              const flags = (selectedReport.assessment as any).red_flags;
+              if (!Array.isArray(flags)) return null;
+              const integrityFlags = flags.filter((f: any) => f.category === 'INTEGRITY');
+              const tabSwitches = integrityFlags.filter((f: any) => f.evidence?.includes('Tab switched'));
+              const pastes = integrityFlags.filter((f: any) => f.evidence?.includes('Copy-paste'));
+              if (tabSwitches.length === 0 && pastes.length === 0) {
+                return (
+                  <div style={{ background: "#0f2a1a", borderRadius: "8px", padding: "16px", marginBottom: "16px", border: "1px solid #22c55e44" }}>
+                    <div style={{ color: "#22c55e", fontWeight: "bold", marginBottom: "4px", fontSize: "14px" }}>🔍 INTEGRITY CHECK</div>
+                    <div style={{ color: "#4ade80", fontSize: "13px" }}>✓ No integrity concerns detected — clean assessment</div>
+                  </div>
+                );
+              }
+              const highRisk = tabSwitches.length >= 3;
+              return (
+                <div style={{ background: highRisk ? "#2a1015" : "#1a2e47", borderRadius: "8px", padding: "16px", marginBottom: "16px", border: `1px solid ${highRisk ? "#dc262688" : "#D4AF3744"}` }}>
+                  <div style={{ color: highRisk ? "#ef4444" : "#D4AF37", fontWeight: "bold", marginBottom: "4px", fontSize: "14px" }}>🔍 INTEGRITY CHECK</div>
+                  <div style={{ color: highRisk ? "#ef4444" : "#D4AF37", fontSize: "10px", fontWeight: "bold", marginBottom: "12px", letterSpacing: "1px" }}>CONFIDENTIAL — MANAGER ONLY</div>
+                  {tabSwitches.length > 0 && (
+                    <div style={{ marginBottom: "10px", display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ background: tabSwitches.length >= 3 ? "#dc2626" : "#d97706", color: "#fff", borderRadius: "4px", padding: "2px 6px", fontSize: "11px", fontWeight: "bold" }}>
+                        {tabSwitches.length >= 3 ? "HIGH" : "MEDIUM"}
+                      </span>
+                      <span style={{ color: "#e0e0e0", fontSize: "13px" }}>
+                        Tab switches detected: <strong>{tabSwitches.length}</strong> time(s) during assessment
+                      </span>
+                    </div>
+                  )}
+                  {pastes.length > 0 && (
+                    <div style={{ marginBottom: "10px", display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ background: "#555", color: "#fff", borderRadius: "4px", padding: "2px 6px", fontSize: "11px", fontWeight: "bold" }}>LOW</span>
+                      <span style={{ color: "#e0e0e0", fontSize: "13px" }}>
+                        Copy-paste detected: <strong>{pastes.length}</strong> time(s) — {pastes.map((p: any) => p.evidence).join("; ")}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              );
+            })()
+
             {/* Improvement Areas */}
             {(selectedReport.assessment as any).report?.improvement_areas?.length > 0 && (
               <div style={{ background: "#1a2e47", borderRadius: "8px", padding: "16px", marginBottom: "16px" }}>
