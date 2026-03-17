@@ -11,6 +11,7 @@ interface Props {
   evaluating?: boolean;
   pendingFollowUp?: string | null;
   onFollowUpAnswer?: (answer: string) => void;
+  onRedFlag?: (flag: {category:string,evidence:string,severity?:string}) => void;
 }
 
 const FALLBACK_QUESTIONS = [

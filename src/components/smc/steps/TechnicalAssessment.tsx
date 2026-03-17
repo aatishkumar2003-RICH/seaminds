@@ -146,6 +146,37 @@ const TechnicalAssessment = ({ firstName, rank, shipName, assessmentId, question
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, pendingFollowUp]);
 
+  // Per-question countdown timer
+  useEffect(() => {
+    if (qIndex < 0 || complete) return;
+    setTimeLeft(90);
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          // Auto-submit current answer
+          const answer = input.trim() || "[No answer — time expired]";
+          setInput("");
+          const next = qIndex + 1;
+          if (next < activeQuestions.length) {
+            setMessages(p => [...p, { role: "user", text: answer }, { role: "ai", text: activeQuestions[next] }]);
+            setQIndex(next);
+          } else {
+            setMessages(p => [...p, { role: "user", text: answer }, { role: "ai", text: "Assessment Recording Complete. Thank you for your honest and detailed answers." }]);
+            setComplete(true);
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [qIndex, complete]);
+
+  const handlePaste = () => {
+    onRedFlag?.({ category: 'INTEGRITY', evidence: `Copy-paste detected on question ${qIndex + 1}`, severity: 'LOW' });
+  };
+
   const handleReady = () => {
     setReady(true);
     setQIndex(0);
