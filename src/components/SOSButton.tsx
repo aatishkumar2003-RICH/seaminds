@@ -7,6 +7,7 @@ interface SOSButtonProps {
   onOpenChat?: () => void;
   firstName?: string;
   shipName?: string;
+  inline?: boolean;
 }
 
 interface DPAContact {
@@ -33,7 +34,7 @@ const FALLBACK_CONTACTS: DPAContact[] = [
   },
 ];
 
-const SOSButton = ({ onOpenChat, firstName, shipName }: SOSButtonProps) => {
+const SOSButton = ({ onOpenChat, firstName, shipName, inline }: SOSButtonProps) => {
   const [open, setOpen] = useState(false);
   const [contacts, setContacts] = useState<DPAContact[]>(FALLBACK_CONTACTS);
 
@@ -76,7 +77,7 @@ const SOSButton = ({ onOpenChat, firstName, shipName }: SOSButtonProps) => {
       {/* Floating SOS trigger */}
       <button
         onClick={() => { setOpen(true); trackEvent("sos_button_click"); }}
-        className="fixed top-4 right-4 z-50 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow-lg transition-colors"
+        className={`${inline ? 'relative' : 'fixed top-4 right-4'} z-50 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow-lg transition-colors`}
         style={{ background: "#DC2626", color: "#FFFFFF" }}
         aria-label="SOS Emergency"
       >

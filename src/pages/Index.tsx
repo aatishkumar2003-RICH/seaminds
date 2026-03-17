@@ -595,7 +595,7 @@ const Index = () => {
             <LogOut size={14} /> Sign Out
           </button>
           <div className="w-full">
-            <SOSButton onOpenChat={() => setScreen("chat")} firstName={firstName} shipName={shipName} />
+            <SOSButton onOpenChat={() => setScreen("chat")} firstName={firstName} shipName={shipName} inline />
           </div>
         </div>
       </aside>
@@ -607,11 +607,6 @@ const Index = () => {
         </div>
 
         <div className="relative z-10 flex flex-col flex-1 min-h-0">
-        {/* SOS only on mobile */}
-        <div className="lg:hidden">
-          <SOSButton onOpenChat={() => setScreen("chat")} firstName={firstName} shipName={shipName} />
-        </div>
-
         {/* Greeting Header */}
         <div className="px-4 lg:px-8 pt-2 lg:pt-4 pb-1">
           <div className="flex items-center justify-between">
@@ -633,7 +628,12 @@ const Index = () => {
                 </span>
               )}
             </div>
-            <span className="text-xs font-mono text-muted-foreground">{utcTime}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span className="text-xs font-mono text-muted-foreground">{utcTime}</span>
+              <div className="lg:hidden">
+                <SOSButton onOpenChat={() => setScreen("chat")} firstName={firstName} shipName={shipName} inline />
+              </div>
+            </div>
           </div>
 
         {/* Quick Stats Row */}
