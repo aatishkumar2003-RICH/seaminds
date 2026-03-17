@@ -299,7 +299,7 @@ const ManagerPaymentHistory = ({ managerUserId }: ManagerPaymentHistoryProps) =>
 
             {/* PDF Export Button */}
             <button
-              onClick={() => {
+              onClick={async () => {
                 const a = selectedReport.assessment as any;
                 const c = selectedReport.crew;
                 const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
@@ -325,9 +325,41 @@ const ManagerPaymentHistory = ({ managerUserId }: ManagerPaymentHistoryProps) =>
                   y += 4;
                 };
 
-                // Header
+                // Header with logo
                 doc.setFillColor(13, 27, 42);
-                doc.rect(0, 0, w, 45, "F");
+                doc.rect(0, 0, w, 50, "F");
+
+                // Load and embed logo
+                const logoImg = new Image();
+                logoImg.crossOrigin = "anonymous";
+                logoImg.src = "/seaminds-logo.png";
+                try {
+                  await new Promise<void>((resolve, reject) => {
+                    logoImg.onload = () => resolve();
+                    logoImg.onerror = () => reject();
+                    setTimeout(() => resolve(), 1500);
+                  });
+                  const canvas = document.createElement("canvas");
+                  canvas.width = logoImg.naturalWidth || 120;
+                  canvas.height = logoImg.naturalHeight || 120;
+                  const ctx = canvas.getContext("2d");
+                  if (ctx) {
+                    ctx.drawImage(logoImg, 0, 0);
+                    const logoData = canvas.toDataURL("image/png");
+                    doc.addImage(logoData, "PNG", 15, 8, 14, 14);
+                  }
+                } catch { /* logo optional */ }
+
+                y = 12;
+                doc.setFontSize(7);
+                doc.setTextColor(212, 175, 55);
+                doc.setFont("helvetica", "bold");
+                doc.text("SEAMINDS", 31, 14);
+                doc.setFontSize(5);
+                doc.setFont("helvetica", "normal");
+                doc.text("Maritime Intelligence Platform", 31, 18);
+
+                y = 26;
                 addLine("CONFIDENTIAL — SMC ASSESSMENT REPORT", 9, [212, 175, 55], true);
                 y += 2;
                 addLine(c.name, 18, [255, 255, 255], true);
