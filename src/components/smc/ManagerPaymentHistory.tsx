@@ -299,7 +299,7 @@ const ManagerPaymentHistory = ({ managerUserId }: ManagerPaymentHistoryProps) =>
 
             {/* PDF Export Button */}
             <button
-              onClick={() => {
+              onClick={async () => {
                 const a = selectedReport.assessment as any;
                 const c = selectedReport.crew;
                 const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
