@@ -269,7 +269,21 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
 
   const advanceQuestion = () => {
     if (qIndex + 1 < flatQuestions.length) {
-      setQIndex(prev => prev + 1);
+      const nextQ = flatQuestions[qIndex + 1];
+      const currQ = flatQuestions[qIndex];
+      // Show section title card when switching sections
+      if (nextQ && currQ && nextQ.type !== currQ.type) {
+        const label = nextQ.type === 'scenario' ? '🚨 Situational Judgment' : '💬 Personal Wellbeing';
+        const num = nextQ.type === 'scenario' ? 'Section 2' : 'Section 3';
+        const icon = nextQ.type === 'scenario' ? '🚨' : '💬';
+        setSectionCard({ type: nextQ.type, label, num, icon });
+        setTimeout(() => {
+          setSectionCard(null);
+          setQIndex(prev => prev + 1);
+        }, 2200);
+      } else {
+        setQIndex(prev => prev + 1);
+      }
     } else {
       setFlowStep('score');
     }
