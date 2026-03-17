@@ -329,6 +329,7 @@ const TechnicalAssessment = ({ firstName, rank, shipName, assessmentId, question
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              onPaste={handlePaste}
               placeholder="Type your answer..."
               className="flex-1 bg-secondary border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground"
               disabled={evaluating}
