@@ -27,9 +27,29 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   const [aiQuestions, setAiQuestions] = useState<{ technical: string[]; communication: string[]; behavioural: string[] } | null>(null);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
   const [transcript, setTranscript] = useState<Array<{question:string,answer:string,score:number,redFlag:boolean,redFlagCategory:string|null,followUp:string|null}>>([]);
-  const [redFlags, setRedFlags] = useState<Array<{category:string,evidence:string,question:string,answer:string}>>([]);
+  const [redFlags, setRedFlags] = useState<Array<{category:string,evidence:string,question?:string,answer?:string,severity?:string}>>([]);
   const [pendingFollowUp, setPendingFollowUp] = useState<string|null>(null);
   const [evaluating, setEvaluating] = useState(false);
+  const [tabSwitches, setTabSwitches] = useState(0);
+
+  // Tab switch / focus loss detection
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'hidden') {
+        setTabSwitches(prev => {
+          const count = prev + 1;
+          setRedFlags(f => [...f, {
+            category: 'INTEGRITY',
+            evidence: `Tab switched ${count} time(s) during assessment`,
+            severity: count >= 3 ? 'HIGH' : 'MEDIUM'
+          }]);
+          return count;
+        });
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, []);
   const [preForm, setPreForm] = useState<{reasonForLeaving:string,expectedSalary:string,availabilityDate:string,medicalFit:boolean,accidentHistory:string,pscDetention:boolean,nearMiss:boolean,safetyViolation:boolean}>({ reasonForLeaving:'', expectedSalary:'', availabilityDate:'', medicalFit:true, accidentHistory:'', pscDetention:false, nearMiss:false, safetyViolation:false });
   const [preFormDone, setPreFormDone] = useState(false);
 
