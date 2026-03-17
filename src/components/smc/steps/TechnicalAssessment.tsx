@@ -241,7 +241,19 @@ const TechnicalAssessment = ({ firstName, rank, shipName, assessmentId, question
           <p className="text-xs text-muted-foreground">15 questions matched to your rank and vessel type. Answer in your own words.</p>
         </div>
         {qIndex >= 0 && !complete && (
-          <p className="text-xs text-center text-primary font-medium">{qIndex + 1} of 15 questions completed</p>
+          <div className="space-y-1">
+            <p className="text-xs text-center text-primary font-medium">{qIndex + 1} of 15 questions completed</p>
+            <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-1000"
+                style={{
+                  width: `${(timeLeft / 90) * 100}%`,
+                  backgroundColor: timeLeft > 30 ? '#D4AF37' : timeLeft > 10 ? '#F97316' : '#EF4444',
+                }}
+              />
+            </div>
+            <p className="text-[10px] text-center text-muted-foreground">{timeLeft}s remaining</p>
+          </div>
         )}
       </div>
 
