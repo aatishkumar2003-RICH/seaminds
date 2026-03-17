@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { CreditCard, TrendingUp, Clock, DollarSign, X, FileText } from "lucide-react";
+import { CreditCard, TrendingUp, Clock, DollarSign, X, FileText, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import jsPDF from "jspdf";
 
 interface Payment {
   id: string;
@@ -295,6 +296,127 @@ const ManagerPaymentHistory = ({ managerUserId }: ManagerPaymentHistoryProps) =>
                 ))}
               </div>
             )}
+
+            {/* PDF Export Button */}
+            <button
+              onClick={() => {
+                const a = selectedReport.assessment as any;
+                const c = selectedReport.crew;
+                const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+                const w = doc.internal.pageSize.getWidth();
+                let y = 20;
+
+                const addLine = (text: string, size: number, color: [number, number, number], bold = false, indent = 0) => {
+                  if (y > 270) { doc.addPage(); y = 20; }
+                  doc.setFontSize(size);
+                  doc.setTextColor(...color);
+                  if (bold) doc.setFont("helvetica", "bold"); else doc.setFont("helvetica", "normal");
+                  const lines = doc.splitTextToSize(text, w - 30 - indent);
+                  doc.text(lines, 15 + indent, y);
+                  y += lines.length * (size * 0.45) + 2;
+                };
+
+                const addSection = (title: string) => {
+                  y += 4;
+                  addLine(title, 11, [212, 175, 55], true);
+                  y += 1;
+                  doc.setDrawColor(212, 175, 55);
+                  doc.line(15, y, w - 15, y);
+                  y += 4;
+                };
+
+                // Header
+                doc.setFillColor(13, 27, 42);
+                doc.rect(0, 0, w, 45, "F");
+                addLine("CONFIDENTIAL — SMC ASSESSMENT REPORT", 9, [212, 175, 55], true);
+                y += 2;
+                addLine(c.name, 18, [255, 255, 255], true);
+                addLine(`${c.role} · ${c.ship_name}${a.completed_at ? ` · ${new Date(a.completed_at).toLocaleDateString()}` : ""}`, 10, [170, 170, 170]);
+                if (a.overall_score != null) {
+                  addLine(`SMC Score: ${a.overall_score} — ${a.score_band || "N/A"}`, 13, [212, 175, 55], true);
+                }
+                y += 4;
+
+                // Recommendation
+                const rec = a.report?.recommendation || a.recommendation;
+                if (rec) {
+                  const rs = REC_STYLES[rec];
+                  addLine(`RECOMMENDATION: ${rs?.label || rec}`, 12, rec === "SUITABLE" ? [34, 197, 94] : rec === "HIGH_RISK" || rec === "NOT_RECOMMENDED" ? [239, 68, 68] : [217, 119, 6], true);
+                  y += 3;
+                }
+
+                // Dimension Scores
+                addSection("DIMENSION SCORES");
+                const dims = [
+                  ["Technical", a.technical_score],
+                  ["Safety", a.wellness_score],
+                  ["Operational", a.experience_score],
+                  ["Leadership", a.behavioural_score],
+                  ["Communication", a.english_score],
+                ];
+                dims.forEach(([label, score]) => {
+                  addLine(`${label}: ${score != null ? `${score}/10` : "—"}`, 10, [224, 224, 224]);
+                });
+
+                // Findings
+                if (a.report?.findings?.length > 0) {
+                  addSection("FINDINGS");
+                  a.report.findings.forEach((f: string, i: number) => addLine(`${i + 1}. ${f}`, 10, [224, 224, 224], false, 2));
+                }
+
+                // Professional Remarks
+                if (a.report?.remarks) {
+                  addSection("PROFESSIONAL REMARKS");
+                  addLine(a.report.remarks, 10, [224, 224, 224]);
+                }
+
+                // Red Flags
+                const flags = a.red_flags;
+                if (Array.isArray(flags) && flags.length > 0) {
+                  addSection("RED FLAGS");
+                  flags.filter((f: any) => f.category !== "INTEGRITY").forEach((rf: any) => {
+                    addLine(`[${rf.category}] "${rf.evidence}"`, 10, [239, 68, 68], false, 2);
+                  });
+                }
+
+                // Integrity Flags
+                if (Array.isArray(flags)) {
+                  const integrity = flags.filter((f: any) => f.category === "INTEGRITY");
+                  const tabs = integrity.filter((f: any) => f.evidence?.includes("Tab switched"));
+                  const pastes = integrity.filter((f: any) => f.evidence?.includes("Copy-paste"));
+                  addSection("INTEGRITY CHECK");
+                  if (tabs.length === 0 && pastes.length === 0) {
+                    addLine("✓ No integrity concerns detected — clean assessment", 10, [74, 222, 128]);
+                  } else {
+                    if (tabs.length > 0) addLine(`Tab switches detected: ${tabs.length} time(s) — ${tabs.length >= 3 ? "HIGH RISK" : "MEDIUM"}`, 10, tabs.length >= 3 ? [239, 68, 68] : [217, 119, 6]);
+                    if (pastes.length > 0) addLine(`Copy-paste detected: ${pastes.length} time(s)`, 10, [170, 170, 170]);
+                  }
+                }
+
+                // Improvement Areas
+                if (a.report?.improvement_areas?.length > 0) {
+                  addSection("IMPROVEMENT AREAS");
+                  a.report.improvement_areas.forEach((item: any) => {
+                    addLine(`[${item.severity}] ${item.area}: ${item.detail}`, 10, [224, 224, 224], false, 2);
+                  });
+                }
+
+                // Training
+                if (a.report?.training_recommendations?.length > 0) {
+                  addSection("TRAINING RECOMMENDATIONS");
+                  a.report.training_recommendations.forEach((r: string) => addLine(`• ${r}`, 10, [224, 224, 224], false, 2));
+                }
+
+                // Footer
+                y += 6;
+                addLine("Generated by SeaMinds · Confidential", 8, [120, 120, 120]);
+
+                doc.save(`SMC-Report-${c.name.replace(/\s+/g, "-")}-${new Date().toISOString().split("T")[0]}.pdf`);
+              }}
+              style={{ width: "100%", marginTop: "16px", marginBottom: "24px", padding: "14px", background: "#D4AF37", color: "#0D1B2A", border: "none", borderRadius: "12px", fontSize: "14px", fontWeight: "bold", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
+            >
+              <Download size={16} /> Download PDF Report
+            </button>
           </div>
         </div>
       )}
