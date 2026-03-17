@@ -49,6 +49,36 @@ const BehaviouralProfile = ({ assessmentId, questions: questionsProp, onNext, on
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, pendingFollowUp]);
 
+  // Per-question countdown timer
+  useEffect(() => {
+    if (complete) return;
+    setTimeLeft(90);
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          const answer = input.trim() || "[No answer — time expired]";
+          setInput("");
+          const next = qIndex + 1;
+          if (next < activeQuestions.length) {
+            setMessages(p => [...p, { role: "user", text: answer }, { role: "ai", text: activeQuestions[next] }]);
+            setQIndex(next);
+          } else {
+            setMessages(p => [...p, { role: "user", text: answer }, { role: "ai", text: "Profile Complete. Thank you for your openness." }]);
+            setComplete(true);
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [qIndex, complete]);
+
+  const handlePaste = () => {
+    onRedFlag?.({ category: 'INTEGRITY', evidence: `Copy-paste detected on question ${qIndex + 1}`, severity: 'LOW' });
+  };
+
   const handleSend = () => {
     if (!input.trim()) return;
     const answer = input.trim();
