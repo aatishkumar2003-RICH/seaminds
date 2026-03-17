@@ -483,7 +483,13 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
 
               {/* MCQ result banner */}
               {mcqSubmitted && (
-                <div className="rounded-xl px-4 py-3 space-y-1" style={{ background: mcqCorrect ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', border: `1px solid ${mcqCorrect ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}` }}>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3 }}
+                  className="rounded-xl px-4 py-3 space-y-1"
+                  style={{ background: mcqCorrect ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', border: `1px solid ${mcqCorrect ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}` }}
+                >
                   <div className="flex items-center gap-2">
                     {mcqCorrect ? <CheckCircle size={16} style={{ color: '#22c55e' }} /> : <XCircle size={16} style={{ color: '#ef4444' }} />}
                     <span className="text-sm font-bold" style={{ color: mcqCorrect ? '#22c55e' : '#ef4444' }}>
@@ -493,7 +499,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
                   {!mcqCorrect && currentQ.explanation && (
                     <p style={{ fontSize: '12px', color: '#aaa', marginTop: '4px' }}>{currentQ.explanation}</p>
                   )}
-                </div>
+                </motion.div>
               )}
 
               {/* Follow-up question after MCQ */}
