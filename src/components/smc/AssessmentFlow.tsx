@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { ArrowLeft, Loader2, CheckCircle, XCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import DocumentUpload from "./steps/DocumentUpload";
 import DocumentVerification from "./steps/DocumentVerification";
@@ -436,6 +437,14 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
 
         {/* Question content */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 pb-4">
+          <AnimatePresence mode="wait">
+          <motion.div
+            key={`q-${qIndex}`}
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -30 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+          >
           {/* ── MCQ ── */}
           {currentQ?.type === 'mcq' && (
             <div className="space-y-4">
@@ -450,8 +459,11 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
                   const isCorrectOpt = mcqSubmitted && i === currentQ.correct_index;
                   const isWrongSelected = mcqSubmitted && isSelected && !mcqCorrect;
                   return (
-                    <button
+                    <motion.button
                       key={i}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.08, duration: 0.25 }}
                       onClick={() => { if (!mcqSubmitted) setSelectedOption(i); }}
                       disabled={mcqSubmitted}
                       className="w-full text-left rounded-xl px-4 py-3 text-sm transition-all"
@@ -464,14 +476,20 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
                     >
                       <span style={{ fontWeight: 'bold', color: isSelected && !mcqSubmitted ? '#D4AF37' : '#888', marginRight: '8px' }}>{letter}.</span>
                       {opt.replace(/^[A-D]\.\s*/, '')}
-                    </button>
+                    </motion.button>
                   );
                 })}
               </div>
 
               {/* MCQ result banner */}
               {mcqSubmitted && (
-                <div className="rounded-xl px-4 py-3 space-y-1" style={{ background: mcqCorrect ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', border: `1px solid ${mcqCorrect ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}` }}>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3 }}
+                  className="rounded-xl px-4 py-3 space-y-1"
+                  style={{ background: mcqCorrect ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', border: `1px solid ${mcqCorrect ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}` }}
+                >
                   <div className="flex items-center gap-2">
                     {mcqCorrect ? <CheckCircle size={16} style={{ color: '#22c55e' }} /> : <XCircle size={16} style={{ color: '#ef4444' }} />}
                     <span className="text-sm font-bold" style={{ color: mcqCorrect ? '#22c55e' : '#ef4444' }}>
@@ -481,7 +499,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
                   {!mcqCorrect && currentQ.explanation && (
                     <p style={{ fontSize: '12px', color: '#aaa', marginTop: '4px' }}>{currentQ.explanation}</p>
                   )}
-                </div>
+                </motion.div>
               )}
 
               {/* Follow-up question after MCQ */}
@@ -567,6 +585,8 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
               )}
             </div>
           )}
+          </motion.div>
+          </AnimatePresence>
         </div>
 
         {/* Bottom action bar */}
