@@ -77,7 +77,7 @@ const SOSButton = ({ onOpenChat, firstName, shipName, inline }: SOSButtonProps) 
       {/* Floating SOS trigger */}
       <button
         onClick={() => { setOpen(true); trackEvent("sos_button_click"); }}
-        className="fixed top-4 right-4 z-50 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow-lg transition-colors"
+        className={`${inline ? 'relative' : 'fixed top-4 right-4'} z-50 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow-lg transition-colors`}
         style={{ background: "#DC2626", color: "#FFFFFF" }}
         aria-label="SOS Emergency"
       >
