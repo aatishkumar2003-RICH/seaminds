@@ -937,6 +937,60 @@ export type Database = {
         }
         Relationships: []
       }
+      question_bank: {
+        Row: {
+          active: boolean | null
+          correct_index: number
+          correct_letter: string
+          created_at: string | null
+          difficulty: string | null
+          domain: string
+          explanation: string | null
+          id: string
+          options: Json
+          question: string
+          rank_group: string
+          rank_specific: string | null
+          regulation: string | null
+          times_used: number | null
+          vessel_type: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          correct_index: number
+          correct_letter: string
+          created_at?: string | null
+          difficulty?: string | null
+          domain: string
+          explanation?: string | null
+          id?: string
+          options: Json
+          question: string
+          rank_group: string
+          rank_specific?: string | null
+          regulation?: string | null
+          times_used?: number | null
+          vessel_type?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          correct_index?: number
+          correct_letter?: string
+          created_at?: string | null
+          difficulty?: string | null
+          domain?: string
+          explanation?: string | null
+          id?: string
+          options?: Json
+          question?: string
+          rank_group?: string
+          rank_specific?: string | null
+          regulation?: string | null
+          times_used?: number | null
+          vessel_type?: string | null
+        }
+        Relationships: []
+      }
       rest_hours_data: {
         Row: {
           crew_profile_id: string | null
