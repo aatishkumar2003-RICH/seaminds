@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { CreditCard, TrendingUp, Clock, DollarSign, X, FileText } from "lucide-react";
+import { CreditCard, TrendingUp, Clock, DollarSign, X, FileText, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import jsPDF from "jspdf";
 
 interface Payment {
   id: string;
