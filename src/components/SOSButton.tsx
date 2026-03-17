@@ -34,7 +34,7 @@ const FALLBACK_CONTACTS: DPAContact[] = [
   },
 ];
 
-const SOSButton = ({ onOpenChat, firstName, shipName }: SOSButtonProps) => {
+const SOSButton = ({ onOpenChat, firstName, shipName, inline }: SOSButtonProps) => {
   const [open, setOpen] = useState(false);
   const [contacts, setContacts] = useState<DPAContact[]>(FALLBACK_CONTACTS);
 
