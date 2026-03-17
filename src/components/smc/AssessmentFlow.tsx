@@ -459,8 +459,11 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
                   const isCorrectOpt = mcqSubmitted && i === currentQ.correct_index;
                   const isWrongSelected = mcqSubmitted && isSelected && !mcqCorrect;
                   return (
-                    <button
+                    <motion.button
                       key={i}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.08, duration: 0.25 }}
                       onClick={() => { if (!mcqSubmitted) setSelectedOption(i); }}
                       disabled={mcqSubmitted}
                       className="w-full text-left rounded-xl px-4 py-3 text-sm transition-all"
@@ -473,7 +476,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
                     >
                       <span style={{ fontWeight: 'bold', color: isSelected && !mcqSubmitted ? '#D4AF37' : '#888', marginRight: '8px' }}>{letter}.</span>
                       {opt.replace(/^[A-D]\.\s*/, '')}
-                    </button>
+                    </motion.button>
                   );
                 })}
               </div>
