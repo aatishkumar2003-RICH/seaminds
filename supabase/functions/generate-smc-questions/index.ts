@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
   const department = sanitize(_department, 100);
   const yearsExperience = Math.min(Math.max(Number(_yearsExperience) || 0, 0), 60);
 
-  // ── CLASSIFY CANDIDATE (deterministic — no AI needed) ──────────────────
+  // ── CLASSIFY CANDIDATE ──
   const yrs = Number(yearsExperience) || 0;
   let experience_tier = "MID";
   if (yrs < 3) experience_tier = "JUNIOR";
@@ -56,10 +56,6 @@ Deno.serve(async (req) => {
   const rankUpper = (rank || "").toUpperCase();
   if (rankUpper.includes("MASTER") || rankUpper.includes("CHIEF ENGINEER")) experience_tier = "COMMAND";
   if (rankUpper.includes("CADET")) experience_tier = "JUNIOR";
-
-  const dept = (department || "").toUpperCase();
-  const isRating = ["AB","OS","OILER","FITTER","MOTORMAN"].some(r => rankUpper.includes(r));
-  const isCatering = ["COOK","MESSMAN"].some(r => rankUpper.includes(r));
 
   const vt = (vesselType || "").toUpperCase();
   let ship_specialisation = "GENERAL";
@@ -72,7 +68,16 @@ Deno.serve(async (req) => {
   else if (vt.includes("CONTAINER")) ship_specialisation = "CONTAINER";
   else if (vt.includes("RO-RO") || vt.includes("RORO")) ship_specialisation = "RORO";
 
-  // ── BUILD SPECIALISATION CONTEXT ───────────────────────────────────────
+  // ── OFFICER vs RATING classification ──
+  const OFFICER_RANKS = ['Master','Captain','Chief Officer','Chief Mate','2nd Officer','Second Officer','3rd Officer','Third Officer','Chief Engineer','Second Engineer','2nd Engineer','Third Engineer','3rd Engineer','ETO','Electrical Officer','Electro-Technical Officer'];
+  const RATING_KEYWORDS = ['ab','os','oiler','fitter','motorman','cook','messman','chief cook','steward'];
+  const isOfficer = OFFICER_RANKS.some(r => rank.toLowerCase().includes(r.toLowerCase())) || (!RATING_KEYWORDS.some(r => rank.toLowerCase().includes(r)));
+  const mcqCount = isOfficer ? 30 : 10;
+  const scenarioCount = isOfficer ? 5 : 3;
+  const behaviouralCount = isOfficer ? 5 : 4;
+  const totalQuestions = mcqCount + scenarioCount + behaviouralCount;
+
+  // ── BUILD VESSEL SPECIALISATION CONTEXT ──
   const shipContext: Record<string, string> = {
     LNG: "Include questions on BOG management, cargo cooling procedures, membrane vs Moss tanks, ESD system, reliquefaction plant.",
     LPG: "Include questions on LPG cargo properties, pressure relief systems, compressor operations, cargo cooling.",
@@ -85,53 +90,98 @@ Deno.serve(async (req) => {
     GENERAL: "Use standard SOLAS, ISM, MLC, MARPOL questions relevant to the rank.",
   };
 
-  // ── BUILD TIER CONTEXT ─────────────────────────────────────────────────
-  const tierContext: Record<string, string> = {
-    JUNIOR: "Focus on operational knowledge: watchkeeping duties, basic procedures, routine tasks. Ask WHAT and HOW questions. Expect procedural answers.",
-    MID: "Focus on problem-solving: handling abnormal situations, equipment issues, cargo challenges. Ask WHAT WOULD YOU DO IF questions.",
-    SENIOR: "Focus on leadership and management: managing crew, handling inspections, coordinating teams. Ask HOW DO YOU MANAGE questions.",
-    COMMAND: "Focus on strategic command decisions: PSC/SIRE inspections, major incidents, commercial pressure vs safety, crisis management. Expect experience-based strategic answers.",
-  };
+  // ── MCQ DOMAIN DISTRIBUTION ──
+  let mcqDistribution: string;
+  if (isOfficer) {
+    mcqDistribution = `Generate exactly ${mcqCount} MCQ questions in these EXACT proportions:
+- Safety domain (10 questions): SOLAS fire detection, LSA requirements, emergency procedures, stability, GMDSS, muster, abandon ship, enclosed space entry, hot work permits, MOB procedures
+- Security domain (5 questions): ISPS Code, Ship Security Plan, security levels 1/2/3, Declaration of Security, access control, crew ID verification
+- Management & MLC domain (8 questions): MLC 2006 rest hours (max 14hrs work/24hrs, 72hrs/week), STCW watch hours, port state control, flag state requirements, SMS documentation, ISM Code, near miss reporting, safety committee
+- Technical domain (7 questions): vessel-type specific cargo operations, navigation equipment, propulsion, chartwork regulations, bridge procedures`;
+  } else {
+    mcqDistribution = `Generate exactly ${mcqCount} MCQ questions in these EXACT proportions:
+- Safety domain (4 questions): PPE usage, muster station duties, fire watch procedures, immersion suit donning
+- Security domain (2 questions): access control responsibilities, reporting suspicious persons/items
+- Watchkeeping domain (2 questions): lookout duties, communication with OOW, AB/OS specific bridge procedures
+- Technical domain (2 questions): basic maintenance, role-specific equipment operation`;
+  }
 
-  // ── BUILD DEPARTMENT QUESTION STYLE ───────────────────────────────────
-  let deptStyle = "";
-  if (isRating) {
-    const ratingRole = rankUpper.includes('AB') ? 'Able Seaman (AB)' :
-      rankUpper.includes('OS') ? 'Ordinary Seaman (OS)' :
-      rankUpper.includes('OILER') ? 'Oiler' :
-      rankUpper.includes('FITTER') ? 'Fitter' :
-      rankUpper.includes('MOTORMAN') ? 'Motorman' : 'Rating';
-    deptStyle = `This is a ${ratingRole} rating. Ask ONLY procedural compliance and basic safety questions. Topics: personal safety equipment (PPE), permit to work system, muster duties and emergency stations, basic firefighting equipment locations, lifeboat/liferaft duties, watchkeeping basics, ISPS security awareness, reporting defects to officers, working at height safety, confined space entry basics. For Fitter/Motorman also ask: basic machinery maintenance, lubrication routines, tool safety. For AB also ask: mooring rope handling, anchor operations, lookout duties, helm orders. Do NOT ask navigation, cargo management, engine systems, or leadership questions. Questions must be simple and direct — ratings answer in practical terms not theory.`;
-  } else if (isCatering) {
-    const cateringRole = rankUpper.includes('CHIEF COOK') || rankUpper.includes('CHIEF_COOK') ? 'Chief Cook' :
-      rankUpper.includes('COOK') ? 'Cook' : 'Messman';
-    deptStyle = `This is a ${cateringRole} in the Catering Department. Ask questions about: food safety and hygiene (HACCP basics), galley cleanliness and sanitation, food storage temperatures, allergen awareness, galley fire prevention and fire extinguisher use, emergency muster duties, ISPS security awareness, personal hygiene standards, waste disposal procedures, MLC 2006 crew welfare provisions. For Chief Cook also ask: menu planning for crew nutrition, food budgeting, managing stores, crew dietary requirements. Do NOT ask technical navigation, engine, or cargo questions. Questions must be practical and relevant to daily galley and ship safety duties.`;
-  } else if (dept.includes("ENGINE") || rankUpper.includes("ENGINEER") || rankUpper.includes("ETO")) deptStyle = "This is an ENGINE DEPARTMENT officer. Ask TECHNICAL DIAGNOSIS questions: machinery systems, alarm responses, maintenance procedures, overhaul sequences. NOT navigation or cargo questions.";
-  else deptStyle = "This is a DECK DEPARTMENT officer. Ask SCENARIO AND DECISION-MAKING questions: navigation situations, COLREGS, passage planning, cargo operations, safety management. NOT engine machinery questions.";
-
-  const numTechnical = isRating || isCatering ? 4 : 5;
-  const numComm = isRating || isCatering ? 2 : 3;
-  const numBehav = isRating || isCatering ? 2 : 3;
-  const totalQ = numTechnical + numComm + numBehav;
-
-  const userMessage = `Generate interview questions for a seafarer with this exact profile:
+  const userMessage = `Generate assessment questions for this seafarer profile:
 Rank: ${rank}
 Department: ${department}
 Vessel Type: ${vesselType}
-Years Experience in Rank: ${yearsExperience}
+Years Experience: ${yearsExperience}
 Experience Tier: ${experience_tier}
 Ship Specialisation: ${ship_specialisation}
+Classification: ${isOfficer ? 'OFFICER' : 'RATING'}
 
-DEPARTMENT STYLE: ${deptStyle}
-EXPERIENCE DEPTH: ${tierContext[experience_tier]}
-VESSEL SPECIALISATION: ${shipContext[ship_specialisation] || shipContext.GENERAL}
+VESSEL SPECIALISATION CONTEXT: ${shipContext[ship_specialisation] || shipContext.GENERAL}
 
-Generate exactly ${numTechnical} technical questions, ${numComm} communication questions, and ${numBehav} behavioural questions (${totalQ} total).
-Questions must be specific to this exact profile — NOT generic for all seafarers.
-A ${rank} on a ${vesselType} with ${yearsExperience} years should get completely different questions from a cadet on a bulk carrier.
+SECTION 1 — MCQ (Multiple Choice Questions)
+${mcqDistribution}
 
-Return ONLY valid JSON, no markdown, no explanation:
-{ "technical": [${numTechnical} strings], "communication": [${numComm} strings], "behavioural": [${numBehav} strings] }`;
+Each MCQ must have exactly 4 options (A, B, C, D). Only ONE is correct.
+Every correct answer must be definitively correct according to the referenced convention.
+Wrong answers must be plausible but clearly incorrect to anyone with proper knowledge.
+
+SECTION 2 — SCENARIO QUESTIONS
+Generate exactly ${scenarioCount} scenario-based questions. Each scenario must include:
+- A detailed situation description with vessel position, weather conditions, and time
+- A clear question asking for immediate actions in order of priority
+- 4 key steps that should be in the answer
+- One critical step that MUST be present
+- Time limit of 180 seconds
+
+SECTION 3 — BEHAVIOURAL QUESTIONS
+Generate exactly ${behaviouralCount} behavioural/wellness questions covering categories:
+stress, leadership, family, conflict, fatigue, safety_culture, mental_health
+
+Return ONLY valid JSON (no markdown, no explanation) in this EXACT structure:
+{
+  "mcq": [
+    {
+      "id": "mcq_1",
+      "domain": "safety|security|management|technical",
+      "question": "Exact question text",
+      "options": ["A. Option text", "B. Option text", "C. Option text", "D. Option text"],
+      "correct_index": 0,
+      "correct_letter": "A",
+      "regulation": "SOLAS Chapter II-2 Reg 10",
+      "explanation": "Why this answer is correct with regulatory reference"
+    }
+  ],
+  "scenario": [
+    {
+      "id": "scen_1",
+      "domain": "emergency|cargo|navigation|engineering",
+      "situation": "Detailed scenario description including vessel position, conditions, time",
+      "question": "What are your immediate actions in order of priority?",
+      "key_steps": ["First action", "Second action", "Third action", "Fourth action"],
+      "critical_step": "The single most important step that MUST be in the answer",
+      "time_seconds": 180
+    }
+  ],
+  "behavioural": [
+    {
+      "id": "beh_1",
+      "category": "stress|leadership|family|conflict|fatigue|safety_culture|mental_health",
+      "question": "Question text",
+      "wellness_indicator": true,
+      "confidential": true,
+      "prompt_text": "Your response is confidential and will never be shared with your employer."
+    }
+  ],
+  "candidate_context": {
+    "rank": "${rank}",
+    "vessel_type": "${vesselType}",
+    "experience_tier": "${experience_tier}",
+    "is_officer": ${isOfficer},
+    "mcq_count": ${mcqCount},
+    "total_questions": ${totalQuestions}
+  }
+}`;
+
+  const systemPrompt = `You are a senior maritime examiner and Flag State surveyor with 25 years experience. You examine officers and ratings for CoC (Certificate of Competency) and endorsements. Generate STRICTLY accurate MCQ questions based on SOLAS 2024, MARPOL 2024, MLC 2006, STCW 2010 Manila Amendments, ISPS Code, and ISM Code. Every correct answer must be definitively correct according to the referenced convention. Wrong answers must be plausible but clearly incorrect to anyone with proper knowledge. Questions must differentiate between competent and incompetent seafarers. Do NOT generate questions that can be answered by guessing or common sense alone. Return ONLY valid JSON, no markdown backticks, no explanation.`;
 
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -139,10 +189,10 @@ Return ONLY valid JSON, no markdown, no explanation:
     body: JSON.stringify({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: "You are a senior maritime superintendent generating interview questions. Return ONLY valid JSON, no markdown backticks, no explanation." },
+        { role: "system", content: systemPrompt },
         { role: "user", content: userMessage }
       ],
-      max_tokens: 1200,
+      max_tokens: 8000,
       temperature: 0.7,
     }),
   });
@@ -153,11 +203,12 @@ Return ONLY valid JSON, no markdown, no explanation:
 
   let questions;
   try { questions = JSON.parse(clean); }
-  catch { questions = { technical: [], communication: [], behavioural: [] }; }
+  catch { questions = { mcq: [], scenario: [], behavioural: [], candidate_context: { rank, vessel_type: vesselType, experience_tier, is_officer: isOfficer, mcq_count: mcqCount, total_questions: totalQuestions } }; }
 
-  // Return questions + the classified context (useful for evaluate-answer later)
-  return new Response(JSON.stringify({
-    ...questions,
-    candidate_context: { rank, department, experience_tier, ship_specialisation, yearsExperience, vesselType }
-  }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  // Ensure candidate_context is always present
+  if (!questions.candidate_context) {
+    questions.candidate_context = { rank, vessel_type: vesselType, experience_tier, ship_specialisation, is_officer: isOfficer, mcq_count: mcqCount, total_questions: totalQuestions };
+  }
+
+  return new Response(JSON.stringify(questions), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 });
