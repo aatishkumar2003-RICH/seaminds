@@ -7,6 +7,7 @@ interface SOSButtonProps {
   onOpenChat?: () => void;
   firstName?: string;
   shipName?: string;
+  inline?: boolean;
 }
 
 interface DPAContact {
