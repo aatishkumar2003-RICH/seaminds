@@ -60,6 +60,8 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   const [pendingFollowUp, setPendingFollowUp] = useState<string|null>(null);
   const [evaluating, setEvaluating] = useState(false);
   const [tabSwitches, setTabSwitches] = useState(0);
+  const [sectionCard, setSectionCard] = useState<{ type: string; label: string; num: string; icon: string } | null>(null);
+  const prevSectionType = useRef<string | null>(null);
 
   // Timer state
   const [timeLeft, setTimeLeft] = useState(60);
@@ -267,7 +269,21 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
 
   const advanceQuestion = () => {
     if (qIndex + 1 < flatQuestions.length) {
-      setQIndex(prev => prev + 1);
+      const nextQ = flatQuestions[qIndex + 1];
+      const currQ = flatQuestions[qIndex];
+      // Show section title card when switching sections
+      if (nextQ && currQ && nextQ.type !== currQ.type) {
+        const label = nextQ.type === 'scenario' ? '🚨 Situational Judgment' : '💬 Personal Wellbeing';
+        const num = nextQ.type === 'scenario' ? 'Section 2' : 'Section 3';
+        const icon = nextQ.type === 'scenario' ? '🚨' : '💬';
+        setSectionCard({ type: nextQ.type, label, num, icon });
+        setTimeout(() => {
+          setSectionCard(null);
+          setQIndex(prev => prev + 1);
+        }, 2200);
+      } else {
+        setQIndex(prev => prev + 1);
+      }
     } else {
       setFlowStep('score');
     }
@@ -398,6 +414,64 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
             <Loader2 size={28} className="animate-spin mx-auto" style={{ color: '#D4AF37' }} />
             <p className="text-sm font-semibold animate-pulse" style={{ color: '#D4AF37' }}>Preparing your personalised assessment...</p>
           </div>
+        </div>
+      );
+    }
+
+    // Section transition card overlay
+    if (sectionCard) {
+      return (
+        <div className="flex flex-col h-full items-center justify-center" style={{ background: '#0b1929' }}>
+          <AnimatePresence>
+            <motion.div
+              key={`section-card-${sectionCard.type}`}
+              initial={{ opacity: 0, scale: 0.8, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: -20 }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className="text-center space-y-4 px-8"
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: 'spring', stiffness: 200, damping: 15 }}
+                style={{ fontSize: '56px', lineHeight: 1 }}
+              >
+                {sectionCard.icon}
+              </motion.div>
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35, duration: 0.4 }}
+                className="text-xs uppercase tracking-[0.25em] font-semibold"
+                style={{ color: '#D4AF37' }}
+              >
+                {sectionCard.num}
+              </motion.p>
+              <motion.h2
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.4 }}
+                className="text-xl font-bold text-foreground"
+              >
+                {sectionCard.label.replace(/^[^\s]+\s/, '')}
+              </motion.h2>
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: '60px' }}
+                transition={{ delay: 0.7, duration: 0.6 }}
+                style={{ height: '2px', background: '#D4AF37', margin: '0 auto' }}
+              />
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.9, duration: 0.4 }}
+                className="text-xs text-muted-foreground"
+              >
+                {sectionCard.type === 'scenario' ? 'Describe your actions in order of priority' : 'Your responses are confidential'}
+              </motion.p>
+            </motion.div>
+          </AnimatePresence>
         </div>
       );
     }
