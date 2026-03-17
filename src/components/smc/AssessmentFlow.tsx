@@ -585,6 +585,8 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
               )}
             </div>
           )}
+          </motion.div>
+          </AnimatePresence>
         </div>
 
         {/* Bottom action bar */}
