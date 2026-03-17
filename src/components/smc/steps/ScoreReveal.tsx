@@ -84,7 +84,14 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, tran
         supabase.functions.invoke('generate-report', {
           body: { rank, firstName, transcript: transcript || [], scores: data?.scores || {}, redFlags: redFlags || [], candidateContext: candidateContext || {} }
         }).then(({ data: rd }) => {
-          if (rd?.report) setReport(rd.report);
+          if (rd?.report) {
+            setReport(rd.report);
+            // Persist report to DB
+            supabase.from("smc_assessments").update({
+              report: rd.report,
+              recommendation: rd.report.recommendation || null,
+            } as any).eq("id", assessmentId).then(() => {});
+          }
           setReportLoading(false);
         });
       });
@@ -123,8 +130,19 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, tran
               certificate_id: certId,
               status: "completed",
               completed_at: new Date().toISOString(),
-            })
-            .eq("id", assessmentId);
+              red_flags: redFlags || [],
+              report: report || null,
+              recommendation: report?.recommendation || null,
+              dimension_scores: {
+                technical: scores.technical,
+                safety: scores.safety,
+                operational: scores.operational,
+                leadership: scores.leadership,
+                communication: scores.communication,
+              },
+            } as any)
+            .eq("id", assessmentId)
+            .then(() => {});
         } catch (err) {
           console.log("DB write error (non-blocking):", err);
         }

@@ -1003,11 +1003,15 @@ export type Database = {
           completed_at: string | null
           crew_profile_id: string
           current_step: number
+          dimension_scores: Json | null
           doc_upload_status: string
           english_score: number | null
           experience_score: number | null
           id: string
           overall_score: number | null
+          recommendation: string | null
+          red_flags: Json | null
+          report: Json | null
           score_band: string | null
           started_at: string
           status: string
@@ -1020,11 +1024,15 @@ export type Database = {
           completed_at?: string | null
           crew_profile_id: string
           current_step?: number
+          dimension_scores?: Json | null
           doc_upload_status?: string
           english_score?: number | null
           experience_score?: number | null
           id?: string
           overall_score?: number | null
+          recommendation?: string | null
+          red_flags?: Json | null
+          report?: Json | null
           score_band?: string | null
           started_at?: string
           status?: string
@@ -1037,11 +1045,15 @@ export type Database = {
           completed_at?: string | null
           crew_profile_id?: string
           current_step?: number
+          dimension_scores?: Json | null
           doc_upload_status?: string
           english_score?: number | null
           experience_score?: number | null
           id?: string
           overall_score?: number | null
+          recommendation?: string | null
+          red_flags?: Json | null
+          report?: Json | null
           score_band?: string | null
           started_at?: string
           status?: string
