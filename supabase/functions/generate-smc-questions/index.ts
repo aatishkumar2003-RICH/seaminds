@@ -77,6 +77,55 @@ Deno.serve(async (req) => {
   const behaviouralCount = isOfficer ? 5 : 4;
   const totalQuestions = mcqCount + scenarioCount + behaviouralCount;
 
+  // ── QUESTION BANK LOGIC ──
+  const rankGroup = isOfficer ? 'OFFICER' : 'RATING';
+  const domains = isOfficer
+    ? [{ domain: 'safety', count: 10 }, { domain: 'security', count: 5 }, { domain: 'management', count: 8 }, { domain: 'technical', count: 7 }]
+    : [{ domain: 'safety', count: 4 }, { domain: 'security', count: 2 }, { domain: 'watchkeeping', count: 2 }, { domain: 'technical', count: 2 }];
+
+  const bankMCQ: any[] = [];
+  let bankHasEnough = true;
+
+  for (const { domain, count } of domains) {
+    const { data: questions } = await adminClient
+      .from('question_bank')
+      .select('*')
+      .eq('rank_group', rankGroup)
+      .eq('domain', domain)
+      .eq('active', true)
+      .order('times_used', { ascending: true })
+      .limit(count * 3);
+
+    if (!questions || questions.length < count) {
+      bankHasEnough = false;
+      break;
+    }
+
+    const shuffled = questions.sort(() => Math.random() - 0.5).slice(0, count);
+
+    shuffled.forEach((q: any) => {
+      const options = typeof q.options === 'string' ? JSON.parse(q.options) : (q.options as string[]);
+      const correctAnswer = options[q.correct_index];
+      const shuffledOptions = [...options].sort(() => Math.random() - 0.5);
+      const newCorrectIndex = shuffledOptions.indexOf(correctAnswer);
+      bankMCQ.push({
+        id: q.id,
+        domain: q.domain,
+        question: q.question,
+        options: shuffledOptions,
+        correct_index: newCorrectIndex,
+        correct_letter: ['A','B','C','D'][newCorrectIndex],
+        regulation: q.regulation,
+        explanation: q.explanation
+      });
+      adminClient.from('question_bank').update({ times_used: (q.times_used || 0) + 1 }).eq('id', q.id);
+    });
+  }
+
+  if (bankHasEnough && bankMCQ.length >= mcqCount) {
+    console.log(`Using ${bankMCQ.length} questions from question bank`);
+  }
+
   // ── BUILD VESSEL SPECIALISATION CONTEXT ──
   const shipContext: Record<string, string> = {
     LNG: "Include questions on BOG management, cargo cooling procedures, membrane vs Moss tanks, ESD system, reliquefaction plant.",
@@ -90,7 +139,10 @@ Deno.serve(async (req) => {
     GENERAL: "Use standard SOLAS, ISM, MLC, MARPOL questions relevant to the rank.",
   };
 
-  // ── MCQ DOMAIN DISTRIBUTION ──
+  // ── DETERMINE WHAT GPT NEEDS TO GENERATE ──
+  const needGptMCQ = !bankHasEnough || bankMCQ.length < mcqCount;
+
+  // ── MCQ DOMAIN DISTRIBUTION (only if GPT needed for MCQ) ──
   let mcqDistribution: string;
   if (isOfficer) {
     mcqDistribution = `Generate exactly ${mcqCount} MCQ questions in these EXACT proportions:
@@ -106,6 +158,13 @@ Deno.serve(async (req) => {
 - Technical domain (2 questions): basic maintenance, role-specific equipment operation`;
   }
 
+  const mcqSection = needGptMCQ ? `SECTION 1 — MCQ (Multiple Choice Questions)
+${mcqDistribution}
+
+Each MCQ must have exactly 4 options (A, B, C, D). Only ONE is correct.
+Every correct answer must be definitively correct according to the referenced convention.
+Wrong answers must be plausible but clearly incorrect to anyone with proper knowledge.` : 'SECTION 1 — MCQ: SKIP (already sourced from question bank)';
+
   const userMessage = `Generate assessment questions for this seafarer profile:
 Rank: ${rank}
 Department: ${department}
@@ -117,12 +176,7 @@ Classification: ${isOfficer ? 'OFFICER' : 'RATING'}
 
 VESSEL SPECIALISATION CONTEXT: ${shipContext[ship_specialisation] || shipContext.GENERAL}
 
-SECTION 1 — MCQ (Multiple Choice Questions)
-${mcqDistribution}
-
-Each MCQ must have exactly 4 options (A, B, C, D). Only ONE is correct.
-Every correct answer must be definitively correct according to the referenced convention.
-Wrong answers must be plausible but clearly incorrect to anyone with proper knowledge.
+${mcqSection}
 
 SECTION 2 — SCENARIO QUESTIONS
 Generate exactly ${scenarioCount} scenario-based questions. Each scenario must include:
@@ -138,7 +192,7 @@ stress, leadership, family, conflict, fatigue, safety_culture, mental_health
 
 Return ONLY valid JSON (no markdown, no explanation) in this EXACT structure:
 {
-  "mcq": [
+  ${needGptMCQ ? `"mcq": [
     {
       "id": "mcq_1",
       "domain": "safety|security|management|technical",
@@ -149,7 +203,7 @@ Return ONLY valid JSON (no markdown, no explanation) in this EXACT structure:
       "regulation": "SOLAS Chapter II-2 Reg 10",
       "explanation": "Why this answer is correct with regulatory reference"
     }
-  ],
+  ],` : ''}
   "scenario": [
     {
       "id": "scen_1",
@@ -170,18 +224,10 @@ Return ONLY valid JSON (no markdown, no explanation) in this EXACT structure:
       "confidential": true,
       "prompt_text": "Your response is confidential and will never be shared with your employer."
     }
-  ],
-  "candidate_context": {
-    "rank": "${rank}",
-    "vessel_type": "${vesselType}",
-    "experience_tier": "${experience_tier}",
-    "is_officer": ${isOfficer},
-    "mcq_count": ${mcqCount},
-    "total_questions": ${totalQuestions}
-  }
+  ]
 }`;
 
-  const systemPrompt = `You are a senior maritime examiner and Flag State surveyor with 25 years experience. You examine officers and ratings for CoC (Certificate of Competency) and endorsements. Generate STRICTLY accurate MCQ questions based on SOLAS 2024, MARPOL 2024, MLC 2006, STCW 2010 Manila Amendments, ISPS Code, and ISM Code. Every correct answer must be definitively correct according to the referenced convention. Wrong answers must be plausible but clearly incorrect to anyone with proper knowledge. Questions must differentiate between competent and incompetent seafarers. Do NOT generate questions that can be answered by guessing or common sense alone. Return ONLY valid JSON, no markdown backticks, no explanation.`;
+  const systemPrompt = `You are a senior maritime examiner and Flag State surveyor with 25 years experience. You examine officers and ratings for CoC (Certificate of Competency) and endorsements. Generate STRICTLY accurate questions based on SOLAS 2024, MARPOL 2024, MLC 2006, STCW 2010 Manila Amendments, ISPS Code, and ISM Code. Every correct answer must be definitively correct according to the referenced convention. Wrong answers must be plausible but clearly incorrect to anyone with proper knowledge. Questions must differentiate between competent and incompetent seafarers. Do NOT generate questions that can be answered by guessing or common sense alone. Return ONLY valid JSON, no markdown backticks, no explanation.`;
 
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -203,12 +249,35 @@ Return ONLY valid JSON (no markdown, no explanation) in this EXACT structure:
 
   let questions;
   try { questions = JSON.parse(clean); }
-  catch { questions = { mcq: [], scenario: [], behavioural: [], candidate_context: { rank, vessel_type: vesselType, experience_tier, is_officer: isOfficer, mcq_count: mcqCount, total_questions: totalQuestions } }; }
+  catch { questions = { mcq: [], scenario: [], behavioural: [] }; }
+
+  // ── USE BANK MCQ OR GPT MCQ ──
+  if (bankHasEnough && bankMCQ.length >= mcqCount) {
+    questions.mcq = bankMCQ;
+  } else {
+    // Save GPT-generated MCQ to question bank for future use
+    const generatedMCQ = questions.mcq || [];
+    if (generatedMCQ.length > 0) {
+      const toInsert = generatedMCQ.map((q: any) => ({
+        rank_group: rankGroup,
+        domain: q.domain || 'safety',
+        vessel_type: vesselType || 'ALL',
+        question: q.question,
+        options: q.options,
+        correct_index: q.correct_index,
+        correct_letter: q.correct_letter,
+        regulation: q.regulation,
+        explanation: q.explanation,
+        difficulty: 'INTERMEDIATE',
+        active: true,
+      }));
+      await adminClient.from('question_bank').insert(toInsert);
+      console.log(`Saved ${toInsert.length} new questions to bank`);
+    }
+  }
 
   // Ensure candidate_context is always present
-  if (!questions.candidate_context) {
-    questions.candidate_context = { rank, vessel_type: vesselType, experience_tier, ship_specialisation, is_officer: isOfficer, mcq_count: mcqCount, total_questions: totalQuestions };
-  }
+  questions.candidate_context = { rank, vessel_type: vesselType, experience_tier, ship_specialisation, is_officer: isOfficer, mcq_count: mcqCount, total_questions: totalQuestions };
 
   return new Response(JSON.stringify(questions), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 });
