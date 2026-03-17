@@ -288,6 +288,10 @@ const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: Cre
       setMessages((prev) =>
         prev.map((m) => (m.id === streamId ? { ...m, id: savedAssistant?.id || crypto.randomUUID() } : m))
       );
+
+      // Purge messages older than 30 days
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      supabase.from('chat_messages').delete().eq('crew_profile_id', profileId).lt('created_at', thirtyDaysAgo);
       setMessageCount(prev => prev + 1);
     } catch (e: any) {
       console.error("Chat error:", e);
