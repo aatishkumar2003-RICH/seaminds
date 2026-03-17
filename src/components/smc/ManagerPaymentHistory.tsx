@@ -444,6 +444,18 @@ const ManagerPaymentHistory = ({ managerUserId }: ManagerPaymentHistoryProps) =>
                 const pageH = doc.internal.pageSize.getHeight();
                 for (let p = 1; p <= totalPages; p++) {
                   doc.setPage(p);
+
+                  // Diagonal CONFIDENTIAL watermark
+                  doc.saveGraphicsState();
+                  const gState = new (doc as any).GState({ opacity: 0.06 });
+                  doc.setGState(gState);
+                  doc.setFontSize(60);
+                  doc.setFont("helvetica", "bold");
+                  doc.setTextColor(13, 27, 42);
+                  doc.text("CONFIDENTIAL", w / 2, pageH / 2, { align: "center", angle: 45 });
+                  doc.restoreGraphicsState();
+
+                  // Footer
                   doc.setDrawColor(60, 60, 70);
                   doc.line(15, pageH - 18, w - 15, pageH - 18);
                   doc.setFontSize(7);
