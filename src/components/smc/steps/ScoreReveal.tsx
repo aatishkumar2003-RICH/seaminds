@@ -11,7 +11,7 @@ interface Props {
   rank: string;
   onComplete: () => void;
   transcript?: Array<{question:string,answer:string,score:number,redFlag:boolean,redFlagCategory:string|null,followUp:string|null}>;
-  redFlags?: Array<{category:string,evidence:string,question:string,answer:string}>;
+  redFlags?: Array<{category:string,evidence:string,question?:string,answer?:string,severity?:string}>;
   candidateContext?: any;
 }
 
