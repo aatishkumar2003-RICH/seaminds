@@ -60,6 +60,8 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   const [pendingFollowUp, setPendingFollowUp] = useState<string|null>(null);
   const [evaluating, setEvaluating] = useState(false);
   const [tabSwitches, setTabSwitches] = useState(0);
+  const [sectionCard, setSectionCard] = useState<{ type: string; label: string; num: string; icon: string } | null>(null);
+  const prevSectionType = useRef<string | null>(null);
 
   // Timer state
   const [timeLeft, setTimeLeft] = useState(60);
