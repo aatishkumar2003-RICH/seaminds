@@ -31,6 +31,8 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   const [pendingFollowUp, setPendingFollowUp] = useState<string|null>(null);
   const [evaluating, setEvaluating] = useState(false);
   const [tabSwitches, setTabSwitches] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(90);
+  const [timerActive, setTimerActive] = useState(false);
 
   // Tab switch / focus loss detection
   useEffect(() => {
@@ -50,6 +52,28 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     document.addEventListener('visibilitychange', handleVisibility);
     return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, []);
+
+  // Per-question countdown timer (90 seconds)
+  useEffect(() => {
+    if (!timerActive) return;
+    setTimeLeft(90);
+    const interval = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) { clearInterval(interval); goNext(); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [step, timerActive]);
+
+  // Paste detection handler
+  const handlePaste = () => {
+    setRedFlags((f: any[]) => [...f, {
+      category: 'INTEGRITY',
+      evidence: `Copy-paste detected on step ${step}`,
+      severity: 'LOW'
+    }]);
+  };
   const [preForm, setPreForm] = useState<{reasonForLeaving:string,expectedSalary:string,availabilityDate:string,medicalFit:boolean,accidentHistory:string,pscDetention:boolean,nearMiss:boolean,safetyViolation:boolean}>({ reasonForLeaving:'', expectedSalary:'', availabilityDate:'', medicalFit:true, accidentHistory:'', pscDetention:false, nearMiss:false, safetyViolation:false });
   const [preFormDone, setPreFormDone] = useState(false);
 
@@ -78,7 +102,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
         const { data } = await supabase.functions.invoke('generate-smc-questions', {
           body: { rank, vesselType: vesselType || 'General Cargo', yearsExperience: yearsExperience || 5, department: 'Deck' }
         });
-        if (data?.technical) setAiQuestions(data);
+        if (data?.technical) { setAiQuestions(data); setTimerActive(true); }
       } catch (e) { console.error(e); }
       finally { setLoadingQuestions(false); }
     };
@@ -262,6 +286,17 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
       )}
 
       <div className="flex-1 overflow-hidden">
+        {timerActive && step >= 3 && step < TOTAL_STEPS && (
+          <div style={{ padding: '0 16px', marginTop: '8px', marginBottom: '0' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', fontSize:'12px', marginBottom:'4px', color: timeLeft <= 10 ? '#e74c3c' : timeLeft <= 30 ? '#f39c12' : '#D4AF37' }}>
+              <span>Time remaining</span>
+              <span style={{ fontWeight:'bold' }}>{timeLeft}s</span>
+            </div>
+            <div style={{ height:'4px', background:'#1a2e47', borderRadius:'2px' }}>
+              <div style={{ height:'100%', borderRadius:'2px', transition:'width 1s linear', width:`${(timeLeft/90)*100}%`, background: timeLeft <= 10 ? '#e74c3c' : timeLeft <= 30 ? '#f39c12' : '#D4AF37' }} />
+            </div>
+          </div>
+        )}
         {step === 1 && loadingQuestions && (
           <div className="flex items-center justify-center h-full">
             <p className="text-sm font-semibold animate-pulse" style={{ color: "#D4AF37" }}>
