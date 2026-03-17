@@ -50,7 +50,17 @@ const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: Cre
       }
 
       if (data && data.length > 0) {
-        setMessages(data.map((m) => ({ id: m.id, role: m.role as "assistant" | "user", content: m.content })));
+        const reversed = [...data].reverse();
+        setMessages(reversed.map((m) => ({ id: m.id, role: m.role as "assistant" | "user", content: m.content })));
+
+        // Skip welcome-back if there's a recent assistant message (within 10 min)
+        const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+        const hasRecentMessage = data.some(m => m.role === 'assistant' && m.created_at > tenMinutesAgo);
+        if (hasRecentMessage) {
+          setShowMoodButtons(true);
+          setInitialLoading(false);
+          return;
+        }
         
         // Returning user — generate a contextual re-greeting via AI
         setIsLoading(true);
