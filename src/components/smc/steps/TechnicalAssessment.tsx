@@ -14,6 +14,7 @@ interface Props {
   evaluating?: boolean;
   pendingFollowUp?: string | null;
   onFollowUpAnswer?: (answer: string) => void;
+  onRedFlag?: (flag: {category:string,evidence:string,severity?:string}) => void;
 }
 
 const QUESTIONS_BY_RANK: Record<string, string[]> = {
@@ -121,7 +122,7 @@ interface Message {
   text: string;
 }
 
-const TechnicalAssessment = ({ firstName, rank, shipName, assessmentId, questions: questionsProp, onNext, onSkipToEnd, evaluating, pendingFollowUp, onFollowUpAnswer }: Props) => {
+const TechnicalAssessment = ({ firstName, rank, shipName, assessmentId, questions: questionsProp, onNext, onSkipToEnd, evaluating, pendingFollowUp, onFollowUpAnswer, onRedFlag }: Props) => {
   const activeQuestions = (questionsProp && questionsProp.length > 0) ? questionsProp : getQuestions(rank);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -129,6 +130,7 @@ const TechnicalAssessment = ({ firstName, rank, shipName, assessmentId, question
   const [qIndex, setQIndex] = useState(-1);
   const [ready, setReady] = useState(false);
   const [complete, setComplete] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(90);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -143,6 +145,37 @@ const TechnicalAssessment = ({ firstName, rank, shipName, assessmentId, question
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, pendingFollowUp]);
+
+  // Per-question countdown timer
+  useEffect(() => {
+    if (qIndex < 0 || complete) return;
+    setTimeLeft(90);
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          // Auto-submit current answer
+          const answer = input.trim() || "[No answer — time expired]";
+          setInput("");
+          const next = qIndex + 1;
+          if (next < activeQuestions.length) {
+            setMessages(p => [...p, { role: "user", text: answer }, { role: "ai", text: activeQuestions[next] }]);
+            setQIndex(next);
+          } else {
+            setMessages(p => [...p, { role: "user", text: answer }, { role: "ai", text: "Assessment Recording Complete. Thank you for your honest and detailed answers." }]);
+            setComplete(true);
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [qIndex, complete]);
+
+  const handlePaste = () => {
+    onRedFlag?.({ category: 'INTEGRITY', evidence: `Copy-paste detected on question ${qIndex + 1}`, severity: 'LOW' });
+  };
 
   const handleReady = () => {
     setReady(true);
@@ -208,7 +241,19 @@ const TechnicalAssessment = ({ firstName, rank, shipName, assessmentId, question
           <p className="text-xs text-muted-foreground">15 questions matched to your rank and vessel type. Answer in your own words.</p>
         </div>
         {qIndex >= 0 && !complete && (
-          <p className="text-xs text-center text-primary font-medium">{qIndex + 1} of 15 questions completed</p>
+          <div className="space-y-1">
+            <p className="text-xs text-center text-primary font-medium">{qIndex + 1} of 15 questions completed</p>
+            <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-1000"
+                style={{
+                  width: `${(timeLeft / 90) * 100}%`,
+                  backgroundColor: timeLeft > 30 ? '#D4AF37' : timeLeft > 10 ? '#F97316' : '#EF4444',
+                }}
+              />
+            </div>
+            <p className="text-[10px] text-center text-muted-foreground">{timeLeft}s remaining</p>
+          </div>
         )}
       </div>
 
@@ -284,6 +329,7 @@ const TechnicalAssessment = ({ firstName, rank, shipName, assessmentId, question
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              onPaste={handlePaste}
               placeholder="Type your answer..."
               className="flex-1 bg-secondary border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground"
               disabled={evaluating}

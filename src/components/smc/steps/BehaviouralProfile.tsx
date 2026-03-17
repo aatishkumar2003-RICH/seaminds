@@ -11,6 +11,7 @@ interface Props {
   evaluating?: boolean;
   pendingFollowUp?: string | null;
   onFollowUpAnswer?: (answer: string) => void;
+  onRedFlag?: (flag: {category:string,evidence:string,severity?:string}) => void;
 }
 
 const FALLBACK_QUESTIONS = [
@@ -31,7 +32,7 @@ interface Message {
   text: string;
 }
 
-const BehaviouralProfile = ({ assessmentId, questions: questionsProp, onNext, onSkipToEnd, evaluating, pendingFollowUp, onFollowUpAnswer }: Props) => {
+const BehaviouralProfile = ({ assessmentId, questions: questionsProp, onNext, onSkipToEnd, evaluating, pendingFollowUp, onFollowUpAnswer, onRedFlag }: Props) => {
   const activeQuestions = (questionsProp && questionsProp.length > 0) ? questionsProp : FALLBACK_QUESTIONS;
   const [messages, setMessages] = useState<Message[]>([
     { role: "ai", text: "Now let's understand your professional profile. I'll ask 10 questions about how you work. There are no right or wrong answers — only honest ones." },
@@ -41,11 +42,42 @@ const BehaviouralProfile = ({ assessmentId, questions: questionsProp, onNext, on
   const [followUpInput, setFollowUpInput] = useState("");
   const [qIndex, setQIndex] = useState(0);
   const [complete, setComplete] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(90);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, pendingFollowUp]);
+
+  // Per-question countdown timer
+  useEffect(() => {
+    if (complete) return;
+    setTimeLeft(90);
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          const answer = input.trim() || "[No answer — time expired]";
+          setInput("");
+          const next = qIndex + 1;
+          if (next < activeQuestions.length) {
+            setMessages(p => [...p, { role: "user", text: answer }, { role: "ai", text: activeQuestions[next] }]);
+            setQIndex(next);
+          } else {
+            setMessages(p => [...p, { role: "user", text: answer }, { role: "ai", text: "Profile Complete. Thank you for your openness." }]);
+            setComplete(true);
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [qIndex, complete]);
+
+  const handlePaste = () => {
+    onRedFlag?.({ category: 'INTEGRITY', evidence: `Copy-paste detected on question ${qIndex + 1}`, severity: 'LOW' });
+  };
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -97,7 +129,19 @@ const BehaviouralProfile = ({ assessmentId, questions: questionsProp, onNext, on
           <p className="text-xs text-muted-foreground">10 questions about how you work. No right or wrong answers — only honest ones.</p>
         </div>
         {!complete && (
-          <p className="text-xs text-center text-primary font-medium">{qIndex + 1} of 10 questions</p>
+          <div className="space-y-1">
+            <p className="text-xs text-center text-primary font-medium">{qIndex + 1} of 10 questions</p>
+            <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-1000"
+                style={{
+                  width: `${(timeLeft / 90) * 100}%`,
+                  backgroundColor: timeLeft > 30 ? '#D4AF37' : timeLeft > 10 ? '#F97316' : '#EF4444',
+                }}
+              />
+            </div>
+            <p className="text-[10px] text-center text-muted-foreground">{timeLeft}s remaining</p>
+          </div>
         )}
       </div>
 
@@ -166,6 +210,7 @@ const BehaviouralProfile = ({ assessmentId, questions: questionsProp, onNext, on
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              onPaste={handlePaste}
               placeholder="Type your answer..."
               className="flex-1 bg-secondary border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground"
               disabled={evaluating}

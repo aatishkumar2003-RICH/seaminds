@@ -27,9 +27,29 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   const [aiQuestions, setAiQuestions] = useState<{ technical: string[]; communication: string[]; behavioural: string[] } | null>(null);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
   const [transcript, setTranscript] = useState<Array<{question:string,answer:string,score:number,redFlag:boolean,redFlagCategory:string|null,followUp:string|null}>>([]);
-  const [redFlags, setRedFlags] = useState<Array<{category:string,evidence:string,question:string,answer:string}>>([]);
+  const [redFlags, setRedFlags] = useState<Array<{category:string,evidence:string,question?:string,answer?:string,severity?:string}>>([]);
   const [pendingFollowUp, setPendingFollowUp] = useState<string|null>(null);
   const [evaluating, setEvaluating] = useState(false);
+  const [tabSwitches, setTabSwitches] = useState(0);
+
+  // Tab switch / focus loss detection
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'hidden') {
+        setTabSwitches(prev => {
+          const count = prev + 1;
+          setRedFlags(f => [...f, {
+            category: 'INTEGRITY',
+            evidence: `Tab switched ${count} time(s) during assessment`,
+            severity: count >= 3 ? 'HIGH' : 'MEDIUM'
+          }]);
+          return count;
+        });
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, []);
   const [preForm, setPreForm] = useState<{reasonForLeaving:string,expectedSalary:string,availabilityDate:string,medicalFit:boolean,accidentHistory:string,pscDetention:boolean,nearMiss:boolean,safetyViolation:boolean}>({ reasonForLeaving:'', expectedSalary:'', availabilityDate:'', medicalFit:true, accidentHistory:'', pscDetention:false, nearMiss:false, safetyViolation:false });
   const [preFormDone, setPreFormDone] = useState(false);
 
@@ -228,6 +248,11 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
 
   return (
     <div className="flex flex-col h-full">
+      {tabSwitches >= 3 && (
+        <div className="px-4 py-2 text-xs text-center font-medium bg-destructive/20 text-destructive border-b border-destructive/30">
+          ⚠️ Multiple tab switches detected. This is noted in your assessment record.
+        </div>
+      )}
       {step < TOTAL_STEPS && (
         <div className="p-4 pb-0">
           <button onClick={goBack} className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 text-sm">
@@ -274,6 +299,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
             evaluating={evaluating}
             pendingFollowUp={pendingFollowUp}
             onFollowUpAnswer={handleFollowUpAnswer}
+            onRedFlag={(flag) => setRedFlags(f => [...f, flag])}
           />
         )}
         {step === 4 && (
@@ -296,6 +322,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
             evaluating={evaluating}
             pendingFollowUp={pendingFollowUp}
             onFollowUpAnswer={handleFollowUpAnswer}
+            onRedFlag={(flag) => setRedFlags(f => [...f, flag])}
           />
         )}
         {step === 6 && (
