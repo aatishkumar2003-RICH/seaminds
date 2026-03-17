@@ -322,6 +322,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
             evaluating={evaluating}
             pendingFollowUp={pendingFollowUp}
             onFollowUpAnswer={handleFollowUpAnswer}
+            onRedFlag={(flag) => setRedFlags(f => [...f, flag])}
           />
         )}
         {step === 6 && (
