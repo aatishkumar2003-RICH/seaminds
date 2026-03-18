@@ -343,7 +343,7 @@ const ResumeBuilder = () => {
   // ── Completion check ──
   const getCompletionStatus = () => {
     const missing: string[] = [];
-    if (!photo) missing.push('Photo');
+    // Photo is optional — silhouette placeholder shown if missing
     if (!personal.firstName) missing.push('First Name');
     if (!personal.lastName) missing.push('Last Name');
     if (!personal.rank) missing.push('Current Rank');
