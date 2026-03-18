@@ -217,7 +217,7 @@ const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) 
         )}
 
         <button
-          onClick={handleClaim}
+          onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleClaim(); }}
           disabled={loading || remaining === null}
           className="w-full bg-primary text-primary-foreground font-bold py-4 rounded-xl text-base flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors disabled:opacity-60"
         >
