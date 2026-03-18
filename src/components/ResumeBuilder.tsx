@@ -575,10 +575,30 @@ const ResumeBuilder = () => {
             {scanMessage && <p className="text-xs mt-3" style={{ color: scanMessage.startsWith("✅") ? "#22c55e" : "#ef4444" }}>{scanMessage}</p>}
           </div>
 
+          {/* ── CV COMPLETION PROGRESS ── */}
+          {(() => {
+            const missing = getCompletionStatus();
+            const total = 10;
+            const pct = Math.round(((total - missing.length) / total) * 100);
+            return (
+              <div className="mb-2 bg-[#132236] rounded-xl p-3">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-gray-400 text-xs font-medium">CV Completion</span>
+                  <span className="text-[#D4AF37] text-xs font-bold">{pct}%</span>
+                </div>
+                <div className="w-full h-2.5 bg-[#0a1929] rounded-full overflow-hidden">
+                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: pct === 100 ? '#22c55e' : '#D4AF37' }} />
+                </div>
+                {pct < 100 && <p className="text-gray-500 text-[10px] mt-1">Missing: {missing.join(', ')}</p>}
+              </div>
+            );
+          })()}
+
           {/* ── PERSONAL DETAILS ── */}
           <Section id="personal" icon={<User size={16} />} title="Personal Details" />
           {openSection === "personal" && (
             <div className="bg-[#0a1929] rounded-xl p-4 space-y-3 mb-1">
+              <p className="text-gray-500 text-[10px] mb-1">Fields marked <span className="text-red-500">*</span> are required to generate your CV</p>
               <div className="flex items-center gap-3 mb-2">
                 <input ref={photoRef} type="file" accept="image/*" className="hidden" onChange={handlePhoto} />
                 <button onClick={() => photoRef.current?.click()} title="Upload photo" className="flex-shrink-0">
