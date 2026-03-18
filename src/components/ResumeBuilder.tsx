@@ -543,12 +543,14 @@ const ResumeBuilder = () => {
       {/* ─── TOP BAR (hidden in print) ─── */}
       <div className="print:hidden">
         <div className="flex gap-2 p-3 pb-1">
-          {(["form", "preview"] as const).map(v => (
-            <button key={v} onClick={() => setView(v)}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-colors ${view === v ? "bg-[#D4AF37] text-[#0D1B2A]" : "bg-[#132236] text-gray-400 hover:text-white"}`}>
-              {v === "form" ? <><Edit3 size={16} /> Build CV</> : <><Eye size={16} /> Preview & Print</>}
-            </button>
-          ))}
+          <button onClick={() => setView("form")}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-colors ${view === "form" ? "bg-[#D4AF37] text-[#0D1B2A]" : "bg-[#132236] text-gray-400 hover:text-white"}`}>
+            <Edit3 size={16} /> Build CV
+          </button>
+          <button onClick={handlePreviewClick}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-colors ${view === "preview" ? "bg-[#D4AF37] text-[#0D1B2A]" : "bg-[#132236] text-gray-400 hover:text-white"}`}>
+            <Eye size={16} /> Preview & Print
+          </button>
         </div>
       </div>
 
