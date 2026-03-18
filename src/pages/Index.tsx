@@ -255,10 +255,26 @@ const Index = () => {
         clearTimeout(fallbackTimer);
 
         if (sessionResult && 'data' in sessionResult && sessionResult.data?.session?.user) {
-          const fullName = sessionResult.data.session.user.user_metadata?.full_name || sessionResult.data.session.user.email?.split('@')[0] || 'Seafarer';
+          const user = sessionResult.data.session.user;
+          // Check if crew_profile already exists — skip onboarding if so
+          const { data: existingProfile } = await supabase.from('crew_profiles')
+            .select('id, first_name, last_name, onboarded, role, ship_name, voyage_start_date, manning_agency, nationality, whatsapp_number, vessel_type, port_of_joining, onboarding_complete')
+            .eq('id', user.id).single();
+          if (existingProfile?.first_name) {
+            localStorage.setItem(PROFILE_KEY, existingProfile.id);
+            setProfileId(existingProfile.id); setFirstName(existingProfile.first_name); setLastName(existingProfile.last_name || '');
+            setRole(existingProfile.role || ''); setShipName(existingProfile.ship_name || '');
+            setVoyageStartDate(existingProfile.voyage_start_date || ''); setManningAgency(existingProfile.manning_agency || '');
+            setNationality(existingProfile.nationality || ''); setWhatsappNumber(existingProfile.whatsapp_number || '');
+            setVesselType((existingProfile as any).vessel_type || ''); setPortOfJoining((existingProfile as any).port_of_joining || '');
+            setOnboardingComplete(!!(existingProfile as any).onboarding_complete);
+            setAppState(existingProfile.onboarded ? 'main' : 'welcome');
+            setScreen('news');
+            return;
+          }
+          const fullName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Seafarer';
           setFirstName(fullName.split(' ')[0]);
-          setAppState('main');
-          setScreen('news');
+          setAppState('name-entry');
           return;
         }
         setAppState('landing');
