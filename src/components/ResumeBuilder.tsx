@@ -1084,22 +1084,7 @@ const ResumeBuilder = () => {
   );
 };
 
-// ── Shared inline styles for print tables ──
-const thStyle: React.CSSProperties = {
-  padding: "6px 8px", textAlign: "left", fontSize: 10, fontWeight: 700,
-  borderBottom: "2px solid #D4AF37",
-};
-const tdStyle: React.CSSProperties = {
-  padding: "5px 8px", borderBottom: "1px solid #eee", fontSize: 11, verticalAlign: "top",
-};
-const sectionTitleStyle: React.CSSProperties = {
-  fontSize: 13, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1,
-  color: "#0D1B2A", borderBottom: "2px solid #D4AF37", paddingBottom: 4, marginBottom: 10,
-};
-const goldBadgeStyle: React.CSSProperties = {
-  background: "#D4AF37", color: "#0D1B2A", fontSize: 11, padding: "3px 10px",
-  borderRadius: 12, fontWeight: 600,
-};
+
 
 // ── Sub-component: Certificate Row ──
 const CertRow = ({ cert, UC, rmCert, inp, sel, lbl }: {
