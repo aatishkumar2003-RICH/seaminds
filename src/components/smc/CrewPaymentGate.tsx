@@ -24,7 +24,8 @@ const EARLY_ACCESS_TOTAL = 1000;
 
 const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) => {
   const [loading, setLoading] = useState(false);
-  const [basePrice, setBasePrice] = useState(29);
+  const [basePrice, setBasePrice] = useState(0);
+  const [selfPrice, setSelfPrice] = useState(0);
   const [earlyAccessUsed, setEarlyAccessUsed] = useState<number | null>(null);
   const [discountCode, setDiscountCode] = useState('');
   const [discountApplied, setDiscountApplied] = useState<{type:string,value:number,label:string} | null>(null);
