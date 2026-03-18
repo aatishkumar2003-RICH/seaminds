@@ -7,8 +7,9 @@ const corsHeaders = {
 };
 
 const SYSTEM_PROMPT = `You are a maritime document expert. Extract data and return ONLY valid JSON no markdown:
-{"certificates":[{"name":"","number":"","issue_date":"","expiry_date":"","issuing_authority":"","place":""}],"sea_service":[{"vessel_name":"","vessel_type":"","flag":"","grt":"","rank":"","company":"","sign_on":"","sign_off":""}],"medical":[{"cert_type":"","issue_date":"","expiry_date":"","issuing_authority":""}],"education":[{"institution":"","qualification":"","year_from":"","year_to":""}]}
-Return ONLY the JSON object, no other text, no markdown fences. Use empty arrays if a section has no data.`;
+{"personal":{"firstName":"","lastName":"","nationality":"","rank":"","yearsAtSea":"","imoNumber":"","currentVessel":"","phone":""},"certificates":[{"name":"","number":"","issue_date":"","expiry_date":"","issuing_authority":"","place":""}],"sea_service":[{"vessel_name":"","vessel_type":"","flag":"","grt":"","rank":"","company":"","sign_on":"","sign_off":""}],"medical":[{"cert_type":"","issue_date":"","expiry_date":"","issuing_authority":""}],"education":[{"institution":"","qualification":"","year_from":"","year_to":""}]}
+For "personal": extract the seafarer's first name, last name, nationality, rank/position, total years at sea (e.g. "5 years"), IMO number of their last/current vessel, current vessel name, and phone/WhatsApp number. Use empty strings if not found.
+Return ONLY the JSON object, no other text, no markdown fences. Use empty arrays/strings if a section has no data.`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
