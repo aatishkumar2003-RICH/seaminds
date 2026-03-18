@@ -917,6 +917,32 @@ const ResumeBuilder = () => {
                           className={inp + " text-xs"} />
                       </div>
                     </div>
+                    {((e as any).rightshipInspection || ['Bulk Carrier','General Cargo','Cement','Timber','Coal','Grain'].some(t => e.vesselType?.includes(t))) && (
+                      <div style={{ marginTop:'8px', padding:'8px', background:'#0D1B2A', borderRadius:'6px', border:'1px solid #1e3a5f' }}>
+                        <label style={{ color:'#D4AF37', fontSize:'11px', display:'block', marginBottom:'6px' }}>⭐ RightShip Inspection Details</label>
+                        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px' }}>
+                          <div>
+                            <label style={{ color:'#aaa', fontSize:'10px', display:'block', marginBottom:'3px' }}>GHG Rating Achieved</label>
+                            <select value={(e as any).rightshipGHG || ''} onChange={ev => { ev.stopPropagation(); updateSea(e.id, 'rightshipGHG', ev.target.value); }}
+                              style={{ width:'100%', background:'#1a2e47', border:'1px solid #2a4060', color:'white', padding:'5px 8px', borderRadius:'5px', fontSize:'11px' }}>
+                              <option value=''>Select GHG Rating</option>
+                              <option value='A'>A (Best)</option>
+                              <option value='B'>B</option>
+                              <option value='C'>C</option>
+                              <option value='D'>D</option>
+                              <option value='E'>E (Worst)</option>
+                              <option value='Not Rated'>Not Rated</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label style={{ color:'#aaa', fontSize:'10px', display:'block', marginBottom:'3px' }}>Deficiencies / Observations</label>
+                            <input value={(e as any).rightshipDeficiencies || ''} onChange={ev => { ev.stopPropagation(); updateSea(e.id, 'rightshipDeficiencies', ev.target.value); }}
+                              placeholder="None / 2 obs, 0 deficiencies"
+                              style={{ width:'100%', background:'#1a2e47', border:'1px solid #2a4060', color:'white', padding:'5px 8px', borderRadius:'5px', fontSize:'11px' }} />
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
