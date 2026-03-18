@@ -1143,28 +1143,46 @@ const ResumeBuilder = () => {
           <div id="cv-preview" style={{ background:'#fff', color:'#000', fontFamily:'Arial, Helvetica, sans-serif', fontSize:'11px', lineHeight:'1.4', padding:'15mm', maxWidth:'210mm', margin:'0 auto', boxSizing:'border-box' }}>
 
             {/* HEADER */}
-            <div style={{ display:'flex', gap:'16px', marginBottom:'12px', borderBottom:'2px solid #0D1B2A', paddingBottom:'12px' }}>
-              {photo && <img src={photo} style={{ width:'80px', height:'80px', borderRadius:'50%', objectFit:'cover', border:'2px solid #D4AF37', flexShrink:0 }} />}
+            <div style={{ display:'flex', gap:'20px', marginBottom:'0', paddingBottom:'0' }}>
+              {/* Photo box */}
+              <div style={{ flexShrink:0 }}>
+                {photo
+                  ? <img src={photo} style={{ width:'95px', height:'115px', objectFit:'cover', display:'block' }} alt="Profile" />
+                  : <div style={{ width:'95px', height:'115px', background:'#e8e8e8', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'10px', color:'#999', textAlign:'center', border:'1px solid #ccc' }}>PASSPORT<br/>PHOTO</div>
+                }
+              </div>
+              {/* Name & info */}
               <div style={{ flex:1 }}>
-                <div style={{ fontSize:'20px', fontWeight:'bold', color:'#0D1B2A' }}>{personal.firstName || personal.lastName ? `${personal.firstName} ${personal.lastName}`.trim() : 'YOUR NAME'}</div>
-                <div style={{ fontSize:'13px', color:'#D4AF37', fontWeight:'bold', marginBottom:'4px' }}>{personal.rank || 'Rank / Position'}{personal.applyingFor ? ` | Seeking: ${personal.applyingFor}` : ''}</div>
-                <div style={{ fontSize:'10px', color:'#333', display:'flex', flexWrap:'wrap', gap:'8px' }}>
-                  {personal.nationality && <span>🌍 {personal.nationality}</span>}
-                  {personal.dob && <span>📅 DOB: {fmtDate(personal.dob)}</span>}
-                  {personal.passportNo && <span>🛂 Passport: {personal.passportNo}</span>}
-                  {personal.cdcNo && <span>📋 CDC: {personal.cdcNo}</span>}
-                  {personal.phone && <span>📱 {personal.phone}</span>}
-                  {personal.email && <span>✉ {personal.email}</span>}
-                  {personal.address && <span>📍 {personal.address}</span>}
+                <div style={{ background:'#0D1B2A', padding:'10px 14px', marginBottom:'6px' }}>
+                  <div style={{ fontSize:'24px', fontWeight:'900', color:'#FFFFFF', letterSpacing:'2px', textTransform:'uppercase', lineHeight:'1.1' }}>
+                    {personal.firstName || personal.lastName ? `${personal.firstName} ${personal.lastName}`.trim() : 'YOUR NAME'}
+                  </div>
+                  <div style={{ fontSize:'12px', color:'#D4AF37', fontWeight:'bold', marginTop:'3px', letterSpacing:'1px', textTransform:'uppercase' }}>
+                    {personal.rank || 'RANK / POSITION'}
+                    {personal.applyingFor ? <span style={{ color:'#aaa', fontWeight:'normal', fontSize:'10px' }}> &nbsp;|&nbsp; Seeking: {personal.applyingFor}</span> : ''}
+                  </div>
                 </div>
-                {(personal.expectedSalaryMin || personal.expectedSalaryMax) && (
-                  <div style={{ fontSize:'10px', color:'#D4AF37', fontWeight:'bold', marginTop:'3px' }}>
-                    💰 Expected Salary: ${personal.expectedSalaryMin}{personal.expectedSalaryMax ? ` – $${personal.expectedSalaryMax}` : ''} USD/month
-                    {personal.availableFrom ? `   📅 Available: ${personal.availableFrom}` : ''}
+                {/* Two-column contact details */}
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'2px 16px', fontSize:'9px', color:'#333', lineHeight:'1.7' }}>
+                  {personal.nationality && <div><span style={{ color:'#666', fontWeight:'bold' }}>NATIONALITY:</span> {personal.nationality}</div>}
+                  {personal.dob && <div><span style={{ color:'#666', fontWeight:'bold' }}>DATE OF BIRTH:</span> {fmtDate(personal.dob)}</div>}
+                  {personal.passportNo && <div><span style={{ color:'#666', fontWeight:'bold' }}>PASSPORT NO:</span> {personal.passportNo}</div>}
+                  {personal.cdcNo && <div><span style={{ color:'#666', fontWeight:'bold' }}>CDC / SB NO:</span> {personal.cdcNo}{personal.cdcCountry ? ` (${personal.cdcCountry})` : ''}</div>}
+                  {personal.phone && <div><span style={{ color:'#666', fontWeight:'bold' }}>WHATSAPP:</span> {personal.phone}</div>}
+                  {personal.email && <div><span style={{ color:'#666', fontWeight:'bold' }}>EMAIL:</span> {personal.email}</div>}
+                  {personal.address && <div style={{ gridColumn:'span 2' }}><span style={{ color:'#666', fontWeight:'bold' }}>ADDRESS:</span> {personal.address}</div>}
+                </div>
+                {/* Availability row */}
+                {(personal.availableFrom || personal.expectedSalaryMin) && (
+                  <div style={{ marginTop:'5px', padding:'3px 8px', background:'#fffbea', borderLeft:'3px solid #D4AF37', fontSize:'9px', display:'flex', gap:'20px' }}>
+                    {personal.availableFrom && <span><strong>AVAILABLE FROM:</strong> {personal.availableFrom}</span>}
+                    {personal.expectedSalaryMin && <span><strong>EXPECTED SALARY:</strong> USD {personal.expectedSalaryMin}{personal.expectedSalaryMax ? `–${personal.expectedSalaryMax}` : ''}/month</span>}
                   </div>
                 )}
               </div>
             </div>
+            {/* Divider line */}
+            <div style={{ height:'3px', background:'linear-gradient(to right, #0D1B2A, #D4AF37, #0D1B2A)', margin:'10px 0 12px 0' }} />
 
             {/* OBJECTIVE / SUMMARY */}
             {personal.summary && (
