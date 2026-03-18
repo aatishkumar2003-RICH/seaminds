@@ -13,27 +13,12 @@ const LandingScreen = ({ onGetStarted, onManagerLogin }: LandingScreenProps) => 
   const handleGoogleLogin = async () => {
     if (!(await checkRateLimit())) return;
     
-    const isCustomDomain = !window.location.hostname.includes('lovable.app') && !window.location.hostname.includes('lovableproject.com');
-    
-    if (isCustomDomain) {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: 'https://seaminds.life/app',
-          skipBrowserRedirect: true,
-        },
-      });
-      if (!error && data?.url) {
-        window.location.href = data.url;
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: 'https://seaminds.life/app'
       }
-    } else {
-      await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: 'https://seaminds.life/app',
-        },
-      });
-    }
+    });
   };
 
   const [showEmail, setShowEmail] = useState(false);
