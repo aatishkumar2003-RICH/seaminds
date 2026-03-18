@@ -1199,21 +1199,25 @@ const ResumeBuilder = () => {
             {/* SEA SERVICE RECORD */}
             {filledSea.length > 0 && (
               <div style={{ marginBottom:'10px' }}>
-                <div style={{ fontSize:'11px', fontWeight:'bold', background:'#0D1B2A', color:'#D4AF37', padding:'3px 8px', marginBottom:'4px' }}>SEA SERVICE RECORD</div>
+                <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'6px', marginTop:'12px' }}>
+                  <div style={{ width:'4px', height:'16px', background:'#D4AF37' }} />
+                  <div style={{ fontSize:'10px', fontWeight:'900', color:'#0D1B2A', letterSpacing:'1.5px', textTransform:'uppercase' }}>SEA SERVICE RECORD</div>
+                  <div style={{ flex:1, height:'1px', background:'#0D1B2A', opacity:0.2 }} />
+                </div>
                 <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'9px' }}>
                   <thead>
-                    <tr style={{ background:'#0D1B2A', color:'#D4AF37' }}>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'center', fontSize:'9px' }}>Sr.</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left', fontSize:'9px' }}>Vessel Name</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left', fontSize:'9px' }}>Type</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left', fontSize:'9px' }}>Flag</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left', fontSize:'9px' }}>GRT/DWT</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left', fontSize:'9px' }}>Rank</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left', fontSize:'9px' }}>Company</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left', fontSize:'9px' }}>Sign On</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left', fontSize:'9px' }}>Sign Off</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left', fontSize:'9px' }}>Engine Type</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left', fontSize:'9px' }}>Cargo Handled</th>
+                    <tr style={{ background:'#0D1B2A', color:'#fff' }}>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'center', fontSize:'9px', fontWeight:'bold' }}>Sr.</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontSize:'9px', fontWeight:'bold' }}>Vessel Name</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontSize:'9px', fontWeight:'bold' }}>Type</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontSize:'9px', fontWeight:'bold' }}>Flag</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontSize:'9px', fontWeight:'bold' }}>GRT/DWT</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontSize:'9px', fontWeight:'bold' }}>Rank</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontSize:'9px', fontWeight:'bold' }}>Company</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontSize:'9px', fontWeight:'bold' }}>Sign On</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontSize:'9px', fontWeight:'bold' }}>Sign Off</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontSize:'9px', fontWeight:'bold' }}>Engine Type</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontSize:'9px', fontWeight:'bold' }}>Cargo Handled</th>
                     </tr>
                   </thead>
                   <tbody>
