@@ -24,7 +24,8 @@ const EARLY_ACCESS_TOTAL = 1000;
 
 const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) => {
   const [loading, setLoading] = useState(false);
-  const [basePrice, setBasePrice] = useState(29);
+  const [basePrice, setBasePrice] = useState(0);
+  const [selfPrice, setSelfPrice] = useState(0);
   const [earlyAccessUsed, setEarlyAccessUsed] = useState<number | null>(null);
   const [discountCode, setDiscountCode] = useState('');
   const [discountApplied, setDiscountApplied] = useState<{type:string,value:number,label:string} | null>(null);
@@ -39,6 +40,11 @@ const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) 
       .then(({ count }) => {
         setEarlyAccessUsed(count ?? 0);
       });
+  }, []);
+
+  useEffect(() => {
+    supabase.from('admin_settings').select('value').eq('key', 'price_self_assessment').single()
+      .then(({ data }) => { if (data?.value) setSelfPrice(Number(data.value)); });
   }, []);
 
   useEffect(() => {
@@ -166,8 +172,8 @@ const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) 
 
         <div className="text-center py-4">
           {isEarlyAccess ? (
-            <>
-              <p className="text-lg text-muted-foreground line-through">${basePrice}</p>
+          <>
+              {selfPrice > 0 && <p className="text-lg text-muted-foreground line-through">${selfPrice}</p>}
               <p className="text-5xl font-bold text-primary gold-glow">FREE</p>
               <p className="text-xs text-muted-foreground mt-2">Early Access · Limited to first 1,000 crew · No credit card needed</p>
             </>
@@ -217,7 +223,7 @@ const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) 
         )}
 
         <button
-          onClick={handleClaim}
+          onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleClaim(); }}
           disabled={loading || remaining === null}
           className="w-full bg-primary text-primary-foreground font-bold py-4 rounded-xl text-base flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors disabled:opacity-60"
         >
@@ -231,7 +237,7 @@ const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) 
 
         {isEarlyAccess ? (
           <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
-            After 1,000 crew — standard price ${basePrice}. Lock in your free assessment now.
+            {selfPrice > 0 ? `After free period — standard price $${selfPrice}. ` : ''}Lock in your free assessment now.
           </p>
         ) : (
           <p className="text-[11px] text-muted-foreground text-center leading-relaxed">

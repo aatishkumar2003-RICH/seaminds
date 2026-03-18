@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { trackEvent } from "@/lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
-import { Upload, RefreshCw, Check, FileText, Anchor, Award, HeartPulse } from "lucide-react";
+import { Upload, RefreshCw, Check, FileText, Anchor, Award, HeartPulse, X } from "lucide-react";
 import { toast } from "sonner";
 import CrewPaymentGate from "@/components/smc/CrewPaymentGate";
 import SMCScoreCertificate from "@/components/smc/SMCScoreCertificate";
 import AssessmentFlow from "@/components/smc/AssessmentFlow";
 import MyDocumentsSection from "@/components/smc/MyDocumentsSection";
 import SalaryBenchmark from "@/components/SalaryBenchmark";
+import CvUpload from "@/components/CvUpload";
 
 interface SMCScoreTabProps {
   profileId: string;
@@ -25,6 +26,7 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
   const [assessmentId, setAssessmentId] = useState("");
   const [salaryOpen, setSalaryOpen] = useState(false);
   const [crewUniqueId, setCrewUniqueId] = useState<string | null>(null);
+  const [showCvUpload, setShowCvUpload] = useState(false);
 
   // CV parse state
   const [cvStatus, setCvStatus] = useState<CvStatus>("idle");
@@ -243,8 +245,7 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
           onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();
-            console.log("SMCScoreTab: CV upload button clicked");
-            fileRef.current?.click();
+            setShowCvUpload(true);
           }}
           className="w-full bg-card rounded-2xl border border-dashed border-border p-4 flex items-center gap-3 hover:border-primary/50 transition-colors"
         >
@@ -262,6 +263,24 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
 
   return (
     <div className="flex flex-col h-full">
+      {/* CV Upload Modal */}
+      {showCvUpload && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={() => setShowCvUpload(false)}>
+          <div className="relative w-[90%] max-w-md rounded-2xl p-6" style={{ background: "#0D1B2A", border: "1px solid rgba(212,175,55,0.3)" }} onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setShowCvUpload(false)} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-secondary flex items-center justify-center hover:bg-secondary/80">
+              <X size={16} className="text-muted-foreground" />
+            </button>
+            <h3 className="text-base font-bold text-foreground mb-4">Upload Your CV</h3>
+            <CvUpload
+              onParsed={(data) => {
+                setCvStatus("done");
+                setShowCvUpload(false);
+                toast.success("CV parsed — certificates & sea service extracted");
+              }}
+            />
+          </div>
+        </div>
+      )}
       {crewUniqueId && (
         <div className="mx-4 mt-3 mb-1 rounded-xl border px-4 py-3 flex items-center gap-3" style={{ background: 'rgba(212,175,55,0.08)', borderColor: '#D4AF37' }}>
           <span className="text-xs font-semibold" style={{ color: '#D4AF37' }}>Your SeaMinds ID</span>
