@@ -838,7 +838,7 @@ const ResumeBuilder = () => {
                         <option value="">Engine...</option>{ENGINE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                       </select>
                     </div>
-                    <div><label className={lbl}>Cargo Type</label>
+                    <div><label className={lbl}>Cargo Type (primary)</label>
                       <select className={sel} value={e.cargoType} onChange={ev => U(e.id, "cargoType", ev.target.value)}>
                         <option value="">Cargo...</option>{CARGO_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                       </select>
@@ -849,6 +849,73 @@ const ResumeBuilder = () => {
                     <div><label className={lbl}>Sign Off</label><input type="date" className={inp} value={e.toDate} onChange={ev => U(e.id, "toDate", ev.target.value)} /></div>
                   </div>
                   <div><label className={lbl}>Reason for Leaving</label><input className={inp} placeholder="End of contract" value={e.reasonForLeaving} onChange={ev => U(e.id, "reasonForLeaving", ev.target.value)} /></div>
+
+                  {/* Cargo Types — multi-select */}
+                  <div className="mt-2">
+                    <label style={{ color:'#D4AF37', fontSize:'12px', display:'block', marginBottom:'4px' }}>Cargo Types Handled (select all that apply)</label>
+                    <div style={{ display:'flex', flexWrap:'wrap', gap:'6px', marginBottom:'8px' }}>
+                      {['Dry Bulk','Coal','Grain','Iron Ore','Fertilizer','Crude Oil','Clean Petroleum','Chemical','LNG','LPG','Containers','General Cargo','RoRo','Vehicles','Passengers','Offshore','Cement','Timber'].map(cargo => (
+                        <button key={cargo} type="button"
+                          onClick={ev => { ev.stopPropagation(); ev.preventDefault();
+                            const updated = (e as any).cargoTypes?.includes(cargo)
+                              ? (e as any).cargoTypes.filter((c:string) => c !== cargo)
+                              : [...((e as any).cargoTypes || []), cargo];
+                            updateSea(e.id, 'cargoTypes', updated);
+                          }}
+                          style={{ padding:'4px 10px', borderRadius:'20px', fontSize:'11px', cursor:'pointer', border:'1px solid',
+                            background: (e as any).cargoTypes?.includes(cargo) ? '#D4AF37' : 'transparent',
+                            color: (e as any).cargoTypes?.includes(cargo) ? '#0D1B2A' : '#D4AF37',
+                            borderColor: '#D4AF37' }}>
+                          {cargo}
+                        </button>
+                      ))}
+                    </div>
+                    <input value={(e as any).otherCargo || ''} onChange={ev => updateSea(e.id, 'otherCargo', ev.target.value)}
+                      placeholder="Other cargo (type here)..."
+                      className={inp + " text-xs"} />
+                  </div>
+
+                  {/* Special Experience for this vessel */}
+                  <div className="mt-2" style={{ background:'#0a1628', borderRadius:'8px', padding:'12px', border:'1px solid #1a2e47' }}>
+                    <label style={{ color:'#D4AF37', fontSize:'12px', display:'block', marginBottom:'8px' }}>⭐ Special Experience on this Vessel</label>
+                    <div style={{ display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:'6px', marginBottom:'10px' }}>
+                      {([
+                        ['drydockExperience', '🔧 Dry Dock'],
+                        ['tankWashing', '🚿 Tank Washing'],
+                        ['holdCleaning', '🧹 Hold Cleaning'],
+                        ['wallWash', '🔬 Wall Wash'],
+                        ['cargoHeating', '🌡️ Cargo Heating'],
+                        ['inertGas', '💨 Inert Gas Ops'],
+                      ] as [string, string][]).map(([field, label]) => (
+                        <label key={field} style={{ display:'flex', alignItems:'center', gap:'6px', cursor:'pointer', fontSize:'11px', color:'#ccc' }}>
+                          <input type="checkbox" checked={!!(e as any)[field]}
+                            onChange={ev => { ev.stopPropagation(); updateSea(e.id, field, ev.target.checked); }}
+                            style={{ accentColor:'#D4AF37' }} />
+                          {label}
+                        </label>
+                      ))}
+                    </div>
+                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px' }}>
+                      <div>
+                        <label style={{ color:'#aaa', fontSize:'11px', display:'block', marginBottom:'3px' }}>PSC Inspections (e.g. USCG x2, AMSA x1)</label>
+                        <input value={(e as any).pscInspections || ''} onChange={ev => updateSea(e.id, 'pscInspections', ev.target.value)}
+                          placeholder="USCG x2, Paris MOU x1, AMSA x1"
+                          className={inp + " text-xs"} />
+                      </div>
+                      <div>
+                        <label style={{ color:'#aaa', fontSize:'11px', display:'block', marginBottom:'3px' }}>PSC Detentions</label>
+                        <input value={(e as any).pscDetentions || ''} onChange={ev => updateSea(e.id, 'pscDetentions', ev.target.value)}
+                          placeholder="None / 1 detention (detail)"
+                          className={inp + " text-xs"} />
+                      </div>
+                      <div style={{ gridColumn:'span 2' }}>
+                        <label style={{ color:'#aaa', fontSize:'11px', display:'block', marginBottom:'3px' }}>Vetting Inspections (SIRE/CDI/OCIMF)</label>
+                        <input value={(e as any).vettingInspections || ''} onChange={ev => updateSea(e.id, 'vettingInspections', ev.target.value)}
+                          placeholder="SIRE x3, CDI x1, DocksideSurvey x2"
+                          className={inp + " text-xs"} />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ))}
               <button onClick={addVessel} className="w-full border border-dashed border-[#D4AF37] text-[#D4AF37] py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#D4AF37]/10 transition-colors">
