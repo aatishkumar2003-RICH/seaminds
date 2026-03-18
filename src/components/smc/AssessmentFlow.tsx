@@ -506,7 +506,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
             {onExit && (
               <button onClick={() => {
                 if (window.confirm('Exit assessment? Your progress will be lost.')) onExit();
-              }} style={{ background:'transparent', border:'1px solid #444', color:'#888', padding:'4px 10px', borderRadius:'6px', fontSize:'11px', cursor:'pointer' }}>
+              }} style={{ background:'transparent', border:'1px solid #444', color:'#888', padding:'4px 12px', borderRadius:'6px', fontSize:'11px', cursor:'pointer' }}>
                 ✕ Exit
               </button>
             )}

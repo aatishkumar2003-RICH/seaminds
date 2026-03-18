@@ -192,7 +192,7 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
     <div className="overflow-y-auto" style={{ maxHeight: '100%' }}>
       {onBack && (
         <button onClick={onBack}
-          style={{ background:'transparent', border:'1px solid #2a4060', color:'#D4AF37', padding:'8px 16px', borderRadius:'8px', fontSize:'13px', cursor:'pointer', marginBottom:'16px' }}>
+          style={{ background:'transparent', border:'1px solid #2a4060', color:'#D4AF37', padding:'8px 16px', borderRadius:'8px', fontSize:'13px', cursor:'pointer', marginBottom:'16px', display:'block' }}>
           ← Back to Profile
         </button>
       )}
