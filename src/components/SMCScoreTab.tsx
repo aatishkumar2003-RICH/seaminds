@@ -240,7 +240,12 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
         </button>
       ) : (
         <button
-          onClick={() => fileRef.current?.click()}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            console.log("SMCScoreTab: CV upload button clicked");
+            fileRef.current?.click();
+          }}
           className="w-full bg-card rounded-2xl border border-dashed border-border p-4 flex items-center gap-3 hover:border-primary/50 transition-colors"
         >
           <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center shrink-0">
