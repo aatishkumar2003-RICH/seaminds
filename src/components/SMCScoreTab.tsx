@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { trackEvent } from "@/lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
-import { Upload, RefreshCw, Check, FileText, Anchor, Award, HeartPulse } from "lucide-react";
+import { Upload, RefreshCw, Check, FileText, Anchor, Award, HeartPulse, X } from "lucide-react";
 import { toast } from "sonner";
 import CrewPaymentGate from "@/components/smc/CrewPaymentGate";
 import SMCScoreCertificate from "@/components/smc/SMCScoreCertificate";
 import AssessmentFlow from "@/components/smc/AssessmentFlow";
 import MyDocumentsSection from "@/components/smc/MyDocumentsSection";
 import SalaryBenchmark from "@/components/SalaryBenchmark";
+import CvUpload from "@/components/CvUpload";
 
 interface SMCScoreTabProps {
   profileId: string;
