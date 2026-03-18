@@ -50,6 +50,7 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
   const [status, setStatus] = useState<"idle" | "reading" | "success" | "error">("idle");
   const [fileName, setFileName] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleFile = async (file: File) => {
@@ -68,14 +69,22 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
         reader.readAsDataURL(file);
       });
 
-      const { data: { session } } = await supabase.auth.getSession();
-      const { data, error } = await supabase.functions.invoke("parse-cv-documents", {
-        body: { file_base64: base64, mime_type: file.type },
-        headers: { Authorization: `Bearer ${session?.access_token}` },
-      });
+      setIsProcessing(true);
+      let data: any, error: any;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const result = await supabase.functions.invoke("parse-cv-documents", {
+          body: { file_base64: base64, mime_type: file.type },
+          headers: { Authorization: `Bearer ${session?.access_token}` },
+        });
+        data = result.data;
+        error = result.error;
+      } finally {
+        setIsProcessing(false);
+      }
 
       if (error || !data?.success) {
-        throw new Error(data?.error || "Could not read CV");
+        throw new Error(data?.error || error?.message || "Could not read CV");
       }
 
       const cv = data.data;
@@ -103,6 +112,12 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
 
   return (
     <div>
+      {isProcessing ? (
+        <div style={{ color: '#D4AF37', textAlign: 'center', padding: '16px' }}>
+          ⏳ AI is reading your CV... This may take 15-20 seconds
+        </div>
+      ) : (
+      <>
       <input
         ref={fileRef}
         type="file"
@@ -161,6 +176,8 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
           </>
         )}
       </button>
+      </>
+      )}
     </div>
   );
 };
