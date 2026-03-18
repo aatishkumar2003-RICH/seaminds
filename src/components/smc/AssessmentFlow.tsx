@@ -705,14 +705,22 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
             </button>
           )}
           {(currentQ?.type === 'scenario' || currentQ?.type === 'behavioural') && !pendingFollowUp && (
-            <button
-              onClick={handleTextSubmit}
-              disabled={!textAnswer.trim() || evaluating}
-              className="w-full py-3 rounded-xl font-bold text-sm transition-all disabled:opacity-40"
-              style={{ background: '#D4AF37', color: '#0b1929' }}
-            >
-              {evaluating ? <Loader2 size={16} className="animate-spin mx-auto" /> : qIndex + 1 < totalQuestions ? 'Submit & Continue' : 'Submit & See Results'}
-            </button>
+            <div style={{ display:'flex', alignItems:'center' }}>
+              {currentQ?.type === 'behavioural' && qIndex > 0 && (
+                <button onClick={() => setQIndex(s => s - 1)}
+                  style={{ background:'transparent', border:'1px solid #2a4060', color:'#888', padding:'6px 12px', borderRadius:'6px', fontSize:'12px', cursor:'pointer', marginRight:'8px' }}>
+                  ← Previous
+                </button>
+              )}
+              <button
+                onClick={handleTextSubmit}
+                disabled={!textAnswer.trim() || evaluating}
+                className="flex-1 py-3 rounded-xl font-bold text-sm transition-all disabled:opacity-40"
+                style={{ background: '#D4AF37', color: '#0b1929' }}
+              >
+                {evaluating ? <Loader2 size={16} className="animate-spin mx-auto" /> : qIndex + 1 < totalQuestions ? 'Submit & Continue' : 'Submit & See Results'}
+              </button>
+            </div>
           )}
         </div>
       </div>
