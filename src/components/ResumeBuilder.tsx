@@ -306,6 +306,32 @@ const ResumeBuilder = () => {
     setOpenSection("personal");
   };
 
+  // ── Completion check ──
+  const getCompletionStatus = () => {
+    const missing: string[] = [];
+    if (!photo) missing.push('Photo');
+    if (!personal.firstName) missing.push('First Name');
+    if (!personal.lastName) missing.push('Last Name');
+    if (!personal.rank) missing.push('Current Rank');
+    if (!personal.nationality) missing.push('Nationality');
+    if (!personal.dob) missing.push('Date of Birth');
+    if (!personal.passportNo) missing.push('Passport Number');
+    if (!personal.phone) missing.push('Phone/WhatsApp');
+    if (sea.length === 0 || !sea.some(s => s.vesselName)) missing.push('At least 1 Sea Service entry');
+    if (certs.length === 0 || !certs.some(c => c.name)) missing.push('At least 1 Certificate');
+    return missing;
+  };
+
+  const handlePreviewClick = () => {
+    const missing = getCompletionStatus();
+    if (missing.length > 0) {
+      setMissingFields(missing);
+      setShowMissingModal(true);
+      return;
+    }
+    setView('preview');
+  };
+
   // ── Download PDF ──
   const handleDownloadPDF = async () => {
     try {
