@@ -96,17 +96,18 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
         throw new Error(data?.error || error?.message || "Could not read CV");
       }
 
-      const cv = data.data;
+      const cv = data.data?.personal || data.data || {};
       const mapped: Parameters<CvUploadProps["onParsed"]>[0] = {};
 
       if (cv.firstName) mapped.firstName = cv.firstName;
       if (cv.lastName) mapped.lastName = cv.lastName;
       if (cv.nationality) mapped.nationality = cv.nationality;
       if (cv.rank && RANK_MAP[cv.rank]) mapped.role = RANK_MAP[cv.rank];
+      else if (cv.rank) mapped.role = cv.rank;
       if (cv.yearsAtSea) mapped.yearsAtSea = YEARS_MAP[cv.yearsAtSea] || cv.yearsAtSea;
       if (cv.imoNumber) mapped.vesselImo = cv.imoNumber;
       if (cv.currentVessel) mapped.shipName = cv.currentVessel;
-      if (cv.whatsapp || cv.phone) mapped.whatsappNumber = cv.whatsapp || cv.phone;
+      if (cv.phone) mapped.whatsappNumber = cv.phone;
 
       onParsed(mapped);
       onFileReady?.(file);
