@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { trackEvent } from "@/lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
+import { Check, Loader2, FileText, Ship, GraduationCap, Stethoscope, Upload } from "lucide-react";
 
 interface CvUploadProps {
   onParsed: (data: {
@@ -51,6 +52,7 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
   const [fileName, setFileName] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [summary, setSummary] = useState({ certs: 0, service: 0, medical: 0, education: 0, name: "", rank: "" });
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleClick = (e: React.MouseEvent) => {
@@ -109,6 +111,17 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
       if (cv.currentVessel) mapped.shipName = cv.currentVessel;
       if (cv.phone) mapped.whatsappNumber = cv.phone;
 
+      // Build summary for display
+      const docData = data.data || {};
+      setSummary({
+        certs: (docData.certificates || []).length,
+        service: (docData.sea_service || []).length,
+        medical: (docData.medical || []).length,
+        education: (docData.education || []).length,
+        name: [cv.firstName, cv.lastName].filter(Boolean).join(" "),
+        rank: cv.rank || "",
+      });
+
       console.log('CV Upload: mapped personal data', mapped);
       onParsed(mapped);
       onFileReady?.(file);
@@ -119,7 +132,6 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
       try {
         const { data: { session: s } } = await supabase.auth.getSession();
         if (s?.user?.id && data.data) {
-          const docData = data.data;
           await supabase.from("crew_cv_data").upsert({
             user_id: s.user.id,
             certificates: (docData.certificates || []) as any,
@@ -140,12 +152,6 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
 
   return (
     <div>
-      {isProcessing ? (
-        <div style={{ color: '#D4AF37', textAlign: 'center', padding: '16px' }}>
-          ⏳ AI is reading your CV... This may take 15-20 seconds
-        </div>
-      ) : (
-      <>
       <input
         ref={fileRef}
         type="file"
@@ -154,57 +160,116 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (file) handleFile(file);
+          if (fileRef.current) fileRef.current.value = "";
         }}
       />
-      <button
-        type="button"
-        onClick={handleClick}
-        className="w-full rounded-xl p-5 text-center transition-all hover:opacity-90"
-        style={{
-          border: "1px dashed #D4AF37",
-          background: "rgba(212,175,55,0.05)",
-        }}
-      >
-        {status === "idle" && (
-          <>
-            <div className="text-[32px] mb-2">📄</div>
-            <div className="font-bold text-base" style={{ color: "#D4AF37" }}>
-              Upload Your CV
-            </div>
-            <div className="text-sm text-muted-foreground mt-1">
-              PDF or photo — AI reads and fills your profile automatically
-            </div>
-            <div className="text-xs text-muted-foreground mt-2">Supports PDF, JPG, PNG</div>
-          </>
-        )}
-        {status === "reading" && (
-          <div className="flex flex-col items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-full border-[3px] border-muted"
-              style={{
-                borderTopColor: "#D4AF37",
-                animation: "spin 0.8s linear infinite",
-              }}
-            />
-            <div className="text-sm text-muted-foreground">{fileName}</div>
-            <div className="font-bold text-base" style={{ color: "#D4AF37" }}>
-              🤖 AI Reading CV...
+
+      {/* Processing state */}
+      {isProcessing && (
+        <div className="rounded-xl p-5 text-center space-y-3" style={{ border: "1px solid hsl(var(--primary) / 0.3)", background: "hsl(var(--primary) / 0.05)" }}>
+          <div className="flex justify-center">
+            <div className="relative">
+              <div className="w-12 h-12 rounded-full border-[3px] border-muted animate-spin" style={{ borderTopColor: "hsl(var(--primary))" }} />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <FileText size={16} className="text-primary" />
+              </div>
             </div>
           </div>
-        )}
-        {status === "success" && (
-          <div className="font-medium text-sm" style={{ color: "#22c55e" }}>
-            ✓ CV read — please review and confirm your details below
+          <p className="font-bold text-sm text-primary">🤖 AI is reading your CV...</p>
+          <p className="text-xs text-muted-foreground">This may take 15–20 seconds</p>
+          <div className="space-y-1.5 text-left max-w-xs mx-auto">
+            {["Extracting personal details...", "Reading certificates...", "Identifying sea service..."].map((step, i) => (
+              <div key={step} className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Loader2 size={10} className="animate-spin text-primary shrink-0" />
+                <span>{step}</span>
+              </div>
+            ))}
           </div>
-        )}
-        {status === "error" && (
-          <>
-            <div className="font-medium text-sm text-destructive">{errorMsg}</div>
-            <div className="text-xs text-muted-foreground mt-1">Tap to try again or fill manually</div>
-          </>
-        )}
-      </button>
-      </>
+        </div>
+      )}
+
+      {/* Idle state */}
+      {!isProcessing && status === "idle" && (
+        <button
+          type="button"
+          onClick={handleClick}
+          className="w-full rounded-xl p-5 text-center transition-all hover:scale-[1.01] active:scale-[0.99]"
+          style={{
+            border: "1px dashed hsl(var(--primary))",
+            background: "hsl(var(--primary) / 0.05)",
+          }}
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: "hsl(var(--primary) / 0.15)" }}>
+              <Upload size={20} className="text-primary" />
+            </div>
+            <div className="text-left">
+              <p className="font-bold text-sm text-primary">Upload Your CV</p>
+              <p className="text-xs text-muted-foreground mt-0.5">PDF or photo — AI extracts certificates & sea service</p>
+            </div>
+          </div>
+        </button>
+      )}
+
+      {/* Reading but not yet processing (file being read to base64) */}
+      {!isProcessing && status === "reading" && (
+        <div className="rounded-xl p-5 text-center" style={{ border: "1px solid hsl(var(--primary) / 0.3)", background: "hsl(var(--primary) / 0.05)" }}>
+          <Loader2 size={20} className="animate-spin text-primary mx-auto mb-2" />
+          <p className="text-xs text-muted-foreground">Preparing {fileName}...</p>
+        </div>
+      )}
+
+      {/* Success state with summary */}
+      {!isProcessing && status === "success" && (
+        <div className="rounded-xl overflow-hidden" style={{ border: "1px solid hsl(var(--primary) / 0.3)" }}>
+          <div className="p-4 flex items-center gap-3" style={{ background: "hsl(var(--primary) / 0.1)" }}>
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "hsl(var(--primary) / 0.2)" }}>
+              <Check size={16} className="text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-primary">✓ CV Parsed Successfully</p>
+              {summary.name && (
+                <p className="text-xs text-muted-foreground truncate">
+                  {summary.name}{summary.rank ? ` · ${summary.rank}` : ""}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Summary stats */}
+          <div className="grid grid-cols-4 divide-x divide-border border-t border-border">
+            {[
+              { icon: <GraduationCap size={12} />, count: summary.certs, label: "Certs" },
+              { icon: <Ship size={12} />, count: summary.service, label: "Service" },
+              { icon: <Stethoscope size={12} />, count: summary.medical, label: "Medical" },
+              { icon: <FileText size={12} />, count: summary.education, label: "Education" },
+            ].map((item) => (
+              <div key={item.label} className="py-2.5 px-2 text-center">
+                <div className="flex justify-center text-primary mb-1">{item.icon}</div>
+                <p className="text-sm font-bold text-foreground">{item.count}</p>
+                <p className="text-[10px] text-muted-foreground">{item.label}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="px-4 py-2 border-t border-border flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">Review your details below</p>
+            <button onClick={handleClick} className="text-xs text-primary underline">Re-upload</button>
+          </div>
+        </div>
+      )}
+
+      {/* Error state */}
+      {!isProcessing && status === "error" && (
+        <button
+          type="button"
+          onClick={handleClick}
+          className="w-full rounded-xl p-5 text-center transition-all hover:opacity-90"
+          style={{ border: "1px solid hsl(var(--destructive) / 0.3)", background: "hsl(var(--destructive) / 0.05)" }}
+        >
+          <p className="text-sm font-medium text-destructive">❌ {errorMsg}</p>
+          <p className="text-xs text-muted-foreground mt-1">Tap to try again or fill manually</p>
+        </button>
       )}
     </div>
   );
