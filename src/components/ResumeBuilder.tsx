@@ -139,6 +139,10 @@ const ResumeBuilder = () => {
     personal: true, sea: true, certs: true, edu: true, skills: true,
   });
 
+  // ── Validation state ──
+  const [missingFields, setMissingFields] = useState<string[]>([]);
+  const [showMissingModal, setShowMissingModal] = useState(false);
+
   // ── Form state (keep existing names) ──
   const [personal, setPersonal] = useState({
     firstName: "", lastName: "", rank: "", applyingFor: "", nationality: "",
