@@ -1346,23 +1346,27 @@ const ResumeBuilder = () => {
             {/* TRAINING COURSES */}
             {filledTraining.length > 0 && (
               <div style={{ marginBottom:'10px' }}>
-                <div style={{ fontSize:'11px', fontWeight:'bold', background:'#0D1B2A', color:'#D4AF37', padding:'3px 8px', marginBottom:'4px' }}>TRAINING COURSES</div>
+                <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'6px', marginTop:'12px' }}>
+                  <div style={{ width:'4px', height:'16px', background:'#D4AF37' }} />
+                  <div style={{ fontSize:'10px', fontWeight:'900', color:'#0D1B2A', letterSpacing:'1.5px', textTransform:'uppercase' }}>TRAINING COURSES</div>
+                  <div style={{ flex:1, height:'1px', background:'#0D1B2A', opacity:0.2 }} />
+                </div>
                 <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'9px' }}>
                   <thead>
-                    <tr style={{ background:'#f0f0f0' }}>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left' }}>Course</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left' }}>Institution</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left' }}>Date</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left' }}>Cert No.</th>
+                    <tr style={{ background:'#0D1B2A', color:'#fff' }}>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontWeight:'bold' }}>Course</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontWeight:'bold' }}>Institution</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontWeight:'bold' }}>Date</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontWeight:'bold' }}>Cert No.</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filledTraining.map((t: any, i: number) => (
-                      <tr key={t.id || i} style={{ background: i%2===0 ? '#fff' : '#fafafa' }}>
-                        <td style={{ border:'1px solid #ccc', padding:'3px' }}>{t.courseName}</td>
-                        <td style={{ border:'1px solid #ccc', padding:'3px' }}>{t.institution}</td>
-                        <td style={{ border:'1px solid #ccc', padding:'3px' }}>{fmtDate(t.dateCompleted)}</td>
-                        <td style={{ border:'1px solid #ccc', padding:'3px' }}>{t.certNo}</td>
+                      <tr key={t.id || i} style={{ background: i%2===0 ? '#fff' : '#f8f9fa' }}>
+                        <td style={{ border:'1px solid #dee2e6', padding:'3px' }}>{t.courseName}</td>
+                        <td style={{ border:'1px solid #dee2e6', padding:'3px' }}>{t.institution}</td>
+                        <td style={{ border:'1px solid #dee2e6', padding:'3px' }}>{fmtDate(t.dateCompleted)}</td>
+                        <td style={{ border:'1px solid #dee2e6', padding:'3px' }}>{t.certNo}</td>
                       </tr>
                     ))}
                   </tbody>
