@@ -533,7 +533,7 @@ const Index = () => {
       setTargetScreen(item.screen);
       setAppState("name-entry");
     } else {
-      setScreen(item.screen);
+      navigateTo(item.screen);
       if (item.screen === "opportunities") setJobBadgeCount(0);
     }
   };
