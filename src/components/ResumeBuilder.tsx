@@ -196,7 +196,8 @@ const ResumeBuilder = () => {
     grtDwt: "", company: "", manningAgent: "", rankOnBoard: "", engineType: "",
     cargoType: "", fromDate: "", toDate: "", reasonForLeaving: "",
     cargoTypes: [], otherCargo: "", pscDetentions: "", pscInspections: "",
-    vettingInspections: "", drydockExperience: false, tankWashing: false,
+    vettingInspections: "", rightshipInspection: false, rightshipGHG: "", rightshipDeficiencies: "",
+    drydockExperience: false, tankWashing: false,
     holdCleaning: false, wallWash: false, cargoHeating: false, inertGas: false,
   }]);
   const rmVessel = (id: string) => setSea(s => s.filter(e => e.id !== id));
