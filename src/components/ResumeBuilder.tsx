@@ -1200,6 +1200,7 @@ const ResumeBuilder = () => {
                                 s.pscInspections && `PSC: ${s.pscInspections}`,
                                 s.pscDetentions && s.pscDetentions !== 'None' && `Detentions: ${s.pscDetentions}`,
                                 s.vettingInspections && `Vetting: ${s.vettingInspections}`,
+                                (s as any).rightshipInspection && `⭐ RightShip GHG:${(s as any).rightshipGHG || 'N/A'}${(s as any).rightshipDeficiencies ? ` (${(s as any).rightshipDeficiencies})` : ''}`,
                               ].filter(Boolean).join('   |   ')}
                             </td>
                           </tr>
