@@ -15,6 +15,7 @@ interface SeaEntry {
   fromDate: string; toDate: string; reasonForLeaving: string;
   cargoTypes: string[]; otherCargo: string;
   pscDetentions: string; pscInspections: string; vettingInspections: string;
+  rightshipInspection: boolean; rightshipGHG: string; rightshipDeficiencies: string;
   drydockExperience: boolean; tankWashing: boolean; holdCleaning: boolean;
   wallWash: boolean; cargoHeating: boolean; inertGas: boolean;
 }
