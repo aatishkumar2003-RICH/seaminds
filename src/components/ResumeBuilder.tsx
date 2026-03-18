@@ -1154,23 +1154,23 @@ const ResumeBuilder = () => {
               {/* Name & info */}
               <div style={{ flex:1 }}>
                 <div style={{ background:'#0D1B2A', padding:'10px 14px', marginBottom:'6px' }}>
-                  <div style={{ fontSize:'24px', fontWeight:'900', color:'#FFFFFF', letterSpacing:'2px', textTransform:'uppercase', lineHeight:'1.1' }}>
+                  <div style={{ fontSize:'22px', fontWeight:'900', color:'#FFFFFF', letterSpacing:'2px', textTransform:'uppercase', lineHeight:'1.1' }}>
                     {personal.firstName || personal.lastName ? `${personal.firstName} ${personal.lastName}`.trim() : 'YOUR NAME'}
                   </div>
                   <div style={{ fontSize:'12px', color:'#D4AF37', fontWeight:'bold', marginTop:'3px', letterSpacing:'1px', textTransform:'uppercase' }}>
                     {personal.rank || 'RANK / POSITION'}
-                    {personal.applyingFor ? <span style={{ color:'#aaa', fontWeight:'normal', fontSize:'10px' }}> &nbsp;|&nbsp; Seeking: {personal.applyingFor}</span> : ''}
+                    {personal.applyingFor ? <span style={{ color:'#aaa', fontWeight:'normal', fontSize:'10px' }}> | Seeking: {personal.applyingFor}</span> : ''}
                   </div>
                 </div>
                 {/* Two-column contact details */}
-                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'2px 16px', fontSize:'9px', color:'#333', lineHeight:'1.7' }}>
-                  {personal.nationality && <div><span style={{ color:'#666', fontWeight:'bold' }}>NATIONALITY:</span> {personal.nationality}</div>}
-                  {personal.dob && <div><span style={{ color:'#666', fontWeight:'bold' }}>DATE OF BIRTH:</span> {fmtDate(personal.dob)}</div>}
-                  {personal.passportNo && <div><span style={{ color:'#666', fontWeight:'bold' }}>PASSPORT NO:</span> {personal.passportNo}</div>}
-                  {personal.cdcNo && <div><span style={{ color:'#666', fontWeight:'bold' }}>CDC / SB NO:</span> {personal.cdcNo}{personal.cdcCountry ? ` (${personal.cdcCountry})` : ''}</div>}
-                  {personal.phone && <div><span style={{ color:'#666', fontWeight:'bold' }}>WHATSAPP:</span> {personal.phone}</div>}
-                  {personal.email && <div><span style={{ color:'#666', fontWeight:'bold' }}>EMAIL:</span> {personal.email}</div>}
-                  {personal.address && <div style={{ gridColumn:'span 2' }}><span style={{ color:'#666', fontWeight:'bold' }}>ADDRESS:</span> {personal.address}</div>}
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'2px 16px', fontSize:'9px', color:'#333', lineHeight:'1.8' }}>
+                  {personal.nationality && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Nationality: </span>{personal.nationality}</div>}
+                  {personal.dob && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Date of Birth: </span>{fmtDate(personal.dob)}</div>}
+                  {personal.passportNo && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Passport: </span>{personal.passportNo}</div>}
+                  {personal.cdcNo && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>CDC/SB: </span>{personal.cdcNo}{personal.cdcCountry ? ` (${personal.cdcCountry})` : ''}</div>}
+                  {personal.phone && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>WhatsApp: </span>{personal.phone}</div>}
+                  {personal.email && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Email: </span>{personal.email}</div>}
+                  {personal.address && <div style={{ gridColumn:'span 2' }}><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Address: </span>{personal.address}</div>}
                 </div>
                 {/* Availability row */}
                 {(personal.availableFrom || personal.expectedSalaryMin) && (
