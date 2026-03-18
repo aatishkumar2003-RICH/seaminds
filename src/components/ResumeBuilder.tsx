@@ -750,6 +750,22 @@ const ResumeBuilder = () => {
               </div>
               <div><label className={lbl}>Home Address</label><input className={inp} placeholder="Manila, Philippines" value={personal.address} onChange={e => P("address", e.target.value)} /></div>
 
+              {/* Expected Salary Range */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={lbl}>Expected Salary Min (USD/month)</label>
+                  <input className={inp} value={personal.expectedSalaryMin} onChange={e => P("expectedSalaryMin", e.target.value)} placeholder="e.g. 3000" type="number" />
+                </div>
+                <div>
+                  <label className={lbl}>Expected Salary Max (USD/month)</label>
+                  <input className={inp} value={personal.expectedSalaryMax} onChange={e => P("expectedSalaryMax", e.target.value)} placeholder="e.g. 4000" type="number" />
+                </div>
+              </div>
+              <div>
+                <label className={lbl}>Available / Expected Joining Date <span className="text-red-500">*</span></label>
+                <input className={inp} value={personal.availableFrom} onChange={e => P("availableFrom", e.target.value)} type="date" />
+              </div>
+
               {/* Languages inline */}
               <div>
                 <div className="flex items-center justify-between mb-2">
