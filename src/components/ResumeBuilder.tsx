@@ -178,6 +178,98 @@ const ResumeBuilder = () => {
     setTimeout(() => { win.print(); win.close(); }, 400);
   };
 
+  const handleScanCV = async (ev: React.ChangeEvent<HTMLInputElement>) => {
+    const file = ev.target.files?.[0];
+    if (!file) return;
+    setScanning(true);
+    setScanMessage('');
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve((reader.result as string).split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const { data: { session } } = await supabase.auth.getSession();
+      const { data, error } = await supabase.functions.invoke('parse-cv-documents', {
+        body: { file_base64: base64, mime_type: file.type },
+        headers: { Authorization: `Bearer ${session?.access_token}` }
+      });
+      if (error || !data?.success) throw new Error(error?.message || 'Scan failed');
+      const cv = data.data;
+      let filled = 0;
+      if (cv.name || cv.rank || cv.nationality || cv.date_of_birth) {
+        setPersonal((p) => ({
+          ...p,
+          ...(cv.name && { firstName: cv.name.split(' ')[0], lastName: cv.name.split(' ').slice(1).join(' ') }),
+          ...(cv.rank && { rank: cv.rank }),
+          ...(cv.nationality && { nationality: cv.nationality }),
+          ...(cv.date_of_birth && { dob: cv.date_of_birth }),
+        }));
+        filled++;
+      }
+      if (cv.sea_service?.length > 0) {
+        setSea(cv.sea_service.map((s: any) => ({
+          id: String(Date.now()) + String(Math.random()),
+          vesselName: s.vessel_name || '',
+          imoNumber: '',
+          vesselType: s.vessel_type || '',
+          flagState: s.flag || '',
+          company: s.company || '',
+          rankOnBoard: s.rank || '',
+          engineType: s.engine_type || '',
+          grtDwt: '',
+          fromDate: s.sign_on || '',
+          toDate: s.sign_off || '',
+        })));
+        filled++;
+      }
+      if (cv.certificates?.length > 0) {
+        setCerts(cv.certificates.map((c: any) => ({
+          id: String(Date.now()) + String(Math.random()),
+          name: c.name || '',
+          number: c.number || '',
+          issueDate: c.issue_date || '',
+          expiryDate: c.expiry_date || '',
+          isCustom: true,
+        })));
+        filled++;
+      }
+      if (cv.education?.length > 0) {
+        const first = cv.education[0];
+        setEdu({
+          academy: typeof first === 'string' ? first : first.institution || '',
+          degree: typeof first === 'string' ? '' : first.qualification || '',
+          year: typeof first === 'string' ? '' : first.year || '',
+          country: '',
+        });
+        filled++;
+      }
+      if (cv.main_engine_types?.length > 0 || cv.cargo_experience?.length > 0) {
+        setSkills((s) => ({
+          ...s,
+          other: [
+            s.other,
+            cv.main_engine_types?.length > 0 ? `Engine types: ${cv.main_engine_types.join(', ')}` : '',
+            cv.cargo_experience?.length > 0 ? `Cargo: ${cv.cargo_experience.join(', ')}` : '',
+          ].filter(Boolean).join('. '),
+        }));
+        filled++;
+      }
+      if (cv.summary) {
+        setPersonal((p) => ({ ...p, summary: p.summary || cv.summary }));
+      }
+      const total = (cv.sea_service?.length || 0) + (cv.certificates?.length || 0);
+      setScanMessage(`✅ CV scanned — ${total} records imported across ${filled} sections. Review and fill any missing details.`);
+      setOpenSection('personal');
+    } catch (err: any) {
+      setScanMessage('❌ Could not read CV: ' + (err.message || 'Unknown error'));
+    } finally {
+      setScanning(false);
+      if (scanInputRef.current) scanInputRef.current.value = '';
+    }
+  };
+
   // ── Shared styles ──
   const inp = "w-full bg-[#0a1929] border border-[#1e3a5f] rounded-lg px-3 py-2 text-white text-sm focus:border-[#D4AF37] focus:outline-none placeholder:text-gray-600";
   const sel = "w-full bg-[#0a1929] border border-[#1e3a5f] rounded-lg px-3 py-2 text-white text-sm focus:border-[#D4AF37] focus:outline-none";
