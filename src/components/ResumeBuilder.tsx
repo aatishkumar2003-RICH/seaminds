@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Camera, Plus, Trash2, Eye, Edit3, Award, Ship, FileText,
   User, GraduationCap, Globe, ChevronDown, ChevronUp,
@@ -13,6 +13,10 @@ interface SeaEntry {
   flagState: string; grtDwt: string; company: string; manningAgent: string;
   rankOnBoard: string; engineType: string; cargoType: string;
   fromDate: string; toDate: string; reasonForLeaving: string;
+  cargoTypes: string[]; otherCargo: string;
+  pscDetentions: string; pscInspections: string; vettingInspections: string;
+  drydockExperience: boolean; tankWashing: boolean; holdCleaning: boolean;
+  wallWash: boolean; cargoHeating: boolean; inertGas: boolean;
 }
 interface Cert {
   id: string; name: string; number: string; flagState: string;
@@ -149,12 +153,16 @@ const ResumeBuilder = () => {
     dob: "", phone: "", email: "", address: "",
     passportNo: "", cdcNo: "", cdcCountry: "", summary: "",
     emergencyName: "", emergencyPhone: "",
+    expectedSalaryMin: "", expectedSalaryMax: "", availableFrom: "",
   });
 
   const [sea, setSea] = useState<SeaEntry[]>([{
     id: "1", vesselName: "", imoNumber: "", vesselType: "", flagState: "",
     grtDwt: "", company: "", manningAgent: "", rankOnBoard: "", engineType: "",
     cargoType: "", fromDate: "", toDate: "", reasonForLeaving: "",
+    cargoTypes: [], otherCargo: "", pscDetentions: "", pscInspections: "",
+    vettingInspections: "", drydockExperience: false, tankWashing: false,
+    holdCleaning: false, wallWash: false, cargoHeating: false, inertGas: false,
   }]);
 
   const [certs, setCerts] = useState<Cert[]>(
@@ -185,10 +193,14 @@ const ResumeBuilder = () => {
     id: uid(), vesselName: "", imoNumber: "", vesselType: "", flagState: "",
     grtDwt: "", company: "", manningAgent: "", rankOnBoard: "", engineType: "",
     cargoType: "", fromDate: "", toDate: "", reasonForLeaving: "",
+    cargoTypes: [], otherCargo: "", pscDetentions: "", pscInspections: "",
+    vettingInspections: "", drydockExperience: false, tankWashing: false,
+    holdCleaning: false, wallWash: false, cargoHeating: false, inertGas: false,
   }]);
   const rmVessel = (id: string) => setSea(s => s.filter(e => e.id !== id));
-  const U = (id: string, f: string, v: string) =>
+  const U = (id: string, f: string, v: any) =>
     setSea(s => s.map(e => e.id === id ? { ...e, [f]: v } : e));
+  const updateSea = U;
   const UC = (id: string, f: string, v: string) =>
     setCerts(c => c.map(cert => cert.id === id ? { ...cert, [f]: v } : cert));
   const addCert = (cat: "coc" | "stcw" | "medical" | "other") => setCerts(c => [...c, {
@@ -738,6 +750,22 @@ const ResumeBuilder = () => {
               </div>
               <div><label className={lbl}>Home Address</label><input className={inp} placeholder="Manila, Philippines" value={personal.address} onChange={e => P("address", e.target.value)} /></div>
 
+              {/* Expected Salary Range */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={lbl}>Expected Salary Min (USD/month)</label>
+                  <input className={inp} value={personal.expectedSalaryMin} onChange={e => P("expectedSalaryMin", e.target.value)} placeholder="e.g. 3000" type="number" />
+                </div>
+                <div>
+                  <label className={lbl}>Expected Salary Max (USD/month)</label>
+                  <input className={inp} value={personal.expectedSalaryMax} onChange={e => P("expectedSalaryMax", e.target.value)} placeholder="e.g. 4000" type="number" />
+                </div>
+              </div>
+              <div>
+                <label className={lbl}>Available / Expected Joining Date <span className="text-red-500">*</span></label>
+                <input className={inp} value={personal.availableFrom} onChange={e => P("availableFrom", e.target.value)} type="date" />
+              </div>
+
               {/* Languages inline */}
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -810,7 +838,7 @@ const ResumeBuilder = () => {
                         <option value="">Engine...</option>{ENGINE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                       </select>
                     </div>
-                    <div><label className={lbl}>Cargo Type</label>
+                    <div><label className={lbl}>Cargo Type (primary)</label>
                       <select className={sel} value={e.cargoType} onChange={ev => U(e.id, "cargoType", ev.target.value)}>
                         <option value="">Cargo...</option>{CARGO_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                       </select>
@@ -821,6 +849,73 @@ const ResumeBuilder = () => {
                     <div><label className={lbl}>Sign Off</label><input type="date" className={inp} value={e.toDate} onChange={ev => U(e.id, "toDate", ev.target.value)} /></div>
                   </div>
                   <div><label className={lbl}>Reason for Leaving</label><input className={inp} placeholder="End of contract" value={e.reasonForLeaving} onChange={ev => U(e.id, "reasonForLeaving", ev.target.value)} /></div>
+
+                  {/* Cargo Types — multi-select */}
+                  <div className="mt-2">
+                    <label style={{ color:'#D4AF37', fontSize:'12px', display:'block', marginBottom:'4px' }}>Cargo Types Handled (select all that apply)</label>
+                    <div style={{ display:'flex', flexWrap:'wrap', gap:'6px', marginBottom:'8px' }}>
+                      {['Dry Bulk','Coal','Grain','Iron Ore','Fertilizer','Crude Oil','Clean Petroleum','Chemical','LNG','LPG','Containers','General Cargo','RoRo','Vehicles','Passengers','Offshore','Cement','Timber'].map(cargo => (
+                        <button key={cargo} type="button"
+                          onClick={ev => { ev.stopPropagation(); ev.preventDefault();
+                            const updated = (e as any).cargoTypes?.includes(cargo)
+                              ? (e as any).cargoTypes.filter((c:string) => c !== cargo)
+                              : [...((e as any).cargoTypes || []), cargo];
+                            updateSea(e.id, 'cargoTypes', updated);
+                          }}
+                          style={{ padding:'4px 10px', borderRadius:'20px', fontSize:'11px', cursor:'pointer', border:'1px solid',
+                            background: (e as any).cargoTypes?.includes(cargo) ? '#D4AF37' : 'transparent',
+                            color: (e as any).cargoTypes?.includes(cargo) ? '#0D1B2A' : '#D4AF37',
+                            borderColor: '#D4AF37' }}>
+                          {cargo}
+                        </button>
+                      ))}
+                    </div>
+                    <input value={(e as any).otherCargo || ''} onChange={ev => updateSea(e.id, 'otherCargo', ev.target.value)}
+                      placeholder="Other cargo (type here)..."
+                      className={inp + " text-xs"} />
+                  </div>
+
+                  {/* Special Experience for this vessel */}
+                  <div className="mt-2" style={{ background:'#0a1628', borderRadius:'8px', padding:'12px', border:'1px solid #1a2e47' }}>
+                    <label style={{ color:'#D4AF37', fontSize:'12px', display:'block', marginBottom:'8px' }}>⭐ Special Experience on this Vessel</label>
+                    <div style={{ display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:'6px', marginBottom:'10px' }}>
+                      {([
+                        ['drydockExperience', '🔧 Dry Dock'],
+                        ['tankWashing', '🚿 Tank Washing'],
+                        ['holdCleaning', '🧹 Hold Cleaning'],
+                        ['wallWash', '🔬 Wall Wash'],
+                        ['cargoHeating', '🌡️ Cargo Heating'],
+                        ['inertGas', '💨 Inert Gas Ops'],
+                      ] as [string, string][]).map(([field, label]) => (
+                        <label key={field} style={{ display:'flex', alignItems:'center', gap:'6px', cursor:'pointer', fontSize:'11px', color:'#ccc' }}>
+                          <input type="checkbox" checked={!!(e as any)[field]}
+                            onChange={ev => { ev.stopPropagation(); updateSea(e.id, field, ev.target.checked); }}
+                            style={{ accentColor:'#D4AF37' }} />
+                          {label}
+                        </label>
+                      ))}
+                    </div>
+                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px' }}>
+                      <div>
+                        <label style={{ color:'#aaa', fontSize:'11px', display:'block', marginBottom:'3px' }}>PSC Inspections (e.g. USCG x2, AMSA x1)</label>
+                        <input value={(e as any).pscInspections || ''} onChange={ev => updateSea(e.id, 'pscInspections', ev.target.value)}
+                          placeholder="USCG x2, Paris MOU x1, AMSA x1"
+                          className={inp + " text-xs"} />
+                      </div>
+                      <div>
+                        <label style={{ color:'#aaa', fontSize:'11px', display:'block', marginBottom:'3px' }}>PSC Detentions</label>
+                        <input value={(e as any).pscDetentions || ''} onChange={ev => updateSea(e.id, 'pscDetentions', ev.target.value)}
+                          placeholder="None / 1 detention (detail)"
+                          className={inp + " text-xs"} />
+                      </div>
+                      <div style={{ gridColumn:'span 2' }}>
+                        <label style={{ color:'#aaa', fontSize:'11px', display:'block', marginBottom:'3px' }}>Vetting Inspections (SIRE/CDI/OCIMF)</label>
+                        <input value={(e as any).vettingInspections || ''} onChange={ev => updateSea(e.id, 'vettingInspections', ev.target.value)}
+                          placeholder="SIRE x3, CDI x1, DocksideSurvey x2"
+                          className={inp + " text-xs"} />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ))}
               <button onClick={addVessel} className="w-full border border-dashed border-[#D4AF37] text-[#D4AF37] py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#D4AF37]/10 transition-colors">
@@ -1012,6 +1107,12 @@ const ResumeBuilder = () => {
                   {personal.email && <span>✉ {personal.email}</span>}
                   {personal.address && <span>📍 {personal.address}</span>}
                 </div>
+                {(personal.expectedSalaryMin || personal.expectedSalaryMax) && (
+                  <div style={{ fontSize:'10px', color:'#D4AF37', fontWeight:'bold', marginTop:'3px' }}>
+                    💰 Expected Salary: ${personal.expectedSalaryMin}{personal.expectedSalaryMax ? ` – $${personal.expectedSalaryMax}` : ''} USD/month
+                    {personal.availableFrom ? `   📅 Available: ${personal.availableFrom}` : ''}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1044,18 +1145,38 @@ const ResumeBuilder = () => {
                   </thead>
                   <tbody>
                     {filledSea.map((s: any, i: number) => (
-                      <tr key={s.id || i} style={{ background: i%2===0 ? '#fff' : '#fafafa' }}>
-                        <td style={{ border:'1px solid #ccc', padding:'3px' }}>{i+1}</td>
-                        <td style={{ border:'1px solid #ccc', padding:'3px', fontWeight:'bold' }}>{s.vesselName}</td>
-                        <td style={{ border:'1px solid #ccc', padding:'3px' }}>{s.vesselType}</td>
-                        <td style={{ border:'1px solid #ccc', padding:'3px' }}>{s.flagState}</td>
-                        <td style={{ border:'1px solid #ccc', padding:'3px' }}>{s.grtDwt}</td>
-                        <td style={{ border:'1px solid #ccc', padding:'3px' }}>{s.rankOnBoard || personal.rank}</td>
-                        <td style={{ border:'1px solid #ccc', padding:'3px' }}>{s.company}</td>
-                        <td style={{ border:'1px solid #ccc', padding:'3px' }}>{fmtDate(s.fromDate)}</td>
-                        <td style={{ border:'1px solid #ccc', padding:'3px' }}>{fmtDate(s.toDate)}</td>
-                        <td style={{ border:'1px solid #ccc', padding:'3px' }}>{s.engineType || s.cargoType}</td>
-                      </tr>
+                      <React.Fragment key={s.id || i}>
+                        <tr style={{ background: i%2===0 ? '#fff' : '#fafafa' }}>
+                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{i+1}</td>
+                          <td style={{ border:'1px solid #ccc', padding:'3px', fontWeight:'bold' }}>{s.vesselName}</td>
+                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{s.vesselType}</td>
+                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{s.flagState}</td>
+                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{s.grtDwt}</td>
+                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{s.rankOnBoard || personal.rank}</td>
+                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{s.company}</td>
+                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{fmtDate(s.fromDate)}</td>
+                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{fmtDate(s.toDate)}</td>
+                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{[s.engineType, s.cargoType, ...(s.cargoTypes || [])].filter(Boolean).join(', ') || ''}</td>
+                        </tr>
+                        {(s.pscInspections || s.vettingInspections || s.drydockExperience || s.tankWashing || s.holdCleaning || s.wallWash || s.cargoHeating || s.inertGas) && (
+                          <tr style={{ background:'#f8f8f8', fontSize:'8px' }}>
+                            <td></td>
+                            <td colSpan={9} style={{ border:'1px solid #ccc', padding:'2px 6px', color:'#555', fontStyle:'italic' }}>
+                              {[
+                                s.drydockExperience && '🔧 Drydock',
+                                s.tankWashing && '🚿 Tank Washing',
+                                s.holdCleaning && '🧹 Hold Cleaning',
+                                s.wallWash && '🔬 Wall Wash',
+                                s.cargoHeating && '🌡️ Cargo Heating',
+                                s.inertGas && '💨 Inert Gas',
+                                s.pscInspections && `PSC: ${s.pscInspections}`,
+                                s.pscDetentions && s.pscDetentions !== 'None' && `Detentions: ${s.pscDetentions}`,
+                                s.vettingInspections && `Vetting: ${s.vettingInspections}`,
+                              ].filter(Boolean).join('   |   ')}
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     ))}
                   </tbody>
                 </table>
