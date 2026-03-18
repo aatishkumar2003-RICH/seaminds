@@ -15,6 +15,7 @@ Deno.serve(async (req) => {
 
   try {
     const { file_base64, mime_type } = await req.json();
+    console.log('parse-cv-documents called, mime_type:', mime_type, 'base64 length:', file_base64?.length);
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
     if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not configured");
 
