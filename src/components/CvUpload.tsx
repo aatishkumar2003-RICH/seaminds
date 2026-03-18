@@ -112,6 +112,12 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
 
   return (
     <div>
+      {isProcessing ? (
+        <div style={{ color: '#D4AF37', textAlign: 'center', padding: '16px' }}>
+          ⏳ AI is reading your CV... This may take 15-20 seconds
+        </div>
+      ) : (
+      <>
       <input
         ref={fileRef}
         type="file"
