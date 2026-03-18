@@ -88,9 +88,11 @@ Deno.serve(async (req) => {
 
     try {
       const parsed = JSON.parse(jsonStr);
-      const isEmpty = Object.values(parsed).every((v: any) => Array.isArray(v) && v.length === 0);
-      if (isEmpty) {
-        console.error("AI returned empty arrays for all sections");
+      const arrayKeys = Object.entries(parsed).filter(([_, v]) => Array.isArray(v));
+      const allArraysEmpty = arrayKeys.every(([_, v]: any) => v.length === 0);
+      const personalEmpty = !parsed.personal || Object.values(parsed.personal || {}).every((v: any) => !v);
+      if (allArraysEmpty && personalEmpty) {
+        console.error("AI returned empty data for all sections");
         return new Response(JSON.stringify({ error: "AI could not read this file. Please try a clearer photo or text-based PDF." }), {
           status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
