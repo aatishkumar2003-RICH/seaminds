@@ -27,6 +27,7 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
   const [salaryOpen, setSalaryOpen] = useState(false);
   const [crewUniqueId, setCrewUniqueId] = useState<string | null>(null);
   const [showCvUpload, setShowCvUpload] = useState(false);
+  const [selfPrice, setSelfPrice] = useState(0);
 
   // CV parse state
   const [cvStatus, setCvStatus] = useState<CvStatus>("idle");
@@ -40,6 +41,11 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
       if (data?.crew_unique_id) setCrewUniqueId(data.crew_unique_id);
     });
   }, [profileId]);
+
+  useEffect(() => {
+    supabase.from('admin_settings').select('value').eq('key', 'price_self_assessment').single()
+      .then(({ data }) => { if (data?.value) setSelfPrice(Number(data.value)); });
+  }, []);
 
   const checkExistingCvData = async () => {
     const { data } = await supabase

@@ -219,13 +219,13 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
           </div>
 
           {/* Vessel Experience */}
-          {(cvSummary?.vessel_experience || []).length > 0 && (
+          {(cvSummary?.sea_service || cvSummary?.vessel_experience || []).length > 0 && (
             <div style={{ marginBottom: '12px' }}>
               <label style={{ color: '#888', fontSize: '12px' }}>VESSEL TYPES WORKED ON</label>
               <div style={{ color: 'white', fontSize: '13px', marginTop: '4px' }}>
-                {(cvSummary?.vessel_experience || []).slice(0, 3).map((v: any, i: number) => (
+                {(cvSummary?.sea_service || cvSummary?.vessel_experience || []).slice(0, 3).map((v: any, i: number) => (
                   <div key={i} style={{ background:'#1a2e47', padding:'6px 10px', borderRadius:'6px', marginBottom:'4px' }}>
-                    {v.vessel_name} — {v.vessel_type} ({v.role}) {v.from_date} to {v.to_date}
+                    {v.vessel_name} — {v.vessel_type} ({v.rank || v.role}) {v.sign_on || v.from_date} to {v.sign_off || v.to_date}
                   </div>
                 ))}
               </div>
