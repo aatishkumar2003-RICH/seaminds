@@ -498,8 +498,17 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
 
         {/* Header with section & progress */}
         <div className="p-4 pb-2 space-y-2">
-          <div style={{ color: '#D4AF37', fontSize: '12px', marginBottom: '8px' }}>
-            {sectionNum}: {sectionLabel} — Question {qIndex + 1} of {totalQuestions}
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'8px' }}>
+            <div style={{ color: '#D4AF37', fontSize: '12px' }}>
+              {sectionNum}: {sectionLabel} — Question {qIndex + 1} of {totalQuestions}
+            </div>
+            {onExit && (
+              <button onClick={() => {
+                if (window.confirm('Exit assessment? Your progress will be lost.')) onExit();
+              }} style={{ background:'transparent', border:'1px solid #444', color:'#888', padding:'4px 10px', borderRadius:'6px', fontSize:'11px', cursor:'pointer' }}>
+                ✕ Exit
+              </button>
+            )}
           </div>
           {/* Progress bar */}
           <div style={{ height: '3px', background: '#1a2e47', borderRadius: '2px' }}>
