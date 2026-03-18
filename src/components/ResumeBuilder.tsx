@@ -160,6 +160,9 @@ const ResumeBuilder = () => {
     id: "1", vesselName: "", imoNumber: "", vesselType: "", flagState: "",
     grtDwt: "", company: "", manningAgent: "", rankOnBoard: "", engineType: "",
     cargoType: "", fromDate: "", toDate: "", reasonForLeaving: "",
+    cargoTypes: [], otherCargo: "", pscDetentions: "", pscInspections: "",
+    vettingInspections: "", drydockExperience: false, tankWashing: false,
+    holdCleaning: false, wallWash: false, cargoHeating: false, inertGas: false,
   }]);
 
   const [certs, setCerts] = useState<Cert[]>(
