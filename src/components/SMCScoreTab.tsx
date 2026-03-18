@@ -263,6 +263,24 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
 
   return (
     <div className="flex flex-col h-full">
+      {/* CV Upload Modal */}
+      {showCvUpload && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={() => setShowCvUpload(false)}>
+          <div className="relative w-[90%] max-w-md rounded-2xl p-6" style={{ background: "#0D1B2A", border: "1px solid rgba(212,175,55,0.3)" }} onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setShowCvUpload(false)} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-secondary flex items-center justify-center hover:bg-secondary/80">
+              <X size={16} className="text-muted-foreground" />
+            </button>
+            <h3 className="text-base font-bold text-foreground mb-4">Upload Your CV</h3>
+            <CvUpload
+              onParsed={(data) => {
+                setCvStatus("done");
+                setShowCvUpload(false);
+                toast.success("CV parsed — certificates & sea service extracted");
+              }}
+            />
+          </div>
+        </div>
+      )}
       {crewUniqueId && (
         <div className="mx-4 mt-3 mb-1 rounded-xl border px-4 py-3 flex items-center gap-3" style={{ background: 'rgba(212,175,55,0.08)', borderColor: '#D4AF37' }}>
           <span className="text-xs font-semibold" style={{ color: '#D4AF37' }}>Your SeaMinds ID</span>

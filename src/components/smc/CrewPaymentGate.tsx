@@ -172,8 +172,8 @@ const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) 
 
         <div className="text-center py-4">
           {isEarlyAccess ? (
-            <>
-              <p className="text-lg text-muted-foreground line-through">${basePrice}</p>
+          <>
+              {selfPrice > 0 && <p className="text-lg text-muted-foreground line-through">${selfPrice}</p>}
               <p className="text-5xl font-bold text-primary gold-glow">FREE</p>
               <p className="text-xs text-muted-foreground mt-2">Early Access · Limited to first 1,000 crew · No credit card needed</p>
             </>
