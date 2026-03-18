@@ -1148,7 +1148,12 @@ const ResumeBuilder = () => {
               <div style={{ flexShrink:0 }}>
                 {photo
                   ? <img src={photo} style={{ width:'95px', height:'115px', objectFit:'cover', display:'block' }} alt="Profile" />
-                  : <div style={{ width:'95px', height:'115px', background:'#e8e8e8', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'10px', color:'#999', textAlign:'center', border:'1px solid #ccc' }}>PASSPORT<br/>PHOTO</div>
+                  : <div style={{ width:'95px', height:'115px', background:'#e8e8e8', display:'flex', alignItems:'center', justifyContent:'center', border:'1px solid #ccc' }}>
+                      <svg width="50" height="60" viewBox="0 0 50 60" fill="none">
+                        <ellipse cx="25" cy="18" rx="12" ry="14" fill="#bbb"/>
+                        <path d="M0 58 C0 40 12 32 25 32 C38 32 50 40 50 58" fill="#bbb"/>
+                      </svg>
+                    </div>
                 }
               </div>
               {/* Name & info */}
