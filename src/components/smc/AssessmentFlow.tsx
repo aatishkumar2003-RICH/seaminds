@@ -409,6 +409,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
         lastName={lastName}
         rank={rank}
         onComplete={onComplete}
+        onBack={onExit}
         transcript={transcript}
         redFlags={redFlags}
         candidateContext={aiQuestions?.candidate_context}

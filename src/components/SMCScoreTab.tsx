@@ -331,6 +331,7 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
             shipName={shipName}
             assessmentId={assessmentId}
             onComplete={() => setView("certificate")}
+            onExit={() => setView("payment")}
           />
         ) : (
           <SMCScoreCertificate />
