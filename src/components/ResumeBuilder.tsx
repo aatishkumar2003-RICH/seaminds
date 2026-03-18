@@ -887,6 +887,7 @@ const ResumeBuilder = () => {
                         ['wallWash', '🔬 Wall Wash'],
                         ['cargoHeating', '🌡️ Cargo Heating'],
                         ['inertGas', '💨 Inert Gas Ops'],
+                        ['rightshipInspection', '⭐ RightShip Inspection'],
                       ] as [string, string][]).map(([field, label]) => (
                         <label key={field} style={{ display:'flex', alignItems:'center', gap:'6px', cursor:'pointer', fontSize:'11px', color:'#ccc' }}>
                           <input type="checkbox" checked={!!(e as any)[field]}
