@@ -2,8 +2,9 @@ import { useState, useRef } from "react";
 import {
   Camera, Plus, Trash2, Eye, Edit3, Award, Ship, FileText,
   User, GraduationCap, Globe, ChevronDown, ChevronUp,
-  Printer, Anchor, Star
+  Printer, Anchor, Star, Loader2
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 // ─────────── TYPES ───────────
 interface SeaEntry {
@@ -75,6 +76,9 @@ const ResumeBuilder = () => {
   const [photo, setPhoto] = useState<string | null>(null);
   const photoRef = useRef<HTMLInputElement>(null);
   const printRef = useRef<HTMLDivElement>(null);
+  const scanInputRef = useRef<HTMLInputElement>(null);
+  const [scanning, setScanning] = useState(false);
+  const [scanMessage, setScanMessage] = useState('');
 
   const [personal, setPersonal] = useState({
     firstName: "", lastName: "", rank: "", nationality: "",
@@ -174,6 +178,98 @@ const ResumeBuilder = () => {
     setTimeout(() => { win.print(); win.close(); }, 400);
   };
 
+  const handleScanCV = async (ev: React.ChangeEvent<HTMLInputElement>) => {
+    const file = ev.target.files?.[0];
+    if (!file) return;
+    setScanning(true);
+    setScanMessage('');
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve((reader.result as string).split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const { data: { session } } = await supabase.auth.getSession();
+      const { data, error } = await supabase.functions.invoke('parse-cv-documents', {
+        body: { file_base64: base64, mime_type: file.type },
+        headers: { Authorization: `Bearer ${session?.access_token}` }
+      });
+      if (error || !data?.success) throw new Error(error?.message || 'Scan failed');
+      const cv = data.data;
+      let filled = 0;
+      if (cv.name || cv.rank || cv.nationality || cv.date_of_birth) {
+        setPersonal((p) => ({
+          ...p,
+          ...(cv.name && { firstName: cv.name.split(' ')[0], lastName: cv.name.split(' ').slice(1).join(' ') }),
+          ...(cv.rank && { rank: cv.rank }),
+          ...(cv.nationality && { nationality: cv.nationality }),
+          ...(cv.date_of_birth && { dob: cv.date_of_birth }),
+        }));
+        filled++;
+      }
+      if (cv.sea_service?.length > 0) {
+        setSea(cv.sea_service.map((s: any) => ({
+          id: String(Date.now()) + String(Math.random()),
+          vesselName: s.vessel_name || '',
+          imoNumber: '',
+          vesselType: s.vessel_type || '',
+          flagState: s.flag || '',
+          company: s.company || '',
+          rankOnBoard: s.rank || '',
+          engineType: s.engine_type || '',
+          grtDwt: '',
+          fromDate: s.sign_on || '',
+          toDate: s.sign_off || '',
+        })));
+        filled++;
+      }
+      if (cv.certificates?.length > 0) {
+        setCerts(cv.certificates.map((c: any) => ({
+          id: String(Date.now()) + String(Math.random()),
+          name: c.name || '',
+          number: c.number || '',
+          issueDate: c.issue_date || '',
+          expiryDate: c.expiry_date || '',
+          isCustom: true,
+        })));
+        filled++;
+      }
+      if (cv.education?.length > 0) {
+        const first = cv.education[0];
+        setEdu({
+          academy: typeof first === 'string' ? first : first.institution || '',
+          degree: typeof first === 'string' ? '' : first.qualification || '',
+          year: typeof first === 'string' ? '' : first.year || '',
+          country: '',
+        });
+        filled++;
+      }
+      if (cv.main_engine_types?.length > 0 || cv.cargo_experience?.length > 0) {
+        setSkills((s) => ({
+          ...s,
+          other: [
+            s.other,
+            cv.main_engine_types?.length > 0 ? `Engine types: ${cv.main_engine_types.join(', ')}` : '',
+            cv.cargo_experience?.length > 0 ? `Cargo: ${cv.cargo_experience.join(', ')}` : '',
+          ].filter(Boolean).join('. '),
+        }));
+        filled++;
+      }
+      if (cv.summary) {
+        setPersonal((p) => ({ ...p, summary: p.summary || cv.summary }));
+      }
+      const total = (cv.sea_service?.length || 0) + (cv.certificates?.length || 0);
+      setScanMessage(`✅ CV scanned — ${total} records imported across ${filled} sections. Review and fill any missing details.`);
+      setOpenSection('personal');
+    } catch (err: any) {
+      setScanMessage('❌ Could not read CV: ' + (err.message || 'Unknown error'));
+    } finally {
+      setScanning(false);
+      if (scanInputRef.current) scanInputRef.current.value = '';
+    }
+  };
+
   // ── Shared styles ──
   const inp = "w-full bg-[#0a1929] border border-[#1e3a5f] rounded-lg px-3 py-2 text-white text-sm focus:border-[#D4AF37] focus:outline-none placeholder:text-gray-600";
   const sel = "w-full bg-[#0a1929] border border-[#1e3a5f] rounded-lg px-3 py-2 text-white text-sm focus:border-[#D4AF37] focus:outline-none";
@@ -214,6 +310,26 @@ const ResumeBuilder = () => {
       {/* ══════════ FORM VIEW ══════════ */}
       {view === "form" && (
         <div className="flex-1 overflow-y-auto px-3 pt-2 space-y-1">
+
+          {/* ── AI SCAN CV ── */}
+          <div className="rounded-xl p-4 mb-2" style={{ background: '#0D1B2A', border: '1px solid #D4AF37' }}>
+            <input ref={scanInputRef} type="file" accept=".pdf,image/*" className="hidden" onChange={handleScanCV} />
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-lg">⚡</span>
+              <span className="text-[#D4AF37] font-bold text-sm">AI Auto-Fill</span>
+            </div>
+            <p className="text-gray-400 text-xs mb-3">Upload your existing CV — AI extracts and fills all fields automatically</p>
+            <button
+              onClick={(e) => { e.stopPropagation(); e.preventDefault(); scanInputRef.current?.click(); }}
+              disabled={scanning}
+              style={{ background: '#D4AF37', color: '#0D1B2A', border: 'none', padding: '10px 24px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px', opacity: scanning ? 0.7 : 1 }}
+            >
+              {scanning ? (
+                <span className="flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> Scanning CV...</span>
+              ) : '📄 Scan My CV'}
+            </button>
+            {scanMessage && <p className="text-xs mt-3" style={{ color: scanMessage.startsWith('✅') ? '#22c55e' : '#ef4444' }}>{scanMessage}</p>}
+          </div>
 
           {/* ── PERSONAL ── */}
           <Section id="personal" icon={<User size={16}/>} title="Personal Details" />
