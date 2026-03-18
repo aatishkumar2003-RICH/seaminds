@@ -311,6 +311,26 @@ const ResumeBuilder = () => {
       {view === "form" && (
         <div className="flex-1 overflow-y-auto px-3 pt-2 space-y-1">
 
+          {/* ── AI SCAN CV ── */}
+          <div className="rounded-xl p-4 mb-2" style={{ background: '#0D1B2A', border: '1px solid #D4AF37' }}>
+            <input ref={scanInputRef} type="file" accept=".pdf,image/*" className="hidden" onChange={handleScanCV} />
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-lg">⚡</span>
+              <span className="text-[#D4AF37] font-bold text-sm">AI Auto-Fill</span>
+            </div>
+            <p className="text-gray-400 text-xs mb-3">Upload your existing CV — AI extracts and fills all fields automatically</p>
+            <button
+              onClick={(e) => { e.stopPropagation(); e.preventDefault(); scanInputRef.current?.click(); }}
+              disabled={scanning}
+              style={{ background: '#D4AF37', color: '#0D1B2A', border: 'none', padding: '10px 24px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px', opacity: scanning ? 0.7 : 1 }}
+            >
+              {scanning ? (
+                <span className="flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> Scanning CV...</span>
+              ) : '📄 Scan My CV'}
+            </button>
+            {scanMessage && <p className="text-xs mt-3" style={{ color: scanMessage.startsWith('✅') ? '#22c55e' : '#ef4444' }}>{scanMessage}</p>}
+          </div>
+
           {/* ── PERSONAL ── */}
           <Section id="personal" icon={<User size={16}/>} title="Personal Details" />
           {openSection === "personal" && (
