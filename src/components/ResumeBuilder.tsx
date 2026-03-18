@@ -302,10 +302,30 @@ const ResumeBuilder = () => {
     setOpenSection("personal");
   };
 
-  // ── Print ──
-  const handlePrint = () => {
-    setView("preview");
-    setTimeout(() => window.print(), 300);
+  // ── Download PDF ──
+  const handleDownloadPDF = async () => {
+    try {
+      const { default: html2canvas } = await import('html2canvas');
+      const { jsPDF } = await import('jspdf');
+      const el = document.getElementById('cv-preview');
+      if (!el) return;
+      const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const imgData = canvas.toDataURL('image/png');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      let heightLeft = pdfHeight;
+      let position = 0;
+      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+      heightLeft -= pdf.internal.pageSize.getHeight();
+      while (heightLeft > 0) {
+        position -= pdf.internal.pageSize.getHeight();
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+        heightLeft -= pdf.internal.pageSize.getHeight();
+      }
+      pdf.save(`SeaMinds-CV-${personal.firstName || 'Seafarer'}-${personal.lastName || ''}.pdf`);
+    } catch (e) { console.error(e); }
   };
 
   // ── Styles ──
