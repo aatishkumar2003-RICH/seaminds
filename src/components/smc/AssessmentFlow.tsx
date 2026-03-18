@@ -42,7 +42,7 @@ interface FlatQuestion {
   prompt_text?: string;
 }
 
-const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assessmentId, vesselType, yearsExperience, onComplete }: AssessmentFlowProps) => {
+const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assessmentId, vesselType, yearsExperience, onComplete, onExit }: AssessmentFlowProps) => {
   // Core flow state
   const [flowStep, setFlowStep] = useState<'preform' | 'docUpload' | 'docVerify' | 'questions' | 'score'>('preform');
   const [aiQuestions, setAiQuestions] = useState<any>(null);
