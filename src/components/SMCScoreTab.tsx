@@ -49,6 +49,7 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
   };
 
   const handleCvParse = async (file: File) => {
+    console.log("SMCScoreTab CV parse: file selected", file.name, file.type, file.size);
     setCvStatus("reading");
     setCvError("");
 
@@ -63,8 +64,11 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
         reader.readAsDataURL(file);
       });
 
+      console.log("SMCScoreTab CV parse: calling parse-cv-documents, base64 length:", base64.length);
+      const { data: { session } } = await supabase.auth.getSession();
       const response = await supabase.functions.invoke("parse-cv-documents", {
         body: { file_base64: base64, mime_type: file.type },
+        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
       });
 
       console.log("CV parse response:", JSON.stringify(response));
@@ -223,7 +227,7 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
         </div>
       ) : cvStatus === "error" ? (
         <button
-          onClick={() => fileRef.current?.click()}
+          onClick={(e) => { e.stopPropagation(); e.preventDefault(); fileRef.current?.click(); }}
           className="w-full bg-card rounded-2xl border border-dashed border-destructive/50 p-4 flex items-center gap-3 hover:border-destructive transition-colors"
         >
           <div className="w-9 h-9 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
@@ -236,7 +240,12 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
         </button>
       ) : (
         <button
-          onClick={() => fileRef.current?.click()}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            console.log("SMCScoreTab: CV upload button clicked");
+            fileRef.current?.click();
+          }}
           className="w-full bg-card rounded-2xl border border-dashed border-border p-4 flex items-center gap-3 hover:border-primary/50 transition-colors"
         >
           <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center shrink-0">
