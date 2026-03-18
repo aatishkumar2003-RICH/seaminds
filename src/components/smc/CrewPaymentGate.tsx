@@ -237,7 +237,7 @@ const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) 
 
         {isEarlyAccess ? (
           <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
-            After 1,000 crew — standard price ${basePrice}. Lock in your free assessment now.
+            {selfPrice > 0 ? `After free period — standard price $${selfPrice}. ` : ''}Lock in your free assessment now.
           </p>
         ) : (
           <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
