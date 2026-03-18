@@ -87,13 +87,20 @@ Deno.serve(async (req) => {
 
     try {
       const parsed = JSON.parse(jsonStr);
+      const isEmpty = Object.values(parsed).every((v: any) => Array.isArray(v) && v.length === 0);
+      if (isEmpty) {
+        console.error("AI returned empty arrays for all sections");
+        return new Response(JSON.stringify({ error: "AI could not read this file. Please try a clearer photo or text-based PDF." }), {
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       return new Response(JSON.stringify({ success: true, data: parsed }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     } catch {
       console.error("Failed to parse AI JSON:", content);
-      return new Response(JSON.stringify({ error: "Could not parse document data" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      return new Response(JSON.stringify({ error: "AI could not read this file. Please try a clearer photo or text-based PDF." }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
   } catch (e) {

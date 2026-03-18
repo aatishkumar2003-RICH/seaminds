@@ -139,7 +139,7 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
       />
       <button
         type="button"
-        onClick={() => fileRef.current?.click()}
+        onClick={handleClick}
         className="w-full rounded-xl p-5 text-center transition-all hover:opacity-90"
         style={{
           border: "1px dashed #D4AF37",
