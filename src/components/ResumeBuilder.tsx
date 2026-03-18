@@ -540,6 +540,23 @@ const ResumeBuilder = () => {
         </div>
       )}
 
+      {/* ── MISSING FIELDS MODAL ── */}
+      {showMissingModal && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <div style={{ background:'#0D1B2A', border:'2px solid #e74c3c', borderRadius:'12px', padding:'24px', maxWidth:'400px', width:'90%' }}>
+            <div style={{ color:'#e74c3c', fontSize:'18px', fontWeight:'bold', marginBottom:'12px' }}>⚠️ CV Incomplete</div>
+            <div style={{ color:'#ccc', fontSize:'13px', marginBottom:'12px' }}>Please complete the following before generating your CV:</div>
+            <ul style={{ color:'white', fontSize:'13px', paddingLeft:'20px', marginBottom:'16px' }}>
+              {missingFields.map((f, i) => <li key={i} style={{ marginBottom:'4px', color:'#D4AF37' }}>• {f}</li>)}
+            </ul>
+            <button onClick={() => { setShowMissingModal(false); setView('form'); }}
+              style={{ background:'#D4AF37', color:'#0D1B2A', border:'none', padding:'10px 20px', borderRadius:'8px', fontWeight:'bold', cursor:'pointer', width:'100%' }}>
+              ← Go Back & Complete
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ─── TOP BAR (hidden in print) ─── */}
       <div className="print:hidden">
         <div className="flex gap-2 p-3 pb-1">
