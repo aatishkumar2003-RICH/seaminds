@@ -52,7 +52,8 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
   const [fileName, setFileName] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [summary, setSummary] = useState({ certs: 0, service: 0, medical: 0, education: 0, name: "", rank: "" });
+  const [cvSummary, setCvSummary] = useState<any>(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleClick = (e: React.MouseEvent) => {
@@ -66,6 +67,8 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
     setFileName(file.name);
     setStatus("reading");
     setErrorMsg("");
+    setShowConfirmation(false);
+    setCvSummary(null);
 
     try {
       const base64 = await new Promise<string>((resolve, reject) => {
@@ -98,56 +101,65 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
         throw new Error(data?.error || error?.message || "Could not read CV");
       }
 
-      const cv = data.data?.personal || data.data || {};
-      const mapped: Parameters<CvUploadProps["onParsed"]>[0] = {};
+      const parsed = typeof data.data === 'string' ? JSON.parse(data.data) : data.data;
+      console.log('CV Upload: parsed data', parsed);
 
-      if (cv.firstName) mapped.firstName = cv.firstName;
-      if (cv.lastName) mapped.lastName = cv.lastName;
-      if (cv.nationality) mapped.nationality = cv.nationality;
-      if (cv.rank && RANK_MAP[cv.rank]) mapped.role = RANK_MAP[cv.rank];
-      else if (cv.rank) mapped.role = cv.rank;
-      if (cv.yearsAtSea) mapped.yearsAtSea = YEARS_MAP[cv.yearsAtSea] || cv.yearsAtSea;
-      if (cv.imoNumber) mapped.vesselImo = cv.imoNumber;
-      if (cv.currentVessel) mapped.shipName = cv.currentVessel;
-      if (cv.phone) mapped.whatsappNumber = cv.phone;
-
-      // Build summary for display
-      const docData = data.data || {};
-      setSummary({
-        certs: (docData.certificates || []).length,
-        service: (docData.sea_service || []).length,
-        medical: (docData.medical || []).length,
-        education: (docData.education || []).length,
-        name: [cv.firstName, cv.lastName].filter(Boolean).join(" "),
-        rank: cv.rank || "",
-      });
-
-      console.log('CV Upload: mapped personal data', mapped);
-      onParsed(mapped);
-      onFileReady?.(file);
+      // Show confirmation screen instead of immediately saving
+      setCvSummary(parsed);
+      setShowConfirmation(true);
       setStatus("success");
+      onFileReady?.(file);
       trackEvent("cv_upload_success");
-
-      // Also save structured document data to crew_cv_data
-      try {
-        const { data: { session: s } } = await supabase.auth.getSession();
-        if (s?.user?.id && data.data) {
-          await supabase.from("crew_cv_data").upsert({
-            user_id: s.user.id,
-            certificates: (docData.certificates || []) as any,
-            sea_service: (docData.sea_service || []) as any,
-            medical: (docData.medical || []) as any,
-            education: (docData.education || []) as any,
-            updated_at: new Date().toISOString(),
-          }, { onConflict: "user_id" });
-          console.log('CV Upload: document data saved to crew_cv_data');
-        }
-      } catch (saveErr) { console.log("CV data save (non-blocking):", saveErr); }
     } catch (e) {
       console.error("CV parse error:", e);
       setErrorMsg(e instanceof Error ? e.message : "Could not read CV. Please fill manually.");
       setStatus("error");
     }
+  };
+
+  const handleConfirm = async () => {
+    if (!cvSummary) return;
+
+    const cv = cvSummary.personal || cvSummary;
+    const mapped: Parameters<CvUploadProps["onParsed"]>[0] = {};
+
+    // Try new format fields first, fall back to personal object
+    const firstName = cv.firstName || (cvSummary.name ? cvSummary.name.split(" ")[0] : "");
+    const lastName = cv.lastName || (cvSummary.name ? cvSummary.name.split(" ").slice(1).join(" ") : "");
+    
+    if (firstName) mapped.firstName = firstName;
+    if (lastName) mapped.lastName = lastName;
+    if (cv.nationality || cvSummary.nationality) mapped.nationality = cv.nationality || cvSummary.nationality;
+    
+    const rankVal = cv.rank || cvSummary.rank;
+    if (rankVal && RANK_MAP[rankVal]) mapped.role = RANK_MAP[rankVal];
+    else if (rankVal) mapped.role = rankVal;
+    
+    const yearsVal = cv.yearsAtSea || cvSummary.years_experience;
+    if (yearsVal) mapped.yearsAtSea = YEARS_MAP[yearsVal] || yearsVal;
+    if (cv.imoNumber) mapped.vesselImo = cv.imoNumber;
+    if (cv.currentVessel) mapped.shipName = cv.currentVessel;
+    if (cv.phone) mapped.whatsappNumber = cv.phone;
+
+    console.log('CV Upload: confirmed, mapped data', mapped);
+    onParsed(mapped);
+    setShowConfirmation(false);
+
+    // Save structured document data to crew_cv_data
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id) {
+        await supabase.from("crew_cv_data").upsert({
+          user_id: session.user.id,
+          certificates: (cvSummary.certificates || []) as any,
+          sea_service: (cvSummary.sea_service || cvSummary.vessel_experience || []) as any,
+          medical: (cvSummary.medical || []) as any,
+          education: (cvSummary.education || []) as any,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "user_id" });
+        console.log('CV Upload: document data saved to crew_cv_data');
+      }
+    } catch (saveErr) { console.log("CV data save (non-blocking):", saveErr); }
   };
 
   return (
@@ -178,7 +190,7 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
           <p className="font-bold text-sm text-primary">🤖 AI is reading your CV...</p>
           <p className="text-xs text-muted-foreground">This may take 15–20 seconds</p>
           <div className="space-y-1.5 text-left max-w-xs mx-auto">
-            {["Extracting personal details...", "Reading certificates...", "Identifying sea service..."].map((step, i) => (
+            {["Extracting personal details...", "Reading certificates...", "Identifying sea service..."].map((step) => (
               <div key={step} className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Loader2 size={10} className="animate-spin text-primary shrink-0" />
                 <span>{step}</span>
@@ -188,8 +200,82 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
         </div>
       )}
 
+      {/* Confirmation screen */}
+      {!isProcessing && showConfirmation && cvSummary && (
+        <div style={{ background: '#0D1B2A', border: '1px solid #D4AF37', borderRadius: '12px', padding: '20px' }}>
+          <h3 style={{ color: '#D4AF37', marginBottom: '16px', fontSize: '15px', fontWeight: 'bold' }}>✅ CV Read Successfully — Please Confirm</h3>
+
+          {/* Rank & Experience */}
+          <div style={{ marginBottom: '12px' }}>
+            <label style={{ color: '#888', fontSize: '12px' }}>RANK / POSITION</label>
+            <input value={cvSummary?.rank || cvSummary?.personal?.rank || ''} onChange={e => setCvSummary({...cvSummary, rank: e.target.value, personal: { ...cvSummary.personal, rank: e.target.value }})}
+              style={{ display:'block', width:'100%', background:'#1a2e47', border:'1px solid #2a4060', color:'white', padding:'8px', borderRadius:'6px', marginTop:'4px', fontSize: '13px' }} />
+          </div>
+
+          <div style={{ marginBottom: '12px' }}>
+            <label style={{ color: '#888', fontSize: '12px' }}>YEARS OF EXPERIENCE</label>
+            <input value={cvSummary?.years_experience || cvSummary?.personal?.yearsAtSea || ''} onChange={e => setCvSummary({...cvSummary, years_experience: e.target.value, personal: { ...cvSummary.personal, yearsAtSea: e.target.value }})}
+              style={{ display:'block', width:'100%', background:'#1a2e47', border:'1px solid #2a4060', color:'white', padding:'8px', borderRadius:'6px', marginTop:'4px', fontSize: '13px' }} />
+          </div>
+
+          {/* Vessel Experience */}
+          {(cvSummary?.vessel_experience || []).length > 0 && (
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ color: '#888', fontSize: '12px' }}>VESSEL TYPES WORKED ON</label>
+              <div style={{ color: 'white', fontSize: '13px', marginTop: '4px' }}>
+                {(cvSummary?.vessel_experience || []).slice(0, 3).map((v: any, i: number) => (
+                  <div key={i} style={{ background:'#1a2e47', padding:'6px 10px', borderRadius:'6px', marginBottom:'4px' }}>
+                    {v.vessel_name} — {v.vessel_type} ({v.role}) {v.from_date} to {v.to_date}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Engine type for engineers */}
+          {cvSummary?.main_engine_types?.length > 0 && (
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ color: '#888', fontSize: '12px' }}>MAIN ENGINE EXPERIENCE</label>
+              <div style={{ color: '#D4AF37', fontSize: '13px', marginTop: '4px' }}>{cvSummary.main_engine_types.join(', ')}</div>
+            </div>
+          )}
+
+          {/* Cargo for deck officers */}
+          {cvSummary?.cargo_experience?.length > 0 && (
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ color: '#888', fontSize: '12px' }}>CARGO EXPERIENCE</label>
+              <div style={{ color: '#D4AF37', fontSize: '13px', marginTop: '4px' }}>{cvSummary.cargo_experience.join(', ')}</div>
+            </div>
+          )}
+
+          {/* Certificates count */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ color: '#888', fontSize: '12px' }}>CERTIFICATES FOUND</label>
+            <div style={{ color: 'white', fontSize: '13px', marginTop: '4px' }}>{(cvSummary?.certificates || []).length} certificates detected</div>
+          </div>
+
+          {/* AI Summary */}
+          {cvSummary?.summary && (
+            <div style={{ background:'#1a2e47', padding:'12px', borderRadius:'8px', marginBottom:'16px', color:'#ccc', fontSize:'13px', fontStyle:'italic' }}>
+              "{cvSummary.summary}"
+            </div>
+          )}
+
+          <div style={{ display:'flex', gap:'10px' }}>
+            <button onClick={handleConfirm}
+              style={{ flex:1, background:'#D4AF37', color:'#0D1B2A', border:'none', padding:'12px', borderRadius:'8px', fontWeight:'bold', cursor:'pointer', fontSize: '14px' }}>
+              ✓ Confirm & Proceed
+            </button>
+            <button onClick={() => { setShowConfirmation(false); setCvSummary(null); setStatus("idle"); }}
+              style={{ background:'transparent', color:'#888', border:'1px solid #2a4060', padding:'12px 16px', borderRadius:'8px', cursor:'pointer', fontSize: '13px' }}>
+              Re-upload
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Idle state */}
-      {!isProcessing && status === "idle" && (
+      {!isProcessing && !showConfirmation && status === "idle" && (
         <button
           type="button"
           onClick={handleClick}
@@ -211,47 +297,26 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
         </button>
       )}
 
-      {/* Reading but not yet processing (file being read to base64) */}
-      {!isProcessing && status === "reading" && (
+      {/* Reading but not yet processing */}
+      {!isProcessing && !showConfirmation && status === "reading" && (
         <div className="rounded-xl p-5 text-center" style={{ border: "1px solid hsl(var(--primary) / 0.3)", background: "hsl(var(--primary) / 0.05)" }}>
           <Loader2 size={20} className="animate-spin text-primary mx-auto mb-2" />
           <p className="text-xs text-muted-foreground">Preparing {fileName}...</p>
         </div>
       )}
 
-      {/* Success state with summary */}
-      {!isProcessing && status === "success" && (
+      {/* Success state (after confirmation was done) */}
+      {!isProcessing && !showConfirmation && status === "success" && (
         <div className="rounded-xl overflow-hidden" style={{ border: "1px solid hsl(var(--primary) / 0.3)" }}>
           <div className="p-4 flex items-center gap-3" style={{ background: "hsl(var(--primary) / 0.1)" }}>
             <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "hsl(var(--primary) / 0.2)" }}>
               <Check size={16} className="text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-primary">✓ CV Parsed Successfully</p>
-              {summary.name && (
-                <p className="text-xs text-muted-foreground truncate">
-                  {summary.name}{summary.rank ? ` · ${summary.rank}` : ""}
-                </p>
-              )}
+              <p className="text-sm font-bold text-primary">✓ CV Confirmed</p>
+              <p className="text-xs text-muted-foreground">Data saved successfully</p>
             </div>
           </div>
-
-          {/* Summary stats */}
-          <div className="grid grid-cols-4 divide-x divide-border border-t border-border">
-            {[
-              { icon: <GraduationCap size={12} />, count: summary.certs, label: "Certs" },
-              { icon: <Ship size={12} />, count: summary.service, label: "Service" },
-              { icon: <Stethoscope size={12} />, count: summary.medical, label: "Medical" },
-              { icon: <FileText size={12} />, count: summary.education, label: "Education" },
-            ].map((item) => (
-              <div key={item.label} className="py-2.5 px-2 text-center">
-                <div className="flex justify-center text-primary mb-1">{item.icon}</div>
-                <p className="text-sm font-bold text-foreground">{item.count}</p>
-                <p className="text-[10px] text-muted-foreground">{item.label}</p>
-              </div>
-            ))}
-          </div>
-
           <div className="px-4 py-2 border-t border-border flex items-center justify-between">
             <p className="text-xs text-muted-foreground">Review your details below</p>
             <button onClick={handleClick} className="text-xs text-primary underline">Re-upload</button>
@@ -260,7 +325,7 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
       )}
 
       {/* Error state */}
-      {!isProcessing && status === "error" && (
+      {!isProcessing && !showConfirmation && status === "error" && (
         <button
           type="button"
           onClick={handleClick}
