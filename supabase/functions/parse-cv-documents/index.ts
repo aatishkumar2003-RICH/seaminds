@@ -5,21 +5,60 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SYSTEM_PROMPT = `You are a maritime HR expert. Extract ALL information from this seafarer CV and return ONLY valid JSON with no markdown:
+const SYSTEM_PROMPT = `You are a maritime HR expert. Extract ALL information from this seafarer CV document and return ONLY valid JSON with no markdown fences, no explanation:
 {
-  "name": "",
-  "rank": "",
-  "nationality": "",
-  "date_of_birth": "",
-  "years_experience": 0,
-  "main_engine_types": [],
-  "cargo_experience": [],
-  "summary": "2-3 sentence professional summary",
-  "certificates": [{"name":"","number":"","issue_date":"","expiry_date":"","issuing_authority":""}],
-  "sea_service": [{"vessel_name":"","vessel_type":"","flag":"","rank":"","company":"","sign_on":"","sign_off":"","engine_type":"","cargo_type":""}],
-  "education": [{"institution":"","qualification":"","year":""}]
+  "name": "Full name as written",
+  "rank": "Current or most recent rank/position",
+  "nationality": "Nationality",
+  "date_of_birth": "DD/MM/YYYY or YYYY-MM-DD",
+  "passport_no": "Passport number",
+  "cdc_no": "Seaman book / CDC number",
+  "cdc_country": "Country that issued CDC",
+  "phone": "Phone or WhatsApp number",
+  "email": "Email address",
+  "summary": "2-3 sentence professional summary based on experience",
+  "main_engine_types": ["engine type 1", "engine type 2"],
+  "cargo_experience": ["cargo type 1", "cargo type 2"],
+  "sea_service": [
+    {
+      "vessel_name": "",
+      "vessel_type": "Bulk Carrier/Tanker/Container/LNG/LPG/RORO/Offshore/General Cargo/Passenger/Chemical",
+      "flag": "",
+      "grt": "",
+      "rank": "rank on this vessel",
+      "company": "shipping company name",
+      "sign_on": "DD/MM/YYYY",
+      "sign_off": "DD/MM/YYYY",
+      "engine_type": "main engine type if engineer",
+      "cargo_type": "cargo type if deck officer"
+    }
+  ],
+  "certificates": [
+    {
+      "name": "Certificate name",
+      "number": "Certificate number",
+      "issue_date": "DD/MM/YYYY",
+      "expiry_date": "DD/MM/YYYY",
+      "issuing_authority": "Authority or flag state"
+    }
+  ],
+  "medical": [
+    {
+      "cert_type": "ENG1/PEME/etc",
+      "issue_date": "DD/MM/YYYY",
+      "expiry_date": "DD/MM/YYYY",
+      "issuing_authority": ""
+    }
+  ],
+  "education": [
+    {
+      "institution": "",
+      "qualification": "",
+      "year": ""
+    }
+  ]
 }
-Return ONLY the JSON object. No markdown. No explanation.`;
+Use empty string "" for any field not found. Use empty array [] for any array not found. Return ONLY the JSON object. No markdown. No preamble.`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
