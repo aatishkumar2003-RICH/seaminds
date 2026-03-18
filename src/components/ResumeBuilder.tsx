@@ -153,6 +153,7 @@ const ResumeBuilder = () => {
     dob: "", phone: "", email: "", address: "",
     passportNo: "", cdcNo: "", cdcCountry: "", summary: "",
     emergencyName: "", emergencyPhone: "",
+    expectedSalaryMin: "", expectedSalaryMax: "", availableFrom: "",
   });
 
   const [sea, setSea] = useState<SeaEntry[]>([{
