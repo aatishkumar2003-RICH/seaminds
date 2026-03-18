@@ -639,6 +639,11 @@ const ResumeBuilder = () => {
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-colors ${view === "form" ? "bg-[#D4AF37] text-[#0D1B2A]" : "bg-[#132236] text-gray-400 hover:text-white"}`}>
             <Edit3 size={16} /> Build CV
           </button>
+          {saveStatus !== 'idle' && (
+            <div className="flex items-center text-xs font-medium px-2" style={{ color: '#D4AF37' }}>
+              {saveStatus === 'saving' ? '💾 Saving...' : '✓ Saved'}
+            </div>
+          )}
           <button onClick={handlePreviewClick}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-colors ${view === "preview" ? "bg-[#D4AF37] text-[#0D1B2A]" : "bg-[#132236] text-gray-400 hover:text-white"}`}>
             <Eye size={16} /> Preview & Print
