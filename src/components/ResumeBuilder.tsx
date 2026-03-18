@@ -76,6 +76,9 @@ const ResumeBuilder = () => {
   const [photo, setPhoto] = useState<string | null>(null);
   const photoRef = useRef<HTMLInputElement>(null);
   const printRef = useRef<HTMLDivElement>(null);
+  const scanInputRef = useRef<HTMLInputElement>(null);
+  const [scanning, setScanning] = useState(false);
+  const [scanMessage, setScanMessage] = useState('');
 
   const [personal, setPersonal] = useState({
     firstName: "", lastName: "", rank: "", nationality: "",
