@@ -10,6 +10,7 @@ interface Props {
   lastName: string;
   rank: string;
   onComplete: () => void;
+  onBack?: () => void;
   transcript?: Array<{question:string,answer:string,score:number,redFlag:boolean,redFlagCategory:string|null,followUp:string|null}>;
   redFlags?: Array<{category:string,evidence:string,question?:string,answer?:string,severity?:string}>;
   candidateContext?: any;
