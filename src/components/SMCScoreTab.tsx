@@ -245,8 +245,7 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
           onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();
-            console.log("SMCScoreTab: CV upload button clicked");
-            fileRef.current?.click();
+            setShowCvUpload(true);
           }}
           className="w-full bg-card rounded-2xl border border-dashed border-border p-4 flex items-center gap-3 hover:border-primary/50 transition-colors"
         >
