@@ -52,7 +52,7 @@ function getScoreBand(score: number): string {
   return "FOUNDATION";
 }
 
-const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, transcript, redFlags, candidateContext }: Props) => {
+const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBack, transcript, redFlags, candidateContext }: Props) => {
   const [phase, setPhase] = useState<"loading" | "counting" | "done">("loading");
   const [displayScore, setDisplayScore] = useState(0);
   const [scores, setScores] = useState<Scores | null>(null);
