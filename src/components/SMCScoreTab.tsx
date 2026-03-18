@@ -227,7 +227,7 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
         </div>
       ) : cvStatus === "error" ? (
         <button
-          onClick={() => fileRef.current?.click()}
+          onClick={(e) => { e.stopPropagation(); e.preventDefault(); fileRef.current?.click(); }}
           className="w-full bg-card rounded-2xl border border-dashed border-destructive/50 p-4 flex items-center gap-3 hover:border-destructive transition-colors"
         >
           <div className="w-9 h-9 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
