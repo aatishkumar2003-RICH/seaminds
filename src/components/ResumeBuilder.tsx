@@ -797,7 +797,11 @@ const ResumeBuilder = () => {
               <div>
                 <label className={lbl}>Professional Summary</label>
                 <textarea className={inp + " h-20 resize-none"} placeholder="Experienced 2nd Engineer with 8+ years on bulk carriers..." value={personal.summary} onChange={e => P("summary", e.target.value)} />
-              </div>
+               </div>
+              <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); setOpenSection('sea'); }}
+                style={{ background:'transparent', border:'1px solid #D4AF37', color:'#D4AF37', padding:'6px 16px', borderRadius:'6px', fontSize:'12px', cursor:'pointer', marginTop:'12px' }}>
+                Next Section →
+              </button>
             </div>
           )}
 
