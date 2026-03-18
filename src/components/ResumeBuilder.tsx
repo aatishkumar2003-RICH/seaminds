@@ -440,7 +440,7 @@ const ResumeBuilder = () => {
 
   const Section = ({ id, icon, title, badge }: { id: string; icon: React.ReactNode; title: string; badge?: string }) => (
     <button
-      onClick={() => setOpenSection(openSection === id ? null : id)}
+      onClick={(e) => { e.stopPropagation(); e.preventDefault(); setOpenSection(openSection === id ? null : id); }}
       className="w-full flex items-center justify-between p-3.5 bg-[#132236] rounded-xl mb-1 text-left hover:bg-[#1a2d47] transition-colors"
     >
       <div className="flex items-center gap-2 text-white text-sm font-semibold">
