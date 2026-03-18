@@ -69,14 +69,22 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
         reader.readAsDataURL(file);
       });
 
-      const { data: { session } } = await supabase.auth.getSession();
-      const { data, error } = await supabase.functions.invoke("parse-cv-documents", {
-        body: { file_base64: base64, mime_type: file.type },
-        headers: { Authorization: `Bearer ${session?.access_token}` },
-      });
+      setIsProcessing(true);
+      let data: any, error: any;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const result = await supabase.functions.invoke("parse-cv-documents", {
+          body: { file_base64: base64, mime_type: file.type },
+          headers: { Authorization: `Bearer ${session?.access_token}` },
+        });
+        data = result.data;
+        error = result.error;
+      } finally {
+        setIsProcessing(false);
+      }
 
       if (error || !data?.success) {
-        throw new Error(data?.error || "Could not read CV");
+        throw new Error(data?.error || error?.message || "Could not read CV");
       }
 
       const cv = data.data;
