@@ -1332,10 +1332,10 @@ const ResumeBuilder = () => {
                   </thead>
                   <tbody>
                     {filledEdu.map((e: any, i: number) => (
-                      <tr key={e.id || i}>
-                        <td style={{ border:'1px solid #ccc', padding:'3px' }}>{e.institution}</td>
-                        <td style={{ border:'1px solid #ccc', padding:'3px' }}>{e.qualification}</td>
-                        <td style={{ border:'1px solid #ccc', padding:'3px' }}>{e.yearFrom}{e.yearTo ? ` - ${e.yearTo}` : ''}</td>
+                      <tr key={e.id || i} style={{ background: i%2===0 ? '#fff' : '#f8f9fa' }}>
+                        <td style={{ border:'1px solid #dee2e6', padding:'3px' }}>{e.institution}</td>
+                        <td style={{ border:'1px solid #dee2e6', padding:'3px' }}>{e.qualification}</td>
+                        <td style={{ border:'1px solid #dee2e6', padding:'3px' }}>{e.yearFrom}{e.yearTo ? ` - ${e.yearTo}` : ''}</td>
                       </tr>
                     ))}
                   </tbody>
