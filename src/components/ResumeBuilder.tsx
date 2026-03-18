@@ -139,6 +139,10 @@ const ResumeBuilder = () => {
     personal: true, sea: true, certs: true, edu: true, skills: true,
   });
 
+  // ── Validation state ──
+  const [missingFields, setMissingFields] = useState<string[]>([]);
+  const [showMissingModal, setShowMissingModal] = useState(false);
+
   // ── Form state (keep existing names) ──
   const [personal, setPersonal] = useState({
     firstName: "", lastName: "", rank: "", applyingFor: "", nationality: "",
@@ -300,6 +304,32 @@ const ResumeBuilder = () => {
     setShowScanConfirm(false);
     setScanResult(null);
     setOpenSection("personal");
+  };
+
+  // ── Completion check ──
+  const getCompletionStatus = () => {
+    const missing: string[] = [];
+    if (!photo) missing.push('Photo');
+    if (!personal.firstName) missing.push('First Name');
+    if (!personal.lastName) missing.push('Last Name');
+    if (!personal.rank) missing.push('Current Rank');
+    if (!personal.nationality) missing.push('Nationality');
+    if (!personal.dob) missing.push('Date of Birth');
+    if (!personal.passportNo) missing.push('Passport Number');
+    if (!personal.phone) missing.push('Phone/WhatsApp');
+    if (sea.length === 0 || !sea.some(s => s.vesselName)) missing.push('At least 1 Sea Service entry');
+    if (certs.length === 0 || !certs.some(c => c.name)) missing.push('At least 1 Certificate');
+    return missing;
+  };
+
+  const handlePreviewClick = () => {
+    const missing = getCompletionStatus();
+    if (missing.length > 0) {
+      setMissingFields(missing);
+      setShowMissingModal(true);
+      return;
+    }
+    setView('preview');
   };
 
   // ── Download PDF ──
@@ -499,13 +529,30 @@ const ResumeBuilder = () => {
             <div className="sticky bottom-0 bg-[#0D1B2A] border-t border-[#1e3a5f] p-4 flex gap-3">
               <button onClick={applyImport}
                 className="flex-1 bg-[#D4AF37] text-[#0D1B2A] py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-yellow-400 transition-colors">
-                <CheckSquare size={16} /> Confirm & Import Selected
+                <CheckSquare size={16} /> ✓ Import All & Review
               </button>
               <button onClick={() => { setShowScanConfirm(false); setScanResult(null); }}
                 className="px-6 py-3 bg-[#132236] text-gray-400 rounded-xl text-sm font-medium hover:text-white transition-colors">
-                Cancel
+                ✗ Discard
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MISSING FIELDS MODAL ── */}
+      {showMissingModal && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <div style={{ background:'#0D1B2A', border:'2px solid #e74c3c', borderRadius:'12px', padding:'24px', maxWidth:'400px', width:'90%' }}>
+            <div style={{ color:'#e74c3c', fontSize:'18px', fontWeight:'bold', marginBottom:'12px' }}>⚠️ CV Incomplete</div>
+            <div style={{ color:'#ccc', fontSize:'13px', marginBottom:'12px' }}>Please complete the following before generating your CV:</div>
+            <ul style={{ color:'white', fontSize:'13px', paddingLeft:'20px', marginBottom:'16px' }}>
+              {missingFields.map((f, i) => <li key={i} style={{ marginBottom:'4px', color:'#D4AF37' }}>• {f}</li>)}
+            </ul>
+            <button onClick={() => { setShowMissingModal(false); setView('form'); }}
+              style={{ background:'#D4AF37', color:'#0D1B2A', border:'none', padding:'10px 20px', borderRadius:'8px', fontWeight:'bold', cursor:'pointer', width:'100%' }}>
+              ← Go Back & Complete
+            </button>
           </div>
         </div>
       )}
@@ -513,12 +560,14 @@ const ResumeBuilder = () => {
       {/* ─── TOP BAR (hidden in print) ─── */}
       <div className="print:hidden">
         <div className="flex gap-2 p-3 pb-1">
-          {(["form", "preview"] as const).map(v => (
-            <button key={v} onClick={() => setView(v)}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-colors ${view === v ? "bg-[#D4AF37] text-[#0D1B2A]" : "bg-[#132236] text-gray-400 hover:text-white"}`}>
-              {v === "form" ? <><Edit3 size={16} /> Build CV</> : <><Eye size={16} /> Preview & Print</>}
-            </button>
-          ))}
+          <button onClick={() => setView("form")}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-colors ${view === "form" ? "bg-[#D4AF37] text-[#0D1B2A]" : "bg-[#132236] text-gray-400 hover:text-white"}`}>
+            <Edit3 size={16} /> Build CV
+          </button>
+          <button onClick={handlePreviewClick}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-colors ${view === "preview" ? "bg-[#D4AF37] text-[#0D1B2A]" : "bg-[#132236] text-gray-400 hover:text-white"}`}>
+            <Eye size={16} /> Preview & Print
+          </button>
         </div>
       </div>
 
@@ -543,10 +592,30 @@ const ResumeBuilder = () => {
             {scanMessage && <p className="text-xs mt-3" style={{ color: scanMessage.startsWith("✅") ? "#22c55e" : "#ef4444" }}>{scanMessage}</p>}
           </div>
 
+          {/* ── CV COMPLETION PROGRESS ── */}
+          {(() => {
+            const missing = getCompletionStatus();
+            const total = 10;
+            const pct = Math.round(((total - missing.length) / total) * 100);
+            return (
+              <div className="mb-2 bg-[#132236] rounded-xl p-3">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-gray-400 text-xs font-medium">CV Completion</span>
+                  <span className="text-[#D4AF37] text-xs font-bold">{pct}%</span>
+                </div>
+                <div className="w-full h-2.5 bg-[#0a1929] rounded-full overflow-hidden">
+                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: pct === 100 ? '#22c55e' : '#D4AF37' }} />
+                </div>
+                {pct < 100 && <p className="text-gray-500 text-[10px] mt-1">Missing: {missing.join(', ')}</p>}
+              </div>
+            );
+          })()}
+
           {/* ── PERSONAL DETAILS ── */}
           <Section id="personal" icon={<User size={16} />} title="Personal Details" />
           {openSection === "personal" && (
             <div className="bg-[#0a1929] rounded-xl p-4 space-y-3 mb-1">
+              <p className="text-gray-500 text-[10px] mb-1">Fields marked <span className="text-red-500">*</span> are required to generate your CV</p>
               <div className="flex items-center gap-3 mb-2">
                 <input ref={photoRef} type="file" accept="image/*" className="hidden" onChange={handlePhoto} />
                 <button onClick={() => photoRef.current?.click()} title="Upload photo" className="flex-shrink-0">
@@ -575,16 +644,16 @@ const ResumeBuilder = () => {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className={lbl}>Nationality</label><input className={inp} placeholder="Filipino" value={personal.nationality} onChange={e => P("nationality", e.target.value)} /></div>
-                <div><label className={lbl}>Date of Birth</label><input type="date" className={inp} value={personal.dob} onChange={e => P("dob", e.target.value)} /></div>
+                <div><label className={lbl}>Nationality <span className="text-red-500">*</span></label><input className={inp} placeholder="Filipino" value={personal.nationality} onChange={e => P("nationality", e.target.value)} /></div>
+                <div><label className={lbl}>Date of Birth <span className="text-red-500">*</span></label><input type="date" className={inp} value={personal.dob} onChange={e => P("dob", e.target.value)} /></div>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className={lbl}>Passport Number</label><input className={inp} placeholder="P1234567A" value={personal.passportNo} onChange={e => P("passportNo", e.target.value)} /></div>
+                <div><label className={lbl}>Passport Number <span className="text-red-500">*</span></label><input className={inp} placeholder="P1234567A" value={personal.passportNo} onChange={e => P("passportNo", e.target.value)} /></div>
                 <div><label className={lbl}>CDC / Seaman Book No.</label><input className={inp} placeholder="CDC-123456" value={personal.cdcNo} onChange={e => P("cdcNo", e.target.value)} /></div>
               </div>
               <div><label className={lbl}>CDC Issue Country</label><input className={inp} placeholder="Philippines" value={personal.cdcCountry} onChange={e => P("cdcCountry", e.target.value)} /></div>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className={lbl}>WhatsApp / Phone</label><input className={inp} placeholder="+63..." value={personal.phone} onChange={e => P("phone", e.target.value)} /></div>
+                <div><label className={lbl}>WhatsApp / Phone <span className="text-red-500">*</span></label><input className={inp} placeholder="+63..." value={personal.phone} onChange={e => P("phone", e.target.value)} /></div>
                 <div><label className={lbl}>Email</label><input className={inp} placeholder="name@email.com" value={personal.email} onChange={e => P("email", e.target.value)} /></div>
               </div>
               <div><label className={lbl}>Home Address</label><input className={inp} placeholder="Manila, Philippines" value={personal.address} onChange={e => P("address", e.target.value)} /></div>
