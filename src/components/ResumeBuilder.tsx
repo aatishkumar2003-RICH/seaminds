@@ -1160,54 +1160,65 @@ const ResumeBuilder = () => {
                 <div style={{ fontSize:'11px', fontWeight:'bold', background:'#0D1B2A', color:'#D4AF37', padding:'3px 8px', marginBottom:'4px' }}>SEA SERVICE RECORD</div>
                 <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'9px' }}>
                   <thead>
-                    <tr style={{ background:'#f0f0f0' }}>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left' }}>Sr.</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left' }}>Vessel Name</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left' }}>Type</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left' }}>Flag</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left' }}>GRT/DWT</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left' }}>Rank</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left' }}>Company</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left' }}>Sign On</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left' }}>Sign Off</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left' }}>Engine/Cargo</th>
+                    <tr style={{ background:'#0D1B2A', color:'#D4AF37' }}>
+                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'center', fontSize:'9px' }}>Sr.</th>
+                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left', fontSize:'9px' }}>Vessel Name</th>
+                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left', fontSize:'9px' }}>Type</th>
+                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left', fontSize:'9px' }}>Flag</th>
+                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left', fontSize:'9px' }}>GRT/DWT</th>
+                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left', fontSize:'9px' }}>Rank</th>
+                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left', fontSize:'9px' }}>Company</th>
+                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left', fontSize:'9px' }}>Sign On</th>
+                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left', fontSize:'9px' }}>Sign Off</th>
+                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left', fontSize:'9px' }}>Engine Type</th>
+                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left', fontSize:'9px' }}>Cargo Handled</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filledSea.map((s: any, i: number) => (
-                      <React.Fragment key={s.id || i}>
-                        <tr style={{ background: i%2===0 ? '#fff' : '#fafafa' }}>
-                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{i+1}</td>
-                          <td style={{ border:'1px solid #ccc', padding:'3px', fontWeight:'bold' }}>{s.vesselName}</td>
-                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{s.vesselType}</td>
-                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{s.flagState}</td>
-                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{s.grtDwt}</td>
-                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{s.rankOnBoard || personal.rank}</td>
-                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{s.company}</td>
-                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{fmtDate(s.fromDate)}</td>
-                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{fmtDate(s.toDate)}</td>
-                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{[s.engineType, s.cargoType, ...(s.cargoTypes || [])].filter(Boolean).join(', ') || ''}</td>
+                      <>
+                        {/* Main vessel row */}
+                        <tr key={s.id || i} style={{ background: i%2===0 ? '#fff' : '#fafafa', fontSize:'9px' }}>
+                          <td style={{ border:'1px solid #ccc', padding:'3px', textAlign:'center' }}>{i+1}</td>
+                          <td style={{ border:'1px solid #ccc', padding:'3px', fontWeight:'bold' }}>{s.vesselName || s.vessel_name || ''}</td>
+                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{s.vesselType || s.vessel_type || ''}</td>
+                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{s.flag || s.flagState || ''}</td>
+                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{s.grt || s.grtDwt || ''}</td>
+                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{s.rankOnBoard || s.rank || personal.rank || ''}</td>
+                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{s.company || ''}</td>
+                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{s.signOn || s.sign_on || s.fromDate || ''}</td>
+                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{s.signOff || s.sign_off || s.toDate || ''}</td>
+                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{s.engineType || s.engine_type || s.engineTypes || ''}</td>
+                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>
+                            {[
+                              ...(Array.isArray(s.cargoTypes) ? s.cargoTypes : []),
+                              s.cargoType || s.cargo_type || '',
+                              s.otherCargo || ''
+                            ].filter(Boolean).join(', ')}
+                          </td>
                         </tr>
-                        {(s.pscInspections || s.vettingInspections || s.drydockExperience || s.tankWashing || s.holdCleaning || s.wallWash || s.cargoHeating || s.inertGas || (s as any).rightshipInspection) && (
-                          <tr style={{ background:'#f8f8f8', fontSize:'8px' }}>
-                            <td></td>
-                            <td colSpan={9} style={{ border:'1px solid #ccc', padding:'2px 6px', color:'#555', fontStyle:'italic' }}>
+                        {/* Experience sub-row — only show if any special experience exists */}
+                        {(s.pscInspections || s.vettingInspections || s.rightshipInspection || s.drydockExperience || s.tankWashing || s.holdCleaning || s.wallWash || s.cargoHeating || s.inertGas || s.pscDetentions) && (
+                          <tr key={(s.id || i) + '-exp'} style={{ background:'#fffde7', fontSize:'8px' }}>
+                            <td style={{ border:'1px solid #ccc', padding:'2px' }}></td>
+                            <td colSpan={10} style={{ border:'1px solid #ccc', padding:'3px 6px', color:'#444', fontStyle:'italic', lineHeight:'1.6' }}>
+                              <strong style={{ color:'#0D1B2A' }}>Special Experience: </strong>
                               {[
                                 s.drydockExperience && '🔧 Drydock',
                                 s.tankWashing && '🚿 Tank Washing',
                                 s.holdCleaning && '🧹 Hold Cleaning',
                                 s.wallWash && '🔬 Wall Wash',
                                 s.cargoHeating && '🌡️ Cargo Heating',
-                                s.inertGas && '💨 Inert Gas',
-                                s.pscInspections && `PSC: ${s.pscInspections}`,
-                                s.pscDetentions && s.pscDetentions !== 'None' && `Detentions: ${s.pscDetentions}`,
-                                s.vettingInspections && `Vetting: ${s.vettingInspections}`,
-                                (s as any).rightshipInspection && `⭐ RightShip GHG:${(s as any).rightshipGHG || 'N/A'}${(s as any).rightshipDeficiencies ? ` (${(s as any).rightshipDeficiencies})` : ''}`,
+                                s.inertGas && '💨 Inert Gas Ops',
+                                s.pscInspections && `PSC Inspections: ${s.pscInspections}`,
+                                (s.pscDetentions && s.pscDetentions !== 'None') && `PSC Detentions: ${s.pscDetentions}`,
+                                s.vettingInspections && `Vetting (SIRE/CDI): ${s.vettingInspections}`,
+                                s.rightshipInspection && `⭐ RightShip GHG: ${s.rightshipGHG || 'N/A'}${s.rightshipDeficiencies ? ` — ${s.rightshipDeficiencies}` : ''}`,
                               ].filter(Boolean).join('   |   ')}
                             </td>
                           </tr>
                         )}
-                      </React.Fragment>
+                      </>
                     ))}
                   </tbody>
                 </table>
