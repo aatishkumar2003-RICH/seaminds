@@ -15,6 +15,7 @@ interface SeaEntry {
   fromDate: string; toDate: string; reasonForLeaving: string;
   cargoTypes: string[]; otherCargo: string;
   pscDetentions: string; pscInspections: string; vettingInspections: string;
+  rightshipInspection: boolean; rightshipGHG: string; rightshipDeficiencies: string;
   drydockExperience: boolean; tankWashing: boolean; holdCleaning: boolean;
   wallWash: boolean; cargoHeating: boolean; inertGas: boolean;
 }
@@ -161,7 +162,8 @@ const ResumeBuilder = () => {
     grtDwt: "", company: "", manningAgent: "", rankOnBoard: "", engineType: "",
     cargoType: "", fromDate: "", toDate: "", reasonForLeaving: "",
     cargoTypes: [], otherCargo: "", pscDetentions: "", pscInspections: "",
-    vettingInspections: "", drydockExperience: false, tankWashing: false,
+    vettingInspections: "", rightshipInspection: false, rightshipGHG: "", rightshipDeficiencies: "",
+    drydockExperience: false, tankWashing: false,
     holdCleaning: false, wallWash: false, cargoHeating: false, inertGas: false,
   }]);
 
@@ -194,7 +196,8 @@ const ResumeBuilder = () => {
     grtDwt: "", company: "", manningAgent: "", rankOnBoard: "", engineType: "",
     cargoType: "", fromDate: "", toDate: "", reasonForLeaving: "",
     cargoTypes: [], otherCargo: "", pscDetentions: "", pscInspections: "",
-    vettingInspections: "", drydockExperience: false, tankWashing: false,
+    vettingInspections: "", rightshipInspection: false, rightshipGHG: "", rightshipDeficiencies: "",
+    drydockExperience: false, tankWashing: false,
     holdCleaning: false, wallWash: false, cargoHeating: false, inertGas: false,
   }]);
   const rmVessel = (id: string) => setSea(s => s.filter(e => e.id !== id));
@@ -886,6 +889,7 @@ const ResumeBuilder = () => {
                         ['wallWash', '🔬 Wall Wash'],
                         ['cargoHeating', '🌡️ Cargo Heating'],
                         ['inertGas', '💨 Inert Gas Ops'],
+                        ['rightshipInspection', '⭐ RightShip Inspection'],
                       ] as [string, string][]).map(([field, label]) => (
                         <label key={field} style={{ display:'flex', alignItems:'center', gap:'6px', cursor:'pointer', fontSize:'11px', color:'#ccc' }}>
                           <input type="checkbox" checked={!!(e as any)[field]}
@@ -915,6 +919,32 @@ const ResumeBuilder = () => {
                           className={inp + " text-xs"} />
                       </div>
                     </div>
+                    {((e as any).rightshipInspection || ['Bulk Carrier','General Cargo','Cement','Timber','Coal','Grain'].some(t => e.vesselType?.includes(t))) && (
+                      <div style={{ marginTop:'8px', padding:'8px', background:'#0D1B2A', borderRadius:'6px', border:'1px solid #1e3a5f' }}>
+                        <label style={{ color:'#D4AF37', fontSize:'11px', display:'block', marginBottom:'6px' }}>⭐ RightShip Inspection Details</label>
+                        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px' }}>
+                          <div>
+                            <label style={{ color:'#aaa', fontSize:'10px', display:'block', marginBottom:'3px' }}>GHG Rating Achieved</label>
+                            <select value={(e as any).rightshipGHG || ''} onChange={ev => { ev.stopPropagation(); updateSea(e.id, 'rightshipGHG', ev.target.value); }}
+                              style={{ width:'100%', background:'#1a2e47', border:'1px solid #2a4060', color:'white', padding:'5px 8px', borderRadius:'5px', fontSize:'11px' }}>
+                              <option value=''>Select GHG Rating</option>
+                              <option value='A'>A (Best)</option>
+                              <option value='B'>B</option>
+                              <option value='C'>C</option>
+                              <option value='D'>D</option>
+                              <option value='E'>E (Worst)</option>
+                              <option value='Not Rated'>Not Rated</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label style={{ color:'#aaa', fontSize:'10px', display:'block', marginBottom:'3px' }}>Deficiencies / Observations</label>
+                            <input value={(e as any).rightshipDeficiencies || ''} onChange={ev => { ev.stopPropagation(); updateSea(e.id, 'rightshipDeficiencies', ev.target.value); }}
+                              placeholder="None / 2 obs, 0 deficiencies"
+                              style={{ width:'100%', background:'#1a2e47', border:'1px solid #2a4060', color:'white', padding:'5px 8px', borderRadius:'5px', fontSize:'11px' }} />
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -1158,7 +1188,7 @@ const ResumeBuilder = () => {
                           <td style={{ border:'1px solid #ccc', padding:'3px' }}>{fmtDate(s.toDate)}</td>
                           <td style={{ border:'1px solid #ccc', padding:'3px' }}>{[s.engineType, s.cargoType, ...(s.cargoTypes || [])].filter(Boolean).join(', ') || ''}</td>
                         </tr>
-                        {(s.pscInspections || s.vettingInspections || s.drydockExperience || s.tankWashing || s.holdCleaning || s.wallWash || s.cargoHeating || s.inertGas) && (
+                        {(s.pscInspections || s.vettingInspections || s.drydockExperience || s.tankWashing || s.holdCleaning || s.wallWash || s.cargoHeating || s.inertGas || (s as any).rightshipInspection) && (
                           <tr style={{ background:'#f8f8f8', fontSize:'8px' }}>
                             <td></td>
                             <td colSpan={9} style={{ border:'1px solid #ccc', padding:'2px 6px', color:'#555', fontStyle:'italic' }}>
@@ -1172,6 +1202,7 @@ const ResumeBuilder = () => {
                                 s.pscInspections && `PSC: ${s.pscInspections}`,
                                 s.pscDetentions && s.pscDetentions !== 'None' && `Detentions: ${s.pscDetentions}`,
                                 s.vettingInspections && `Vetting: ${s.vettingInspections}`,
+                                (s as any).rightshipInspection && `⭐ RightShip GHG:${(s as any).rightshipGHG || 'N/A'}${(s as any).rightshipDeficiencies ? ` (${(s as any).rightshipDeficiencies})` : ''}`,
                               ].filter(Boolean).join('   |   ')}
                             </td>
                           </tr>
