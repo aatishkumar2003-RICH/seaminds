@@ -86,10 +86,11 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
   const [agentCountryCode, setAgentCountryCode] = useState("+63");
   const [portOfJoiningVal, setPortOfJoiningVal] = useState("");
   const [vesselTypeVal, setVesselTypeVal] = useState("");
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const canSubmit =
     firstName.trim() && lastName.trim() && shipName.trim() && role &&
-    nationality.trim() && yearsAtSea && phoneNumber.trim();
+    nationality.trim() && yearsAtSea && phoneNumber.trim() && agreedToTerms;
 
   const handleSubmit = () => {
     if (!canSubmit) return;
