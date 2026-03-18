@@ -16,6 +16,7 @@ interface AssessmentFlowProps {
   vesselType?: string;
   yearsExperience?: number;
   onComplete: () => void;
+  onExit?: () => void;
 }
 
 interface FlatQuestion {
@@ -41,7 +42,7 @@ interface FlatQuestion {
   prompt_text?: string;
 }
 
-const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assessmentId, vesselType, yearsExperience, onComplete }: AssessmentFlowProps) => {
+const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assessmentId, vesselType, yearsExperience, onComplete, onExit }: AssessmentFlowProps) => {
   // Core flow state
   const [flowStep, setFlowStep] = useState<'preform' | 'docUpload' | 'docVerify' | 'questions' | 'score'>('preform');
   const [aiQuestions, setAiQuestions] = useState<any>(null);
@@ -408,6 +409,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
         lastName={lastName}
         rank={rank}
         onComplete={onComplete}
+        onBack={onExit}
         transcript={transcript}
         redFlags={redFlags}
         candidateContext={aiQuestions?.candidate_context}
@@ -497,8 +499,17 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
 
         {/* Header with section & progress */}
         <div className="p-4 pb-2 space-y-2">
-          <div style={{ color: '#D4AF37', fontSize: '12px', marginBottom: '8px' }}>
-            {sectionNum}: {sectionLabel} — Question {qIndex + 1} of {totalQuestions}
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'8px' }}>
+            <div style={{ color: '#D4AF37', fontSize: '12px' }}>
+              {sectionNum}: {sectionLabel} — Question {qIndex + 1} of {totalQuestions}
+            </div>
+            {onExit && (
+              <button onClick={() => {
+                if (window.confirm('Exit assessment? Your progress will be lost.')) onExit();
+              }} style={{ background:'transparent', border:'1px solid #444', color:'#888', padding:'4px 10px', borderRadius:'6px', fontSize:'11px', cursor:'pointer' }}>
+                ✕ Exit
+              </button>
+            )}
           </div>
           {/* Progress bar */}
           <div style={{ height: '3px', background: '#1a2e47', borderRadius: '2px' }}>
@@ -695,14 +706,22 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
             </button>
           )}
           {(currentQ?.type === 'scenario' || currentQ?.type === 'behavioural') && !pendingFollowUp && (
-            <button
-              onClick={handleTextSubmit}
-              disabled={!textAnswer.trim() || evaluating}
-              className="w-full py-3 rounded-xl font-bold text-sm transition-all disabled:opacity-40"
-              style={{ background: '#D4AF37', color: '#0b1929' }}
-            >
-              {evaluating ? <Loader2 size={16} className="animate-spin mx-auto" /> : qIndex + 1 < totalQuestions ? 'Submit & Continue' : 'Submit & See Results'}
-            </button>
+            <div style={{ display:'flex', alignItems:'center' }}>
+              {currentQ?.type === 'behavioural' && qIndex > 0 && (
+                <button onClick={() => setQIndex(s => s - 1)}
+                  style={{ background:'transparent', border:'1px solid #2a4060', color:'#888', padding:'6px 12px', borderRadius:'6px', fontSize:'12px', cursor:'pointer', marginRight:'8px' }}>
+                  ← Previous
+                </button>
+              )}
+              <button
+                onClick={handleTextSubmit}
+                disabled={!textAnswer.trim() || evaluating}
+                className="flex-1 py-3 rounded-xl font-bold text-sm transition-all disabled:opacity-40"
+                style={{ background: '#D4AF37', color: '#0b1929' }}
+              >
+                {evaluating ? <Loader2 size={16} className="animate-spin mx-auto" /> : qIndex + 1 < totalQuestions ? 'Submit & Continue' : 'Submit & See Results'}
+              </button>
+            </div>
           )}
         </div>
       </div>

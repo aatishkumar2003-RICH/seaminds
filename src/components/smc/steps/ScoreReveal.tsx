@@ -10,6 +10,7 @@ interface Props {
   lastName: string;
   rank: string;
   onComplete: () => void;
+  onBack?: () => void;
   transcript?: Array<{question:string,answer:string,score:number,redFlag:boolean,redFlagCategory:string|null,followUp:string|null}>;
   redFlags?: Array<{category:string,evidence:string,question?:string,answer?:string,severity?:string}>;
   candidateContext?: any;
@@ -51,7 +52,7 @@ function getScoreBand(score: number): string {
   return "FOUNDATION";
 }
 
-const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, transcript, redFlags, candidateContext }: Props) => {
+const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBack, transcript, redFlags, candidateContext }: Props) => {
   const [phase, setPhase] = useState<"loading" | "counting" | "done">("loading");
   const [displayScore, setDisplayScore] = useState(0);
   const [scores, setScores] = useState<Scores | null>(null);
@@ -189,6 +190,12 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, tran
 
   return (
     <div className="overflow-y-auto" style={{ maxHeight: '100%' }}>
+      {onBack && (
+        <button onClick={onBack}
+          style={{ background:'transparent', border:'1px solid #2a4060', color:'#D4AF37', padding:'8px 16px', borderRadius:'8px', fontSize:'13px', cursor:'pointer', marginBottom:'16px' }}>
+          ← Back to Profile
+        </button>
+      )}
       <SMCScoreCertificate
         data={{
           overallScore: finalScore,

@@ -797,7 +797,11 @@ const ResumeBuilder = () => {
               <div>
                 <label className={lbl}>Professional Summary</label>
                 <textarea className={inp + " h-20 resize-none"} placeholder="Experienced 2nd Engineer with 8+ years on bulk carriers..." value={personal.summary} onChange={e => P("summary", e.target.value)} />
-              </div>
+               </div>
+              <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); setOpenSection('sea'); }}
+                style={{ background:'transparent', border:'1px solid #D4AF37', color:'#D4AF37', padding:'6px 16px', borderRadius:'6px', fontSize:'12px', cursor:'pointer', marginTop:'12px' }}>
+                Next Section →
+              </button>
             </div>
           )}
 
@@ -951,6 +955,10 @@ const ResumeBuilder = () => {
               <button onClick={addVessel} className="w-full border border-dashed border-[#D4AF37] text-[#D4AF37] py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#D4AF37]/10 transition-colors">
                 <Plus size={16} /> Add Another Vessel
               </button>
+              <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); setOpenSection('certs'); }}
+                style={{ background:'transparent', border:'1px solid #D4AF37', color:'#D4AF37', padding:'6px 16px', borderRadius:'6px', fontSize:'12px', cursor:'pointer', marginTop:'12px' }}>
+                Next Section →
+              </button>
             </div>
           )}
 
@@ -1010,6 +1018,10 @@ const ResumeBuilder = () => {
                   <button onClick={() => addCert("other")} className="w-full border border-dashed border-[#1e3a5f] text-gray-500 py-2 rounded-lg text-xs">+ Add Other</button>
                 )}
               </div>
+              <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); setOpenSection('edu'); }}
+                style={{ background:'transparent', border:'1px solid #D4AF37', color:'#D4AF37', padding:'6px 16px', borderRadius:'6px', fontSize:'12px', cursor:'pointer', marginTop:'12px' }}>
+                Next Section →
+              </button>
             </div>
           )}
 
@@ -1034,6 +1046,10 @@ const ResumeBuilder = () => {
               <button onClick={addEdu} className="w-full border border-dashed border-[#D4AF37] text-[#D4AF37] py-2 rounded-xl text-sm flex items-center justify-center gap-2 hover:bg-[#D4AF37]/10">
                 <Plus size={16} /> Add Education
               </button>
+              <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); setOpenSection('training'); }}
+                style={{ background:'transparent', border:'1px solid #D4AF37', color:'#D4AF37', padding:'6px 16px', borderRadius:'6px', fontSize:'12px', cursor:'pointer', marginTop:'12px' }}>
+                Next Section →
+              </button>
             </div>
           )}
 
@@ -1057,6 +1073,10 @@ const ResumeBuilder = () => {
               ))}
               <button onClick={addTraining} className="w-full border border-dashed border-[#D4AF37] text-[#D4AF37] py-2 rounded-xl text-sm flex items-center justify-center gap-2 hover:bg-[#D4AF37]/10">
                 <Plus size={16} /> Add Training Course
+              </button>
+              <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); setOpenSection('skills'); }}
+                style={{ background:'transparent', border:'1px solid #D4AF37', color:'#D4AF37', padding:'6px 16px', borderRadius:'6px', fontSize:'12px', cursor:'pointer', marginTop:'12px' }}>
+                Next Section →
               </button>
             </div>
           )}
