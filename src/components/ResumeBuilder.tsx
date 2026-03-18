@@ -377,6 +377,62 @@ const ResumeBuilder = () => {
     } catch (e) { console.error(e); }
   };
 
+  // ── Auto-save state ──
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+
+  // ── Auto-save CV data to Supabase ──
+  const saveCVData = async (data: any) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      setSaveStatus('saving');
+      await supabase.from('crew_cv_data').upsert({
+        user_id: session.user.id,
+        certificates: JSON.stringify(data.certs) as any,
+        sea_service: JSON.stringify(data.sea) as any,
+        education: JSON.stringify(data.edu) as any,
+        medical: JSON.stringify({ personal: data.personal, skills: data.skills, photo: data.photo, training: data.training }) as any,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id' });
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch (e) { console.error('CV save error:', e); setSaveStatus('idle'); }
+  };
+
+  // Debounced auto-save
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      saveCVData({ personal, sea, certs, edu, skills, photo, training });
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [personal, sea, certs, edu, skills, photo, training]);
+
+  // Load saved CV data on mount
+  useEffect(() => {
+    const loadCV = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const { data } = await supabase.from('crew_cv_data')
+        .select('certificates, sea_service, education, medical')
+        .eq('user_id', session.user.id).single();
+      if (!data) return;
+      try {
+        const meta = typeof data.medical === 'string' ? JSON.parse(data.medical) : data.medical;
+        if (meta?.personal) setPersonal(meta.personal);
+        if (meta?.skills) setSkills(meta.skills);
+        if (meta?.photo) setPhoto(meta.photo);
+        if (meta?.training) setTraining(meta.training);
+        const seaData = typeof data.sea_service === 'string' ? JSON.parse(data.sea_service) : data.sea_service;
+        if (Array.isArray(seaData) && seaData.length > 0) setSea(seaData);
+        const certsData = typeof data.certificates === 'string' ? JSON.parse(data.certificates) : data.certificates;
+        if (Array.isArray(certsData) && certsData.length > 0) setCerts(certsData);
+        const eduData = typeof data.education === 'string' ? JSON.parse(data.education) : data.education;
+        if (Array.isArray(eduData) && eduData.length > 0) setEdu(eduData);
+      } catch (e) { console.error('CV load error:', e); }
+    };
+    loadCV();
+  }, []);
+
   // ── Styles ──
   const inp = "w-full bg-[#0a1929] border border-[#1e3a5f] rounded-lg px-3 py-2 text-white text-sm focus:border-[#D4AF37] focus:outline-none placeholder:text-gray-600";
   const sel = "w-full bg-[#0a1929] border border-[#1e3a5f] rounded-lg px-3 py-2 text-white text-sm focus:border-[#D4AF37] focus:outline-none";
