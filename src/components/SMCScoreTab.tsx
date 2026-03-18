@@ -49,6 +49,7 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
   };
 
   const handleCvParse = async (file: File) => {
+    console.log("SMCScoreTab CV parse: file selected", file.name, file.type, file.size);
     setCvStatus("reading");
     setCvError("");
 
@@ -63,8 +64,11 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
         reader.readAsDataURL(file);
       });
 
+      console.log("SMCScoreTab CV parse: calling parse-cv-documents, base64 length:", base64.length);
+      const { data: { session } } = await supabase.auth.getSession();
       const response = await supabase.functions.invoke("parse-cv-documents", {
         body: { file_base64: base64, mime_type: file.type },
+        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
       });
 
       console.log("CV parse response:", JSON.stringify(response));
