@@ -1018,6 +1018,10 @@ const ResumeBuilder = () => {
                   <button onClick={() => addCert("other")} className="w-full border border-dashed border-[#1e3a5f] text-gray-500 py-2 rounded-lg text-xs">+ Add Other</button>
                 )}
               </div>
+              <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); setOpenSection('edu'); }}
+                style={{ background:'transparent', border:'1px solid #D4AF37', color:'#D4AF37', padding:'6px 16px', borderRadius:'6px', fontSize:'12px', cursor:'pointer', marginTop:'12px' }}>
+                Next Section →
+              </button>
             </div>
           )}
 
