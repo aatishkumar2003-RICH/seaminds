@@ -1187,7 +1187,11 @@ const ResumeBuilder = () => {
             {/* OBJECTIVE / SUMMARY */}
             {personal.summary && (
               <div style={{ marginBottom:'10px' }}>
-                <div style={{ fontSize:'11px', fontWeight:'bold', background:'#0D1B2A', color:'#D4AF37', padding:'3px 8px', marginBottom:'4px' }}>PROFESSIONAL SUMMARY</div>
+                <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'6px', marginTop:'12px' }}>
+                  <div style={{ width:'4px', height:'16px', background:'#D4AF37' }} />
+                  <div style={{ fontSize:'10px', fontWeight:'900', color:'#0D1B2A', letterSpacing:'1.5px', textTransform:'uppercase' }}>PROFESSIONAL SUMMARY</div>
+                  <div style={{ flex:1, height:'1px', background:'#0D1B2A', opacity:0.2 }} />
+                </div>
                 <div style={{ color:'#333', fontStyle:'italic' }}>{personal.summary}</div>
               </div>
             )}
