@@ -16,6 +16,7 @@ interface AssessmentFlowProps {
   vesselType?: string;
   yearsExperience?: number;
   onComplete: () => void;
+  onExit?: () => void;
 }
 
 interface FlatQuestion {
