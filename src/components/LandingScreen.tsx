@@ -12,12 +12,11 @@ interface LandingScreenProps {
 const LandingScreen = ({ onGetStarted, onManagerLogin }: LandingScreenProps) => {
   const handleGoogleLogin = async () => {
     if (!(await checkRateLimit())) return;
-    
-    const { error } = await supabase.auth.signInWithOAuth({
+    await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: 'https://seaminds.life/app'
-      }
+        redirectTo: `${window.location.origin}/app`,
+      },
     });
   };
 
@@ -40,7 +39,7 @@ const LandingScreen = ({ onGetStarted, onManagerLogin }: LandingScreenProps) => 
 
     const { error: authError } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: 'https://seaminds.life/app' }
+      options: { emailRedirectTo: `${window.location.origin}/app` }
     });
     if (authError) {
       setError(authError.message);

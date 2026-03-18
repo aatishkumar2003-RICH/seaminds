@@ -483,7 +483,7 @@ export type Database = {
           vessel_imo: string | null
           vessel_type: string | null
           voyage_start_date: string | null
-          whatsapp_number: string | null
+          whatsapp_number: string
           years_at_sea: string
         }
         Insert: {
@@ -516,7 +516,7 @@ export type Database = {
           vessel_imo?: string | null
           vessel_type?: string | null
           voyage_start_date?: string | null
-          whatsapp_number?: string | null
+          whatsapp_number?: string
           years_at_sea?: string
         }
         Update: {
@@ -549,7 +549,7 @@ export type Database = {
           vessel_imo?: string | null
           vessel_type?: string | null
           voyage_start_date?: string | null
-          whatsapp_number?: string | null
+          whatsapp_number?: string
           years_at_sea?: string
         }
         Relationships: []
