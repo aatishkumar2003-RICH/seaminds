@@ -198,8 +198,9 @@ const ResumeBuilder = () => {
     holdCleaning: false, wallWash: false, cargoHeating: false, inertGas: false,
   }]);
   const rmVessel = (id: string) => setSea(s => s.filter(e => e.id !== id));
-  const U = (id: string, f: string, v: string) =>
+  const U = (id: string, f: string, v: any) =>
     setSea(s => s.map(e => e.id === id ? { ...e, [f]: v } : e));
+  const updateSea = U;
   const UC = (id: string, f: string, v: string) =>
     setCerts(c => c.map(cert => cert.id === id ? { ...cert, [f]: v } : cert));
   const addCert = (cat: "coc" | "stcw" | "medical" | "other") => setCerts(c => [...c, {
