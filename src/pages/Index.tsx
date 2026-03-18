@@ -281,6 +281,11 @@ const Index = () => {
   }, cvFile?: File) => {
     const { data: { session } } = await supabase.auth.getSession();
     const uid = session?.user?.id;
+    // Generate crew unique ID
+    const year = new Date().getFullYear();
+    const randomNum = Math.floor(10000 + Math.random() * 90000);
+    const crewUniqueId = `SM-${year}-${randomNum}`;
+
     const insertData: Record<string, any> = {
       first_name: profile.firstName, last_name: profile.lastName,
       ship_name: profile.shipName, role: profile.role,
@@ -291,6 +296,7 @@ const Index = () => {
       manning_agent_phone: profile.manningAgentPhone || null,
       port_of_joining: profile.portOfJoining || null,
       vessel_type: profile.vesselType || null,
+      crew_unique_id: crewUniqueId,
       onboarded: true,
     };
     if (uid) { insertData.id = uid; insertData.user_id = uid; }
