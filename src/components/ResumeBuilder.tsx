@@ -1186,7 +1186,7 @@ const ResumeBuilder = () => {
                           <td style={{ border:'1px solid #ccc', padding:'3px' }}>{fmtDate(s.toDate)}</td>
                           <td style={{ border:'1px solid #ccc', padding:'3px' }}>{[s.engineType, s.cargoType, ...(s.cargoTypes || [])].filter(Boolean).join(', ') || ''}</td>
                         </tr>
-                        {(s.pscInspections || s.vettingInspections || s.drydockExperience || s.tankWashing || s.holdCleaning || s.wallWash || s.cargoHeating || s.inertGas) && (
+                        {(s.pscInspections || s.vettingInspections || s.drydockExperience || s.tankWashing || s.holdCleaning || s.wallWash || s.cargoHeating || s.inertGas || (s as any).rightshipInspection) && (
                           <tr style={{ background:'#f8f8f8', fontSize:'8px' }}>
                             <td></td>
                             <td colSpan={9} style={{ border:'1px solid #ccc', padding:'2px 6px', color:'#555', fontStyle:'italic' }}>
