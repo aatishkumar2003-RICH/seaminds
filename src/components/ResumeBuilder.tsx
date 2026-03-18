@@ -584,7 +584,7 @@ const ResumeBuilder = () => {
               </div>
               <div><label className={lbl}>CDC Issue Country</label><input className={inp} placeholder="Philippines" value={personal.cdcCountry} onChange={e => P("cdcCountry", e.target.value)} /></div>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className={lbl}>WhatsApp / Phone</label><input className={inp} placeholder="+63..." value={personal.phone} onChange={e => P("phone", e.target.value)} /></div>
+                <div><label className={lbl}>WhatsApp / Phone <span className="text-red-500">*</span></label><input className={inp} placeholder="+63..." value={personal.phone} onChange={e => P("phone", e.target.value)} /></div>
                 <div><label className={lbl}>Email</label><input className={inp} placeholder="name@email.com" value={personal.email} onChange={e => P("email", e.target.value)} /></div>
               </div>
               <div><label className={lbl}>Home Address</label><input className={inp} placeholder="Manila, Philippines" value={personal.address} onChange={e => P("address", e.target.value)} /></div>
