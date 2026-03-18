@@ -2,52 +2,72 @@ import { useState, useRef } from "react";
 import {
   Camera, Plus, Trash2, Eye, Edit3, Award, Ship, FileText,
   User, GraduationCap, Globe, ChevronDown, ChevronUp,
-  Printer, Anchor, Star, Loader2
+  Printer, Anchor, Loader2, ArrowLeft, BookOpen, Wrench,
+  CheckSquare, X
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 // ─────────── TYPES ───────────
 interface SeaEntry {
   id: string; vesselName: string; imoNumber: string; vesselType: string;
-  flagState: string; company: string; rankOnBoard: string; engineType: string;
-  grtDwt: string; fromDate: string; toDate: string;
+  flagState: string; grtDwt: string; company: string; manningAgent: string;
+  rankOnBoard: string; engineType: string; cargoType: string;
+  fromDate: string; toDate: string; reasonForLeaving: string;
 }
 interface Cert {
-  id: string; name: string; number: string; issueDate: string;
-  expiryDate: string; isCustom?: boolean;
+  id: string; name: string; number: string; flagState: string;
+  issueDate: string; expiryDate: string; issuingAuthority: string;
+  category: "coc" | "stcw" | "medical" | "other"; isCustom?: boolean;
+}
+interface EduEntry {
+  id: string; institution: string; qualification: string; yearFrom: string; yearTo: string;
+}
+interface TrainingEntry {
+  id: string; courseName: string; institution: string; dateCompleted: string; certNo: string;
 }
 interface Language { language: string; level: string; }
 
 // ─────────── CONSTANTS ───────────
-const RANKS = ["Captain / Master","Chief Officer","2nd Officer","3rd Officer",
+const RANKS = [
+  "Captain / Master","Chief Officer","2nd Officer","3rd Officer",
   "Chief Engineer","2nd Engineer","3rd Engineer","4th Engineer","ETO / EEO",
   "Bosun","AB Seaman","Ordinary Seaman (OS)","Fitter","Oiler","Wiper",
-  "Cook","Messman / Steward","Deck Cadet","Engine Cadet"];
+  "Cook","Messman / Steward","Deck Cadet","Engine Cadet","Pumpman",
+  "Electrician","Refrigeration Engineer","Radio Officer",
+];
 
-const VESSEL_TYPES = ["Bulk Carrier","Container Ship","Oil Tanker","Chemical Tanker",
+const VESSEL_TYPES = [
+  "Bulk Carrier","Container Ship","Oil Tanker","Chemical Tanker",
   "LNG Carrier","LPG Carrier","RORO","General Cargo","Offshore Supply Vessel",
   "Platform Supply Vessel","Anchor Handling Vessel","Passenger / Cruise Ship",
-  "Dredger","Tug / Towage","Car Carrier","Reefer","Other"];
+  "Dredger","Tug / Towage","Car Carrier","Reefer","Other",
+];
 
-const ENGINE_TYPES = ["2-Stroke Diesel (MAN B&W)","2-Stroke Diesel (Wärtsilä/Sulzer)",
-  "4-Stroke Diesel","Diesel Electric","Steam Turbine","Gas Turbine","Dual Fuel LNG","Other"];
+const ENGINE_TYPES = [
+  "MAN B&W","Wärtsilä","Sulzer","MAK","Caterpillar",
+  "2-Stroke Diesel","4-Stroke Diesel","Diesel Electric",
+  "Steam Turbine","Gas Turbine","Dual Fuel LNG","Other",
+];
 
-const ECDIS_SYSTEMS = ["JRC","Furuno","Transas / Navtor","Kongsberg","Raytheon Anschütz",
-  "Wärtsilä NAVI-SAILOR","Consilium","Nobeltec","Kelvin Hughes","Yokogawa"];
+const CARGO_TYPES = [
+  "Dry Bulk","Crude Oil","Chemical","Container","LNG","LPG",
+  "General Cargo","RoRo","Passengers","Other",
+];
 
-const STD_CERTS: string[] = [
-  "Certificate of Competency (CoC)",
-  "STCW Basic Safety Training (BST)",
-  "Proficiency in Survival Craft & Rescue Boats (PSSR)",
-  "Elementary First Aid (EFA)",
-  "Advanced Fire Fighting (AFF)",
-  "GMDSS — General Operator Certificate (GOC)",
-  "Medical Certificate (ENG1 / PEME)",
-  "CDC / Seaman's Book",
-  "Oil Tanker Endorsement (OT)",
-  "Chemical Tanker Endorsement (CT)",
-  "LNG/LPG Tanker Endorsement",
-  "STCW Security Awareness (SAQ)",
+const STCW_CERTS = [
+  "Basic Safety Training (BST)","Proficiency in Survival Craft (PSC)",
+  "Advanced Fire Fighting (AFF)","Proficiency in Fire Prevention (FPFF)",
+  "Elementary First Aid (EFA)","Medical First Aid","Medical Care",
+  "GMDSS — General Operator (GOC)","GMDSS — Restricted Operator (ROC)",
+  "Security Awareness (SAQ)","Ship Security Officer (SSO)",
+  "BOSIET","HUET","H2S Awareness","Tanker Familiarisation",
+  "Oil Tanker Endorsement","Chemical Tanker Endorsement","LNG/LPG Tanker Endorsement",
+  "ECDIS Generic","ECDIS Type-Specific","BRM / BTM","ERM / ETM",
+];
+
+const ECDIS_SYSTEMS = [
+  "JRC","Furuno","Transas / Navtor","Kongsberg","Raytheon Anschütz",
+  "Wärtsilä NAVI-SAILOR","Consilium","Nobeltec","Kelvin Hughes","Yokogawa",
 ];
 
 const LEVELS = ["Native","Fluent","Advanced","Intermediate","Basic"];
@@ -62,12 +82,44 @@ const certStatus = (expiry: string) => {
   return "valid";
 };
 
+const fmtDate = (d: string) => {
+  if (!d) return "";
+  const date = new Date(d);
+  if (isNaN(date.getTime())) return d;
+  return date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+};
+
 const fmtMonth = (m: string) => {
   if (!m) return "";
-  const [y, mo] = m.split("-");
-  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  return `${months[parseInt(mo) - 1]} ${y}`;
+  if (m.includes("-") && m.length === 7) {
+    const [y, mo] = m.split("-");
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return `${months[parseInt(mo) - 1]} ${y}`;
+  }
+  return fmtDate(m);
 };
+
+const calcTotalSeaService = (entries: SeaEntry[]) => {
+  let totalMonths = 0;
+  entries.forEach(e => {
+    if (e.fromDate && e.toDate) {
+      const from = new Date(e.fromDate);
+      const to = new Date(e.toDate);
+      const diff = (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth());
+      if (diff > 0) totalMonths += diff;
+    }
+  });
+  const years = Math.floor(totalMonths / 12);
+  const months = totalMonths % 12;
+  return years > 0 ? `${years} year${years > 1 ? "s" : ""} ${months} month${months !== 1 ? "s" : ""}` : `${months} month${months !== 1 ? "s" : ""}`;
+};
+
+const isEngineerRank = (rank: string) => {
+  const lower = rank.toLowerCase();
+  return lower.includes("engineer") || lower.includes("eto") || lower.includes("eeo") || lower.includes("fitter") || lower.includes("oiler") || lower.includes("wiper") || lower.includes("electrician") || lower.includes("refrigeration");
+};
+
+const uid = () => String(Date.now()) + String(Math.random()).slice(2, 6);
 
 // ─────────── COMPONENT ───────────
 const ResumeBuilder = () => {
@@ -78,48 +130,76 @@ const ResumeBuilder = () => {
   const printRef = useRef<HTMLDivElement>(null);
   const scanInputRef = useRef<HTMLInputElement>(null);
   const [scanning, setScanning] = useState(false);
-  const [scanMessage, setScanMessage] = useState('');
+  const [scanMessage, setScanMessage] = useState("");
 
+  // ── Scan confirmation state ──
+  const [scanResult, setScanResult] = useState<any>(null);
+  const [showScanConfirm, setShowScanConfirm] = useState(false);
+  const [importSections, setImportSections] = useState({
+    personal: true, sea: true, certs: true, edu: true, skills: true,
+  });
+
+  // ── Form state (keep existing names) ──
   const [personal, setPersonal] = useState({
-    firstName: "", lastName: "", rank: "", nationality: "",
+    firstName: "", lastName: "", rank: "", applyingFor: "", nationality: "",
     dob: "", phone: "", email: "", address: "",
     passportNo: "", cdcNo: "", cdcCountry: "", summary: "",
+    emergencyName: "", emergencyPhone: "",
   });
 
   const [sea, setSea] = useState<SeaEntry[]>([{
     id: "1", vesselName: "", imoNumber: "", vesselType: "", flagState: "",
-    company: "", rankOnBoard: "", engineType: "", grtDwt: "", fromDate: "", toDate: "",
+    grtDwt: "", company: "", manningAgent: "", rankOnBoard: "", engineType: "",
+    cargoType: "", fromDate: "", toDate: "", reasonForLeaving: "",
   }]);
 
   const [certs, setCerts] = useState<Cert[]>(
-    STD_CERTS.map((name, i) => ({
-      id: String(i), name, number: "", issueDate: "", expiryDate: "", isCustom: false,
+    STCW_CERTS.slice(0, 6).map((name, i) => ({
+      id: String(i), name, number: "", flagState: "", issueDate: "",
+      expiryDate: "", issuingAuthority: "", category: "stcw" as const, isCustom: false,
     }))
   );
 
-  const [edu, setEdu] = useState({ academy: "", degree: "", year: "", country: "" });
+  const [edu, setEdu] = useState<EduEntry[]>([
+    { id: "1", institution: "", qualification: "", yearFrom: "", yearTo: "" },
+  ]);
+
+  const [training, setTraining] = useState<TrainingEntry[]>([]);
 
   const [skills, setSkills] = useState({
     ecdis: [] as string[],
     languages: [{ language: "English", level: "Fluent" }] as Language[],
+    engineTypes: "",
+    cargoTypes: "",
+    computerSkills: "",
     other: "",
   });
 
   // ── Handlers ──
   const P = (f: string, v: string) => setPersonal(p => ({ ...p, [f]: v }));
   const addVessel = () => setSea(s => [...s, {
-    id: Date.now().toString(), vesselName: "", imoNumber: "", vesselType: "",
-    flagState: "", company: "", rankOnBoard: "", engineType: "", grtDwt: "", fromDate: "", toDate: "",
+    id: uid(), vesselName: "", imoNumber: "", vesselType: "", flagState: "",
+    grtDwt: "", company: "", manningAgent: "", rankOnBoard: "", engineType: "",
+    cargoType: "", fromDate: "", toDate: "", reasonForLeaving: "",
   }]);
   const rmVessel = (id: string) => setSea(s => s.filter(e => e.id !== id));
   const U = (id: string, f: string, v: string) =>
     setSea(s => s.map(e => e.id === id ? { ...e, [f]: v } : e));
   const UC = (id: string, f: string, v: string) =>
     setCerts(c => c.map(cert => cert.id === id ? { ...cert, [f]: v } : cert));
-  const addCert = () => setCerts(c => [...c, {
-    id: Date.now().toString(), name: "", number: "", issueDate: "", expiryDate: "", isCustom: true,
+  const addCert = (cat: "coc" | "stcw" | "medical" | "other") => setCerts(c => [...c, {
+    id: uid(), name: "", number: "", flagState: "", issueDate: "",
+    expiryDate: "", issuingAuthority: "", category: cat, isCustom: true,
   }]);
   const rmCert = (id: string) => setCerts(c => c.filter(cert => cert.id !== id));
+  const addEdu = () => setEdu(e => [...e, { id: uid(), institution: "", qualification: "", yearFrom: "", yearTo: "" }]);
+  const rmEdu = (id: string) => setEdu(e => e.filter(x => x.id !== id));
+  const UE = (id: string, f: string, v: string) =>
+    setEdu(e => e.map(x => x.id === id ? { ...x, [f]: v } : x));
+  const addTraining = () => setTraining(t => [...t, { id: uid(), courseName: "", institution: "", dateCompleted: "", certNo: "" }]);
+  const rmTraining = (id: string) => setTraining(t => t.filter(x => x.id !== id));
+  const UT = (id: string, f: string, v: string) =>
+    setTraining(t => t.map(x => x.id === id ? { ...x, [f]: v } : x));
   const toggleEcdis = (sys: string) =>
     setSkills(s => ({ ...s, ecdis: s.ecdis.includes(sys) ? s.ecdis.filter(e => e !== sys) : [...s.ecdis, sys] }));
   const addLang = () => setSkills(s => ({ ...s, languages: [...s.languages, { language: "", level: "Intermediate" }] }));
@@ -136,183 +216,298 @@ const ResumeBuilder = () => {
     }
   };
 
-  const handlePrint = () => {
-    const div = printRef.current;
-    if (!div) return;
-    const win = window.open("", "_blank", "width=800,height=900");
-    if (!win) return;
-    win.document.write(`<!DOCTYPE html><html><head>
-      <title>CV - ${personal.firstName} ${personal.lastName}</title>
-      <style>
-        *{margin:0;padding:0;box-sizing:border-box}
-        body{font-family:Georgia,serif;color:#1a1a1a;background:#fff}
-        .cv-header{background:#0D1B2A;color:#fff;padding:24px;display:flex;align-items:center;gap:20px}
-        .cv-photo{width:96px;height:96px;border-radius:50%;object-fit:cover;border:3px solid #D4AF37;flex-shrink:0}
-        .cv-photo-ph{width:96px;height:96px;border-radius:50%;background:#1a2d47;border:2px solid #D4AF37;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:36px}
-        .cv-name{font-size:22px;font-weight:700;color:#fff}
-        .cv-rank{color:#D4AF37;font-size:15px;margin-top:2px}
-        .cv-contact{color:#ccc;font-size:12px;margin-top:4px}
-        .cv-body{padding:24px;display:flex;gap:20px}
-        .cv-main{flex:2;border-right:2px solid #eee;padding-right:20px}
-        .cv-side{flex:1}
-        .cv-section-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#0D1B2A;border-bottom:2px solid #D4AF37;padding-bottom:4px;margin-bottom:10px;margin-top:16px}
-        .vessel-card{background:#f7f8fa;border:1px solid #eee;border-radius:6px;padding:10px;margin-bottom:8px}
-        .vessel-name{font-weight:700;color:#0D1B2A;font-size:13px}
-        .vessel-rank{color:#D4AF37;font-weight:600;font-size:12px}
-        .vessel-meta{color:#666;font-size:11px;margin-top:2px}
-        .cert-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:11px}
-        .cert-name{color:#333}
-        .cert-meta{color:#999;font-size:10px}
-        .status-valid{color:#22c55e}
-        .status-expiring{color:#f59e0b}
-        .status-expired{color:#ef4444}
-        .chip{display:inline-block;background:#0D1B2A;color:#fff;font-size:10px;padding:2px 8px;border-radius:12px;margin:2px}
-        .summary{border-left:3px solid #D4AF37;padding:8px 12px;color:#444;font-size:12px;font-style:italic;margin-bottom:12px}
-        .edu-box{background:#f7f8fa;border-radius:6px;padding:10px}
-        .lang-row{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;color:#444}
-        .footer{background:#0D1B2A;padding:8px;text-align:center;margin-top:16px}
-        .footer p{color:#D4AF37;font-size:10px}
-        @page{margin:0.5cm}
-      </style></head><body>${div.innerHTML}</body></html>`);
-    win.document.close();
-    setTimeout(() => { win.print(); win.close(); }, 400);
-  };
-
+  // ── AI Scan (now with confirmation) ──
   const handleScanCV = async (ev: React.ChangeEvent<HTMLInputElement>) => {
     const file = ev.target.files?.[0];
     if (!file) return;
     setScanning(true);
-    setScanMessage('');
+    setScanMessage("");
     try {
       const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = () => resolve((reader.result as string).split(',')[1]);
+        reader.onload = () => resolve((reader.result as string).split(",")[1]);
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
       const { data: { session } } = await supabase.auth.getSession();
-      const { data, error } = await supabase.functions.invoke('parse-cv-documents', {
+      const { data, error } = await supabase.functions.invoke("parse-cv-documents", {
         body: { file_base64: base64, mime_type: file.type },
-        headers: { Authorization: `Bearer ${session?.access_token}` }
+        headers: { Authorization: `Bearer ${session?.access_token}` },
       });
-      if (error || !data?.success) throw new Error(error?.message || 'Scan failed');
-      const cv = data.data;
-      let filled = 0;
-      if (cv.name || cv.rank || cv.nationality || cv.date_of_birth) {
-        setPersonal((p) => ({
-          ...p,
-          ...(cv.name && { firstName: cv.name.split(' ')[0], lastName: cv.name.split(' ').slice(1).join(' ') }),
-          ...(cv.rank && { rank: cv.rank }),
-          ...(cv.nationality && { nationality: cv.nationality }),
-          ...(cv.date_of_birth && { dob: cv.date_of_birth }),
-        }));
-        filled++;
-      }
-      if (cv.sea_service?.length > 0) {
-        setSea(cv.sea_service.map((s: any) => ({
-          id: String(Date.now()) + String(Math.random()),
-          vesselName: s.vessel_name || '',
-          imoNumber: '',
-          vesselType: s.vessel_type || '',
-          flagState: s.flag || '',
-          company: s.company || '',
-          rankOnBoard: s.rank || '',
-          engineType: s.engine_type || '',
-          grtDwt: '',
-          fromDate: s.sign_on || '',
-          toDate: s.sign_off || '',
-        })));
-        filled++;
-      }
-      if (cv.certificates?.length > 0) {
-        setCerts(cv.certificates.map((c: any) => ({
-          id: String(Date.now()) + String(Math.random()),
-          name: c.name || '',
-          number: c.number || '',
-          issueDate: c.issue_date || '',
-          expiryDate: c.expiry_date || '',
-          isCustom: true,
-        })));
-        filled++;
-      }
-      if (cv.education?.length > 0) {
-        const first = cv.education[0];
-        setEdu({
-          academy: typeof first === 'string' ? first : first.institution || '',
-          degree: typeof first === 'string' ? '' : first.qualification || '',
-          year: typeof first === 'string' ? '' : first.year || '',
-          country: '',
-        });
-        filled++;
-      }
-      if (cv.main_engine_types?.length > 0 || cv.cargo_experience?.length > 0) {
-        setSkills((s) => ({
-          ...s,
-          other: [
-            s.other,
-            cv.main_engine_types?.length > 0 ? `Engine types: ${cv.main_engine_types.join(', ')}` : '',
-            cv.cargo_experience?.length > 0 ? `Cargo: ${cv.cargo_experience.join(', ')}` : '',
-          ].filter(Boolean).join('. '),
-        }));
-        filled++;
-      }
-      if (cv.summary) {
-        setPersonal((p) => ({ ...p, summary: p.summary || cv.summary }));
-      }
-      const total = (cv.sea_service?.length || 0) + (cv.certificates?.length || 0);
-      setScanMessage(`✅ CV scanned — ${total} records imported across ${filled} sections. Review and fill any missing details.`);
-      setOpenSection('personal');
+      if (error || !data?.success) throw new Error(error?.message || "Scan failed");
+      setScanResult(data.data);
+      setImportSections({ personal: true, sea: true, certs: true, edu: true, skills: true });
+      setShowScanConfirm(true);
     } catch (err: any) {
-      setScanMessage('❌ Could not read CV: ' + (err.message || 'Unknown error'));
+      setScanMessage("❌ Could not read CV: " + (err.message || "Unknown error"));
     } finally {
       setScanning(false);
-      if (scanInputRef.current) scanInputRef.current.value = '';
+      if (scanInputRef.current) scanInputRef.current.value = "";
     }
   };
 
-  // ── Shared styles ──
+  const applyImport = () => {
+    if (!scanResult) return;
+    const cv = scanResult;
+    if (importSections.personal && (cv.name || cv.rank || cv.nationality || cv.date_of_birth)) {
+      setPersonal(p => ({
+        ...p,
+        ...(cv.name && { firstName: cv.name.split(" ")[0], lastName: cv.name.split(" ").slice(1).join(" ") }),
+        ...(cv.rank && { rank: cv.rank }),
+        ...(cv.nationality && { nationality: cv.nationality }),
+        ...(cv.date_of_birth && { dob: cv.date_of_birth }),
+        ...(cv.summary && { summary: cv.summary }),
+      }));
+    }
+    if (importSections.sea && cv.sea_service?.length > 0) {
+      setSea(cv.sea_service.map((s: any) => ({
+        id: uid(), vesselName: s.vessel_name || "", imoNumber: "",
+        vesselType: s.vessel_type || "", flagState: s.flag || "",
+        grtDwt: "", company: s.company || "", manningAgent: "",
+        rankOnBoard: s.rank || "", engineType: s.engine_type || "",
+        cargoType: s.cargo_type || "", fromDate: s.sign_on || "",
+        toDate: s.sign_off || "", reasonForLeaving: "",
+      })));
+    }
+    if (importSections.certs && cv.certificates?.length > 0) {
+      setCerts(cv.certificates.map((c: any) => ({
+        id: uid(), name: c.name || "", number: c.number || "",
+        flagState: "", issueDate: c.issue_date || "",
+        expiryDate: c.expiry_date || "", issuingAuthority: c.issuing_authority || "",
+        category: "stcw" as const, isCustom: true,
+      })));
+    }
+    if (importSections.edu && cv.education?.length > 0) {
+      setEdu(cv.education.map((e: any) => ({
+        id: uid(),
+        institution: typeof e === "string" ? e : e.institution || "",
+        qualification: typeof e === "string" ? "" : e.qualification || "",
+        yearFrom: typeof e === "string" ? "" : e.year || "",
+        yearTo: "",
+      })));
+    }
+    if (importSections.skills) {
+      if (cv.main_engine_types?.length > 0 || cv.cargo_experience?.length > 0) {
+        setSkills(s => ({
+          ...s,
+          engineTypes: cv.main_engine_types?.join(", ") || s.engineTypes,
+          cargoTypes: cv.cargo_experience?.join(", ") || s.cargoTypes,
+        }));
+      }
+    }
+    const totalRecs = (cv.sea_service?.length || 0) + (cv.certificates?.length || 0);
+    setScanMessage(`✅ Imported ${totalRecs} records. Review and fill any missing details.`);
+    setShowScanConfirm(false);
+    setScanResult(null);
+    setOpenSection("personal");
+  };
+
+  // ── Print ──
+  const handlePrint = () => {
+    setView("preview");
+    setTimeout(() => window.print(), 300);
+  };
+
+  // ── Styles ──
   const inp = "w-full bg-[#0a1929] border border-[#1e3a5f] rounded-lg px-3 py-2 text-white text-sm focus:border-[#D4AF37] focus:outline-none placeholder:text-gray-600";
   const sel = "w-full bg-[#0a1929] border border-[#1e3a5f] rounded-lg px-3 py-2 text-white text-sm focus:border-[#D4AF37] focus:outline-none";
   const lbl = "text-gray-400 text-xs mb-1 block";
 
-  const Section = ({ id, icon, title }: { id: string; icon: React.ReactNode; title: string }) => (
+  const Section = ({ id, icon, title, badge }: { id: string; icon: React.ReactNode; title: string; badge?: string }) => (
     <button
       onClick={() => setOpenSection(openSection === id ? null : id)}
       className="w-full flex items-center justify-between p-3.5 bg-[#132236] rounded-xl mb-1 text-left hover:bg-[#1a2d47] transition-colors"
     >
       <div className="flex items-center gap-2 text-white text-sm font-semibold">
         {icon}{title}
+        {badge && <span className="bg-[#D4AF37] text-[#0D1B2A] text-xs px-2 py-0.5 rounded-full font-bold">{badge}</span>}
       </div>
-      {openSection === id
-        ? <ChevronUp size={16} className="text-[#D4AF37]" />
-        : <ChevronDown size={16} className="text-gray-500" />}
+      {openSection === id ? <ChevronUp size={16} className="text-[#D4AF37]" /> : <ChevronDown size={16} className="text-gray-500" />}
     </button>
   );
 
   // ── Filtered for preview ──
-  const filledSea = sea.filter(s => s.vesselName);
+  const filledSea = [...sea.filter(s => s.vesselName)].sort((a, b) => {
+    if (!a.toDate && !b.toDate) return 0;
+    if (!a.toDate) return -1;
+    if (!b.toDate) return 1;
+    return b.toDate.localeCompare(a.toDate);
+  });
   const filledCerts = certs.filter(c => c.name && c.number);
+  const cocCerts = filledCerts.filter(c => c.category === "coc");
+  const stcwCerts = filledCerts.filter(c => c.category === "stcw");
+  const medCerts = filledCerts.filter(c => c.category === "medical");
+  const otherCerts = filledCerts.filter(c => c.category === "other");
+  const filledEdu = edu.filter(e => e.institution);
+  const filledTraining = training.filter(t => t.courseName);
   const fullName = `${personal.firstName} ${personal.lastName}`.trim() || "Your Name";
+  const isEngineer = isEngineerRank(personal.rank);
 
+  const CertStatusBadge = ({ expiry }: { expiry: string }) => {
+    const st = certStatus(expiry);
+    if (st === "valid") return <span style={{ color: "#22c55e", fontWeight: 700, fontSize: 11 }}>✓ Valid</span>;
+    if (st === "expiring") return <span style={{ color: "#f59e0b", fontWeight: 700, fontSize: 11 }}>⚠ Expiring</span>;
+    if (st === "expired") return <span style={{ color: "#ef4444", fontWeight: 700, fontSize: 11 }}>✗ Expired</span>;
+    return null;
+  };
+
+  // ═══════════════════════════════════════════════════
   return (
-    <div className="flex flex-col h-full bg-[#0D1B2A]">
+    <div className="flex flex-col h-full bg-[#0D1B2A] print:bg-white">
 
-      {/* ─── TAB BAR ─── */}
-      <div className="flex gap-2 p-3 pb-1">
-        {(["form","preview"] as const).map(v => (
-          <button key={v} onClick={() => setView(v)}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-colors ${view === v ? "bg-[#D4AF37] text-[#0D1B2A]" : "bg-[#132236] text-gray-400 hover:text-white"}`}>
-            {v === "form" ? <><Edit3 size={16}/> Build CV</> : <><Eye size={16}/> Preview &amp; Print</>}
-          </button>
-        ))}
+      {/* ── SCAN CONFIRMATION MODAL ── */}
+      {showScanConfirm && scanResult && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={() => setShowScanConfirm(false)}>
+          <div className="bg-[#0D1B2A] border-2 border-[#D4AF37] rounded-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto"
+            onClick={e => e.stopPropagation()}>
+            <div className="sticky top-0 bg-[#0D1B2A] border-b border-[#1e3a5f] p-4 flex items-center justify-between z-10">
+              <h2 className="text-white font-bold text-base">✅ AI extracted the following — Please confirm</h2>
+              <button onClick={() => setShowScanConfirm(false)} className="text-gray-400 hover:text-white"><X size={20} /></button>
+            </div>
+            <div className="p-4 space-y-3">
+
+              {/* Personal */}
+              {(scanResult.name || scanResult.rank || scanResult.nationality) && (
+                <div className="border border-[#1e3a5f] rounded-xl p-3">
+                  <label className="flex items-center gap-2 text-white text-sm font-semibold mb-2 cursor-pointer">
+                    <input type="checkbox" checked={importSections.personal}
+                      onChange={e => setImportSections(s => ({ ...s, personal: e.target.checked }))}
+                      className="accent-[#D4AF37]" />
+                    <User size={14} /> Personal Details
+                  </label>
+                  <div className="text-gray-300 text-xs space-y-1 pl-6">
+                    {scanResult.name && <p>Name: <span className="text-white">{scanResult.name}</span></p>}
+                    {scanResult.rank && <p>Rank: <span className="text-[#D4AF37]">{scanResult.rank}</span></p>}
+                    {scanResult.nationality && <p>Nationality: <span className="text-white">{scanResult.nationality}</span></p>}
+                    {scanResult.date_of_birth && <p>DOB: <span className="text-white">{scanResult.date_of_birth}</span></p>}
+                  </div>
+                </div>
+              )}
+
+              {/* Sea Service */}
+              {scanResult.sea_service?.length > 0 && (
+                <div className="border border-[#1e3a5f] rounded-xl p-3">
+                  <label className="flex items-center gap-2 text-white text-sm font-semibold mb-2 cursor-pointer">
+                    <input type="checkbox" checked={importSections.sea}
+                      onChange={e => setImportSections(s => ({ ...s, sea: e.target.checked }))}
+                      className="accent-[#D4AF37]" />
+                    <Ship size={14} /> Sea Service ({scanResult.sea_service.length} records found)
+                  </label>
+                  <div className="space-y-1 pl-6">
+                    {scanResult.sea_service.slice(0, 5).map((s: any, i: number) => (
+                      <div key={i} className="text-xs text-gray-300">
+                        <span className="text-white font-medium">{s.vessel_name}</span>
+                        {s.vessel_type && <span className="text-gray-400"> — {s.vessel_type}</span>}
+                        {s.rank && <span className="text-[#D4AF37]"> ({s.rank})</span>}
+                        {s.sign_on && s.sign_off && <span className="text-gray-500"> {s.sign_on} to {s.sign_off}</span>}
+                      </div>
+                    ))}
+                    {scanResult.sea_service.length > 5 && (
+                      <p className="text-gray-500 text-xs">+{scanResult.sea_service.length - 5} more...</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Certificates */}
+              {scanResult.certificates?.length > 0 && (
+                <div className="border border-[#1e3a5f] rounded-xl p-3">
+                  <label className="flex items-center gap-2 text-white text-sm font-semibold mb-2 cursor-pointer">
+                    <input type="checkbox" checked={importSections.certs}
+                      onChange={e => setImportSections(s => ({ ...s, certs: e.target.checked }))}
+                      className="accent-[#D4AF37]" />
+                    <Award size={14} /> Certificates ({scanResult.certificates.length} found)
+                  </label>
+                  <div className="space-y-1 pl-6">
+                    {scanResult.certificates.slice(0, 6).map((c: any, i: number) => (
+                      <p key={i} className="text-xs text-gray-300">{c.name}{c.number && ` — No. ${c.number}`}</p>
+                    ))}
+                    {scanResult.certificates.length > 6 && (
+                      <p className="text-gray-500 text-xs">+{scanResult.certificates.length - 6} more...</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Education */}
+              {scanResult.education?.length > 0 && (
+                <div className="border border-[#1e3a5f] rounded-xl p-3">
+                  <label className="flex items-center gap-2 text-white text-sm font-semibold mb-2 cursor-pointer">
+                    <input type="checkbox" checked={importSections.edu}
+                      onChange={e => setImportSections(s => ({ ...s, edu: e.target.checked }))}
+                      className="accent-[#D4AF37]" />
+                    <GraduationCap size={14} /> Education ({scanResult.education.length} entries)
+                  </label>
+                  <div className="space-y-1 pl-6">
+                    {scanResult.education.map((e: any, i: number) => (
+                      <p key={i} className="text-xs text-gray-300">
+                        {typeof e === "string" ? e : `${e.institution}${e.qualification ? ` — ${e.qualification}` : ""}`}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Skills */}
+              {(scanResult.main_engine_types?.length > 0 || scanResult.cargo_experience?.length > 0) && (
+                <div className="border border-[#1e3a5f] rounded-xl p-3">
+                  <label className="flex items-center gap-2 text-white text-sm font-semibold mb-2 cursor-pointer">
+                    <input type="checkbox" checked={importSections.skills}
+                      onChange={e => setImportSections(s => ({ ...s, skills: e.target.checked }))}
+                      className="accent-[#D4AF37]" />
+                    <Wrench size={14} /> Skills & Experience
+                  </label>
+                  <div className="pl-6 text-xs space-y-1">
+                    {scanResult.main_engine_types?.length > 0 && (
+                      <p className="text-[#D4AF37]">Engine: {scanResult.main_engine_types.join(", ")}</p>
+                    )}
+                    {scanResult.cargo_experience?.length > 0 && (
+                      <p className="text-[#D4AF37]">Cargo: {scanResult.cargo_experience.join(", ")}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Summary */}
+              {scanResult.summary && (
+                <div className="border border-[#1e3a5f] rounded-xl p-3">
+                  <p className="text-gray-400 text-xs italic">"{scanResult.summary}"</p>
+                </div>
+              )}
+            </div>
+
+            <div className="sticky bottom-0 bg-[#0D1B2A] border-t border-[#1e3a5f] p-4 flex gap-3">
+              <button onClick={applyImport}
+                className="flex-1 bg-[#D4AF37] text-[#0D1B2A] py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-yellow-400 transition-colors">
+                <CheckSquare size={16} /> Confirm & Import Selected
+              </button>
+              <button onClick={() => { setShowScanConfirm(false); setScanResult(null); }}
+                className="px-6 py-3 bg-[#132236] text-gray-400 rounded-xl text-sm font-medium hover:text-white transition-colors">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── TOP BAR (hidden in print) ─── */}
+      <div className="print:hidden">
+        <div className="flex gap-2 p-3 pb-1">
+          {(["form", "preview"] as const).map(v => (
+            <button key={v} onClick={() => setView(v)}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-colors ${view === v ? "bg-[#D4AF37] text-[#0D1B2A]" : "bg-[#132236] text-gray-400 hover:text-white"}`}>
+              {v === "form" ? <><Edit3 size={16} /> Build CV</> : <><Eye size={16} /> Preview & Print</>}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* ══════════ FORM VIEW ══════════ */}
       {view === "form" && (
-        <div className="flex-1 overflow-y-auto px-3 pt-2 space-y-1">
+        <div className="flex-1 overflow-y-auto px-3 pt-2 space-y-1 print:hidden">
 
           {/* ── AI SCAN CV ── */}
-          <div className="rounded-xl p-4 mb-2" style={{ background: '#0D1B2A', border: '1px solid #D4AF37' }}>
+          <div className="rounded-xl p-4 mb-2 border border-[#D4AF37] bg-[#0D1B2A]">
             <input ref={scanInputRef} type="file" accept=".pdf,image/*" className="hidden" onChange={handleScanCV} />
             <div className="flex items-center gap-2 mb-1">
               <span className="text-lg">⚡</span>
@@ -322,17 +517,14 @@ const ResumeBuilder = () => {
             <button
               onClick={(e) => { e.stopPropagation(); e.preventDefault(); scanInputRef.current?.click(); }}
               disabled={scanning}
-              style={{ background: '#D4AF37', color: '#0D1B2A', border: 'none', padding: '10px 24px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px', opacity: scanning ? 0.7 : 1 }}
-            >
-              {scanning ? (
-                <span className="flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> Scanning CV...</span>
-              ) : '📄 Scan My CV'}
+              className="bg-[#D4AF37] text-[#0D1B2A] border-none px-6 py-2.5 rounded-lg font-bold text-sm cursor-pointer hover:bg-yellow-400 transition-colors disabled:opacity-60">
+              {scanning ? <span className="flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> Scanning CV...</span> : "📄 Scan My CV"}
             </button>
-            {scanMessage && <p className="text-xs mt-3" style={{ color: scanMessage.startsWith('✅') ? '#22c55e' : '#ef4444' }}>{scanMessage}</p>}
+            {scanMessage && <p className="text-xs mt-3" style={{ color: scanMessage.startsWith("✅") ? "#22c55e" : "#ef4444" }}>{scanMessage}</p>}
           </div>
 
-          {/* ── PERSONAL ── */}
-          <Section id="personal" icon={<User size={16}/>} title="Personal Details" />
+          {/* ── PERSONAL DETAILS ── */}
+          <Section id="personal" icon={<User size={16} />} title="Personal Details" />
           {openSection === "personal" && (
             <div className="bg-[#0a1929] rounded-xl p-4 space-y-3 mb-1">
               <div className="flex items-center gap-3 mb-2">
@@ -341,186 +533,280 @@ const ResumeBuilder = () => {
                   {photo
                     ? <img src={photo} alt="Photo" className="w-16 h-16 rounded-full object-cover border-2 border-[#D4AF37]" />
                     : <div className="w-16 h-16 rounded-full bg-[#132236] border-2 border-dashed border-[#1e3a5f] flex flex-col items-center justify-center text-gray-500">
-                        <Camera size={18} />
-                        <span className="text-[8px] mt-0.5">Add Photo</span>
-                      </div>
-                  }
+                        <Camera size={18} /><span className="text-[8px] mt-0.5">Photo</span>
+                      </div>}
                 </button>
+                <p className="text-gray-500 text-xs">Passport-style photo recommended</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><label className={lbl}>First Name *</label><input className={inp} placeholder="Juan" value={personal.firstName} onChange={e => P("firstName", e.target.value)} /></div>
+                <div><label className={lbl}>Last Name *</label><input className={inp} placeholder="Dela Cruz" value={personal.lastName} onChange={e => P("lastName", e.target.value)} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><label className={lbl}>Current Rank *</label>
+                  <select className={sel} value={personal.rank} onChange={e => P("rank", e.target.value)}>
+                    <option value="">Select rank...</option>{RANKS.map(r => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                </div>
+                <div><label className={lbl}>Applying For</label>
+                  <select className={sel} value={personal.applyingFor} onChange={e => P("applyingFor", e.target.value)}>
+                    <option value="">Position desired...</option>{RANKS.map(r => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><label className={lbl}>Nationality</label><input className={inp} placeholder="Filipino" value={personal.nationality} onChange={e => P("nationality", e.target.value)} /></div>
+                <div><label className={lbl}>Date of Birth</label><input type="date" className={inp} value={personal.dob} onChange={e => P("dob", e.target.value)} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><label className={lbl}>Passport Number</label><input className={inp} placeholder="P1234567A" value={personal.passportNo} onChange={e => P("passportNo", e.target.value)} /></div>
+                <div><label className={lbl}>CDC / Seaman Book No.</label><input className={inp} placeholder="CDC-123456" value={personal.cdcNo} onChange={e => P("cdcNo", e.target.value)} /></div>
+              </div>
+              <div><label className={lbl}>CDC Issue Country</label><input className={inp} placeholder="Philippines" value={personal.cdcCountry} onChange={e => P("cdcCountry", e.target.value)} /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><label className={lbl}>WhatsApp / Phone</label><input className={inp} placeholder="+63..." value={personal.phone} onChange={e => P("phone", e.target.value)} /></div>
+                <div><label className={lbl}>Email</label><input className={inp} placeholder="name@email.com" value={personal.email} onChange={e => P("email", e.target.value)} /></div>
+              </div>
+              <div><label className={lbl}>Home Address</label><input className={inp} placeholder="Manila, Philippines" value={personal.address} onChange={e => P("address", e.target.value)} /></div>
+
+              {/* Languages inline */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-[#D4AF37] text-xs font-semibold">Languages</label>
+                  <button onClick={addLang} className="text-[#D4AF37] text-xs flex items-center gap-1 hover:opacity-80"><Plus size={12} />Add</button>
+                </div>
+                {skills.languages.map((l, i) => (
+                  <div key={i} className="grid grid-cols-5 gap-2 mb-2 items-center">
+                    <div className="col-span-2"><input className={inp} placeholder="Language" value={l.language} onChange={e => UL(i, "language", e.target.value)} /></div>
+                    <div className="col-span-2">
+                      <select className={sel} value={l.level} onChange={e => UL(i, "level", e.target.value)}>
+                        {LEVELS.map(lv => <option key={lv} value={lv}>{lv}</option>)}
+                      </select>
+                    </div>
+                    {skills.languages.length > 1 && <button onClick={() => rmLang(i)} className="text-red-400 flex justify-center"><Trash2 size={14} /></button>}
+                  </div>
+                ))}
               </div>
 
+              {/* Emergency Contact */}
               <div className="grid grid-cols-2 gap-3">
-                <div><label className={lbl}>First Name</label><input className={inp} placeholder="Juan" value={personal.firstName} onChange={e=>P("firstName",e.target.value)}/></div>
-                <div><label className={lbl}>Last Name</label><input className={inp} placeholder="Dela Cruz" value={personal.lastName} onChange={e=>P("lastName",e.target.value)}/></div>
+                <div><label className={lbl}>Emergency Contact Name</label><input className={inp} placeholder="Maria Dela Cruz" value={personal.emergencyName} onChange={e => P("emergencyName", e.target.value)} /></div>
+                <div><label className={lbl}>Emergency Phone</label><input className={inp} placeholder="+63..." value={personal.emergencyPhone} onChange={e => P("emergencyPhone", e.target.value)} /></div>
               </div>
-              <div><label className={lbl}>Rank / Position</label>
-                <select className={sel} value={personal.rank} onChange={e=>P("rank",e.target.value)}>
-                  <option value="">Select rank...</option>{RANKS.map(r=><option key={r} value={r}>{r}</option>)}
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><label className={lbl}>Nationality</label><input className={inp} placeholder="Filipino" value={personal.nationality} onChange={e=>P("nationality",e.target.value)}/></div>
-                <div><label className={lbl}>Date of Birth</label><input type="date" className={inp} value={personal.dob} onChange={e=>P("dob",e.target.value)}/></div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><label className={lbl}>WhatsApp / Phone</label><input className={inp} placeholder="+63..." value={personal.phone} onChange={e=>P("phone",e.target.value)}/></div>
-                <div><label className={lbl}>Email Address</label><input className={inp} placeholder="name@email.com" value={personal.email} onChange={e=>P("email",e.target.value)}/></div>
-              </div>
-              <div><label className={lbl}>Home Address / City, Country</label><input className={inp} placeholder="Manila, Philippines" value={personal.address} onChange={e=>P("address",e.target.value)}/></div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><label className={lbl}>Passport Number</label><input className={inp} placeholder="P1234567A" value={personal.passportNo} onChange={e=>P("passportNo",e.target.value)}/></div>
-                <div><label className={lbl}>CDC / Seaman Book No.</label><input className={inp} placeholder="CDC-123456" value={personal.cdcNo} onChange={e=>P("cdcNo",e.target.value)}/></div>
-              </div>
+
               <div>
-                <label className={lbl}>Professional Summary (optional — describe your career in 2–3 sentences)</label>
-                <textarea className={inp+" h-20 resize-none"} placeholder="Experienced 2nd Engineer with 8+ years on bulk carriers and tankers..." value={personal.summary} onChange={e=>P("summary",e.target.value)}/>
+                <label className={lbl}>Professional Summary</label>
+                <textarea className={inp + " h-20 resize-none"} placeholder="Experienced 2nd Engineer with 8+ years on bulk carriers..." value={personal.summary} onChange={e => P("summary", e.target.value)} />
               </div>
             </div>
           )}
 
           {/* ── SEA SERVICE ── */}
-          <Section id="sea" icon={<Ship size={16}/>} title={`Sea Service History (${sea.length} vessel${sea.length>1?"s":""})`}/>
+          <Section id="sea" icon={<Ship size={16} />} title="Sea Service Record" badge={`${sea.filter(s => s.vesselName).length}`} />
           {openSection === "sea" && (
             <div className="bg-[#0a1929] rounded-xl p-4 space-y-4 mb-1">
-              {sea.map((e,idx)=>(
+              {sea.map((e, idx) => (
                 <div key={e.id} className="border border-[#1e3a5f] rounded-xl p-3 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[#D4AF37] text-xs font-bold">🚢 VESSEL {idx+1}</span>
-                    {sea.length>1&&<button onClick={()=>rmVessel(e.id)} className="text-red-400 hover:text-red-300 transition-colors"><Trash2 size={14}/></button>}
+                    <span className="text-[#D4AF37] text-xs font-bold">🚢 VESSEL {idx + 1}</span>
+                    {sea.length > 1 && <button onClick={() => rmVessel(e.id)} className="text-red-400 hover:text-red-300"><Trash2 size={14} /></button>}
                   </div>
                   <div className="grid grid-cols-2 gap-2">
-                    <div><label className={lbl}>Vessel Name *</label><input className={inp} placeholder="MV Pacific Star" value={e.vesselName} onChange={ev=>U(e.id,"vesselName",ev.target.value)}/></div>
-                    <div><label className={lbl}>IMO Number</label><input className={inp} placeholder="9123456" value={e.imoNumber} onChange={ev=>U(e.id,"imoNumber",ev.target.value)}/></div>
-                  </div>
-                  <div><label className={lbl}>Vessel Type</label>
-                    <select className={sel} value={e.vesselType} onChange={ev=>U(e.id,"vesselType",ev.target.value)}>
-                      <option value="">Select type...</option>{VESSEL_TYPES.map(t=><option key={t} value={t}>{t}</option>)}
-                    </select>
+                    <div><label className={lbl}>Vessel Name *</label><input className={inp} placeholder="MV Pacific Star" value={e.vesselName} onChange={ev => U(e.id, "vesselName", ev.target.value)} /></div>
+                    <div><label className={lbl}>IMO Number</label><input className={inp} placeholder="9123456" value={e.imoNumber} onChange={ev => U(e.id, "imoNumber", ev.target.value)} /></div>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
-                    <div><label className={lbl}>Flag State</label><input className={inp} placeholder="Panama" value={e.flagState} onChange={ev=>U(e.id,"flagState",ev.target.value)}/></div>
+                    <div><label className={lbl}>Vessel Type</label>
+                      <select className={sel} value={e.vesselType} onChange={ev => U(e.id, "vesselType", ev.target.value)}>
+                        <option value="">Select...</option>{VESSEL_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                      </select>
+                    </div>
+                    <div><label className={lbl}>Flag State</label><input className={inp} placeholder="Panama" value={e.flagState} onChange={ev => U(e.id, "flagState", ev.target.value)} /></div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div><label className={lbl}>GRT / DWT</label><input className={inp} placeholder="180,000 DWT" value={e.grtDwt} onChange={ev => U(e.id, "grtDwt", ev.target.value)} /></div>
                     <div><label className={lbl}>Rank on Board</label>
-                      <select className={sel} value={e.rankOnBoard} onChange={ev=>U(e.id,"rankOnBoard",ev.target.value)}>
-                        <option value="">Rank...</option>{RANKS.map(r=><option key={r} value={r}>{r}</option>)}
+                      <select className={sel} value={e.rankOnBoard} onChange={ev => U(e.id, "rankOnBoard", ev.target.value)}>
+                        <option value="">Rank...</option>{RANKS.map(r => <option key={r} value={r}>{r}</option>)}
                       </select>
                     </div>
                   </div>
-                  <div><label className={lbl}>Manning Agency / Company</label><input className={inp} placeholder="Anglo-Eastern, Columbia, Bernhard Schulte..." value={e.company} onChange={ev=>U(e.id,"company",ev.target.value)}/></div>
                   <div className="grid grid-cols-2 gap-2">
-                    <div><label className={lbl}>Engine Type</label>
-                      <select className={sel} value={e.engineType} onChange={ev=>U(e.id,"engineType",ev.target.value)}>
-                        <option value="">Engine type...</option>{ENGINE_TYPES.map(t=><option key={t} value={t}>{t}</option>)}
+                    <div><label className={lbl}>Shipping Company</label><input className={inp} placeholder="Anglo-Eastern" value={e.company} onChange={ev => U(e.id, "company", ev.target.value)} /></div>
+                    <div><label className={lbl}>Manning Agent</label><input className={inp} placeholder="Pacific Ocean Manning" value={e.manningAgent} onChange={ev => U(e.id, "manningAgent", ev.target.value)} /></div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div><label className={lbl}>Main Engine Type</label>
+                      <select className={sel} value={e.engineType} onChange={ev => U(e.id, "engineType", ev.target.value)}>
+                        <option value="">Engine...</option>{ENGINE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                       </select>
                     </div>
-                    <div><label className={lbl}>GRT / DWT</label><input className={inp} placeholder="180,000 DWT" value={e.grtDwt} onChange={ev=>U(e.id,"grtDwt",ev.target.value)}/></div>
+                    <div><label className={lbl}>Cargo Type</label>
+                      <select className={sel} value={e.cargoType} onChange={ev => U(e.id, "cargoType", ev.target.value)}>
+                        <option value="">Cargo...</option>{CARGO_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                      </select>
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
-                    <div><label className={lbl}>From (Month/Year)</label><input type="month" className={inp} value={e.fromDate} onChange={ev=>U(e.id,"fromDate",ev.target.value)}/></div>
-                    <div><label className={lbl}>To (Month/Year)</label><input type="month" className={inp} value={e.toDate} onChange={ev=>U(e.id,"toDate",ev.target.value)}/></div>
+                    <div><label className={lbl}>Sign On</label><input type="date" className={inp} value={e.fromDate} onChange={ev => U(e.id, "fromDate", ev.target.value)} /></div>
+                    <div><label className={lbl}>Sign Off</label><input type="date" className={inp} value={e.toDate} onChange={ev => U(e.id, "toDate", ev.target.value)} /></div>
                   </div>
+                  <div><label className={lbl}>Reason for Leaving</label><input className={inp} placeholder="End of contract" value={e.reasonForLeaving} onChange={ev => U(e.id, "reasonForLeaving", ev.target.value)} /></div>
                 </div>
               ))}
               <button onClick={addVessel} className="w-full border border-dashed border-[#D4AF37] text-[#D4AF37] py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#D4AF37]/10 transition-colors">
-                <Plus size={16}/> Add Another Vessel
+                <Plus size={16} /> Add Another Vessel
               </button>
             </div>
           )}
 
           {/* ── CERTIFICATES ── */}
-          <Section id="certs" icon={<Award size={16}/>} title="Certificates & Endorsements"/>
+          <Section id="certs" icon={<Award size={16} />} title="Certificates & Endorsements" badge={`${filledCerts.length}`} />
           {openSection === "certs" && (
-            <div className="bg-[#0a1929] rounded-xl p-4 space-y-2 mb-1">
-              <p className="text-gray-500 text-xs mb-3">Fill in the certificates you hold. Leave blank any you don't have.</p>
-              {certs.map(cert=>{
-                const st = certStatus(cert.expiryDate);
-                return (
-                  <div key={cert.id} className="border border-[#1e3a5f] rounded-xl p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      {cert.isCustom
-                        ? <input className={inp+" flex-1 mr-2 text-xs"} placeholder="Certificate name" value={cert.name} onChange={e=>UC(cert.id,"name",e.target.value)}/>
-                        : <span className="text-white text-xs font-medium flex-1 pr-2">{cert.name}</span>
-                      }
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        {st==="valid"&&<span className="text-green-400 text-xs font-bold">✓ Valid</span>}
-                        {st==="expiring"&&<span className="text-yellow-400 text-xs font-bold">⚠ Expiring</span>}
-                        {st==="expired"&&<span className="text-red-400 text-xs font-bold">✗ Expired</span>}
-                        {cert.isCustom&&<button onClick={()=>rmCert(cert.id)} className="text-red-400 ml-1"><Trash2 size={12}/></button>}
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      <div><label className={lbl}>Cert No.</label><input className={inp} placeholder="No." value={cert.number} onChange={e=>UC(cert.id,"number",e.target.value)}/></div>
-                      <div><label className={lbl}>Issue Date</label><input type="date" className={inp} value={cert.issueDate} onChange={e=>UC(cert.id,"issueDate",e.target.value)}/></div>
-                      <div><label className={lbl}>Expiry Date</label><input type="date" className={inp} value={cert.expiryDate} onChange={e=>UC(cert.id,"expiryDate",e.target.value)}/></div>
-                    </div>
-                  </div>
-                );
-              })}
-              <button onClick={addCert} className="w-full border border-dashed border-[#D4AF37] text-[#D4AF37] py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#D4AF37]/10 transition-colors">
-                <Plus size={16}/> Add Custom Certificate
-              </button>
-            </div>
-          )}
+            <div className="bg-[#0a1929] rounded-xl p-4 space-y-4 mb-1">
+              {/* CoC */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[#D4AF37] text-xs font-bold uppercase tracking-wider">Certificate of Competency (CoC)</span>
+                  <button onClick={() => addCert("coc")} className="text-[#D4AF37] text-xs flex items-center gap-1"><Plus size={12} />Add</button>
+                </div>
+                {certs.filter(c => c.category === "coc").map(cert => (
+                  <CertRow key={cert.id} cert={cert} UC={UC} rmCert={rmCert} inp={inp} sel={sel} lbl={lbl} />
+                ))}
+                {certs.filter(c => c.category === "coc").length === 0 && (
+                  <button onClick={() => addCert("coc")} className="w-full border border-dashed border-[#1e3a5f] text-gray-500 py-2 rounded-lg text-xs">+ Add CoC</button>
+                )}
+              </div>
 
-          {/* ── EDUCATION ── */}
-          <Section id="edu" icon={<GraduationCap size={16}/>} title="Education"/>
-          {openSection === "edu" && (
-            <div className="bg-[#0a1929] rounded-xl p-4 space-y-3 mb-1">
-              <div><label className={lbl}>Maritime Academy / College</label><input className={inp} placeholder="MAAP, DLMM, NMTI, DMET..." value={edu.academy} onChange={e=>setEdu(d=>({...d,academy:e.target.value}))}/></div>
-              <div><label className={lbl}>Degree / Diploma</label><input className={inp} placeholder="BSc Marine Transportation, BSc Marine Engineering..." value={edu.degree} onChange={e=>setEdu(d=>({...d,degree:e.target.value}))}/></div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><label className={lbl}>Year of Graduation</label><input className={inp} placeholder="2018" value={edu.year} onChange={e=>setEdu(d=>({...d,year:e.target.value}))}/></div>
-                <div><label className={lbl}>Country</label><input className={inp} placeholder="Philippines" value={edu.country} onChange={e=>setEdu(d=>({...d,country:e.target.value}))}/></div>
+              {/* STCW */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[#D4AF37] text-xs font-bold uppercase tracking-wider">STCW Endorsements</span>
+                  <button onClick={() => addCert("stcw")} className="text-[#D4AF37] text-xs flex items-center gap-1"><Plus size={12} />Add</button>
+                </div>
+                {certs.filter(c => c.category === "stcw").map(cert => (
+                  <CertRow key={cert.id} cert={cert} UC={UC} rmCert={rmCert} inp={inp} sel={sel} lbl={lbl} />
+                ))}
+              </div>
+
+              {/* Medical */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[#D4AF37] text-xs font-bold uppercase tracking-wider">Medical Certificates</span>
+                  <button onClick={() => addCert("medical")} className="text-[#D4AF37] text-xs flex items-center gap-1"><Plus size={12} />Add</button>
+                </div>
+                {certs.filter(c => c.category === "medical").map(cert => (
+                  <CertRow key={cert.id} cert={cert} UC={UC} rmCert={rmCert} inp={inp} sel={sel} lbl={lbl} />
+                ))}
+                {certs.filter(c => c.category === "medical").length === 0 && (
+                  <button onClick={() => addCert("medical")} className="w-full border border-dashed border-[#1e3a5f] text-gray-500 py-2 rounded-lg text-xs">+ Add Medical</button>
+                )}
+              </div>
+
+              {/* Other */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[#D4AF37] text-xs font-bold uppercase tracking-wider">Other (Flag State, Yellow Fever, etc.)</span>
+                  <button onClick={() => addCert("other")} className="text-[#D4AF37] text-xs flex items-center gap-1"><Plus size={12} />Add</button>
+                </div>
+                {certs.filter(c => c.category === "other").map(cert => (
+                  <CertRow key={cert.id} cert={cert} UC={UC} rmCert={rmCert} inp={inp} sel={sel} lbl={lbl} />
+                ))}
+                {certs.filter(c => c.category === "other").length === 0 && (
+                  <button onClick={() => addCert("other")} className="w-full border border-dashed border-[#1e3a5f] text-gray-500 py-2 rounded-lg text-xs">+ Add Other</button>
+                )}
               </div>
             </div>
           )}
 
+          {/* ── EDUCATION ── */}
+          <Section id="edu" icon={<GraduationCap size={16} />} title="Education" badge={`${filledEdu.length}`} />
+          {openSection === "edu" && (
+            <div className="bg-[#0a1929] rounded-xl p-4 space-y-3 mb-1">
+              {edu.map((e, idx) => (
+                <div key={e.id} className="border border-[#1e3a5f] rounded-xl p-3 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[#D4AF37] text-xs font-bold">🎓 Entry {idx + 1}</span>
+                    {edu.length > 1 && <button onClick={() => rmEdu(e.id)} className="text-red-400"><Trash2 size={14} /></button>}
+                  </div>
+                  <div><label className={lbl}>Institution / Academy</label><input className={inp} placeholder="MAAP, PMI, PMMA..." value={e.institution} onChange={ev => UE(e.id, "institution", ev.target.value)} /></div>
+                  <div><label className={lbl}>Qualification / Degree</label><input className={inp} placeholder="BSc Marine Transportation" value={e.qualification} onChange={ev => UE(e.id, "qualification", ev.target.value)} /></div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div><label className={lbl}>Year From</label><input className={inp} placeholder="2014" value={e.yearFrom} onChange={ev => UE(e.id, "yearFrom", ev.target.value)} /></div>
+                    <div><label className={lbl}>Year To</label><input className={inp} placeholder="2018" value={e.yearTo} onChange={ev => UE(e.id, "yearTo", ev.target.value)} /></div>
+                  </div>
+                </div>
+              ))}
+              <button onClick={addEdu} className="w-full border border-dashed border-[#D4AF37] text-[#D4AF37] py-2 rounded-xl text-sm flex items-center justify-center gap-2 hover:bg-[#D4AF37]/10">
+                <Plus size={16} /> Add Education
+              </button>
+            </div>
+          )}
+
+          {/* ── TRAINING COURSES ── */}
+          <Section id="training" icon={<BookOpen size={16} />} title="Training Courses" badge={`${filledTraining.length}`} />
+          {openSection === "training" && (
+            <div className="bg-[#0a1929] rounded-xl p-4 space-y-3 mb-1">
+              {training.map((t, idx) => (
+                <div key={t.id} className="border border-[#1e3a5f] rounded-xl p-3 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[#D4AF37] text-xs font-bold">📚 Course {idx + 1}</span>
+                    <button onClick={() => rmTraining(t.id)} className="text-red-400"><Trash2 size={14} /></button>
+                  </div>
+                  <div><label className={lbl}>Course Name</label><input className={inp} placeholder="Tanker Familiarisation" value={t.courseName} onChange={ev => UT(t.id, "courseName", ev.target.value)} /></div>
+                  <div><label className={lbl}>Institution</label><input className={inp} placeholder="STCW Training Center" value={t.institution} onChange={ev => UT(t.id, "institution", ev.target.value)} /></div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div><label className={lbl}>Date Completed</label><input type="date" className={inp} value={t.dateCompleted} onChange={ev => UT(t.id, "dateCompleted", ev.target.value)} /></div>
+                    <div><label className={lbl}>Certificate No.</label><input className={inp} placeholder="TC-12345" value={t.certNo} onChange={ev => UT(t.id, "certNo", ev.target.value)} /></div>
+                  </div>
+                </div>
+              ))}
+              <button onClick={addTraining} className="w-full border border-dashed border-[#D4AF37] text-[#D4AF37] py-2 rounded-xl text-sm flex items-center justify-center gap-2 hover:bg-[#D4AF37]/10">
+                <Plus size={16} /> Add Training Course
+              </button>
+            </div>
+          )}
+
           {/* ── SKILLS ── */}
-          <Section id="skills" icon={<Globe size={16}/>} title="Skills & Languages"/>
+          <Section id="skills" icon={<Wrench size={16} />} title="Skills & Experience" />
           {openSection === "skills" && (
             <div className="bg-[#0a1929] rounded-xl p-4 space-y-4 mb-1">
               <div>
-                <label className="text-[#D4AF37] text-sm font-semibold mb-2 block">ECDIS Systems Known</label>
+                <label className={lbl}>Engine Types Experience</label>
+                <input className={inp} placeholder="MAN B&W 6S50MC-C, Wärtsilä 6RT-flex58T-B..." value={skills.engineTypes} onChange={e => setSkills(s => ({ ...s, engineTypes: e.target.value }))} />
+              </div>
+              <div>
+                <label className={lbl}>Cargo Types Handled</label>
+                <input className={inp} placeholder="Crude Oil, Dry Bulk, Chemicals, LNG..." value={skills.cargoTypes} onChange={e => setSkills(s => ({ ...s, cargoTypes: e.target.value }))} />
+              </div>
+              <div>
+                <label className="text-[#D4AF37] text-xs font-semibold mb-2 block">ECDIS Systems</label>
                 <div className="flex flex-wrap gap-2">
-                  {ECDIS_SYSTEMS.map(sys=>(
-                    <button key={sys} onClick={()=>toggleEcdis(sys)}
+                  {ECDIS_SYSTEMS.map(sys => (
+                    <button key={sys} onClick={() => toggleEcdis(sys)}
                       className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${skills.ecdis.includes(sys) ? "bg-[#D4AF37] text-[#0D1B2A] border-[#D4AF37]" : "bg-transparent text-gray-400 border-[#1e3a5f] hover:border-[#D4AF37]"}`}>
                       {sys}
                     </button>
                   ))}
                 </div>
               </div>
-
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-[#D4AF37] text-sm font-semibold">Languages</label>
-                  <button onClick={addLang} className="text-[#D4AF37] text-xs flex items-center gap-1 hover:opacity-80"><Plus size={12}/>Add</button>
-                </div>
-                {skills.languages.map((l,i)=>(
-                  <div key={i} className="grid grid-cols-5 gap-2 mb-2 items-center">
-                    <div className="col-span-2"><input className={inp} placeholder="Language" value={l.language} onChange={e=>UL(i,"language",e.target.value)}/></div>
-                    <div className="col-span-2">
-                      <select className={sel} value={l.level} onChange={e=>UL(i,"level",e.target.value)}>
-                        {LEVELS.map(lv=><option key={lv} value={lv}>{lv}</option>)}
-                      </select>
-                    </div>
-                    {skills.languages.length>1&&<button onClick={()=>rmLang(i)} className="text-red-400 flex justify-center"><Trash2 size={14}/></button>}
-                  </div>
-                ))}
+                <label className={lbl}>Computer Skills</label>
+                <input className={inp} placeholder="MS Office, AMOS, ShipManager..." value={skills.computerSkills} onChange={e => setSkills(s => ({ ...s, computerSkills: e.target.value }))} />
               </div>
-
               <div>
                 <label className={lbl}>Other Skills & Competencies</label>
-                <textarea className={inp+" h-16 resize-none"} placeholder="ISM/ISPS procedures, cargo planning, stability calculations, LRIT, AIS, VDR, autopilot systems..." value={skills.other} onChange={e=>setSkills(s=>({...s,other:e.target.value}))}/>
+                <textarea className={inp + " h-16 resize-none"} placeholder="ISM/ISPS procedures, cargo planning, stability calculations..." value={skills.other} onChange={e => setSkills(s => ({ ...s, other: e.target.value }))} />
               </div>
             </div>
           )}
 
-          {/* Generate Button */}
+          {/* Preview Button */}
           <div className="pb-4">
-            <button onClick={()=>setView("preview")}
+            <button onClick={() => setView("preview")}
               className="w-full bg-[#D4AF37] text-[#0D1B2A] py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-3 shadow-lg hover:bg-yellow-400 transition-colors mt-3">
-              <Eye size={20}/> Preview My CV →
+              <Eye size={20} /> Preview My CV →
             </button>
-            <p className="text-gray-600 text-xs text-center mt-2">Preview → Print / Save as PDF</p>
           </div>
         </div>
       )}
@@ -528,162 +814,400 @@ const ResumeBuilder = () => {
       {/* ══════════ PREVIEW VIEW ══════════ */}
       {view === "preview" && (
         <div className="flex-1 overflow-y-auto">
-          <div className="px-3 pt-3 pb-2 flex gap-2">
+          <div className="px-3 pt-3 pb-2 flex gap-2 print:hidden">
+            <button onClick={() => setView("form")}
+              className="px-4 py-3 bg-[#132236] text-gray-300 rounded-xl text-sm font-medium flex items-center gap-2 hover:text-white transition-colors">
+              <ArrowLeft size={16} /> Back to Edit
+            </button>
             <button onClick={handlePrint}
               className="flex-1 bg-[#D4AF37] text-[#0D1B2A] py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-yellow-400 transition-colors shadow-lg">
-              <Printer size={18}/> Download / Print PDF
+              <Printer size={18} /> Download / Print PDF
             </button>
           </div>
-          <p className="text-gray-500 text-xs text-center pb-2">A print dialog will open — select "Save as PDF"</p>
+          <p className="text-gray-500 text-xs text-center pb-2 print:hidden">Select "Save as PDF" in the print dialog</p>
+
+          {/* ── Print-only styles ── */}
+          <style>{`
+            @media print {
+              body, html { margin: 0 !important; padding: 0 !important; background: #fff !important; }
+              .print\\:hidden, nav, header, footer, [data-print-hide] { display: none !important; }
+              .print\\:bg-white { background: #fff !important; }
+              #cv-print-area { display: block !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; border-radius: 0 !important; }
+              @page { size: A4; margin: 15mm; }
+              table { page-break-inside: auto; }
+              tr { page-break-inside: avoid; page-break-after: auto; }
+              .cv-page-break { page-break-before: always; }
+            }
+          `}</style>
 
           {/* ── CV DOCUMENT ── */}
-          <div ref={printRef} className="mx-3 mb-10 bg-white text-gray-900 rounded-2xl overflow-hidden shadow-2xl" style={{fontFamily:"Georgia, serif"}}>
+          <div ref={printRef} id="cv-print-area" className="mx-3 mb-10 bg-white text-gray-900 rounded-2xl overflow-hidden shadow-2xl print:mx-0 print:rounded-none print:shadow-none"
+            style={{ fontFamily: "Arial, Helvetica, sans-serif" }}>
 
             {/* Header */}
-            <div className="cv-header bg-[#0D1B2A] p-5 flex items-center gap-5">
+            <div style={{ background: "#0D1B2A", padding: "24px", display: "flex", alignItems: "center", gap: "20px" }}>
               {photo
-                ? <img src={photo} alt="CV Photo" className="cv-photo w-20 h-20 rounded-full object-cover flex-shrink-0" style={{border:"3px solid #D4AF37"}}/>
-                : <div className="cv-photo-ph w-20 h-20 rounded-full bg-[#1a2d47] flex items-center justify-center flex-shrink-0 text-3xl" style={{border:"2px solid #D4AF37"}}>👤</div>
-              }
+                ? <img src={photo} alt="CV Photo" style={{ width: 96, height: 96, borderRadius: "50%", objectFit: "cover", border: "3px solid #D4AF37", flexShrink: 0 }} />
+                : <div style={{ width: 96, height: 96, borderRadius: "50%", background: "#1a2d47", border: "2px solid #D4AF37", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 36 }}>👤</div>}
               <div>
-                <div className="cv-name text-xl font-bold text-white">{fullName}</div>
-                <div className="cv-rank text-[#D4AF37] text-sm font-semibold mt-0.5">{personal.rank||"Rank / Position"}</div>
-                <div className="cv-contact text-gray-300 text-xs mt-1 space-y-0.5">
-                  {[personal.nationality, personal.phone, personal.email, personal.address].filter(Boolean).join(" · ") || "Contact details..."}
+                <div style={{ fontSize: 22, fontWeight: 700, color: "#fff" }}>{fullName}</div>
+                <div style={{ color: "#D4AF37", fontSize: 15, marginTop: 2, fontWeight: 600 }}>{personal.rank || "Rank / Position"}</div>
+                {personal.applyingFor && <div style={{ color: "#ccc", fontSize: 12, marginTop: 2 }}>Applying for: {personal.applyingFor}</div>}
+                <div style={{ color: "#ccc", fontSize: 12, marginTop: 4 }}>
+                  {[
+                    personal.nationality,
+                    personal.dob && `DOB: ${fmtDate(personal.dob)}`,
+                    personal.passportNo && `Passport: ${personal.passportNo}`,
+                    personal.cdcNo && `CDC: ${personal.cdcNo}`,
+                  ].filter(Boolean).join(" | ")}
                 </div>
-                {(personal.passportNo||personal.cdcNo) && (
-                  <div className="text-gray-400 text-xs mt-1">
-                    {personal.passportNo&&`Passport: ${personal.passportNo}`}{personal.passportNo&&personal.cdcNo&&" · "}{personal.cdcNo&&`CDC: ${personal.cdcNo}`}
-                  </div>
-                )}
+                <div style={{ color: "#aaa", fontSize: 11, marginTop: 3 }}>
+                  {[
+                    personal.phone && `📱 ${personal.phone}`,
+                    personal.email && `✉ ${personal.email}`,
+                    personal.address && `📍 ${personal.address}`,
+                  ].filter(Boolean).join(" | ")}
+                </div>
               </div>
             </div>
 
-            <div className="cv-body p-5 flex gap-4">
-              {/* Main column */}
-              <div className="cv-main flex-[2] pr-4 border-r border-gray-200">
-                {personal.summary&&(
-                  <div className="cv-summary border-l-4 border-[#D4AF37] pl-3 py-1 mb-4">
-                    <p className="text-gray-600 text-xs italic">{personal.summary}</p>
-                  </div>
-                )}
+            <div style={{ padding: "20px 24px" }}>
+              {/* Summary */}
+              {personal.summary && (
+                <div style={{ borderLeft: "4px solid #D4AF37", padding: "8px 14px", marginBottom: 20, background: "#f9f9f5" }}>
+                  <p style={{ color: "#444", fontSize: 12, fontStyle: "italic", lineHeight: 1.5 }}>{personal.summary}</p>
+                </div>
+              )}
 
-                {/* Sea Service */}
-                {filledSea.length>0&&(
-                  <div className="mb-4">
-                    <div className="cv-section-title text-[#0D1B2A] font-bold text-xs uppercase tracking-widest border-b-2 border-[#D4AF37] pb-1 mb-2 flex items-center gap-2">
-                      <span>⚓</span> SEA SERVICE RECORD
-                    </div>
-                    <div className="space-y-2">
-                      {filledSea.map(e=>(
-                        <div key={e.id} className="vessel-card bg-gray-50 rounded-lg p-2.5 border border-gray-100">
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <span className="vessel-name font-bold text-[#0D1B2A] text-xs">{e.vesselName}</span>
-                              {e.imoNumber&&<span className="text-gray-400 text-xs ml-2">IMO {e.imoNumber}</span>}
-                            </div>
-                            <span className="vessel-rank text-[#D4AF37] font-bold text-xs">{e.rankOnBoard}</span>
-                          </div>
-                          <div className="vessel-meta text-gray-500 text-xs mt-0.5">
-                            {[e.vesselType, e.grtDwt&&e.grtDwt, e.flagState&&`Flag: ${e.flagState}`, e.company].filter(Boolean).join(" · ")}
-                          </div>
-                          {e.engineType&&<div className="text-gray-400 text-xs">Engine: {e.engineType}</div>}
-                          {(e.fromDate||e.toDate)&&(
-                            <div className="text-gray-400 text-xs mt-0.5">{fmtMonth(e.fromDate)||"?"} — {fmtMonth(e.toDate)||"Present"}</div>
-                          )}
-                        </div>
+              {/* ── SEA SERVICE TABLE ── */}
+              {filledSea.length > 0 && (
+                <div style={{ marginBottom: 24 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "#0D1B2A", borderBottom: "2px solid #D4AF37", paddingBottom: 4, marginBottom: 10 }}>
+                    ⚓ Sea Service Record
+                  </div>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+                    <thead>
+                      <tr style={{ background: "#0D1B2A", color: "#fff" }}>
+                        <th style={thStyle}>Sr.</th>
+                        <th style={thStyle}>Vessel Name</th>
+                        <th style={thStyle}>Type</th>
+                        <th style={thStyle}>Flag</th>
+                        <th style={thStyle}>GRT/DWT</th>
+                        <th style={thStyle}>Rank</th>
+                        <th style={thStyle}>Company</th>
+                        <th style={thStyle}>Sign On</th>
+                        <th style={thStyle}>Sign Off</th>
+                        <th style={thStyle}>{isEngineer ? "Engine" : "Cargo"}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filledSea.map((e, i) => (
+                        <tr key={e.id} style={{ background: i % 2 === 0 ? "#fff" : "#f7f8fa" }}>
+                          <td style={tdStyle}>{i + 1}</td>
+                          <td style={{ ...tdStyle, fontWeight: 600 }}>{e.vesselName}{e.imoNumber && <span style={{ color: "#999", fontSize: 9 }}><br />IMO {e.imoNumber}</span>}</td>
+                          <td style={tdStyle}>{e.vesselType}</td>
+                          <td style={tdStyle}>{e.flagState}</td>
+                          <td style={tdStyle}>{e.grtDwt}</td>
+                          <td style={{ ...tdStyle, color: "#D4AF37", fontWeight: 600 }}>{e.rankOnBoard}</td>
+                          <td style={tdStyle}>{e.company}{e.manningAgent && <span style={{ color: "#999", fontSize: 9 }}><br />{e.manningAgent}</span>}</td>
+                          <td style={tdStyle}>{fmtDate(e.fromDate)}</td>
+                          <td style={tdStyle}>{fmtDate(e.toDate) || "Present"}</td>
+                          <td style={tdStyle}>{isEngineer ? e.engineType : e.cargoType}</td>
+                        </tr>
                       ))}
-                    </div>
+                    </tbody>
+                  </table>
+                  <div style={{ textAlign: "right", fontSize: 11, fontWeight: 700, color: "#0D1B2A", marginTop: 6 }}>
+                    Total Sea Service: {calcTotalSeaService(filledSea)}
                   </div>
-                )}
+                </div>
+              )}
 
-                {/* Certificates */}
-                {filledCerts.length>0&&(
-                  <div>
-                    <div className="cv-section-title text-[#0D1B2A] font-bold text-xs uppercase tracking-widest border-b-2 border-[#D4AF37] pb-1 mb-2 flex items-center gap-2">
-                      <span>📋</span> CERTIFICATES &amp; ENDORSEMENTS
-                    </div>
-                    {filledCerts.map(c=>{
-                      const st=certStatus(c.expiryDate);
-                      return (
-                        <div key={c.id} className="cert-row flex items-center justify-between py-1 border-b border-gray-100">
-                          <div className="flex items-center gap-2">
-                            <span className={st==="valid"?"text-green-500":st==="expiring"?"text-yellow-500":st==="expired"?"text-red-500":"text-gray-300"} style={{fontSize:"10px"}}>
-                              {st==="valid"?"✓":st==="expiring"?"⚠":st==="expired"?"✗":"·"}
-                            </span>
-                            <span className="cert-name text-gray-800 text-xs">{c.name}</span>
-                          </div>
-                          <div className="cert-meta text-gray-400 text-xs text-right">
-                            {c.number&&`No. ${c.number}`}{c.expiryDate&&` · Exp: ${c.expiryDate}`}
-                          </div>
+              {/* ── CoC ── */}
+              {cocCerts.length > 0 && (
+                <div style={{ marginBottom: 20 }}>
+                  <div style={sectionTitleStyle}>📋 Certificate of Competency</div>
+                  <div style={{ background: "#f9f9f5", border: "1px solid #D4AF37", borderRadius: 8, padding: 12 }}>
+                    {cocCerts.map(c => (
+                      <div key={c.id} style={{ marginBottom: 6 }}>
+                        <span style={{ fontWeight: 700, fontSize: 12 }}>{c.name}</span>
+                        <span style={{ color: "#666", fontSize: 11 }}> — No. {c.number}{c.flagState && `, Flag: ${c.flagState}`}</span>
+                        <div style={{ fontSize: 10, color: "#999" }}>
+                          Issued: {fmtDate(c.issueDate)} | Expires: {fmtDate(c.expiryDate)}
+                          {c.issuingAuthority && ` | Authority: ${c.issuingAuthority}`}
                         </div>
-                      );
-                    })}
+                      </div>
+                    ))}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
 
-              {/* Side column */}
-              <div className="cv-side flex-1 space-y-4">
-                {/* Education */}
-                {edu.academy&&(
-                  <div>
-                    <div className="cv-section-title text-[#0D1B2A] font-bold text-xs uppercase tracking-widest border-b-2 border-[#D4AF37] pb-1 mb-2">🎓 Education</div>
-                    <div className="edu-box bg-gray-50 rounded-lg p-2.5">
-                      <div className="font-bold text-[#0D1B2A] text-xs">{edu.academy}</div>
-                      {edu.degree&&<div className="text-gray-600 text-xs">{edu.degree}</div>}
-                      {(edu.year||edu.country)&&<div className="text-gray-400 text-xs">{[edu.year,edu.country].filter(Boolean).join(", ")}</div>}
-                    </div>
+              {/* ── STCW TABLE ── */}
+              {stcwCerts.length > 0 && (
+                <div style={{ marginBottom: 20 }}>
+                  <div style={sectionTitleStyle}>📋 STCW Endorsements</div>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+                    <thead>
+                      <tr style={{ background: "#0D1B2A", color: "#fff" }}>
+                        <th style={thStyle}>Sr.</th>
+                        <th style={thStyle}>Certificate</th>
+                        <th style={thStyle}>Cert No.</th>
+                        <th style={thStyle}>Issue Date</th>
+                        <th style={thStyle}>Expiry Date</th>
+                        <th style={thStyle}>Issuing Authority</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {stcwCerts.map((c, i) => {
+                        const st = certStatus(c.expiryDate);
+                        return (
+                          <tr key={c.id} style={{ background: st === "expired" ? "#fff0f0" : st === "expiring" ? "#fffbeb" : i % 2 === 0 ? "#fff" : "#f7f8fa" }}>
+                            <td style={tdStyle}>{i + 1}</td>
+                            <td style={tdStyle}>{c.name}</td>
+                            <td style={tdStyle}>{c.number}</td>
+                            <td style={tdStyle}>{fmtDate(c.issueDate)}</td>
+                            <td style={{ ...tdStyle, color: st === "expired" ? "#ef4444" : st === "expiring" ? "#f59e0b" : "#333", fontWeight: st !== "valid" && st !== "none" ? 700 : 400 }}>{fmtDate(c.expiryDate)}</td>
+                            <td style={tdStyle}>{c.issuingAuthority}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* ── Medical Table ── */}
+              {medCerts.length > 0 && (
+                <div style={{ marginBottom: 20 }}>
+                  <div style={sectionTitleStyle}>🏥 Medical Certificates</div>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+                    <thead>
+                      <tr style={{ background: "#0D1B2A", color: "#fff" }}>
+                        <th style={thStyle}>Sr.</th>
+                        <th style={thStyle}>Type</th>
+                        <th style={thStyle}>Issue Date</th>
+                        <th style={thStyle}>Expiry Date</th>
+                        <th style={thStyle}>Issuing Clinic/Authority</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {medCerts.map((c, i) => {
+                        const st = certStatus(c.expiryDate);
+                        return (
+                          <tr key={c.id} style={{ background: st === "expired" ? "#fff0f0" : st === "expiring" ? "#fffbeb" : "#fff" }}>
+                            <td style={tdStyle}>{i + 1}</td>
+                            <td style={tdStyle}>{c.name}</td>
+                            <td style={tdStyle}>{fmtDate(c.issueDate)}</td>
+                            <td style={{ ...tdStyle, color: st === "expired" ? "#ef4444" : st === "expiring" ? "#f59e0b" : "#333" }}>{fmtDate(c.expiryDate)}</td>
+                            <td style={tdStyle}>{c.issuingAuthority}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Other certs */}
+              {otherCerts.length > 0 && (
+                <div style={{ marginBottom: 20 }}>
+                  <div style={sectionTitleStyle}>📄 Other Certificates & Endorsements</div>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+                    <thead>
+                      <tr style={{ background: "#0D1B2A", color: "#fff" }}>
+                        <th style={thStyle}>Certificate</th>
+                        <th style={thStyle}>No.</th>
+                        <th style={thStyle}>Issue</th>
+                        <th style={thStyle}>Expiry</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {otherCerts.map((c, i) => (
+                        <tr key={c.id} style={{ background: i % 2 === 0 ? "#fff" : "#f7f8fa" }}>
+                          <td style={tdStyle}>{c.name}</td>
+                          <td style={tdStyle}>{c.number}</td>
+                          <td style={tdStyle}>{fmtDate(c.issueDate)}</td>
+                          <td style={tdStyle}>{fmtDate(c.expiryDate)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* ── Education ── */}
+              {filledEdu.length > 0 && (
+                <div style={{ marginBottom: 20 }}>
+                  <div style={sectionTitleStyle}>🎓 Education</div>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+                    <thead>
+                      <tr style={{ background: "#0D1B2A", color: "#fff" }}>
+                        <th style={thStyle}>Institution</th>
+                        <th style={thStyle}>Qualification</th>
+                        <th style={thStyle}>Year</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filledEdu.map((e, i) => (
+                        <tr key={e.id} style={{ background: i % 2 === 0 ? "#fff" : "#f7f8fa" }}>
+                          <td style={tdStyle}>{e.institution}</td>
+                          <td style={tdStyle}>{e.qualification}</td>
+                          <td style={tdStyle}>{e.yearFrom}{e.yearTo && ` – ${e.yearTo}`}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* ── Engine / Cargo Experience ── */}
+              {skills.engineTypes && (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={sectionTitleStyle}>⚙️ Engine Experience</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {skills.engineTypes.split(",").map((t, i) => t.trim() && (
+                      <span key={i} style={goldBadgeStyle}>{t.trim()}</span>
+                    ))}
                   </div>
-                )}
+                </div>
+              )}
+              {skills.cargoTypes && (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={sectionTitleStyle}>📦 Cargo Experience</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {skills.cargoTypes.split(",").map((t, i) => t.trim() && (
+                      <span key={i} style={goldBadgeStyle}>{t.trim()}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-                {/* Languages */}
-                {skills.languages.filter(l=>l.language).length>0&&(
-                  <div>
-                    <div className="cv-section-title text-[#0D1B2A] font-bold text-xs uppercase tracking-widest border-b-2 border-[#D4AF37] pb-1 mb-2">🌐 Languages</div>
-                    {skills.languages.filter(l=>l.language).map((l,i)=>(
-                      <div key={i} className="lang-row flex justify-between text-xs text-gray-700 py-0.5">
-                        <span>{l.language}</span><span className="text-gray-400">{l.level}</span>
+              {/* Training Courses */}
+              {filledTraining.length > 0 && (
+                <div style={{ marginBottom: 20 }}>
+                  <div style={sectionTitleStyle}>📚 Training Courses</div>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+                    <thead>
+                      <tr style={{ background: "#0D1B2A", color: "#fff" }}>
+                        <th style={thStyle}>Course</th>
+                        <th style={thStyle}>Institution</th>
+                        <th style={thStyle}>Date</th>
+                        <th style={thStyle}>Cert No.</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filledTraining.map((t, i) => (
+                        <tr key={t.id} style={{ background: i % 2 === 0 ? "#fff" : "#f7f8fa" }}>
+                          <td style={tdStyle}>{t.courseName}</td>
+                          <td style={tdStyle}>{t.institution}</td>
+                          <td style={tdStyle}>{fmtDate(t.dateCompleted)}</td>
+                          <td style={tdStyle}>{t.certNo}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Languages & ECDIS & Skills */}
+              <div style={{ display: "flex", gap: 20, flexWrap: "wrap", marginBottom: 20 }}>
+                {skills.languages.filter(l => l.language).length > 0 && (
+                  <div style={{ flex: 1, minWidth: 200 }}>
+                    <div style={sectionTitleStyle}>🌐 Languages</div>
+                    {skills.languages.filter(l => l.language).map((l, i) => (
+                      <div key={i} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "3px 0", color: "#444" }}>
+                        <span>{l.language}</span><span style={{ color: "#999" }}>{l.level}</span>
                       </div>
                     ))}
                   </div>
                 )}
-
-                {/* ECDIS */}
-                {skills.ecdis.length>0&&(
-                  <div>
-                    <div className="cv-section-title text-[#0D1B2A] font-bold text-xs uppercase tracking-widest border-b-2 border-[#D4AF37] pb-1 mb-2">🖥️ ECDIS</div>
-                    <div className="flex flex-wrap gap-1">
-                      {skills.ecdis.map(s=><span key={s} className="chip bg-[#0D1B2A] text-white text-xs px-2 py-0.5 rounded-full">{s}</span>)}
+                {skills.ecdis.length > 0 && (
+                  <div style={{ flex: 1, minWidth: 200 }}>
+                    <div style={sectionTitleStyle}>🖥️ ECDIS Systems</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                      {skills.ecdis.map(s => <span key={s} style={{ background: "#0D1B2A", color: "#fff", fontSize: 10, padding: "2px 8px", borderRadius: 12 }}>{s}</span>)}
                     </div>
                   </div>
                 )}
-
-                {/* Other Skills */}
-                {skills.other&&(
-                  <div>
-                    <div className="cv-section-title text-[#0D1B2A] font-bold text-xs uppercase tracking-widest border-b-2 border-[#D4AF37] pb-1 mb-2">⚙️ Skills</div>
-                    <p className="text-gray-600 text-xs leading-relaxed">{skills.other}</p>
-                  </div>
-                )}
-
-                {/* SeaMinds Badge */}
-                <div className="mt-4 bg-[#0D1B2A] rounded-xl p-3 text-center">
-                  <div className="text-[#D4AF37] font-bold text-xs flex items-center justify-center gap-1">
-                    <Anchor size={12}/> SeaMinds Verified
-                  </div>
-                  <div className="text-gray-400 text-xs mt-0.5">seaminds.life</div>
-                </div>
               </div>
+
+              {(skills.computerSkills || skills.other) && (
+                <div style={{ marginBottom: 20 }}>
+                  <div style={sectionTitleStyle}>💼 Additional Skills</div>
+                  {skills.computerSkills && <p style={{ fontSize: 12, color: "#444", marginBottom: 4 }}><strong>Computer:</strong> {skills.computerSkills}</p>}
+                  {skills.other && <p style={{ fontSize: 12, color: "#444" }}>{skills.other}</p>}
+                </div>
+              )}
+
+              {/* Emergency Contact */}
+              {personal.emergencyName && (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={sectionTitleStyle}>🆘 Emergency Contact</div>
+                  <p style={{ fontSize: 12, color: "#444" }}>{personal.emergencyName}{personal.emergencyPhone && ` — ${personal.emergencyPhone}`}</p>
+                </div>
+              )}
             </div>
 
             {/* Footer */}
-            <div className="footer bg-[#0D1B2A] py-2 text-center">
-              <p className="text-[#D4AF37] text-xs font-medium">Generated by SeaMinds · The Maritime Wellness &amp; Competency Platform · seaminds.life</p>
+            <div style={{ background: "#0D1B2A", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <p style={{ color: "#D4AF37", fontSize: 10, fontWeight: 500 }}>Generated by SeaMinds · The Maritime Competency Platform · seaminds.life</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <Anchor size={12} color="#D4AF37" />
+                <span style={{ color: "#D4AF37", fontSize: 10, fontWeight: 700 }}>SeaMinds Verified</span>
+              </div>
             </div>
           </div>
         </div>
       )}
+    </div>
+  );
+};
+
+// ── Shared inline styles for print tables ──
+const thStyle: React.CSSProperties = {
+  padding: "6px 8px", textAlign: "left", fontSize: 10, fontWeight: 700,
+  borderBottom: "2px solid #D4AF37",
+};
+const tdStyle: React.CSSProperties = {
+  padding: "5px 8px", borderBottom: "1px solid #eee", fontSize: 11, verticalAlign: "top",
+};
+const sectionTitleStyle: React.CSSProperties = {
+  fontSize: 13, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1,
+  color: "#0D1B2A", borderBottom: "2px solid #D4AF37", paddingBottom: 4, marginBottom: 10,
+};
+const goldBadgeStyle: React.CSSProperties = {
+  background: "#D4AF37", color: "#0D1B2A", fontSize: 11, padding: "3px 10px",
+  borderRadius: 12, fontWeight: 600,
+};
+
+// ── Sub-component: Certificate Row ──
+const CertRow = ({ cert, UC, rmCert, inp, sel, lbl }: {
+  cert: Cert; UC: (id: string, f: string, v: string) => void;
+  rmCert: (id: string) => void; inp: string; sel: string; lbl: string;
+}) => {
+  const st = certStatus(cert.expiryDate);
+  return (
+    <div className="border border-[#1e3a5f] rounded-xl p-3 mb-2">
+      <div className="flex items-center justify-between mb-2">
+        {cert.isCustom
+          ? <input className={inp + " flex-1 mr-2 text-xs"} placeholder="Certificate name" value={cert.name} onChange={e => UC(cert.id, "name", e.target.value)} />
+          : <span className="text-white text-xs font-medium flex-1 pr-2">{cert.name}</span>}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {st === "valid" && <span className="text-green-400 text-xs font-bold">✓ Valid</span>}
+          {st === "expiring" && <span className="text-yellow-400 text-xs font-bold">⚠ Expiring</span>}
+          {st === "expired" && <span className="text-red-400 text-xs font-bold">✗ Expired</span>}
+          {cert.isCustom && <button onClick={() => rmCert(cert.id)} className="text-red-400 ml-1"><Trash2 size={12} /></button>}
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-2 mb-2">
+        <div><label className={lbl}>Cert No.</label><input className={inp} placeholder="No." value={cert.number} onChange={e => UC(cert.id, "number", e.target.value)} /></div>
+        <div><label className={lbl}>Flag State</label><input className={inp} placeholder="Flag" value={cert.flagState} onChange={e => UC(cert.id, "flagState", e.target.value)} /></div>
+        <div><label className={lbl}>Issuing Authority</label><input className={inp} placeholder="Authority" value={cert.issuingAuthority} onChange={e => UC(cert.id, "issuingAuthority", e.target.value)} /></div>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <div><label className={lbl}>Issue Date</label><input type="date" className={inp} value={cert.issueDate} onChange={e => UC(cert.id, "issueDate", e.target.value)} /></div>
+        <div><label className={lbl}>Expiry Date</label><input type="date" className={inp} value={cert.expiryDate} onChange={e => UC(cert.id, "expiryDate", e.target.value)} /></div>
+      </div>
     </div>
   );
 };
