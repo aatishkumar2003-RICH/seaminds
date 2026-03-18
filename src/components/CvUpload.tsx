@@ -176,6 +176,8 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
           </>
         )}
       </button>
+      </>
+      )}
     </div>
   );
 };
