@@ -529,11 +529,11 @@ const ResumeBuilder = () => {
             <div className="sticky bottom-0 bg-[#0D1B2A] border-t border-[#1e3a5f] p-4 flex gap-3">
               <button onClick={applyImport}
                 className="flex-1 bg-[#D4AF37] text-[#0D1B2A] py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-yellow-400 transition-colors">
-                <CheckSquare size={16} /> Confirm & Import Selected
+                <CheckSquare size={16} /> ✓ Import All & Review
               </button>
               <button onClick={() => { setShowScanConfirm(false); setScanResult(null); }}
                 className="px-6 py-3 bg-[#132236] text-gray-400 rounded-xl text-sm font-medium hover:text-white transition-colors">
-                Cancel
+                ✗ Discard
               </button>
             </div>
           </div>
