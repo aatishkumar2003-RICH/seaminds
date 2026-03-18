@@ -210,15 +210,29 @@ const Index = () => {
   }, [appState, role]);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const savedId = localStorage.getItem('seamind_profile_id');
       if (savedId) return;
       if (session?.user) {
+        // Check if returning user with existing profile
+        const { data: existingProfile } = await supabase.from('crew_profiles')
+          .select('id, first_name, last_name, onboarded, role, ship_name, voyage_start_date, manning_agency, nationality, whatsapp_number, vessel_type, port_of_joining, onboarding_complete')
+          .eq('id', session.user.id).single();
+        if (existingProfile?.first_name) {
+          localStorage.setItem(PROFILE_KEY, existingProfile.id);
+          setProfileId(existingProfile.id); setFirstName(existingProfile.first_name); setLastName(existingProfile.last_name || '');
+          setRole(existingProfile.role || ''); setShipName(existingProfile.ship_name || '');
+          setVoyageStartDate(existingProfile.voyage_start_date || ''); setManningAgency(existingProfile.manning_agency || '');
+          setNationality(existingProfile.nationality || ''); setWhatsappNumber(existingProfile.whatsapp_number || '');
+          setVesselType((existingProfile as any).vessel_type || ''); setPortOfJoining((existingProfile as any).port_of_joining || '');
+          setOnboardingComplete(!!(existingProfile as any).onboarding_complete);
+          setAppState(existingProfile.onboarded ? 'main' : 'welcome');
+          setScreen('news');
+          return;
+        }
         const fullName = session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Seafarer';
-        const fn = fullName.split(' ')[0];
-        setFirstName(fn);
-        setAppState('main');
-        setScreen('news');
+        setFirstName(fullName.split(' ')[0]);
+        setAppState('name-entry');
       }
     });
 
@@ -255,10 +269,26 @@ const Index = () => {
         clearTimeout(fallbackTimer);
 
         if (sessionResult && 'data' in sessionResult && sessionResult.data?.session?.user) {
-          const fullName = sessionResult.data.session.user.user_metadata?.full_name || sessionResult.data.session.user.email?.split('@')[0] || 'Seafarer';
+          const user = sessionResult.data.session.user;
+          // Check if crew_profile already exists — skip onboarding if so
+          const { data: existingProfile } = await supabase.from('crew_profiles')
+            .select('id, first_name, last_name, onboarded, role, ship_name, voyage_start_date, manning_agency, nationality, whatsapp_number, vessel_type, port_of_joining, onboarding_complete')
+            .eq('id', user.id).single();
+          if (existingProfile?.first_name) {
+            localStorage.setItem(PROFILE_KEY, existingProfile.id);
+            setProfileId(existingProfile.id); setFirstName(existingProfile.first_name); setLastName(existingProfile.last_name || '');
+            setRole(existingProfile.role || ''); setShipName(existingProfile.ship_name || '');
+            setVoyageStartDate(existingProfile.voyage_start_date || ''); setManningAgency(existingProfile.manning_agency || '');
+            setNationality(existingProfile.nationality || ''); setWhatsappNumber(existingProfile.whatsapp_number || '');
+            setVesselType((existingProfile as any).vessel_type || ''); setPortOfJoining((existingProfile as any).port_of_joining || '');
+            setOnboardingComplete(!!(existingProfile as any).onboarding_complete);
+            setAppState(existingProfile.onboarded ? 'main' : 'welcome');
+            setScreen('news');
+            return;
+          }
+          const fullName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Seafarer';
           setFirstName(fullName.split(' ')[0]);
-          setAppState('main');
-          setScreen('news');
+          setAppState('name-entry');
           return;
         }
         setAppState('landing');
@@ -281,6 +311,11 @@ const Index = () => {
   }, cvFile?: File) => {
     const { data: { session } } = await supabase.auth.getSession();
     const uid = session?.user?.id;
+    // Generate crew unique ID
+    const year = new Date().getFullYear();
+    const randomNum = Math.floor(10000 + Math.random() * 90000);
+    const crewUniqueId = `SM-${year}-${randomNum}`;
+
     const insertData: Record<string, any> = {
       first_name: profile.firstName, last_name: profile.lastName,
       ship_name: profile.shipName, role: profile.role,
@@ -291,6 +326,7 @@ const Index = () => {
       manning_agent_phone: profile.manningAgentPhone || null,
       port_of_joining: profile.portOfJoining || null,
       vessel_type: profile.vesselType || null,
+      crew_unique_id: crewUniqueId,
       onboarded: true,
     };
     if (uid) { insertData.id = uid; insertData.user_id = uid; }
