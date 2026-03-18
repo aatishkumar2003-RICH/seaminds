@@ -13,6 +13,10 @@ interface SeaEntry {
   flagState: string; grtDwt: string; company: string; manningAgent: string;
   rankOnBoard: string; engineType: string; cargoType: string;
   fromDate: string; toDate: string; reasonForLeaving: string;
+  cargoTypes: string[]; otherCargo: string;
+  pscDetentions: string; pscInspections: string; vettingInspections: string;
+  drydockExperience: boolean; tankWashing: boolean; holdCleaning: boolean;
+  wallWash: boolean; cargoHeating: boolean; inertGas: boolean;
 }
 interface Cert {
   id: string; name: string; number: string; flagState: string;
