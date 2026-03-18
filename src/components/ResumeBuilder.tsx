@@ -1453,7 +1453,11 @@ const ResumeBuilder = () => {
             {/* EMERGENCY CONTACT */}
             {personal.emergencyName && (
               <div style={{ marginBottom:'10px' }}>
-                <div style={{ fontSize:'11px', fontWeight:'bold', background:'#0D1B2A', color:'#D4AF37', padding:'3px 8px', marginBottom:'4px' }}>EMERGENCY CONTACT</div>
+                <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'6px', marginTop:'12px' }}>
+                  <div style={{ width:'4px', height:'16px', background:'#D4AF37' }} />
+                  <div style={{ fontSize:'10px', fontWeight:'900', color:'#0D1B2A', letterSpacing:'1.5px', textTransform:'uppercase' }}>EMERGENCY CONTACT</div>
+                  <div style={{ flex:1, height:'1px', background:'#0D1B2A', opacity:0.2 }} />
+                </div>
                 <p style={{ fontSize:'10px', color:'#333' }}>{personal.emergencyName}{personal.emergencyPhone && ` — ${personal.emergencyPhone}`}</p>
               </div>
             )}
