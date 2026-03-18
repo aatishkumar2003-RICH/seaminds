@@ -1107,6 +1107,12 @@ const ResumeBuilder = () => {
                   {personal.email && <span>✉ {personal.email}</span>}
                   {personal.address && <span>📍 {personal.address}</span>}
                 </div>
+                {(personal.expectedSalaryMin || personal.expectedSalaryMax) && (
+                  <div style={{ fontSize:'10px', color:'#D4AF37', fontWeight:'bold', marginTop:'3px' }}>
+                    💰 Expected Salary: ${personal.expectedSalaryMin}{personal.expectedSalaryMax ? ` – $${personal.expectedSalaryMax}` : ''} USD/month
+                    {personal.availableFrom ? `   📅 Available: ${personal.availableFrom}` : ''}
+                  </div>
+                )}
               </div>
             </div>
 
