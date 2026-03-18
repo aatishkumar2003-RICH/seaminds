@@ -1143,33 +1143,55 @@ const ResumeBuilder = () => {
           <div id="cv-preview" style={{ background:'#fff', color:'#000', fontFamily:'Arial, Helvetica, sans-serif', fontSize:'11px', lineHeight:'1.4', padding:'15mm', maxWidth:'210mm', margin:'0 auto', boxSizing:'border-box' }}>
 
             {/* HEADER */}
-            <div style={{ display:'flex', gap:'16px', marginBottom:'12px', borderBottom:'2px solid #0D1B2A', paddingBottom:'12px' }}>
-              {photo && <img src={photo} style={{ width:'80px', height:'80px', borderRadius:'50%', objectFit:'cover', border:'2px solid #D4AF37', flexShrink:0 }} />}
+            <div style={{ display:'flex', gap:'20px', marginBottom:'0', paddingBottom:'0' }}>
+              {/* Photo box */}
+              <div style={{ flexShrink:0 }}>
+                {photo
+                  ? <img src={photo} style={{ width:'95px', height:'115px', objectFit:'cover', display:'block' }} alt="Profile" />
+                  : <div style={{ width:'95px', height:'115px', background:'#e8e8e8', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'10px', color:'#999', textAlign:'center', border:'1px solid #ccc' }}>PASSPORT<br/>PHOTO</div>
+                }
+              </div>
+              {/* Name & info */}
               <div style={{ flex:1 }}>
-                <div style={{ fontSize:'20px', fontWeight:'bold', color:'#0D1B2A' }}>{personal.firstName || personal.lastName ? `${personal.firstName} ${personal.lastName}`.trim() : 'YOUR NAME'}</div>
-                <div style={{ fontSize:'13px', color:'#D4AF37', fontWeight:'bold', marginBottom:'4px' }}>{personal.rank || 'Rank / Position'}{personal.applyingFor ? ` | Seeking: ${personal.applyingFor}` : ''}</div>
-                <div style={{ fontSize:'10px', color:'#333', display:'flex', flexWrap:'wrap', gap:'8px' }}>
-                  {personal.nationality && <span>🌍 {personal.nationality}</span>}
-                  {personal.dob && <span>📅 DOB: {fmtDate(personal.dob)}</span>}
-                  {personal.passportNo && <span>🛂 Passport: {personal.passportNo}</span>}
-                  {personal.cdcNo && <span>📋 CDC: {personal.cdcNo}</span>}
-                  {personal.phone && <span>📱 {personal.phone}</span>}
-                  {personal.email && <span>✉ {personal.email}</span>}
-                  {personal.address && <span>📍 {personal.address}</span>}
+                <div style={{ background:'#0D1B2A', padding:'10px 14px', marginBottom:'6px' }}>
+                  <div style={{ fontSize:'24px', fontWeight:'900', color:'#FFFFFF', letterSpacing:'2px', textTransform:'uppercase', lineHeight:'1.1' }}>
+                    {personal.firstName || personal.lastName ? `${personal.firstName} ${personal.lastName}`.trim() : 'YOUR NAME'}
+                  </div>
+                  <div style={{ fontSize:'12px', color:'#D4AF37', fontWeight:'bold', marginTop:'3px', letterSpacing:'1px', textTransform:'uppercase' }}>
+                    {personal.rank || 'RANK / POSITION'}
+                    {personal.applyingFor ? <span style={{ color:'#aaa', fontWeight:'normal', fontSize:'10px' }}> &nbsp;|&nbsp; Seeking: {personal.applyingFor}</span> : ''}
+                  </div>
                 </div>
-                {(personal.expectedSalaryMin || personal.expectedSalaryMax) && (
-                  <div style={{ fontSize:'10px', color:'#D4AF37', fontWeight:'bold', marginTop:'3px' }}>
-                    💰 Expected Salary: ${personal.expectedSalaryMin}{personal.expectedSalaryMax ? ` – $${personal.expectedSalaryMax}` : ''} USD/month
-                    {personal.availableFrom ? `   📅 Available: ${personal.availableFrom}` : ''}
+                {/* Two-column contact details */}
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'2px 16px', fontSize:'9px', color:'#333', lineHeight:'1.7' }}>
+                  {personal.nationality && <div><span style={{ color:'#666', fontWeight:'bold' }}>NATIONALITY:</span> {personal.nationality}</div>}
+                  {personal.dob && <div><span style={{ color:'#666', fontWeight:'bold' }}>DATE OF BIRTH:</span> {fmtDate(personal.dob)}</div>}
+                  {personal.passportNo && <div><span style={{ color:'#666', fontWeight:'bold' }}>PASSPORT NO:</span> {personal.passportNo}</div>}
+                  {personal.cdcNo && <div><span style={{ color:'#666', fontWeight:'bold' }}>CDC / SB NO:</span> {personal.cdcNo}{personal.cdcCountry ? ` (${personal.cdcCountry})` : ''}</div>}
+                  {personal.phone && <div><span style={{ color:'#666', fontWeight:'bold' }}>WHATSAPP:</span> {personal.phone}</div>}
+                  {personal.email && <div><span style={{ color:'#666', fontWeight:'bold' }}>EMAIL:</span> {personal.email}</div>}
+                  {personal.address && <div style={{ gridColumn:'span 2' }}><span style={{ color:'#666', fontWeight:'bold' }}>ADDRESS:</span> {personal.address}</div>}
+                </div>
+                {/* Availability row */}
+                {(personal.availableFrom || personal.expectedSalaryMin) && (
+                  <div style={{ marginTop:'5px', padding:'3px 8px', background:'#fffbea', borderLeft:'3px solid #D4AF37', fontSize:'9px', display:'flex', gap:'20px' }}>
+                    {personal.availableFrom && <span><strong>AVAILABLE FROM:</strong> {personal.availableFrom}</span>}
+                    {personal.expectedSalaryMin && <span><strong>EXPECTED SALARY:</strong> USD {personal.expectedSalaryMin}{personal.expectedSalaryMax ? `–${personal.expectedSalaryMax}` : ''}/month</span>}
                   </div>
                 )}
               </div>
             </div>
+            {/* Divider line */}
+            <div style={{ height:'3px', background:'linear-gradient(to right, #0D1B2A, #D4AF37, #0D1B2A)', margin:'10px 0 12px 0' }} />
 
             {/* OBJECTIVE / SUMMARY */}
             {personal.summary && (
               <div style={{ marginBottom:'10px' }}>
-                <div style={{ fontSize:'11px', fontWeight:'bold', background:'#0D1B2A', color:'#D4AF37', padding:'3px 8px', marginBottom:'4px' }}>PROFESSIONAL SUMMARY</div>
+                <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'6px', marginTop:'12px' }}>
+                  <div style={{ width:'4px', height:'16px', background:'#D4AF37' }} />
+                  <div style={{ fontSize:'10px', fontWeight:'900', color:'#0D1B2A', letterSpacing:'1.5px', textTransform:'uppercase' }}>PROFESSIONAL SUMMARY</div>
+                  <div style={{ flex:1, height:'1px', background:'#0D1B2A', opacity:0.2 }} />
+                </div>
                 <div style={{ color:'#333', fontStyle:'italic' }}>{personal.summary}</div>
               </div>
             )}
@@ -1177,39 +1199,43 @@ const ResumeBuilder = () => {
             {/* SEA SERVICE RECORD */}
             {filledSea.length > 0 && (
               <div style={{ marginBottom:'10px' }}>
-                <div style={{ fontSize:'11px', fontWeight:'bold', background:'#0D1B2A', color:'#D4AF37', padding:'3px 8px', marginBottom:'4px' }}>SEA SERVICE RECORD</div>
+                <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'6px', marginTop:'12px' }}>
+                  <div style={{ width:'4px', height:'16px', background:'#D4AF37' }} />
+                  <div style={{ fontSize:'10px', fontWeight:'900', color:'#0D1B2A', letterSpacing:'1.5px', textTransform:'uppercase' }}>SEA SERVICE RECORD</div>
+                  <div style={{ flex:1, height:'1px', background:'#0D1B2A', opacity:0.2 }} />
+                </div>
                 <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'9px' }}>
                   <thead>
-                    <tr style={{ background:'#0D1B2A', color:'#D4AF37' }}>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'center', fontSize:'9px' }}>Sr.</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left', fontSize:'9px' }}>Vessel Name</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left', fontSize:'9px' }}>Type</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left', fontSize:'9px' }}>Flag</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left', fontSize:'9px' }}>GRT/DWT</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left', fontSize:'9px' }}>Rank</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left', fontSize:'9px' }}>Company</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left', fontSize:'9px' }}>Sign On</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left', fontSize:'9px' }}>Sign Off</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left', fontSize:'9px' }}>Engine Type</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left', fontSize:'9px' }}>Cargo Handled</th>
+                    <tr style={{ background:'#0D1B2A', color:'#fff' }}>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'center', fontSize:'9px', fontWeight:'bold' }}>Sr.</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontSize:'9px', fontWeight:'bold' }}>Vessel Name</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontSize:'9px', fontWeight:'bold' }}>Type</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontSize:'9px', fontWeight:'bold' }}>Flag</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontSize:'9px', fontWeight:'bold' }}>GRT/DWT</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontSize:'9px', fontWeight:'bold' }}>Rank</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontSize:'9px', fontWeight:'bold' }}>Company</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontSize:'9px', fontWeight:'bold' }}>Sign On</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontSize:'9px', fontWeight:'bold' }}>Sign Off</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontSize:'9px', fontWeight:'bold' }}>Engine Type</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontSize:'9px', fontWeight:'bold' }}>Cargo Handled</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filledSea.map((s: any, i: number) => (
-                      <>
+                      <React.Fragment key={s.id || i}>
                         {/* Main vessel row */}
-                        <tr key={s.id || i} style={{ background: i%2===0 ? '#fff' : '#fafafa', fontSize:'9px' }}>
-                          <td style={{ border:'1px solid #ccc', padding:'3px', textAlign:'center' }}>{i+1}</td>
-                          <td style={{ border:'1px solid #ccc', padding:'3px', fontWeight:'bold' }}>{s.vesselName || s.vessel_name || ''}</td>
-                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{s.vesselType || s.vessel_type || ''}</td>
-                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{s.flag || s.flagState || ''}</td>
-                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{s.grt || s.grtDwt || ''}</td>
-                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{s.rankOnBoard || s.rank || personal.rank || ''}</td>
-                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{s.company || ''}</td>
-                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{s.signOn || s.sign_on || s.fromDate || ''}</td>
-                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{s.signOff || s.sign_off || s.toDate || ''}</td>
-                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{s.engineType || s.engine_type || s.engineTypes || ''}</td>
-                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>
+                        <tr style={{ background: i%2===0 ? '#fff' : '#f8f9fa', fontSize:'9px' }}>
+                          <td style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'center' }}>{i+1}</td>
+                          <td style={{ border:'1px solid #dee2e6', padding:'3px', fontWeight:'bold' }}>{s.vesselName || s.vessel_name || ''}</td>
+                          <td style={{ border:'1px solid #dee2e6', padding:'3px' }}>{s.vesselType || s.vessel_type || ''}</td>
+                          <td style={{ border:'1px solid #dee2e6', padding:'3px' }}>{s.flag || s.flagState || ''}</td>
+                          <td style={{ border:'1px solid #dee2e6', padding:'3px' }}>{s.grt || s.grtDwt || ''}</td>
+                          <td style={{ border:'1px solid #dee2e6', padding:'3px' }}>{s.rankOnBoard || s.rank || personal.rank || ''}</td>
+                          <td style={{ border:'1px solid #dee2e6', padding:'3px' }}>{s.company || ''}</td>
+                          <td style={{ border:'1px solid #dee2e6', padding:'3px' }}>{s.signOn || s.sign_on || s.fromDate || ''}</td>
+                          <td style={{ border:'1px solid #dee2e6', padding:'3px' }}>{s.signOff || s.sign_off || s.toDate || ''}</td>
+                          <td style={{ border:'1px solid #dee2e6', padding:'3px' }}>{s.engineType || s.engine_type || s.engineTypes || ''}</td>
+                          <td style={{ border:'1px solid #dee2e6', padding:'3px' }}>
                             {[
                               ...(Array.isArray(s.cargoTypes) ? s.cargoTypes : []),
                               s.cargoType || s.cargo_type || '',
@@ -1217,28 +1243,28 @@ const ResumeBuilder = () => {
                             ].filter(Boolean).join(', ')}
                           </td>
                         </tr>
-                        {/* Experience sub-row — only show if any special experience exists */}
+                        {/* Experience sub-row */}
                         {(s.pscInspections || s.vettingInspections || s.rightshipInspection || s.drydockExperience || s.tankWashing || s.holdCleaning || s.wallWash || s.cargoHeating || s.inertGas || s.pscDetentions) && (
-                          <tr key={(s.id || i) + '-exp'} style={{ background:'#fffde7', fontSize:'8px' }}>
-                            <td style={{ border:'1px solid #ccc', padding:'2px' }}></td>
-                            <td colSpan={10} style={{ border:'1px solid #ccc', padding:'3px 6px', color:'#444', fontStyle:'italic', lineHeight:'1.6' }}>
+                          <tr style={{ background:'#fffde7', fontSize:'8px' }}>
+                            <td style={{ border:'1px solid #dee2e6', padding:'2px' }}></td>
+                            <td colSpan={10} style={{ border:'1px solid #dee2e6', padding:'3px 6px', color:'#444', fontStyle:'italic', lineHeight:'1.6' }}>
                               <strong style={{ color:'#0D1B2A' }}>Special Experience: </strong>
                               {[
-                                s.drydockExperience && '🔧 Drydock',
-                                s.tankWashing && '🚿 Tank Washing',
-                                s.holdCleaning && '🧹 Hold Cleaning',
-                                s.wallWash && '🔬 Wall Wash',
-                                s.cargoHeating && '🌡️ Cargo Heating',
-                                s.inertGas && '💨 Inert Gas Ops',
+                                s.drydockExperience && 'Drydock',
+                                s.tankWashing && 'Tank Washing',
+                                s.holdCleaning && 'Hold Cleaning',
+                                s.wallWash && 'Wall Wash',
+                                s.cargoHeating && 'Cargo Heating',
+                                s.inertGas && 'Inert Gas Ops',
                                 s.pscInspections && `PSC Inspections: ${s.pscInspections}`,
                                 (s.pscDetentions && s.pscDetentions !== 'None') && `PSC Detentions: ${s.pscDetentions}`,
                                 s.vettingInspections && `Vetting (SIRE/CDI): ${s.vettingInspections}`,
-                                s.rightshipInspection && `⭐ RightShip GHG: ${s.rightshipGHG || 'N/A'}${s.rightshipDeficiencies ? ` — ${s.rightshipDeficiencies}` : ''}`,
+                                s.rightshipInspection && `RightShip GHG: ${s.rightshipGHG || 'N/A'}${s.rightshipDeficiencies ? ` — ${s.rightshipDeficiencies}` : ''}`,
                               ].filter(Boolean).join('   |   ')}
                             </td>
                           </tr>
                         )}
-                      </>
+                      </React.Fragment>
                     ))}
                   </tbody>
                 </table>
@@ -1251,16 +1277,20 @@ const ResumeBuilder = () => {
             {/* CERTIFICATES */}
             {filledCerts.length > 0 && (
               <div style={{ marginBottom:'10px' }}>
-                <div style={{ fontSize:'11px', fontWeight:'bold', background:'#0D1B2A', color:'#D4AF37', padding:'3px 8px', marginBottom:'4px' }}>CERTIFICATES & ENDORSEMENTS</div>
+                <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'6px', marginTop:'12px' }}>
+                  <div style={{ width:'4px', height:'16px', background:'#D4AF37' }} />
+                  <div style={{ fontSize:'10px', fontWeight:'900', color:'#0D1B2A', letterSpacing:'1.5px', textTransform:'uppercase' }}>CERTIFICATES & ENDORSEMENTS</div>
+                  <div style={{ flex:1, height:'1px', background:'#0D1B2A', opacity:0.2 }} />
+                </div>
                 <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'9px' }}>
                   <thead>
-                    <tr style={{ background:'#f0f0f0' }}>
-                      <th style={{ border:'1px solid #ccc', padding:'3px' }}>Sr.</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left' }}>Certificate Name</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left' }}>Cert No.</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left' }}>Issue Date</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left' }}>Expiry Date</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left' }}>Issuing Authority</th>
+                    <tr style={{ background:'#0D1B2A', color:'#fff' }}>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', fontWeight:'bold' }}>Sr.</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontWeight:'bold' }}>Certificate Name</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontWeight:'bold' }}>Cert No.</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontWeight:'bold' }}>Issue Date</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontWeight:'bold' }}>Expiry Date</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontWeight:'bold' }}>Issuing Authority</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1268,13 +1298,13 @@ const ResumeBuilder = () => {
                       const isExpired = c.expiryDate && new Date(c.expiryDate) < new Date();
                       const expiringSoon = c.expiryDate && !isExpired && new Date(c.expiryDate) < new Date(Date.now() + 90*24*60*60*1000);
                       return (
-                        <tr key={c.id || i} style={{ background: isExpired ? '#fff0f0' : expiringSoon ? '#fffbe0' : i%2===0 ? '#fff' : '#fafafa' }}>
-                          <td style={{ border:'1px solid #ccc', padding:'3px', textAlign:'center' }}>{i+1}</td>
-                          <td style={{ border:'1px solid #ccc', padding:'3px', fontWeight:'bold' }}>{c.name}</td>
-                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{c.number}</td>
-                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{fmtDate(c.issueDate)}</td>
-                          <td style={{ border:'1px solid #ccc', padding:'3px', color: isExpired ? 'red' : expiringSoon ? 'orange' : 'inherit' }}>{fmtDate(c.expiryDate) || 'No Expiry'}</td>
-                          <td style={{ border:'1px solid #ccc', padding:'3px' }}>{c.issuingAuthority}</td>
+                        <tr key={c.id || i} style={{ background: isExpired ? '#fff0f0' : expiringSoon ? '#fffbe0' : i%2===0 ? '#fff' : '#f8f9fa' }}>
+                          <td style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'center' }}>{i+1}</td>
+                          <td style={{ border:'1px solid #dee2e6', padding:'3px', fontWeight:'bold' }}>{c.name}</td>
+                          <td style={{ border:'1px solid #dee2e6', padding:'3px' }}>{c.number}</td>
+                          <td style={{ border:'1px solid #dee2e6', padding:'3px' }}>{fmtDate(c.issueDate)}</td>
+                          <td style={{ border:'1px solid #dee2e6', padding:'3px', color: isExpired ? 'red' : expiringSoon ? 'orange' : 'inherit' }}>{fmtDate(c.expiryDate) || 'No Expiry'}</td>
+                          <td style={{ border:'1px solid #dee2e6', padding:'3px' }}>{c.issuingAuthority}</td>
                         </tr>
                       );
                     })}
@@ -1287,21 +1317,25 @@ const ResumeBuilder = () => {
             {/* EDUCATION */}
             {filledEdu.length > 0 && (
               <div style={{ marginBottom:'10px' }}>
-                <div style={{ fontSize:'11px', fontWeight:'bold', background:'#0D1B2A', color:'#D4AF37', padding:'3px 8px', marginBottom:'4px' }}>EDUCATION</div>
+                <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'6px', marginTop:'12px' }}>
+                  <div style={{ width:'4px', height:'16px', background:'#D4AF37' }} />
+                  <div style={{ fontSize:'10px', fontWeight:'900', color:'#0D1B2A', letterSpacing:'1.5px', textTransform:'uppercase' }}>EDUCATION</div>
+                  <div style={{ flex:1, height:'1px', background:'#0D1B2A', opacity:0.2 }} />
+                </div>
                 <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'9px' }}>
                   <thead>
-                    <tr style={{ background:'#f0f0f0' }}>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left' }}>Institution</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left' }}>Qualification</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left' }}>Year</th>
+                    <tr style={{ background:'#0D1B2A', color:'#fff' }}>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontWeight:'bold' }}>Institution</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontWeight:'bold' }}>Qualification</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontWeight:'bold' }}>Year</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filledEdu.map((e: any, i: number) => (
-                      <tr key={e.id || i}>
-                        <td style={{ border:'1px solid #ccc', padding:'3px' }}>{e.institution}</td>
-                        <td style={{ border:'1px solid #ccc', padding:'3px' }}>{e.qualification}</td>
-                        <td style={{ border:'1px solid #ccc', padding:'3px' }}>{e.yearFrom}{e.yearTo ? ` - ${e.yearTo}` : ''}</td>
+                      <tr key={e.id || i} style={{ background: i%2===0 ? '#fff' : '#f8f9fa' }}>
+                        <td style={{ border:'1px solid #dee2e6', padding:'3px' }}>{e.institution}</td>
+                        <td style={{ border:'1px solid #dee2e6', padding:'3px' }}>{e.qualification}</td>
+                        <td style={{ border:'1px solid #dee2e6', padding:'3px' }}>{e.yearFrom}{e.yearTo ? ` - ${e.yearTo}` : ''}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1312,23 +1346,27 @@ const ResumeBuilder = () => {
             {/* TRAINING COURSES */}
             {filledTraining.length > 0 && (
               <div style={{ marginBottom:'10px' }}>
-                <div style={{ fontSize:'11px', fontWeight:'bold', background:'#0D1B2A', color:'#D4AF37', padding:'3px 8px', marginBottom:'4px' }}>TRAINING COURSES</div>
+                <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'6px', marginTop:'12px' }}>
+                  <div style={{ width:'4px', height:'16px', background:'#D4AF37' }} />
+                  <div style={{ fontSize:'10px', fontWeight:'900', color:'#0D1B2A', letterSpacing:'1.5px', textTransform:'uppercase' }}>TRAINING COURSES</div>
+                  <div style={{ flex:1, height:'1px', background:'#0D1B2A', opacity:0.2 }} />
+                </div>
                 <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'9px' }}>
                   <thead>
-                    <tr style={{ background:'#f0f0f0' }}>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left' }}>Course</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left' }}>Institution</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left' }}>Date</th>
-                      <th style={{ border:'1px solid #ccc', padding:'3px', textAlign:'left' }}>Cert No.</th>
+                    <tr style={{ background:'#0D1B2A', color:'#fff' }}>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontWeight:'bold' }}>Course</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontWeight:'bold' }}>Institution</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontWeight:'bold' }}>Date</th>
+                      <th style={{ border:'1px solid #dee2e6', padding:'3px', textAlign:'left', fontWeight:'bold' }}>Cert No.</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filledTraining.map((t: any, i: number) => (
-                      <tr key={t.id || i} style={{ background: i%2===0 ? '#fff' : '#fafafa' }}>
-                        <td style={{ border:'1px solid #ccc', padding:'3px' }}>{t.courseName}</td>
-                        <td style={{ border:'1px solid #ccc', padding:'3px' }}>{t.institution}</td>
-                        <td style={{ border:'1px solid #ccc', padding:'3px' }}>{fmtDate(t.dateCompleted)}</td>
-                        <td style={{ border:'1px solid #ccc', padding:'3px' }}>{t.certNo}</td>
+                      <tr key={t.id || i} style={{ background: i%2===0 ? '#fff' : '#f8f9fa' }}>
+                        <td style={{ border:'1px solid #dee2e6', padding:'3px' }}>{t.courseName}</td>
+                        <td style={{ border:'1px solid #dee2e6', padding:'3px' }}>{t.institution}</td>
+                        <td style={{ border:'1px solid #dee2e6', padding:'3px' }}>{fmtDate(t.dateCompleted)}</td>
+                        <td style={{ border:'1px solid #dee2e6', padding:'3px' }}>{t.certNo}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1339,7 +1377,11 @@ const ResumeBuilder = () => {
             {/* ENGINE / CARGO EXPERIENCE */}
             {(skills?.engineTypes || skills?.cargoTypes) && (
               <div style={{ marginBottom:'10px' }}>
-                <div style={{ fontSize:'11px', fontWeight:'bold', background:'#0D1B2A', color:'#D4AF37', padding:'3px 8px', marginBottom:'6px' }}>TECHNICAL EXPERIENCE</div>
+                <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'6px', marginTop:'12px' }}>
+                  <div style={{ width:'4px', height:'16px', background:'#D4AF37' }} />
+                  <div style={{ fontSize:'10px', fontWeight:'900', color:'#0D1B2A', letterSpacing:'1.5px', textTransform:'uppercase' }}>TECHNICAL EXPERIENCE</div>
+                  <div style={{ flex:1, height:'1px', background:'#0D1B2A', opacity:0.2 }} />
+                </div>
                 <div style={{ display:'flex', gap:'20px', flexWrap:'wrap' }}>
                   {skills?.engineTypes && (
                     <div>
@@ -1368,7 +1410,11 @@ const ResumeBuilder = () => {
             {/* LANGUAGES */}
             {skills.languages.filter(l => l.language).length > 0 && (
               <div style={{ marginBottom:'10px' }}>
-                <div style={{ fontSize:'11px', fontWeight:'bold', background:'#0D1B2A', color:'#D4AF37', padding:'3px 8px', marginBottom:'4px' }}>LANGUAGES</div>
+                <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'6px', marginTop:'12px' }}>
+                  <div style={{ width:'4px', height:'16px', background:'#D4AF37' }} />
+                  <div style={{ fontSize:'10px', fontWeight:'900', color:'#0D1B2A', letterSpacing:'1.5px', textTransform:'uppercase' }}>LANGUAGES</div>
+                  <div style={{ flex:1, height:'1px', background:'#0D1B2A', opacity:0.2 }} />
+                </div>
                 <div style={{ display:'flex', gap:'12px', flexWrap:'wrap' }}>
                   {skills.languages.filter(l => l.language).map((l, i) => (
                     <span key={i} style={{ fontSize:'10px', color:'#333' }}>{l.language} — <em>{l.level}</em></span>
@@ -1380,7 +1426,11 @@ const ResumeBuilder = () => {
             {/* ECDIS */}
             {skills.ecdis.length > 0 && (
               <div style={{ marginBottom:'10px' }}>
-                <div style={{ fontSize:'11px', fontWeight:'bold', background:'#0D1B2A', color:'#D4AF37', padding:'3px 8px', marginBottom:'4px' }}>ECDIS SYSTEMS</div>
+                <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'6px', marginTop:'12px' }}>
+                  <div style={{ width:'4px', height:'16px', background:'#D4AF37' }} />
+                  <div style={{ fontSize:'10px', fontWeight:'900', color:'#0D1B2A', letterSpacing:'1.5px', textTransform:'uppercase' }}>ECDIS SYSTEMS</div>
+                  <div style={{ flex:1, height:'1px', background:'#0D1B2A', opacity:0.2 }} />
+                </div>
                 <div style={{ display:'flex', gap:'4px', flexWrap:'wrap' }}>
                   {skills.ecdis.map(s => <span key={s} style={{ background:'#0D1B2A', color:'#fff', fontSize:'9px', padding:'2px 8px', borderRadius:'12px' }}>{s}</span>)}
                 </div>
@@ -1390,7 +1440,11 @@ const ResumeBuilder = () => {
             {/* ADDITIONAL SKILLS */}
             {(skills.computerSkills || skills.other) && (
               <div style={{ marginBottom:'10px' }}>
-                <div style={{ fontSize:'11px', fontWeight:'bold', background:'#0D1B2A', color:'#D4AF37', padding:'3px 8px', marginBottom:'4px' }}>ADDITIONAL SKILLS</div>
+                <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'6px', marginTop:'12px' }}>
+                  <div style={{ width:'4px', height:'16px', background:'#D4AF37' }} />
+                  <div style={{ fontSize:'10px', fontWeight:'900', color:'#0D1B2A', letterSpacing:'1.5px', textTransform:'uppercase' }}>ADDITIONAL SKILLS</div>
+                  <div style={{ flex:1, height:'1px', background:'#0D1B2A', opacity:0.2 }} />
+                </div>
                 {skills.computerSkills && <p style={{ fontSize:'10px', color:'#333', marginBottom:'2px' }}><strong>Computer:</strong> {skills.computerSkills}</p>}
                 {skills.other && <p style={{ fontSize:'10px', color:'#333' }}>{skills.other}</p>}
               </div>
@@ -1399,15 +1453,28 @@ const ResumeBuilder = () => {
             {/* EMERGENCY CONTACT */}
             {personal.emergencyName && (
               <div style={{ marginBottom:'10px' }}>
-                <div style={{ fontSize:'11px', fontWeight:'bold', background:'#0D1B2A', color:'#D4AF37', padding:'3px 8px', marginBottom:'4px' }}>EMERGENCY CONTACT</div>
+                <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'6px', marginTop:'12px' }}>
+                  <div style={{ width:'4px', height:'16px', background:'#D4AF37' }} />
+                  <div style={{ fontSize:'10px', fontWeight:'900', color:'#0D1B2A', letterSpacing:'1.5px', textTransform:'uppercase' }}>EMERGENCY CONTACT</div>
+                  <div style={{ flex:1, height:'1px', background:'#0D1B2A', opacity:0.2 }} />
+                </div>
                 <p style={{ fontSize:'10px', color:'#333' }}>{personal.emergencyName}{personal.emergencyPhone && ` — ${personal.emergencyPhone}`}</p>
               </div>
             )}
 
             {/* FOOTER */}
-            <div style={{ borderTop:'1px solid #ccc', marginTop:'10px', paddingTop:'6px', display:'flex', justifyContent:'space-between', fontSize:'8px', color:'#999' }}>
-              <span>Generated by SeaMinds · The Maritime Competency Platform · seaminds.life</span>
-              <span style={{ color:'#D4AF37', fontWeight:'bold' }}>⚓ SeaMinds Verified</span>
+            <div style={{ borderTop:'2px solid #0D1B2A', marginTop:'16px', paddingTop:'8px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+                <img src="/seaminds-logo.png" style={{ width:'28px', height:'28px', borderRadius:'4px', objectFit:'contain' }} alt="SeaMinds" />
+                <div>
+                  <div style={{ fontSize:'9px', fontWeight:'bold', color:'#0D1B2A', letterSpacing:'0.5px' }}>SEAMINDS VERIFIED CV</div>
+                  <div style={{ fontSize:'8px', color:'#888' }}>seaminds.life · PT Indoglobal Service Solutions</div>
+                </div>
+              </div>
+              <div style={{ textAlign:'right' }}>
+                <div style={{ fontSize:'9px', color:'#888' }}>Generated: {new Date().toLocaleDateString('en-GB')}</div>
+                <div style={{ fontSize:'8px', color:'#D4AF37', fontWeight:'bold', letterSpacing:'0.5px' }}>COMPETENCY CERTIFIED PLATFORM</div>
+              </div>
             </div>
           </div>
         </div>
