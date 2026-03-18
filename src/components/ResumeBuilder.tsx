@@ -1046,6 +1046,10 @@ const ResumeBuilder = () => {
               <button onClick={addEdu} className="w-full border border-dashed border-[#D4AF37] text-[#D4AF37] py-2 rounded-xl text-sm flex items-center justify-center gap-2 hover:bg-[#D4AF37]/10">
                 <Plus size={16} /> Add Education
               </button>
+              <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); setOpenSection('training'); }}
+                style={{ background:'transparent', border:'1px solid #D4AF37', color:'#D4AF37', padding:'6px 16px', borderRadius:'6px', fontSize:'12px', cursor:'pointer', marginTop:'12px' }}>
+                Next Section →
+              </button>
             </div>
           )}
 
