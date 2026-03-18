@@ -39,7 +39,7 @@ const LandingScreen = ({ onGetStarted, onManagerLogin }: LandingScreenProps) => 
 
     const { error: authError } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: `${window.location.origin}/app` }
+      options: { emailRedirectTo: 'https://seaminds.life/app' }
     });
     if (authError) {
       setError(authError.message);
