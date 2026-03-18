@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Camera, Plus, Trash2, Eye, Edit3, Award, Ship, FileText,
   User, GraduationCap, Globe, ChevronDown, ChevronUp,
