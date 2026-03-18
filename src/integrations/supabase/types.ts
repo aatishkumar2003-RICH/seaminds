@@ -456,6 +456,7 @@ export type Database = {
         Row: {
           created_at: string
           crew_unique_id: string | null
+          cv_data: string | null
           date_of_birth: string | null
           email: string | null
           first_name: string
@@ -488,6 +489,7 @@ export type Database = {
         Insert: {
           created_at?: string
           crew_unique_id?: string | null
+          cv_data?: string | null
           date_of_birth?: string | null
           email?: string | null
           first_name: string
@@ -520,6 +522,7 @@ export type Database = {
         Update: {
           created_at?: string
           crew_unique_id?: string | null
+          cv_data?: string | null
           date_of_birth?: string | null
           email?: string | null
           first_name?: string
