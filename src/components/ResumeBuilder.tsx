@@ -1377,7 +1377,11 @@ const ResumeBuilder = () => {
             {/* ENGINE / CARGO EXPERIENCE */}
             {(skills?.engineTypes || skills?.cargoTypes) && (
               <div style={{ marginBottom:'10px' }}>
-                <div style={{ fontSize:'11px', fontWeight:'bold', background:'#0D1B2A', color:'#D4AF37', padding:'3px 8px', marginBottom:'6px' }}>TECHNICAL EXPERIENCE</div>
+                <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'6px', marginTop:'12px' }}>
+                  <div style={{ width:'4px', height:'16px', background:'#D4AF37' }} />
+                  <div style={{ fontSize:'10px', fontWeight:'900', color:'#0D1B2A', letterSpacing:'1.5px', textTransform:'uppercase' }}>TECHNICAL EXPERIENCE</div>
+                  <div style={{ flex:1, height:'1px', background:'#0D1B2A', opacity:0.2 }} />
+                </div>
                 <div style={{ display:'flex', gap:'20px', flexWrap:'wrap' }}>
                   {skills?.engineTypes && (
                     <div>
