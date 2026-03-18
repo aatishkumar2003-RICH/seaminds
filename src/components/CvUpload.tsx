@@ -109,10 +109,28 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
       if (cv.currentVessel) mapped.shipName = cv.currentVessel;
       if (cv.phone) mapped.whatsappNumber = cv.phone;
 
+      console.log('CV Upload: mapped personal data', mapped);
       onParsed(mapped);
       onFileReady?.(file);
       setStatus("success");
       trackEvent("cv_upload_success");
+
+      // Also save structured document data to crew_cv_data
+      try {
+        const { data: { session: s } } = await supabase.auth.getSession();
+        if (s?.user?.id && data.data) {
+          const docData = data.data;
+          await supabase.from("crew_cv_data").upsert({
+            user_id: s.user.id,
+            certificates: (docData.certificates || []) as any,
+            sea_service: (docData.sea_service || []) as any,
+            medical: (docData.medical || []) as any,
+            education: (docData.education || []) as any,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: "user_id" });
+          console.log('CV Upload: document data saved to crew_cv_data');
+        }
+      } catch (saveErr) { console.log("CV data save (non-blocking):", saveErr); }
     } catch (e) {
       console.error("CV parse error:", e);
       setErrorMsg(e instanceof Error ? e.message : "Could not read CV. Please fill manually.");
