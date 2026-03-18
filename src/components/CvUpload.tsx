@@ -50,6 +50,7 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
   const [status, setStatus] = useState<"idle" | "reading" | "success" | "error">("idle");
   const [fileName, setFileName] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleFile = async (file: File) => {
