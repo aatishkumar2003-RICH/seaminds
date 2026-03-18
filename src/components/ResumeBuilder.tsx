@@ -2,8 +2,9 @@ import { useState, useRef } from "react";
 import {
   Camera, Plus, Trash2, Eye, Edit3, Award, Ship, FileText,
   User, GraduationCap, Globe, ChevronDown, ChevronUp,
-  Printer, Anchor, Star
+  Printer, Anchor, Star, Loader2
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 // ─────────── TYPES ───────────
 interface SeaEntry {
