@@ -86,10 +86,11 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
   const [agentCountryCode, setAgentCountryCode] = useState("+63");
   const [portOfJoiningVal, setPortOfJoiningVal] = useState("");
   const [vesselTypeVal, setVesselTypeVal] = useState("");
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const canSubmit =
     firstName.trim() && lastName.trim() && shipName.trim() && role &&
-    nationality.trim() && yearsAtSea && phoneNumber.trim();
+    nationality.trim() && yearsAtSea && phoneNumber.trim() && agreedToTerms;
 
   const handleSubmit = () => {
     if (!canSubmit) return;
@@ -338,6 +339,12 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
             </div>
           </div>
         </div>
+
+        <label style={{ display:'flex', gap:'8px', alignItems:'flex-start', color:'#aaa', fontSize:'12px', marginBottom:'16px' }}>
+          <input type="checkbox" required style={{ marginTop:'2px', accentColor:'#D4AF37' }}
+            checked={agreedToTerms} onChange={e => setAgreedToTerms(e.target.checked)} />
+          <span>I agree to SeaMinds <a href="/privacy" target="_blank" style={{ color:'#D4AF37' }}>Privacy Policy</a> and <a href="/terms" target="_blank" style={{ color:'#D4AF37' }}>Terms of Service</a>. I consent to my maritime professional data being stored and processed by PT Indoglobal Service Solutions.</span>
+        </label>
 
         <button
           onClick={handleSubmit}
