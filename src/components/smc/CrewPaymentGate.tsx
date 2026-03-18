@@ -43,6 +43,11 @@ const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) 
   }, []);
 
   useEffect(() => {
+    supabase.from('admin_settings').select('value').eq('key', 'price_self_assessment').single()
+      .then(({ data }) => { if (data?.value) setSelfPrice(Number(data.value)); });
+  }, []);
+
+  useEffect(() => {
     const fetchPrice = async () => {
       const { data: profile } = await supabase.from('crew_profiles').select('nationality').eq('id', profileId).single();
       const nationality = (profile?.nationality || '').toUpperCase().trim();
