@@ -253,41 +253,60 @@ const ResumeBuilder = () => {
   const applyImport = () => {
     if (!scanResult) return;
     const cv = scanResult;
-    if (importSections.personal && (cv.name || cv.rank || cv.nationality || cv.date_of_birth)) {
-      setPersonal(p => ({
+    if (importSections.personal) {
+      setPersonal((p: any) => ({
         ...p,
-        ...(cv.name && { firstName: cv.name.split(" ")[0], lastName: cv.name.split(" ").slice(1).join(" ") }),
-        ...(cv.rank && { rank: cv.rank }),
-        ...(cv.nationality && { nationality: cv.nationality }),
-        ...(cv.date_of_birth && { dob: cv.date_of_birth }),
-        ...(cv.summary && { summary: cv.summary }),
+        firstName: cv.name?.split(' ')[0] || p.firstName,
+        lastName: cv.name?.split(' ').slice(1).join(' ') || p.lastName,
+        rank: cv.rank || p.rank,
+        nationality: cv.nationality || p.nationality,
+        dob: cv.date_of_birth || p.dob,
+        passportNo: cv.passport_no || cv.passportNo || p.passportNo,
+        cdcNo: cv.cdc_no || cv.cdcNo || cv.seaman_book || p.cdcNo,
+        cdcCountry: cv.cdc_country || cv.cdcCountry || p.cdcCountry,
+        phone: cv.phone || cv.whatsapp || p.phone,
+        email: cv.email || p.email,
+        summary: cv.summary || p.summary,
       }));
     }
     if (importSections.sea && cv.sea_service?.length > 0) {
-      setSea(cv.sea_service.map((s: any) => ({
-        id: uid(), vesselName: s.vessel_name || "", imoNumber: "",
-        vesselType: s.vessel_type || "", flagState: s.flag || "",
-        grtDwt: "", company: s.company || "", manningAgent: "",
-        rankOnBoard: s.rank || "", engineType: s.engine_type || "",
-        cargoType: s.cargo_type || "", fromDate: s.sign_on || "",
-        toDate: s.sign_off || "", reasonForLeaving: "",
+      setSea(cv.sea_service.map((s: any, i: number) => ({
+        id: String(Date.now() + i),
+        vesselName: s.vessel_name || s.vesselName || '',
+        vesselType: s.vessel_type || s.vesselType || '',
+        flagState: s.flag || '',
+        grtDwt: s.grt || s.dwt || '',
+        imoNumber: s.imo || '',
+        company: s.company || '',
+        manningAgent: s.manning_agent || '',
+        rankOnBoard: s.rank || '',
+        fromDate: s.sign_on || s.signOn || s.from_date || '',
+        toDate: s.sign_off || s.signOff || s.to_date || '',
+        engineType: s.engine_type || s.engineType || '',
+        cargoType: s.cargo_type || s.cargoType || '',
+        reasonForLeaving: '',
       })));
     }
     if (importSections.certs && cv.certificates?.length > 0) {
-      setCerts(cv.certificates.map((c: any) => ({
-        id: uid(), name: c.name || "", number: c.number || "",
-        flagState: "", issueDate: c.issue_date || "",
-        expiryDate: c.expiry_date || "", issuingAuthority: c.issuing_authority || "",
-        category: "stcw" as const, isCustom: true,
+      setCerts(cv.certificates.map((c: any, i: number) => ({
+        id: String(Date.now() + i),
+        name: c.name || c.cert_name || '',
+        number: c.number || c.cert_no || c.certNo || '',
+        flagState: '',
+        issueDate: c.issue_date || c.issueDate || '',
+        expiryDate: c.expiry_date || c.expiryDate || '',
+        issuingAuthority: c.issuing_authority || c.issued_by || c.authority || '',
+        category: "stcw" as const,
+        isCustom: true,
       })));
     }
     if (importSections.edu && cv.education?.length > 0) {
-      setEdu(cv.education.map((e: any) => ({
-        id: uid(),
-        institution: typeof e === "string" ? e : e.institution || "",
-        qualification: typeof e === "string" ? "" : e.qualification || "",
-        yearFrom: typeof e === "string" ? "" : e.year || "",
-        yearTo: "",
+      setEdu(cv.education.map((e: any, i: number) => ({
+        id: String(Date.now() + i),
+        institution: typeof e === 'string' ? e : e.institution || '',
+        qualification: typeof e === 'string' ? '' : e.qualification || '',
+        yearFrom: typeof e === 'string' ? '' : e.year || '',
+        yearTo: '',
       })));
     }
     if (importSections.skills) {
