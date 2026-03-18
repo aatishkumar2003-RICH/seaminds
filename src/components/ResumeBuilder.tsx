@@ -1410,7 +1410,11 @@ const ResumeBuilder = () => {
             {/* LANGUAGES */}
             {skills.languages.filter(l => l.language).length > 0 && (
               <div style={{ marginBottom:'10px' }}>
-                <div style={{ fontSize:'11px', fontWeight:'bold', background:'#0D1B2A', color:'#D4AF37', padding:'3px 8px', marginBottom:'4px' }}>LANGUAGES</div>
+                <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'6px', marginTop:'12px' }}>
+                  <div style={{ width:'4px', height:'16px', background:'#D4AF37' }} />
+                  <div style={{ fontSize:'10px', fontWeight:'900', color:'#0D1B2A', letterSpacing:'1.5px', textTransform:'uppercase' }}>LANGUAGES</div>
+                  <div style={{ flex:1, height:'1px', background:'#0D1B2A', opacity:0.2 }} />
+                </div>
                 <div style={{ display:'flex', gap:'12px', flexWrap:'wrap' }}>
                   {skills.languages.filter(l => l.language).map((l, i) => (
                     <span key={i} style={{ fontSize:'10px', color:'#333' }}>{l.language} — <em>{l.level}</em></span>
