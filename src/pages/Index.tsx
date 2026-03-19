@@ -795,7 +795,7 @@ const Index = () => {
       </div>
 
       {/* Top bar */}
-      <div className="flex items-center justify-start gap-3 pl-4 pr-16 py-1 lg:pl-8">
+      <div className="hidden lg:flex items-center justify-start gap-3 pl-4 pr-16 py-1 lg:pl-8">
         <button onClick={() => setShowSignOffConfirm(true)} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
           <Anchor size={14} /> Sign Off
         </button>
