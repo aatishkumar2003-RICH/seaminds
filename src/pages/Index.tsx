@@ -100,24 +100,35 @@ const Index = () => {
   const [touchDelta, setTouchDelta] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
   const [edgeSwipeStart, setEdgeSwipeStart] = useState<number | null>(null);
+  const [edgeSwipeDelta, setEdgeSwipeDelta] = useState(0);
+  const [isEdgeSwiping, setIsEdgeSwiping] = useState(false);
 
   // Swipe from left edge to open drawer
   useEffect(() => {
+    const DRAWER_W = 288; // w-72
     const handleTouchStart = (e: TouchEvent) => {
       if (drawerOpen) return;
       const x = e.touches[0].clientX;
-      if (x < 25) setEdgeSwipeStart(x);
+      if (x < 25) {
+        setEdgeSwipeStart(x);
+        setIsEdgeSwiping(true);
+        setEdgeSwipeDelta(0);
+      }
     };
     const handleTouchMove = (e: TouchEvent) => {
       if (edgeSwipeStart === null || drawerOpen) return;
-      const delta = e.touches[0].clientX - edgeSwipeStart;
-      if (delta > 80) {
+      const delta = Math.min(e.touches[0].clientX - edgeSwipeStart, DRAWER_W);
+      if (delta > 0) setEdgeSwipeDelta(delta);
+    };
+    const handleTouchEnd = () => {
+      if (edgeSwipeDelta > 80) {
         setDrawerOpen(true);
-        setEdgeSwipeStart(null);
         if (navigator.vibrate) navigator.vibrate(10);
       }
+      setEdgeSwipeStart(null);
+      setEdgeSwipeDelta(0);
+      setIsEdgeSwiping(false);
     };
-    const handleTouchEnd = () => setEdgeSwipeStart(null);
 
     document.addEventListener('touchstart', handleTouchStart, { passive: true });
     document.addEventListener('touchmove', handleTouchMove, { passive: true });
@@ -127,7 +138,7 @@ const Index = () => {
       document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [drawerOpen, edgeSwipeStart]);
+  }, [drawerOpen, edgeSwipeStart, edgeSwipeDelta]);
 
   const navigateTo = (next: Screen) => {
     setPrevScreen(screen);
@@ -667,24 +678,29 @@ const Index = () => {
       </aside>
 
       {/* Mobile drawer overlay */}
-      {drawerOpen && (
+      {(drawerOpen || isEdgeSwiping) && (
         <div
           className="fixed inset-0 z-40 lg:hidden"
           onClick={() => setDrawerOpen(false)}
-          style={{ background: 'rgba(0,0,0,0.5)' }}
+          style={{
+            background: `rgba(0,0,0,${drawerOpen ? 0.5 : Math.min(0.5, edgeSwipeDelta / 288 * 0.5)})`,
+            transition: !isEdgeSwiping ? 'background 0.3s' : 'none',
+          }}
         />
       )}
 
       {/* Mobile drawer - slides in from left */}
       <div
-        className={`fixed top-0 left-0 h-full w-72 z-50 lg:hidden ${!isSwiping ? 'transition-transform duration-300 ease-in-out' : ''}`}
+        className={`fixed top-0 left-0 h-full w-72 z-50 lg:hidden ${!isSwiping && !isEdgeSwiping ? 'transition-transform duration-300 ease-in-out' : ''}`}
         style={{
           background: "#0D1B2A",
           borderRight: '1px solid rgba(212,175,55,0.2)',
           padding: "24px 16px",
           transform: drawerOpen
             ? `translateX(${Math.min(0, touchDelta)}px)`
-            : 'translateX(-100%)',
+            : isEdgeSwiping && edgeSwipeDelta > 0
+              ? `translateX(${-288 + edgeSwipeDelta}px)`
+              : 'translateX(-100%)',
         }}
         onTouchStart={(e) => {
           setTouchStart(e.touches[0].clientX);
