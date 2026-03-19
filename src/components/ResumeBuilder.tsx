@@ -182,6 +182,8 @@ const ResumeBuilder = () => {
 
   const [training, setTraining] = useState<TrainingEntry[]>([]);
 
+  const [crewUniqueId, setCrewUniqueId] = useState('');
+
   const [skills, setSkills] = useState({
     ecdis: [] as string[],
     languages: [{ language: "English", level: "Fluent" }] as Language[],
@@ -443,9 +445,17 @@ const ResumeBuilder = () => {
         const eduData = typeof data.education === 'string' ? JSON.parse(data.education) : data.education;
         if (Array.isArray(eduData) && eduData.length > 0) setEdu(eduData);
       } catch (e) { console.error('CV load error:', e); }
+      // Fetch crew_unique_id from crew_profiles
+      const { data: profileData } = await supabase.from('crew_profiles')
+        .select('crew_unique_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (profileData?.crew_unique_id) setCrewUniqueId(profileData.crew_unique_id);
     };
     loadCV();
   }, []);
+
+
 
   // ── Styles ──
   const inp = "w-full bg-[#0a1929] border border-[#1e3a5f] rounded-lg px-3 py-2 text-white text-sm focus:border-[#D4AF37] focus:outline-none placeholder:text-gray-600";
@@ -1477,7 +1487,7 @@ const ResumeBuilder = () => {
               {/* QR Code for verification */}
               <div style={{ textAlign:'center', marginLeft:'12px' }}>
                 <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=${encodeURIComponent(`https://seaminds.life/verify/${personal.firstName || 'crew'}-${new Date().getFullYear()}`)}&format=png&bgcolor=ffffff`}
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=${encodeURIComponent(`https://seaminds.life/verify/${crewUniqueId || 'pending'}`)}&format=png&bgcolor=ffffff`}
                   style={{ width:'60px', height:'60px', display:'block' }}
                   alt="Verify CV"
                   crossOrigin="anonymous"

@@ -214,6 +214,27 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
           certificateId: certId,
         }}
       />
+      {/* Certificate footer with logo and QR */}
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:'24px', paddingTop:'16px', borderTop:'1px solid rgba(212,175,55,0.3)' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+          <img src="/seaminds-logo.png" style={{ width:'32px', height:'32px', borderRadius:'6px' }} alt="SeaMinds" />
+          <div>
+            <div style={{ color:'#D4AF37', fontSize:'11px', fontWeight:'bold' }}>SEAMINDS VERIFIED</div>
+            <div style={{ color:'#888', fontSize:'10px' }}>seaminds.life</div>
+          </div>
+        </div>
+        {assessmentId && (
+          <div style={{ textAlign:'center' }}>
+            <img
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=70x70&data=${encodeURIComponent(`https://seaminds.life/verify/${assessmentId}`)}&format=png&bgcolor=0d1b2a&color=D4AF37`}
+              style={{ width:'70px', height:'70px', display:'block' }}
+              alt="Verify Score"
+              crossOrigin="anonymous"
+            />
+            <div style={{ color:'#888', fontSize:'9px', marginTop:'2px' }}>Scan to verify</div>
+          </div>
+        )}
+      </div>
       {reportLoading && (
         <div style={{ textAlign:'center', color:'#D4AF37', padding:'16px', fontSize:'14px' }}>
           Generating your assessment report...
