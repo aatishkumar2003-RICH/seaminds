@@ -101,6 +101,7 @@ const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed }: OnboardingT
       setStep(step + 1);
     } else {
       setShowConfetti(true);
+      if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
       confettiTimerRef.current = setTimeout(() => {
         setShowConfetti(false);
         dismiss();
