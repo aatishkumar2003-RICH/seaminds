@@ -177,10 +177,11 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
         }
       } catch (error: any) {
         clearTimeout(timeoutId);
+        console.error('Failed to generate questions:', error);
         if (error.name === 'AbortError') {
-          console.error('Assessment question generation timed out');
+          alert('Assessment is taking too long. Please check your internet connection and try again.');
         } else {
-          console.error('Failed to generate questions:', error);
+          alert('Could not load assessment questions. Please try again.');
         }
       } finally {
         setLoadingQuestions(false);
