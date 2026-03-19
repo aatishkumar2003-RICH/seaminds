@@ -779,7 +779,7 @@ const Index = () => {
           </div>
 
         {/* Quick Stats Row */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mt-2 pb-1 -mx-1 px-1">
+        <div className="grid grid-cols-4 gap-1 lg:gap-2 mt-2 pb-1 -mx-1 px-1">
           {(() => {
             const certsRaw = localStorage.getItem("seaminds_certs");
             const certs: { expiryDate: string }[] = certsRaw ? (() => { try { return JSON.parse(certsRaw); } catch { return []; } })() : [];
@@ -798,8 +798,7 @@ const Index = () => {
               background: "rgba(13,27,42,0.8)",
               border: "1px solid rgba(212,175,55,0.15)",
               borderRadius: "12px",
-              padding: "10px",
-              minWidth: "80px",
+              minWidth: "0",
               textAlign: "center" as const,
               flexShrink: 0,
             };
