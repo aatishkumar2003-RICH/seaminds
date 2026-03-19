@@ -843,25 +843,37 @@ const Index = () => {
         )}
 
         {screen === "chat" ? (
-          profileComplete ? (onboardingComplete ? <CrewChat profileId={profileId} firstName={firstName} role={role} shipName={shipName} voyageStartDate={voyageStartDate} /> : vesselOnboardingUI) : profileGateUI
+          profileComplete ? (onboardingComplete ? <ScreenErrorBoundary screenName="Chat"><CrewChat profileId={profileId} firstName={firstName} role={role} shipName={shipName} voyageStartDate={voyageStartDate} /></ScreenErrorBoundary> : vesselOnboardingUI) : profileGateUI
         ) : screen === "dashboard" ? (
-          profileComplete ? (onboardingComplete ? <WelfareDashboard shipName={shipName} /> : vesselOnboardingUI) : profileGateUI
+          profileComplete ? (onboardingComplete ? <ScreenErrorBoundary screenName="Welfare Dashboard"><WelfareDashboard shipName={shipName} /></ScreenErrorBoundary> : vesselOnboardingUI) : profileGateUI
         ) : screen === "resthours" ? (
-          profileComplete ? (onboardingComplete ? <RestHoursTracker onNavigate={(s: Screen) => setScreen(s)} profileId={profileId} /> : vesselOnboardingUI) : profileGateUI
+          profileComplete ? (onboardingComplete ? <ScreenErrorBoundary screenName="Rest Hours"><RestHoursTracker onNavigate={(s: Screen) => setScreen(s)} profileId={profileId} /></ScreenErrorBoundary> : vesselOnboardingUI) : profileGateUI
         ) : screen === "community" ? (
-          profileComplete ? (onboardingComplete ? <Community profileId={profileId} shipName={shipName} manningAgency={manningAgency} firstName={firstName} voyageStartDate={voyageStartDate} onCompleteVoyage={() => setAppState("voyage-report")} onOpenVesselRating={() => navigateTo("vesselrating")} /> : vesselOnboardingUI) : profileGateUI
+          profileComplete ? (onboardingComplete ? <ScreenErrorBoundary screenName="Community"><Community profileId={profileId} shipName={shipName} manningAgency={manningAgency} firstName={firstName} voyageStartDate={voyageStartDate} onCompleteVoyage={() => setAppState("voyage-report")} onOpenVesselRating={() => navigateTo("vesselrating")} /></ScreenErrorBoundary> : vesselOnboardingUI) : profileGateUI
         ) : screen === "opportunities" ? (
-          <Opportunities profileId={profileId} firstName={firstName} role={role} nationality={nationality} shipName={shipName} />
+          <ScreenErrorBoundary screenName="Opportunities">
+            <Opportunities profileId={profileId} firstName={firstName} role={role} nationality={nationality} shipName={shipName} />
+          </ScreenErrorBoundary>
         ) : screen === "news" ? (
-          <News />
+          <ScreenErrorBoundary screenName="News">
+            <News />
+          </ScreenErrorBoundary>
         ) : screen === "academy" ? (
-          <Academy />
+          <ScreenErrorBoundary screenName="Academy">
+            <Academy />
+          </ScreenErrorBoundary>
         ) : screen === "bridge" ? (
-          <Bridge profileId={profileId} />
+          <ScreenErrorBoundary screenName="Bridge">
+            <Bridge profileId={profileId} />
+          </ScreenErrorBoundary>
         ) : screen === "vesselrating" ? (
-          <VesselRating onBack={() => setScreen("community")} />
+          <ScreenErrorBoundary screenName="Vessel Rating">
+            <VesselRating onBack={() => setScreen("community")} />
+          </ScreenErrorBoundary>
         ) : screen === "resume" ? (
-          <ResumeBuilder />
+          <ScreenErrorBoundary screenName="CV Builder">
+            <ResumeBuilder />
+          </ScreenErrorBoundary>
         ) : screen === "certs" ? (
           <ScreenErrorBoundary screenName="Certificates">
             <CertWallet profileId={profileId} />
