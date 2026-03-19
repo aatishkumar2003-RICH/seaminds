@@ -863,9 +863,13 @@ const Index = () => {
         ) : screen === "resume" ? (
           <ResumeBuilder />
         ) : screen === "certs" ? (
-          <CertWallet profileId={profileId} />
+          <ScreenErrorBoundary screenName="Certificates">
+            <CertWallet profileId={profileId} />
+          </ScreenErrorBoundary>
         ) : screen === "smc" ? (
-          <SMCScoreTab profileId={profileId} firstName={firstName} lastName={lastName} rank={role} shipName={shipName} />
+          <ScreenErrorBoundary screenName="SMC Score">
+            <SMCScoreTab profileId={profileId} firstName={firstName} lastName={lastName} rank={role} shipName={shipName} />
+          </ScreenErrorBoundary>
         ) : null}
       </div>
 
