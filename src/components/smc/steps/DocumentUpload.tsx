@@ -89,10 +89,9 @@ const DocumentUpload = ({ assessmentId, profileId, onNext, onSkipToEnd }: Docume
       });
 
       console.log("SMC CV Upload: calling parse-cv-documents");
-      const { data: { session } } = await supabase.auth.getSession();
       const { data, error } = await supabase.functions.invoke("parse-cv-documents", {
         body: { file_base64: base64, mime_type: file.type },
-        headers: { Authorization: `Bearer ${session?.access_token}` },
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
       console.log("SMC CV Upload: response", data, error);
 
