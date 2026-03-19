@@ -44,6 +44,8 @@ const STORAGE_KEY = "seamind_tour_completed";
 
 interface OnboardingTourProps {
   enabled: boolean;
+  forceShow?: boolean;
+  onForceShowConsumed?: () => void;
 }
 
 const OnboardingTour = ({ enabled }: OnboardingTourProps) => {
