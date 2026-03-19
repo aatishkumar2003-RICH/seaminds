@@ -850,7 +850,7 @@ const Index = () => {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span className="text-xs font-mono text-muted-foreground">{utcTime}</span>
-              <div className="lg:hidden">
+              <div className="lg:hidden" data-tour="sos">
                 <SOSButton onOpenChat={() => setScreen("chat")} firstName={firstName} shipName={shipName} inline />
               </div>
             </div>
