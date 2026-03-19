@@ -22,7 +22,7 @@ interface NameEntryProps {
     manningAgentPhone: string;
     portOfJoining: string;
     vesselType: string;
-  }, cvFile?: File) => void;
+  }, cvFile?: File) => Promise<string | undefined> | void;
 }
 
 const VESSEL_TYPES = [
