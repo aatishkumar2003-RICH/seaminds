@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { X, ChevronRight, ChevronLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -53,6 +53,8 @@ const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed }: OnboardingT
   const [step, setStep] = useState(0);
   const [visible, setVisible] = useState(false);
   const [rect, setRect] = useState<DOMRect | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const confettiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!enabled) return;
@@ -98,9 +100,19 @@ const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed }: OnboardingT
     if (step < TOUR_STEPS.length - 1) {
       setStep(step + 1);
     } else {
-      dismiss();
+      setShowConfetti(true);
+      confettiTimerRef.current = setTimeout(() => {
+        setShowConfetti(false);
+        dismiss();
+      }, 2200);
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (confettiTimerRef.current) clearTimeout(confettiTimerRef.current);
+    };
+  }, []);
 
   const prev = () => {
     if (step > 0) setStep(step - 1);
@@ -141,6 +153,58 @@ const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed }: OnboardingT
     boxShadow: "0 0 0 9999px rgba(0,0,0,0.7)",
     pointerEvents: "none",
   };
+
+  const confettiPieces = Array.from({ length: 40 }, (_, i) => ({
+    id: i,
+    x: Math.random() * 100,
+    delay: Math.random() * 0.5,
+    duration: 1.5 + Math.random() * 1,
+    size: 6 + Math.random() * 6,
+    color: ['#D4AF37', '#FFD700', '#FFA500', '#FF6347', '#4FC3F7', '#81C784', '#BA68C8'][i % 7],
+    rotation: Math.random() * 720 - 360,
+    drift: Math.random() * 80 - 40,
+  }));
+
+  if (showConfetti) {
+    return (
+      <div className="fixed inset-0 z-[300] pointer-events-none overflow-hidden">
+        {confettiPieces.map((p) => (
+          <motion.div
+            key={p.id}
+            className="absolute rounded-sm"
+            style={{
+              left: `${p.x}%`,
+              top: -12,
+              width: p.size,
+              height: p.size * 0.6,
+              backgroundColor: p.color,
+            }}
+            initial={{ y: 0, x: 0, rotate: 0, opacity: 1 }}
+            animate={{
+              y: window.innerHeight + 40,
+              x: p.drift,
+              rotate: p.rotation,
+              opacity: [1, 1, 0.8, 0],
+            }}
+            transition={{
+              duration: p.duration,
+              delay: p.delay,
+              ease: [0.25, 0.46, 0.45, 0.94],
+            }}
+          />
+        ))}
+        <motion.div
+          className="absolute top-1/3 left-1/2 -translate-x-1/2 text-center"
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
+        >
+          <div className="text-4xl mb-2">🎉</div>
+          <p className="text-sm font-bold text-foreground">You're all set!</p>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <>
