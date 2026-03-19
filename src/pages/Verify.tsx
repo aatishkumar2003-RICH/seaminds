@@ -26,7 +26,7 @@ const Verify = () => {
             .select('first_name, last_name, rank, nationality, crew_unique_id')
             .eq('id', assessment.crew_profile_id)
             .single();
-          result = { ...assessment, ...(profile || {}) };
+          result = { ...(assessment as any), ...(profile as any || {}) };
         } else {
           const { data: profile } = await supabase
             .from('crew_profiles')
