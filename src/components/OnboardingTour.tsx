@@ -100,9 +100,19 @@ const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed }: OnboardingT
     if (step < TOUR_STEPS.length - 1) {
       setStep(step + 1);
     } else {
-      dismiss();
+      setShowConfetti(true);
+      confettiTimerRef.current = setTimeout(() => {
+        setShowConfetti(false);
+        dismiss();
+      }, 2200);
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (confettiTimerRef.current) clearTimeout(confettiTimerRef.current);
+    };
+  }, []);
 
   const prev = () => {
     if (step > 0) setStep(step - 1);
