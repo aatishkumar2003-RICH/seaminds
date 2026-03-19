@@ -96,6 +96,9 @@ const Index = () => {
   const [vesselType, setVesselType] = useState("");
   const [portOfJoining, setPortOfJoining] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchDelta, setTouchDelta] = useState(0);
+  const [isSwiping, setIsSwiping] = useState(false);
 
   const navigateTo = (next: Screen) => {
     setPrevScreen(screen);
