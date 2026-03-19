@@ -428,7 +428,7 @@ const ResumeBuilder = () => {
       if (!user) return;
       const { data } = await supabase.from('crew_cv_data')
         .select('certificates, sea_service, education, medical')
-        .eq('user_id', user.id).single();
+        .eq('user_id', user.id).maybeSingle();
       if (!data) return;
       try {
         const meta = typeof data.medical === 'string' ? JSON.parse(data.medical) : data.medical;
