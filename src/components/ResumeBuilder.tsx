@@ -182,6 +182,8 @@ const ResumeBuilder = () => {
 
   const [training, setTraining] = useState<TrainingEntry[]>([]);
 
+  const [crewUniqueId, setCrewUniqueId] = useState('');
+
   const [skills, setSkills] = useState({
     ecdis: [] as string[],
     languages: [{ language: "English", level: "Fluent" }] as Language[],
