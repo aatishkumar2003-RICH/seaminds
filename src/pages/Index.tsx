@@ -102,6 +102,18 @@ const Index = () => {
   const [edgeSwipeStart, setEdgeSwipeStart] = useState<number | null>(null);
   const [edgeSwipeDelta, setEdgeSwipeDelta] = useState(0);
   const [isEdgeSwiping, setIsEdgeSwiping] = useState(false);
+  const [showSwipeHint, setShowSwipeHint] = useState(false);
+
+  useEffect(() => {
+    if (!localStorage.getItem('seamind_swipe_hint_seen')) setShowSwipeHint(true);
+  }, []);
+
+  useEffect(() => {
+    if (showSwipeHint && drawerOpen) {
+      setShowSwipeHint(false);
+      localStorage.setItem('seamind_swipe_hint_seen', '1');
+    }
+  }, [drawerOpen, showSwipeHint]);
 
   // Swipe from left edge to open drawer
   useEffect(() => {
