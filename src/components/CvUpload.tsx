@@ -56,7 +56,23 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [cvSummary, setCvSummary] = useState<any>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [scanStage, setScanStage] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const stages = [
+    '📄 Reading your CV...',
+    '🔍 Extracting certificates...',
+    '⚓ Mapping sea service...',
+    '✅ Almost done...'
+  ];
+
+  useEffect(() => {
+    if (!isProcessing) { setScanStage(0); return; }
+    const interval = setInterval(() => {
+      setScanStage(s => s < stages.length - 1 ? s + 1 : s);
+    }, 7000);
+    return () => clearInterval(interval);
+  }, [isProcessing]);
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
