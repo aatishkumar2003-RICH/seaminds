@@ -413,19 +413,18 @@ const DigitalCvSummary = ({ profileId, cvStatus }: { profileId: string; cvStatus
         </p>
       ) : (
         <div className="space-y-4">
-          {/* Certificates */}
           {hasCerts && (
             <div>
               <h4 className="text-xs font-semibold mb-2 flex items-center gap-1.5" style={{ color: "#D4AF37" }}>
                 <Award size={13} /> Certificates
               </h4>
               <div className="space-y-1.5">
-                {cvData!.certificates!.map((c, i) => (
+                {certificates.map((c, i) => (
                   <div key={c.id || i} className="flex items-center justify-between rounded-lg px-3 py-2" style={{ background: "rgba(255,255,255,0.03)" }}>
                     <span className="text-xs text-foreground truncate mr-2">{c.name || "Unnamed"}</span>
-                    {c.expiryDate && (
+                    {(c.expiryDate || c.expiry_date) && (
                       <span className="text-[10px] shrink-0" style={{ color: "#94A3B8" }}>
-                        Exp: {new Date(c.expiryDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                        Exp: {new Date(c.expiryDate || c.expiry_date || "").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
                       </span>
                     )}
                   </div>
@@ -434,22 +433,21 @@ const DigitalCvSummary = ({ profileId, cvStatus }: { profileId: string; cvStatus
             </div>
           )}
 
-          {/* Sea Service */}
           {hasService && (
             <div>
               <h4 className="text-xs font-semibold mb-2 flex items-center gap-1.5" style={{ color: "#D4AF37" }}>
                 <Anchor size={13} /> Sea Service
               </h4>
               <div className="space-y-1.5">
-                {cvData!.sea_service!.map((s, i) => (
+                {seaService.map((s, i) => (
                   <div key={i} className="flex items-center justify-between rounded-lg px-3 py-2" style={{ background: "rgba(255,255,255,0.03)" }}>
                     <div className="min-w-0 mr-2">
                       <span className="text-xs text-foreground truncate block">{s.vessel_name || s.vesselName || "Unknown vessel"}</span>
-                      {s.rank && <span className="text-[10px]" style={{ color: "#94A3B8" }}>{s.rank}</span>}
+                      {(s.rank || s.rankOnBoard) && <span className="text-[10px]" style={{ color: "#94A3B8" }}>{s.rank || s.rankOnBoard}</span>}
                     </div>
-                    {(s.duration || (s.from && s.to)) && (
+                    {(s.duration || (s.from && s.to) || (s.fromDate && s.toDate)) && (
                       <span className="text-[10px] shrink-0" style={{ color: "#94A3B8" }}>
-                        {s.duration || `${s.from} – ${s.to}`}
+                        {s.duration || (s.from && s.to ? `${s.from} – ${s.to}` : `${s.fromDate} – ${s.toDate}`)}
                       </span>
                     )}
                   </div>
@@ -458,14 +456,13 @@ const DigitalCvSummary = ({ profileId, cvStatus }: { profileId: string; cvStatus
             </div>
           )}
 
-          {/* Medical */}
           {hasMedical && (
             <div>
               <h4 className="text-xs font-semibold mb-2 flex items-center gap-1.5" style={{ color: "#D4AF37" }}>
                 <HeartPulse size={13} /> Medical
               </h4>
               <div className="space-y-1.5">
-                {cvData!.medical!.map((m, i) => (
+                {medical.map((m, i) => (
                   <div key={i} className="flex items-center justify-between rounded-lg px-3 py-2" style={{ background: "rgba(255,255,255,0.03)" }}>
                     <span className="text-xs text-foreground truncate mr-2">{m.name || "Medical Certificate"}</span>
                     <span className="text-[10px] shrink-0" style={{ color: m.status === "Expired" ? "#ef4444" : "#22c55e" }}>
