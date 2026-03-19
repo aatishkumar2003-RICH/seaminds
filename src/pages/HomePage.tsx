@@ -43,30 +43,12 @@ const HomePage = () => {
     ],
   };
 
-  // Check auth and redirect authenticated users to /app (with 3s timeout)
+  // Redirect authenticated users to /app
   useEffect(() => {
-    let timeout: ReturnType<typeof setTimeout>;
-
-    const resolve = () => { clearTimeout(timeout); setAuthReady(true); };
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        navigate('/app', { replace: true });
-      } else {
-        resolve();
-      }
-    }).catch(() => resolve());
-
-    // Fallback: always show homepage after 3 seconds
-    timeout = setTimeout(resolve, 3000);
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        navigate('/app', { replace: true });
-      }
-    });
-    return () => { clearTimeout(timeout); subscription.unsubscribe(); };
-  }, [navigate]);
+    if (authReady && user) {
+      navigate('/app', { replace: true });
+    }
+  }, [authReady, user, navigate]);
 
   if (!authReady) {
     return (
