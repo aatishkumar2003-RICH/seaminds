@@ -736,13 +736,14 @@ const Index = () => {
         <div className="relative z-10 flex flex-col flex-1 min-h-0">
 
         {/* Mobile top bar */}
-        <div className="flex items-center justify-between px-4 py-3 lg:hidden border-b border-[#D4AF37]/20 flex-shrink-0" style={{ background: '#0D1B2A' }}>
+        <div className="flex items-center justify-between px-4 py-2 lg:hidden border-b border-[#D4AF37]/20 flex-shrink-0" style={{ background: '#0D1B2A' }}>
           <button onClick={() => setDrawerOpen(true)} className="text-[#D4AF37] text-xl font-bold p-1">
             ☰
           </button>
           <div className="flex items-center gap-2">
             <img src="/seaminds-logo.png" className="w-6 h-6 rounded-full" />
             <span className="text-[#D4AF37] font-bold text-sm">SeaMinds</span>
+            <span className="text-gray-400 text-xs hidden sm:block">{role || ''}</span>
           </div>
           <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
             <span className="text-xs text-[#D4AF37] font-bold">{firstName?.[0] || 'C'}</span>
@@ -779,7 +780,7 @@ const Index = () => {
           </div>
 
         {/* Quick Stats Row */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mt-2 pb-1 -mx-1 px-1">
+        <div className="grid grid-cols-4 gap-1 lg:gap-2 mt-2 pb-1 -mx-1 px-1">
           {(() => {
             const certsRaw = localStorage.getItem("seaminds_certs");
             const certs: { expiryDate: string }[] = certsRaw ? (() => { try { return JSON.parse(certsRaw); } catch { return []; } })() : [];
@@ -798,15 +799,14 @@ const Index = () => {
               background: "rgba(13,27,42,0.8)",
               border: "1px solid rgba(212,175,55,0.15)",
               borderRadius: "12px",
-              padding: "10px",
-              minWidth: "80px",
+              minWidth: "0",
               textAlign: "center" as const,
               flexShrink: 0,
             };
 
             return (
               <>
-                <button onClick={() => setScreen("chat")} style={cardStyle} className="flex-1">
+                <button onClick={() => setScreen("chat")} style={cardStyle} className="flex-1 py-1 lg:py-3">
                   <div className="text-lg">🔥</div>
                   <div className="text-sm font-bold" style={{ color: "#D4AF37" }}>{streakCount}</div>
                   <div className="text-[9px] text-muted-foreground">day streak</div>
@@ -814,23 +814,23 @@ const Index = () => {
                 <button onClick={() => setScreen("certs")} style={{
                   ...cardStyle,
                   border: expiringSoon > 0 ? "1px solid rgba(245,158,11,0.4)" : cardStyle.border,
-                }} className="flex-1">
+                }} className="flex-1 py-1 lg:py-3">
                   <div className="text-lg">📜</div>
                   <div className="text-sm font-bold" style={{ color: expiringSoon > 0 ? "#f59e0b" : "#22c55e" }}>{expiringSoon}</div>
-                  <div className="text-[9px] text-muted-foreground">expiring soon</div>
+                  <div className="text-[9px] text-muted-foreground">expiring</div>
                 </button>
                 <button onClick={() => setScreen("resthours")} style={{
                   ...cardStyle,
                   border: restHours < 10 && restHours > 0 ? "1px solid rgba(239,68,68,0.4)" : cardStyle.border,
-                }} className="flex-1">
+                }} className="flex-1 py-1 lg:py-3">
                   <div className="text-lg">⏱</div>
                   <div className="text-sm font-bold" style={{ color: restHours >= 10 ? "#22c55e" : restHours > 0 ? "#ef4444" : "#888" }}>{restHours || "—"}</div>
-                  <div className="text-[9px] text-muted-foreground">hrs rest today</div>
+                  <div className="text-[9px] text-muted-foreground">hrs rest</div>
                 </button>
-                <button onClick={() => setScreen("smc")} style={cardStyle} className="flex-1">
+                <button onClick={() => setScreen("smc")} style={cardStyle} className="flex-1 py-1 lg:py-3">
                   <div className="text-lg">🏆</div>
-                  <div className="text-sm font-bold" style={{ color: "#D4AF37" }}>{smcScore !== null ? smcScore : "Get Score"}</div>
-                  <div className="text-[9px] text-muted-foreground">{smcScore !== null ? "SMC Score" : "SMC"}</div>
+                  <div className="text-sm font-bold" style={{ color: "#D4AF37" }}>{smcScore !== null ? smcScore : "Get"}</div>
+                  <div className="text-[9px] text-muted-foreground">{smcScore !== null ? "SMC" : "SMC"}</div>
                 </button>
               </>
             );
@@ -875,7 +875,7 @@ const Index = () => {
           const dayIndex = Math.floor(Date.now() / 86400000) % SEAFARER_QUOTES.length;
           const quote = SEAFARER_QUOTES[dayIndex];
           return (
-            <div className="mt-2 px-1 py-2 rounded-xl hidden sm:block" style={{ background: "rgba(13,27,42,0.5)", border: "1px solid rgba(212,175,55,0.08)" }}>
+            <div className="mt-2 px-1 py-2 rounded-xl hidden lg:block" style={{ background: "rgba(13,27,42,0.5)", border: "1px solid rgba(212,175,55,0.08)" }}>
               <p className="text-[11px] text-muted-foreground italic leading-relaxed text-center">
                 "{quote.text}"
               </p>
