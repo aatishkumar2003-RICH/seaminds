@@ -43,14 +43,20 @@ const CertWallet = ({ profileId }: CertWalletProps) => {
   const [certNumber, setCertNumber] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<Cert | null>(null);
   const fetchCerts = useCallback(async () => {
-    if (!profileId) return;
-    const { data, error } = await supabase
-      .from("crew_cv_data")
-      .select("certificates")
-      .eq("user_id", profileId)
-      .maybeSingle();
-    if (!error && data?.certificates) {
-      setCerts(data.certificates as unknown as Cert[]);
+    if (!profileId) { setLoading(false); return; }
+    try {
+      const { data, error } = await supabase
+        .from("crew_cv_data")
+        .select("certificates")
+        .eq("user_id", profileId)
+        .maybeSingle();
+      if (error) {
+        console.error('CertWallet fetch error:', error);
+      } else if (data?.certificates) {
+        setCerts(data.certificates as unknown as Cert[]);
+      }
+    } catch (e) {
+      console.error('CertWallet fetchCerts crash:', e);
     }
     setLoading(false);
   }, [profileId]);
@@ -59,14 +65,20 @@ const CertWallet = ({ profileId }: CertWalletProps) => {
 
   const upsertCerts = async (updated: Cert[]) => {
     setCerts(updated);
-    const { error } = await supabase
-      .from("crew_cv_data")
-      .upsert(
-        { user_id: profileId, certificates: updated as any, updated_at: new Date().toISOString() },
-        { onConflict: "user_id" }
-      );
-    if (error) {
-      toast({ title: "Error saving certificates", description: error.message, variant: "destructive" });
+    try {
+      const { error } = await supabase
+        .from("crew_cv_data")
+        .upsert(
+          { user_id: profileId, certificates: updated as any, updated_at: new Date().toISOString() },
+          { onConflict: "user_id" }
+        );
+      if (error) {
+        console.error('CertWallet upsert error:', error);
+        toast({ title: "Error saving certificates", description: error.message, variant: "destructive" });
+      }
+    } catch (e) {
+      console.error('CertWallet upsertCerts crash:', e);
+      toast({ title: "Error saving certificates", description: "Please try again", variant: "destructive" });
     }
   };
 

@@ -37,11 +37,18 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    checkStatus();
-    checkExistingCvData();
-    supabase.from("crew_profiles").select("crew_unique_id").eq("id", profileId).maybeSingle().then(({ data }) => {
-      if (data?.crew_unique_id) setCrewUniqueId(data.crew_unique_id);
-    });
+    const init = async () => {
+      try {
+        await checkStatus();
+        await checkExistingCvData();
+        const { data } = await supabase.from("crew_profiles").select("crew_unique_id").eq("id", profileId).maybeSingle();
+        if (data?.crew_unique_id) setCrewUniqueId(data.crew_unique_id);
+      } catch (e) {
+        console.error('SMCScoreTab init error:', e);
+        setView("payment");
+      }
+    };
+    init();
   }, [profileId]);
 
   useEffect(() => {
@@ -123,47 +130,57 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
   };
 
   const checkStatus = async () => {
-    const { data: assessment } = await supabase
-      .from("smc_assessments")
-      .select("*")
-      .eq("crew_profile_id", profileId)
-      .order("started_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (assessment?.status === "completed") {
-      setAssessmentId(assessment.id);
-      setView("certificate");
-      return;
-    }
-
-    if (assessment?.status === "in_progress") {
-      setAssessmentId(assessment.id);
-      setView("assessment");
-      return;
-    }
-
-    const { data: payment } = await supabase
-      .from("smc_payments")
-      .select("*")
-      .eq("crew_profile_id", profileId)
-      .eq("assessment_unlocked", true)
-      .maybeSingle();
-
-    if (payment) {
-      const { data: newAssessment } = await supabase
+    try {
+      if (!profileId) { setView("payment"); return; }
+      const { data: assessment, error: assessErr } = await supabase
         .from("smc_assessments")
-        .insert({ crew_profile_id: profileId, status: "in_progress", current_step: 1 })
-        .select("id")
-        .single();
-      if (newAssessment) {
-        setAssessmentId(newAssessment.id);
-        setView("assessment");
-      }
-      return;
-    }
+        .select("*")
+        .eq("crew_profile_id", profileId)
+        .order("started_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-    setView("payment");
+      if (assessErr) { console.error('SMC assessment query error:', assessErr); setView("payment"); return; }
+
+      if (assessment?.status === "completed") {
+        setAssessmentId(assessment.id);
+        setView("certificate");
+        return;
+      }
+
+      if (assessment?.status === "in_progress") {
+        setAssessmentId(assessment.id);
+        setView("assessment");
+        return;
+      }
+
+      const { data: payment, error: payErr } = await supabase
+        .from("smc_payments")
+        .select("*")
+        .eq("crew_profile_id", profileId)
+        .eq("assessment_unlocked", true)
+        .maybeSingle();
+
+      if (payErr) { console.error('SMC payment query error:', payErr); setView("payment"); return; }
+
+      if (payment) {
+        const { data: newAssessment } = await supabase
+          .from("smc_assessments")
+          .insert({ crew_profile_id: profileId, status: "in_progress", current_step: 1 })
+          .select("id")
+          .single();
+        if (newAssessment) {
+          setAssessmentId(newAssessment.id);
+          setView("assessment");
+        }
+        return;
+      }
+
+      setView("payment");
+    } catch (e) {
+      console.error('SMC checkStatus crash:', e);
+      setView("payment");
+    }
   };
 
   const handlePaymentSuccess = async () => {
