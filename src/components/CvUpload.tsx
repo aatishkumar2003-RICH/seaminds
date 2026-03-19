@@ -203,7 +203,7 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
               </div>
             </div>
           </div>
-          <p className="font-bold text-sm text-primary">🤖 AI is reading your CV...</p>
+          <p className="font-bold text-sm text-primary">{stages[scanStage]}</p>
           <p className="text-xs text-muted-foreground">This may take 15–20 seconds</p>
           <div className="space-y-1.5 text-left max-w-xs mx-auto">
             {["Extracting personal details...", "Reading certificates...", "Identifying sea service..."].map((step) => (
