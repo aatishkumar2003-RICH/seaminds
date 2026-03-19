@@ -574,7 +574,7 @@ const Index = () => {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen w-full bg-background relative">
+    <div className="flex flex-col lg:flex-row h-screen w-full bg-background relative overflow-hidden">
       {/* === DESKTOP SIDEBAR (lg+) === */}
       <aside className="hidden lg:flex w-64 h-screen flex-col flex-shrink-0 border-r border-border" style={{ background: "#0D1B2A", padding: "24px 16px" }}>
         {/* Logo */}
@@ -636,7 +636,7 @@ const Index = () => {
       </aside>
 
       {/* === MAIN CONTENT AREA === */}
-      <div className="flex-1 flex flex-col h-screen w-full max-w-md lg:max-w-none mx-auto lg:mx-0 relative overflow-hidden pb-20 md:pb-0">
+      <div className="flex-1 flex flex-col h-screen w-full max-w-md lg:max-w-none mx-auto lg:mx-0 relative overflow-hidden pb-16 lg:pb-0">
         <div className="absolute inset-0 opacity-20 pointer-events-none z-0">
           <OceanBackground timeOfDay={timeOfDay} />
         </div>
@@ -893,7 +893,7 @@ const Index = () => {
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-[#0D1B2A] border-t border-[#D4AF37]/20 flex justify-around items-center px-2 py-2 safe-area-pb">
+      <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-[#0D1B2A] border-t border-[#D4AF37]/20 flex justify-around items-center px-1 py-2">
         {[
           { id: 'chat' as Screen, icon: '💬', label: 'Chat', gated: true },
           { id: 'dashboard' as Screen, icon: '❤️', label: 'Welfare', gated: true },
