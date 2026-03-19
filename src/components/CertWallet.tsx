@@ -66,8 +66,8 @@ const CertWallet = ({ profileId }: CertWalletProps) => {
         .maybeSingle();
       if (error) {
         console.error('CertWallet fetch error:', error);
-      } else if (data?.certificates) {
-        setCerts(data.certificates as unknown as Cert[]);
+      } else {
+        setCerts(normalizeCerts(data?.certificates));
       }
     } catch (e) {
       console.error('CertWallet fetchCerts crash:', e);
