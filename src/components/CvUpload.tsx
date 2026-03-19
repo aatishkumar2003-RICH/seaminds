@@ -87,10 +87,9 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
       let data: any, error: any;
       try {
         console.log('CV Upload: calling parse-cv-documents');
-        const { data: { session } } = await supabase.auth.getSession();
         const result = await supabase.functions.invoke("parse-cv-documents", {
           body: { file_base64: base64, mime_type: file.type },
-          headers: { Authorization: `Bearer ${session?.access_token}` },
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
         data = result.data;
         error = result.error;
