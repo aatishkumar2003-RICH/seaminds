@@ -6,7 +6,7 @@
   "id": "life.seaminds.app",
   "display": "standalone",
   "background_color": "#0D1B2A",
-  "theme_color": "#D4AF37",
+  "theme_color": "#0D1B2A",
   "orientation": "portrait",
   "categories": ["health", "productivity", "utilities"],
   "icons": [
