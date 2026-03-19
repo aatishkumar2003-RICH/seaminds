@@ -399,11 +399,10 @@ const ResumeBuilder = () => {
   // ── Auto-save CV data to Supabase ──
   const saveCVData = async (data: any) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      if (!user) return;
       setSaveStatus('saving');
       await supabase.from('crew_cv_data').upsert({
-        user_id: session.user.id,
+        user_id: user.id,
         certificates: JSON.stringify(data.certs) as any,
         sea_service: JSON.stringify(data.sea) as any,
         education: JSON.stringify(data.edu) as any,
