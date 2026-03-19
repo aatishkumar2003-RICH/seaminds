@@ -888,7 +888,7 @@ const Index = () => {
                   <div className="text-sm font-bold" style={{ color: "#D4AF37" }}>{streakCount}</div>
                   <div className="text-[9px] text-muted-foreground">day streak</div>
                 </button>
-                <button onClick={() => setScreen("certs")} style={{
+                <button onClick={() => setScreen("certs")} data-tour="certs" style={{
                   ...cardStyle,
                   border: expiringSoon > 0 ? "1px solid rgba(245,158,11,0.4)" : cardStyle.border,
                 }} className="flex-1 py-1 lg:py-3">
