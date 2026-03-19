@@ -44,7 +44,7 @@ class ScreenErrorBoundary extends React.Component<{children: React.ReactNode, sc
     this.state = { hasError: false };
   }
   static getDerivedStateFromError() { return { hasError: true }; }
-  componentDidCatch(error: any) { console.error('Screen error:', error); }
+  componentDidCatch(error: any, errorInfo: any) { console.error('Screen error in', this.props.screenName, ':', error, errorInfo); }
   render() {
     if (this.state.hasError) {
       return (
