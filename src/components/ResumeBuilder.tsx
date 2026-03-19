@@ -374,7 +374,7 @@ const ResumeBuilder = () => {
       const { jsPDF } = await import('jspdf');
       const el = document.getElementById('cv-preview');
       if (!el) return;
-      const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+      const canvas = await html2canvas(el, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff' });
       const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const imgData = canvas.toDataURL('image/png');
       const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -1473,6 +1473,16 @@ const ResumeBuilder = () => {
               <div style={{ textAlign:'right' }}>
                 <div style={{ fontSize:'9px', color:'#888' }}>Generated: {new Date().toLocaleDateString('en-GB')}</div>
                 <div style={{ fontSize:'8px', color:'#D4AF37', fontWeight:'bold', letterSpacing:'0.5px' }}>COMPETENCY CERTIFIED PLATFORM</div>
+              </div>
+              {/* QR Code for verification */}
+              <div style={{ textAlign:'center', marginLeft:'12px' }}>
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=${encodeURIComponent(`https://seaminds.life/verify/${personal.firstName || 'crew'}-${new Date().getFullYear()}`)}&format=png&bgcolor=ffffff`}
+                  style={{ width:'60px', height:'60px', display:'block' }}
+                  alt="Verify CV"
+                  crossOrigin="anonymous"
+                />
+                <div style={{ fontSize:'7px', color:'#888', marginTop:'2px', textAlign:'center' }}>Scan to verify</div>
               </div>
             </div>
           </div>
