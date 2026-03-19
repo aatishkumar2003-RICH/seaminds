@@ -163,10 +163,14 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
       setLoadingQuestions(true);
       try {
         const token = accessToken;
-        const { data } = await supabase.functions.invoke('generate-smc-questions', {
+        const invokePromise = supabase.functions.invoke('generate-smc-questions', {
           body: { rank, vesselType: vesselType || 'General Cargo', yearsExperience: yearsExperience || 5, department: 'Deck' },
-          headers: { Authorization: `Bearer ${token}`, signal: controller.signal },
+          headers: { Authorization: `Bearer ${token}` },
         });
+        const abortPromise = new Promise<never>((_, reject) => {
+          controller.signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+        });
+        const { data } = await Promise.race([invokePromise, abortPromise]);
         clearTimeout(timeoutId);
         if (data?.mcq || data?.scenario || data?.behavioural) {
           setAiQuestions(data);
