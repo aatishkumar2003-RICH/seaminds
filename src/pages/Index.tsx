@@ -114,6 +114,7 @@ const Index = () => {
       if (delta > 80) {
         setDrawerOpen(true);
         setEdgeSwipeStart(null);
+        if (navigator.vibrate) navigator.vibrate(10);
       }
     };
     const handleTouchEnd = () => setEdgeSwipeStart(null);
