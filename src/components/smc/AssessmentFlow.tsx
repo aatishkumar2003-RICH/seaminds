@@ -44,6 +44,7 @@ interface FlatQuestion {
 }
 
 const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assessmentId, vesselType, yearsExperience, onComplete, onExit }: AssessmentFlowProps) => {
+  const { accessToken } = useAuth();
   // Core flow state
   const [flowStep, setFlowStep] = useState<'preform' | 'docUpload' | 'docVerify' | 'questions' | 'score'>('preform');
   const [aiQuestions, setAiQuestions] = useState<any>(null);
