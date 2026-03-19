@@ -22,7 +22,7 @@ interface NameEntryProps {
     manningAgentPhone: string;
     portOfJoining: string;
     vesselType: string;
-  }, cvFile?: File) => void;
+  }, cvFile?: File) => Promise<string | undefined> | void;
 }
 
 const VESSEL_TYPES = [
@@ -86,29 +86,53 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
   const [agentCountryCode, setAgentCountryCode] = useState("+63");
   const [portOfJoiningVal, setPortOfJoiningVal] = useState("");
   const [vesselTypeVal, setVesselTypeVal] = useState("");
+  const [formError, setFormError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const canSubmit =
     firstName.trim() && lastName.trim() && shipName.trim() && role &&
     nationality.trim() && yearsAtSea && phoneNumber.trim();
 
-  const handleSubmit = () => {
-    if (!canSubmit) return;
-    onSubmit({
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      shipName: shipName.trim(),
-      role,
-      gender,
-      nationality: nationality.trim(),
-      whatsappNumber: `${countryCode}${phoneNumber.trim()}`,
-      yearsAtSea,
-      voyageStartDate: voyageStartDate ? format(voyageStartDate, "yyyy-MM-dd") : "",
-      manningAgency: manningAgency.trim(),
-      vesselImo: vesselImo.trim(),
-      manningAgentPhone: manningAgentPhone.trim() ? `${agentCountryCode}${manningAgentPhone.trim()}` : "",
-      portOfJoining: portOfJoiningVal.trim(),
-      vesselType: vesselTypeVal,
-    }, cvFile);
+  const cleanWhatsappNumber = (dialCode: string, rawNumber: string): string => {
+    let clean = (dialCode + rawNumber.trim()).replace(/\s/g, '');
+    const code = dialCode.replace('+', '');
+    if (clean.startsWith('+' + code + '00' + code)) {
+      clean = '+' + code + clean.substring(('+' + code + '00' + code).length);
+    }
+    if (clean.startsWith('+' + code + '0')) {
+      clean = '+' + code + clean.substring(('+' + code + '0').length);
+    }
+    return clean;
+  };
+
+  const handleSubmit = async () => {
+    if (!canSubmit || submitting) return;
+    setFormError("");
+    setSubmitting(true);
+    try {
+      const cleanedWhatsapp = cleanWhatsappNumber(countryCode, phoneNumber);
+      const errorMsg = await onSubmit({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        shipName: shipName.trim(),
+        role,
+        gender,
+        nationality: nationality.trim(),
+        whatsappNumber: cleanedWhatsapp,
+        yearsAtSea,
+        voyageStartDate: voyageStartDate ? format(voyageStartDate, "yyyy-MM-dd") : "",
+        manningAgency: manningAgency.trim(),
+        vesselImo: vesselImo.trim(),
+        manningAgentPhone: manningAgentPhone.trim() ? `${agentCountryCode}${manningAgentPhone.trim()}` : "",
+        portOfJoining: portOfJoiningVal.trim(),
+        vesselType: vesselTypeVal,
+      }, cvFile);
+      if (errorMsg) setFormError(errorMsg);
+    } catch (e: any) {
+      setFormError(e?.message || "Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -339,12 +363,18 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
           </div>
         </div>
 
+        {formError && (
+          <div className="rounded-xl bg-destructive/10 border border-destructive/30 px-4 py-3 text-sm text-destructive">
+            {formError}
+          </div>
+        )}
+
         <button
           onClick={handleSubmit}
-          disabled={!canSubmit}
+          disabled={!canSubmit || submitting}
           className="w-full bg-primary text-primary-foreground font-medium text-sm rounded-xl py-3.5 disabled:opacity-30 transition-opacity"
         >
-          Continue
+          {submitting ? "Saving..." : "Continue"}
         </button>
       </div>
     </div>
