@@ -74,7 +74,7 @@ const Verify = () => {
                 {data.nationality && <p style={{ color:'#ccc', fontSize:'13px', marginBottom:'6px' }}>Nationality: {data.nationality}</p>}
                 {data.crew_unique_id && <p style={{ color:'#ccc', fontSize:'13px', marginBottom:'6px' }}>Crew ID: {data.crew_unique_id}</p>}
                 {data.overall_score && <p style={{ color:'#ccc', fontSize:'13px', marginBottom:'6px' }}>SMC Score: {data.overall_score}/5.00</p>}
-                {data.created_at && <p style={{ color:'#ccc', fontSize:'13px', marginBottom:'6px' }}>Certified: {new Date(data.created_at).toLocaleDateString('en-GB')}</p>}
+                {data.started_at && <p style={{ color:'#ccc', fontSize:'13px', marginBottom:'6px' }}>Certified: {new Date(data.started_at).toLocaleDateString('en-GB')}</p>}
               </div>
             </div>
             <div style={{ borderTop:'1px solid rgba(212,175,55,0.2)', paddingTop:'16px', marginTop:'20px' }}>
