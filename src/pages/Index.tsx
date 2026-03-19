@@ -574,19 +574,19 @@ const Index = () => {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen w-full bg-background relative overflow-hidden">
-      {/* === DESKTOP SIDEBAR (lg+) === */}
-      <aside className="hidden lg:flex w-64 h-screen flex-col flex-shrink-0 border-r border-border" style={{ background: "#0D1B2A", padding: "24px 16px" }}>
+    <div className="flex h-screen w-full bg-background relative overflow-hidden">
+      {/* === SIDEBAR (all sizes: icon-only on mobile, full on md+) === */}
+      <aside className="flex w-16 md:w-64 h-screen flex-col flex-shrink-0 border-r border-border" style={{ background: "#0D1B2A", padding: "24px 8px" }}>
         {/* Logo */}
-        <div className="flex items-center gap-2 mb-6">
+        <div className="flex items-center gap-2 mb-6 justify-center md:justify-start md:px-2">
           <span className="text-lg font-bold px-2 py-0.5 rounded" style={{ background: "rgba(212,175,55,0.15)", color: "#D4AF37" }}>SM</span>
-          <span className="font-bold text-base" style={{ color: "#D4AF37" }}>SeaMinds</span>
+          <span className="hidden md:block font-bold text-base" style={{ color: "#D4AF37" }}>SeaMinds</span>
         </div>
 
         {/* User info */}
-        <div className="flex items-center gap-2 mb-6 px-1">
+        <div className="flex items-center gap-2 mb-6 px-1 justify-center md:justify-start">
           <span className="text-lg">{NATIONALITY_FLAGS[nationality] || "🌊"}</span>
-          <div className="flex flex-col">
+          <div className="hidden md:flex flex-col">
             <span className="text-sm text-muted-foreground font-medium">{firstName || "Seafarer"} {lastName}</span>
             {role && <span className="text-xs text-muted-foreground/60">{role}</span>}
           </div>
@@ -600,7 +600,7 @@ const Index = () => {
               <button
                 key={item.screen}
                 onClick={() => handleNavClick(item)}
-                className="flex items-center gap-3 text-sm font-medium transition-colors w-full text-left"
+                className="flex items-center gap-3 text-sm font-medium transition-colors w-full justify-center md:justify-start"
                 style={{
                   padding: "10px 12px",
                   borderRadius: "10px",
@@ -610,11 +610,12 @@ const Index = () => {
                 }}
                 onMouseEnter={(e) => { if (!active) (e.currentTarget.style.background = "rgba(255,255,255,0.05)"); }}
                 onMouseLeave={(e) => { if (!active) (e.currentTarget.style.background = "transparent"); }}
+                title={item.label}
               >
                 <span className="text-base">{item.icon}</span>
-                <span>{item.label}</span>
+                <span className="hidden md:inline">{item.label}</span>
                 {item.screen === "opportunities" && jobBadgeCount > 0 && (
-                  <span className="ml-auto text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1" style={{ background: "#D4AF37", color: "#0a1929" }}>{jobBadgeCount}</span>
+                  <span className="ml-auto text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 hidden md:flex" style={{ background: "#D4AF37", color: "#0a1929" }}>{jobBadgeCount}</span>
                 )}
               </button>
             );
@@ -622,12 +623,12 @@ const Index = () => {
         </nav>
 
         {/* Bottom section */}
-        <div className="mt-auto flex flex-col gap-2">
+        <div className="mt-auto flex flex-col gap-2 items-center md:items-stretch">
           <div className="flex items-center justify-center gap-2 py-1.5 rounded-full text-xs font-medium" style={{ background: "rgba(212,175,55,0.12)", color: "#D4AF37" }}>
-            🔥 {streakCount} day streak
+            🔥 <span className="hidden md:inline">{streakCount} day streak</span><span className="md:hidden">{streakCount}</span>
           </div>
           <button onClick={handleSignOut} className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-2">
-            <LogOut size={14} /> Sign Out
+            <LogOut size={14} /> <span className="hidden md:inline">Sign Out</span>
           </button>
           <div className="w-full">
             <SOSButton onOpenChat={() => setScreen("chat")} firstName={firstName} shipName={shipName} inline />
@@ -636,28 +637,15 @@ const Index = () => {
       </aside>
 
       {/* === MAIN CONTENT AREA === */}
-      <div className="flex-1 flex flex-col h-screen w-full mx-auto lg:mx-0 relative overflow-hidden pb-16 lg:pb-0">
+      <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
         <div className="absolute inset-0 opacity-20 pointer-events-none z-0">
           <OceanBackground timeOfDay={timeOfDay} />
         </div>
 
         <div className="relative z-10 flex flex-col flex-1 min-h-0">
-        {/* Mobile Header Bar */}
-        <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-[#0D1B2A] border-b border-[#D4AF37]/20">
-          <div className="flex items-center gap-2">
-            <img src="/seaminds-logo.png" className="w-7 h-7 rounded-full" />
-            <span className="text-[#D4AF37] font-bold text-sm">SeaMinds</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-white text-sm">{firstName || 'Crew'}</span>
-            <div className="w-7 h-7 rounded-full bg-secondary flex items-center justify-center">
-              <span className="text-xs text-[#D4AF37]">{firstName?.[0] || 'C'}</span>
-            </div>
-          </div>
-        </div>
 
         {/* Greeting Header */}
-        <div className="hidden lg:block px-4 lg:px-8 pt-2 lg:pt-4 pb-1">
+        <div className="px-4 md:px-8 pt-2 md:pt-4 pb-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               {prevScreen && (
@@ -686,7 +674,7 @@ const Index = () => {
           </div>
 
         {/* Quick Stats Row */}
-        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4 mt-2 pb-1 -mx-1 px-1">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2 pb-1 -mx-1 px-1">
           {(() => {
             const certsRaw = localStorage.getItem("seaminds_certs");
             const certs: { expiryDate: string }[] = certsRaw ? (() => { try { return JSON.parse(certsRaw); } catch { return []; } })() : [];
@@ -795,7 +783,7 @@ const Index = () => {
       </div>
 
       {/* Top bar */}
-      <div className="hidden lg:flex items-center justify-start gap-3 pl-4 pr-16 py-1 lg:pl-8">
+      <div className="hidden md:flex items-center justify-start gap-3 pl-4 pr-16 py-1 md:pl-8">
         <button onClick={() => setShowSignOffConfirm(true)} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
           <Anchor size={14} /> Sign Off
         </button>
@@ -906,38 +894,6 @@ const Index = () => {
         ) : null}
       </div>
 
-      {/* Mobile Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-[#0D1B2A] border-t border-[#D4AF37]/20 flex justify-around items-center px-1 py-2">
-        {[
-          { id: 'chat' as Screen, icon: '💬', label: 'Chat', gated: true },
-          { id: 'dashboard' as Screen, icon: '❤️', label: 'Health', gated: true },
-          { id: 'smc' as Screen, icon: '🏆', label: 'SMC', gated: false },
-          { id: 'resume' as Screen, icon: '📄', label: 'CV', gated: false },
-          { id: 'opportunities' as Screen, icon: '💼', label: 'Jobs', gated: false },
-          { id: 'news' as Screen, icon: '📰', label: 'News', gated: false },
-        ].map(item => (
-          <button
-            key={item.id}
-            onClick={() => {
-              if (item.gated && !profileComplete) {
-                setTargetScreen(item.id);
-                setAppState("name-entry");
-              } else {
-                navigateTo(item.id);
-                if (item.id === "opportunities") setJobBadgeCount(0);
-              }
-            }}
-            className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg transition-all ${
-              screen === item.id
-                ? 'text-[#D4AF37]'
-                : 'text-gray-400'
-            }`}
-          >
-            <span className="text-xl">{item.icon}</span>
-            <span className="text-[11px] font-medium">{item.label}</span>
-          </button>
-        ))}
-      </div>
       </div>
       </div>
 
