@@ -574,7 +574,7 @@ const Index = () => {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen w-full bg-background relative">
+    <div className="flex flex-col lg:flex-row h-screen w-full bg-background relative overflow-hidden">
       {/* === DESKTOP SIDEBAR (lg+) === */}
       <aside className="hidden lg:flex w-64 h-screen flex-col flex-shrink-0 border-r border-border" style={{ background: "#0D1B2A", padding: "24px 16px" }}>
         {/* Logo */}
