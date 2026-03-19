@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { trackEvent } from "@/lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Check, Loader2, FileText, Ship, GraduationCap, Stethoscope, Upload } from "lucide-react";
 
 interface CvUploadProps {

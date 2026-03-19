@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { Camera, Check, Loader2, Info, FileText, Anchor, GraduationCap, Stethoscope, Ship, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import StepProgressBar from "./StepProgressBar";
 
 interface DocumentUploadProps {

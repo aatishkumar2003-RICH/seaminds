@@ -247,8 +247,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     setEvaluating(true);
     setTimerActive(false);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token || '';
+      const token = accessToken;
       const { data } = await supabase.functions.invoke('evaluate-answer', {
         body: {
           question,

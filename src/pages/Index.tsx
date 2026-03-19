@@ -423,8 +423,7 @@ const Index = () => {
         role: dbRole, nationality, ship_name: shipName, whatsapp_number: whatsappNumber
       }).eq("id", profileId);
     } else {
-      const { data: { session } } = await supabase.auth.getSession();
-      const uid = session?.user?.id;
+      const uid = authUser?.id;
       if (!uid) return;
       const { data: existing } = await supabase.from("crew_profiles").select("id").eq("id", uid).maybeSingle();
       if (existing) {

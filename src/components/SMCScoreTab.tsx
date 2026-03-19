@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { trackEvent } from "@/lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Upload, RefreshCw, Check, FileText, Anchor, Award, HeartPulse, X } from "lucide-react";
 import { toast } from "sonner";
 import CrewPaymentGate from "@/components/smc/CrewPaymentGate";
