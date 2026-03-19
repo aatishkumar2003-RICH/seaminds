@@ -129,6 +129,7 @@ const uid = () => String(Date.now()) + String(Math.random()).slice(2, 6);
 
 // ─────────── COMPONENT ───────────
 const ResumeBuilder = () => {
+  const { accessToken, user } = useAuth();
   const [view, setView] = useState<"form" | "preview">("form");
   const [openSection, setOpenSection] = useState<string | null>("personal");
   const [photo, setPhoto] = useState<string | null>(null);

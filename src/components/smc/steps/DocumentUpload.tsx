@@ -43,6 +43,7 @@ const PROCESSING_STEPS = [
 ];
 
 const DocumentUpload = ({ assessmentId, profileId, onNext, onSkipToEnd }: DocumentUploadProps) => {
+  const { accessToken, user } = useAuth();
   const [uploads, setUploads] = useState<Record<string, string>>({});
   const [analysing, setAnalysing] = useState(false);
 

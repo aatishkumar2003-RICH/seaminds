@@ -49,6 +49,7 @@ const YEARS_MAP: Record<string, string> = {
 };
 
 const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
+  const { accessToken, user } = useAuth();
   const [status, setStatus] = useState<"idle" | "reading" | "success" | "error">("idle");
   const [fileName, setFileName] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
