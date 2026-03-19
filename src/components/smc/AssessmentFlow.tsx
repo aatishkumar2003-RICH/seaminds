@@ -3,6 +3,7 @@ import { ArrowLeft, Loader2, CheckCircle, XCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { logEvent } from "@/lib/logEvent";
 import DocumentUpload from "./steps/DocumentUpload";
 import DocumentVerification from "./steps/DocumentVerification";
 import ScoreReveal from "./steps/ScoreReveal";
