@@ -25,6 +25,7 @@ import RestHoursTracker from "@/components/RestHoursTracker";
 import VesselRating from "@/components/VesselRating";
 import NPSSurvey from "@/components/NPSSurvey";
 import VesselOnboardingCard from "@/components/VesselOnboardingCard";
+import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 type AppState = "loading" | "landing" | "name-entry" | "welcome" | "main" | "voyage-report";
 type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "bridge" | "community" | "smc" | "resume" | "certs" | "resthours" | "vesselrating";
 
@@ -1005,6 +1006,7 @@ const Index = () => {
         </div>
       )}
       {showNPS && <NPSSurvey firstName={firstName} onDismiss={() => setShowNPS(false)} />}
+      <PWAInstallPrompt />
 
       {/* Push Notification Permission Prompt */}
       {showNotifPrompt && (
