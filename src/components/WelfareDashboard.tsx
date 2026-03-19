@@ -273,7 +273,7 @@ const WelfareDashboard = ({ shipName }: DashboardProps) => {
           <p className="text-xs text-muted-foreground uppercase tracking-widest mb-4">
             Voyage Statistics
           </p>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <StatCard icon={Users} label="Crew Using SeaMinds" value={String(crewCount)} />
             <StatCard icon={Calendar} label="Avg Days Into Voyage" value={avgDaysIntoVoyage > 0 ? String(avgDaysIntoVoyage) : "—"} />
             <StatCard icon={Globe} label="Top Nationality" value={topNationality} />
