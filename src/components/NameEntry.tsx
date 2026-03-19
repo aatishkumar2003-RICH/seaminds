@@ -145,8 +145,20 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
         vesselType: vesselTypeVal,
       }, cvFile);
       if (errorMsg) setFormError(errorMsg);
-    } catch (e: any) {
-      setFormError(e?.message || "Something went wrong. Please try again.");
+    } catch (err: any) {
+      console.error('Failed to create profile:', err);
+      
+      if (err?.code === '23505' || err?.message?.includes('duplicate')) {
+        if (err?.message?.includes('whatsapp')) {
+          alert('This WhatsApp number is already registered. Please use a different number or sign in to your existing account.');
+        } else {
+          alert('An account with these details already exists. Please sign out and sign in again.');
+        }
+      } else if (err?.code === '23514' || err?.message?.includes('check constraint')) {
+        alert('There was an issue with your role selection. Please select your role again from the dropdown.');
+      } else {
+        alert('Could not save your profile. Please check your details and try again. Error: ' + (err?.message || 'Unknown error'));
+      }
     } finally {
       setSubmitting(false);
     }
