@@ -153,7 +153,25 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
     return () => clearInterval(interval);
   }, [phase, scores, finalScore, assessmentId, band, certId]);
 
-  if (phase === "loading") {
+  const handleDownloadCertificate = async () => {
+    try {
+      const { default: html2canvas } = await import('html2canvas');
+      const { jsPDF } = await import('jspdf');
+      const el = document.getElementById('smc-certificate-print');
+      if (!el) return;
+      el.style.display = 'block';
+      const canvas = await html2canvas(el, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff' });
+      el.style.display = 'none';
+      const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const imgData = canvas.toDataURL('image/png');
+      const pdfW = pdf.internal.pageSize.getWidth();
+      const pdfH = (canvas.height * pdfW) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH);
+      pdf.save(`SeaMinds-SMC-Certificate.pdf`);
+    } catch(e) { console.error('Certificate download error:', e); }
+  };
+
+
     return (
       <div className="flex flex-col items-center justify-center h-full gap-6">
         <div className="w-20 h-20 rounded-2xl bg-primary/15 flex items-center justify-center animate-pulse">
