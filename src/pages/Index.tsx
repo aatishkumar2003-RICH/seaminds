@@ -805,7 +805,7 @@ const Index = () => {
 
             return (
               <>
-                <button onClick={() => setScreen("chat")} style={cardStyle} className="flex-1">
+                <button onClick={() => setScreen("chat")} style={cardStyle} className="flex-1 py-1 lg:py-3">
                   <div className="text-lg">🔥</div>
                   <div className="text-sm font-bold" style={{ color: "#D4AF37" }}>{streakCount}</div>
                   <div className="text-[9px] text-muted-foreground">day streak</div>
@@ -813,23 +813,23 @@ const Index = () => {
                 <button onClick={() => setScreen("certs")} style={{
                   ...cardStyle,
                   border: expiringSoon > 0 ? "1px solid rgba(245,158,11,0.4)" : cardStyle.border,
-                }} className="flex-1">
+                }} className="flex-1 py-1 lg:py-3">
                   <div className="text-lg">📜</div>
                   <div className="text-sm font-bold" style={{ color: expiringSoon > 0 ? "#f59e0b" : "#22c55e" }}>{expiringSoon}</div>
-                  <div className="text-[9px] text-muted-foreground">expiring soon</div>
+                  <div className="text-[9px] text-muted-foreground">expiring</div>
                 </button>
                 <button onClick={() => setScreen("resthours")} style={{
                   ...cardStyle,
                   border: restHours < 10 && restHours > 0 ? "1px solid rgba(239,68,68,0.4)" : cardStyle.border,
-                }} className="flex-1">
+                }} className="flex-1 py-1 lg:py-3">
                   <div className="text-lg">⏱</div>
                   <div className="text-sm font-bold" style={{ color: restHours >= 10 ? "#22c55e" : restHours > 0 ? "#ef4444" : "#888" }}>{restHours || "—"}</div>
-                  <div className="text-[9px] text-muted-foreground">hrs rest today</div>
+                  <div className="text-[9px] text-muted-foreground">hrs rest</div>
                 </button>
-                <button onClick={() => setScreen("smc")} style={cardStyle} className="flex-1">
+                <button onClick={() => setScreen("smc")} style={cardStyle} className="flex-1 py-1 lg:py-3">
                   <div className="text-lg">🏆</div>
-                  <div className="text-sm font-bold" style={{ color: "#D4AF37" }}>{smcScore !== null ? smcScore : "Get Score"}</div>
-                  <div className="text-[9px] text-muted-foreground">{smcScore !== null ? "SMC Score" : "SMC"}</div>
+                  <div className="text-sm font-bold" style={{ color: "#D4AF37" }}>{smcScore !== null ? smcScore : "Get"}</div>
+                  <div className="text-[9px] text-muted-foreground">{smcScore !== null ? "SMC" : "SMC"}</div>
                 </button>
               </>
             );
