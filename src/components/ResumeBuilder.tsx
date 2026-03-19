@@ -250,10 +250,9 @@ const ResumeBuilder = () => {
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
-      const { data: { session } } = await supabase.auth.getSession();
       const { data, error } = await supabase.functions.invoke("parse-cv-documents", {
         body: { file_base64: base64, mime_type: file.type },
-        headers: { Authorization: `Bearer ${session?.access_token}` },
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (error || !data?.success) throw new Error(error?.message || "Scan failed");
       setScanResult(data.data);
