@@ -25,6 +25,20 @@ const SUGGESTED_CERTS = [
   "Flag State Endorsement",
 ];
 
+const normalizeCerts = (value: unknown): Cert[] => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item): item is Record<string, unknown> => !!item && typeof item === "object")
+    .map((item, index) => ({
+      id: String(item.id ?? crypto.randomUUID?.() ?? `cert-${index}`),
+      name: String(item.name ?? item.certificateName ?? "Unnamed Certificate"),
+      issueDate: String(item.issueDate ?? item.issue_date ?? ""),
+      expiryDate: String(item.expiryDate ?? item.expiry_date ?? ""),
+      certNumber: String(item.certNumber ?? item.number ?? item.certificate_number ?? ""),
+    }))
+    .filter((cert) => cert.name.trim().length > 0);
+};
+
 const getDaysRemaining = (expiryDate: string) => {
   const now = new Date();
   now.setHours(0, 0, 0, 0);
@@ -52,8 +66,8 @@ const CertWallet = ({ profileId }: CertWalletProps) => {
         .maybeSingle();
       if (error) {
         console.error('CertWallet fetch error:', error);
-      } else if (data?.certificates) {
-        setCerts(data.certificates as unknown as Cert[]);
+      } else {
+        setCerts(normalizeCerts(data?.certificates));
       }
     } catch (e) {
       console.error('CertWallet fetchCerts crash:', e);
