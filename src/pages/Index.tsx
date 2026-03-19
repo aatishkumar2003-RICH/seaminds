@@ -26,6 +26,7 @@ import VesselRating from "@/components/VesselRating";
 import NPSSurvey from "@/components/NPSSurvey";
 import VesselOnboardingCard from "@/components/VesselOnboardingCard";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
+import OnboardingTour from "@/components/OnboardingTour";
 type AppState = "loading" | "landing" | "name-entry" | "welcome" | "main" | "voyage-report";
 type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "bridge" | "community" | "smc" | "resume" | "certs" | "resthours" | "vesselrating";
 
@@ -850,7 +851,7 @@ const Index = () => {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span className="text-xs font-mono text-muted-foreground">{utcTime}</span>
-              <div className="lg:hidden">
+              <div className="lg:hidden" data-tour="sos">
                 <SOSButton onOpenChat={() => setScreen("chat")} firstName={firstName} shipName={shipName} inline />
               </div>
             </div>
@@ -883,12 +884,12 @@ const Index = () => {
 
             return (
               <>
-                <button onClick={() => setScreen("chat")} style={cardStyle} className="flex-1 py-1 lg:py-3">
+                <button onClick={() => setScreen("chat")} style={cardStyle} className="flex-1 py-1 lg:py-3" data-tour="streak">
                   <div className="text-lg">🔥</div>
                   <div className="text-sm font-bold" style={{ color: "#D4AF37" }}>{streakCount}</div>
                   <div className="text-[9px] text-muted-foreground">day streak</div>
                 </button>
-                <button onClick={() => setScreen("certs")} style={{
+                <button onClick={() => setScreen("certs")} data-tour="certs" style={{
                   ...cardStyle,
                   border: expiringSoon > 0 ? "1px solid rgba(245,158,11,0.4)" : cardStyle.border,
                 }} className="flex-1 py-1 lg:py-3">
@@ -904,7 +905,7 @@ const Index = () => {
                   <div className="text-sm font-bold" style={{ color: restHours >= 10 ? "#22c55e" : restHours > 0 ? "#ef4444" : "#888" }}>{restHours || "—"}</div>
                   <div className="text-[9px] text-muted-foreground">hrs rest</div>
                 </button>
-                <button onClick={() => setScreen("smc")} style={cardStyle} className="flex-1 py-1 lg:py-3">
+                <button onClick={() => setScreen("smc")} style={cardStyle} className="flex-1 py-1 lg:py-3" data-tour="smc">
                   <div className="text-lg">🏆</div>
                   <div className="text-sm font-bold" style={{ color: "#D4AF37" }}>{smcScore !== null ? smcScore : "Get"}</div>
                   <div className="text-[9px] text-muted-foreground">{smcScore !== null ? "SMC" : "SMC"}</div>
@@ -1208,6 +1209,7 @@ const Index = () => {
           </div>
         </div>
       )}
+      <OnboardingTour enabled={appState === "main"} />
     </div>
   );
 };
