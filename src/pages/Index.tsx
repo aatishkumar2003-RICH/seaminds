@@ -311,7 +311,12 @@ const Index = () => {
       port_of_joining: profile.portOfJoining || null,
       vessel_type: profile.vesselType || null,
       onboarded: true,
+      onboarding_complete: true,
     };
+    const year = new Date().getFullYear();
+    const rand = Math.floor(10000 + Math.random() * 90000);
+    const crewUniqueId = `SM-${year}-${rand}`;
+    insertData.crew_unique_id = crewUniqueId;
     if (uid) { insertData.id = uid; insertData.user_id = uid; }
     const { data, error } = await supabase.from("crew_profiles").upsert(insertData as any).select("id").single();
     if (error) {
@@ -325,6 +330,7 @@ const Index = () => {
       return 'Failed to create profile. Please try again.';
     }
     if (!data) return 'Failed to create profile. Please try again.';
+    await supabase.from('crew_profiles').update({ onboarding_complete: true }).eq('id', data.id);
     localStorage.setItem(PROFILE_KEY, data.id);
     setProfileId(data.id); setFirstName(profile.firstName); setLastName(profile.lastName);
     setRole(profile.role); setShipName(profile.shipName); setNationality(profile.nationality);
