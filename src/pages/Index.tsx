@@ -635,7 +635,7 @@ const Index = () => {
       </aside>
 
       {/* === MAIN CONTENT AREA === */}
-      <div className="flex-1 flex flex-col h-screen w-full max-w-md lg:max-w-none mx-auto lg:mx-0 relative overflow-hidden">
+      <div className="flex-1 flex flex-col h-screen w-full max-w-md lg:max-w-none mx-auto lg:mx-0 relative overflow-hidden pb-20 md:pb-0">
         <div className="absolute inset-0 opacity-20 pointer-events-none z-0">
           <OceanBackground timeOfDay={timeOfDay} />
         </div>
