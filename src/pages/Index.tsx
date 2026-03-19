@@ -95,6 +95,7 @@ const Index = () => {
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [vesselType, setVesselType] = useState("");
   const [portOfJoining, setPortOfJoining] = useState("");
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const navigateTo = (next: Screen) => {
     setPrevScreen(screen);
