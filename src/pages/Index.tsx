@@ -95,6 +95,7 @@ const Index = () => {
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [vesselType, setVesselType] = useState("");
   const [portOfJoining, setPortOfJoining] = useState("");
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const navigateTo = (next: Screen) => {
     setPrevScreen(screen);
@@ -571,6 +572,7 @@ const Index = () => {
       navigateTo(item.screen);
       if (item.screen === "opportunities") setJobBadgeCount(0);
     }
+    setDrawerOpen(false);
   };
 
   return (
@@ -582,7 +584,6 @@ const Index = () => {
           <span className="text-lg font-bold px-2 py-0.5 rounded" style={{ background: "rgba(212,175,55,0.15)", color: "#D4AF37" }}>SM</span>
           <span className="font-bold text-base" style={{ color: "#D4AF37" }}>SeaMinds</span>
         </div>
-
         {/* User info */}
         <div className="flex items-center gap-2 mb-6 px-1">
           <span className="text-lg">{NATIONALITY_FLAGS[nationality] || "🌊"}</span>
@@ -591,7 +592,6 @@ const Index = () => {
             {role && <span className="text-xs text-muted-foreground/60">{role}</span>}
           </div>
         </div>
-
         {/* Nav items */}
         <nav className="flex flex-col gap-1 flex-1">
           {navItems.map((item) => {
@@ -620,7 +620,6 @@ const Index = () => {
             );
           })}
         </nav>
-
         {/* Bottom section */}
         <div className="mt-auto flex flex-col gap-2">
           <div className="flex items-center justify-center gap-2 py-1.5 rounded-full text-xs font-medium" style={{ background: "rgba(212,175,55,0.12)", color: "#D4AF37" }}>
@@ -635,6 +634,71 @@ const Index = () => {
         </div>
       </aside>
 
+      {/* Mobile drawer overlay */}
+      {drawerOpen && (
+        <div
+          className="fixed inset-0 z-40 lg:hidden"
+          onClick={() => setDrawerOpen(false)}
+          style={{ background: 'rgba(0,0,0,0.5)' }}
+        />
+      )}
+
+      {/* Mobile drawer - slides in from left */}
+      <div className={`fixed top-0 left-0 h-full w-72 z-50 lg:hidden transform transition-transform duration-300 ease-in-out ${drawerOpen ? 'translate-x-0' : '-translate-x-full'}`} style={{ background: "#0D1B2A", borderRight: '1px solid rgba(212,175,55,0.2)', padding: "24px 16px" }}>
+        <button onClick={() => setDrawerOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white text-lg">✕</button>
+        {/* Logo */}
+        <div className="flex items-center gap-2 mb-6">
+          <span className="text-lg font-bold px-2 py-0.5 rounded" style={{ background: "rgba(212,175,55,0.15)", color: "#D4AF37" }}>SM</span>
+          <span className="font-bold text-base" style={{ color: "#D4AF37" }}>SeaMinds</span>
+        </div>
+        {/* User info */}
+        <div className="flex items-center gap-2 mb-6 px-1">
+          <span className="text-lg">{NATIONALITY_FLAGS[nationality] || "🌊"}</span>
+          <div className="flex flex-col">
+            <span className="text-sm text-muted-foreground font-medium">{firstName || "Seafarer"} {lastName}</span>
+            {role && <span className="text-xs text-muted-foreground/60">{role}</span>}
+          </div>
+        </div>
+        {/* Nav items */}
+        <nav className="flex flex-col gap-1 flex-1">
+          {navItems.map((item) => {
+            const active = screen === item.screen;
+            return (
+              <button
+                key={item.screen}
+                onClick={() => handleNavClick(item)}
+                className="flex items-center gap-3 text-sm font-medium transition-colors w-full text-left"
+                style={{
+                  padding: "10px 12px",
+                  borderRadius: "10px",
+                  borderLeft: active ? "3px solid #D4AF37" : "3px solid transparent",
+                  background: active ? "rgba(212,175,55,0.15)" : "transparent",
+                  color: active ? "#D4AF37" : "rgba(255,255,255,0.5)",
+                }}
+              >
+                <span className="text-base">{item.icon}</span>
+                <span>{item.label}</span>
+                {item.screen === "opportunities" && jobBadgeCount > 0 && (
+                  <span className="ml-auto text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1" style={{ background: "#D4AF37", color: "#0a1929" }}>{jobBadgeCount}</span>
+                )}
+              </button>
+            );
+          })}
+        </nav>
+        {/* Bottom section */}
+        <div className="mt-auto flex flex-col gap-2">
+          <div className="flex items-center justify-center gap-2 py-1.5 rounded-full text-xs font-medium" style={{ background: "rgba(212,175,55,0.12)", color: "#D4AF37" }}>
+            🔥 {streakCount} day streak
+          </div>
+          <button onClick={() => { handleSignOut(); setDrawerOpen(false); }} className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-2">
+            <LogOut size={14} /> Sign Out
+          </button>
+          <div className="w-full">
+            <SOSButton onOpenChat={() => { setScreen("chat"); setDrawerOpen(false); }} firstName={firstName} shipName={shipName} inline />
+          </div>
+        </div>
+      </div>
+
       {/* === MAIN CONTENT AREA === */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
         <div className="absolute inset-0 opacity-20 pointer-events-none z-0">
@@ -642,6 +706,20 @@ const Index = () => {
         </div>
 
         <div className="relative z-10 flex flex-col flex-1 min-h-0">
+
+        {/* Mobile top bar */}
+        <div className="flex items-center justify-between px-4 py-3 lg:hidden border-b border-[#D4AF37]/20 flex-shrink-0" style={{ background: '#0D1B2A' }}>
+          <button onClick={() => setDrawerOpen(true)} className="text-[#D4AF37] text-xl font-bold p-1">
+            ☰
+          </button>
+          <div className="flex items-center gap-2">
+            <img src="/seaminds-logo.png" className="w-6 h-6 rounded-full" />
+            <span className="text-[#D4AF37] font-bold text-sm">SeaMinds</span>
+          </div>
+          <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+            <span className="text-xs text-[#D4AF37] font-bold">{firstName?.[0] || 'C'}</span>
+          </div>
+        </div>
 
         {/* Greeting Header */}
         <div className="px-4 lg:px-8 pt-2 lg:pt-4 pb-1">
@@ -805,7 +883,7 @@ const Index = () => {
         </div>
       )}
 
-      <div className="flex-1 overflow-hidden pb-14 lg:pb-0">
+      <div className="flex-1 overflow-hidden">
         {/* Job match notification */}
         {screen === "chat" && jobMatch && (
           <div
@@ -893,28 +971,6 @@ const Index = () => {
         ) : null}
       </div>
 
-      {/* Mobile bottom nav - phones only */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-[#0D1B2A] border-t border-[#D4AF37]/30">
-        <div className="flex justify-around items-center h-14">
-          {[
-            { screen: 'chat' as Screen, icon: '💬', label: 'Chat' },
-            { screen: 'dashboard' as Screen, icon: '❤️', label: 'Welfare' },
-            { screen: 'smc' as Screen, icon: '🏆', label: 'SMC' },
-            { screen: 'resume' as Screen, icon: '📄', label: 'CV' },
-            { screen: 'opportunities' as Screen, icon: '💼', label: 'Jobs' },
-            { screen: 'news' as Screen, icon: '📰', label: 'More' },
-          ].map(item => (
-            <button
-              key={item.screen}
-              onClick={() => navigateTo(item.screen)}
-              className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors ${screen === item.screen ? 'text-[#D4AF37]' : 'text-gray-500'}`}
-            >
-              <span className="text-lg leading-none">{item.icon}</span>
-              <span className="text-[10px] font-medium leading-none">{item.label}</span>
-            </button>
-          ))}
-        </div>
-      </nav>
 
       </div>
       </div>
