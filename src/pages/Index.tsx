@@ -1216,7 +1216,7 @@ const Index = () => {
           </div>
         </div>
       )}
-      <OnboardingTour enabled={appState === "main"} />
+      <OnboardingTour enabled={appState === "main"} forceShow={forceTour} onForceShowConsumed={() => setForceTour(false)} />
     </div>
   );
 };
