@@ -44,9 +44,11 @@ const STORAGE_KEY = "seamind_tour_completed";
 
 interface OnboardingTourProps {
   enabled: boolean;
+  forceShow?: boolean;
+  onForceShowConsumed?: () => void;
 }
 
-const OnboardingTour = ({ enabled }: OnboardingTourProps) => {
+const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed }: OnboardingTourProps) => {
   const [step, setStep] = useState(0);
   const [visible, setVisible] = useState(false);
   const [rect, setRect] = useState<DOMRect | null>(null);
@@ -54,10 +56,17 @@ const OnboardingTour = ({ enabled }: OnboardingTourProps) => {
   useEffect(() => {
     if (!enabled) return;
     if (localStorage.getItem(STORAGE_KEY)) return;
-    // Delay to let the main UI mount
     const t = setTimeout(() => setVisible(true), 1500);
     return () => clearTimeout(t);
   }, [enabled]);
+
+  useEffect(() => {
+    if (forceShow && enabled) {
+      setStep(0);
+      setVisible(true);
+      onForceShowConsumed?.();
+    }
+  }, [forceShow, enabled, onForceShowConsumed]);
 
   const measureTarget = useCallback(() => {
     if (!visible) return;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
-import { MessageCircle, LayoutDashboard, Briefcase, Newspaper, GraduationCap, Compass, Star, LogOut, Anchor, X, FileText } from "lucide-react";
+import { MessageCircle, LayoutDashboard, Briefcase, Newspaper, GraduationCap, Compass, Star, LogOut, Anchor, X, FileText, HelpCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import LandingScreen from "@/components/LandingScreen";
@@ -104,6 +104,7 @@ const Index = () => {
   const [edgeSwipeDelta, setEdgeSwipeDelta] = useState(0);
   const [isEdgeSwiping, setIsEdgeSwiping] = useState(false);
   const [showSwipeHint, setShowSwipeHint] = useState(false);
+  const [forceTour, setForceTour] = useState(false);
 
   useEffect(() => {
     if (!localStorage.getItem('seamind_swipe_hint_seen')) setShowSwipeHint(true);
@@ -681,6 +682,9 @@ const Index = () => {
           <div className="flex items-center justify-center gap-2 py-1.5 rounded-full text-xs font-medium" style={{ background: "rgba(212,175,55,0.12)", color: "#D4AF37" }}>
             🔥 {streakCount} day streak
           </div>
+          <button onClick={() => setForceTour(true)} className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-2">
+            <HelpCircle size={14} /> Replay Tour
+          </button>
           <button onClick={handleSignOut} className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-2">
             <LogOut size={14} /> Sign Out
           </button>
@@ -796,6 +800,9 @@ const Index = () => {
           <div className="flex items-center justify-center gap-2 py-1.5 rounded-full text-xs font-medium" style={{ background: "rgba(212,175,55,0.12)", color: "#D4AF37" }}>
             🔥 {streakCount} day streak
           </div>
+          <button onClick={() => { setForceTour(true); setDrawerOpen(false); }} className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-2">
+            <HelpCircle size={14} /> Replay Tour
+          </button>
           <button onClick={() => { handleSignOut(); setDrawerOpen(false); }} className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-2">
             <LogOut size={14} /> Sign Out
           </button>
@@ -1209,7 +1216,7 @@ const Index = () => {
           </div>
         </div>
       )}
-      <OnboardingTour enabled={appState === "main"} />
+      <OnboardingTour enabled={appState === "main"} forceShow={forceTour} onForceShowConsumed={() => setForceTour(false)} />
     </div>
   );
 };
