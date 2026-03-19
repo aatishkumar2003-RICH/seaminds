@@ -50,6 +50,39 @@ export type Database = {
         }
         Relationships: []
       }
+      app_events: {
+        Row: {
+          created_at: string | null
+          emailed: boolean | null
+          event_type: string
+          id: string
+          message: string
+          metadata: Json | null
+          severity: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          emailed?: boolean | null
+          event_type: string
+          id?: string
+          message: string
+          metadata?: Json | null
+          severity?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          emailed?: boolean | null
+          event_type?: string
+          id?: string
+          message?: string
+          metadata?: Json | null
+          severity?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       auth_rate_limits: {
         Row: {
           attempt_count: number
