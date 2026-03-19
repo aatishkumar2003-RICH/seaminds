@@ -290,7 +290,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
         setTimeout(() => {
           setSectionCard(null);
           setQIndex(prev => prev + 1);
-        }, 2200);
+        }, 60000);
       } else {
         setQIndex(prev => prev + 1);
       }
