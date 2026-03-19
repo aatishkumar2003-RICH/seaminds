@@ -100,24 +100,35 @@ const Index = () => {
   const [touchDelta, setTouchDelta] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
   const [edgeSwipeStart, setEdgeSwipeStart] = useState<number | null>(null);
+  const [edgeSwipeDelta, setEdgeSwipeDelta] = useState(0);
+  const [isEdgeSwiping, setIsEdgeSwiping] = useState(false);
 
   // Swipe from left edge to open drawer
   useEffect(() => {
+    const DRAWER_W = 288; // w-72
     const handleTouchStart = (e: TouchEvent) => {
       if (drawerOpen) return;
       const x = e.touches[0].clientX;
-      if (x < 25) setEdgeSwipeStart(x);
+      if (x < 25) {
+        setEdgeSwipeStart(x);
+        setIsEdgeSwiping(true);
+        setEdgeSwipeDelta(0);
+      }
     };
     const handleTouchMove = (e: TouchEvent) => {
       if (edgeSwipeStart === null || drawerOpen) return;
-      const delta = e.touches[0].clientX - edgeSwipeStart;
-      if (delta > 80) {
+      const delta = Math.min(e.touches[0].clientX - edgeSwipeStart, DRAWER_W);
+      if (delta > 0) setEdgeSwipeDelta(delta);
+    };
+    const handleTouchEnd = () => {
+      if (edgeSwipeDelta > 80) {
         setDrawerOpen(true);
-        setEdgeSwipeStart(null);
         if (navigator.vibrate) navigator.vibrate(10);
       }
+      setEdgeSwipeStart(null);
+      setEdgeSwipeDelta(0);
+      setIsEdgeSwiping(false);
     };
-    const handleTouchEnd = () => setEdgeSwipeStart(null);
 
     document.addEventListener('touchstart', handleTouchStart, { passive: true });
     document.addEventListener('touchmove', handleTouchMove, { passive: true });
@@ -127,7 +138,7 @@ const Index = () => {
       document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [drawerOpen, edgeSwipeStart]);
+  }, [drawerOpen, edgeSwipeStart, edgeSwipeDelta]);
 
   const navigateTo = (next: Screen) => {
     setPrevScreen(screen);
