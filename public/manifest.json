@@ -3,23 +3,17 @@
   "short_name": "SeaMinds",
   "description": "Your Private Companion at Sea",
   "start_url": "/app",
+  "id": "life.seaminds.app",
   "display": "standalone",
   "background_color": "#0D1B2A",
   "theme_color": "#D4AF37",
   "orientation": "portrait",
   "categories": ["health", "productivity", "utilities"],
   "icons": [
-    {
-      "src": "/seaminds-logo.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/seaminds-logo.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
+    { "src": "/seaminds-logo.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/seaminds-logo.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "screenshots": [
+    { "src": "/seaminds-logo.png", "sizes": "512x512", "type": "image/png", "form_factor": "narrow" }
   ]
 }
