@@ -105,7 +105,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     if (flowStep === 'questions' && flatQuestions.length > 0 && !introShown.current) {
       introShown.current = true;
       setSectionCard({ type: 'mcq', label: '📋 Knowledge Assessment', num: 'Section 1', icon: '📋' });
-      setTimeout(() => setSectionCard(null), 2200);
+      setTimeout(() => setSectionCard(null), 60000);
     }
   }, [flowStep, flatQuestions]);
 
@@ -158,18 +158,33 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   // Fetch questions
   useEffect(() => {
     const fetchQuestions = async () => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000);
       setLoadingQuestions(true);
       try {
         const token = accessToken;
-        const { data } = await supabase.functions.invoke('generate-smc-questions', {
+        const invokePromise = supabase.functions.invoke('generate-smc-questions', {
           body: { rank, vesselType: vesselType || 'General Cargo', yearsExperience: yearsExperience || 5, department: 'Deck' },
           headers: { Authorization: `Bearer ${token}` },
         });
+        const abortPromise = new Promise<never>((_, reject) => {
+          controller.signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+        });
+        const { data } = await Promise.race([invokePromise, abortPromise]);
+        clearTimeout(timeoutId);
         if (data?.mcq || data?.scenario || data?.behavioural) {
           setAiQuestions(data);
         }
-      } catch (e) { console.error(e); }
-      finally { setLoadingQuestions(false); }
+      } catch (error: any) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+          console.error('Assessment question generation timed out');
+        } else {
+          console.error('Failed to generate questions:', error);
+        }
+      } finally {
+        setLoadingQuestions(false);
+      }
     };
     fetchQuestions();
   }, [rank]);
@@ -290,7 +305,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
         setTimeout(() => {
           setSectionCard(null);
           setQIndex(prev => prev + 1);
-        }, 2200);
+        }, 60000);
       } else {
         setQIndex(prev => prev + 1);
       }
