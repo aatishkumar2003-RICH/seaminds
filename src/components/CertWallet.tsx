@@ -65,14 +65,20 @@ const CertWallet = ({ profileId }: CertWalletProps) => {
 
   const upsertCerts = async (updated: Cert[]) => {
     setCerts(updated);
-    const { error } = await supabase
-      .from("crew_cv_data")
-      .upsert(
-        { user_id: profileId, certificates: updated as any, updated_at: new Date().toISOString() },
-        { onConflict: "user_id" }
-      );
-    if (error) {
-      toast({ title: "Error saving certificates", description: error.message, variant: "destructive" });
+    try {
+      const { error } = await supabase
+        .from("crew_cv_data")
+        .upsert(
+          { user_id: profileId, certificates: updated as any, updated_at: new Date().toISOString() },
+          { onConflict: "user_id" }
+        );
+      if (error) {
+        console.error('CertWallet upsert error:', error);
+        toast({ title: "Error saving certificates", description: error.message, variant: "destructive" });
+      }
+    } catch (e) {
+      console.error('CertWallet upsertCerts crash:', e);
+      toast({ title: "Error saving certificates", description: "Please try again", variant: "destructive" });
     }
   };
 
