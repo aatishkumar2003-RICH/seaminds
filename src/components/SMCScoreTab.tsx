@@ -392,9 +392,13 @@ const DigitalCvSummary = ({ profileId, cvStatus }: { profileId: string; cvStatus
 
   if (loading) return null;
 
-  const hasCerts = cvData?.certificates && cvData.certificates.length > 0;
-  const hasService = cvData?.sea_service && cvData.sea_service.length > 0;
-  const hasMedical = cvData?.medical && cvData.medical.length > 0;
+  const certificates = ensureArray<CvData["certificates"] extends (infer U)[] ? U : never>(cvData?.certificates);
+  const seaService = ensureArray<CvData["sea_service"] extends (infer U)[] ? U : never>(cvData?.sea_service);
+  const medical = ensureArray<CvData["medical"] extends (infer U)[] ? U : never>(cvData?.medical);
+
+  const hasCerts = certificates.length > 0;
+  const hasService = seaService.length > 0;
+  const hasMedical = medical.length > 0;
   const hasData = hasCerts || hasService || hasMedical;
 
   return (
