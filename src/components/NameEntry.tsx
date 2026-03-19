@@ -66,6 +66,23 @@ const selectClass = "w-full bg-secondary text-foreground text-sm rounded-xl px-4
 const inputClass = "w-full bg-secondary text-foreground text-sm rounded-xl px-4 py-3 placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary";
 const labelClass = "text-xs text-muted-foreground uppercase tracking-wide";
 
+const normalizeRole = (role: string): string => {
+  const r = (role || '').toLowerCase();
+  if (r.includes('captain') || r.includes('master')) return 'Master';
+  if (r.includes('chief officer') || r.includes('1st officer') || r.includes('first officer')) return 'Chief Officer';
+  if (r.includes('2nd officer') || r.includes('second officer')) return '2nd Officer';
+  if (r.includes('3rd officer') || r.includes('third officer')) return '3rd Officer';
+  if (r.includes('chief engineer')) return 'Chief Engineer';
+  if (r.includes('2nd engineer') || r.includes('second engineer')) return '2nd Engineer';
+  if (r.includes('3rd engineer') || r.includes('third engineer')) return '3rd Engineer';
+  if (r.includes('4th engineer') || r.includes('fourth engineer')) return '4th Engineer';
+  if (r.includes('eto') || r.includes('electrical')) return 'ETO';
+  if (r.includes('bosun')) return 'Bosun';
+  if (r.includes('engineer')) return '2nd Engineer';
+  if (r.includes('officer')) return '2nd Officer';
+  return role;
+};
+
 const NameEntry = ({ onSubmit }: NameEntryProps) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -115,7 +132,7 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         shipName: shipName.trim(),
-        role,
+        role: normalizeRole(role),
         gender,
         nationality: nationality.trim(),
         whatsappNumber: cleanedWhatsapp,
