@@ -159,8 +159,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     const fetchQuestions = async () => {
       setLoadingQuestions(true);
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const token = session?.access_token || '';
+        const token = accessToken;
         const { data } = await supabase.functions.invoke('generate-smc-questions', {
           body: { rank, vesselType: vesselType || 'General Cargo', yearsExperience: yearsExperience || 5, department: 'Deck' },
           headers: { Authorization: `Bearer ${token}` },
