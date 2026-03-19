@@ -673,7 +673,7 @@ const Index = () => {
           </div>
 
         {/* Quick Stats Row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2 pb-1 -mx-1 px-1">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mt-2 pb-1 -mx-1 px-1">
           {(() => {
             const certsRaw = localStorage.getItem("seaminds_certs");
             const certs: { expiryDate: string }[] = certsRaw ? (() => { try { return JSON.parse(certsRaw); } catch { return []; } })() : [];
