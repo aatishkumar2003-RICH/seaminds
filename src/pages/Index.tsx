@@ -636,14 +636,28 @@ const Index = () => {
       </aside>
 
       {/* === MAIN CONTENT AREA === */}
-      <div className="flex-1 flex flex-col h-screen w-full max-w-md lg:max-w-none mx-auto lg:mx-0 relative overflow-hidden pb-16 lg:pb-0">
+      <div className="flex-1 flex flex-col h-screen w-full mx-auto lg:mx-0 relative overflow-hidden pb-16 lg:pb-0">
         <div className="absolute inset-0 opacity-20 pointer-events-none z-0">
           <OceanBackground timeOfDay={timeOfDay} />
         </div>
 
         <div className="relative z-10 flex flex-col flex-1 min-h-0">
+        {/* Mobile Header Bar */}
+        <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-[#0D1B2A] border-b border-[#D4AF37]/20">
+          <div className="flex items-center gap-2">
+            <img src="/seaminds-logo.png" className="w-7 h-7 rounded-full" />
+            <span className="text-[#D4AF37] font-bold text-sm">SeaMinds</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-white text-sm">{firstName || 'Crew'}</span>
+            <div className="w-7 h-7 rounded-full bg-secondary flex items-center justify-center">
+              <span className="text-xs text-[#D4AF37]">{firstName?.[0] || 'C'}</span>
+            </div>
+          </div>
+        </div>
+
         {/* Greeting Header */}
-        <div className="px-4 lg:px-8 pt-2 lg:pt-4 pb-1">
+        <div className="hidden lg:block px-4 lg:px-8 pt-2 lg:pt-4 pb-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               {prevScreen && (
@@ -672,7 +686,7 @@ const Index = () => {
           </div>
 
         {/* Quick Stats Row */}
-        <div className="flex gap-2 mt-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide" style={{ scrollbarWidth: "none" }}>
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4 mt-2 pb-1 -mx-1 px-1">
           {(() => {
             const certsRaw = localStorage.getItem("seaminds_certs");
             const certs: { expiryDate: string }[] = certsRaw ? (() => { try { return JSON.parse(certsRaw); } catch { return []; } })() : [];
@@ -781,7 +795,7 @@ const Index = () => {
       </div>
 
       {/* Top bar */}
-      <div className="flex items-center justify-start gap-3 pl-4 pr-16 py-1 lg:pl-8">
+      <div className="hidden lg:flex items-center justify-start gap-3 pl-4 pr-16 py-1 lg:pl-8">
         <button onClick={() => setShowSignOffConfirm(true)} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
           <Anchor size={14} /> Sign Off
         </button>
@@ -896,7 +910,7 @@ const Index = () => {
       <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-[#0D1B2A] border-t border-[#D4AF37]/20 flex justify-around items-center px-1 py-2">
         {[
           { id: 'chat' as Screen, icon: '💬', label: 'Chat', gated: true },
-          { id: 'dashboard' as Screen, icon: '❤️', label: 'Welfare', gated: true },
+          { id: 'dashboard' as Screen, icon: '❤️', label: 'Health', gated: true },
           { id: 'smc' as Screen, icon: '🏆', label: 'SMC', gated: false },
           { id: 'resume' as Screen, icon: '📄', label: 'CV', gated: false },
           { id: 'opportunities' as Screen, icon: '💼', label: 'Jobs', gated: false },
@@ -919,8 +933,8 @@ const Index = () => {
                 : 'text-gray-400'
             }`}
           >
-            <span className="text-lg">{item.icon}</span>
-            <span className="text-[10px] font-medium">{item.label}</span>
+            <span className="text-xl">{item.icon}</span>
+            <span className="text-[11px] font-medium">{item.label}</span>
           </button>
         ))}
       </div>
