@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { trackEvent } from "@/lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -56,7 +56,23 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [cvSummary, setCvSummary] = useState<any>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [scanStage, setScanStage] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const stages = [
+    '📄 Reading your CV...',
+    '🔍 Extracting certificates...',
+    '⚓ Mapping sea service...',
+    '✅ Almost done...'
+  ];
+
+  useEffect(() => {
+    if (!isProcessing) { setScanStage(0); return; }
+    const interval = setInterval(() => {
+      setScanStage(s => s < stages.length - 1 ? s + 1 : s);
+    }, 7000);
+    return () => clearInterval(interval);
+  }, [isProcessing]);
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -187,7 +203,7 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
               </div>
             </div>
           </div>
-          <p className="font-bold text-sm text-primary">🤖 AI is reading your CV...</p>
+          <p className="font-bold text-sm text-primary">{stages[scanStage]}</p>
           <p className="text-xs text-muted-foreground">This may take 15–20 seconds</p>
           <div className="space-y-1.5 text-left max-w-xs mx-auto">
             {["Extracting personal details...", "Reading certificates...", "Identifying sea service..."].map((step) => (
