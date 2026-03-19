@@ -275,8 +275,7 @@ const Index = () => {
     voyageStartDate: string; manningAgency: string; vesselImo: string;
     manningAgentPhone: string; portOfJoining: string; vesselType: string;
   }, cvFile?: File) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    const uid = session?.user?.id;
+    const uid = authUser?.id;
     const insertData: Record<string, any> = {
       first_name: profile.firstName, last_name: profile.lastName,
       ship_name: profile.shipName, role: profile.role,
