@@ -107,6 +107,7 @@ const Verify = () => {
         )}
       </div>
     </div>
+    </>
   );
 };
 
