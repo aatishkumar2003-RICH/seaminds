@@ -15,7 +15,7 @@ const Verify = () => {
         let result: any = null;
         const { data: assessment } = await supabase
           .from('smc_assessments')
-          .select('overall_score, created_at, crew_profile_id, status')
+          .select('overall_score, started_at, crew_profile_id, status')
           .eq('id', id)
           .eq('status', 'completed')
           .single();
@@ -26,7 +26,7 @@ const Verify = () => {
             .select('first_name, last_name, rank, nationality, crew_unique_id')
             .eq('id', assessment.crew_profile_id)
             .single();
-          result = { ...assessment, ...profile };
+          result = { ...assessment, ...(profile || {}) };
         } else {
           const { data: profile } = await supabase
             .from('crew_profiles')
