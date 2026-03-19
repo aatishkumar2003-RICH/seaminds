@@ -423,7 +423,7 @@ const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: Cre
       </div>
 
       {/* Input */}
-      <div className="px-4 pb-3 pt-2 mb-16 md:mb-0">
+      <div className="px-4 pb-3 pt-2 pb-16 lg:pb-3">
         <div className="flex items-center gap-2 bg-secondary rounded-2xl px-4 py-2">
           <input
             type="text"

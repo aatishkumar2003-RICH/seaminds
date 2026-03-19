@@ -910,7 +910,7 @@ const Index = () => {
       <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-[#0D1B2A] border-t border-[#D4AF37]/20 flex justify-around items-center px-1 py-2">
         {[
           { id: 'chat' as Screen, icon: '💬', label: 'Chat', gated: true },
-          { id: 'dashboard' as Screen, icon: '❤️', label: 'Welfare', gated: true },
+          { id: 'dashboard' as Screen, icon: '❤️', label: 'Health', gated: true },
           { id: 'smc' as Screen, icon: '🏆', label: 'SMC', gated: false },
           { id: 'resume' as Screen, icon: '📄', label: 'CV', gated: false },
           { id: 'opportunities' as Screen, icon: '💼', label: 'Jobs', gated: false },
@@ -933,8 +933,8 @@ const Index = () => {
                 : 'text-gray-400'
             }`}
           >
-            <span className="text-lg">{item.icon}</span>
-            <span className="text-[10px] font-medium">{item.label}</span>
+            <span className="text-xl">{item.icon}</span>
+            <span className="text-[11px] font-medium">{item.label}</span>
           </button>
         ))}
       </div>
