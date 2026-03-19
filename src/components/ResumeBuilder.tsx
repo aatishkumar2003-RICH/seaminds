@@ -1474,6 +1474,16 @@ const ResumeBuilder = () => {
                 <div style={{ fontSize:'9px', color:'#888' }}>Generated: {new Date().toLocaleDateString('en-GB')}</div>
                 <div style={{ fontSize:'8px', color:'#D4AF37', fontWeight:'bold', letterSpacing:'0.5px' }}>COMPETENCY CERTIFIED PLATFORM</div>
               </div>
+              {/* QR Code for verification */}
+              <div style={{ textAlign:'center', marginLeft:'12px' }}>
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=${encodeURIComponent(`https://seaminds.life/verify/${personal.firstName || 'crew'}-${new Date().getFullYear()}`)}&format=png&bgcolor=ffffff`}
+                  style={{ width:'60px', height:'60px', display:'block' }}
+                  alt="Verify CV"
+                  crossOrigin="anonymous"
+                />
+                <div style={{ fontSize:'7px', color:'#888', marginTop:'2px', textAlign:'center' }}>Scan to verify</div>
+              </div>
             </div>
           </div>
         </div>
