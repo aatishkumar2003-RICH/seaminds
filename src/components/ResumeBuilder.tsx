@@ -454,20 +454,8 @@ const ResumeBuilder = () => {
     };
     loadCV();
   }, []);
-        if (meta?.personal) setPersonal(meta.personal);
-        if (meta?.skills) setSkills(meta.skills);
-        if (meta?.photo) setPhoto(meta.photo);
-        if (meta?.training) setTraining(meta.training);
-        const seaData = typeof data.sea_service === 'string' ? JSON.parse(data.sea_service) : data.sea_service;
-        if (Array.isArray(seaData) && seaData.length > 0) setSea(seaData);
-        const certsData = typeof data.certificates === 'string' ? JSON.parse(data.certificates) : data.certificates;
-        if (Array.isArray(certsData) && certsData.length > 0) setCerts(certsData);
-        const eduData = typeof data.education === 'string' ? JSON.parse(data.education) : data.education;
-        if (Array.isArray(eduData) && eduData.length > 0) setEdu(eduData);
-      } catch (e) { console.error('CV load error:', e); }
-    };
-    loadCV();
-  }, []);
+
+
 
   // ── Styles ──
   const inp = "w-full bg-[#0a1929] border border-[#1e3a5f] rounded-lg px-3 py-2 text-white text-sm focus:border-[#D4AF37] focus:outline-none placeholder:text-gray-600";
