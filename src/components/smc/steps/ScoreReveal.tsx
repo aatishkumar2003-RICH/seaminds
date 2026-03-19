@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { trackEvent } from "@/lib/analytics";
 import { Shield, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import SMCScoreCertificate from "../SMCScoreCertificate";
 
 interface Props {
@@ -58,12 +59,11 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
   const [scores, setScores] = useState<Scores | null>(null);
   const [report, setReport] = useState<any>(null);
   const [reportLoading, setReportLoading] = useState(false);
+  const { accessToken } = useAuth();
 
   useEffect(() => {
     const run = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token || '';
-      const authHeaders = { Authorization: `Bearer ${token}` };
+      const authHeaders = { Authorization: `Bearer ${accessToken}` };
 
       const { data, error } = await supabase.functions.invoke("score-assessment", {
         body: { rank, firstName, transcript: transcript || [], candidateContext: candidateContext || {} },

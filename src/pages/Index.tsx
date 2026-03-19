@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { MessageCircle, LayoutDashboard, Briefcase, Newspaper, GraduationCap, Compass, Star, LogOut, Anchor, X, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import LandingScreen from "@/components/LandingScreen";
 import OceanBackground from "@/components/homepage/OceanBackground";
 import { useTimeOfDay } from "@/hooks/useTimeOfDay";
@@ -209,19 +210,10 @@ const Index = () => {
     };
   }, [appState, role]);
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      const savedId = localStorage.getItem('seamind_profile_id');
-      if (savedId) return;
-      if (session?.user) {
-        const fullName = session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Seafarer';
-        const fn = fullName.split(' ')[0];
-        setFirstName(fn);
-        setAppState('main');
-        setScreen('news');
-      }
-    });
+  const { user: authUser, isReady: authReady, accessToken } = useAuth();
 
+  // Single init effect — uses auth context instead of getSession
+  useEffect(() => {
     const init = async () => {
       // Fallback: if init hangs for 4 seconds, show landing
       const fallbackTimer = setTimeout(() => {
@@ -246,16 +238,10 @@ const Index = () => {
           localStorage.removeItem('seamind_profile_id');
         }
 
-        // Race getSession against a timeout to avoid hanging
-        const sessionResult = await Promise.race([
-          supabase.auth.getSession(),
-          new Promise<null>(resolve => setTimeout(() => resolve(null), 3000)),
-        ]);
-
         clearTimeout(fallbackTimer);
 
-        if (sessionResult && 'data' in sessionResult && sessionResult.data?.session?.user) {
-          const fullName = sessionResult.data.session.user.user_metadata?.full_name || sessionResult.data.session.user.email?.split('@')[0] || 'Seafarer';
+        if (authUser) {
+          const fullName = authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'Seafarer';
           setFirstName(fullName.split(' ')[0]);
           setAppState('main');
           setScreen('news');
@@ -269,9 +255,19 @@ const Index = () => {
       }
     };
 
-    init();
-    return () => subscription.unsubscribe();
-  }, []);
+    if (authReady) init();
+  }, [authReady, authUser]);
+
+  // React to auth state changes (login while on landing)
+  useEffect(() => {
+    if (!authReady || !authUser) return;
+    const savedId = localStorage.getItem('seamind_profile_id');
+    if (savedId) return;
+    const fullName = authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'Seafarer';
+    setFirstName(fullName.split(' ')[0]);
+    setAppState('main');
+    setScreen('news');
+  }, [authUser, authReady]);
 
   const handleNameSubmit = async (profile: {
     firstName: string; lastName: string; shipName: string; role: string;
@@ -279,8 +275,7 @@ const Index = () => {
     voyageStartDate: string; manningAgency: string; vesselImo: string;
     manningAgentPhone: string; portOfJoining: string; vesselType: string;
   }, cvFile?: File) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    const uid = session?.user?.id;
+    const uid = authUser?.id;
     const insertData: Record<string, any> = {
       first_name: profile.firstName, last_name: profile.lastName,
       ship_name: profile.shipName, role: profile.role,
@@ -428,8 +423,7 @@ const Index = () => {
         role: dbRole, nationality, ship_name: shipName, whatsapp_number: whatsappNumber
       }).eq("id", profileId);
     } else {
-      const { data: { session } } = await supabase.auth.getSession();
-      const uid = session?.user?.id;
+      const uid = authUser?.id;
       if (!uid) return;
       const { data: existing } = await supabase.from("crew_profiles").select("id").eq("id", uid).maybeSingle();
       if (existing) {

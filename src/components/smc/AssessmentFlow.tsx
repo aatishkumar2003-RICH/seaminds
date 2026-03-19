@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { ArrowLeft, Loader2, CheckCircle, XCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import DocumentUpload from "./steps/DocumentUpload";
 import DocumentVerification from "./steps/DocumentVerification";
 import ScoreReveal from "./steps/ScoreReveal";
@@ -43,6 +44,7 @@ interface FlatQuestion {
 }
 
 const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assessmentId, vesselType, yearsExperience, onComplete, onExit }: AssessmentFlowProps) => {
+  const { accessToken } = useAuth();
   // Core flow state
   const [flowStep, setFlowStep] = useState<'preform' | 'docUpload' | 'docVerify' | 'questions' | 'score'>('preform');
   const [aiQuestions, setAiQuestions] = useState<any>(null);
@@ -158,8 +160,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     const fetchQuestions = async () => {
       setLoadingQuestions(true);
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const token = session?.access_token || '';
+        const token = accessToken;
         const { data } = await supabase.functions.invoke('generate-smc-questions', {
           body: { rank, vesselType: vesselType || 'General Cargo', yearsExperience: yearsExperience || 5, department: 'Deck' },
           headers: { Authorization: `Bearer ${token}` },
@@ -216,8 +217,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     // Evaluate MCQ
     setEvaluating(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token || '';
+      const token = accessToken;
       const { data } = await supabase.functions.invoke('evaluate-answer', {
         body: {
           question: currentQ.question,
@@ -248,8 +248,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     setEvaluating(true);
     setTimerActive(false);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token || '';
+      const token = accessToken;
       const { data } = await supabase.functions.invoke('evaluate-answer', {
         body: {
           question,

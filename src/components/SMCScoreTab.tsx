@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { trackEvent } from "@/lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Upload, RefreshCw, Check, FileText, Anchor, Award, HeartPulse, X } from "lucide-react";
 import { toast } from "sonner";
 import CrewPaymentGate from "@/components/smc/CrewPaymentGate";
@@ -22,6 +23,7 @@ type View = "loading" | "payment" | "assessment" | "certificate";
 type CvStatus = "idle" | "reading" | "done" | "error";
 
 const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScoreTabProps) => {
+  const { accessToken } = useAuth();
   const [view, setView] = useState<View>("loading");
   const [assessmentId, setAssessmentId] = useState("");
   const [salaryOpen, setSalaryOpen] = useState(false);
@@ -73,10 +75,9 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
       });
 
       console.log("SMCScoreTab CV parse: calling parse-cv-documents, base64 length:", base64.length);
-      const { data: { session } } = await supabase.auth.getSession();
       const response = await supabase.functions.invoke("parse-cv-documents", {
         body: { file_base64: base64, mime_type: file.type },
-        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
       });
 
       console.log("CV parse response:", JSON.stringify(response));

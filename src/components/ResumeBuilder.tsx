@@ -6,6 +6,7 @@ import {
   CheckSquare, X
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 // ─────────── TYPES ───────────
 interface SeaEntry {
@@ -128,6 +129,7 @@ const uid = () => String(Date.now()) + String(Math.random()).slice(2, 6);
 
 // ─────────── COMPONENT ───────────
 const ResumeBuilder = () => {
+  const { accessToken, user } = useAuth();
   const [view, setView] = useState<"form" | "preview">("form");
   const [openSection, setOpenSection] = useState<string | null>("personal");
   const [photo, setPhoto] = useState<string | null>(null);
@@ -248,10 +250,9 @@ const ResumeBuilder = () => {
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
-      const { data: { session } } = await supabase.auth.getSession();
       const { data, error } = await supabase.functions.invoke("parse-cv-documents", {
         body: { file_base64: base64, mime_type: file.type },
-        headers: { Authorization: `Bearer ${session?.access_token}` },
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (error || !data?.success) throw new Error(error?.message || "Scan failed");
       setScanResult(data.data);
@@ -398,11 +399,10 @@ const ResumeBuilder = () => {
   // ── Auto-save CV data to Supabase ──
   const saveCVData = async (data: any) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      if (!user) return;
       setSaveStatus('saving');
       await supabase.from('crew_cv_data').upsert({
-        user_id: session.user.id,
+        user_id: user.id,
         certificates: JSON.stringify(data.certs) as any,
         sea_service: JSON.stringify(data.sea) as any,
         education: JSON.stringify(data.edu) as any,
@@ -425,11 +425,10 @@ const ResumeBuilder = () => {
   // Load saved CV data on mount
   useEffect(() => {
     const loadCV = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      if (!user) return;
       const { data } = await supabase.from('crew_cv_data')
         .select('certificates, sea_service, education, medical')
-        .eq('user_id', session.user.id).single();
+        .eq('user_id', user.id).single();
       if (!data) return;
       try {
         const meta = typeof data.medical === 'string' ? JSON.parse(data.medical) : data.medical;

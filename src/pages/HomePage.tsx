@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import HomeNav from "@/components/homepage/HomeNav";
@@ -12,12 +12,12 @@ import TestimonialsSection from "@/components/homepage/TestimonialsSection";
 import FinalCTA from "@/components/homepage/FinalCTA";
 import HomeFooter from "@/components/homepage/HomeFooter";
 import { useTimeOfDay } from "@/hooks/useTimeOfDay";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const HomePage = () => {
   const timeOfDay = useTimeOfDay();
   const navigate = useNavigate();
-  const [authReady, setAuthReady] = useState(false);
+  const { user, isReady: authReady } = useAuth();
 
   useEffect(() => { document.title = "SeaMinds — The Seafarer's Digital Platform"; }, []);
 
@@ -43,30 +43,12 @@ const HomePage = () => {
     ],
   };
 
-  // Check auth and redirect authenticated users to /app (with 3s timeout)
+  // Redirect authenticated users to /app
   useEffect(() => {
-    let timeout: ReturnType<typeof setTimeout>;
-
-    const resolve = () => { clearTimeout(timeout); setAuthReady(true); };
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        navigate('/app', { replace: true });
-      } else {
-        resolve();
-      }
-    }).catch(() => resolve());
-
-    // Fallback: always show homepage after 3 seconds
-    timeout = setTimeout(resolve, 3000);
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        navigate('/app', { replace: true });
-      }
-    });
-    return () => { clearTimeout(timeout); subscription.unsubscribe(); };
-  }, [navigate]);
+    if (authReady && user) {
+      navigate('/app', { replace: true });
+    }
+  }, [authReady, user, navigate]);
 
   if (!authReady) {
     return (

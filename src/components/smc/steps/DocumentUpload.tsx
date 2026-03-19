@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { Camera, Check, Loader2, Info, FileText, Anchor, GraduationCap, Stethoscope, Ship, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import StepProgressBar from "./StepProgressBar";
 
 interface DocumentUploadProps {
@@ -42,6 +43,7 @@ const PROCESSING_STEPS = [
 ];
 
 const DocumentUpload = ({ assessmentId, profileId, onNext, onSkipToEnd }: DocumentUploadProps) => {
+  const { accessToken, user } = useAuth();
   const [uploads, setUploads] = useState<Record<string, string>>({});
   const [analysing, setAnalysing] = useState(false);
 
@@ -87,10 +89,9 @@ const DocumentUpload = ({ assessmentId, profileId, onNext, onSkipToEnd }: Docume
       });
 
       console.log("SMC CV Upload: calling parse-cv-documents");
-      const { data: { session } } = await supabase.auth.getSession();
       const { data, error } = await supabase.functions.invoke("parse-cv-documents", {
         body: { file_base64: base64, mime_type: file.type },
-        headers: { Authorization: `Bearer ${session?.access_token}` },
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
       console.log("SMC CV Upload: response", data, error);
 
@@ -106,10 +107,9 @@ const DocumentUpload = ({ assessmentId, profileId, onNext, onSkipToEnd }: Docume
 
       // Also store in crew_cv_data
       try {
-        const { data: { session: s } } = await supabase.auth.getSession();
-        if (s?.user?.id) {
+        if (user?.id) {
           await supabase.from("crew_cv_data").upsert({
-            user_id: s.user.id,
+            user_id: user.id,
             certificates: parsed.certificates as any,
             sea_service: parsed.sea_service as any,
             medical: parsed.medical as any,
