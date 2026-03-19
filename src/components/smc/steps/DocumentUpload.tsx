@@ -107,10 +107,9 @@ const DocumentUpload = ({ assessmentId, profileId, onNext, onSkipToEnd }: Docume
 
       // Also store in crew_cv_data
       try {
-        const { data: { session: s } } = await supabase.auth.getSession();
-        if (s?.user?.id) {
+        if (user?.id) {
           await supabase.from("crew_cv_data").upsert({
-            user_id: s.user.id,
+            user_id: user.id,
             certificates: parsed.certificates as any,
             sea_service: parsed.sea_service as any,
             medical: parsed.medical as any,

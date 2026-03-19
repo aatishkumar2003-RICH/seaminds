@@ -148,10 +148,9 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
 
     // Save structured document data to crew_cv_data
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user?.id) {
+      if (user?.id) {
         await supabase.from("crew_cv_data").upsert({
-          user_id: session.user.id,
+            user_id: user.id,
           certificates: (cvSummary.certificates || []) as any,
           sea_service: (cvSummary.sea_service || cvSummary.vessel_experience || []) as any,
           medical: (cvSummary.medical || []) as any,

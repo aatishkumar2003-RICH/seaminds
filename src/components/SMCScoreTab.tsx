@@ -75,10 +75,9 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
       });
 
       console.log("SMCScoreTab CV parse: calling parse-cv-documents, base64 length:", base64.length);
-      const { data: { session } } = await supabase.auth.getSession();
       const response = await supabase.functions.invoke("parse-cv-documents", {
         body: { file_base64: base64, mime_type: file.type },
-        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
       });
 
       console.log("CV parse response:", JSON.stringify(response));
