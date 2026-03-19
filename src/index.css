@@ -1,3 +1,7 @@
+html { touch-action: manipulation; }
+* { -webkit-tap-highlight-color: transparent; }
+button, a, [role="button"] { touch-action: manipulation; cursor: pointer; }
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
