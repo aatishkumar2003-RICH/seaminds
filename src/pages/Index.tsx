@@ -904,7 +904,7 @@ const Index = () => {
                   <div className="text-sm font-bold" style={{ color: restHours >= 10 ? "#22c55e" : restHours > 0 ? "#ef4444" : "#888" }}>{restHours || "—"}</div>
                   <div className="text-[9px] text-muted-foreground">hrs rest</div>
                 </button>
-                <button onClick={() => setScreen("smc")} style={cardStyle} className="flex-1 py-1 lg:py-3">
+                <button onClick={() => setScreen("smc")} style={cardStyle} className="flex-1 py-1 lg:py-3" data-tour="smc">
                   <div className="text-lg">🏆</div>
                   <div className="text-sm font-bold" style={{ color: "#D4AF37" }}>{smcScore !== null ? smcScore : "Get"}</div>
                   <div className="text-[9px] text-muted-foreground">{smcScore !== null ? "SMC" : "SMC"}</div>
