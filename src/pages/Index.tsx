@@ -682,6 +682,9 @@ const Index = () => {
           <div className="flex items-center justify-center gap-2 py-1.5 rounded-full text-xs font-medium" style={{ background: "rgba(212,175,55,0.12)", color: "#D4AF37" }}>
             🔥 {streakCount} day streak
           </div>
+          <button onClick={() => setForceTour(true)} className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-2">
+            <HelpCircle size={14} /> Replay Tour
+          </button>
           <button onClick={handleSignOut} className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-2">
             <LogOut size={14} /> Sign Out
           </button>
