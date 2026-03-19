@@ -262,6 +262,13 @@ button, a, [role="button"] { touch-action: manipulation; cursor: pointer; }
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  @keyframes swipeHintPulse {
+    0% { opacity: 0; transform: translateX(-10px) translateY(-50%); }
+    30% { opacity: 1; transform: translateX(8px) translateY(-50%); }
+    60% { opacity: 1; transform: translateX(0px) translateY(-50%); }
+    100% { opacity: 0; transform: translateX(-10px) translateY(-50%); }
+  }
 }
 
 @layer utilities {

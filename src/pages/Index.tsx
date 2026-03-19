@@ -102,6 +102,18 @@ const Index = () => {
   const [edgeSwipeStart, setEdgeSwipeStart] = useState<number | null>(null);
   const [edgeSwipeDelta, setEdgeSwipeDelta] = useState(0);
   const [isEdgeSwiping, setIsEdgeSwiping] = useState(false);
+  const [showSwipeHint, setShowSwipeHint] = useState(false);
+
+  useEffect(() => {
+    if (!localStorage.getItem('seamind_swipe_hint_seen')) setShowSwipeHint(true);
+  }, []);
+
+  useEffect(() => {
+    if (showSwipeHint && drawerOpen) {
+      setShowSwipeHint(false);
+      localStorage.setItem('seamind_swipe_hint_seen', '1');
+    }
+  }, [drawerOpen, showSwipeHint]);
 
   // Swipe from left edge to open drawer
   useEffect(() => {
@@ -689,7 +701,27 @@ const Index = () => {
         />
       )}
 
-      {/* Mobile drawer - slides in from left */}
+      {/* Swipe hint for first-time users */}
+      {showSwipeHint && !drawerOpen && !isEdgeSwiping && (
+        <div
+          className="fixed left-0 top-1/2 -translate-y-1/2 z-30 lg:hidden pointer-events-none"
+          style={{ animation: 'swipeHintPulse 2s ease-in-out 3' }}
+          onAnimationEnd={() => {
+            setShowSwipeHint(false);
+            localStorage.setItem('seamind_swipe_hint_seen', '1');
+          }}
+        >
+          <div className="flex items-center gap-1 pl-1 pr-3 py-3 rounded-r-full"
+            style={{ background: 'linear-gradient(90deg, hsl(var(--gold) / 0.3), transparent)' }}>
+            <div className="w-1 h-10 rounded-full opacity-60" style={{ background: 'hsl(var(--gold))' }} />
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ color: 'hsl(var(--gold))', opacity: 0.8 }}>
+              <path d="M8 4L14 10L8 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+        </div>
+      )}
+
+
       <div
         className={`fixed top-0 left-0 h-full w-72 z-50 lg:hidden ${!isSwiping && !isEdgeSwiping ? 'transition-transform duration-300 ease-in-out' : ''}`}
         style={{
