@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { MessageCircle, LayoutDashboard, Briefcase, Newspaper, GraduationCap, Compass, Star, LogOut, Anchor, X, FileText } from "lucide-react";
@@ -37,6 +37,30 @@ const NATIONALITY_FLAGS: Record<string, string> = {
   Croatian: "🇭🇷", Polish: "🇵🇱", Turkish: "🇹🇷", Kiribati: "🇰🇮", Tuvalu: "🇹🇻",
   Fijian: "🇫🇯", Maldivian: "🇲🇻", Ghanaian: "🇬🇭", Nigerian: "🇳🇬",
 };
+
+class ScreenErrorBoundary extends React.Component<{children: React.ReactNode, screenName: string}, {hasError: boolean}> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch(error: any) { console.error('Screen error:', error); }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '40px', textAlign: 'center', color: '#D4AF37' }}>
+          <div style={{ fontSize: '40px', marginBottom: '16px' }}>⚠️</div>
+          <div style={{ fontSize: '16px', marginBottom: '8px' }}>Could not load {this.props.screenName}</div>
+          <button onClick={() => this.setState({ hasError: false })}
+            style={{ background: '#D4AF37', color: '#0D1B2A', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', marginTop: '12px' }}>
+            Try Again
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const Index = () => {
   const navigate = useNavigate();
@@ -839,9 +863,13 @@ const Index = () => {
         ) : screen === "resume" ? (
           <ResumeBuilder />
         ) : screen === "certs" ? (
-          <CertWallet profileId={profileId} />
+          <ScreenErrorBoundary screenName="Certificates">
+            <CertWallet profileId={profileId} />
+          </ScreenErrorBoundary>
         ) : screen === "smc" ? (
-          <SMCScoreTab profileId={profileId} firstName={firstName} lastName={lastName} rank={role} shipName={shipName} />
+          <ScreenErrorBoundary screenName="SMC Score">
+            <SMCScoreTab profileId={profileId} firstName={firstName} lastName={lastName} rank={role} shipName={shipName} />
+          </ScreenErrorBoundary>
         ) : null}
       </div>
 
