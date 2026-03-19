@@ -290,7 +290,17 @@ const Index = () => {
     };
     if (uid) { insertData.id = uid; insertData.user_id = uid; }
     const { data, error } = await supabase.from("crew_profiles").upsert(insertData as any).select("id").single();
-    if (error || !data) { console.error("Failed to create profile:", error); return; }
+    if (error) {
+      console.error("Failed to create profile:", error);
+      if (error.code === '23505') {
+        if (error.message?.includes('whatsapp')) {
+          return 'This WhatsApp number is already linked to an account. Please sign in to your existing account instead.';
+        }
+        return 'An account with these details already exists. Please sign in.';
+      }
+      return 'Failed to create profile. Please try again.';
+    }
+    if (!data) return 'Failed to create profile. Please try again.';
     localStorage.setItem(PROFILE_KEY, data.id);
     setProfileId(data.id); setFirstName(profile.firstName); setLastName(profile.lastName);
     setRole(profile.role); setShipName(profile.shipName); setNationality(profile.nationality);

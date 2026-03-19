@@ -363,12 +363,18 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
           </div>
         </div>
 
+        {formError && (
+          <div className="rounded-xl bg-destructive/10 border border-destructive/30 px-4 py-3 text-sm text-destructive">
+            {formError}
+          </div>
+        )}
+
         <button
           onClick={handleSubmit}
-          disabled={!canSubmit}
+          disabled={!canSubmit || submitting}
           className="w-full bg-primary text-primary-foreground font-medium text-sm rounded-xl py-3.5 disabled:opacity-30 transition-opacity"
         >
-          Continue
+          {submitting ? "Saving..." : "Continue"}
         </button>
       </div>
     </div>
