@@ -17,6 +17,7 @@ import CollegePage from "./pages/CollegePage";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import AdminDashboard from "./pages/AdminDashboard";
+import Verify from "./pages/Verify";
 import CookieConsent from "./components/CookieConsent";
 import { AuthProvider } from "./contexts/AuthContext";
 
@@ -46,6 +47,7 @@ const App = () => (
           <Route path="/smc-score" element={<Navigate to="/#smc" replace />} />
           <Route path="/jobs" element={<Navigate to="/app" replace />} />
           <Route path="/for-seafarers" element={<Navigate to="/app" replace />} />
+          <Route path="/verify/:id" element={<Verify />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
