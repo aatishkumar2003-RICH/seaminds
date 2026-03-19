@@ -210,19 +210,10 @@ const Index = () => {
     };
   }, [appState, role]);
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      const savedId = localStorage.getItem('seamind_profile_id');
-      if (savedId) return;
-      if (session?.user) {
-        const fullName = session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Seafarer';
-        const fn = fullName.split(' ')[0];
-        setFirstName(fn);
-        setAppState('main');
-        setScreen('news');
-      }
-    });
+  const { user: authUser, isReady: authReady, accessToken } = useAuth();
 
+  // Single init effect — uses auth context instead of getSession
+  useEffect(() => {
     const init = async () => {
       // Fallback: if init hangs for 4 seconds, show landing
       const fallbackTimer = setTimeout(() => {
@@ -247,16 +238,10 @@ const Index = () => {
           localStorage.removeItem('seamind_profile_id');
         }
 
-        // Race getSession against a timeout to avoid hanging
-        const sessionResult = await Promise.race([
-          supabase.auth.getSession(),
-          new Promise<null>(resolve => setTimeout(() => resolve(null), 3000)),
-        ]);
-
         clearTimeout(fallbackTimer);
 
-        if (sessionResult && 'data' in sessionResult && sessionResult.data?.session?.user) {
-          const fullName = sessionResult.data.session.user.user_metadata?.full_name || sessionResult.data.session.user.email?.split('@')[0] || 'Seafarer';
+        if (authUser) {
+          const fullName = authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'Seafarer';
           setFirstName(fullName.split(' ')[0]);
           setAppState('main');
           setScreen('news');
@@ -270,9 +255,19 @@ const Index = () => {
       }
     };
 
-    init();
-    return () => subscription.unsubscribe();
-  }, []);
+    if (authReady) init();
+  }, [authReady, authUser]);
+
+  // React to auth state changes (login while on landing)
+  useEffect(() => {
+    if (!authReady || !authUser) return;
+    const savedId = localStorage.getItem('seamind_profile_id');
+    if (savedId) return;
+    const fullName = authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'Seafarer';
+    setFirstName(fullName.split(' ')[0]);
+    setAppState('main');
+    setScreen('news');
+  }, [authUser, authReady]);
 
   const handleNameSubmit = async (profile: {
     firstName: string; lastName: string; shipName: string; role: string;
