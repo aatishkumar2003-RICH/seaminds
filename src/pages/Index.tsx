@@ -99,6 +99,34 @@ const Index = () => {
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchDelta, setTouchDelta] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
+  const [edgeSwipeStart, setEdgeSwipeStart] = useState<number | null>(null);
+
+  // Swipe from left edge to open drawer
+  useEffect(() => {
+    const handleTouchStart = (e: TouchEvent) => {
+      if (drawerOpen) return;
+      const x = e.touches[0].clientX;
+      if (x < 25) setEdgeSwipeStart(x);
+    };
+    const handleTouchMove = (e: TouchEvent) => {
+      if (edgeSwipeStart === null || drawerOpen) return;
+      const delta = e.touches[0].clientX - edgeSwipeStart;
+      if (delta > 80) {
+        setDrawerOpen(true);
+        setEdgeSwipeStart(null);
+      }
+    };
+    const handleTouchEnd = () => setEdgeSwipeStart(null);
+
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: true });
+    document.addEventListener('touchend', handleTouchEnd, { passive: true });
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [drawerOpen, edgeSwipeStart]);
 
   const navigateTo = (next: Screen) => {
     setPrevScreen(screen);
