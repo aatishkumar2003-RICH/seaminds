@@ -637,25 +637,12 @@ const Index = () => {
       </aside>
 
       {/* === MAIN CONTENT AREA === */}
-      <div className="flex-1 flex flex-col h-screen w-full mx-auto lg:mx-0 relative overflow-hidden pb-16 lg:pb-0">
+      <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
         <div className="absolute inset-0 opacity-20 pointer-events-none z-0">
           <OceanBackground timeOfDay={timeOfDay} />
         </div>
 
         <div className="relative z-10 flex flex-col flex-1 min-h-0">
-        {/* Mobile Header Bar */}
-        <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-[#0D1B2A] border-b border-[#D4AF37]/20">
-          <div className="flex items-center gap-2">
-            <img src="/seaminds-logo.png" className="w-7 h-7 rounded-full" />
-            <span className="text-[#D4AF37] font-bold text-sm">SeaMinds</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-white text-sm">{firstName || 'Crew'}</span>
-            <div className="w-7 h-7 rounded-full bg-secondary flex items-center justify-center">
-              <span className="text-xs text-[#D4AF37]">{firstName?.[0] || 'C'}</span>
-            </div>
-          </div>
-        </div>
 
         {/* Greeting Header */}
         <div className="hidden lg:block px-4 lg:px-8 pt-2 lg:pt-4 pb-1">
