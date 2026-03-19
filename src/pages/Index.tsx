@@ -743,7 +743,7 @@ const Index = () => {
           <div className="flex items-center gap-2">
             <img src="/seaminds-logo.png" className="w-6 h-6 rounded-full" />
             <span className="text-[#D4AF37] font-bold text-sm">SeaMinds</span>
-            <span className="text-gray-400 text-xs hidden sm:block">{crewProfile?.rank || ''}</span>
+            <span className="text-gray-400 text-xs hidden sm:block">{role || ''}</span>
           </div>
           <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
             <span className="text-xs text-[#D4AF37] font-bold">{firstName?.[0] || 'C'}</span>
