@@ -61,7 +61,7 @@ const Verify = () => {
         <meta name="description" content={pageDesc} />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDesc} />
-        <meta property="og:image" content="https://seaminds.lovable.app/og-image.png" />
+        <meta property="og:image" content="https://seaminds.lovable.app/og-verify.png" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={`https://seaminds.lovable.app/verify/${id || ''}`} />
         <meta name="twitter:card" content="summary_large_image" />
