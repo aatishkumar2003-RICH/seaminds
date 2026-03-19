@@ -894,38 +894,6 @@ const Index = () => {
         ) : null}
       </div>
 
-      {/* Mobile Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-[#0D1B2A] border-t border-[#D4AF37]/20 flex justify-around items-center px-1 py-2">
-        {[
-          { id: 'chat' as Screen, icon: '💬', label: 'Chat', gated: true },
-          { id: 'dashboard' as Screen, icon: '❤️', label: 'Health', gated: true },
-          { id: 'smc' as Screen, icon: '🏆', label: 'SMC', gated: false },
-          { id: 'resume' as Screen, icon: '📄', label: 'CV', gated: false },
-          { id: 'opportunities' as Screen, icon: '💼', label: 'Jobs', gated: false },
-          { id: 'news' as Screen, icon: '📰', label: 'News', gated: false },
-        ].map(item => (
-          <button
-            key={item.id}
-            onClick={() => {
-              if (item.gated && !profileComplete) {
-                setTargetScreen(item.id);
-                setAppState("name-entry");
-              } else {
-                navigateTo(item.id);
-                if (item.id === "opportunities") setJobBadgeCount(0);
-              }
-            }}
-            className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg transition-all ${
-              screen === item.id
-                ? 'text-[#D4AF37]'
-                : 'text-gray-400'
-            }`}
-          >
-            <span className="text-xl">{item.icon}</span>
-            <span className="text-[11px] font-medium">{item.label}</span>
-          </button>
-        ))}
-      </div>
       </div>
       </div>
 
