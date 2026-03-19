@@ -172,6 +172,7 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
   };
 
 
+  if (phase === "loading") {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-6">
         <div className="w-20 h-20 rounded-2xl bg-primary/15 flex items-center justify-center animate-pulse">
