@@ -1209,6 +1209,7 @@ const Index = () => {
           </div>
         </div>
       )}
+      <OnboardingTour enabled={appState === "main"} />
     </div>
   );
 };
