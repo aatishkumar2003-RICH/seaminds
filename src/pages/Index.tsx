@@ -647,7 +647,32 @@ const Index = () => {
       )}
 
       {/* Mobile drawer - slides in from left */}
-      <div className={`fixed top-0 left-0 h-full w-72 z-50 lg:hidden transform transition-transform duration-300 ease-in-out ${drawerOpen ? 'translate-x-0' : '-translate-x-full'}`} style={{ background: "#0D1B2A", borderRight: '1px solid rgba(212,175,55,0.2)', padding: "24px 16px" }}>
+      <div
+        className={`fixed top-0 left-0 h-full w-72 z-50 lg:hidden ${!isSwiping ? 'transition-transform duration-300 ease-in-out' : ''}`}
+        style={{
+          background: "#0D1B2A",
+          borderRight: '1px solid rgba(212,175,55,0.2)',
+          padding: "24px 16px",
+          transform: drawerOpen
+            ? `translateX(${Math.min(0, touchDelta)}px)`
+            : 'translateX(-100%)',
+        }}
+        onTouchStart={(e) => {
+          setTouchStart(e.touches[0].clientX);
+          setIsSwiping(true);
+        }}
+        onTouchMove={(e) => {
+          if (touchStart === null) return;
+          const delta = e.touches[0].clientX - touchStart;
+          if (delta < 0) setTouchDelta(delta);
+        }}
+        onTouchEnd={() => {
+          if (touchDelta < -80) setDrawerOpen(false);
+          setTouchStart(null);
+          setTouchDelta(0);
+          setIsSwiping(false);
+        }}
+      >
         <button onClick={() => setDrawerOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white text-lg">✕</button>
         {/* Logo */}
         <div className="flex items-center gap-2 mb-6">
