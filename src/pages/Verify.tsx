@@ -33,7 +33,7 @@ const Verify = () => {
             .select('first_name, last_name, rank, nationality, crew_unique_id')
             .eq('crew_unique_id', id)
             .single();
-          if (profile) result = profile;
+          if (profile) result = profile as any;
         }
 
         if (result) { setData(result); }
