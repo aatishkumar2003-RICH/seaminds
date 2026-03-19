@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { supabase } from '@/integrations/supabase/client';
 
 const Verify = () => {
@@ -46,7 +47,28 @@ const Verify = () => {
     verify();
   }, [id]);
 
+  const pageTitle = data
+    ? `✅ ${data.first_name} ${data.last_name} — Verified by SeaMinds`
+    : 'SeaMinds Certificate Verification';
+  const pageDesc = data
+    ? `${data.first_name} ${data.last_name}${data.rank ? ` (${data.rank})` : ''} has a verified SeaMinds Competency Certificate${data.overall_score ? ` with a score of ${data.overall_score}/5.00` : ''}.`
+    : 'Verify the authenticity of a SeaMinds maritime competency certificate.';
+
   return (
+    <>
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDesc} />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDesc} />
+        <meta property="og:image" content="https://seaminds.lovable.app/og-image.png" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={`https://seaminds.lovable.app/verify/${id || ''}`} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={pageDesc} />
+        <meta name="twitter:image" content="https://seaminds.lovable.app/og-image.png" />
+      </Helmet>
     <div style={{ minHeight:'100vh', background:'linear-gradient(135deg, #0D1B2A 0%, #1B2838 50%, #0D1B2A 100%)', display:'flex', alignItems:'center', justifyContent:'center', padding:'20px' }}>
       <div style={{ maxWidth:'480px', width:'100%', textAlign:'center' }}>
         <img src="/seaminds-logo.png" style={{ width:'60px', height:'60px', borderRadius:'12px', margin:'0 auto 16px', display:'block' }} alt="SeaMinds" />
@@ -85,6 +107,7 @@ const Verify = () => {
         )}
       </div>
     </div>
+    </>
   );
 };
 
