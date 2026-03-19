@@ -449,6 +449,26 @@ const Index = () => {
     );
   }
 
+      {/* Swipe hint for first-time users */}
+      {showSwipeHint && !drawerOpen && !isEdgeSwiping && (
+        <div
+          className="fixed left-0 top-1/2 -translate-y-1/2 z-30 lg:hidden pointer-events-none"
+          style={{ animation: 'swipeHintPulse 2s ease-in-out 3' }}
+          onAnimationEnd={() => {
+            setShowSwipeHint(false);
+            localStorage.setItem('seamind_swipe_hint_seen', '1');
+          }}
+        >
+          <div className="flex items-center gap-1 pl-1 pr-3 py-3 rounded-r-full"
+            style={{ background: 'linear-gradient(90deg, hsl(var(--gold) / 0.3), transparent)' }}>
+            <div className="w-1 h-10 rounded-full bg-[hsl(var(--gold))] opacity-60" />
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-[hsl(var(--gold))] opacity-80">
+              <path d="M6 10L12 4M6 10L12 16M6 10H18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" transform="scale(-1,1) translate(-20,0)" />
+            </svg>
+          </div>
+        </div>
+      )}
+
 
   const handleSignOut = async () => {
     // Clear local state immediately
