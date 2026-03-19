@@ -67,7 +67,7 @@ const Verify = () => {
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={pageDesc} />
-        <meta name="twitter:image" content="https://seaminds.lovable.app/og-image.png" />
+        <meta name="twitter:image" content="https://seaminds.lovable.app/og-verify.png" />
       </Helmet>
     <div style={{ minHeight:'100vh', background:'linear-gradient(135deg, #0D1B2A 0%, #1B2838 50%, #0D1B2A 100%)', display:'flex', alignItems:'center', justifyContent:'center', padding:'20px' }}>
       <div style={{ maxWidth:'480px', width:'100%', textAlign:'center' }}>
