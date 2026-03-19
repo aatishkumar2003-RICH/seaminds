@@ -17,6 +17,7 @@ import CollegePage from "./pages/CollegePage";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import AdminDashboard from "./pages/AdminDashboard";
+import Verify from "./pages/Verify";
 import CookieConsent from "./components/CookieConsent";
 import { AuthProvider } from "./contexts/AuthContext";
 
