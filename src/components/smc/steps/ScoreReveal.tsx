@@ -189,13 +189,17 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
   const fullName = [firstName, lastName].filter(Boolean).join(" ");
 
   return (
-    <div className="overflow-y-auto" style={{ maxHeight: '100%' }}>
+    <div id="smc-certificate" className="overflow-y-auto" style={{ maxHeight: '100%' }}>
       {onBack && (
         <button onClick={onBack}
           style={{ background:'transparent', border:'1px solid #2a4060', color:'#D4AF37', padding:'8px 16px', borderRadius:'8px', fontSize:'13px', cursor:'pointer', marginBottom:'16px', display:'block' }}>
           ← Back to Profile
         </button>
       )}
+      <div style={{ textAlign:'center', marginBottom:'16px' }}>
+        <img src="/seaminds-logo.png" style={{ width:'60px', height:'60px', borderRadius:'12px', objectFit:'contain' }} alt="SeaMinds" />
+        <div style={{ color:'#D4AF37', fontSize:'11px', letterSpacing:'2px', marginTop:'4px' }}>SEAMINDS CERTIFIED</div>
+      </div>
       <SMCScoreCertificate
         data={{
           overallScore: finalScore,
@@ -235,6 +239,35 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
           </div>
         )}
       </div>
+      <div style={{ textAlign:'center', margin:'16px 0', padding:'12px', background:'white', borderRadius:'8px', display:'inline-block' }}>
+        <img
+          src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(`https://seaminds.life/verify/${certId || assessmentId}`)}&format=png&bgcolor=ffffff`}
+          style={{ width:'80px', height:'80px', display:'block' }}
+          alt="Verify Certificate"
+          crossOrigin="anonymous"
+        />
+        <div style={{ fontSize:'9px', color:'#666', marginTop:'4px' }}>Scan to verify authenticity</div>
+        <div style={{ fontSize:'8px', color:'#999', marginTop:'2px' }}>{certId || assessmentId}</div>
+      </div>
+      <button
+        onClick={async () => {
+          try {
+            const { default: html2canvas } = await import('html2canvas');
+            const { jsPDF } = await import('jspdf');
+            const el = document.getElementById('smc-certificate');
+            if (!el) return;
+            const canvas = await html2canvas(el, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#0D1B2A' });
+            const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+            const imgData = canvas.toDataURL('image/png');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.save(`SeaMinds-SMC-Certificate-${certId || assessmentId}.pdf`);
+          } catch(e) { console.error('Download error:', e); }
+        }}
+        style={{ background:'#D4AF37', color:'#0D1B2A', border:'none', padding:'10px 24px', borderRadius:'8px', fontWeight:'bold', cursor:'pointer', marginTop:'8px', display:'block', width:'100%' }}>
+        ⬇ Download Certificate PDF
+      </button>
       {reportLoading && (
         <div style={{ textAlign:'center', color:'#D4AF37', padding:'16px', fontSize:'14px' }}>
           Generating your assessment report...
