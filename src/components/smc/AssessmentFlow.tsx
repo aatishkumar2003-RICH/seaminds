@@ -158,18 +158,29 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   // Fetch questions
   useEffect(() => {
     const fetchQuestions = async () => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000);
       setLoadingQuestions(true);
       try {
         const token = accessToken;
         const { data } = await supabase.functions.invoke('generate-smc-questions', {
           body: { rank, vesselType: vesselType || 'General Cargo', yearsExperience: yearsExperience || 5, department: 'Deck' },
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${token}`, signal: controller.signal },
         });
+        clearTimeout(timeoutId);
         if (data?.mcq || data?.scenario || data?.behavioural) {
           setAiQuestions(data);
         }
-      } catch (e) { console.error(e); }
-      finally { setLoadingQuestions(false); }
+      } catch (error: any) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+          console.error('Assessment question generation timed out');
+        } else {
+          console.error('Failed to generate questions:', error);
+        }
+      } finally {
+        setLoadingQuestions(false);
+      }
     };
     fetchQuestions();
   }, [rank]);
