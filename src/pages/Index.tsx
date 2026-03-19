@@ -645,7 +645,7 @@ const Index = () => {
         <div className="relative z-10 flex flex-col flex-1 min-h-0">
 
         {/* Greeting Header */}
-        <div className="hidden lg:block px-4 lg:px-8 pt-2 lg:pt-4 pb-1">
+        <div className="px-4 md:px-8 pt-2 md:pt-4 pb-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               {prevScreen && (
