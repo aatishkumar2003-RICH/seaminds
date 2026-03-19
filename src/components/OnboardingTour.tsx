@@ -53,6 +53,8 @@ const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed }: OnboardingT
   const [step, setStep] = useState(0);
   const [visible, setVisible] = useState(false);
   const [rect, setRect] = useState<DOMRect | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const confettiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!enabled) return;
