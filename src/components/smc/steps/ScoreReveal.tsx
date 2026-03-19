@@ -374,6 +374,57 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
           )}
         </div>
       )}
+
+      {/* Downloadable Certificate (hidden, rendered for PDF capture) */}
+      <div id="smc-certificate-print" style={{ display:'none', width:'1120px', padding:'60px', background:'#ffffff', fontFamily:'Georgia, serif' }}>
+        {/* Header */}
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', borderBottom:'3px solid #D4AF37', paddingBottom:'20px', marginBottom:'30px' }}>
+          <img src="/seaminds-logo.png" style={{ width:'80px', height:'80px', borderRadius:'12px', objectFit:'contain' }} alt="SeaMinds" />
+          <div style={{ textAlign:'right' }}>
+            <div style={{ fontSize:'28px', fontWeight:'bold', color:'#0D1B2A', letterSpacing:'1px' }}>SeaMinds Competency Certificate</div>
+            <div style={{ fontSize:'14px', color:'#666', marginTop:'4px' }}>AI-Verified Maritime Competency Assessment</div>
+          </div>
+          <div style={{ textAlign:'right', fontSize:'12px', color:'#888' }}>
+            <div>PT Indoglobal Service Solutions</div>
+            <div>seaminds.life</div>
+          </div>
+        </div>
+        {/* Body */}
+        <div style={{ textAlign:'center', padding:'40px 0' }}>
+          <div style={{ fontSize:'16px', color:'#666' }}>This certifies that</div>
+          <div style={{ fontSize:'36px', fontWeight:'bold', color:'#0D1B2A', margin:'12px 0', textTransform:'uppercase' }}>{fullName || 'SEAFARER'}</div>
+          <div style={{ fontSize:'18px', color:'#555', marginBottom:'20px' }}>{rank || ''}</div>
+          <div style={{ fontSize:'14px', color:'#666', marginBottom:'8px' }}>has successfully completed the SeaMinds Competency Assessment</div>
+          <div style={{ fontSize:'14px', color:'#666', marginBottom:'20px' }}>and achieved a verified score of</div>
+          <div style={{ fontSize:'48px', fontWeight:'bold', color:'#D4AF37', margin:'8px 0' }}>{finalScore}/5.00</div>
+          <div style={{ display:'inline-block', background: finalScore >= 4.5 ? '#27ae60' : finalScore >= 3.5 ? '#D4AF37' : '#e67e22', color:'white', padding:'6px 24px', borderRadius:'20px', fontSize:'16px', fontWeight:'bold' }}>{band}</div>
+        </div>
+        {/* Footer */}
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end', borderTop:'2px solid #eee', paddingTop:'20px', marginTop:'30px' }}>
+          <div style={{ fontSize:'12px', color:'#888' }}>
+            <div>Certificate Date: {new Date().toLocaleDateString('en-GB')}</div>
+            <div>Assessment ID: {assessmentId || 'N/A'}</div>
+            <div>Certificate ID: {certId || 'N/A'}</div>
+            <div style={{ marginTop:'8px', fontStyle:'italic' }}>This certificate is digitally verified by SeaMinds AI.</div>
+          </div>
+          <div style={{ textAlign:'center' }}>
+            <img
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(`https://seaminds.life/verify/${certId || assessmentId}`)}&format=png&bgcolor=ffffff`}
+              style={{ width:'80px', height:'80px', display:'block' }}
+              alt="Verify Certificate"
+              crossOrigin="anonymous"
+            />
+            <div style={{ fontSize:'9px', color:'#666', marginTop:'4px' }}>Scan to verify</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Download Button */}
+      <button
+        onClick={handleDownloadCertificate}
+        style={{ background:'#D4AF37', color:'#0D1B2A', border:'none', padding:'12px 24px', borderRadius:'8px', fontWeight:'bold', cursor:'pointer', marginTop:'16px', display:'block', width:'100%', fontSize:'15px' }}>
+        ⬇ Download Certificate PDF
+      </button>
     </div>
   );
 };
