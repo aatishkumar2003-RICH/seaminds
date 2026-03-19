@@ -168,7 +168,7 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full px-6 overflow-y-auto">
+    <div className="flex flex-col items-center justify-center min-h-screen px-4 py-8 overflow-y-auto">
       <div className="w-full max-w-md space-y-6 py-8">
         <div className="text-center space-y-3">
           <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center mx-auto">

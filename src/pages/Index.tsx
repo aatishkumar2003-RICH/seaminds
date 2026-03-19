@@ -893,7 +893,7 @@ const Index = () => {
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-[#0D1B2A] border-t border-[#D4AF37]/20 flex justify-around items-center px-2 py-2 safe-area-pb">
+      <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-[#0D1B2A] border-t border-[#D4AF37]/20 flex justify-around items-center px-1 py-2">
         {[
           { id: 'chat' as Screen, icon: '💬', label: 'Chat', gated: true },
           { id: 'dashboard' as Screen, icon: '❤️', label: 'Welfare', gated: true },
