@@ -3,6 +3,7 @@ import { ArrowLeft, Loader2, CheckCircle, XCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { logEvent } from "@/lib/logEvent";
 import DocumentUpload from "./steps/DocumentUpload";
 import DocumentVerification from "./steps/DocumentVerification";
 import ScoreReveal from "./steps/ScoreReveal";
@@ -178,6 +179,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
       } catch (error: any) {
         clearTimeout(timeoutId);
         console.error('Failed to generate questions:', error);
+        await logEvent('smc_stuck', error.name === 'AbortError' ? 'SMC timed out' : error.message, 'error');
         if (error.name === 'AbortError') {
           alert('Assessment is taking too long. Please check your internet connection and try again.');
         } else {
