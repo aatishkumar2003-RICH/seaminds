@@ -179,6 +179,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
       } catch (error: any) {
         clearTimeout(timeoutId);
         console.error('Failed to generate questions:', error);
+        await logEvent('smc_stuck', error.name === 'AbortError' ? 'SMC timed out' : error.message, 'error');
         if (error.name === 'AbortError') {
           alert('Assessment is taking too long. Please check your internet connection and try again.');
         } else {

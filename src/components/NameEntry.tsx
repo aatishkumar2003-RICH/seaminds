@@ -146,8 +146,10 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
         vesselType: vesselTypeVal,
       }, cvFile);
       if (errorMsg) setFormError(errorMsg);
+      else await logEvent('crew_signup', 'New crew signed up', 'info', { name: `${firstName.trim()} ${lastName.trim()}`, rank: role, nationality: nationality.trim() });
     } catch (err: any) {
       console.error('Failed to create profile:', err);
+      await logEvent('profile_create_error', err?.message || 'Unknown error', 'error', { code: err?.code });
       
       if (err?.code === '23505' || err?.message?.includes('duplicate')) {
         if (err?.message?.includes('whatsapp')) {

@@ -130,6 +130,7 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
       trackEvent("cv_upload_success");
     } catch (e) {
       console.error("CV parse error:", e);
+      await logEvent('cv_upload_error', 'CV upload/parse failed', 'error');
       setErrorMsg(e instanceof Error ? e.message : "Could not read CV. Please fill manually.");
       setStatus("error");
     }
