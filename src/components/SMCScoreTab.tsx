@@ -37,16 +37,18 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    try {
-      checkStatus().catch(e => { console.error('SMCScoreTab checkStatus error:', e); setView("payment"); });
-      checkExistingCvData().catch(e => console.error('SMCScoreTab checkExistingCvData error:', e));
-      supabase.from("crew_profiles").select("crew_unique_id").eq("id", profileId).maybeSingle().then(({ data }) => {
+    const init = async () => {
+      try {
+        await checkStatus();
+        await checkExistingCvData();
+        const { data } = await supabase.from("crew_profiles").select("crew_unique_id").eq("id", profileId).maybeSingle();
         if (data?.crew_unique_id) setCrewUniqueId(data.crew_unique_id);
-      }).catch(e => console.error('SMCScoreTab crew_unique_id error:', e));
-    } catch (e) {
-      console.error('SMCScoreTab init error:', e);
-      setView("payment");
-    }
+      } catch (e) {
+        console.error('SMCScoreTab init error:', e);
+        setView("payment");
+      }
+    };
+    init();
   }, [profileId]);
 
   useEffect(() => {
