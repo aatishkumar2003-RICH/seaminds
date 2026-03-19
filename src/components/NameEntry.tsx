@@ -132,7 +132,7 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         shipName: shipName.trim(),
-        role,
+        role: normalizeRole(role),
         gender,
         nationality: nationality.trim(),
         whatsappNumber: cleanedWhatsapp,
