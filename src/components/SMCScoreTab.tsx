@@ -360,10 +360,12 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
 };
 
 interface CvData {
-  certificates?: { id?: string; name?: string; expiryDate?: string; issueDate?: string; certNumber?: string; [key: string]: any }[];
-  sea_service?: { vessel_name?: string; vesselName?: string; rank?: string; duration?: string; from?: string; to?: string; [key: string]: any }[];
+  certificates?: { id?: string; name?: string; expiryDate?: string; expiry_date?: string; issueDate?: string; issue_date?: string; certNumber?: string; number?: string; [key: string]: any }[];
+  sea_service?: { vessel_name?: string; vesselName?: string; rank?: string; rankOnBoard?: string; duration?: string; from?: string; to?: string; fromDate?: string; toDate?: string; [key: string]: any }[];
   medical?: { name?: string; status?: string; expiryDate?: string; [key: string]: any }[];
 }
+
+const ensureArray = <T,>(value: unknown): T[] => Array.isArray(value) ? value as T[] : [];
 
 const DigitalCvSummary = ({ profileId, cvStatus }: { profileId: string; cvStatus: CvStatus }) => {
   const [cvData, setCvData] = useState<CvData | null>(null);
