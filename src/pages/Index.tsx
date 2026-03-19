@@ -572,6 +572,7 @@ const Index = () => {
       navigateTo(item.screen);
       if (item.screen === "opportunities") setJobBadgeCount(0);
     }
+    setDrawerOpen(false);
   };
 
   return (
