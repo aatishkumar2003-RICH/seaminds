@@ -1006,6 +1006,7 @@ const Index = () => {
         </div>
       )}
       {showNPS && <NPSSurvey firstName={firstName} onDismiss={() => setShowNPS(false)} />}
+      <PWAInstallPrompt />
 
       {/* Push Notification Permission Prompt */}
       {showNotifPrompt && (
