@@ -883,7 +883,7 @@ const Index = () => {
         </div>
       )}
 
-      <div className="flex-1 overflow-hidden pb-14 lg:pb-0">
+      <div className="flex-1 overflow-hidden">
         {/* Job match notification */}
         {screen === "chat" && jobMatch && (
           <div
