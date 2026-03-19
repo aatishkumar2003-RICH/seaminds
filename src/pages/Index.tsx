@@ -893,6 +893,29 @@ const Index = () => {
         ) : null}
       </div>
 
+      {/* Mobile bottom nav - phones only */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-[#0D1B2A] border-t border-[#D4AF37]/30">
+        <div className="flex justify-around items-center h-14">
+          {[
+            { screen: 'chat' as Screen, icon: '💬', label: 'Chat' },
+            { screen: 'dashboard' as Screen, icon: '❤️', label: 'Welfare' },
+            { screen: 'smc' as Screen, icon: '🏆', label: 'SMC' },
+            { screen: 'resume' as Screen, icon: '📄', label: 'CV' },
+            { screen: 'opportunities' as Screen, icon: '💼', label: 'Jobs' },
+            { screen: 'news' as Screen, icon: '📰', label: 'More' },
+          ].map(item => (
+            <button
+              key={item.screen}
+              onClick={() => navigateTo(item.screen)}
+              className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors ${screen === item.screen ? 'text-[#D4AF37]' : 'text-gray-500'}`}
+            >
+              <span className="text-lg leading-none">{item.icon}</span>
+              <span className="text-[10px] font-medium leading-none">{item.label}</span>
+            </button>
+          ))}
+        </div>
+      </nav>
+
       </div>
       </div>
 
