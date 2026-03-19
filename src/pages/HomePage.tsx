@@ -12,12 +12,12 @@ import TestimonialsSection from "@/components/homepage/TestimonialsSection";
 import FinalCTA from "@/components/homepage/FinalCTA";
 import HomeFooter from "@/components/homepage/HomeFooter";
 import { useTimeOfDay } from "@/hooks/useTimeOfDay";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const HomePage = () => {
   const timeOfDay = useTimeOfDay();
   const navigate = useNavigate();
-  const [authReady, setAuthReady] = useState(false);
+  const { user, isReady: authReady } = useAuth();
 
   useEffect(() => { document.title = "SeaMinds — The Seafarer's Digital Platform"; }, []);
 
