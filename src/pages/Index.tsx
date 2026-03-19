@@ -736,13 +736,14 @@ const Index = () => {
         <div className="relative z-10 flex flex-col flex-1 min-h-0">
 
         {/* Mobile top bar */}
-        <div className="flex items-center justify-between px-4 py-3 lg:hidden border-b border-[#D4AF37]/20 flex-shrink-0" style={{ background: '#0D1B2A' }}>
+        <div className="flex items-center justify-between px-4 py-2 lg:hidden border-b border-[#D4AF37]/20 flex-shrink-0" style={{ background: '#0D1B2A' }}>
           <button onClick={() => setDrawerOpen(true)} className="text-[#D4AF37] text-xl font-bold p-1">
             ☰
           </button>
           <div className="flex items-center gap-2">
             <img src="/seaminds-logo.png" className="w-6 h-6 rounded-full" />
             <span className="text-[#D4AF37] font-bold text-sm">SeaMinds</span>
+            <span className="text-gray-400 text-xs hidden sm:block">{crewProfile?.rank || ''}</span>
           </div>
           <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
             <span className="text-xs text-[#D4AF37] font-bold">{firstName?.[0] || 'C'}</span>
