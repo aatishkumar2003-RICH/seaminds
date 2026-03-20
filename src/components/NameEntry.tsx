@@ -138,7 +138,16 @@ const NATIONALITY_TO_CODE: Record<string, string> = {
   "Romanian": "+40", "Bulgarian": "+359", "Polish": "+48", "Latvian": "+371",
   "Lithuanian": "+370", "Estonian": "+372", "Norwegian": "+47", "British": "+44",
   "American": "+1", "Australian": "+61", "Nigerian": "+234", "Ghanaian": "+233",
-  "Kenyan": "+254", "Brazilian": "+55",
+  "Kenyan": "+254", "Brazilian": "+55", "South African": "+27", "Egyptian": "+20",
+  "Moroccan": "+212", "Tanzanian": "+255", "Maldivian": "+960", "Singaporean": "+65",
+  "South Korean": "+82", "Japanese": "+81", "Italian": "+39", "German": "+49",
+  "Spanish": "+34", "Portuguese": "+351", "French": "+33", "Dutch": "+31",
+  "Danish": "+45", "Swedish": "+46", "Finnish": "+358", "Peruvian": "+51",
+  "Argentine": "+54", "Mexican": "+52", "Canadian": "+1", "New Zealander": "+64",
+  "Omani": "+968", "Emirati": "+971", "Saudi": "+966", "Qatari": "+974",
+  "Kuwaiti": "+965", "Bahraini": "+973", "Iranian": "+98", "Montenegrin": "+382",
+  "Serbian": "+381", "Slovenian": "+386", "Albanian": "+355", "Tunisian": "+216",
+  "Algerian": "+213",
 };
 
 const selectClass = "w-full bg-secondary text-foreground text-sm rounded-xl px-4 py-3 outline-none focus:ring-1 focus:ring-primary appearance-none";
