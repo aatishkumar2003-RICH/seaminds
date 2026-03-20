@@ -25,6 +25,7 @@ interface NameEntryProps {
     manningAgentPhone: string;
     portOfJoining: string;
     vesselType: string;
+    dateOfBirth: string;
   }, cvFile?: File) => Promise<string | undefined> | void;
 }
 
