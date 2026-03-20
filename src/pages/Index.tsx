@@ -711,9 +711,9 @@ const Index = () => {
           }}
         >
           <div className="flex items-center gap-1 pl-1 pr-3 py-3 rounded-r-full"
-            style={{ background: 'linear-gradient(90deg, hsl(var(--gold) / 0.3), transparent)' }}>
-            <div className="w-1 h-10 rounded-full opacity-60" style={{ background: 'hsl(var(--gold))' }} />
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ color: 'hsl(var(--gold))', opacity: 0.8 }}>
+            style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.1), transparent)' }}>
+            <div className="w-1 h-10 rounded-full opacity-40" style={{ background: 'rgba(255,255,255,0.5)' }} />
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ color: 'rgba(255,255,255,0.5)' }}>
               <path d="M8 4L14 10L8 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
