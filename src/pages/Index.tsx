@@ -263,6 +263,7 @@ const Index = () => {
       manning_agency: profile.manningAgency || null, vessel_imo: profile.vesselImo || null,
       manning_agent_phone: profile.manningAgentPhone || null,
       port_of_joining: profile.portOfJoining || null, vessel_type: profile.vesselType || null,
+      date_of_birth: profile.dateOfBirth || null,
       onboarded: true, onboarding_complete: true,
     };
     const year = new Date().getFullYear();
