@@ -34,7 +34,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
   drawerOpen, setDrawerOpen, isSwiping, isEdgeSwiping,
   touchDelta, edgeSwipeDelta, touchStart, setTouchStart, setTouchDelta, setIsSwiping,
   screen, appState, firstName, lastName, nationality, role,
-  streakCount, jobBadgeCount, onNavClick, onReplayTour, onSignOut, onOpenChat, shipName,
+  streakCount, jobBadgeCount, onNavClick, onReplayTour, onSignOut, onOpenChat, shipName, tourActiveScreen,
 }) => {
   return (
     <div
