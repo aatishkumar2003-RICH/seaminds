@@ -22,7 +22,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
         )}
       </div>
       <div className="flex items-center gap-2">
-        <img src="/seaminds-logo.png" className="h-6 w-6 rounded-full" alt="SeaMinds logo" />
+        <img src={seamindsLogo} className="h-6 w-6 rounded-full" alt="SeaMinds logo" />
         <span className="text-sm font-bold text-foreground">SeaMinds</span>
       </div>
       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary">
