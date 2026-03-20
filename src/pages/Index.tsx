@@ -43,6 +43,7 @@ const Index = () => {
   const timeOfDay = useTimeOfDay();
   const [appState, setAppState] = useState<AppState>("loading");
   const [screen, setScreen] = useState<Screen>("chat");
+  const [tourActiveScreen, setTourActiveScreen] = useState<Screen | null>(null);
   const [prevScreen, setPrevScreen] = useState<Screen | null>(null);
   const [profileId, setProfileId] = useState("");
   const [firstName, setFirstName] = useState("");
