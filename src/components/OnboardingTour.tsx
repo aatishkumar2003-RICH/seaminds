@@ -96,12 +96,31 @@ const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed }: OnboardingT
     localStorage.setItem(STORAGE_KEY, "1");
   };
 
+  const playCelebrationChime = () => {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.15, ctx.currentTime + i * 0.12);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.6);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(ctx.currentTime + i * 0.12);
+        osc.stop(ctx.currentTime + i * 0.12 + 0.6);
+      });
+    } catch {}
+  };
+
   const next = () => {
     if (step < TOUR_STEPS.length - 1) {
       setStep(step + 1);
     } else {
       setShowConfetti(true);
       if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
+      playCelebrationChime();
       confettiTimerRef.current = setTimeout(() => {
         setShowConfetti(false);
         dismiss();
