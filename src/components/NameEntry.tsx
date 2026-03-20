@@ -48,7 +48,14 @@ const NATIONALITIES = [
   "Thai", "Malaysian", "Cambodian", "Georgian", "Azerbaijani",
   "Romanian", "Bulgarian", "Polish", "Latvian", "Lithuanian",
   "Estonian", "Norwegian", "British", "American", "Australian",
-  "Nigerian", "Ghanaian", "Kenyan", "Brazilian", "Other",
+  "Nigerian", "Ghanaian", "Kenyan", "Brazilian", "South African",
+  "Egyptian", "Moroccan", "Tanzanian", "Maldivian", "Singaporean",
+  "South Korean", "Japanese", "Italian", "German", "Spanish",
+  "Portuguese", "French", "Dutch", "Danish", "Swedish",
+  "Finnish", "Peruvian", "Argentine", "Mexican", "Canadian",
+  "New Zealander", "Omani", "Emirati", "Saudi", "Qatari",
+  "Kuwaiti", "Bahraini", "Iranian", "Montenegrin", "Serbian",
+  "Slovenian", "Albanian", "Tunisian", "Algerian", "Other",
 ];
 const COUNTRY_CODES = [
   { flag: '🇵🇭', name: 'Philippines', code: '+63' },
