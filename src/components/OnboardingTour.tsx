@@ -287,7 +287,7 @@ const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed, onNavigate }:
   return (
     <motion.div
       className="fixed inset-0 z-[200] flex items-center justify-center"
-      style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
+      style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(3px)" }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       onClick={dismiss}
