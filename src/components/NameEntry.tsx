@@ -404,19 +404,17 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
           {/* WhatsApp Number */}
           <div className="space-y-1.5">
             <label className={labelClass}>WhatsApp Number *</label>
-            <div className="flex gap-2">
-              <div className="relative w-28 shrink-0">
-                <select value={countryCode} onChange={(e) => setCountryCode(e.target.value)} className={selectClass}>
-                  {COUNTRY_CODES.map((c) => <option key={c.code} value={c.code}>{c.label}</option>)}
-                </select>
-                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-              </div>
+            <div className="flex w-full gap-2">
+              <select value={countryCode} onChange={(e) => setCountryCode(e.target.value)} className="w-28 rounded-xl border border-border bg-secondary px-2 py-3 text-sm text-foreground outline-none focus:border-primary shrink-0">
+                {COUNTRY_CODES.map((c) => <option key={c.code + c.name} value={c.code}>{c.flag} {c.code}</option>)}
+              </select>
               <input
                 type="tel"
+                inputMode="numeric"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value.replace(/[^0-9]/g, ""))}
-                placeholder="9171234567"
-                className={inputClass}
+                placeholder="WhatsApp number"
+                className="flex-1 rounded-xl border border-border bg-secondary px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary"
               />
             </div>
           </div>
