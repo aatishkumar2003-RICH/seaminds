@@ -1,5 +1,5 @@
 import React from "react";
-import { type Screen, type AppState } from "./types";
+import { type Screen, type AppState, NATIONALITY_FLAGS } from "./types";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 
 interface MobileHeaderProps {
@@ -8,13 +8,16 @@ interface MobileHeaderProps {
   screen: Screen;
   onNavigateToNews: () => void;
   firstName: string;
+  nationality: string;
   appState?: AppState;
 }
 
 const MobileHeader: React.FC<MobileHeaderProps> = ({
-  onMenuOpen, showBackToNews, screen, onNavigateToNews, firstName, appState,
+  onMenuOpen, showBackToNews, screen, onNavigateToNews, firstName, nationality, appState,
 }) => {
   if (appState === "landing") return null;
+
+  const flag = NATIONALITY_FLAGS[nationality] || "🌊";
 
   return (
     <div className="flex shrink-0 items-center justify-between border-b border-border/50 bg-background px-4 py-2 lg:hidden">
@@ -29,7 +32,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
         <span className="text-sm font-bold text-foreground">SeaMinds</span>
       </div>
       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary">
-        <span className="text-xs font-bold text-primary">{firstName?.[0] || "C"}</span>
+        <span className="text-base">{flag}</span>
       </div>
     </div>
   );
