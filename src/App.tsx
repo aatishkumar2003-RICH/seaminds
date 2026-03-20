@@ -18,6 +18,7 @@ const ScrollRedirect = ({ hash }: { hash: string }) => {
   return null;
 };
 import HomePage from "./pages/HomePage";
+import ForCompanies from "./pages/ForCompanies";
 import Index from "./pages/Index";
 import ManagerAuth from "./pages/ManagerAuth";
 import ManagerDashboard from "./pages/ManagerDashboard";
