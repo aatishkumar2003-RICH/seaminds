@@ -56,17 +56,17 @@ const HomeNav = () => {
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden bg-card border-t border-border px-4 pb-4 space-y-2">
+        <div className="md:hidden border-t border-white/5 px-4 pb-4 space-y-2" style={{ background: '#0D1B2A' }}>
           {navLinks.map((l) => (
-            <button key={l.label} onClick={() => handleNav(l)} className="block w-full text-left py-2 text-sm text-muted-foreground hover:text-primary transition-colors">
+            <button key={l.label} onClick={() => handleNav(l)} className="block w-full text-left py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
               {l.label}
             </button>
           ))}
           <div className="flex gap-2 pt-2">
-            <Button size="sm" className="flex-1" onClick={() => { setMobileOpen(false); navigate('/app'); }}>
+            <Button size="sm" className="flex-1 bg-foreground text-background hover:bg-foreground/90" onClick={() => { setMobileOpen(false); navigate('/app'); }}>
               Get Your Score
             </Button>
-            <Button size="sm" variant="outline" className="flex-1" onClick={() => { setMobileOpen(false); navigate('/manager'); }}>
+            <Button size="sm" variant="outline" className="flex-1 border-white/10 text-foreground hover:bg-white/5" onClick={() => { setMobileOpen(false); navigate('/manager'); }}>
               Company Login
             </Button>
           </div>
