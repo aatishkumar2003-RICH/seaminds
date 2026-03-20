@@ -45,7 +45,7 @@ const HomeFooter = () => {
   ];
 
   return (
-    <footer className="bg-background border-t border-border py-12">
+    <footer className="border-t border-white/5 py-12" style={{ background: '#0D1B2A' }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-8 mb-10">
           <div>
@@ -63,7 +63,7 @@ const HomeFooter = () => {
               <ul className="space-y-2">
                 {col.links.map((l) => (
                   <li key={l.label}>
-                    <button onClick={l.action} className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                    <button onClick={l.action} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                       {l.label}
                     </button>
                   </li>
@@ -72,7 +72,7 @@ const HomeFooter = () => {
             </div>
           ))}
         </div>
-        <div className="border-t border-border pt-6 text-center">
+        <div className="border-t border-white/5 pt-6 text-center">
           <p className="text-xs text-muted-foreground">
             Built by a Master Mariner. For the people who keep global trade moving. © 2026 SeaMinds. MLC 2006 Compliant.
           </p>

@@ -120,7 +120,7 @@ const Index = () => {
 
   // Swipe from left edge to open drawer
   useEffect(() => {
-    const DRAWER_W = 208; // w-52
+    const DRAWER_W = 176; // w-44
     const handleTouchStart = (e: TouchEvent) => {
       if (drawerOpen) return;
       const x = e.touches[0].clientX;
@@ -636,57 +636,51 @@ const Index = () => {
   return (
     <div className="flex flex-col lg:flex-row h-screen w-full bg-background relative overflow-hidden">
       {/* === DESKTOP SIDEBAR (lg+) === */}
-      <aside className="hidden lg:flex w-[6.5rem] h-screen flex-col flex-shrink-0 border-r border-white/5" style={{ background: "#0D1B2A", padding: "20px 8px" }}>
+      <aside className="hidden lg:flex w-[3.5rem] h-screen flex-col flex-shrink-0 border-r border-white/5 items-center" style={{ background: "#0D1B2A", padding: "16px 4px" }}>
         {/* Logo */}
-        <div className="flex items-center gap-1 mb-4">
-          <span className="text-xs font-bold px-1.5 py-0.5 rounded" style={{ background: "rgba(212,175,55,0.15)", color: "#D4AF37" }}>SM</span>
+        <div className="mb-4">
+          <span className="text-xs font-bold px-1.5 py-0.5 rounded" style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.7)" }}>SM</span>
         </div>
-        {/* User info */}
-        <div className="flex items-center gap-1.5 mb-4 px-0.5">
+        {/* User flag */}
+        <div className="mb-4">
           <span className="text-sm">{NATIONALITY_FLAGS[nationality] || "🌊"}</span>
-          <div className="flex flex-col">
-            <span className="text-[11px] text-muted-foreground font-medium truncate">{firstName || "Seafarer"}</span>
-            {role && <span className="text-[9px] text-muted-foreground/60 truncate">{role}</span>}
-          </div>
         </div>
-        {/* Nav items */}
-        <nav className="flex flex-col gap-1 flex-1">
+        {/* Nav items - icon only */}
+        <nav className="flex flex-col gap-1 flex-1 w-full">
           {navItems.map((item) => {
             const active = screen === item.screen;
             return (
               <button
                 key={item.screen}
                 onClick={() => handleNavClick(item)}
-                className="flex items-center gap-2 text-xs font-medium transition-colors w-full text-left"
+                title={item.label}
+                className="flex items-center justify-center text-sm transition-colors w-full relative"
                 style={{
-                  padding: "7px 8px",
+                  padding: "8px 0",
                   borderRadius: "8px",
-                  borderLeft: active ? "2px solid #D4AF37" : "2px solid transparent",
-                  background: active ? "rgba(212,175,55,0.15)" : "transparent",
-                  color: active ? "#D4AF37" : "rgba(255,255,255,0.5)",
+                  borderLeft: active ? "2px solid rgba(255,255,255,0.6)" : "2px solid transparent",
+                  background: active ? "rgba(255,255,255,0.08)" : "transparent",
+                  color: active ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.4)",
                 }}
                 onMouseEnter={(e) => { if (!active) (e.currentTarget.style.background = "rgba(255,255,255,0.05)"); }}
                 onMouseLeave={(e) => { if (!active) (e.currentTarget.style.background = "transparent"); }}
               >
-                <span className="text-sm">{item.icon}</span>
-                <span>{item.label}</span>
+                <span>{item.icon}</span>
                 {item.screen === "opportunities" && jobBadgeCount > 0 && (
-                  <span className="ml-auto text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1" style={{ background: "#D4AF37", color: "#0a1929" }}>{jobBadgeCount}</span>
+                  <span className="absolute top-1 right-1 text-[8px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center" style={{ background: "rgba(255,255,255,0.7)", color: "#0a1929" }}>{jobBadgeCount}</span>
                 )}
               </button>
             );
           })}
         </nav>
         {/* Bottom section */}
-        <div className="mt-auto flex flex-col gap-2">
-          <div className="flex items-center justify-center gap-2 py-1.5 rounded-full text-xs font-medium" style={{ background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.6)" }}>
-            🔥 {streakCount} day streak
-          </div>
-          <button onClick={() => setForceTour(true)} className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-2">
-            <HelpCircle size={14} /> Replay Tour
+        <div className="mt-auto flex flex-col items-center gap-2">
+          <div className="text-[10px] text-muted-foreground">🔥{streakCount}</div>
+          <button onClick={() => setForceTour(true)} title="Replay Tour" className="text-muted-foreground hover:text-foreground transition-colors p-1">
+            <HelpCircle size={14} />
           </button>
-          <button onClick={handleSignOut} className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-2">
-            <LogOut size={14} /> Sign Out
+          <button onClick={handleSignOut} title="Sign Out" className="text-muted-foreground hover:text-foreground transition-colors p-1">
+            <LogOut size={14} />
           </button>
           <div className="w-full">
             <SOSButton onOpenChat={() => setScreen("chat")} firstName={firstName} shipName={shipName} inline />
@@ -717,9 +711,9 @@ const Index = () => {
           }}
         >
           <div className="flex items-center gap-1 pl-1 pr-3 py-3 rounded-r-full"
-            style={{ background: 'linear-gradient(90deg, hsl(var(--gold) / 0.3), transparent)' }}>
-            <div className="w-1 h-10 rounded-full opacity-60" style={{ background: 'hsl(var(--gold))' }} />
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ color: 'hsl(var(--gold))', opacity: 0.8 }}>
+            style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.1), transparent)' }}>
+            <div className="w-1 h-10 rounded-full opacity-40" style={{ background: 'rgba(255,255,255,0.5)' }} />
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ color: 'rgba(255,255,255,0.5)' }}>
               <path d="M8 4L14 10L8 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
@@ -728,7 +722,7 @@ const Index = () => {
 
 
       <div
-        className={`fixed top-0 left-0 h-full w-52 z-50 lg:hidden ${!isSwiping && !isEdgeSwiping ? 'transition-transform duration-300 ease-in-out' : ''}`}
+        className={`fixed top-0 left-0 h-full w-44 z-50 lg:hidden ${!isSwiping && !isEdgeSwiping ? 'transition-transform duration-300 ease-in-out' : ''}`}
         style={{
           background: "#0D1B2A",
           borderRight: '1px solid rgba(255,255,255,0.05)',
@@ -736,7 +730,7 @@ const Index = () => {
           transform: drawerOpen
             ? `translateX(${Math.min(0, touchDelta)}px)`
             : isEdgeSwiping && edgeSwipeDelta > 0
-              ? `translateX(${-208 + edgeSwipeDelta}px)`
+              ? `translateX(${-176 + edgeSwipeDelta}px)`
               : 'translateX(-100%)',
         }}
         onTouchStart={(e) => {
@@ -758,7 +752,7 @@ const Index = () => {
         <button onClick={() => setDrawerOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white text-lg">✕</button>
         {/* Logo */}
         <div className="flex items-center gap-1 mb-4">
-          <span className="text-xs font-bold px-1.5 py-0.5 rounded" style={{ background: "rgba(212,175,55,0.15)", color: "#D4AF37" }}>SM</span>
+          <span className="text-xs font-bold px-1.5 py-0.5 rounded" style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.7)" }}>SM</span>
           <span className="font-bold text-sm" style={{ color: "rgba(255,255,255,0.7)" }}>SeaMinds</span>
         </div>
         {/* User info */}
@@ -781,15 +775,15 @@ const Index = () => {
                 style={{
                   padding: "7px 8px",
                   borderRadius: "8px",
-                  borderLeft: active ? "2px solid #D4AF37" : "2px solid transparent",
-                  background: active ? "rgba(212,175,55,0.15)" : "transparent",
-                  color: active ? "#D4AF37" : "rgba(255,255,255,0.5)",
+                  borderLeft: active ? "2px solid rgba(255,255,255,0.6)" : "2px solid transparent",
+                  background: active ? "rgba(255,255,255,0.08)" : "transparent",
+                  color: active ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.5)",
                 }}
               >
                 <span className="text-sm">{item.icon}</span>
                 <span>{item.label}</span>
                 {item.screen === "opportunities" && jobBadgeCount > 0 && (
-                  <span className="ml-auto text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1" style={{ background: "#D4AF37", color: "#0a1929" }}>{jobBadgeCount}</span>
+                  <span className="ml-auto text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1" style={{ background: "rgba(255,255,255,0.7)", color: "#0a1929" }}>{jobBadgeCount}</span>
                 )}
               </button>
             );
