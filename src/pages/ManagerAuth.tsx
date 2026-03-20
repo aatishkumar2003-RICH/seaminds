@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Anchor, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import seamindsLogo from "@/assets/seaminds-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { checkRateLimit } from "@/lib/rateLimiter";
