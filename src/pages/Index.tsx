@@ -752,7 +752,7 @@ const Index = () => {
         <button onClick={() => setDrawerOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white text-lg">✕</button>
         {/* Logo */}
         <div className="flex items-center gap-1 mb-4">
-          <span className="text-xs font-bold px-1.5 py-0.5 rounded" style={{ background: "rgba(212,175,55,0.15)", color: "#D4AF37" }}>SM</span>
+          <span className="text-xs font-bold px-1.5 py-0.5 rounded" style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.7)" }}>SM</span>
           <span className="font-bold text-sm" style={{ color: "rgba(255,255,255,0.7)" }}>SeaMinds</span>
         </div>
         {/* User info */}
