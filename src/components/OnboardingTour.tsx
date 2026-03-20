@@ -180,6 +180,7 @@ const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed, onNavigate, o
   const dismiss = () => {
     setVisible(false);
     localStorage.setItem(STORAGE_KEY, "1");
+    onDismiss?.();
   };
 
   const playCelebrationChime = () => {

@@ -78,12 +78,17 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
         {NAV_ITEMS.map((item) => {
           const active = screen === item.screen && appState === "main";
           return (
-            <button
+             <button
               key={item.screen}
               onClick={() => onNavClick(item)}
-              className={`flex w-full items-center gap-2 rounded-lg border-l-2 px-2 py-2 text-left text-xs font-medium transition-colors ${active ? "border-primary bg-secondary text-foreground" : "border-transparent text-muted-foreground hover:bg-secondary/60 hover:text-foreground"}`}
+              className={`relative flex w-full items-center gap-2 rounded-lg border-l-2 px-2 py-2 text-left text-xs font-medium transition-colors ${active ? "border-primary bg-secondary text-foreground" : "border-transparent text-muted-foreground hover:bg-secondary/60 hover:text-foreground"}`}
             >
-              <span className="text-sm">{item.icon}</span>
+              <span className={`text-sm ${tourActiveScreen === item.screen ? "animate-pulse" : ""}`}>
+                {item.icon}
+              </span>
+              {tourActiveScreen === item.screen && (
+                <span className="absolute left-1.5 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full animate-ping opacity-20 bg-primary" />
+              )}
               <span>{item.label}</span>
               {item.screen === "opportunities" && jobBadgeCount > 0 && (
                 <span className="ml-auto flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">{jobBadgeCount}</span>
