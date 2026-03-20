@@ -183,6 +183,7 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [yearsAtSea, setYearsAtSea] = useState("");
   const [voyageStartDate, setVoyageStartDate] = useState<Date>();
+  const [dateOfBirth, setDateOfBirth] = useState<Date>();
   const [manningAgency, setManningAgency] = useState("");
   const [vesselImo, setVesselImo] = useState("");
   const [agencyFilter, setAgencyFilter] = useState("");
