@@ -1,13 +1,20 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
-import { MessageCircle, LayoutDashboard, Briefcase, Newspaper, GraduationCap, Compass, Star, LogOut, Anchor, X, FileText, HelpCircle } from "lucide-react";
+import { Anchor, LogOut, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTimeOfDay } from "@/hooks/useTimeOfDay";
+
+// Layout components
+import MobileChrome from "@/components/layout/MobileChrome";
+import DesktopSidebar from "@/components/layout/DesktopSidebar";
+import ScreenErrorBoundary from "@/components/layout/ScreenErrorBoundary";
+import { NATIONALITY_FLAGS, DRAWER_WIDTH, type AppState, type Screen, type NavItem } from "@/components/layout/types";
+
+// Screen components
 import LandingScreen from "@/components/LandingScreen";
 import OceanBackground from "@/components/homepage/OceanBackground";
-import { useTimeOfDay } from "@/hooks/useTimeOfDay";
 import NameEntry from "@/components/NameEntry";
 import WelcomeScreens from "@/components/WelcomeScreens";
 import CrewChat from "@/components/CrewChat";
@@ -28,42 +35,8 @@ import NPSSurvey from "@/components/NPSSurvey";
 import VesselOnboardingCard from "@/components/VesselOnboardingCard";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import OnboardingTour from "@/components/OnboardingTour";
-type AppState = "loading" | "landing" | "name-entry" | "welcome" | "main" | "voyage-report";
-type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "bridge" | "community" | "smc" | "resume" | "certs" | "resthours" | "vesselrating";
 
 const PROFILE_KEY = "seamind_profile_id";
-
-const NATIONALITY_FLAGS: Record<string, string> = {
-  Filipino: "🇵🇭", Indian: "🇮🇳", Indonesian: "🇮🇩", Ukrainian: "🇺🇦", Russian: "🇷🇺",
-  Chinese: "🇨🇳", Greek: "🇬🇷", British: "🇬🇧", Myanmar: "🇲🇲", Thai: "🇹🇭",
-  Vietnamese: "🇻🇳", Pakistani: "🇵🇰", Bangladeshi: "🇧🇩", "Sri Lankan": "🇱🇰",
-  Croatian: "🇭🇷", Polish: "🇵🇱", Turkish: "🇹🇷", Kiribati: "🇰🇮", Tuvalu: "🇹🇻",
-  Fijian: "🇫🇯", Maldivian: "🇲🇻", Ghanaian: "🇬🇭", Nigerian: "🇳🇬",
-};
-
-class ScreenErrorBoundary extends React.Component<{children: React.ReactNode, screenName: string}, {hasError: boolean}> {
-  constructor(props: any) {
-    super(props);
-    this.state = { hasError: false };
-  }
-  static getDerivedStateFromError() { return { hasError: true }; }
-  componentDidCatch(error: any, errorInfo: any) { console.error('Screen error in', this.props.screenName, ':', error, errorInfo); }
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div style={{ padding: '40px', textAlign: 'center', color: '#D4AF37' }}>
-          <div style={{ fontSize: '40px', marginBottom: '16px' }}>⚠️</div>
-          <div style={{ fontSize: '16px', marginBottom: '8px' }}>Could not load {this.props.screenName}</div>
-          <button onClick={() => this.setState({ hasError: false })}
-            style={{ background: '#D4AF37', color: '#0D1B2A', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', marginTop: '12px' }}>
-            Try Again
-          </button>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
 
 const Index = () => {
   const navigate = useNavigate();
@@ -97,6 +70,10 @@ const Index = () => {
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [vesselType, setVesselType] = useState("");
   const [portOfJoining, setPortOfJoining] = useState("");
+  const [forceTour, setForceTour] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(false);
+
+  // Drawer / swipe state
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchDelta, setTouchDelta] = useState(0);
@@ -105,13 +82,11 @@ const Index = () => {
   const [edgeSwipeDelta, setEdgeSwipeDelta] = useState(0);
   const [isEdgeSwiping, setIsEdgeSwiping] = useState(false);
   const [showSwipeHint, setShowSwipeHint] = useState(false);
-  const [forceTour, setForceTour] = useState(false);
-  const [statsOpen, setStatsOpen] = useState(false);
 
+  // Swipe hint
   useEffect(() => {
     if (!localStorage.getItem('seamind_swipe_hint_seen')) setShowSwipeHint(true);
   }, []);
-
   useEffect(() => {
     if (showSwipeHint && drawerOpen) {
       setShowSwipeHint(false);
@@ -119,33 +94,22 @@ const Index = () => {
     }
   }, [drawerOpen, showSwipeHint]);
 
-  // Swipe from left edge to open drawer
+  // Edge swipe to open drawer
   useEffect(() => {
-    const DRAWER_W = 176; // w-44
     const handleTouchStart = (e: TouchEvent) => {
       if (drawerOpen) return;
       const x = e.touches[0].clientX;
-      if (x < 25) {
-        setEdgeSwipeStart(x);
-        setIsEdgeSwiping(true);
-        setEdgeSwipeDelta(0);
-      }
+      if (x < 25) { setEdgeSwipeStart(x); setIsEdgeSwiping(true); setEdgeSwipeDelta(0); }
     };
     const handleTouchMove = (e: TouchEvent) => {
       if (edgeSwipeStart === null || drawerOpen) return;
-      const delta = Math.min(e.touches[0].clientX - edgeSwipeStart, DRAWER_W);
+      const delta = Math.min(e.touches[0].clientX - edgeSwipeStart, DRAWER_WIDTH);
       if (delta > 0) setEdgeSwipeDelta(delta);
     };
     const handleTouchEnd = () => {
-      if (edgeSwipeDelta > 80) {
-        setDrawerOpen(true);
-        if (navigator.vibrate) navigator.vibrate(10);
-      }
-      setEdgeSwipeStart(null);
-      setEdgeSwipeDelta(0);
-      setIsEdgeSwiping(false);
+      if (edgeSwipeDelta > 80) { setDrawerOpen(true); if (navigator.vibrate) navigator.vibrate(10); }
+      setEdgeSwipeStart(null); setEdgeSwipeDelta(0); setIsEdgeSwiping(false);
     };
-
     document.addEventListener('touchstart', handleTouchStart, { passive: true });
     document.addEventListener('touchmove', handleTouchMove, { passive: true });
     document.addEventListener('touchend', handleTouchEnd, { passive: true });
@@ -156,54 +120,40 @@ const Index = () => {
     };
   }, [drawerOpen, edgeSwipeStart, edgeSwipeDelta]);
 
-  const navigateTo = (next: Screen) => {
-    setPrevScreen(screen);
-    setScreen(next);
-  };
+  const navigateTo = (next: Screen) => { setPrevScreen(screen); setScreen(next); };
 
+  // UTC clock
   useEffect(() => {
-    const tick = () => {
-      const now = new Date();
-      setUtcTime(now.toISOString().slice(11, 19) + " UTC");
-    };
+    const tick = () => setUtcTime(new Date().toISOString().slice(11, 19) + " UTC");
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, []);
 
-  // Dynamic page title based on active screen
+  // Page title
   useEffect(() => {
     const titles: Record<Screen, string> = {
-      chat: "SeaMinds | Wellness",
-      dashboard: "SeaMinds | Wellness",
-      opportunities: "SeaMinds | Opportunities",
-      news: "SeaMinds | News",
-      academy: "SeaMinds | Academy",
-      bridge: "SeaMinds | PMS",
-      community: "SeaMinds | Community",
-      smc: "SeaMinds | SMC Score",
-      resume: "SeaMinds | CV Builder",
-      certs: "SeaMinds | Certificates",
-      resthours: "SeaMinds | Rest Hours",
-      vesselrating: "SeaMinds | Vessel Rating",
+      chat: "SeaMinds | Wellness", dashboard: "SeaMinds | Wellness",
+      opportunities: "SeaMinds | Opportunities", news: "SeaMinds | News",
+      academy: "SeaMinds | Academy", bridge: "SeaMinds | PMS",
+      community: "SeaMinds | Community", smc: "SeaMinds | SMC Score",
+      resume: "SeaMinds | CV Builder", certs: "SeaMinds | Certificates",
+      resthours: "SeaMinds | Rest Hours", vesselrating: "SeaMinds | Vessel Rating",
     };
     document.title = appState === "main" ? titles[screen] : "SeaMinds";
   }, [screen, appState]);
 
-  // NPS survey — 3 minute delay, once per user
+  // NPS survey — 3 min delay
   useEffect(() => {
-    if (appState !== "main") return;
-    if (localStorage.getItem("seaminds_nps_shown")) return;
+    if (appState !== "main" || localStorage.getItem("seaminds_nps_shown")) return;
     const timer = setTimeout(() => setShowNPS(true), 180000);
     return () => clearTimeout(timer);
   }, [appState]);
 
-  // Push notification permission — 2 minute delay, once per user
+  // Notification prompt — 2 min delay
   useEffect(() => {
-    if (appState !== "main") return;
-    if (localStorage.getItem("seaminds_notif_asked")) return;
-    if (!("Notification" in window)) return;
-    if (Notification.permission !== "default") return;
+    if (appState !== "main" || localStorage.getItem("seaminds_notif_asked")) return;
+    if (!("Notification" in window) || Notification.permission !== "default") return;
     const timer = setTimeout(() => setShowNotifPrompt(true), 120000);
     return () => clearTimeout(timer);
   }, [appState]);
@@ -212,43 +162,24 @@ const Index = () => {
   useEffect(() => {
     if (appState !== "main" || !profileId) return;
     const fetchSmc = async () => {
-      const { data } = await supabase
-        .from("smc_assessments")
-        .select("overall_score")
-        .eq("crew_profile_id", profileId)
-        .eq("status", "completed")
-        .order("completed_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const { data } = await supabase.from("smc_assessments").select("overall_score")
+        .eq("crew_profile_id", profileId).eq("status", "completed")
+        .order("completed_at", { ascending: false }).limit(1).maybeSingle();
       if (data?.overall_score != null) setSmcScore(Number(data.overall_score));
     };
     fetchSmc();
   }, [appState, profileId]);
 
-
+  // Job matching
   useEffect(() => {
-    if (appState !== "main" || !role) return;
-    if (sessionStorage.getItem("seamind_job_match_shown")) return;
-
+    if (appState !== "main" || !role || sessionStorage.getItem("seamind_job_match_shown")) return;
     const checkJobMatches = async () => {
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      const { data } = await supabase
-        .from("job_postings")
-        .select("rank_required, vessel_type, joining_port, status")
-        .neq("status", "pending_payment")
-        .gte("created_at", sevenDaysAgo)
-        .order("created_at", { ascending: false })
-        .limit(3);
-
+      const { data } = await supabase.from("job_postings").select("rank_required, vessel_type, joining_port, status")
+        .neq("status", "pending_payment").gte("created_at", sevenDaysAgo).order("created_at", { ascending: false }).limit(3);
       if (data) {
-        const match = data.find(
-          (j) => j.rank_required === "Any Rank" || j.rank_required.toLowerCase() === role.toLowerCase()
-        );
-        if (match) {
-          setJobMatch(match);
-          setJobBadgeCount(prev => prev + 1);
-          sessionStorage.setItem("seamind_job_match_shown", "1");
-        }
+        const match = data.find(j => j.rank_required === "Any Rank" || j.rank_required.toLowerCase() === role.toLowerCase());
+        if (match) { setJobMatch(match); setJobBadgeCount(p => p + 1); sessionStorage.setItem("seamind_job_match_shown", "1"); }
       }
     };
     checkJobMatches();
@@ -257,55 +188,27 @@ const Index = () => {
   // Real-time job alerts
   useEffect(() => {
     if (appState !== "main" || !role) return;
-
-    const channel = supabase
-      .channel("job-alerts")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "job_postings" },
-        (payload) => {
-          const newJob = payload.new as { rank_required: string; vessel_type: string; joining_port: string; status: string };
-          if (newJob.status === "pending_payment") return;
-          if (
-            newJob.rank_required === "Any Rank" ||
-            newJob.rank_required.toLowerCase() === role.toLowerCase()
-          ) {
-            setJobMatch({ rank_required: newJob.rank_required, vessel_type: newJob.vessel_type, joining_port: newJob.joining_port });
-            setJobBadgeCount(prev => prev + 1);
-            
-            // Play notification sound
-            try {
-              const audio = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH2LkI2IhX99c2xjXmFsgImUm5uWkIeAd3BpZGFhaGyBk5ydnJiRiYB3bmdjYWVsiZOdnpyXkIiAdm5nZGJnbYuVnp+dl5CIgHZuZ2RjZ26Ml56fn5iPiIB2b2dlZGhvjZifn5+Yj4iAdm9nZWRpcI6Zn5+fmI+IgHZvZ2VlaXCPmp+fn5mPiIB2b2dmZWpxj5ufn5+Zj4h/dm9nZmVqcZCbn5+fmY+Hf3ZvZ2ZmanGQm5+gn5mPh392b2dmZmpxkJufoJ+Zj4d/dm9nZmZqcZCcn6CfmY+Hf3ZvZ2ZmanGRnJ+gn5mQh392b2dmZmpxkZyfoJ+ZkId/dm9nZmZqcZGcn6CfmpCHf3ZvZ2ZmanGRnJ+gn5qQh392b2dmZmpxkZyfoJ+akId/dm9nZmZqcZGcn6CfmpCHf3ZvZ2ZmanGRnJ+gn5qQh392cGdmZmpxkZyfoJ+akId/dm9nZmZqcQ==");
-              audio.volume = 0.5;
-              audio.play().catch(() => {});
-            } catch {}
-            
-            // Show toast notification
-            toast({
-              title: "⚓ New Job Match!",
-              description: `${newJob.rank_required} on ${newJob.vessel_type} — Joining: ${newJob.joining_port}`,
-            });
-          }
+    const channel = supabase.channel("job-alerts").on("postgres_changes",
+      { event: "INSERT", schema: "public", table: "job_postings" },
+      (payload) => {
+        const nj = payload.new as { rank_required: string; vessel_type: string; joining_port: string; status: string };
+        if (nj.status === "pending_payment") return;
+        if (nj.rank_required === "Any Rank" || nj.rank_required.toLowerCase() === role.toLowerCase()) {
+          setJobMatch({ rank_required: nj.rank_required, vessel_type: nj.vessel_type, joining_port: nj.joining_port });
+          setJobBadgeCount(p => p + 1);
+          try { const a = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH2LkI2IhX99c2xjXmFsgImUm5uWkIeAd3BpZGFhaGyBk5ydnJiRiYB3bmdjYWVsiZOdnpyXkIiAdm5nZGJnbYuVnp+dl5CIgHZuZ2RjZ26Ml56fn5iPiIB2b2dlZGhvjZifn5+Yj4iAdm9nZWRpcI6Zn5+fmI+IgHZvZ2VlaXCPmp+fn5mPiIB2b2dmZWpxj5ufn5+Zj4h/dm9nZmVqcZCbn5+fmY+Hf3ZvZ2ZmanGQm5+gn5mPh392b2dmZmpxkJufoJ+Zj4d/dm9nZmZqcZCcn6CfmY+Hf3ZvZ2ZmanGRnJ+gn5mQh392b2dmZmpxkZyfoJ+ZkId/dm9nZmZqcZGcn6CfmpCHf3ZvZ2ZmanGRnJ+gn5qQh392b2dmZmpxkZyfoJ+akId/dm9nZmZqcZGcn6CfmpCHf3ZvZ2ZmanGRnJ+gn5qQh392cGdmZmpxkZyfoJ+akId/dm9nZmZqcQ=="); a.volume = 0.5; a.play().catch(() => {}); } catch {}
+          toast({ title: "⚓ New Job Match!", description: `${nj.rank_required} on ${nj.vessel_type} — Joining: ${nj.joining_port}` });
         }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+      }).subscribe();
+    return () => { supabase.removeChannel(channel); };
   }, [appState, role]);
 
   const { user: authUser, isReady: authReady, accessToken } = useAuth();
 
-  // Single init effect — uses auth context instead of getSession
+  // Init
   useEffect(() => {
     const init = async () => {
-      // Fallback: if init hangs for 4 seconds, show landing
-      const fallbackTimer = setTimeout(() => {
-        console.warn('[SeaMinds] Init timeout — showing landing');
-        setAppState('landing');
-      }, 4000);
-
+      const fallbackTimer = setTimeout(() => { console.warn('[SeaMinds] Init timeout'); setAppState('landing'); }, 4000);
       try {
         const savedId = localStorage.getItem('seamind_profile_id');
         if (savedId) {
@@ -322,36 +225,24 @@ const Index = () => {
           }
           localStorage.removeItem('seamind_profile_id');
         }
-
         clearTimeout(fallbackTimer);
-
         if (authUser) {
           const fullName = authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'Seafarer';
-          setFirstName(fullName.split(' ')[0]);
-          setAppState('main');
-          setScreen('news');
+          setFirstName(fullName.split(' ')[0]); setAppState('main'); setScreen('news');
           return;
         }
         setAppState('landing');
-      } catch (e) {
-        console.error('[SeaMinds] Init error:', e);
-        clearTimeout(fallbackTimer);
-        setAppState('landing');
-      }
+      } catch (e) { console.error('[SeaMinds] Init error:', e); clearTimeout(fallbackTimer); setAppState('landing'); }
     };
-
     if (authReady) init();
   }, [authReady, authUser]);
 
-  // React to auth state changes (login while on landing)
+  // React to auth changes
   useEffect(() => {
     if (!authReady || !authUser) return;
-    const savedId = localStorage.getItem('seamind_profile_id');
-    if (savedId) return;
+    if (localStorage.getItem('seamind_profile_id')) return;
     const fullName = authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'Seafarer';
-    setFirstName(fullName.split(' ')[0]);
-    setAppState('main');
-    setScreen('news');
+    setFirstName(fullName.split(' ')[0]); setAppState('main'); setScreen('news');
   }, [authUser, authReady]);
 
   const handleNameSubmit = async (profile: {
@@ -369,24 +260,20 @@ const Index = () => {
       voyage_start_date: profile.voyageStartDate || null,
       manning_agency: profile.manningAgency || null, vessel_imo: profile.vesselImo || null,
       manning_agent_phone: profile.manningAgentPhone || null,
-      port_of_joining: profile.portOfJoining || null,
-      vessel_type: profile.vesselType || null,
-      onboarded: true,
-      onboarding_complete: true,
+      port_of_joining: profile.portOfJoining || null, vessel_type: profile.vesselType || null,
+      onboarded: true, onboarding_complete: true,
     };
     const year = new Date().getFullYear();
     const rand = Math.floor(10000 + Math.random() * 90000);
-    const crewUniqueId = `SM-${year}-${rand}`;
-    insertData.crew_unique_id = crewUniqueId;
+    insertData.crew_unique_id = `SM-${year}-${rand}`;
     if (uid) { insertData.id = uid; insertData.user_id = uid; }
     const { data, error } = await supabase.from("crew_profiles").upsert(insertData as any).select("id").single();
     if (error) {
       console.error("Failed to create profile:", error);
       if (error.code === '23505') {
-        if (error.message?.includes('whatsapp')) {
-          return 'This WhatsApp number is already linked to an account. Please sign in to your existing account instead.';
-        }
-        return 'An account with these details already exists. Please sign in.';
+        return error.message?.includes('whatsapp')
+          ? 'This WhatsApp number is already linked to an account. Please sign in to your existing account instead.'
+          : 'An account with these details already exists. Please sign in.';
       }
       return 'Failed to create profile. Please try again.';
     }
@@ -406,37 +293,22 @@ const Index = () => {
 
   const handleWelcomeComplete = async () => {
     await supabase.from("crew_profiles").update({ onboarded: true }).eq("id", profileId);
-    setScreen(targetScreen);
-    setAppState("main");
+    setScreen(targetScreen); setAppState("main");
   };
 
   const handleSignOut = async () => {
     localStorage.removeItem(PROFILE_KEY);
-
-    const forceRedirect = setTimeout(() => {
-      window.location.href = "/";
-    }, 2000);
-
+    const forceRedirect = setTimeout(() => { window.location.href = "/"; }, 2000);
     try {
       const keysToRemove: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key && (key.startsWith("sb-") || key.startsWith("supabase"))) {
-          keysToRemove.push(key);
-        }
+        if (key && (key.startsWith("sb-") || key.startsWith("supabase"))) keysToRemove.push(key);
       }
-      keysToRemove.forEach((key) => localStorage.removeItem(key));
-
-      await Promise.race([
-        supabase.auth.signOut(),
-        new Promise((resolve) => setTimeout(resolve, 1500)),
-      ]);
-    } catch (e) {
-      console.warn("Sign out error (forcing redirect):", e);
-    }
-
-    clearTimeout(forceRedirect);
-    window.location.href = "/";
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+      await Promise.race([supabase.auth.signOut(), new Promise(r => setTimeout(r, 1500))]);
+    } catch (e) { console.warn("Sign out error:", e); }
+    clearTimeout(forceRedirect); window.location.href = "/";
   };
 
   const handleSignOff = async () => {
@@ -457,27 +329,20 @@ const Index = () => {
     if (!role || !nationality || !shipName || !whatsappNumber) return;
     const dbRole = role.includes("Captain") || role.includes("Master") ? "Captain"
       : role.includes("Engineer") || role.includes("ETO") ? "Engineer"
-      : role.includes("Officer") ? "Officer"
-      : "Rating";
+      : role.includes("Officer") ? "Officer" : "Rating";
     if (profileId) {
-      await supabase.from("crew_profiles").update({
-        role: dbRole, nationality, ship_name: shipName, whatsapp_number: whatsappNumber
-      }).eq("id", profileId);
+      await supabase.from("crew_profiles").update({ role: dbRole, nationality, ship_name: shipName, whatsapp_number: whatsappNumber }).eq("id", profileId);
     } else {
       const uid = authUser?.id;
       if (!uid) return;
       const { data: existing } = await supabase.from("crew_profiles").select("id").eq("id", uid).maybeSingle();
       if (existing) {
-        await supabase.from("crew_profiles").update({
-          role: dbRole, nationality, ship_name: shipName, whatsapp_number: whatsappNumber
-        }).eq("id", uid);
-        localStorage.setItem("seamind_profile_id", uid);
-        setProfileId(uid);
+        await supabase.from("crew_profiles").update({ role: dbRole, nationality, ship_name: shipName, whatsapp_number: whatsappNumber }).eq("id", uid);
+        localStorage.setItem("seamind_profile_id", uid); setProfileId(uid);
       } else {
         const { data } = await supabase.from("crew_profiles").insert({
           id: uid, user_id: uid, first_name: firstName, last_name: lastName,
-          role: dbRole, nationality, ship_name: shipName,
-          whatsapp_number: whatsappNumber, onboarded: true
+          role: dbRole, nationality, ship_name: shipName, whatsapp_number: whatsappNumber, onboarded: true
         } as any).select("id").single();
         if (data) { localStorage.setItem("seamind_profile_id", data.id); setProfileId(data.id); }
       }
@@ -507,21 +372,11 @@ const Index = () => {
   );
 
   const handleVesselOnboardingComplete = (data: { vesselName: string; vesselType: string; rank: string; portOfJoining: string }) => {
-    setShipName(data.vesselName);
-    setVesselType(data.vesselType);
-    setRole(data.rank);
-    setPortOfJoining(data.portOfJoining);
-    setOnboardingComplete(true);
+    setShipName(data.vesselName); setVesselType(data.vesselType); setRole(data.rank); setPortOfJoining(data.portOfJoining); setOnboardingComplete(true);
   };
 
   const vesselOnboardingUI = (
-    <VesselOnboardingCard
-      profileId={profileId}
-      existingShipName={shipName}
-      existingRole={role}
-      onBack={() => setScreen("news")}
-      onComplete={handleVesselOnboardingComplete}
-    />
+    <VesselOnboardingCard profileId={profileId} existingShipName={shipName} existingRole={role} onBack={() => setScreen("news")} onComplete={handleVesselOnboardingComplete} />
   );
 
   const handleFeedbackSubmit = async () => {
@@ -534,169 +389,39 @@ const Index = () => {
       const summary = fnError ? "" : (fnData?.summary || "");
       setFeedbackSummary(summary);
       await supabase.from("crew_feedback" as any).insert({
-        profile_id: profileId || null,
-        raw_text: feedbackText,
-        ai_summary: summary,
-        rating: feedbackRating,
-        rank: role || null,
-        nationality: nationality || null,
-        ship_name: shipName || null,
+        profile_id: profileId || null, raw_text: feedbackText, ai_summary: summary,
+        rating: feedbackRating, rank: role || null, nationality: nationality || null, ship_name: shipName || null,
       });
       setFeedbackDone(true);
-    } catch (e) {
-      console.error(e);
-    }
+    } catch (e) { console.error(e); }
     setFeedbackLoading(false);
   };
-
-  const navItems: { icon: string; label: string; screen: Screen; gated?: boolean }[] = [
-    { icon: "💬", label: "Chat", screen: "chat", gated: true },
-    { icon: "❤️", label: "Welfare", screen: "dashboard", gated: true },
-    { icon: "⏱", label: "Rest Hours", screen: "resthours", gated: true },
-    { icon: "💼", label: "Jobs", screen: "opportunities" },
-    { icon: "📄", label: "CV", screen: "resume" },
-    { icon: "📰", label: "News", screen: "news" },
-    { icon: "🎓", label: "Academy", screen: "academy" },
-    { icon: "🔧", label: "PMS", screen: "bridge" },
-    { icon: "👥", label: "Community", screen: "community", gated: true },
-    { icon: "🏆", label: "SMC", screen: "smc" },
-    { icon: "📜", label: "Certs", screen: "certs" },
-  ];
 
   const streakRaw = localStorage.getItem("seaminds_streak");
   const streakCount = streakRaw ? parseInt(streakRaw, 10) : 0;
 
-  const handleNavClick = (item: typeof navItems[0]) => {
-    if (item.gated && !profileComplete) {
-      setTargetScreen(item.screen);
-      setAppState("name-entry");
-    } else {
-      navigateTo(item.screen);
-      if (appState !== "main") setAppState("main");
-      if (item.screen === "opportunities") setJobBadgeCount(0);
-    }
+  const handleNavClick = (item: NavItem) => {
+    if (item.gated && !profileComplete) { setTargetScreen(item.screen); setAppState("name-entry"); }
+    else { navigateTo(item.screen); if (appState !== "main") setAppState("main"); if (item.screen === "opportunities") setJobBadgeCount(0); }
     setDrawerOpen(false);
   };
 
-  const renderMobileChrome = ({ showBackToNews = false }: { showBackToNews?: boolean } = {}) => (
-    <>
-      {(drawerOpen || isEdgeSwiping) && (
-        <div
-          className="fixed inset-0 z-40 lg:hidden"
-          onClick={() => setDrawerOpen(false)}
-          style={{
-            background: `rgba(0,0,0,${drawerOpen ? 0.5 : Math.min(0.5, edgeSwipeDelta / 288 * 0.5)})`,
-            transition: !isEdgeSwiping ? "background 0.3s" : "none",
-          }}
-        />
-      )}
+  // Shared props for MobileChrome
+  const mobileChromeProps = {
+    drawerOpen, setDrawerOpen, isSwiping, isEdgeSwiping,
+    touchDelta, edgeSwipeDelta, touchStart, setTouchStart, setTouchDelta, setIsSwiping,
+    showSwipeHint,
+    onSwipeHintEnd: () => { setShowSwipeHint(false); localStorage.setItem("seamind_swipe_hint_seen", "1"); },
+    screen, appState, firstName, lastName, nationality, role,
+    streakCount, jobBadgeCount, shipName,
+    onNavClick: handleNavClick,
+    onNavigateToNews: () => navigateTo("news"),
+    onReplayTour: () => { setForceTour(true); setDrawerOpen(false); },
+    onSignOut: () => { handleSignOut(); setDrawerOpen(false); },
+    onOpenChat: () => { setScreen("chat"); setAppState("main"); setDrawerOpen(false); },
+  };
 
-      {showSwipeHint && !drawerOpen && !isEdgeSwiping && (
-        <div
-          className="fixed left-0 top-1/2 z-30 -translate-y-1/2 pointer-events-none lg:hidden"
-          style={{ animation: "swipeHintPulse 2s ease-in-out 3" }}
-          onAnimationEnd={() => {
-            setShowSwipeHint(false);
-            localStorage.setItem("seamind_swipe_hint_seen", "1");
-          }}
-        >
-          <div className="flex items-center gap-1 rounded-r-full bg-gradient-to-r from-secondary/60 to-transparent pl-1 pr-3 py-3">
-            <div className="h-10 w-1 rounded-full bg-foreground/40" />
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-foreground/50">
-              <path d="M8 4L14 10L8 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
-        </div>
-      )}
-
-      <div
-        className={`fixed top-0 left-0 z-50 h-full w-44 border-r border-border/40 bg-background/95 px-2.5 py-5 backdrop-blur-sm lg:hidden ${!isSwiping && !isEdgeSwiping ? "transition-transform duration-300 ease-in-out" : ""}`}
-        style={{
-          transform: drawerOpen
-            ? `translateX(${Math.min(0, touchDelta)}px)`
-            : isEdgeSwiping && edgeSwipeDelta > 0
-              ? `translateX(${-176 + edgeSwipeDelta}px)`
-              : "translateX(-100%)",
-        }}
-        onTouchStart={(e) => {
-          setTouchStart(e.touches[0].clientX);
-          setIsSwiping(true);
-        }}
-        onTouchMove={(e) => {
-          if (touchStart === null) return;
-          const delta = e.touches[0].clientX - touchStart;
-          if (delta < 0) setTouchDelta(delta);
-        }}
-        onTouchEnd={() => {
-          if (touchDelta < -80) setDrawerOpen(false);
-          setTouchStart(null);
-          setTouchDelta(0);
-          setIsSwiping(false);
-        }}
-      >
-        <button onClick={() => setDrawerOpen(false)} className="absolute right-4 top-4 text-lg text-muted-foreground transition-colors hover:text-foreground">✕</button>
-        <div className="mb-4 flex items-center gap-1">
-          <span className="rounded bg-secondary px-1.5 py-0.5 text-xs font-bold text-foreground/80">SM</span>
-          <span className="text-sm font-bold text-foreground/80">SeaMinds</span>
-        </div>
-        <div className="mb-6 flex items-center gap-2 px-1">
-          <span className="text-lg">{NATIONALITY_FLAGS[nationality] || "🌊"}</span>
-          <div className="flex flex-col">
-            <span className="text-sm font-medium text-foreground">{firstName || "Seafarer"} {lastName}</span>
-            {role && <span className="text-xs text-muted-foreground">{role}</span>}
-          </div>
-        </div>
-        <nav className="flex flex-1 flex-col gap-1">
-          {navItems.map((item) => {
-            const active = screen === item.screen && appState === "main";
-            return (
-              <button
-                key={item.screen}
-                onClick={() => handleNavClick(item)}
-                className={`flex w-full items-center gap-2 rounded-lg border-l-2 px-2 py-2 text-left text-xs font-medium transition-colors ${active ? "border-primary bg-secondary text-foreground" : "border-transparent text-muted-foreground hover:bg-secondary/60 hover:text-foreground"}`}
-              >
-                <span className="text-sm">{item.icon}</span>
-                <span>{item.label}</span>
-                {item.screen === "opportunities" && jobBadgeCount > 0 && (
-                  <span className="ml-auto flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">{jobBadgeCount}</span>
-                )}
-              </button>
-            );
-          })}
-        </nav>
-        <div className="mt-auto flex flex-col gap-2">
-          <div className="flex items-center justify-center gap-2 rounded-full bg-secondary/70 py-1.5 text-xs font-medium text-muted-foreground">
-            🔥 {streakCount} day streak
-          </div>
-          <button onClick={() => { setForceTour(true); setDrawerOpen(false); }} className="flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground">
-            <HelpCircle size={14} /> Replay Tour
-          </button>
-          <button onClick={() => { handleSignOut(); setDrawerOpen(false); }} className="flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground">
-            <LogOut size={14} /> Sign Out
-          </button>
-          <div className="w-full">
-            <SOSButton onOpenChat={() => { setScreen("chat"); setAppState("main"); setDrawerOpen(false); }} firstName={firstName} shipName={shipName} inline />
-          </div>
-        </div>
-      </div>
-
-      <div className="flex shrink-0 items-center justify-between border-b border-border/40 bg-background/95 px-4 py-2 backdrop-blur-sm lg:hidden">
-        <div className="flex items-center gap-2">
-          <button onClick={() => setDrawerOpen(true)} className="p-1 text-xl font-bold text-foreground">☰</button>
-          {showBackToNews && screen !== "news" && (
-            <button onClick={() => navigateTo("news")} className="p-1 text-lg text-muted-foreground">←</button>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <img src="/seaminds-logo.png" className="h-6 w-6 rounded-full" alt="SeaMinds logo" />
-          <span className="text-sm font-bold text-foreground">SeaMinds</span>
-        </div>
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary">
-          <span className="text-xs font-bold text-foreground">{firstName?.[0] || "C"}</span>
-        </div>
-      </div>
-    </>
-  );
+  // === Early-return states ===
 
   if (appState === "loading") {
     return (
@@ -714,7 +439,7 @@ const Index = () => {
     return (
       <div className="h-screen bg-background">
         <div className="mx-auto flex h-full max-w-md flex-col bg-background">
-          {renderMobileChrome()}
+          <MobileChrome {...mobileChromeProps} />
           <div className="min-h-0 flex-1">
             <SOSButton onOpenChat={() => { setAppState("main"); setScreen("chat"); }} firstName={firstName} shipName={shipName} />
             <LandingScreen onGetStarted={() => setAppState("name-entry")} onManagerLogin={() => navigate("/manager")} />
@@ -728,7 +453,7 @@ const Index = () => {
     return (
       <div className="h-screen bg-background">
         <div className="mx-auto flex h-full max-w-md flex-col bg-background">
-          {renderMobileChrome()}
+          <MobileChrome {...mobileChromeProps} />
           <div className="min-h-0 flex-1 overflow-hidden">
             <SOSButton onOpenChat={() => { setAppState("main"); setScreen("chat"); }} firstName={firstName} shipName={shipName} />
             <NameEntry onSubmit={handleNameSubmit} />
@@ -742,7 +467,7 @@ const Index = () => {
     return (
       <div className="h-screen bg-background">
         <div className="mx-auto flex h-full max-w-md flex-col bg-background">
-          {renderMobileChrome()}
+          <MobileChrome {...mobileChromeProps} />
           <div className="min-h-0 flex-1">
             <SOSButton onOpenChat={() => { setAppState("main"); setScreen("chat"); }} firstName={firstName} shipName={shipName} />
             <WelcomeScreens onComplete={handleWelcomeComplete} />
@@ -756,94 +481,51 @@ const Index = () => {
     return (
       <div className="h-screen bg-background">
         <div className="mx-auto flex h-full max-w-md flex-col bg-background">
-          {renderMobileChrome()}
+          <MobileChrome {...mobileChromeProps} />
           <div className="min-h-0 flex-1 overflow-hidden">
-            <VoyageReport
-              profileId={profileId}
-              firstName={firstName}
-              role={role}
-              shipName={shipName}
-              voyageStartDate={voyageStartDate}
-              nationality={nationality}
-              onClose={() => setAppState("main")}
-            />
+            <VoyageReport profileId={profileId} firstName={firstName} role={role} shipName={shipName}
+              voyageStartDate={voyageStartDate} nationality={nationality} onClose={() => setAppState("main")} />
           </div>
         </div>
       </div>
     );
   }
 
+  // === SEAFARER QUOTES ===
+  const SEAFARER_QUOTES = [
+    { text: "A smooth sea never made a skilled sailor.", author: "Franklin D. Roosevelt" },
+    { text: "The pessimist complains about the wind; the optimist expects it to change; the realist adjusts the sails.", author: "William Arthur Ward" },
+    { text: "Twenty years from now you will be more disappointed by the things you didn't do than by the ones you did.", author: "Mark Twain" },
+    { text: "The sea, once it casts its spell, holds one in its net of wonder forever.", author: "Jacques Cousteau" },
+    { text: "He that would learn to pray, let him go to sea.", author: "George Herbert" },
+    { text: "I can't control the wind, but I can adjust my sails.", author: "Ricky Skaggs" },
+    { text: "The ocean stirs the heart, inspires the imagination and brings eternal joy to the soul.", author: "Wyland" },
+    { text: "There is nothing more enticing, disenchanting, and enslaving than the life at sea.", author: "Joseph Conrad" },
+    { text: "To reach a port we must set sail. Sail, not tie at anchor. Sail, not drift.", author: "Franklin D. Roosevelt" },
+    { text: "In one drop of water are found all the secrets of all the oceans.", author: "Kahlil Gibran" },
+    { text: "The cure for anything is salt water: sweat, tears, or the sea.", author: "Isak Dinesen" },
+    { text: "A ship in harbour is safe, but that is not what ships are built for.", author: "John A. Shedd" },
+  ];
+  const dayIndex = Math.floor(Date.now() / 86400000) % SEAFARER_QUOTES.length;
+  const quote = SEAFARER_QUOTES[dayIndex];
+
+  // Stats cards data
+  const certsRaw = localStorage.getItem("seaminds_certs");
+  const certs: { expiryDate: string }[] = certsRaw ? (() => { try { return JSON.parse(certsRaw); } catch { return []; } })() : [];
+  const expiringSoon = certs.filter(c => { const d = Math.ceil((new Date(c.expiryDate).getTime() - Date.now()) / 86400000); return d >= 0 && d < 90; }).length;
+  const restRaw = localStorage.getItem("seaminds_rest_today");
+  const restHours = restRaw ? parseFloat(restRaw) : 0;
+  const cardStyle = { background: "rgba(13,27,42,0.8)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", minWidth: "0", textAlign: "center" as const, flexShrink: 0 };
+
+  // === Main app view ===
   return (
     <>
       <div className="relative flex h-screen w-full flex-col overflow-hidden bg-background lg:flex-row">
-        <aside className="hidden h-screen w-[2.75rem] flex-shrink-0 flex-col items-center border-r border-white/5 bg-background/95 px-[2px] py-3 backdrop-blur-sm lg:flex">
-          <div className="mb-3">
-            <span className="rounded bg-secondary px-1 py-0.5 text-[10px] font-bold text-foreground/80">SM</span>
-          </div>
-          <div className="mb-3">
-            <span className="text-xs">{NATIONALITY_FLAGS[nationality] || "🌊"}</span>
-          </div>
-
-          <nav className="flex w-full flex-1 flex-col gap-0.5">
-            {navItems.map((item) => {
-              const active = screen === item.screen;
-              return (
-                <Tooltip key={item.screen}>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => handleNavClick(item)}
-                      className="relative flex w-full items-center justify-center rounded-md py-[7px] text-sm transition-colors"
-                      style={{
-                        borderLeft: active ? "2px solid rgba(255,255,255,0.6)" : "2px solid transparent",
-                        background: active ? "rgba(255,255,255,0.08)" : "transparent",
-                        color: active ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.4)",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!active) e.currentTarget.style.background = "rgba(255,255,255,0.05)";
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!active) e.currentTarget.style.background = "transparent";
-                      }}
-                    >
-                      <span>{item.icon}</span>
-                      {item.screen === "opportunities" && jobBadgeCount > 0 && (
-                        <span className="absolute right-0.5 top-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-primary text-[7px] font-bold text-primary-foreground">
-                          {jobBadgeCount}
-                        </span>
-                      )}
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" className="text-xs">
-                    {item.label}
-                  </TooltipContent>
-                </Tooltip>
-              );
-            })}
-          </nav>
-
-          <div className="mt-auto flex flex-col items-center gap-1.5">
-            <div className="text-[9px] text-muted-foreground">🔥{streakCount}</div>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button onClick={() => setForceTour(true)} className="p-0.5 text-muted-foreground transition-colors hover:text-foreground">
-                  <HelpCircle size={12} />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="right" className="text-xs">Replay Tour</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button onClick={handleSignOut} className="p-0.5 text-muted-foreground transition-colors hover:text-foreground">
-                  <LogOut size={12} />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="right" className="text-xs">Sign Out</TooltipContent>
-            </Tooltip>
-            <div className="w-full">
-              <SOSButton onOpenChat={() => setScreen("chat")} firstName={firstName} shipName={shipName} inline />
-            </div>
-          </div>
-        </aside>
+        <DesktopSidebar
+          screen={screen} streakCount={streakCount} jobBadgeCount={jobBadgeCount}
+          firstName={firstName} shipName={shipName}
+          onNavClick={handleNavClick} onReplayTour={() => setForceTour(true)} onSignOut={handleSignOut}
+        />
 
         <div className="relative flex h-screen flex-1 flex-col overflow-hidden">
           <div className="pointer-events-none absolute inset-0 z-0 opacity-20">
@@ -851,28 +533,19 @@ const Index = () => {
           </div>
 
           <div className="relative z-10 flex min-h-0 flex-1 flex-col">
-            {renderMobileChrome({ showBackToNews: true })}
+            <MobileChrome {...mobileChromeProps} showBackToNews />
 
+            {/* Header bar */}
             <div className="px-4 pb-1 pt-2 lg:px-8 lg:pt-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   {prevScreen && (
-                    <button
-                      onClick={() => { setScreen(prevScreen); setPrevScreen(null); }}
-                      className="mr-2 flex items-center gap-1 text-sm text-muted-foreground md:hidden"
-                    >
-                      ← Back
-                    </button>
+                    <button onClick={() => { setScreen(prevScreen); setPrevScreen(null); }} className="mr-2 flex items-center gap-1 text-sm text-muted-foreground md:hidden">← Back</button>
                   )}
                   <span className="text-xl">{NATIONALITY_FLAGS[nationality] || "🌊"}</span>
                   <span className="text-sm font-bold text-foreground">{firstName || "Seafarer"}</span>
-                  {role && (
-                    <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                      {role}
-                    </span>
-                  )}
+                  {role && <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground">{role}</span>}
                 </div>
-
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-mono text-muted-foreground">{utcTime}</span>
                   <div className="lg:hidden" data-tour="sos">
@@ -881,10 +554,8 @@ const Index = () => {
                 </div>
               </div>
 
-              <div
-                className="flex cursor-pointer items-center justify-between px-3 py-1 lg:hidden"
-                onClick={() => setStatsOpen(!statsOpen)}
-              >
+              {/* Mobile stats toggle */}
+              <div className="flex cursor-pointer items-center justify-between px-3 py-1 lg:hidden" onClick={() => setStatsOpen(!statsOpen)}>
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
                   <span>🔥 {streakCount}d</span>
                   <span className="font-semibold text-foreground">SMC {smcScore || "—"}</span>
@@ -892,118 +563,42 @@ const Index = () => {
                 <span className="text-xs text-muted-foreground">{statsOpen ? "▲" : "▼"}</span>
               </div>
 
+              {/* Stats cards */}
               <div className={`overflow-hidden transition-all duration-300 lg:block ${statsOpen ? "max-h-24" : "max-h-0 lg:max-h-none"}`}>
                 <div className="-mx-1 mt-2 grid grid-cols-4 gap-1 px-1 pb-1 lg:gap-2">
-                  {(() => {
-                    const certsRaw = localStorage.getItem("seaminds_certs");
-                    const certs: { expiryDate: string }[] = certsRaw ? (() => { try { return JSON.parse(certsRaw); } catch { return []; } })() : [];
-                    const expiringSoon = certs.filter((c) => {
-                      const d = Math.ceil((new Date(c.expiryDate).getTime() - Date.now()) / 86400000);
-                      return d >= 0 && d < 90;
-                    }).length;
-
-                    const restRaw = localStorage.getItem("seaminds_rest_today");
-                    const restHours = restRaw ? parseFloat(restRaw) : 0;
-
-                    const cardStyle = {
-                      background: "rgba(13,27,42,0.8)",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      borderRadius: "12px",
-                      minWidth: "0",
-                      textAlign: "center" as const,
-                      flexShrink: 0,
-                    };
-
-                    return (
-                      <>
-                        <button onClick={() => setScreen("chat")} style={cardStyle} className="flex-1 py-1 lg:py-3" data-tour="streak">
-                          <div className="text-lg">🔥</div>
-                          <div className="text-sm font-bold text-foreground">{streakCount}</div>
-                          <div className="text-[9px] text-muted-foreground">day streak</div>
-                        </button>
-                        <button
-                          onClick={() => setScreen("certs")}
-                          data-tour="certs"
-                          style={{
-                            ...cardStyle,
-                            border: expiringSoon > 0 ? "1px solid rgba(245,158,11,0.4)" : cardStyle.border,
-                          }}
-                          className="flex-1 py-1 lg:py-3"
-                        >
-                          <div className="text-lg">📜</div>
-                          <div className="text-sm font-bold" style={{ color: expiringSoon > 0 ? "#f59e0b" : "#22c55e" }}>{expiringSoon}</div>
-                          <div className="text-[9px] text-muted-foreground">expiring</div>
-                        </button>
-                        <button
-                          onClick={() => setScreen("resthours")}
-                          style={{
-                            ...cardStyle,
-                            border: restHours < 10 && restHours > 0 ? "1px solid rgba(239,68,68,0.4)" : cardStyle.border,
-                          }}
-                          className="flex-1 py-1 lg:py-3"
-                        >
-                          <div className="text-lg">⏱</div>
-                          <div className="text-sm font-bold" style={{ color: restHours >= 10 ? "#22c55e" : restHours > 0 ? "#ef4444" : "#888" }}>{restHours || "—"}</div>
-                          <div className="text-[9px] text-muted-foreground">hrs rest</div>
-                        </button>
-                        <button onClick={() => setScreen("smc")} style={cardStyle} className="flex-1 py-1 lg:py-3" data-tour="smc">
-                          <div className="text-lg">🏆</div>
-                          <div className="text-sm font-bold text-foreground">{smcScore !== null ? smcScore : "Get"}</div>
-                          <div className="text-[9px] text-muted-foreground">SMC</div>
-                        </button>
-                      </>
-                    );
-                  })()}
+                  <button onClick={() => setScreen("chat")} style={cardStyle} className="flex-1 py-1 lg:py-3" data-tour="streak">
+                    <div className="text-lg">🔥</div>
+                    <div className="text-sm font-bold text-foreground">{streakCount}</div>
+                    <div className="text-[9px] text-muted-foreground">day streak</div>
+                  </button>
+                  <button onClick={() => setScreen("certs")} data-tour="certs"
+                    style={{ ...cardStyle, border: expiringSoon > 0 ? "1px solid rgba(245,158,11,0.4)" : cardStyle.border }} className="flex-1 py-1 lg:py-3">
+                    <div className="text-lg">📜</div>
+                    <div className="text-sm font-bold" style={{ color: expiringSoon > 0 ? "#f59e0b" : "#22c55e" }}>{expiringSoon}</div>
+                    <div className="text-[9px] text-muted-foreground">expiring</div>
+                  </button>
+                  <button onClick={() => setScreen("resthours")}
+                    style={{ ...cardStyle, border: restHours < 10 && restHours > 0 ? "1px solid rgba(239,68,68,0.4)" : cardStyle.border }} className="flex-1 py-1 lg:py-3">
+                    <div className="text-lg">⏱</div>
+                    <div className="text-sm font-bold" style={{ color: restHours >= 10 ? "#22c55e" : restHours > 0 ? "#ef4444" : "#888" }}>{restHours || "—"}</div>
+                    <div className="text-[9px] text-muted-foreground">hrs rest</div>
+                  </button>
+                  <button onClick={() => setScreen("smc")} style={cardStyle} className="flex-1 py-1 lg:py-3" data-tour="smc">
+                    <div className="text-lg">🏆</div>
+                    <div className="text-sm font-bold text-foreground">{smcScore !== null ? smcScore : "Get"}</div>
+                    <div className="text-[9px] text-muted-foreground">SMC</div>
+                  </button>
                 </div>
               </div>
 
-              {(() => {
-                const SEAFARER_QUOTES = [
-                  { text: "A smooth sea never made a skilled sailor.", author: "Franklin D. Roosevelt" },
-                  { text: "The pessimist complains about the wind; the optimist expects it to change; the realist adjusts the sails.", author: "William Arthur Ward" },
-                  { text: "Twenty years from now you will be more disappointed by the things you didn't do than by the ones you did.", author: "Mark Twain" },
-                  { text: "The sea, once it casts its spell, holds one in its net of wonder forever.", author: "Jacques Cousteau" },
-                  { text: "He that would learn to pray, let him go to sea.", author: "George Herbert" },
-                  { text: "I can't control the wind, but I can adjust my sails.", author: "Ricky Skaggs" },
-                  { text: "The ocean stirs the heart, inspires the imagination and brings eternal joy to the soul.", author: "Wyland" },
-                  { text: "There is nothing more enticing, disenchanting, and enslaving than the life at sea.", author: "Joseph Conrad" },
-                  { text: "To reach a port we must set sail. Sail, not tie at anchor. Sail, not drift.", author: "Franklin D. Roosevelt" },
-                  { text: "In one drop of water are found all the secrets of all the oceans.", author: "Kahlil Gibran" },
-                  { text: "The cure for anything is salt water: sweat, tears, or the sea.", author: "Isak Dinesen" },
-                  { text: "A ship in harbour is safe, but that is not what ships are built for.", author: "John A. Shedd" },
-                  { text: "It is not the ship so much as the skillful sailing that assures the prosperous voyage.", author: "George William Curtis" },
-                  { text: "The wind and the waves are always on the side of the ablest navigator.", author: "Edmund Gibbon" },
-                  { text: "Land was created to provide a place for boats to visit.", author: "Brooks Atkinson" },
-                  { text: "Only the guy who isn't rowing has time to rock the boat.", author: "Jean-Paul Sartre" },
-                  { text: "We must free ourselves of the hope that the sea will ever rest. We must learn to sail in high winds.", author: "Aristotle Onassis" },
-                  { text: "The sea lives in every one of us.", author: "Robert Wyland" },
-                  { text: "You can never cross the ocean until you have the courage to lose sight of the shore.", author: "Christopher Columbus" },
-                  { text: "Not all treasure is silver and gold, mate.", author: "Captain Jack Sparrow" },
-                  { text: "Being at sea is like being in a world that only knows how to breathe.", author: "Unknown" },
-                  { text: "A rising tide lifts all boats.", author: "John F. Kennedy" },
-                  { text: "Calm seas and a prosperous voyage.", author: "William Shakespeare" },
-                  { text: "To me, the sea is like a person — like a child that I've known a long time.", author: "Gertrude Ederle" },
-                  { text: "No man will be a sailor who has contrivance enough to get himself into a jail.", author: "Samuel Johnson" },
-                  { text: "Any fool can carry on, but a wise man knows how to shorten sail in time.", author: "Joseph Conrad" },
-                  { text: "The goal is not to sail the boat, but rather to help the boat sail herself.", author: "John Rousmaniere" },
-                  { text: "Those who live by the sea can hardly form a single thought of which the sea would not be part.", author: "Hermann Broch" },
-                  { text: "At sea, I learned how little a person needs, not how much.", author: "Robin Lee Graham" },
-                  { text: "There are good ships and wood ships, ships that sail the sea, but the best ships are friendships, may they always be.", author: "Irish Proverb" },
-                  { text: "The voice of the sea speaks to the soul.", author: "Kate Chopin" },
-                ];
-                const dayIndex = Math.floor(Date.now() / 86400000) % SEAFARER_QUOTES.length;
-                const quote = SEAFARER_QUOTES[dayIndex];
-                return (
-                  <div className="mt-2 hidden rounded-xl border border-white/10 bg-secondary/30 px-1 py-2 lg:block">
-                    <p className="text-center text-[11px] italic leading-relaxed text-muted-foreground">
-                      "{quote.text}"
-                    </p>
-                    <p className="mt-1 text-center text-[10px] text-muted-foreground">— {quote.author}</p>
-                  </div>
-                );
-              })()}
+              {/* Daily quote (desktop) */}
+              <div className="mt-2 hidden rounded-xl border border-white/10 bg-secondary/30 px-1 py-2 lg:block">
+                <p className="text-center text-[11px] italic leading-relaxed text-muted-foreground">"{quote.text}"</p>
+                <p className="mt-1 text-center text-[10px] text-muted-foreground">— {quote.author}</p>
+              </div>
             </div>
 
+            {/* Desktop action bar */}
             <div className="hidden items-center justify-start gap-3 py-1 pl-4 pr-16 lg:flex lg:pl-8">
               <button onClick={() => setShowSignOffConfirm(true)} className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground">
                 <Anchor size={14} /> Sign Off
@@ -1011,7 +606,8 @@ const Index = () => {
               <button onClick={handleSignOut} className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground">
                 <LogOut size={14} /> Sign Out
               </button>
-              <button onClick={() => { setShowFeedback(true); setFeedbackDone(false); setFeedbackText(""); setFeedbackSummary(""); setFeedbackRating(0); }} className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground">
+              <button onClick={() => { setShowFeedback(true); setFeedbackDone(false); setFeedbackText(""); setFeedbackSummary(""); setFeedbackRating(0); }}
+                className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground">
                 ★ Feedback
               </button>
             </div>
@@ -1026,24 +622,17 @@ const Index = () => {
               </div>
             )}
 
+            {/* Main content area */}
             <div className="flex-1 overflow-hidden">
               {screen === "chat" && jobMatch && (
-                <div
-                  className="mx-4 mb-2 flex items-center justify-between gap-2 rounded-[10px] border p-[10px]"
-                  style={{ borderColor: "rgba(255,255,255,0.2)", background: "rgba(26, 58, 92, 0.9)" }}
-                >
+                <div className="mx-4 mb-2 flex items-center justify-between gap-2 rounded-[10px] border p-[10px]"
+                  style={{ borderColor: "rgba(255,255,255,0.2)", background: "rgba(26, 58, 92, 0.9)" }}>
                   <span className="flex-1 text-[12px] text-foreground">
                     ⚓ New job match: <strong className="text-primary">{jobMatch.rank_required}</strong> on <strong>{jobMatch.vessel_type}</strong> vessel. Joining: {jobMatch.joining_port}
                   </span>
-                  <button
-                    onClick={() => { setScreen("opportunities"); setJobMatch(null); setJobBadgeCount(0); }}
-                    className="whitespace-nowrap rounded-md bg-primary px-[10px] py-1 text-[11px] font-bold text-primary-foreground"
-                  >
-                    View
-                  </button>
-                  <button onClick={() => setJobMatch(null)} className="p-0.5 text-muted-foreground">
-                    <X size={14} />
-                  </button>
+                  <button onClick={() => { setScreen("opportunities"); setJobMatch(null); setJobBadgeCount(0); }}
+                    className="whitespace-nowrap rounded-md bg-primary px-[10px] py-1 text-[11px] font-bold text-primary-foreground">View</button>
+                  <button onClick={() => setJobMatch(null)} className="p-0.5 text-muted-foreground"><X size={14} /></button>
                 </div>
               )}
 
@@ -1076,6 +665,7 @@ const Index = () => {
           </div>
         </div>
 
+        {/* Feedback modal */}
         {showFeedback && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
             <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6">
@@ -1085,36 +675,22 @@ const Index = () => {
                   <p className="mb-5 text-center text-xs text-muted-foreground">How is SeaMinds helping you at sea?</p>
                   <div className="mb-5 flex justify-center gap-3">
                     {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        onClick={() => setFeedbackRating(star)}
-                        className="text-4xl transition-transform hover:scale-110"
-                        style={{ color: star <= feedbackRating ? "hsl(var(--primary))" : "rgba(255,255,255,0.16)" }}
-                      >
-                        ★
-                      </button>
+                      <button key={star} onClick={() => setFeedbackRating(star)} className="text-4xl transition-transform hover:scale-110"
+                        style={{ color: star <= feedbackRating ? "hsl(var(--primary))" : "rgba(255,255,255,0.16)" }}>★</button>
                     ))}
                   </div>
                   {feedbackRating > 0 && (
                     <p className="mb-4 text-center text-xs text-muted-foreground">
-                      {feedbackRating === 1 ? "Poor — needs major improvement" :
-                        feedbackRating === 2 ? "Fair — some issues" :
-                        feedbackRating === 3 ? "Good — meets expectations" :
-                        feedbackRating === 4 ? "Very Good — really helpful" :
-                        "Excellent — love it!"}
+                      {feedbackRating === 1 ? "Poor — needs major improvement" : feedbackRating === 2 ? "Fair — some issues" : feedbackRating === 3 ? "Good — meets expectations" : feedbackRating === 4 ? "Very Good — really helpful" : "Excellent — love it!"}
                     </p>
                   )}
-                  <textarea
-                    value={feedbackText}
-                    onChange={(e) => setFeedbackText(e.target.value)}
+                  <textarea value={feedbackText} onChange={(e) => setFeedbackText(e.target.value)}
                     placeholder="Any specific comments? What helped most? What can we improve?"
-                    className="mb-4 h-24 w-full resize-none rounded-xl border border-border bg-secondary px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary"
-                  />
+                    className="mb-4 h-24 w-full resize-none rounded-xl border border-border bg-secondary px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary" />
                   <div className="flex gap-3">
-                    <button onClick={() => setShowFeedback(false)} className="flex-1 rounded-xl border border-border py-2.5 text-sm text-muted-foreground">
-                      Cancel
-                    </button>
-                    <button onClick={handleFeedbackSubmit} disabled={feedbackLoading || feedbackRating === 0} className="flex-1 rounded-xl bg-primary py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-40">
+                    <button onClick={() => setShowFeedback(false)} className="flex-1 rounded-xl border border-border py-2.5 text-sm text-muted-foreground">Cancel</button>
+                    <button onClick={handleFeedbackSubmit} disabled={feedbackLoading || feedbackRating === 0}
+                      className="flex-1 rounded-xl bg-primary py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-40">
                       {feedbackLoading ? "Analysing..." : "Submit"}
                     </button>
                   </div>
@@ -1134,9 +710,7 @@ const Index = () => {
                     <p className="whitespace-pre-line text-sm leading-relaxed text-foreground/80">{feedbackSummary}</p>
                   </div>
                   <p className="mb-4 text-center text-xs text-muted-foreground">Reviewed by SeaMinds team only.</p>
-                  <button onClick={() => setShowFeedback(false)} className="w-full rounded-xl bg-primary py-2.5 text-sm font-bold text-primary-foreground">
-                    Close
-                  </button>
+                  <button onClick={() => setShowFeedback(false)} className="w-full rounded-xl bg-primary py-2.5 text-sm font-bold text-primary-foreground">Close</button>
                 </>
               )}
             </div>
@@ -1152,42 +726,23 @@ const Index = () => {
               <div className="text-center">
                 <p className="mb-3 text-4xl">🔔</p>
                 <h3 className="text-lg font-bold text-foreground">Stay on top of your wellness</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  Get a daily check-in reminder and certificate expiry alerts — even when you're on watch.
-                </p>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Get a daily check-in reminder and certificate expiry alerts — even when you're on watch.</p>
               </div>
-              <button
-                onClick={async () => {
-                  localStorage.setItem("seaminds_notif_asked", "true");
-                  try {
-                    const result = await Notification.requestPermission();
-                    if (result === "granted") {
-                      toast({ title: "✅ Reminders enabled" });
-                      setTimeout(() => {
-                        new Notification("SeaMinds Daily Check-in", {
-                          body: "How are you feeling today, Captain? Tap to log your mood 🔥",
-                          icon: "/favicon.ico",
-                        });
-                      }, 86400000);
-                    }
-                  } catch (e) {
-                    console.error("Notification permission error:", e);
+              <button onClick={async () => {
+                localStorage.setItem("seaminds_notif_asked", "true");
+                try {
+                  const result = await Notification.requestPermission();
+                  if (result === "granted") {
+                    toast({ title: "✅ Reminders enabled" });
+                    setTimeout(() => { new Notification("SeaMinds Daily Check-in", { body: "How are you feeling today, Captain? Tap to log your mood 🔥", icon: "/favicon.ico" }); }, 86400000);
                   }
-                  setShowNotifPrompt(false);
-                }}
-                className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-colors"
-              >
+                } catch (e) { console.error("Notification permission error:", e); }
+                setShowNotifPrompt(false);
+              }} className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-colors">
                 🔔 Enable Reminders
               </button>
-              <button
-                onClick={() => {
-                  localStorage.setItem("seaminds_notif_asked", "true");
-                  setShowNotifPrompt(false);
-                }}
-                className="w-full py-2 text-sm text-muted-foreground"
-              >
-                Not now
-              </button>
+              <button onClick={() => { localStorage.setItem("seaminds_notif_asked", "true"); setShowNotifPrompt(false); }}
+                className="w-full py-2 text-sm text-muted-foreground">Not now</button>
             </div>
           </div>
         )}
@@ -1198,4 +753,3 @@ const Index = () => {
 };
 
 export default Index;
-
