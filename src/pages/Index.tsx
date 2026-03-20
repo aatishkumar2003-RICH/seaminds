@@ -534,64 +534,45 @@ const Index = () => {
           <div className="relative z-10 flex min-h-0 flex-1 flex-col">
             <MobileChrome {...mobileChromeProps} showBackToNews />
 
-            {/* Header bar */}
-            <div className="px-4 pb-1 pt-2 lg:px-8 lg:pt-4">
+            {/* Desktop-only header & stats */}
+            <div className="hidden px-8 pb-1 pt-4 lg:block">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  {prevScreen && (
-                    <button onClick={() => { setScreen(prevScreen); setPrevScreen(null); }} className="mr-2 flex items-center gap-1 text-sm text-muted-foreground md:hidden">← Back</button>
-                  )}
                   <span className="text-xl">{NATIONALITY_FLAGS[nationality] || "🌊"}</span>
                   <span className="text-sm font-bold text-foreground">{firstName || "Seafarer"}</span>
                   {role && <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground">{role}</span>}
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono text-muted-foreground">{utcTime}</span>
-                  <div className="lg:hidden" data-tour="sos">
-                    <SOSButton onOpenChat={() => setScreen("chat")} firstName={firstName} shipName={shipName} inline />
-                  </div>
-                </div>
-              </div>
-
-              {/* Mobile stats toggle */}
-              <div className="flex cursor-pointer items-center justify-between px-3 py-1 lg:hidden" onClick={() => setStatsOpen(!statsOpen)}>
-                <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                  <span>🔥 {streakCount}d</span>
-                  <span className="font-semibold text-foreground">SMC {smcScore || "—"}</span>
-                </div>
-                <span className="text-xs text-muted-foreground">{statsOpen ? "▲" : "▼"}</span>
+                <span className="text-xs font-mono text-muted-foreground">{utcTime}</span>
               </div>
 
               {/* Stats cards */}
-              <div className={`overflow-hidden transition-all duration-300 lg:block ${statsOpen ? "max-h-24" : "max-h-0 lg:max-h-none"}`}>
-                <div className="-mx-1 mt-2 grid grid-cols-4 gap-1 px-1 pb-1 lg:gap-2">
-                  <button onClick={() => setScreen("chat")} style={cardStyle} className="flex-1 py-1 lg:py-3" data-tour="streak">
-                    <div className="text-lg">🔥</div>
-                    <div className="text-sm font-bold text-foreground">{streakCount}</div>
-                    <div className="text-[9px] text-muted-foreground">day streak</div>
-                  </button>
-                  <button onClick={() => setScreen("certs")} data-tour="certs"
-                    style={{ ...cardStyle, border: expiringSoon > 0 ? "1px solid rgba(245,158,11,0.4)" : cardStyle.border }} className="flex-1 py-1 lg:py-3">
-                    <div className="text-lg">📜</div>
-                    <div className="text-sm font-bold" style={{ color: expiringSoon > 0 ? "#f59e0b" : "#22c55e" }}>{expiringSoon}</div>
-                    <div className="text-[9px] text-muted-foreground">expiring</div>
-                  </button>
-                  <button onClick={() => setScreen("resthours")}
-                    style={{ ...cardStyle, border: restHours < 10 && restHours > 0 ? "1px solid rgba(239,68,68,0.4)" : cardStyle.border }} className="flex-1 py-1 lg:py-3">
-                    <div className="text-lg">⏱</div>
-                    <div className="text-sm font-bold" style={{ color: restHours >= 10 ? "#22c55e" : restHours > 0 ? "#ef4444" : "#888" }}>{restHours || "—"}</div>
-                    <div className="text-[9px] text-muted-foreground">hrs rest</div>
-                  </button>
-                  <button onClick={() => setScreen("smc")} style={cardStyle} className="flex-1 py-1 lg:py-3" data-tour="smc">
-                    <div className="text-lg">🏆</div>
-                    <div className="text-sm font-bold text-foreground">{smcScore !== null ? smcScore : "Get"}</div>
-                    <div className="text-[9px] text-muted-foreground">SMC</div>
-                  </button>
-                </div>
+              <div className="-mx-1 mt-2 grid grid-cols-4 gap-1 px-1 pb-1 lg:gap-2">
+                <button onClick={() => setScreen("chat")} style={cardStyle} className="flex-1 py-3" data-tour="streak">
+                  <div className="text-lg">🔥</div>
+                  <div className="text-sm font-bold text-foreground">{streakCount}</div>
+                  <div className="text-[9px] text-muted-foreground">day streak</div>
+                </button>
+                <button onClick={() => setScreen("certs")} data-tour="certs"
+                  style={{ ...cardStyle, border: expiringSoon > 0 ? "1px solid rgba(245,158,11,0.4)" : cardStyle.border }} className="flex-1 py-3">
+                  <div className="text-lg">📜</div>
+                  <div className="text-sm font-bold" style={{ color: expiringSoon > 0 ? "#f59e0b" : "#22c55e" }}>{expiringSoon}</div>
+                  <div className="text-[9px] text-muted-foreground">expiring</div>
+                </button>
+                <button onClick={() => setScreen("resthours")}
+                  style={{ ...cardStyle, border: restHours < 10 && restHours > 0 ? "1px solid rgba(239,68,68,0.4)" : cardStyle.border }} className="flex-1 py-3">
+                  <div className="text-lg">⏱</div>
+                  <div className="text-sm font-bold" style={{ color: restHours >= 10 ? "#22c55e" : restHours > 0 ? "#ef4444" : "#888" }}>{restHours || "—"}</div>
+                  <div className="text-[9px] text-muted-foreground">hrs rest</div>
+                </button>
+                <button onClick={() => setScreen("smc")} style={cardStyle} className="flex-1 py-3" data-tour="smc">
+                  <div className="text-lg">🏆</div>
+                  <div className="text-sm font-bold text-foreground">{smcScore !== null ? smcScore : "Get"}</div>
+                  <div className="text-[9px] text-muted-foreground">SMC</div>
+                </button>
               </div>
 
-              {/* Daily quote (desktop) */}
-              <div className="mt-2 hidden rounded-xl border border-white/10 bg-secondary/30 px-1 py-2 lg:block">
+              {/* Daily quote */}
+              <div className="mt-2 rounded-xl border border-white/10 bg-secondary/30 px-1 py-2">
                 <p className="text-center text-[11px] italic leading-relaxed text-muted-foreground">"{quote.text}"</p>
                 <p className="mt-1 text-center text-[10px] text-muted-foreground">— {quote.author}</p>
               </div>
