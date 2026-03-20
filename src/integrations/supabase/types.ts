@@ -210,6 +210,36 @@ export type Database = {
           },
         ]
       }
+      company_demo_requests: {
+        Row: {
+          company_name: string
+          contact_name: string
+          created_at: string
+          email: string
+          fleet_size: string | null
+          id: string
+          message: string | null
+        }
+        Insert: {
+          company_name: string
+          contact_name: string
+          created_at?: string
+          email: string
+          fleet_size?: string | null
+          id?: string
+          message?: string | null
+        }
+        Update: {
+          company_name?: string
+          contact_name?: string
+          created_at?: string
+          email?: string
+          fleet_size?: string | null
+          id?: string
+          message?: string | null
+        }
+        Relationships: []
+      }
       contact_requests: {
         Row: {
           company_name: string

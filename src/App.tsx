@@ -18,6 +18,7 @@ const ScrollRedirect = ({ hash }: { hash: string }) => {
   return null;
 };
 import HomePage from "./pages/HomePage";
+import ForCompanies from "./pages/ForCompanies";
 import Index from "./pages/Index";
 import ManagerAuth from "./pages/ManagerAuth";
 import ManagerDashboard from "./pages/ManagerDashboard";
@@ -101,7 +102,7 @@ const App = () => (
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/for-companies" element={<ScrollRedirect hash="companies" />} />
+            <Route path="/for-companies" element={<ForCompanies />} />
             <Route path="/smc-score" element={<ScrollRedirect hash="smc-score" />} />
             <Route path="/jobs" element={<Navigate to="/app" replace />} />
             <Route path="/for-seafarers" element={<Navigate to="/app" replace />} />
