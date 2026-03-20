@@ -24,27 +24,27 @@ const HomeNav = () => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 nav-glass border-b border-border">
+    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5" style={{ background: '#0D1B2A' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
             <img src={seamindsLogo} alt="SeaMinds" className="w-8 h-8" />
-            <span className="text-lg font-bold text-foreground gold-glow">SeaMinds</span>
+            <span className="text-lg font-bold text-foreground">SeaMinds</span>
           </div>
 
           <div className="hidden md:flex items-center gap-6">
             {navLinks.map((l) => (
-              <button key={l.label} onClick={() => handleNav(l)} className="text-sm font-medium transition-colors" style={{ color: "#94a3b8" }} onMouseEnter={e => (e.currentTarget.style.color = "#D4AF37")} onMouseLeave={e => (e.currentTarget.style.color = "#94a3b8")}>
+              <button key={l.label} onClick={() => handleNav(l)} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                 {l.label}
               </button>
             ))}
           </div>
 
           <div className="hidden sm:flex items-center gap-3">
-          <Button size="sm" onClick={() => navigate('/app')}>
+          <Button size="sm" className="bg-foreground text-background hover:bg-foreground/90" onClick={() => navigate('/app')}>
             Get Your Score
           </Button>
-          <Button size="sm" variant="outline" onClick={() => navigate('/manager')}>
+          <Button size="sm" variant="outline" className="border-white/10 text-foreground hover:bg-white/5" onClick={() => navigate('/manager')}>
             Company Login
           </Button>
           </div>
