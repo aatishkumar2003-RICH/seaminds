@@ -777,16 +777,16 @@ const Index = () => {
               <button
                 key={item.screen}
                 onClick={() => handleNavClick(item)}
-                className="flex items-center gap-3 text-sm font-medium transition-colors w-full text-left"
+                className="flex items-center gap-2 text-xs font-medium transition-colors w-full text-left"
                 style={{
-                  padding: "10px 12px",
-                  borderRadius: "10px",
-                  borderLeft: active ? "3px solid #D4AF37" : "3px solid transparent",
+                  padding: "7px 8px",
+                  borderRadius: "8px",
+                  borderLeft: active ? "2px solid #D4AF37" : "2px solid transparent",
                   background: active ? "rgba(212,175,55,0.15)" : "transparent",
                   color: active ? "#D4AF37" : "rgba(255,255,255,0.5)",
                 }}
               >
-                <span className="text-base">{item.icon}</span>
+                <span className="text-sm">{item.icon}</span>
                 <span>{item.label}</span>
                 {item.screen === "opportunities" && jobBadgeCount > 0 && (
                   <span className="ml-auto text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1" style={{ background: "#D4AF37", color: "#0a1929" }}>{jobBadgeCount}</span>
@@ -797,7 +797,7 @@ const Index = () => {
         </nav>
         {/* Bottom section */}
         <div className="mt-auto flex flex-col gap-2">
-          <div className="flex items-center justify-center gap-2 py-1.5 rounded-full text-xs font-medium" style={{ background: "rgba(212,175,55,0.12)", color: "#D4AF37" }}>
+          <div className="flex items-center justify-center gap-2 py-1.5 rounded-full text-xs font-medium" style={{ background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.6)" }}>
             🔥 {streakCount} day streak
           </div>
           <button onClick={() => { setForceTour(true); setDrawerOpen(false); }} className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-2">
