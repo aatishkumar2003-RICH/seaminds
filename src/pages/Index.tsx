@@ -120,7 +120,7 @@ const Index = () => {
 
   // Swipe from left edge to open drawer
   useEffect(() => {
-    const DRAWER_W = 256; // w-64
+    const DRAWER_W = 208; // w-52
     const handleTouchStart = (e: TouchEvent) => {
       if (drawerOpen) return;
       const x = e.touches[0].clientX;
@@ -636,18 +636,17 @@ const Index = () => {
   return (
     <div className="flex flex-col lg:flex-row h-screen w-full bg-background relative overflow-hidden">
       {/* === DESKTOP SIDEBAR (lg+) === */}
-      <aside className="hidden lg:flex w-52 h-screen flex-col flex-shrink-0 border-r border-border" style={{ background: "#0D1B2A", padding: "24px 16px" }}>
+      <aside className="hidden lg:flex w-[6.5rem] h-screen flex-col flex-shrink-0 border-r border-white/5" style={{ background: "#0D1B2A", padding: "20px 8px" }}>
         {/* Logo */}
-        <div className="flex items-center gap-2 mb-6">
-          <span className="text-lg font-bold px-2 py-0.5 rounded" style={{ background: "rgba(212,175,55,0.15)", color: "#D4AF37" }}>SM</span>
-          <span className="font-bold text-base" style={{ color: "#D4AF37" }}>SeaMinds</span>
+        <div className="flex items-center gap-1 mb-4">
+          <span className="text-xs font-bold px-1.5 py-0.5 rounded" style={{ background: "rgba(212,175,55,0.15)", color: "#D4AF37" }}>SM</span>
         </div>
         {/* User info */}
-        <div className="flex items-center gap-2 mb-6 px-1">
-          <span className="text-lg">{NATIONALITY_FLAGS[nationality] || "🌊"}</span>
+        <div className="flex items-center gap-1.5 mb-4 px-0.5">
+          <span className="text-sm">{NATIONALITY_FLAGS[nationality] || "🌊"}</span>
           <div className="flex flex-col">
-            <span className="text-sm text-muted-foreground font-medium">{firstName || "Seafarer"} {lastName}</span>
-            {role && <span className="text-xs text-muted-foreground/60">{role}</span>}
+            <span className="text-[11px] text-muted-foreground font-medium truncate">{firstName || "Seafarer"}</span>
+            {role && <span className="text-[9px] text-muted-foreground/60 truncate">{role}</span>}
           </div>
         </div>
         {/* Nav items */}
@@ -658,18 +657,18 @@ const Index = () => {
               <button
                 key={item.screen}
                 onClick={() => handleNavClick(item)}
-                className="flex items-center gap-3 text-sm font-medium transition-colors w-full text-left"
+                className="flex items-center gap-2 text-xs font-medium transition-colors w-full text-left"
                 style={{
-                  padding: "10px 12px",
-                  borderRadius: "10px",
-                  borderLeft: active ? "3px solid #D4AF37" : "3px solid transparent",
+                  padding: "7px 8px",
+                  borderRadius: "8px",
+                  borderLeft: active ? "2px solid #D4AF37" : "2px solid transparent",
                   background: active ? "rgba(212,175,55,0.15)" : "transparent",
                   color: active ? "#D4AF37" : "rgba(255,255,255,0.5)",
                 }}
                 onMouseEnter={(e) => { if (!active) (e.currentTarget.style.background = "rgba(255,255,255,0.05)"); }}
                 onMouseLeave={(e) => { if (!active) (e.currentTarget.style.background = "transparent"); }}
               >
-                <span className="text-base">{item.icon}</span>
+                <span className="text-sm">{item.icon}</span>
                 <span>{item.label}</span>
                 {item.screen === "opportunities" && jobBadgeCount > 0 && (
                   <span className="ml-auto text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1" style={{ background: "#D4AF37", color: "#0a1929" }}>{jobBadgeCount}</span>
@@ -680,7 +679,7 @@ const Index = () => {
         </nav>
         {/* Bottom section */}
         <div className="mt-auto flex flex-col gap-2">
-          <div className="flex items-center justify-center gap-2 py-1.5 rounded-full text-xs font-medium" style={{ background: "rgba(212,175,55,0.12)", color: "#D4AF37" }}>
+          <div className="flex items-center justify-center gap-2 py-1.5 rounded-full text-xs font-medium" style={{ background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.6)" }}>
             🔥 {streakCount} day streak
           </div>
           <button onClick={() => setForceTour(true)} className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-2">
@@ -729,15 +728,15 @@ const Index = () => {
 
 
       <div
-        className={`fixed top-0 left-0 h-full w-64 z-50 lg:hidden ${!isSwiping && !isEdgeSwiping ? 'transition-transform duration-300 ease-in-out' : ''}`}
+        className={`fixed top-0 left-0 h-full w-52 z-50 lg:hidden ${!isSwiping && !isEdgeSwiping ? 'transition-transform duration-300 ease-in-out' : ''}`}
         style={{
           background: "#0D1B2A",
-          borderRight: '1px solid rgba(255,255,255,0.1)',
-          padding: "24px 16px",
+          borderRight: '1px solid rgba(255,255,255,0.05)',
+          padding: "20px 10px",
           transform: drawerOpen
             ? `translateX(${Math.min(0, touchDelta)}px)`
             : isEdgeSwiping && edgeSwipeDelta > 0
-              ? `translateX(${-256 + edgeSwipeDelta}px)`
+              ? `translateX(${-208 + edgeSwipeDelta}px)`
               : 'translateX(-100%)',
         }}
         onTouchStart={(e) => {
@@ -758,9 +757,9 @@ const Index = () => {
       >
         <button onClick={() => setDrawerOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white text-lg">✕</button>
         {/* Logo */}
-        <div className="flex items-center gap-2 mb-6">
-          <span className="text-lg font-bold px-2 py-0.5 rounded" style={{ background: "rgba(212,175,55,0.15)", color: "#D4AF37" }}>SM</span>
-          <span className="font-bold text-base" style={{ color: "#D4AF37" }}>SeaMinds</span>
+        <div className="flex items-center gap-1 mb-4">
+          <span className="text-xs font-bold px-1.5 py-0.5 rounded" style={{ background: "rgba(212,175,55,0.15)", color: "#D4AF37" }}>SM</span>
+          <span className="font-bold text-sm" style={{ color: "rgba(255,255,255,0.7)" }}>SeaMinds</span>
         </div>
         {/* User info */}
         <div className="flex items-center gap-2 mb-6 px-1">
@@ -778,16 +777,16 @@ const Index = () => {
               <button
                 key={item.screen}
                 onClick={() => handleNavClick(item)}
-                className="flex items-center gap-3 text-sm font-medium transition-colors w-full text-left"
+                className="flex items-center gap-2 text-xs font-medium transition-colors w-full text-left"
                 style={{
-                  padding: "10px 12px",
-                  borderRadius: "10px",
-                  borderLeft: active ? "3px solid #D4AF37" : "3px solid transparent",
+                  padding: "7px 8px",
+                  borderRadius: "8px",
+                  borderLeft: active ? "2px solid #D4AF37" : "2px solid transparent",
                   background: active ? "rgba(212,175,55,0.15)" : "transparent",
                   color: active ? "#D4AF37" : "rgba(255,255,255,0.5)",
                 }}
               >
-                <span className="text-base">{item.icon}</span>
+                <span className="text-sm">{item.icon}</span>
                 <span>{item.label}</span>
                 {item.screen === "opportunities" && jobBadgeCount > 0 && (
                   <span className="ml-auto text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1" style={{ background: "#D4AF37", color: "#0a1929" }}>{jobBadgeCount}</span>
@@ -798,7 +797,7 @@ const Index = () => {
         </nav>
         {/* Bottom section */}
         <div className="mt-auto flex flex-col gap-2">
-          <div className="flex items-center justify-center gap-2 py-1.5 rounded-full text-xs font-medium" style={{ background: "rgba(212,175,55,0.12)", color: "#D4AF37" }}>
+          <div className="flex items-center justify-center gap-2 py-1.5 rounded-full text-xs font-medium" style={{ background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.6)" }}>
             🔥 {streakCount} day streak
           </div>
           <button onClick={() => { setForceTour(true); setDrawerOpen(false); }} className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-2">
@@ -824,7 +823,7 @@ const Index = () => {
         {/* Mobile top bar */}
         <div className="flex items-center justify-between px-4 py-2 lg:hidden border-b border-white/5 flex-shrink-0" style={{ background: '#0D1B2A' }}>
           <div className="flex items-center gap-2">
-            <button onClick={() => setDrawerOpen(true)} className="text-[#D4AF37] text-xl font-bold p-1">
+            <button onClick={() => setDrawerOpen(true)} className="text-gray-300 text-xl font-bold p-1">
               ☰
             </button>
             {screen !== 'news' && (
@@ -838,11 +837,10 @@ const Index = () => {
           </div>
           <div className="flex items-center gap-2">
             <img src="/seaminds-logo.png" className="w-6 h-6 rounded-full" />
-            <span className="text-[#D4AF37] font-bold text-sm">SeaMinds</span>
-            <span className="text-gray-400 text-xs hidden sm:block">{role || ''}</span>
+            <span className="text-gray-200 font-bold text-sm">SeaMinds</span>
           </div>
-          <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
-            <span className="text-xs text-[#D4AF37] font-bold">{firstName?.[0] || 'C'}</span>
+          <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+            <span className="text-xs text-gray-200 font-bold">{firstName?.[0] || 'C'}</span>
           </div>
         </div>
 
