@@ -368,10 +368,10 @@ const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: Cre
         {isLoading && !messages.some((m) => m.id === "streaming") && !messages.some((m) => m.id === "welcome-stream") && (
           <div className="chat-fade-in max-w-[85%] mr-auto">
             <p className="text-xs font-medium text-primary mb-1 ml-1">SeaMinds</p>
-            <div className="bg-secondary px-4 py-3 rounded-2xl rounded-tl-md flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground pulse-dot" style={{ animationDelay: "0s" }} />
-              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground pulse-dot" style={{ animationDelay: "0.3s" }} />
-              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground pulse-dot" style={{ animationDelay: "0.6s" }} />
+            <div className="bg-secondary px-4 py-3.5 rounded-2xl rounded-tl-md flex items-center gap-[5px]">
+              <span className="typing-dot" />
+              <span className="typing-dot" />
+              <span className="typing-dot" />
             </div>
           </div>
         )}
