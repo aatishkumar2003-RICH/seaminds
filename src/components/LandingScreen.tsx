@@ -105,7 +105,7 @@ const LandingScreen = ({ onGetStarted, onManagerLogin }: LandingScreenProps) => 
       {!showEmail ? (
         <button
           onClick={() => setShowEmail(true)}
-          className="w-full max-w-xs h-12 text-base font-semibold bg-white/10 border border-white/20 text-white rounded-md flex items-center justify-center hover:bg-white/15 transition-all"
+          className="w-full max-w-xs h-12 text-base font-semibold bg-primary text-primary-foreground rounded-md flex items-center justify-center hover:bg-primary/90 transition-all"
         >
           Sign in with Email
         </button>
