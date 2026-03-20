@@ -791,21 +791,20 @@ const Index = () => {
               {prevScreen && (
                 <button
                   onClick={() => { setScreen(prevScreen); setPrevScreen(null); }}
-                  className="md:hidden flex items-center gap-1 text-sm mr-2"
-                  style={{ color: '#D4AF37' }}
+                  className="md:hidden mr-2 flex items-center gap-1 text-sm text-muted-foreground"
                 >
                   ← Back
                 </button>
               )}
               <span className="text-xl">{NATIONALITY_FLAGS[nationality] || "🌊"}</span>
-              <span className="font-bold text-sm" style={{ color: "#D4AF37" }}>{firstName || "Seafarer"}</span>
+              <span className="text-sm font-bold text-foreground">{firstName || "Seafarer"}</span>
               {role && (
-                <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: "rgba(212,175,55,0.15)", color: "#D4AF37" }}>
+                <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
                   {role}
                 </span>
               )}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="flex items-center gap-2">
               <span className="text-xs font-mono text-muted-foreground">{utcTime}</span>
               <div className="lg:hidden" data-tour="sos">
                 <SOSButton onOpenChat={() => setScreen("chat")} firstName={firstName} shipName={shipName} inline />
@@ -813,17 +812,17 @@ const Index = () => {
             </div>
           </div>
 
-        {/* Mobile stats summary strip */}
-        <div
-          className="lg:hidden flex items-center justify-between px-3 py-1 cursor-pointer"
-          onClick={() => setStatsOpen(!statsOpen)}
-        >
-          <div className="flex items-center gap-3 text-xs text-gray-400">
-            <span>🔥 {streakCount}d</span>
-            <span className="text-[#D4AF37] font-semibold">SMC {smcScore || '—'}</span>
+          {/* Mobile stats summary strip */}
+          <div
+            className="flex cursor-pointer items-center justify-between px-3 py-1 lg:hidden"
+            onClick={() => setStatsOpen(!statsOpen)}
+          >
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <span>🔥 {streakCount}d</span>
+              <span className="font-semibold text-foreground">SMC {smcScore || "—"}</span>
+            </div>
+            <span className="text-xs text-muted-foreground">{statsOpen ? "▲" : "▼"}</span>
           </div>
-          <span className="text-gray-500 text-xs">{statsOpen ? '▲' : '▼'}</span>
-        </div>
 
         {/* Quick Stats Row */}
         <div className={`lg:block transition-all duration-300 overflow-hidden ${statsOpen ? 'max-h-24' : 'max-h-0 lg:max-h-none'}`}>
