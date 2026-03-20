@@ -1047,10 +1047,6 @@ const Index = () => {
         ) : null}
       </div>
 
-
-      </div>
-      </div>
-
       {showFeedback && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center px-4">
           <div className="bg-[#0D1B2A] border border-[#1e3a5f] rounded-2xl p-6 w-full max-w-sm">
