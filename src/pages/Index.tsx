@@ -636,52 +636,67 @@ const Index = () => {
   return (
     <div className="flex flex-col lg:flex-row h-screen w-full bg-background relative overflow-hidden">
       {/* === DESKTOP SIDEBAR (lg+) === */}
-      <aside className="hidden lg:flex w-[3.5rem] h-screen flex-col flex-shrink-0 border-r border-white/5 items-center" style={{ background: "#0D1B2A", padding: "16px 4px" }}>
+      <aside className="hidden lg:flex w-[2.75rem] h-screen flex-col flex-shrink-0 border-r border-white/5 items-center" style={{ background: "#0D1B2A", padding: "12px 2px" }}>
         {/* Logo */}
-        <div className="mb-4">
-          <span className="text-xs font-bold px-1.5 py-0.5 rounded" style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.7)" }}>SM</span>
+        <div className="mb-3">
+          <span className="text-[10px] font-bold px-1 py-0.5 rounded" style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.7)" }}>SM</span>
         </div>
         {/* User flag */}
-        <div className="mb-4">
-          <span className="text-sm">{NATIONALITY_FLAGS[nationality] || "🌊"}</span>
+        <div className="mb-3">
+          <span className="text-xs">{NATIONALITY_FLAGS[nationality] || "🌊"}</span>
         </div>
-        {/* Nav items - icon only */}
-        <nav className="flex flex-col gap-1 flex-1 w-full">
+        {/* Nav items - icon only with tooltips */}
+        <nav className="flex flex-col gap-0.5 flex-1 w-full">
           {navItems.map((item) => {
             const active = screen === item.screen;
             return (
-              <button
-                key={item.screen}
-                onClick={() => handleNavClick(item)}
-                title={item.label}
-                className="flex items-center justify-center text-sm transition-colors w-full relative"
-                style={{
-                  padding: "8px 0",
-                  borderRadius: "8px",
-                  borderLeft: active ? "2px solid rgba(255,255,255,0.6)" : "2px solid transparent",
-                  background: active ? "rgba(255,255,255,0.08)" : "transparent",
-                  color: active ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.4)",
-                }}
-                onMouseEnter={(e) => { if (!active) (e.currentTarget.style.background = "rgba(255,255,255,0.05)"); }}
-                onMouseLeave={(e) => { if (!active) (e.currentTarget.style.background = "transparent"); }}
-              >
-                <span>{item.icon}</span>
-                {item.screen === "opportunities" && jobBadgeCount > 0 && (
-                  <span className="absolute top-1 right-1 text-[8px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center" style={{ background: "rgba(255,255,255,0.7)", color: "#0a1929" }}>{jobBadgeCount}</span>
-                )}
-              </button>
+              <Tooltip key={item.screen}>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => handleNavClick(item)}
+                    className="flex items-center justify-center text-sm transition-colors w-full relative"
+                    style={{
+                      padding: "7px 0",
+                      borderRadius: "6px",
+                      borderLeft: active ? "2px solid rgba(255,255,255,0.6)" : "2px solid transparent",
+                      background: active ? "rgba(255,255,255,0.08)" : "transparent",
+                      color: active ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.4)",
+                    }}
+                    onMouseEnter={(e) => { if (!active) (e.currentTarget.style.background = "rgba(255,255,255,0.05)"); }}
+                    onMouseLeave={(e) => { if (!active) (e.currentTarget.style.background = "transparent"); }}
+                  >
+                    <span>{item.icon}</span>
+                    {item.screen === "opportunities" && jobBadgeCount > 0 && (
+                      <span className="absolute top-0.5 right-0.5 text-[7px] font-bold rounded-full w-3 h-3 flex items-center justify-center" style={{ background: "rgba(255,255,255,0.7)", color: "#0a1929" }}>{jobBadgeCount}</span>
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="text-xs">
+                  {item.label}
+                </TooltipContent>
+              </Tooltip>
             );
           })}
         </nav>
         {/* Bottom section */}
-        <div className="mt-auto flex flex-col items-center gap-2">
-          <div className="text-[10px] text-muted-foreground">🔥{streakCount}</div>
-          <button onClick={() => setForceTour(true)} title="Replay Tour" className="text-muted-foreground hover:text-foreground transition-colors p-1">
-            <HelpCircle size={14} />
-          </button>
-          <button onClick={handleSignOut} title="Sign Out" className="text-muted-foreground hover:text-foreground transition-colors p-1">
-            <LogOut size={14} />
-          </button>
+        <div className="mt-auto flex flex-col items-center gap-1.5">
+          <div className="text-[9px] text-muted-foreground">🔥{streakCount}</div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button onClick={() => setForceTour(true)} className="text-muted-foreground hover:text-foreground transition-colors p-0.5">
+                <HelpCircle size={12} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="text-xs">Replay Tour</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button onClick={handleSignOut} className="text-muted-foreground hover:text-foreground transition-colors p-0.5">
+                <LogOut size={12} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="text-xs">Sign Out</TooltipContent>
+          </Tooltip>
           <div className="w-full">
             <SOSButton onOpenChat={() => setScreen("chat")} firstName={firstName} shipName={shipName} inline />
           </div>
