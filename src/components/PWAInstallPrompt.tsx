@@ -10,6 +10,9 @@ const PWA_DISMISS_KEY = "seaminds_pwa_dismissed";
 const PWA_DISMISS_EXPIRY = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 const PWAInstallPrompt = () => {
+  // PWA install prompt disabled — return nothing
+  return null;
+};
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showBanner, setShowBanner] = useState(false);
   const [isIOS, setIsIOS] = useState(false);

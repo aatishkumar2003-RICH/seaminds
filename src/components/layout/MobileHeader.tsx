@@ -1,6 +1,5 @@
 import React from "react";
 import { type Screen, type AppState } from "./types";
-import seamindsLogo from "@/assets/seaminds-logo.png";
 
 interface MobileHeaderProps {
   onMenuOpen: () => void;
@@ -17,7 +16,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
   if (appState === "landing" || appState === "name-entry" || appState === "welcome") return null;
 
   return (
-    <div className="flex shrink-0 items-center justify-between border-b border-border/40 bg-background/95 px-4 py-2 backdrop-blur-sm lg:hidden">
+    <div className="flex shrink-0 items-center justify-between bg-[#0D1B2A] px-4 py-2 lg:hidden">
       <div className="flex items-center gap-2">
         <button onClick={onMenuOpen} className="p-1 text-xl font-bold text-foreground">☰</button>
         {showBackToNews && screen !== "news" && (
@@ -25,7 +24,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
         )}
       </div>
       <div className="flex items-center gap-2">
-        <img src={seamindsLogo} className="h-6 w-6 rounded-full" alt="SeaMinds logo" />
+        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-[10px] font-bold text-white">SM</div>
         <span className="text-sm font-bold text-foreground">SeaMinds</span>
       </div>
       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary">
