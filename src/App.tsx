@@ -3,7 +3,20 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
+
+/** Navigates to "/" then scrolls to a hash target */
+const ScrollRedirect = ({ hash }: { hash: string }) => {
+  const navigate = useNavigate();
+  useEffect(() => {
+    navigate("/", { replace: true });
+    setTimeout(() => {
+      const el = document.getElementById(hash);
+      el?.scrollIntoView({ behavior: "smooth" });
+    }, 300);
+  }, []);
+  return null;
+};
 import HomePage from "./pages/HomePage";
 import Index from "./pages/Index";
 import ManagerAuth from "./pages/ManagerAuth";
@@ -88,8 +101,8 @@ const App = () => (
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/for-companies" element={<Navigate to="/#companies" replace />} />
-            <Route path="/smc-score" element={<Navigate to="/#smc" replace />} />
+            <Route path="/for-companies" element={<ScrollRedirect hash="companies" />} />
+            <Route path="/smc-score" element={<ScrollRedirect hash="smc-score" />} />
             <Route path="/jobs" element={<Navigate to="/app" replace />} />
             <Route path="/for-seafarers" element={<Navigate to="/app" replace />} />
             <Route path="/verify/:id" element={<Verify />} />
