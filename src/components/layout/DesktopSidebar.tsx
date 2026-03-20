@@ -24,7 +24,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   return (
     <aside className="hidden h-screen w-48 flex-shrink-0 flex-col items-center border-r border-border/60 bg-background/95 px-[2px] py-3 backdrop-blur-sm lg:flex">
       <div className="mb-3">
-        <span className="rounded bg-accent px-1 py-0.5 text-[10px] font-bold text-primary">SM</span>
+        <img src={seamindsLogo} alt="SeaMinds" className="h-7 w-7 rounded object-contain" />
       </div>
 
       <nav className="flex flex-1 flex-col items-center gap-0.5">
