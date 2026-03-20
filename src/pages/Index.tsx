@@ -775,15 +775,15 @@ const Index = () => {
                 style={{
                   padding: "7px 8px",
                   borderRadius: "8px",
-                  borderLeft: active ? "2px solid #D4AF37" : "2px solid transparent",
-                  background: active ? "rgba(212,175,55,0.15)" : "transparent",
-                  color: active ? "#D4AF37" : "rgba(255,255,255,0.5)",
+                  borderLeft: active ? "2px solid rgba(255,255,255,0.6)" : "2px solid transparent",
+                  background: active ? "rgba(255,255,255,0.08)" : "transparent",
+                  color: active ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.5)",
                 }}
               >
                 <span className="text-sm">{item.icon}</span>
                 <span>{item.label}</span>
                 {item.screen === "opportunities" && jobBadgeCount > 0 && (
-                  <span className="ml-auto text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1" style={{ background: "#D4AF37", color: "#0a1929" }}>{jobBadgeCount}</span>
+                  <span className="ml-auto text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1" style={{ background: "rgba(255,255,255,0.7)", color: "#0a1929" }}>{jobBadgeCount}</span>
                 )}
               </button>
             );
