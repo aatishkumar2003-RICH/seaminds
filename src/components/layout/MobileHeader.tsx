@@ -1,5 +1,6 @@
 import React from "react";
 import { type Screen } from "./types";
+import seamindsLogo from "@/assets/seaminds-logo.png";
 
 interface MobileHeaderProps {
   onMenuOpen: () => void;

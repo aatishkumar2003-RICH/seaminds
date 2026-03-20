@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '@/integrations/supabase/client';
+import seamindsLogo from "@/assets/seaminds-logo.png";
 
 const Verify = () => {
   const { id } = useParams<{ id: string }>();
