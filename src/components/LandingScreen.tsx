@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Shield, Heart, Globe } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Shield, Heart, Globe, ArrowLeft } from "lucide-react";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { checkRateLimit } from "@/lib/rateLimiter";
@@ -10,6 +11,7 @@ interface LandingScreenProps {
 }
 
 const LandingScreen = ({ onGetStarted, onManagerLogin }: LandingScreenProps) => {
+  const navigate = useNavigate();
   const handleGoogleLogin = async () => {
     if (!(await checkRateLimit())) return;
     await supabase.auth.signInWithOAuth({
@@ -61,7 +63,14 @@ const LandingScreen = ({ onGetStarted, onManagerLogin }: LandingScreenProps) => 
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full px-8 text-center">
+    <div className="flex flex-col items-center justify-center h-full px-8 text-center relative">
+      <button
+        onClick={() => navigate("/")}
+        className="absolute top-4 left-4 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Home
+      </button>
       <img src={seamindsLogo} alt="SeaMinds Logo" className="w-24 h-24 mb-4" />
 
       <h1 className="text-3xl font-bold text-foreground gold-glow mb-1">SeaMinds</h1>
