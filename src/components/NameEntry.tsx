@@ -50,18 +50,46 @@ const NATIONALITIES = [
   "Nigerian", "Ghanaian", "Kenyan", "Brazilian", "Other",
 ];
 const COUNTRY_CODES = [
-  { code: "+63", label: "🇵🇭 +63" },
-  { code: "+91", label: "🇮🇳 +91" },
-  { code: "+62", label: "🇮🇩 +62" },
-  { code: "+380", label: "🇺🇦 +380" },
-  { code: "+7", label: "🇷🇺 +7" },
-  { code: "+86", label: "🇨🇳 +86" },
-  { code: "+95", label: "🇲🇲 +95" },
-  { code: "+880", label: "🇧🇩 +880" },
-  { code: "+385", label: "🇭🇷 +385" },
-  { code: "+30", label: "🇬🇷 +30" },
-  { code: "+44", label: "🇬🇧 +44" },
-  { code: "+1", label: "🇺🇸 +1" },
+  { flag: '🇵🇭', name: 'Philippines', code: '+63' },
+  { flag: '🇮🇳', name: 'India', code: '+91' },
+  { flag: '🇮🇩', name: 'Indonesia', code: '+62' },
+  { flag: '🇨🇳', name: 'China', code: '+86' },
+  { flag: '🇷🇺', name: 'Russia', code: '+7' },
+  { flag: '🇺🇦', name: 'Ukraine', code: '+380' },
+  { flag: '🇻🇳', name: 'Vietnam', code: '+84' },
+  { flag: '🇲🇲', name: 'Myanmar', code: '+95' },
+  { flag: '🇧🇩', name: 'Bangladesh', code: '+880' },
+  { flag: '🇱🇰', name: 'Sri Lanka', code: '+94' },
+  { flag: '🇹🇷', name: 'Turkey', code: '+90' },
+  { flag: '🇬🇷', name: 'Greece', code: '+30' },
+  { flag: '🇭🇷', name: 'Croatia', code: '+385' },
+  { flag: '🇷🇴', name: 'Romania', code: '+40' },
+  { flag: '🇵🇱', name: 'Poland', code: '+48' },
+  { flag: '🇬🇧', name: 'United Kingdom', code: '+44' },
+  { flag: '🇳🇬', name: 'Nigeria', code: '+234' },
+  { flag: '🇬🇭', name: 'Ghana', code: '+233' },
+  { flag: '🇰🇪', name: 'Kenya', code: '+254' },
+  { flag: '🇿🇦', name: 'South Africa', code: '+27' },
+  { flag: '🇪🇬', name: 'Egypt', code: '+20' },
+  { flag: '🇲🇦', name: 'Morocco', code: '+212' },
+  { flag: '🇵🇰', name: 'Pakistan', code: '+92' },
+  { flag: '🇳🇵', name: 'Nepal', code: '+977' },
+  { flag: '🇲🇻', name: 'Maldives', code: '+960' },
+  { flag: '🇸🇬', name: 'Singapore', code: '+65' },
+  { flag: '🇲🇾', name: 'Malaysia', code: '+60' },
+  { flag: '🇹🇭', name: 'Thailand', code: '+66' },
+  { flag: '🇰🇷', name: 'South Korea', code: '+82' },
+  { flag: '🇯🇵', name: 'Japan', code: '+81' },
+  { flag: '🇧🇷', name: 'Brazil', code: '+55' },
+  { flag: '🇵🇪', name: 'Peru', code: '+51' },
+  { flag: '🇦🇷', name: 'Argentina', code: '+54' },
+  { flag: '🇲🇽', name: 'Mexico', code: '+52' },
+  { flag: '🇺🇸', name: 'USA', code: '+1' },
+  { flag: '🇨🇦', name: 'Canada', code: '+1' },
+  { flag: '🇦🇺', name: 'Australia', code: '+61' },
+  { flag: '🇳🇿', name: 'New Zealand', code: '+64' },
+  { flag: '🇮🇹', name: 'Italy', code: '+39' },
+  { flag: '🇩🇪', name: 'Germany', code: '+49' },
 ];
 
 const selectClass = "w-full bg-secondary text-foreground text-sm rounded-xl px-4 py-3 outline-none focus:ring-1 focus:ring-primary appearance-none";
@@ -326,19 +354,17 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
           {/* Manning Agent Phone */}
           <div className="space-y-1.5">
             <label className={labelClass}>Manning Agent Phone (WhatsApp preferred)</label>
-            <div className="flex gap-2">
-              <div className="relative w-28 shrink-0">
-                <select value={agentCountryCode} onChange={(e) => setAgentCountryCode(e.target.value)} className={selectClass}>
-                  {COUNTRY_CODES.map((c) => <option key={c.code} value={c.code}>{c.label}</option>)}
-                </select>
-                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-              </div>
+            <div className="flex w-full gap-2">
+              <select value={agentCountryCode} onChange={(e) => setAgentCountryCode(e.target.value)} className="w-28 rounded-xl border border-border bg-secondary px-2 py-3 text-sm text-foreground outline-none focus:border-primary shrink-0">
+                {COUNTRY_CODES.map((c) => <option key={c.code + c.name} value={c.code}>{c.flag} {c.code}</option>)}
+              </select>
               <input
                 type="tel"
+                inputMode="numeric"
                 value={manningAgentPhone}
                 onChange={(e) => setManningAgentPhone(e.target.value.replace(/[^0-9]/g, ""))}
-                placeholder="9171234567"
-                className={inputClass}
+                placeholder="Agent WhatsApp number"
+                className="flex-1 rounded-xl border border-border bg-secondary px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary"
               />
             </div>
           </div>
@@ -378,19 +404,17 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
           {/* WhatsApp Number */}
           <div className="space-y-1.5">
             <label className={labelClass}>WhatsApp Number *</label>
-            <div className="flex gap-2">
-              <div className="relative w-28 shrink-0">
-                <select value={countryCode} onChange={(e) => setCountryCode(e.target.value)} className={selectClass}>
-                  {COUNTRY_CODES.map((c) => <option key={c.code} value={c.code}>{c.label}</option>)}
-                </select>
-                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-              </div>
+            <div className="flex w-full gap-2">
+              <select value={countryCode} onChange={(e) => setCountryCode(e.target.value)} className="w-28 rounded-xl border border-border bg-secondary px-2 py-3 text-sm text-foreground outline-none focus:border-primary shrink-0">
+                {COUNTRY_CODES.map((c) => <option key={c.code + c.name} value={c.code}>{c.flag} {c.code}</option>)}
+              </select>
               <input
                 type="tel"
+                inputMode="numeric"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value.replace(/[^0-9]/g, ""))}
-                placeholder="9171234567"
-                className={inputClass}
+                placeholder="WhatsApp number"
+                className="flex-1 rounded-xl border border-border bg-secondary px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary"
               />
             </div>
           </div>
