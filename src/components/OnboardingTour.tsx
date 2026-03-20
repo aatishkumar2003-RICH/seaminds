@@ -2,16 +2,18 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { X, ChevronRight, ChevronLeft, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import seamindsLogo from "@/assets/seaminds-logo.png";
+import type { Screen } from "@/components/layout/types";
 
 /* ─── Tour step definition ─── */
 
 interface TourStep {
-  icon: string;            // emoji or "__LOGO__"
-  label: string;           // short tab name
-  title: string;           // card heading
-  description: string;     // what this tab does & why it matters
-  accent: string;          // HSL for tint
-  tip?: string;            // pro-tip line
+  icon: string;
+  label: string;
+  title: string;
+  description: string;
+  accent: string;
+  tip?: string;
+  screen?: Screen;
 }
 
 const TOUR_STEPS: TourStep[] = [
@@ -30,6 +32,7 @@ const TOUR_STEPS: TourStep[] = [
     description: "Talk to an AI trained on maritime life — isolation, fatigue, homesickness. 100% confidential. Available 24/7, even on low bandwidth.",
     accent: "199 89% 48%",
     tip: "Your conversations are never shared with anyone",
+    screen: "chat",
   },
   {
     icon: "❤️",
@@ -38,6 +41,7 @@ const TOUR_STEPS: TourStep[] = [
     description: "Track your mood daily and build a wellness streak. See patterns, get AI insights, and take care of your mental health on board.",
     accent: "0 84% 60%",
     tip: "Check in daily to build your streak — it takes 10 seconds",
+    screen: "dashboard",
   },
   {
     icon: "⏱",
@@ -45,6 +49,7 @@ const TOUR_STEPS: TourStep[] = [
     title: "STCW Rest Hours Log",
     description: "Log work and rest hours with automatic MLC 2006 compliance checking. Never fail a PSC inspection on rest hours again.",
     accent: "199 89% 48%",
+    screen: "resthours",
   },
   {
     icon: "🏆",
@@ -53,6 +58,7 @@ const TOUR_STEPS: TourStep[] = [
     description: "Get your AI-verified competency rating from 0.00 to 5.00. Technical skills, communication, behaviour — all assessed. Employers trust it.",
     accent: "43 96% 56%",
     tip: "Free for the first 1,000 seafarers",
+    screen: "smc",
   },
   {
     icon: "💼",
@@ -60,6 +66,7 @@ const TOUR_STEPS: TourStep[] = [
     title: "Job Marketplace",
     description: "Find verified maritime positions worldwide. Filter by rank, vessel type, and salary. Apply directly — no agent middlemen.",
     accent: "142 71% 45%",
+    screen: "opportunities",
   },
   {
     icon: "📄",
@@ -67,6 +74,7 @@ const TOUR_STEPS: TourStep[] = [
     title: "Maritime CV Builder",
     description: "Build a professional maritime resume in minutes. AI auto-fills from your profile. Download as PDF with QR verification.",
     accent: "262 83% 58%",
+    screen: "resume",
   },
   {
     icon: "🎓",
@@ -74,6 +82,7 @@ const TOUR_STEPS: TourStep[] = [
     title: "Maritime Academy",
     description: "SIRE 2.0 prep, PSC inspection guides, ITF rights, vessel-specific drills. Study smart for your next promotion or inspection.",
     accent: "199 89% 48%",
+    screen: "academy",
   },
   {
     icon: "🔧",
@@ -81,6 +90,7 @@ const TOUR_STEPS: TourStep[] = [
     title: "Equipment & PMS Tools",
     description: "AI-powered equipment diagnosis, maintenance scheduling, and technical lookups. Your digital toolkit for onboard operations.",
     accent: "43 96% 56%",
+    screen: "bridge",
   },
   {
     icon: "👥",
@@ -88,6 +98,7 @@ const TOUR_STEPS: TourStep[] = [
     title: "Anonymous Crew Community",
     description: "Connect with seafarers worldwide. Share experiences, ask questions, rate vessels — all completely anonymous.",
     accent: "142 71% 45%",
+    screen: "community",
   },
   {
     icon: "⭐",
@@ -96,6 +107,7 @@ const TOUR_STEPS: TourStep[] = [
     description: "Rate your ship anonymously across food, accommodation, safety, internet & more. Help fellow seafarers choose better vessels — your identity is never revealed.",
     accent: "43 96% 56%",
     tip: "Ratings are 100% anonymous — no user ID is ever stored",
+    screen: "vesselrating",
   },
   {
     icon: "📜",
@@ -103,6 +115,7 @@ const TOUR_STEPS: TourStep[] = [
     title: "Certificate Wallet",
     description: "Store all your certificates digitally. Get reminders before expiry. Never miss a renewal deadline again.",
     accent: "262 83% 58%",
+    screen: "certs",
   },
   {
     icon: "📰",
@@ -110,6 +123,7 @@ const TOUR_STEPS: TourStep[] = [
     title: "Maritime News",
     description: "Stay updated with curated maritime news, safety bulletins, and industry updates relevant to your rank and vessel type.",
     accent: "199 89% 48%",
+    screen: "news",
   },
   {
     icon: "🚨",
@@ -127,12 +141,13 @@ interface OnboardingTourProps {
   enabled: boolean;
   forceShow?: boolean;
   onForceShowConsumed?: () => void;
+  onNavigate?: (screen: Screen) => void;
 }
 
-const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed }: OnboardingTourProps) => {
+const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed, onNavigate }: OnboardingTourProps) => {
   const [step, setStep] = useState(0);
   const [visible, setVisible] = useState(false);
-  const [direction, setDirection] = useState(1); // 1 = forward, -1 = back
+  const [direction, setDirection] = useState(1);
   const [showConfetti, setShowConfetti] = useState(false);
   const confettiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -151,6 +166,15 @@ const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed }: OnboardingT
       onForceShowConsumed?.();
     }
   }, [forceShow, enabled, onForceShowConsumed]);
+
+  // Auto-navigate to the corresponding screen when step changes
+  useEffect(() => {
+    if (!visible || !onNavigate) return;
+    const current = TOUR_STEPS[step];
+    if (current?.screen) {
+      onNavigate(current.screen);
+    }
+  }, [step, visible, onNavigate]);
 
   const dismiss = () => {
     setVisible(false);
@@ -195,6 +219,11 @@ const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed }: OnboardingT
       setDirection(-1);
       setStep(step - 1);
     }
+  };
+
+  const jumpTo = (i: number) => {
+    setDirection(i > step ? 1 : -1);
+    setStep(i);
   };
 
   useEffect(() => {
@@ -249,7 +278,6 @@ const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed }: OnboardingT
     );
   }
 
-  // Slide animation variants
   const slideVariants = {
     enter: (dir: number) => ({ x: dir > 0 ? 80 : -80, opacity: 0, scale: 0.95 }),
     center: { x: 0, opacity: 1, scale: 1 },
@@ -293,7 +321,6 @@ const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed }: OnboardingT
           </div>
 
           <div className="p-5">
-            {/* Header row: step counter + skip */}
             <div className="flex items-center justify-between mb-4">
               <span className="text-[10px] font-semibold tracking-widest text-muted-foreground uppercase">
                 {step + 1} / {TOUR_STEPS.length}
@@ -306,7 +333,6 @@ const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed }: OnboardingT
               </button>
             </div>
 
-            {/* Icon + Label badge */}
             <div className="flex items-center gap-3 mb-3">
               <motion.div
                 className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
@@ -345,7 +371,6 @@ const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed }: OnboardingT
               </div>
             </div>
 
-            {/* Description */}
             <motion.p
               className="text-sm text-muted-foreground leading-relaxed mb-4"
               initial={{ y: 10, opacity: 0 }}
@@ -355,7 +380,6 @@ const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed }: OnboardingT
               {current.description}
             </motion.p>
 
-            {/* Pro tip */}
             {current.tip && (
               <motion.div
                 className="flex items-start gap-2 rounded-lg px-3 py-2.5 mb-4"
@@ -372,12 +396,11 @@ const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed }: OnboardingT
               </motion.div>
             )}
 
-            {/* Tab preview dots — mini map of all tabs */}
             <div className="flex flex-wrap gap-1.5 mb-5">
               {TOUR_STEPS.map((s, i) => (
                 <motion.button
                   key={i}
-                  onClick={() => { setDirection(i > step ? 1 : -1); setStep(i); }}
+                  onClick={() => jumpTo(i)}
                   className="flex items-center gap-1 rounded-full px-2 py-1 text-[10px] transition-all cursor-pointer"
                   style={{
                     background: i === step ? `hsl(${s.accent} / 0.2)` : "hsl(var(--muted) / 0.15)",
@@ -394,7 +417,6 @@ const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed }: OnboardingT
               ))}
             </div>
 
-            {/* Navigation */}
             <div className="flex items-center justify-between">
               {!isFirst ? (
                 <button
