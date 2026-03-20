@@ -149,6 +149,13 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
   const [formError, setFormError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  // Auto-select country code when nationality changes
+  useEffect(() => {
+    if (nationality && NATIONALITY_TO_CODE[nationality]) {
+      setCountryCode(NATIONALITY_TO_CODE[nationality]);
+    }
+  }, [nationality]);
+
   const canSubmit =
     firstName.trim() && lastName.trim() && shipName.trim() && role &&
     nationality.trim() && yearsAtSea && phoneNumber.trim();
