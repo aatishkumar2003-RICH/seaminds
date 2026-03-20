@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { Anchor, ChevronDown, CalendarIcon } from "lucide-react";
+import { ChevronDown, CalendarIcon } from "lucide-react";
+import seamindsLogo from "@/assets/seaminds-logo.png";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
