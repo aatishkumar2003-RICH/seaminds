@@ -875,7 +875,20 @@ const Index = () => {
             </div>
           </div>
 
+        {/* Mobile stats summary strip */}
+        <div
+          className="lg:hidden flex items-center justify-between px-3 py-1 cursor-pointer"
+          onClick={() => setStatsOpen(!statsOpen)}
+        >
+          <div className="flex items-center gap-3 text-xs text-gray-400">
+            <span>🔥 {streakCount}d</span>
+            <span className="text-[#D4AF37] font-semibold">SMC {smcScore || '—'}</span>
+          </div>
+          <span className="text-gray-500 text-xs">{statsOpen ? '▲' : '▼'}</span>
+        </div>
+
         {/* Quick Stats Row */}
+        <div className={`lg:block transition-all duration-300 overflow-hidden ${statsOpen ? 'max-h-24' : 'max-h-0 lg:max-h-none'}`}>
         <div className="grid grid-cols-4 gap-1 lg:gap-2 mt-2 pb-1 -mx-1 px-1">
           {(() => {
             const certsRaw = localStorage.getItem("seaminds_certs");
@@ -931,6 +944,7 @@ const Index = () => {
               </>
             );
           })()}
+        </div>
         </div>
 
         {/* Daily Motivational Quote */}
