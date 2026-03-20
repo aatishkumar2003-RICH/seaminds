@@ -30,21 +30,21 @@ button, a, [role="button"] { touch-action: manipulation; cursor: pointer; }
     --muted: 220 35% 14%;
     --muted-foreground: 215 15% 55%;
 
-    --accent: 32 45% 64%;
-    --accent-foreground: 220 50% 8%;
+    --accent: 210 30% 25%;
+    --accent-foreground: 210 20% 90%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 220 30% 18%;
     --input: 220 30% 18%;
-    --ring: 32 45% 64%;
+    --ring: 210 40% 50%;
 
     --radius: 0.75rem;
 
     --sidebar-background: 220 45% 10%;
     --sidebar-foreground: 210 20% 90%;
-    --sidebar-primary: 32 45% 64%;
+    --sidebar-primary: 210 40% 90%;
     --sidebar-primary-foreground: 220 50% 8%;
     --sidebar-accent: 220 40% 16%;
     --sidebar-accent-foreground: 210 20% 85%;
