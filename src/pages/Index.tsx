@@ -722,7 +722,7 @@ const Index = () => {
 
 
       <div
-        className={`fixed top-0 left-0 h-full w-52 z-50 lg:hidden ${!isSwiping && !isEdgeSwiping ? 'transition-transform duration-300 ease-in-out' : ''}`}
+        className={`fixed top-0 left-0 h-full w-44 z-50 lg:hidden ${!isSwiping && !isEdgeSwiping ? 'transition-transform duration-300 ease-in-out' : ''}`}
         style={{
           background: "#0D1B2A",
           borderRight: '1px solid rgba(255,255,255,0.05)',
