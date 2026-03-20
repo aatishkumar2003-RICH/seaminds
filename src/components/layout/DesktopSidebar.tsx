@@ -3,6 +3,7 @@ import { LogOut, HelpCircle } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import SOSButton from "@/components/SOSButton";
 import { NAV_ITEMS, type NavItem, type Screen } from "./types";
+import seamindsLogo from "@/assets/seaminds-logo.png";
 
 interface DesktopSidebarProps {
   screen: Screen;
