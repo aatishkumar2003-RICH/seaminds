@@ -1180,7 +1180,7 @@ const Index = () => {
         </div>
       )}
       <OnboardingTour enabled={appState === "main"} forceShow={forceTour} onForceShowConsumed={() => setForceTour(false)} />
-    </div>
+    </>
   );
 };
 
