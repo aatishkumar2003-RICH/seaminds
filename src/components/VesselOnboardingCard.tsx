@@ -75,7 +75,7 @@ const VesselOnboardingCard = ({ profileId, existingShipName, existingRole, onBac
     "w-full bg-[#132236] border border-[#1e3a5f] rounded-xl px-4 py-3 text-white text-sm focus:border-[#D4AF37] focus:outline-none placeholder:text-gray-600";
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 overflow-y-auto px-6 pb-8 text-center" style={{ background: "#0D1B2A" }}>
+    <div className="flex flex-col flex-1 min-h-0 overflow-y-auto px-6 pb-24 text-center" style={{ background: "#0D1B2A" }}>
       {/* Header row with back arrow */}
       <div className="flex items-center justify-between sticky top-0 py-3 z-10" style={{ background: "#0D1B2A" }}>
         {onBack ? (

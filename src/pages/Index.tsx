@@ -623,7 +623,7 @@ const Index = () => {
             )}
 
             {/* Main content area */}
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-y-auto">
               {screen === "chat" && jobMatch && (
                 <div className="mx-4 mb-2 flex items-center justify-between gap-2 rounded-[10px] border p-[10px]"
                   style={{ borderColor: "rgba(255,255,255,0.2)", background: "rgba(26, 58, 92, 0.9)" }}>
