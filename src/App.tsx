@@ -102,7 +102,7 @@ const App = () => (
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/for-companies" element={<ScrollRedirect hash="companies" />} />
-            <Route path="/smc-score" element={<ScrollRedirect hash="smc" />} />
+            <Route path="/smc-score" element={<ScrollRedirect hash="smc-score" />} />
             <Route path="/jobs" element={<Navigate to="/app" replace />} />
             <Route path="/for-seafarers" element={<Navigate to="/app" replace />} />
             <Route path="/verify/:id" element={<Verify />} />
