@@ -251,6 +251,7 @@ const Index = () => {
     gender: string; nationality: string; whatsappNumber: string; yearsAtSea: string;
     voyageStartDate: string; manningAgency: string; vesselImo: string;
     manningAgentPhone: string; portOfJoining: string; vesselType: string;
+    dateOfBirth: string;
   }, cvFile?: File) => {
     const uid = authUser?.id;
     const insertData: Record<string, any> = {
