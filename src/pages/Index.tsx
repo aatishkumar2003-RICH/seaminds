@@ -105,6 +105,7 @@ const Index = () => {
   const [isEdgeSwiping, setIsEdgeSwiping] = useState(false);
   const [showSwipeHint, setShowSwipeHint] = useState(false);
   const [forceTour, setForceTour] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(false);
 
   useEffect(() => {
     if (!localStorage.getItem('seamind_swipe_hint_seen')) setShowSwipeHint(true);
