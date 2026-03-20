@@ -40,7 +40,12 @@ const ThemeColorManager = () => {
       Object.entries(attributes).forEach(([key, value]) => meta!.setAttribute(key, value));
     };
 
-    upsertThemeMeta('meta[name="theme-color"]', { name: "theme-color", content: APP_THEME_COLOR });
+    // Force all theme-color variants to dark navy to prevent gold bleed-through
+    document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
+      (meta as HTMLMetaElement).setAttribute("content", APP_THEME_COLOR);
+    });
+    upsertThemeMeta('meta[name="theme-color"]:not([media])', { name: "theme-color", content: APP_THEME_COLOR });
+    upsertThemeMeta('meta[name="color-scheme"]', { name: "color-scheme", content: "dark" });
     upsertThemeMeta('meta[name="apple-mobile-web-app-status-bar-style"]', {
       name: "apple-mobile-web-app-status-bar-style",
       content: "black",

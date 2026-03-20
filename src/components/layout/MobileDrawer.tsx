@@ -64,8 +64,8 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
       }}
     >
       <button onClick={() => setDrawerOpen(false)} className="absolute right-4 top-4 text-lg text-muted-foreground transition-colors hover:text-foreground">✕</button>
-      <div className="mb-4 flex items-center gap-1">
-        <span className="rounded bg-secondary px-1.5 py-0.5 text-xs font-bold text-foreground/80">SM</span>
+      <div className="mb-4 flex items-center gap-2">
+        <img src={seamindsLogo} alt="SeaMinds" className="h-6 w-6 rounded object-contain" />
         <span className="text-sm font-bold text-foreground/80">SeaMinds</span>
       </div>
       <div className="mb-6 flex items-center gap-2 px-1">
