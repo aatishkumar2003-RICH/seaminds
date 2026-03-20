@@ -10,6 +10,7 @@ interface DesktopSidebarProps {
   jobBadgeCount: number;
   firstName: string;
   shipName: string;
+  tourActiveScreen?: Screen | null;
   onNavClick: (item: NavItem) => void;
   onReplayTour: () => void;
   onSignOut: () => void;
