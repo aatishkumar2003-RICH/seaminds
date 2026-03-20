@@ -120,7 +120,7 @@ const Index = () => {
 
   // Swipe from left edge to open drawer
   useEffect(() => {
-    const DRAWER_W = 208; // w-52
+    const DRAWER_W = 176; // w-44
     const handleTouchStart = (e: TouchEvent) => {
       if (drawerOpen) return;
       const x = e.touches[0].clientX;
