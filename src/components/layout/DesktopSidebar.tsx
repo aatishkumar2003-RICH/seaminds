@@ -10,13 +10,14 @@ interface DesktopSidebarProps {
   jobBadgeCount: number;
   firstName: string;
   shipName: string;
+  tourActiveScreen?: Screen | null;
   onNavClick: (item: NavItem) => void;
   onReplayTour: () => void;
   onSignOut: () => void;
 }
 
 const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
-  screen, streakCount, jobBadgeCount, firstName, shipName,
+  screen, streakCount, jobBadgeCount, firstName, shipName, tourActiveScreen,
   onNavClick, onReplayTour, onSignOut,
 }) => {
   return (
@@ -45,7 +46,10 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                     if (!active) e.currentTarget.style.background = "transparent";
                   }}
                 >
-                  <span>{item.icon}</span>
+                  <span className={tourActiveScreen === item.screen ? "animate-pulse" : ""}>{item.icon}</span>
+                  {tourActiveScreen === item.screen && (
+                    <span className="absolute inset-0 rounded-md animate-ping opacity-15 bg-primary" />
+                  )}
                   {item.screen === "opportunities" && jobBadgeCount > 0 && (
                     <span className="absolute right-0.5 top-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-primary text-[7px] font-bold text-primary-foreground">
                       {jobBadgeCount}

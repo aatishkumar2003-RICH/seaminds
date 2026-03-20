@@ -142,9 +142,10 @@ interface OnboardingTourProps {
   forceShow?: boolean;
   onForceShowConsumed?: () => void;
   onNavigate?: (screen: Screen) => void;
+  onDismiss?: () => void;
 }
 
-const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed, onNavigate }: OnboardingTourProps) => {
+const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed, onNavigate, onDismiss }: OnboardingTourProps) => {
   const [step, setStep] = useState(0);
   const [visible, setVisible] = useState(false);
   const [direction, setDirection] = useState(1);
@@ -179,6 +180,7 @@ const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed, onNavigate }:
   const dismiss = () => {
     setVisible(false);
     localStorage.setItem(STORAGE_KEY, "1");
+    onDismiss?.();
   };
 
   const playCelebrationChime = () => {

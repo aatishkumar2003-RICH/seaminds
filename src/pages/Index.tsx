@@ -43,6 +43,7 @@ const Index = () => {
   const timeOfDay = useTimeOfDay();
   const [appState, setAppState] = useState<AppState>("loading");
   const [screen, setScreen] = useState<Screen>("chat");
+  const [tourActiveScreen, setTourActiveScreen] = useState<Screen | null>(null);
   const [prevScreen, setPrevScreen] = useState<Screen | null>(null);
   const [profileId, setProfileId] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -413,7 +414,7 @@ const Index = () => {
     showSwipeHint,
     onSwipeHintEnd: () => { setShowSwipeHint(false); localStorage.setItem("seamind_swipe_hint_seen", "1"); },
     screen, appState, firstName, lastName, nationality, role,
-    streakCount, jobBadgeCount, shipName,
+    streakCount, jobBadgeCount, shipName, tourActiveScreen,
     onNavClick: handleNavClick,
     onNavigateToNews: () => navigateTo("news"),
     onReplayTour: () => { setForceTour(true); setDrawerOpen(false); },
@@ -523,7 +524,7 @@ const Index = () => {
       <div className="relative flex h-screen w-full flex-col overflow-hidden bg-background lg:flex-row">
         <DesktopSidebar
           screen={screen} streakCount={streakCount} jobBadgeCount={jobBadgeCount}
-          firstName={firstName} shipName={shipName}
+          firstName={firstName} shipName={shipName} tourActiveScreen={tourActiveScreen}
           onNavClick={handleNavClick} onReplayTour={() => setForceTour(true)} onSignOut={handleSignOut}
         />
 
@@ -747,7 +748,7 @@ const Index = () => {
           </div>
         )}
       </div>
-      <OnboardingTour enabled={appState === "main"} forceShow={forceTour} onForceShowConsumed={() => setForceTour(false)} onNavigate={navigateTo} />
+      <OnboardingTour enabled={appState === "main"} forceShow={forceTour} onForceShowConsumed={() => setForceTour(false)} onNavigate={(s) => { navigateTo(s); setTourActiveScreen(s); }} onDismiss={() => setTourActiveScreen(null)} />
     </>
   );
 };

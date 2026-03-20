@@ -27,6 +27,7 @@ interface MobileChromeProps {
   jobBadgeCount: number;
   shipName: string;
   showBackToNews?: boolean;
+  tourActiveScreen?: Screen | null;
   onNavClick: (item: NavItem) => void;
   onNavigateToNews: () => void;
   onReplayTour: () => void;
