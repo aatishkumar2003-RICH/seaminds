@@ -679,7 +679,7 @@ const Index = () => {
         </nav>
         {/* Bottom section */}
         <div className="mt-auto flex flex-col gap-2">
-          <div className="flex items-center justify-center gap-2 py-1.5 rounded-full text-xs font-medium" style={{ background: "rgba(212,175,55,0.12)", color: "#D4AF37" }}>
+          <div className="flex items-center justify-center gap-2 py-1.5 rounded-full text-xs font-medium" style={{ background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.6)" }}>
             🔥 {streakCount} day streak
           </div>
           <button onClick={() => setForceTour(true)} className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-2">
