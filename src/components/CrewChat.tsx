@@ -4,7 +4,7 @@ import { Send } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useWellnessStreak } from "@/hooks/useWellnessStreak";
-import StreakDisplay from "@/components/chat/StreakDisplay";
+
 import GoDeepCard from "@/components/GoDeepCard";
 
 interface Message {
