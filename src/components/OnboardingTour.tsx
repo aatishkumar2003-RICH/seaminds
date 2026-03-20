@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { X, ChevronRight, ChevronLeft, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import seamindsLogo from "@/assets/seaminds-logo.png";
 
 /* ────────────────────────────────────────────
    Tour step types
@@ -35,7 +36,7 @@ const TOUR_STEPS: TourStep[] = [
   // Step 1: Welcome — what is SeaMinds
   {
     type: "fullscreen",
-    icon: "⚓",
+    icon: "__LOGO__",
     title: "Welcome to SeaMinds",
     subtitle: "Your private companion at sea — built with 10,000+ seafarers across 35 countries.",
     bullets: [
@@ -283,7 +284,11 @@ const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed }: OnboardingT
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 18, delay: 0.1 }}
           >
-            {fs.icon}
+            {fs.icon === "__LOGO__" ? (
+              <img src={seamindsLogo} alt="SeaMinds" className="w-16 h-16 rounded-xl object-contain" />
+            ) : (
+              fs.icon
+            )}
           </motion.div>
 
           {/* Title */}
