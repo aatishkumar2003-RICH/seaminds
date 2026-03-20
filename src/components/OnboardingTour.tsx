@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { X, ChevronRight, ChevronLeft, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import seamindsLogo from "@/assets/seaminds-logo.png";
 
 /* ────────────────────────────────────────────
    Tour step types
