@@ -240,6 +240,7 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
         manningAgentPhone: manningAgentPhone.trim() ? `${agentCountryCode}${manningAgentPhone.trim()}` : "",
         portOfJoining: portOfJoiningVal.trim(),
         vesselType: vesselTypeVal,
+        dateOfBirth: dateOfBirth ? format(dateOfBirth, "yyyy-MM-dd") : "",
       }, cvFile);
       if (errorMsg) setFormError(errorMsg);
       else await logEvent('crew_signup', 'New crew signed up', 'info', { name: `${firstName.trim()} ${lastName.trim()}`, rank: role, nationality: nationality.trim() });
