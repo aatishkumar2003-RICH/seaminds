@@ -6,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import CvUpload from "@/components/CvUpload";
+import CountryCodeSelect from "@/components/CountryCodeSelect";
 import { logEvent } from "@/lib/logEvent";
 
 interface NameEntryProps {
