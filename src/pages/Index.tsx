@@ -251,6 +251,7 @@ const Index = () => {
     gender: string; nationality: string; whatsappNumber: string; yearsAtSea: string;
     voyageStartDate: string; manningAgency: string; vesselImo: string;
     manningAgentPhone: string; portOfJoining: string; vesselType: string;
+    dateOfBirth: string;
   }, cvFile?: File) => {
     const uid = authUser?.id;
     const insertData: Record<string, any> = {
@@ -262,6 +263,7 @@ const Index = () => {
       manning_agency: profile.manningAgency || null, vessel_imo: profile.vesselImo || null,
       manning_agent_phone: profile.manningAgentPhone || null,
       port_of_joining: profile.portOfJoining || null, vessel_type: profile.vesselType || null,
+      date_of_birth: profile.dateOfBirth || null,
       onboarded: true, onboarding_complete: true,
     };
     const year = new Date().getFullYear();

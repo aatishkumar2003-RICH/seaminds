@@ -25,6 +25,7 @@ interface NameEntryProps {
     manningAgentPhone: string;
     portOfJoining: string;
     vesselType: string;
+    dateOfBirth: string;
   }, cvFile?: File) => Promise<string | undefined> | void;
 }
 
@@ -182,6 +183,7 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [yearsAtSea, setYearsAtSea] = useState("");
   const [voyageStartDate, setVoyageStartDate] = useState<Date>();
+  const [dateOfBirth, setDateOfBirth] = useState<Date>();
   const [manningAgency, setManningAgency] = useState("");
   const [vesselImo, setVesselImo] = useState("");
   const [agencyFilter, setAgencyFilter] = useState("");
@@ -238,6 +240,7 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
         manningAgentPhone: manningAgentPhone.trim() ? `${agentCountryCode}${manningAgentPhone.trim()}` : "",
         portOfJoining: portOfJoiningVal.trim(),
         vesselType: vesselTypeVal,
+        dateOfBirth: dateOfBirth ? format(dateOfBirth, "yyyy-MM-dd") : "",
       }, cvFile);
       if (errorMsg) setFormError(errorMsg);
       else await logEvent('crew_signup', 'New crew signed up', 'info', { name: `${firstName.trim()} ${lastName.trim()}`, rank: role, nationality: nationality.trim() });
@@ -312,7 +315,7 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
           </div>
 
 
-          {/* Voyage Start Date */}
+          {/* Voyage Start Date + Date of Birth */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className={labelClass}>Voyage Start Date</label>
@@ -342,7 +345,34 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
                 </PopoverContent>
               </Popover>
             </div>
-            <div />
+            <div className="space-y-1.5">
+              <label className={labelClass}>Date of Birth</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className={cn(
+                      selectClass,
+                      "flex items-center justify-between text-left",
+                      !dateOfBirth && "text-muted-foreground"
+                    )}
+                  >
+                    {dateOfBirth ? format(dateOfBirth, "PPP") : "Select date"}
+                    <CalendarIcon size={16} className="text-muted-foreground" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dateOfBirth}
+                    onSelect={setDateOfBirth}
+                    disabled={(date) => date > new Date() || date < new Date("1940-01-01")}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
 
           {/* Role + Gender */}
