@@ -635,7 +635,7 @@ const Index = () => {
   return (
     <div className="flex flex-col lg:flex-row h-screen w-full bg-background relative overflow-hidden">
       {/* === DESKTOP SIDEBAR (lg+) === */}
-      <aside className="hidden lg:flex w-64 h-screen flex-col flex-shrink-0 border-r border-border" style={{ background: "#0D1B2A", padding: "24px 16px" }}>
+      <aside className="hidden lg:flex w-52 h-screen flex-col flex-shrink-0 border-r border-border" style={{ background: "#0D1B2A", padding: "24px 16px" }}>
         {/* Logo */}
         <div className="flex items-center gap-2 mb-6">
           <span className="text-lg font-bold px-2 py-0.5 rounded" style={{ background: "rgba(212,175,55,0.15)", color: "#D4AF37" }}>SM</span>
