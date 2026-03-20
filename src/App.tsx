@@ -29,7 +29,9 @@ const ThemeColorManager = () => {
 
   useEffect(() => {
     document.documentElement.style.backgroundColor = APP_THEME_COLOR;
+    document.documentElement.style.colorScheme = "dark";
     document.body.style.backgroundColor = APP_THEME_COLOR;
+    document.body.style.colorScheme = "dark";
 
     const upsertThemeMeta = (selector: string, attributes: Record<string, string>) => {
       let meta = document.head.querySelector(selector) as HTMLMetaElement | null;
@@ -40,12 +42,22 @@ const ThemeColorManager = () => {
       Object.entries(attributes).forEach(([key, value]) => meta!.setAttribute(key, value));
     };
 
-    // Force all theme-color variants to dark navy to prevent gold bleed-through
     document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
       (meta as HTMLMetaElement).setAttribute("content", APP_THEME_COLOR);
     });
+
     upsertThemeMeta('meta[name="theme-color"]:not([media])', { name: "theme-color", content: APP_THEME_COLOR });
-    upsertThemeMeta('meta[name="color-scheme"]', { name: "color-scheme", content: "dark" });
+    upsertThemeMeta('meta[name="theme-color"][media="(prefers-color-scheme: dark)"]', {
+      name: "theme-color",
+      media: "(prefers-color-scheme: dark)",
+      content: APP_THEME_COLOR,
+    });
+    upsertThemeMeta('meta[name="theme-color"][media="(prefers-color-scheme: light)"]', {
+      name: "theme-color",
+      media: "(prefers-color-scheme: light)",
+      content: APP_THEME_COLOR,
+    });
+    upsertThemeMeta('meta[name="color-scheme"]', { name: "color-scheme", content: "dark only" });
     upsertThemeMeta('meta[name="apple-mobile-web-app-status-bar-style"]', {
       name: "apple-mobile-web-app-status-bar-style",
       content: "black",

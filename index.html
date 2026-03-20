@@ -65,6 +65,25 @@
     </script>
 
     <!-- GA4 loaded dynamically after cookie consent -->
+    <script>
+      (function () {
+        var themeColor = "#0D1B2A";
+        var root = document.documentElement;
+        var body = document.body;
+
+        root.style.backgroundColor = themeColor;
+        root.style.colorScheme = "dark";
+
+        if (body) {
+          body.style.backgroundColor = themeColor;
+        }
+
+        var metas = document.querySelectorAll('meta[name="theme-color"]');
+        metas.forEach(function (meta) {
+          meta.setAttribute("content", themeColor);
+        });
+      })();
+    </script>
   </head>
 
   <body>
