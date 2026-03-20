@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Shield, Heart, Globe } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Shield, Heart, Globe, ArrowLeft } from "lucide-react";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { checkRateLimit } from "@/lib/rateLimiter";
