@@ -38,7 +38,7 @@ button, a, [role="button"] { touch-action: manipulation; cursor: pointer; }
 
     --border: 220 30% 18%;
     --input: 220 30% 18%;
-    --ring: 32 45% 64%;
+    --ring: 210 40% 50%;
 
     --radius: 0.75rem;
 
