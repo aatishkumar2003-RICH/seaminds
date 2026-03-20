@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { ChevronDown, CalendarIcon } from "lucide-react";
 import seamindsLogo from "@/assets/seaminds-logo.png";
