@@ -286,7 +286,7 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
   );
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full overflow-y-auto">
       <button onClick={() => window.history.back()}
         style={{ background:'transparent', border:'none', color:'#D4AF37', fontSize:'13px', cursor:'pointer', marginBottom:'8px', marginLeft:'16px', marginTop:'8px', display:'flex', alignItems:'center', gap:'4px' }}>
         ← Back
