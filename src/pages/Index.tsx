@@ -454,7 +454,7 @@ const Index = () => {
       <div className="h-screen bg-background">
         <div className="mx-auto flex h-full max-w-md flex-col bg-background">
           <MobileChrome {...mobileChromeProps} />
-          <div className="min-h-0 flex-1 overflow-hidden">
+          <div className="min-h-0 flex-1 overflow-y-auto">
             <SOSButton onOpenChat={() => { setAppState("main"); setScreen("chat"); }} firstName={firstName} shipName={shipName} />
             <NameEntry onSubmit={handleNameSubmit} />
           </div>
