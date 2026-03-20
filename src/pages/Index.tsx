@@ -410,86 +410,26 @@ const Index = () => {
     setAppState("main");
   };
 
-  if (appState === "loading") {
-    return (
-      <div className="flex items-center justify-center h-screen max-w-md mx-auto bg-background">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-primary pulse-dot" style={{ animationDelay: "0s" }} />
-          <span className="w-2 h-2 rounded-full bg-primary pulse-dot" style={{ animationDelay: "0.3s" }} />
-          <span className="w-2 h-2 rounded-full bg-primary pulse-dot" style={{ animationDelay: "0.6s" }} />
-        </div>
-      </div>
-    );
-  }
-
-  if (appState === "landing") {
-    return (
-      <div className="h-screen max-w-md mx-auto bg-background">
-        <SOSButton onOpenChat={() => { setAppState("main"); setScreen("chat"); }} firstName={firstName} shipName={shipName} />
-        <LandingScreen onGetStarted={() => setAppState("name-entry")} onManagerLogin={() => navigate("/manager")} />
-      </div>
-    );
-  }
-
-  if (appState === "name-entry") {
-    return (
-      <div className="h-screen max-w-md mx-auto bg-background">
-        <SOSButton onOpenChat={() => { setAppState("main"); setScreen("chat"); }} firstName={firstName} shipName={shipName} />
-        <NameEntry onSubmit={handleNameSubmit} />
-      </div>
-    );
-  }
-
-  if (appState === "welcome") {
-    return (
-      <div className="h-screen max-w-md mx-auto bg-background">
-        <SOSButton onOpenChat={() => { setAppState("main"); setScreen("chat"); }} firstName={firstName} shipName={shipName} />
-        <WelcomeScreens onComplete={handleWelcomeComplete} />
-      </div>
-    );
-  }
-
-  if (appState === "voyage-report") {
-    return (
-      <div className="h-screen max-w-md mx-auto bg-background">
-        <VoyageReport
-          profileId={profileId}
-          firstName={firstName}
-          role={role}
-          shipName={shipName}
-          voyageStartDate={voyageStartDate}
-          nationality={nationality}
-          onClose={() => setAppState("main")}
-        />
-      </div>
-    );
-  }
-
-
   const handleSignOut = async () => {
-    // Clear local state immediately
     localStorage.removeItem(PROFILE_KEY);
-    
-    // Force redirect within 2 seconds regardless of network
+
     const forceRedirect = setTimeout(() => {
       window.location.href = "/";
     }, 2000);
 
     try {
-      // Clear all Supabase session keys
       const keysToRemove: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key && (key.startsWith('sb-') || key.startsWith('supabase'))) {
+        if (key && (key.startsWith("sb-") || key.startsWith("supabase"))) {
           keysToRemove.push(key);
         }
       }
-      keysToRemove.forEach(key => localStorage.removeItem(key));
+      keysToRemove.forEach((key) => localStorage.removeItem(key));
 
-      // Try supabase signOut but don't wait forever
       await Promise.race([
         supabase.auth.signOut(),
-        new Promise(resolve => setTimeout(resolve, 1500)),
+        new Promise((resolve) => setTimeout(resolve, 1500)),
       ]);
     } catch (e) {
       console.warn("Sign out error (forcing redirect):", e);
@@ -545,21 +485,21 @@ const Index = () => {
   };
 
   const profileGateUI = (
-    <div className="flex flex-col h-full items-center justify-start overflow-y-auto bg-[#0D1B2A] px-6 py-8 text-center">
-      <div className="text-[#D4AF37] mb-4">
+    <div className="flex h-full flex-col items-center justify-start overflow-y-auto bg-background px-6 py-8 text-center">
+      <div className="mb-4 text-primary">
         <svg xmlns="http://www.w3.org/2000/svg" width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
       </div>
-      <h2 className="text-[#D4AF37] text-lg font-bold mb-2">Complete Your Profile</h2>
-      <p className="text-gray-400 text-sm mb-6">CHAT, WELFARE and COMMUNITY are personalised for you. We need 4 quick details.</p>
+      <h2 className="mb-2 text-lg font-bold text-foreground">Complete Your Profile</h2>
+      <p className="mb-6 text-sm text-muted-foreground">CHAT, WELFARE and COMMUNITY are personalised for you. We need 4 quick details.</p>
       <div className="w-full max-w-sm space-y-3">
-        <select className="w-full bg-[#132236] border border-[#1e3a5f] rounded-xl px-4 py-3 text-white text-sm focus:border-[#D4AF37] focus:outline-none" value={role} onChange={e => handleProfileGateUpdate("rank", e.target.value)}>
+        <select className="w-full rounded-xl border border-border bg-secondary px-4 py-3 text-sm text-foreground outline-none focus:border-primary" value={role} onChange={e => handleProfileGateUpdate("rank", e.target.value)}>
           <option value="">Select your rank...</option>
           {["Captain / Master","Chief Officer","2nd Officer","3rd Officer","Chief Engineer","2nd Engineer","3rd Engineer","4th Engineer","ETO / EEO","Bosun","AB Seaman","Ordinary Seaman (OS)","Fitter","Oiler","Cook","Messman / Steward","Deck Cadet","Engine Cadet"].map(r => <option key={r} value={r}>{r}</option>)}
         </select>
-        <input className="w-full bg-[#132236] border border-[#1e3a5f] rounded-xl px-4 py-3 text-white text-sm focus:border-[#D4AF37] focus:outline-none placeholder:text-gray-600" placeholder="Nationality (e.g. Filipino)" value={nationality} onChange={e => handleProfileGateUpdate("nationality", e.target.value)} />
-        <input className="w-full bg-[#132236] border border-[#1e3a5f] rounded-xl px-4 py-3 text-white text-sm focus:border-[#D4AF37] focus:outline-none placeholder:text-gray-600" placeholder="Ship Name (e.g. MV Pacific Star)" value={shipName} onChange={e => handleProfileGateUpdate("shipName", e.target.value)} />
-        <input className="w-full bg-[#132236] border border-[#1e3a5f] rounded-xl px-4 py-3 text-white text-sm focus:border-[#D4AF37] focus:outline-none placeholder:text-gray-600" placeholder="WhatsApp Number (+63...)" value={whatsappNumber} onChange={e => handleProfileGateUpdate("whatsappNumber", e.target.value)} />
-        <button onClick={saveProfileGate} className="w-full bg-[#D4AF37] text-[#0D1B2A] py-3 rounded-xl font-bold text-sm hover:bg-yellow-400 transition-colors">
+        <input className="w-full rounded-xl border border-border bg-secondary px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary" placeholder="Nationality (e.g. Filipino)" value={nationality} onChange={e => handleProfileGateUpdate("nationality", e.target.value)} />
+        <input className="w-full rounded-xl border border-border bg-secondary px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary" placeholder="Ship Name (e.g. MV Pacific Star)" value={shipName} onChange={e => handleProfileGateUpdate("shipName", e.target.value)} />
+        <input className="w-full rounded-xl border border-border bg-secondary px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary" placeholder="WhatsApp Number (+63...)" value={whatsappNumber} onChange={e => handleProfileGateUpdate("whatsappNumber", e.target.value)} />
+        <button onClick={saveProfileGate} className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90">
           Unlock My Tabs →
         </button>
       </div>
@@ -583,11 +523,12 @@ const Index = () => {
       onComplete={handleVesselOnboardingComplete}
     />
   );
+
   const handleFeedbackSubmit = async () => {
     if (feedbackRating === 0) return;
     setFeedbackLoading(true);
     try {
-      const { data: fnData, error: fnError } = await supabase.functions.invoke('summarize-feedback', {
+      const { data: fnData, error: fnError } = await supabase.functions.invoke("summarize-feedback", {
         body: { feedbackText: `Rating: ${feedbackRating}/5 stars\nComment: ${feedbackText}`, feedbackRating }
       });
       const summary = fnError ? "" : (fnData?.summary || "");
@@ -602,7 +543,9 @@ const Index = () => {
         ship_name: shipName || null,
       });
       setFeedbackDone(true);
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error(e);
+    }
     setFeedbackLoading(false);
   };
 
@@ -629,125 +572,51 @@ const Index = () => {
       setAppState("name-entry");
     } else {
       navigateTo(item.screen);
+      if (appState !== "main") setAppState("main");
       if (item.screen === "opportunities") setJobBadgeCount(0);
     }
     setDrawerOpen(false);
   };
 
-  return (
-    <div className="flex flex-col lg:flex-row h-screen w-full bg-background relative overflow-hidden">
-      {/* === DESKTOP SIDEBAR (lg+) === */}
-      <aside className="hidden lg:flex w-[2.75rem] h-screen flex-col flex-shrink-0 border-r border-white/5 items-center" style={{ background: "#0D1B2A", padding: "12px 2px" }}>
-        {/* Logo */}
-        <div className="mb-3">
-          <span className="text-[10px] font-bold px-1 py-0.5 rounded" style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.7)" }}>SM</span>
-        </div>
-        {/* User flag */}
-        <div className="mb-3">
-          <span className="text-xs">{NATIONALITY_FLAGS[nationality] || "🌊"}</span>
-        </div>
-        {/* Nav items - icon only with tooltips */}
-        <nav className="flex flex-col gap-0.5 flex-1 w-full">
-          {navItems.map((item) => {
-            const active = screen === item.screen;
-            return (
-              <Tooltip key={item.screen}>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => handleNavClick(item)}
-                    className="flex items-center justify-center text-sm transition-colors w-full relative"
-                    style={{
-                      padding: "7px 0",
-                      borderRadius: "6px",
-                      borderLeft: active ? "2px solid rgba(255,255,255,0.6)" : "2px solid transparent",
-                      background: active ? "rgba(255,255,255,0.08)" : "transparent",
-                      color: active ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.4)",
-                    }}
-                    onMouseEnter={(e) => { if (!active) (e.currentTarget.style.background = "rgba(255,255,255,0.05)"); }}
-                    onMouseLeave={(e) => { if (!active) (e.currentTarget.style.background = "transparent"); }}
-                  >
-                    <span>{item.icon}</span>
-                    {item.screen === "opportunities" && jobBadgeCount > 0 && (
-                      <span className="absolute top-0.5 right-0.5 text-[7px] font-bold rounded-full w-3 h-3 flex items-center justify-center" style={{ background: "rgba(255,255,255,0.7)", color: "#0a1929" }}>{jobBadgeCount}</span>
-                    )}
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="text-xs">
-                  {item.label}
-                </TooltipContent>
-              </Tooltip>
-            );
-          })}
-        </nav>
-        {/* Bottom section */}
-        <div className="mt-auto flex flex-col items-center gap-1.5">
-          <div className="text-[9px] text-muted-foreground">🔥{streakCount}</div>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button onClick={() => setForceTour(true)} className="text-muted-foreground hover:text-foreground transition-colors p-0.5">
-                <HelpCircle size={12} />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right" className="text-xs">Replay Tour</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button onClick={handleSignOut} className="text-muted-foreground hover:text-foreground transition-colors p-0.5">
-                <LogOut size={12} />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right" className="text-xs">Sign Out</TooltipContent>
-          </Tooltip>
-          <div className="w-full">
-            <SOSButton onOpenChat={() => setScreen("chat")} firstName={firstName} shipName={shipName} inline />
-          </div>
-        </div>
-      </aside>
-
-      {/* Mobile drawer overlay */}
+  const renderMobileChrome = ({ showBackToNews = false }: { showBackToNews?: boolean } = {}) => (
+    <>
       {(drawerOpen || isEdgeSwiping) && (
         <div
           className="fixed inset-0 z-40 lg:hidden"
           onClick={() => setDrawerOpen(false)}
           style={{
             background: `rgba(0,0,0,${drawerOpen ? 0.5 : Math.min(0.5, edgeSwipeDelta / 288 * 0.5)})`,
-            transition: !isEdgeSwiping ? 'background 0.3s' : 'none',
+            transition: !isEdgeSwiping ? "background 0.3s" : "none",
           }}
         />
       )}
 
-      {/* Swipe hint for first-time users */}
       {showSwipeHint && !drawerOpen && !isEdgeSwiping && (
         <div
-          className="fixed left-0 top-1/2 -translate-y-1/2 z-30 lg:hidden pointer-events-none"
-          style={{ animation: 'swipeHintPulse 2s ease-in-out 3' }}
+          className="fixed left-0 top-1/2 z-30 -translate-y-1/2 pointer-events-none lg:hidden"
+          style={{ animation: "swipeHintPulse 2s ease-in-out 3" }}
           onAnimationEnd={() => {
             setShowSwipeHint(false);
-            localStorage.setItem('seamind_swipe_hint_seen', '1');
+            localStorage.setItem("seamind_swipe_hint_seen", "1");
           }}
         >
-          <div className="flex items-center gap-1 pl-1 pr-3 py-3 rounded-r-full"
-            style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.1), transparent)' }}>
-            <div className="w-1 h-10 rounded-full opacity-40" style={{ background: 'rgba(255,255,255,0.5)' }} />
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ color: 'rgba(255,255,255,0.5)' }}>
+          <div className="flex items-center gap-1 rounded-r-full bg-gradient-to-r from-secondary/60 to-transparent pl-1 pr-3 py-3">
+            <div className="h-10 w-1 rounded-full bg-foreground/40" />
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-foreground/50">
               <path d="M8 4L14 10L8 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
         </div>
       )}
 
-
       <div
-        className={`fixed top-0 left-0 h-full w-44 z-50 lg:hidden ${!isSwiping && !isEdgeSwiping ? 'transition-transform duration-300 ease-in-out' : ''}`}
+        className={`fixed top-0 left-0 z-50 h-full w-44 border-r border-border/40 bg-background/95 px-2.5 py-5 backdrop-blur-sm lg:hidden ${!isSwiping && !isEdgeSwiping ? "transition-transform duration-300 ease-in-out" : ""}`}
         style={{
-          background: "#0D1B2A",
-          borderRight: '1px solid rgba(255,255,255,0.05)',
-          padding: "20px 10px",
           transform: drawerOpen
             ? `translateX(${Math.min(0, touchDelta)}px)`
             : isEdgeSwiping && edgeSwipeDelta > 0
               ? `translateX(${-176 + edgeSwipeDelta}px)`
-              : 'translateX(-100%)',
+              : "translateX(-100%)",
         }}
         onTouchStart={(e) => {
           setTouchStart(e.touches[0].clientX);
@@ -765,62 +634,144 @@ const Index = () => {
           setIsSwiping(false);
         }}
       >
-        <button onClick={() => setDrawerOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white text-lg">✕</button>
-        {/* Logo */}
-        <div className="flex items-center gap-1 mb-4">
-          <span className="text-xs font-bold px-1.5 py-0.5 rounded" style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.7)" }}>SM</span>
-          <span className="font-bold text-sm" style={{ color: "rgba(255,255,255,0.7)" }}>SeaMinds</span>
+        <button onClick={() => setDrawerOpen(false)} className="absolute right-4 top-4 text-lg text-muted-foreground transition-colors hover:text-foreground">✕</button>
+        <div className="mb-4 flex items-center gap-1">
+          <span className="rounded bg-secondary px-1.5 py-0.5 text-xs font-bold text-foreground/80">SM</span>
+          <span className="text-sm font-bold text-foreground/80">SeaMinds</span>
         </div>
-        {/* User info */}
-        <div className="flex items-center gap-2 mb-6 px-1">
+        <div className="mb-6 flex items-center gap-2 px-1">
           <span className="text-lg">{NATIONALITY_FLAGS[nationality] || "🌊"}</span>
           <div className="flex flex-col">
-            <span className="text-sm text-muted-foreground font-medium">{firstName || "Seafarer"} {lastName}</span>
-            {role && <span className="text-xs text-muted-foreground/60">{role}</span>}
+            <span className="text-sm font-medium text-foreground">{firstName || "Seafarer"} {lastName}</span>
+            {role && <span className="text-xs text-muted-foreground">{role}</span>}
           </div>
         </div>
-        {/* Nav items */}
-        <nav className="flex flex-col gap-1 flex-1">
+        <nav className="flex flex-1 flex-col gap-1">
           {navItems.map((item) => {
-            const active = screen === item.screen;
+            const active = screen === item.screen && appState === "main";
             return (
               <button
                 key={item.screen}
                 onClick={() => handleNavClick(item)}
-                className="flex items-center gap-2 text-xs font-medium transition-colors w-full text-left"
-                style={{
-                  padding: "7px 8px",
-                  borderRadius: "8px",
-                  borderLeft: active ? "2px solid rgba(255,255,255,0.6)" : "2px solid transparent",
-                  background: active ? "rgba(255,255,255,0.08)" : "transparent",
-                  color: active ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.5)",
-                }}
+                className={`flex w-full items-center gap-2 rounded-lg border-l-2 px-2 py-2 text-left text-xs font-medium transition-colors ${active ? "border-primary bg-secondary text-foreground" : "border-transparent text-muted-foreground hover:bg-secondary/60 hover:text-foreground"}`}
               >
                 <span className="text-sm">{item.icon}</span>
                 <span>{item.label}</span>
                 {item.screen === "opportunities" && jobBadgeCount > 0 && (
-                  <span className="ml-auto text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1" style={{ background: "rgba(255,255,255,0.7)", color: "#0a1929" }}>{jobBadgeCount}</span>
+                  <span className="ml-auto flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">{jobBadgeCount}</span>
                 )}
               </button>
             );
           })}
         </nav>
-        {/* Bottom section */}
         <div className="mt-auto flex flex-col gap-2">
-          <div className="flex items-center justify-center gap-2 py-1.5 rounded-full text-xs font-medium" style={{ background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.6)" }}>
+          <div className="flex items-center justify-center gap-2 rounded-full bg-secondary/70 py-1.5 text-xs font-medium text-muted-foreground">
             🔥 {streakCount} day streak
           </div>
-          <button onClick={() => { setForceTour(true); setDrawerOpen(false); }} className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-2">
+          <button onClick={() => { setForceTour(true); setDrawerOpen(false); }} className="flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground">
             <HelpCircle size={14} /> Replay Tour
           </button>
-          <button onClick={() => { handleSignOut(); setDrawerOpen(false); }} className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-2">
+          <button onClick={() => { handleSignOut(); setDrawerOpen(false); }} className="flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground">
             <LogOut size={14} /> Sign Out
           </button>
           <div className="w-full">
-            <SOSButton onOpenChat={() => { setScreen("chat"); setDrawerOpen(false); }} firstName={firstName} shipName={shipName} inline />
+            <SOSButton onOpenChat={() => { setScreen("chat"); setAppState("main"); setDrawerOpen(false); }} firstName={firstName} shipName={shipName} inline />
           </div>
         </div>
       </div>
+
+      <div className="flex shrink-0 items-center justify-between border-b border-border/40 bg-background/95 px-4 py-2 backdrop-blur-sm lg:hidden">
+        <div className="flex items-center gap-2">
+          <button onClick={() => setDrawerOpen(true)} className="p-1 text-xl font-bold text-foreground">☰</button>
+          {showBackToNews && screen !== "news" && (
+            <button onClick={() => navigateTo("news")} className="p-1 text-lg text-muted-foreground">←</button>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <img src="/seaminds-logo.png" className="h-6 w-6 rounded-full" alt="SeaMinds logo" />
+          <span className="text-sm font-bold text-foreground">SeaMinds</span>
+        </div>
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary">
+          <span className="text-xs font-bold text-foreground">{firstName?.[0] || "C"}</span>
+        </div>
+      </div>
+    </>
+  );
+
+  if (appState === "loading") {
+    return (
+      <div className="flex items-center justify-center h-screen max-w-md mx-auto bg-background">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-primary pulse-dot" style={{ animationDelay: "0s" }} />
+          <span className="w-2 h-2 rounded-full bg-primary pulse-dot" style={{ animationDelay: "0.3s" }} />
+          <span className="w-2 h-2 rounded-full bg-primary pulse-dot" style={{ animationDelay: "0.6s" }} />
+        </div>
+      </div>
+    );
+  }
+
+  if (appState === "landing") {
+    return (
+      <div className="h-screen bg-background">
+        <div className="mx-auto flex h-full max-w-md flex-col bg-background">
+          {renderMobileChrome()}
+          <div className="min-h-0 flex-1">
+            <SOSButton onOpenChat={() => { setAppState("main"); setScreen("chat"); }} firstName={firstName} shipName={shipName} />
+            <LandingScreen onGetStarted={() => setAppState("name-entry")} onManagerLogin={() => navigate("/manager")} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (appState === "name-entry") {
+    return (
+      <div className="h-screen bg-background">
+        <div className="mx-auto flex h-full max-w-md flex-col bg-background">
+          {renderMobileChrome()}
+          <div className="min-h-0 flex-1 overflow-hidden">
+            <SOSButton onOpenChat={() => { setAppState("main"); setScreen("chat"); }} firstName={firstName} shipName={shipName} />
+            <NameEntry onSubmit={handleNameSubmit} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (appState === "welcome") {
+    return (
+      <div className="h-screen bg-background">
+        <div className="mx-auto flex h-full max-w-md flex-col bg-background">
+          {renderMobileChrome()}
+          <div className="min-h-0 flex-1">
+            <SOSButton onOpenChat={() => { setAppState("main"); setScreen("chat"); }} firstName={firstName} shipName={shipName} />
+            <WelcomeScreens onComplete={handleWelcomeComplete} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (appState === "voyage-report") {
+    return (
+      <div className="h-screen bg-background">
+        <div className="mx-auto flex h-full max-w-md flex-col bg-background">
+          {renderMobileChrome()}
+          <div className="min-h-0 flex-1 overflow-hidden">
+            <VoyageReport
+              profileId={profileId}
+              firstName={firstName}
+              role={role}
+              shipName={shipName}
+              voyageStartDate={voyageStartDate}
+              nationality={nationality}
+              onClose={() => setAppState("main")}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
       {/* === MAIN CONTENT AREA === */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
@@ -829,30 +780,7 @@ const Index = () => {
         </div>
 
         <div className="relative z-10 flex flex-col flex-1 min-h-0">
-
-        {/* Mobile top bar */}
-        <div className="flex items-center justify-between px-4 py-2 lg:hidden border-b border-white/5 flex-shrink-0" style={{ background: '#0D1B2A' }}>
-          <div className="flex items-center gap-2">
-            <button onClick={() => setDrawerOpen(true)} className="text-gray-300 text-xl font-bold p-1">
-              ☰
-            </button>
-            {screen !== 'news' && (
-              <button
-                onClick={() => navigateTo('news')}
-                className="text-gray-300 p-1 text-lg"
-              >
-                ←
-              </button>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <img src="/seaminds-logo.png" className="w-6 h-6 rounded-full" />
-            <span className="text-gray-200 font-bold text-sm">SeaMinds</span>
-          </div>
-          <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
-            <span className="text-xs text-gray-200 font-bold">{firstName?.[0] || 'C'}</span>
-          </div>
-        </div>
+          {renderMobileChrome({ showBackToNews: true })}
 
         {/* Greeting Header */}
         <div className="px-4 lg:px-8 pt-2 lg:pt-4 pb-1">

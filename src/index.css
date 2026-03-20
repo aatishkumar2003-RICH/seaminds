@@ -1,6 +1,6 @@
-html { touch-action: manipulation; background-color: #0a1525; overscroll-behavior: none; }
+html { touch-action: manipulation; background-color: hsl(220 50% 8%); overscroll-behavior: none; color-scheme: dark; }
 * { -webkit-tap-highlight-color: transparent; }
-body { overscroll-behavior: none; }
+body { overscroll-behavior: none; background-color: hsl(220 50% 8%); min-height: 100vh; }
 button, a, [role="button"] { touch-action: manipulation; cursor: pointer; }
 
 @tailwind base;
