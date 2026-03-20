@@ -1,5 +1,6 @@
 import React from "react";
 import { type Screen, type AppState } from "./types";
+import seamindsLogo from "@/assets/seaminds-logo.png";
 
 interface MobileHeaderProps {
   onMenuOpen: () => void;
@@ -24,7 +25,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
         )}
       </div>
       <div className="flex items-center gap-2">
-        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-primary">SM</div>
+        <img src={seamindsLogo} alt="SeaMinds" className="h-6 w-6 rounded-full object-contain" />
         <span className="text-sm font-bold text-foreground">SeaMinds</span>
       </div>
       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary">
