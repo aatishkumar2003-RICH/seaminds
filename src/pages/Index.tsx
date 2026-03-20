@@ -1045,6 +1045,8 @@ const Index = () => {
           </ScreenErrorBoundary>
         ) : null}
       </div>
+    </div>
+  </div>
 
       {showFeedback && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center px-4">
