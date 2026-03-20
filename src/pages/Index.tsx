@@ -524,7 +524,7 @@ const Index = () => {
       <div className="relative flex h-screen w-full flex-col overflow-hidden bg-background lg:flex-row">
         <DesktopSidebar
           screen={screen} streakCount={streakCount} jobBadgeCount={jobBadgeCount}
-          firstName={firstName} shipName={shipName}
+          firstName={firstName} shipName={shipName} tourActiveScreen={tourActiveScreen}
           onNavClick={handleNavClick} onReplayTour={() => setForceTour(true)} onSignOut={handleSignOut}
         />
 
