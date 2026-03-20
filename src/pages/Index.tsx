@@ -105,6 +105,7 @@ const Index = () => {
   const [isEdgeSwiping, setIsEdgeSwiping] = useState(false);
   const [showSwipeHint, setShowSwipeHint] = useState(false);
   const [forceTour, setForceTour] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(false);
 
   useEffect(() => {
     if (!localStorage.getItem('seamind_swipe_hint_seen')) setShowSwipeHint(true);
@@ -119,7 +120,7 @@ const Index = () => {
 
   // Swipe from left edge to open drawer
   useEffect(() => {
-    const DRAWER_W = 288; // w-72
+    const DRAWER_W = 256; // w-64
     const handleTouchStart = (e: TouchEvent) => {
       if (drawerOpen) return;
       const x = e.touches[0].clientX;
@@ -635,7 +636,7 @@ const Index = () => {
   return (
     <div className="flex flex-col lg:flex-row h-screen w-full bg-background relative overflow-hidden">
       {/* === DESKTOP SIDEBAR (lg+) === */}
-      <aside className="hidden lg:flex w-64 h-screen flex-col flex-shrink-0 border-r border-border" style={{ background: "#0D1B2A", padding: "24px 16px" }}>
+      <aside className="hidden lg:flex w-52 h-screen flex-col flex-shrink-0 border-r border-border" style={{ background: "#0D1B2A", padding: "24px 16px" }}>
         {/* Logo */}
         <div className="flex items-center gap-2 mb-6">
           <span className="text-lg font-bold px-2 py-0.5 rounded" style={{ background: "rgba(212,175,55,0.15)", color: "#D4AF37" }}>SM</span>
@@ -728,15 +729,15 @@ const Index = () => {
 
 
       <div
-        className={`fixed top-0 left-0 h-full w-72 z-50 lg:hidden ${!isSwiping && !isEdgeSwiping ? 'transition-transform duration-300 ease-in-out' : ''}`}
+        className={`fixed top-0 left-0 h-full w-64 z-50 lg:hidden ${!isSwiping && !isEdgeSwiping ? 'transition-transform duration-300 ease-in-out' : ''}`}
         style={{
           background: "#0D1B2A",
-          borderRight: '1px solid rgba(212,175,55,0.2)',
+          borderRight: '1px solid rgba(255,255,255,0.1)',
           padding: "24px 16px",
           transform: drawerOpen
             ? `translateX(${Math.min(0, touchDelta)}px)`
             : isEdgeSwiping && edgeSwipeDelta > 0
-              ? `translateX(${-288 + edgeSwipeDelta}px)`
+              ? `translateX(${-256 + edgeSwipeDelta}px)`
               : 'translateX(-100%)',
         }}
         onTouchStart={(e) => {
@@ -821,10 +822,20 @@ const Index = () => {
         <div className="relative z-10 flex flex-col flex-1 min-h-0">
 
         {/* Mobile top bar */}
-        <div className="flex items-center justify-between px-4 py-2 lg:hidden border-b border-[#D4AF37]/20 flex-shrink-0" style={{ background: '#0D1B2A' }}>
-          <button onClick={() => setDrawerOpen(true)} className="text-[#D4AF37] text-xl font-bold p-1">
-            ☰
-          </button>
+        <div className="flex items-center justify-between px-4 py-2 lg:hidden border-b border-white/5 flex-shrink-0" style={{ background: '#0D1B2A' }}>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setDrawerOpen(true)} className="text-[#D4AF37] text-xl font-bold p-1">
+              ☰
+            </button>
+            {screen !== 'news' && (
+              <button
+                onClick={() => navigateTo('news')}
+                className="text-gray-300 p-1 text-lg"
+              >
+                ←
+              </button>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             <img src="/seaminds-logo.png" className="w-6 h-6 rounded-full" />
             <span className="text-[#D4AF37] font-bold text-sm">SeaMinds</span>
@@ -864,7 +875,20 @@ const Index = () => {
             </div>
           </div>
 
+        {/* Mobile stats summary strip */}
+        <div
+          className="lg:hidden flex items-center justify-between px-3 py-1 cursor-pointer"
+          onClick={() => setStatsOpen(!statsOpen)}
+        >
+          <div className="flex items-center gap-3 text-xs text-gray-400">
+            <span>🔥 {streakCount}d</span>
+            <span className="text-[#D4AF37] font-semibold">SMC {smcScore || '—'}</span>
+          </div>
+          <span className="text-gray-500 text-xs">{statsOpen ? '▲' : '▼'}</span>
+        </div>
+
         {/* Quick Stats Row */}
+        <div className={`lg:block transition-all duration-300 overflow-hidden ${statsOpen ? 'max-h-24' : 'max-h-0 lg:max-h-none'}`}>
         <div className="grid grid-cols-4 gap-1 lg:gap-2 mt-2 pb-1 -mx-1 px-1">
           {(() => {
             const certsRaw = localStorage.getItem("seaminds_certs");
@@ -920,6 +944,7 @@ const Index = () => {
               </>
             );
           })()}
+        </div>
         </div>
 
         {/* Daily Motivational Quote */}
