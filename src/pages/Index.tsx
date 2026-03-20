@@ -638,16 +638,15 @@ const Index = () => {
       {/* === DESKTOP SIDEBAR (lg+) === */}
       <aside className="hidden lg:flex w-[6.5rem] h-screen flex-col flex-shrink-0 border-r border-white/5" style={{ background: "#0D1B2A", padding: "20px 8px" }}>
         {/* Logo */}
-        <div className="flex items-center gap-2 mb-6">
-          <span className="text-lg font-bold px-2 py-0.5 rounded" style={{ background: "rgba(212,175,55,0.15)", color: "#D4AF37" }}>SM</span>
-          <span className="font-bold text-base" style={{ color: "#D4AF37" }}>SeaMinds</span>
+        <div className="flex items-center gap-1 mb-4">
+          <span className="text-xs font-bold px-1.5 py-0.5 rounded" style={{ background: "rgba(212,175,55,0.15)", color: "#D4AF37" }}>SM</span>
         </div>
         {/* User info */}
-        <div className="flex items-center gap-2 mb-6 px-1">
-          <span className="text-lg">{NATIONALITY_FLAGS[nationality] || "🌊"}</span>
+        <div className="flex items-center gap-1.5 mb-4 px-0.5">
+          <span className="text-sm">{NATIONALITY_FLAGS[nationality] || "🌊"}</span>
           <div className="flex flex-col">
-            <span className="text-sm text-muted-foreground font-medium">{firstName || "Seafarer"} {lastName}</span>
-            {role && <span className="text-xs text-muted-foreground/60">{role}</span>}
+            <span className="text-[11px] text-muted-foreground font-medium truncate">{firstName || "Seafarer"}</span>
+            {role && <span className="text-[9px] text-muted-foreground/60 truncate">{role}</span>}
           </div>
         </div>
         {/* Nav items */}
