@@ -1,42 +1,114 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { X, ChevronRight, ChevronLeft } from "lucide-react";
+import { X, ChevronRight, ChevronLeft, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-interface TourStep {
+/* ────────────────────────────────────────────
+   Tour step types
+   ──────────────────────────────────────────── */
+
+interface FullScreenStep {
+  type: "fullscreen";
+  icon: string;
+  title: string;
+  subtitle: string;
+  bullets: { emoji: string; text: string }[];
+  accent: string; // HSL accent color for this slide
+}
+
+interface SpotlightStep {
+  type: "spotlight";
   targetSelector: string;
   title: string;
   description: string;
   emoji: string;
-  position: "top" | "bottom" | "left" | "right";
+  position: "top" | "bottom";
+  navigateTo?: string; // screen to tap into
 }
 
+type TourStep = FullScreenStep | SpotlightStep;
+
+/* ────────────────────────────────────────────
+   Tour content — value-driven storytelling
+   ──────────────────────────────────────────── */
+
 const TOUR_STEPS: TourStep[] = [
+  // Step 1: Welcome — what is SeaMinds
   {
+    type: "fullscreen",
+    icon: "⚓",
+    title: "Welcome to SeaMinds",
+    subtitle: "Your private companion at sea — built with 10,000+ seafarers across 35 countries.",
+    bullets: [
+      { emoji: "🛡️", text: "Everything here is private — your company never sees your data" },
+      { emoji: "🤖", text: "AI-powered tools designed specifically for merchant seafarers" },
+      { emoji: "🌍", text: "Works offline & on low-bandwidth satellite connections" },
+    ],
+    accent: "199 89% 48%", // ocean blue
+  },
+
+  // Step 2: Pillar 1 — Mental Wellness
+  {
+    type: "fullscreen",
+    icon: "💬",
+    title: "Private Mental Health Support",
+    subtitle: "Talk to an AI trained on maritime life — no judgement, no records shared with anyone.",
+    bullets: [
+      { emoji: "🧠", text: "24/7 confidential AI chat — understands isolation, fatigue & homesickness" },
+      { emoji: "🔥", text: "Daily wellness streak — build a habit of checking in with yourself" },
+      { emoji: "🚨", text: "SOS button — instant access to ISWAN, ITF & DPA emergency contacts" },
+    ],
+    accent: "142 71% 45%", // sea green
+  },
+
+  // Step 3: Pillar 2 — Career & Competency
+  {
+    type: "fullscreen",
+    icon: "🏆",
+    title: "Verified Competency & Career",
+    subtitle: "Your skills, certified. Your next job, found.",
+    bullets: [
+      { emoji: "📊", text: "SMC Score — AI-assessed competency rating that employers trust" },
+      { emoji: "💼", text: "Job marketplace — matching you with verified positions worldwide" },
+      { emoji: "📄", text: "Maritime CV Builder — professional resume in minutes, not hours" },
+    ],
+    accent: "43 96% 56%", // gold
+  },
+
+  // Step 4: Pillar 3 — Protection & Knowledge
+  {
+    type: "fullscreen",
+    icon: "🛡️",
+    title: "Protection & Maritime Knowledge",
+    subtitle: "Know your rights. Stay compliant. Report safely.",
+    bullets: [
+      { emoji: "📜", text: "Certificate Tracker — never miss an expiry, get early reminders" },
+      { emoji: "⏱", text: "STCW Rest Hours log — automatic compliance tracking" },
+      { emoji: "🎓", text: "Academy — SIRE 2.0, PSC inspections, ITF rights & more" },
+    ],
+    accent: "262 83% 58%", // purple
+  },
+
+  // Step 5: Pillar 4 — Community & Tools
+  {
+    type: "fullscreen",
+    icon: "🔧",
+    title: "Onboard Tools & Community",
+    subtitle: "Everything you need on one screen — from PMS checklists to anonymous crew connections.",
+    bullets: [
+      { emoji: "🔧", text: "Bridge PMS — equipment diagnosis, maintenance scheduling & AI lookups" },
+      { emoji: "👥", text: "Anonymous community — connect with crew worldwide without identity exposure" },
+      { emoji: "⭐", text: "Vessel ratings — rate your ship & help fellow seafarers choose better" },
+    ],
+    accent: "199 89% 48%",
+  },
+
+  // Step 6: Spotlight on navigation — show them where to start
+  {
+    type: "spotlight",
     targetSelector: '[data-tour="sos"]',
-    title: "SOS — Emergency Help",
-    description: "Tap this anytime to reach DPA contacts, ISWAN helpline, and ITF. Your calls are private and never shared with your company.",
+    title: "SOS — Always One Tap Away",
+    description: "In a crisis, tap SOS for immediate access to emergency contacts: DPA, ISWAN helpline, and ITF. Private. Always available.",
     emoji: "🚨",
-    position: "bottom",
-  },
-  {
-    targetSelector: '[data-tour="smc"]',
-    title: "Your SMC Score",
-    description: "Get your Seafarer Competency Score — verified by AI assessment. Stand out to recruiters and track your professional growth.",
-    emoji: "🏆",
-    position: "bottom",
-  },
-  {
-    targetSelector: '[data-tour="streak"]',
-    title: "Wellness Streak",
-    description: "Check in daily with the AI chat to build your wellness streak. Stay consistent for your mental health at sea.",
-    emoji: "🔥",
-    position: "bottom",
-  },
-  {
-    targetSelector: '[data-tour="certs"]',
-    title: "Certificate Tracker",
-    description: "Never miss an expiry. Upload your certificates and get reminders before they lapse.",
-    emoji: "📜",
     position: "bottom",
   },
 ];
@@ -59,7 +131,7 @@ const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed }: OnboardingT
   useEffect(() => {
     if (!enabled) return;
     if (localStorage.getItem(STORAGE_KEY)) return;
-    const t = setTimeout(() => setVisible(true), 1500);
+    const t = setTimeout(() => setVisible(true), 1200);
     return () => clearTimeout(t);
   }, [enabled]);
 
@@ -71,15 +143,16 @@ const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed }: OnboardingT
     }
   }, [forceShow, enabled, onForceShowConsumed]);
 
+  const currentStep = TOUR_STEPS[step];
+
+  // Measure spotlight target
   const measureTarget = useCallback(() => {
     if (!visible) return;
-    const el = document.querySelector(TOUR_STEPS[step]?.targetSelector);
-    if (el) {
-      setRect(el.getBoundingClientRect());
-    } else {
-      setRect(null);
-    }
-  }, [step, visible]);
+    if (currentStep?.type !== "spotlight") { setRect(null); return; }
+    const el = document.querySelector(currentStep.targetSelector);
+    if (el) setRect(el.getBoundingClientRect());
+    else setRect(null);
+  }, [step, visible, currentStep]);
 
   useEffect(() => {
     measureTarget();
@@ -99,7 +172,7 @@ const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed }: OnboardingT
   const playCelebrationChime = () => {
     try {
       const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
+      const notes = [523.25, 659.25, 783.99, 1046.5];
       notes.forEach((freq, i) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -124,8 +197,12 @@ const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed }: OnboardingT
       confettiTimerRef.current = setTimeout(() => {
         setShowConfetti(false);
         dismiss();
-      }, 2200);
+      }, 2500);
     }
+  };
+
+  const prev = () => {
+    if (step > 0) setStep(step - 1);
   };
 
   useEffect(() => {
@@ -134,47 +211,12 @@ const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed }: OnboardingT
     };
   }, []);
 
-  const prev = () => {
-    if (step > 0) setStep(step - 1);
-  };
+  if (!visible) return null;
 
-  if (!visible || !rect) return null;
-
-  const current = TOUR_STEPS[step];
   const isLast = step === TOUR_STEPS.length - 1;
 
-  // Tooltip positioning
-  const tooltipStyle: React.CSSProperties = {
-    position: "fixed",
-    zIndex: 200,
-    maxWidth: 300,
-    width: "calc(100vw - 32px)",
-  };
-
-  const OFFSET = 12;
-  if (current.position === "bottom") {
-    tooltipStyle.top = rect.bottom + OFFSET;
-    tooltipStyle.left = Math.max(16, Math.min(rect.left + rect.width / 2 - 150, window.innerWidth - 316));
-  } else if (current.position === "top") {
-    tooltipStyle.bottom = window.innerHeight - rect.top + OFFSET;
-    tooltipStyle.left = Math.max(16, Math.min(rect.left + rect.width / 2 - 150, window.innerWidth - 316));
-  }
-
-  // Spotlight cutout
-  const pad = 6;
-  const spotStyle: React.CSSProperties = {
-    position: "fixed",
-    top: rect.top - pad,
-    left: rect.left - pad,
-    width: rect.width + pad * 2,
-    height: rect.height + pad * 2,
-    borderRadius: 14,
-    zIndex: 199,
-    boxShadow: "0 0 0 9999px rgba(0,0,0,0.7)",
-    pointerEvents: "none",
-  };
-
-  const confettiPieces = Array.from({ length: 40 }, (_, i) => ({
+  // ─── Confetti celebration ───
+  const confettiPieces = Array.from({ length: 50 }, (_, i) => ({
     id: i,
     x: Math.random() * 100,
     delay: Math.random() * 0.5,
@@ -192,25 +234,10 @@ const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed }: OnboardingT
           <motion.div
             key={p.id}
             className="absolute rounded-sm"
-            style={{
-              left: `${p.x}%`,
-              top: -12,
-              width: p.size,
-              height: p.size * 0.6,
-              backgroundColor: p.color,
-            }}
+            style={{ left: `${p.x}%`, top: -12, width: p.size, height: p.size * 0.6, backgroundColor: p.color }}
             initial={{ y: 0, x: 0, rotate: 0, opacity: 1 }}
-            animate={{
-              y: window.innerHeight + 40,
-              x: p.drift,
-              rotate: p.rotation,
-              opacity: [1, 1, 0.8, 0],
-            }}
-            transition={{
-              duration: p.duration,
-              delay: p.delay,
-              ease: [0.25, 0.46, 0.45, 0.94],
-            }}
+            animate={{ y: window.innerHeight + 40, x: p.drift, rotate: p.rotation, opacity: [1, 1, 0.8, 0] }}
+            transition={{ duration: p.duration, delay: p.delay, ease: [0.25, 0.46, 0.45, 0.94] }}
           />
         ))}
         <motion.div
@@ -219,94 +246,102 @@ const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed }: OnboardingT
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
         >
-          <div className="text-4xl mb-2">🎉</div>
-          <p className="text-sm font-bold text-foreground">You're all set!</p>
+          <div className="text-5xl mb-3">🎉</div>
+          <p className="text-base font-bold text-foreground">You're ready to go!</p>
+          <p className="text-xs text-muted-foreground mt-1">Start by chatting with your AI companion</p>
         </motion.div>
       </div>
     );
   }
 
-  return (
-    <>
-      {/* Overlay */}
-      <motion.div
-        className="fixed inset-0 z-[198]"
-        onClick={dismiss}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
-      />
-
-      {/* Spotlight */}
-      <motion.div
-        style={spotStyle}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.35, delay: 0.05 }}
-      />
-
-      {/* Tooltip */}
+  // ─── Full-screen value slide ───
+  if (currentStep.type === "fullscreen") {
+    const fs = currentStep;
+    return (
       <AnimatePresence mode="wait">
         <motion.div
           key={step}
-          style={tooltipStyle}
-          className="rounded-2xl border p-4 shadow-2xl"
-          onClick={(e) => e.stopPropagation()}
-          initial={{ opacity: 0, y: current.position === "top" ? 8 : -8, scale: 0.96 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: current.position === "top" ? 8 : -8, scale: 0.96 }}
-          transition={{ type: "spring", stiffness: 380, damping: 26 }}
+          className="fixed inset-0 z-[200] flex flex-col items-center justify-center px-6"
+          style={{ background: "hsl(213 44% 10% / 0.97)" }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
         >
-          <div
-            className="absolute inset-0 rounded-2xl -z-10"
-            style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--gold) / 0.25)" }}
-          />
-
-          {/* Header */}
-          <div className="flex items-center justify-between mb-2">
-            <motion.div
-              className="flex items-center gap-2"
-              initial={{ x: -10, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.1, duration: 0.25 }}
-            >
-              <span className="text-xl">{current.emoji}</span>
-              <h3 className="text-sm font-bold text-foreground">{current.title}</h3>
-            </motion.div>
-            <button
-              onClick={dismiss}
-              className="p-1 rounded-full hover:bg-secondary transition-colors"
-            >
-              <X size={14} className="text-muted-foreground" />
-            </button>
-          </div>
-
-          {/* Body */}
-          <motion.p
-            className="text-xs text-muted-foreground leading-relaxed mb-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.15, duration: 0.3 }}
+          {/* Skip */}
+          <button
+            onClick={dismiss}
+            className="absolute top-4 right-4 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-lg"
           >
-            {current.description}
+            Skip <X size={14} />
+          </button>
+
+          {/* Icon */}
+          <motion.div
+            className="text-5xl mb-4"
+            initial={{ scale: 0, rotate: -20 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 18, delay: 0.1 }}
+          >
+            {fs.icon}
+          </motion.div>
+
+          {/* Title */}
+          <motion.h2
+            className="text-xl font-bold text-foreground text-center mb-2 max-w-xs"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.15, duration: 0.4 }}
+          >
+            {fs.title}
+          </motion.h2>
+
+          {/* Subtitle */}
+          <motion.p
+            className="text-sm text-muted-foreground text-center leading-relaxed mb-8 max-w-sm"
+            initial={{ y: 15, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.25, duration: 0.4 }}
+          >
+            {fs.subtitle}
           </motion.p>
 
-          {/* Footer */}
+          {/* Bullets */}
+          <div className="w-full max-w-sm space-y-3 mb-10">
+            {fs.bullets.map((b, i) => (
+              <motion.div
+                key={i}
+                className="flex items-start gap-3 rounded-xl px-4 py-3"
+                style={{
+                  background: `hsl(${fs.accent} / 0.08)`,
+                  border: `1px solid hsl(${fs.accent} / 0.15)`,
+                }}
+                initial={{ x: -30, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.3 + i * 0.1, duration: 0.35 }}
+              >
+                <span className="text-lg flex-shrink-0 mt-0.5">{b.emoji}</span>
+                <span className="text-sm text-foreground/90 leading-snug">{b.text}</span>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Footer nav */}
           <motion.div
-            className="flex items-center justify-between"
-            initial={{ opacity: 0, y: 4 }}
+            className="flex items-center justify-between w-full max-w-sm"
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.25 }}
+            transition={{ delay: 0.6, duration: 0.3 }}
           >
             {/* Dots */}
-            <div className="flex gap-1.5">
+            <div className="flex gap-2">
               {TOUR_STEPS.map((_, i) => (
                 <motion.div
                   key={i}
-                  className="w-1.5 h-1.5 rounded-full"
+                  className="rounded-full"
+                  style={{ width: i === step ? 20 : 6, height: 6 }}
                   animate={{
-                    background: i === step ? "hsl(var(--gold))" : "hsl(var(--muted-foreground) / 0.3)",
-                    scale: i === step ? 1.3 : 1,
+                    background: i === step ? `hsl(${fs.accent})` : "hsl(var(--muted-foreground) / 0.25)",
                   }}
                   transition={{ type: "spring", stiffness: 400, damping: 20 }}
                 />
@@ -317,26 +352,136 @@ const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed }: OnboardingT
               {step > 0 && (
                 <button
                   onClick={prev}
-                  className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-colors text-muted-foreground hover:text-foreground"
+                  className="flex items-center gap-1 text-xs px-3 py-2 rounded-xl text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  <ChevronLeft size={12} /> Back
+                  <ChevronLeft size={14} /> Back
                 </button>
               )}
               <motion.button
                 onClick={next}
-                className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
-                style={{ background: "hsl(var(--gold))", color: "hsl(var(--primary-foreground))" }}
-                whileHover={{ scale: 1.05 }}
+                className="flex items-center gap-1.5 text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors"
+                style={{ background: `hsl(${fs.accent})`, color: "#0D1B2A" }}
+                whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.97 }}
               >
-                {isLast ? "Got it!" : "Next"} {!isLast && <ChevronRight size={12} />}
+                {isLast ? "Let's go!" : "Next"} <ChevronRight size={14} />
               </motion.button>
             </div>
           </motion.div>
         </motion.div>
       </AnimatePresence>
-    </>
-  );
+    );
+  }
+
+  // ─── Spotlight step ───
+  if (currentStep.type === "spotlight" && rect) {
+    const sp = currentStep;
+
+    const tooltipStyle: React.CSSProperties = {
+      position: "fixed",
+      zIndex: 200,
+      maxWidth: 300,
+      width: "calc(100vw - 32px)",
+    };
+
+    const OFFSET = 14;
+    if (sp.position === "bottom") {
+      tooltipStyle.top = rect.bottom + OFFSET;
+      tooltipStyle.left = Math.max(16, Math.min(rect.left + rect.width / 2 - 150, window.innerWidth - 316));
+    } else {
+      tooltipStyle.bottom = window.innerHeight - rect.top + OFFSET;
+      tooltipStyle.left = Math.max(16, Math.min(rect.left + rect.width / 2 - 150, window.innerWidth - 316));
+    }
+
+    const pad = 6;
+    const spotStyle: React.CSSProperties = {
+      position: "fixed",
+      top: rect.top - pad,
+      left: rect.left - pad,
+      width: rect.width + pad * 2,
+      height: rect.height + pad * 2,
+      borderRadius: 14,
+      zIndex: 199,
+      boxShadow: "0 0 0 9999px rgba(0,0,0,0.75)",
+      pointerEvents: "none",
+    };
+
+    return (
+      <>
+        <motion.div className="fixed inset-0 z-[198]" onClick={dismiss} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }} />
+        <motion.div style={spotStyle} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.35, delay: 0.05 }} />
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={step}
+            style={tooltipStyle}
+            className="rounded-2xl border p-4 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+            initial={{ opacity: 0, y: sp.position === "top" ? 8 : -8, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: sp.position === "top" ? 8 : -8, scale: 0.96 }}
+            transition={{ type: "spring", stiffness: 380, damping: 26 }}
+          >
+            <div className="absolute inset-0 rounded-2xl -z-10" style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--gold) / 0.25)" }} />
+
+            <div className="flex items-center justify-between mb-2">
+              <motion.div className="flex items-center gap-2" initial={{ x: -10, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.1 }}>
+                <span className="text-xl">{sp.emoji}</span>
+                <h3 className="text-sm font-bold text-foreground">{sp.title}</h3>
+              </motion.div>
+              <button onClick={dismiss} className="p-1 rounded-full hover:bg-secondary transition-colors">
+                <X size={14} className="text-muted-foreground" />
+              </button>
+            </div>
+
+            <motion.p className="text-xs text-muted-foreground leading-relaxed mb-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15, duration: 0.3 }}>
+              {sp.description}
+            </motion.p>
+
+            <motion.div className="flex items-center justify-between" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+              <div className="flex gap-2">
+                {TOUR_STEPS.map((_, i) => (
+                  <motion.div
+                    key={i}
+                    className="rounded-full"
+                    style={{ width: i === step ? 20 : 6, height: 6 }}
+                    animate={{
+                      background: i === step ? "hsl(var(--gold))" : "hsl(var(--muted-foreground) / 0.25)",
+                    }}
+                    transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                  />
+                ))}
+              </div>
+
+              <div className="flex items-center gap-2">
+                {step > 0 && (
+                  <button onClick={prev} className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg text-muted-foreground hover:text-foreground">
+                    <ChevronLeft size={12} /> Back
+                  </button>
+                )}
+                <motion.button
+                  onClick={next}
+                  className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg"
+                  style={{ background: "hsl(var(--gold))", color: "hsl(var(--primary-foreground))" }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  {isLast ? "Start Exploring!" : "Next"} {!isLast && <ChevronRight size={12} />}
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        </AnimatePresence>
+      </>
+    );
+  }
+
+  // Spotlight step but target not found — skip forward
+  if (currentStep.type === "spotlight" && !rect) {
+    return null;
+  }
+
+  return null;
 };
 
 export default OnboardingTour;
