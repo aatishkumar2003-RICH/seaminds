@@ -36,7 +36,7 @@ const TOUR_STEPS: TourStep[] = [
   // Step 1: Welcome — what is SeaMinds
   {
     type: "fullscreen",
-    icon: "⚓",
+    icon: "__LOGO__",
     title: "Welcome to SeaMinds",
     subtitle: "Your private companion at sea — built with 10,000+ seafarers across 35 countries.",
     bullets: [
