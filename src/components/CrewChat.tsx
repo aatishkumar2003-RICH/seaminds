@@ -335,34 +335,22 @@ const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: Cre
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="px-5 pt-4 lg:pt-8 pb-4 border-b border-border">
-        <p className="text-sm text-muted-foreground tracking-wide uppercase">{getTimeGreeting()}</p>
-        <h1 className="text-xl font-semibold text-foreground">{firstName}</h1>
-        {voyageStartDate && (
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Day {Math.max(1, Math.ceil((Date.now() - new Date(voyageStartDate).getTime()) / 86400000))} of voyage
-          </p>
-        )}
-      </div>
-
-      {/* AI Disclaimer */}
-      <div className="px-4 py-1.5" style={{ background: "rgba(13,27,42,0.6)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-        <p className="text-[10px] text-muted-foreground text-center leading-tight">
-          ⚕️ This AI is not a medical professional. If you are in crisis, contact ISWAN:{" "}
-          <a href="tel:+442073232737" className="underline" style={{ color: "#D4AF37" }}>+44 20 7323 2737</a>
-        </p>
-      </div>
-
-      {/* Wellness Streak */}
-      <StreakDisplay
-        currentStreak={streak.currentStreak}
-        longestStreak={streak.longestStreak}
-        checkedInToday={streak.checkedInToday}
-      />
-
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+        {/* Inline streak badge — subtle, at top of chat */}
+        {(streak.currentStreak > 0 || streak.checkedInToday) && (
+          <div className="chat-fade-in flex justify-center pb-1">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary/60 border border-border/50">
+              <span className="text-xs">🔥</span>
+              <span className="text-[11px] font-semibold text-primary">{streak.currentStreak}</span>
+              <span className="text-[10px] text-muted-foreground">day streak</span>
+              {streak.longestStreak > streak.currentStreak && (
+                <span className="text-[10px] text-muted-foreground ml-1">· Best {streak.longestStreak}d</span>
+              )}
+            </div>
+          </div>
+        )}
+
         {messages.slice(-20).map((msg) => (
           <div
             key={msg.id}
@@ -413,7 +401,7 @@ const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: Cre
               <button
                 key={mood.label}
                 onClick={() => handleMoodSelect(mood)}
-                className="px-4 py-2.5 rounded-2xl bg-secondary text-secondary-foreground text-sm font-medium hover:bg-accent transition-colors"
+                className="px-4 py-2.5 rounded-2xl bg-secondary text-secondary-foreground text-sm font-medium hover:bg-accent transition-colors active:scale-[0.97]"
               >
                 {mood.emoji} {mood.label}
               </button>
@@ -422,8 +410,8 @@ const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: Cre
         )}
       </div>
 
-      {/* Input */}
-      <div className="px-4 pt-2 pb-16 lg:pb-3">
+      {/* Input + disclaimer */}
+      <div className="px-4 pt-2 pb-16 lg:pb-3 space-y-1.5">
         <div className="flex items-center gap-2 bg-secondary rounded-2xl px-4 py-2">
           <input
             type="text"
@@ -436,11 +424,15 @@ const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: Cre
           <button
             onClick={() => sendMessage()}
             disabled={!input.trim() || isLoading}
-            className="p-2 rounded-full bg-primary text-primary-foreground disabled:opacity-30 transition-opacity"
+            className="p-2 rounded-full bg-primary text-primary-foreground disabled:opacity-30 transition-opacity active:scale-95"
           >
             <Send size={16} />
           </button>
         </div>
+        <p className="text-[9px] text-muted-foreground/60 text-center leading-tight">
+          Not a medical professional · Crisis?{" "}
+          <a href="tel:+442073232737" className="underline text-muted-foreground/80">ISWAN +44 20 7323 2737</a>
+        </p>
       </div>
     </div>
   );
