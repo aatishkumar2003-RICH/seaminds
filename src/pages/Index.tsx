@@ -729,15 +729,15 @@ const Index = () => {
 
 
       <div
-        className={`fixed top-0 left-0 h-full w-64 z-50 lg:hidden ${!isSwiping && !isEdgeSwiping ? 'transition-transform duration-300 ease-in-out' : ''}`}
+        className={`fixed top-0 left-0 h-full w-52 z-50 lg:hidden ${!isSwiping && !isEdgeSwiping ? 'transition-transform duration-300 ease-in-out' : ''}`}
         style={{
           background: "#0D1B2A",
-          borderRight: '1px solid rgba(255,255,255,0.1)',
-          padding: "24px 16px",
+          borderRight: '1px solid rgba(255,255,255,0.05)',
+          padding: "20px 10px",
           transform: drawerOpen
             ? `translateX(${Math.min(0, touchDelta)}px)`
             : isEdgeSwiping && edgeSwipeDelta > 0
-              ? `translateX(${-256 + edgeSwipeDelta}px)`
+              ? `translateX(${-208 + edgeSwipeDelta}px)`
               : 'translateX(-100%)',
         }}
         onTouchStart={(e) => {
