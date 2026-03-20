@@ -21,7 +21,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   onNavClick, onReplayTour, onSignOut,
 }) => {
   return (
-    <aside className="hidden h-screen w-[2.75rem] flex-shrink-0 flex-col items-center border-r border-white/5 bg-background/95 px-[2px] py-3 backdrop-blur-sm lg:flex">
+    <aside className="hidden h-screen w-48 flex-shrink-0 flex-col items-center border-r border-white/5 bg-background/95 px-[2px] py-3 backdrop-blur-sm lg:flex">
       <div className="mb-3">
         <span className="rounded bg-secondary px-1 py-0.5 text-[10px] font-bold text-foreground/80">SM</span>
       </div>

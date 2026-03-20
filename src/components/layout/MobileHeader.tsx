@@ -1,5 +1,5 @@
 import React from "react";
-import { type Screen } from "./types";
+import { type Screen, type AppState } from "./types";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 
 interface MobileHeaderProps {
@@ -8,11 +8,14 @@ interface MobileHeaderProps {
   screen: Screen;
   onNavigateToNews: () => void;
   firstName: string;
+  appState?: AppState;
 }
 
 const MobileHeader: React.FC<MobileHeaderProps> = ({
-  onMenuOpen, showBackToNews, screen, onNavigateToNews, firstName,
+  onMenuOpen, showBackToNews, screen, onNavigateToNews, firstName, appState,
 }) => {
+  if (appState === "landing" || appState === "name-entry" || appState === "welcome") return null;
+
   return (
     <div className="flex shrink-0 items-center justify-between border-b border-border/40 bg-background/95 px-4 py-2 backdrop-blur-sm lg:hidden">
       <div className="flex items-center gap-2">

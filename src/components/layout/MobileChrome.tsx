@@ -71,6 +71,7 @@ const MobileChrome: React.FC<MobileChromeProps> = (props) => {
         screen={screen}
         onNavigateToNews={onNavigateToNews}
         firstName={firstName}
+        appState={props.appState}
       />
     </>
   );
