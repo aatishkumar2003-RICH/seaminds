@@ -658,11 +658,11 @@ const Index = () => {
               <button
                 key={item.screen}
                 onClick={() => handleNavClick(item)}
-                className="flex items-center gap-3 text-sm font-medium transition-colors w-full text-left"
+                className="flex items-center gap-2 text-xs font-medium transition-colors w-full text-left"
                 style={{
-                  padding: "10px 12px",
-                  borderRadius: "10px",
-                  borderLeft: active ? "3px solid #D4AF37" : "3px solid transparent",
+                  padding: "7px 8px",
+                  borderRadius: "8px",
+                  borderLeft: active ? "2px solid #D4AF37" : "2px solid transparent",
                   background: active ? "rgba(212,175,55,0.15)" : "transparent",
                   color: active ? "#D4AF37" : "rgba(255,255,255,0.5)",
                 }}
