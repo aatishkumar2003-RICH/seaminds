@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '@/integrations/supabase/client';
+import seamindsLogo from "@/assets/seaminds-logo.png";
 
 const Verify = () => {
   const { id } = useParams<{ id: string }>();
@@ -71,7 +72,7 @@ const Verify = () => {
       </Helmet>
     <div style={{ minHeight:'100vh', background:'linear-gradient(135deg, #0D1B2A 0%, #1B2838 50%, #0D1B2A 100%)', display:'flex', alignItems:'center', justifyContent:'center', padding:'20px' }}>
       <div style={{ maxWidth:'480px', width:'100%', textAlign:'center' }}>
-        <img src="/seaminds-logo.png" style={{ width:'60px', height:'60px', borderRadius:'12px', margin:'0 auto 16px', display:'block' }} alt="SeaMinds" />
+        <img src={seamindsLogo} style={{ width:'60px', height:'60px', borderRadius:'12px', margin:'0 auto 16px', display:'block' }} alt="SeaMinds" />
         {loading && <p style={{ color:'#D4AF37', fontSize:'16px' }}>⏳ Verifying certificate...</p>}
         {error && (
           <div style={{ background:'#1a2e47', borderRadius:'12px', padding:'32px', border:'1px solid #c0392b' }}>
