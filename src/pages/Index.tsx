@@ -440,9 +440,7 @@ const Index = () => {
     return (
       <div className="h-screen bg-background">
         <div className="mx-auto flex h-full max-w-md flex-col bg-background">
-          <MobileChrome {...mobileChromeProps} />
           <div className="min-h-0 flex-1">
-            <LandingScreen onGetStarted={() => setAppState("name-entry")} onManagerLogin={() => navigate("/manager")} />
             <LandingScreen onGetStarted={() => setAppState("name-entry")} onManagerLogin={() => navigate("/manager")} />
           </div>
         </div>
