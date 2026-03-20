@@ -11,6 +11,7 @@ interface LandingScreenProps {
 }
 
 const LandingScreen = ({ onGetStarted, onManagerLogin }: LandingScreenProps) => {
+  const navigate = useNavigate();
   const handleGoogleLogin = async () => {
     if (!(await checkRateLimit())) return;
     await supabase.auth.signInWithOAuth({
