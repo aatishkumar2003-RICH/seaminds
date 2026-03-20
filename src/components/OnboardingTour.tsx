@@ -90,6 +90,14 @@ const TOUR_STEPS: TourStep[] = [
     accent: "142 71% 45%",
   },
   {
+    icon: "⭐",
+    label: "Vessel Rating",
+    title: "Rate Your Vessel",
+    description: "Rate your ship anonymously across food, accommodation, safety, internet & more. Help fellow seafarers choose better vessels — your identity is never revealed.",
+    accent: "43 96% 56%",
+    tip: "Ratings are 100% anonymous — no user ID is ever stored",
+  },
+  {
     icon: "📜",
     label: "Certificates",
     title: "Certificate Wallet",
