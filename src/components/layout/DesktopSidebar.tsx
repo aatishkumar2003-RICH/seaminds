@@ -17,7 +17,7 @@ interface DesktopSidebarProps {
 }
 
 const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
-  screen, streakCount, jobBadgeCount, firstName, shipName,
+  screen, streakCount, jobBadgeCount, firstName, shipName, tourActiveScreen,
   onNavClick, onReplayTour, onSignOut,
 }) => {
   return (
