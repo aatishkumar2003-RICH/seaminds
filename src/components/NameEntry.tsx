@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { ChevronDown, CalendarIcon } from "lucide-react";
 import seamindsLogo from "@/assets/seaminds-logo.png";
@@ -93,6 +93,18 @@ const COUNTRY_CODES = [
   { flag: '🇩🇪', name: 'Germany', code: '+49' },
 ];
 
+const NATIONALITY_TO_CODE: Record<string, string> = {
+  "Filipino": "+63", "Indian": "+91", "Indonesian": "+62", "Vietnamese": "+84",
+  "Chinese": "+86", "Myanmar/Burmese": "+95", "Bangladeshi": "+880", "Ukrainian": "+380",
+  "Russian": "+7", "Croatian": "+385", "Greek": "+30", "Turkish": "+90",
+  "Sri Lankan": "+94", "Pakistani": "+92", "Nepali": "+977", "Thai": "+66",
+  "Malaysian": "+60", "Cambodian": "+855", "Georgian": "+995", "Azerbaijani": "+994",
+  "Romanian": "+40", "Bulgarian": "+359", "Polish": "+48", "Latvian": "+371",
+  "Lithuanian": "+370", "Estonian": "+372", "Norwegian": "+47", "British": "+44",
+  "American": "+1", "Australian": "+61", "Nigerian": "+234", "Ghanaian": "+233",
+  "Kenyan": "+254", "Brazilian": "+55",
+};
+
 const selectClass = "w-full bg-secondary text-foreground text-sm rounded-xl px-4 py-3 outline-none focus:ring-1 focus:ring-primary appearance-none";
 const inputClass = "w-full bg-secondary text-foreground text-sm rounded-xl px-4 py-3 placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary";
 const labelClass = "text-xs text-muted-foreground uppercase tracking-wide";
@@ -136,6 +148,13 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
   const [vesselTypeVal, setVesselTypeVal] = useState("");
   const [formError, setFormError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // Auto-select country code when nationality changes
+  useEffect(() => {
+    if (nationality && NATIONALITY_TO_CODE[nationality]) {
+      setCountryCode(NATIONALITY_TO_CODE[nationality]);
+    }
+  }, [nationality]);
 
   const canSubmit =
     firstName.trim() && lastName.trim() && shipName.trim() && role &&
