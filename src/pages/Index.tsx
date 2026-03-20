@@ -730,7 +730,7 @@ const Index = () => {
           transform: drawerOpen
             ? `translateX(${Math.min(0, touchDelta)}px)`
             : isEdgeSwiping && edgeSwipeDelta > 0
-              ? `translateX(${-208 + edgeSwipeDelta}px)`
+              ? `translateX(${-176 + edgeSwipeDelta}px)`
               : 'translateX(-100%)',
         }}
         onTouchStart={(e) => {
