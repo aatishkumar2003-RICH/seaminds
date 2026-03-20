@@ -284,7 +284,11 @@ const OnboardingTour = ({ enabled, forceShow, onForceShowConsumed }: OnboardingT
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 18, delay: 0.1 }}
           >
-            {fs.icon}
+            {fs.icon === "__LOGO__" ? (
+              <img src={seamindsLogo} alt="SeaMinds" className="w-16 h-16 rounded-xl object-contain" />
+            ) : (
+              fs.icon
+            )}
           </motion.div>
 
           {/* Title */}
