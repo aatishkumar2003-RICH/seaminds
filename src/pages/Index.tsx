@@ -823,7 +823,7 @@ const Index = () => {
         {/* Mobile top bar */}
         <div className="flex items-center justify-between px-4 py-2 lg:hidden border-b border-white/5 flex-shrink-0" style={{ background: '#0D1B2A' }}>
           <div className="flex items-center gap-2">
-            <button onClick={() => setDrawerOpen(true)} className="text-[#D4AF37] text-xl font-bold p-1">
+            <button onClick={() => setDrawerOpen(true)} className="text-gray-300 text-xl font-bold p-1">
               ☰
             </button>
             {screen !== 'news' && (
@@ -837,11 +837,10 @@ const Index = () => {
           </div>
           <div className="flex items-center gap-2">
             <img src="/seaminds-logo.png" className="w-6 h-6 rounded-full" />
-            <span className="text-[#D4AF37] font-bold text-sm">SeaMinds</span>
-            <span className="text-gray-400 text-xs hidden sm:block">{role || ''}</span>
+            <span className="text-gray-200 font-bold text-sm">SeaMinds</span>
           </div>
-          <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
-            <span className="text-xs text-[#D4AF37] font-bold">{firstName?.[0] || 'C'}</span>
+          <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+            <span className="text-xs text-gray-200 font-bold">{firstName?.[0] || 'C'}</span>
           </div>
         </div>
 
