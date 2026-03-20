@@ -414,7 +414,7 @@ const Index = () => {
     showSwipeHint,
     onSwipeHintEnd: () => { setShowSwipeHint(false); localStorage.setItem("seamind_swipe_hint_seen", "1"); },
     screen, appState, firstName, lastName, nationality, role,
-    streakCount, jobBadgeCount, shipName,
+    streakCount, jobBadgeCount, shipName, tourActiveScreen,
     onNavClick: handleNavClick,
     onNavigateToNews: () => navigateTo("news"),
     onReplayTour: () => { setForceTour(true); setDrawerOpen(false); },
