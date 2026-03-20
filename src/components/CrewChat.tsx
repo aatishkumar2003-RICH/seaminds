@@ -178,12 +178,6 @@ const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: Cre
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, isLoading]);
 
-  const getTimeGreeting = () => {
-    const h = new Date().getHours();
-    if (h < 12) return "Good morning";
-    if (h < 18) return "Good afternoon";
-    return "Good evening";
-  };
 
   const sendMessage = async (overrideContent?: string) => {
     const userContent = (overrideContent || input).trim();
