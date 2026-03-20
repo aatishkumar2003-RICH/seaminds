@@ -442,7 +442,7 @@ const Index = () => {
         <div className="mx-auto flex h-full max-w-md flex-col bg-background">
           <MobileChrome {...mobileChromeProps} />
           <div className="min-h-0 flex-1">
-            <SOSButton onOpenChat={() => { setAppState("main"); setScreen("chat"); }} firstName={firstName} shipName={shipName} />
+            <LandingScreen onGetStarted={() => setAppState("name-entry")} onManagerLogin={() => navigate("/manager")} />
             <LandingScreen onGetStarted={() => setAppState("name-entry")} onManagerLogin={() => navigate("/manager")} />
           </div>
         </div>
