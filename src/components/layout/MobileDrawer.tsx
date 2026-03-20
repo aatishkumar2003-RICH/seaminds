@@ -1,6 +1,7 @@
 import React from "react";
 import { LogOut, HelpCircle } from "lucide-react";
 import SOSButton from "@/components/SOSButton";
+import seamindsLogo from "@/assets/seaminds-logo.png";
 import { NAV_ITEMS, NATIONALITY_FLAGS, type NavItem, type Screen, type AppState } from "./types";
 
 interface MobileDrawerProps {
