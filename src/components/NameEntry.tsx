@@ -404,9 +404,7 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
           <div className="space-y-1.5">
             <label className={labelClass}>WhatsApp Number *</label>
             <div className="flex w-full gap-2">
-              <select value={countryCode} onChange={(e) => setCountryCode(e.target.value)} className="w-28 rounded-xl border border-border bg-secondary px-2 py-3 text-sm text-foreground outline-none focus:border-primary shrink-0">
-                {COUNTRY_CODES.map((c) => <option key={c.code + c.name} value={c.code}>{c.flag} {c.code}</option>)}
-              </select>
+              <CountryCodeSelect value={countryCode} onChange={setCountryCode} codes={COUNTRY_CODES} />
               <input
                 type="tel"
                 inputMode="numeric"
