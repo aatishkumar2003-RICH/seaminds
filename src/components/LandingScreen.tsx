@@ -96,10 +96,10 @@ const LandingScreen = ({ onGetStarted, onManagerLogin }: LandingScreenProps) => 
         Continue with Google
       </button>
 
-      <div className="flex items-center gap-3 w-full max-w-xs mb-3">
-        <div className="flex-1 h-px bg-gray-700" />
-        <span className="text-gray-500 text-xs">or</span>
-        <div className="flex-1 h-px bg-gray-700" />
+      <div className="mb-3 flex w-full max-w-xs items-center gap-3">
+        <div className="h-px flex-1 bg-border" />
+        <span className="text-xs text-muted-foreground">or</span>
+        <div className="h-px flex-1 bg-border" />
       </div>
 
       {!showEmail ? (

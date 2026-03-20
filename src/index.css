@@ -21,7 +21,7 @@ button, a, [role="button"] { touch-action: manipulation; cursor: pointer; }
     --popover: 220 45% 12%;
     --popover-foreground: 210 20% 90%;
 
-    --primary: 210 40% 90%;
+    --primary: 32 45% 64%;
     --primary-foreground: 220 50% 8%;
 
     --secondary: 220 40% 16%;
