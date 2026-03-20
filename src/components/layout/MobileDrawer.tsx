@@ -27,6 +27,7 @@ interface MobileDrawerProps {
   onSignOut: () => void;
   onOpenChat: () => void;
   shipName: string;
+  tourActiveScreen?: Screen | null;
 }
 
 const MobileDrawer: React.FC<MobileDrawerProps> = ({
