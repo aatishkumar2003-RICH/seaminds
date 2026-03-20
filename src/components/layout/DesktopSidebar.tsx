@@ -21,9 +21,9 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   onNavClick, onReplayTour, onSignOut,
 }) => {
   return (
-    <aside className="hidden h-screen w-48 flex-shrink-0 flex-col items-center border-r border-white/5 bg-background/95 px-[2px] py-3 backdrop-blur-sm lg:flex">
+    <aside className="hidden h-screen w-48 flex-shrink-0 flex-col items-center border-r border-border/60 bg-background/95 px-[2px] py-3 backdrop-blur-sm lg:flex">
       <div className="mb-3">
-        <span className="rounded bg-secondary px-1 py-0.5 text-[10px] font-bold text-foreground/80">SM</span>
+        <span className="rounded bg-accent px-1 py-0.5 text-[10px] font-bold text-primary">SM</span>
       </div>
 
       <nav className="flex flex-1 flex-col items-center gap-0.5">
@@ -34,21 +34,15 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
               <TooltipTrigger asChild>
                 <button
                   onClick={() => onNavClick(item)}
-                  className="relative flex h-8 w-8 items-center justify-center rounded-md text-sm transition-colors"
-                  style={{
-                    background: active ? "rgba(255,255,255,0.1)" : "transparent",
-                    borderLeft: active ? "2px solid hsl(var(--primary))" : "2px solid transparent",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!active) e.currentTarget.style.background = "rgba(255,255,255,0.05)";
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!active) e.currentTarget.style.background = "transparent";
-                  }}
+                  className={`relative flex h-8 w-8 items-center justify-center rounded-md border-l-2 text-sm transition-colors ${
+                    active
+                      ? "border-primary bg-accent text-primary"
+                      : "border-transparent text-muted-foreground hover:bg-secondary/70 hover:text-foreground"
+                  }`}
                 >
                   <span className={tourActiveScreen === item.screen ? "animate-pulse" : ""}>{item.icon}</span>
                   {tourActiveScreen === item.screen && (
-                    <span className="absolute inset-0 rounded-md animate-ping opacity-15 bg-primary" />
+                    <span className="absolute inset-0 rounded-md bg-primary animate-ping opacity-15" />
                   )}
                   {item.screen === "opportunities" && jobBadgeCount > 0 && (
                     <span className="absolute right-0.5 top-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-primary text-[7px] font-bold text-primary-foreground">
