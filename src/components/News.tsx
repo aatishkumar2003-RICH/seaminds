@@ -77,8 +77,14 @@ function timeAgo(dateStr: string): string {
 
 type FeedState = { items: FeedItem[]; loading: boolean; error: boolean };
 
-const News = () => {
-  const [selectedCountry, setSelectedCountry] = useState<CountryKey | null>(null);
+const News = ({ nationality }: { nationality?: string }) => {
+  const [selectedCountry, setSelectedCountry] = useState<CountryKey | null>(() => {
+    if (nationality) {
+      const mapped = NATIONALITY_TO_COUNTRY[nationality];
+      if (mapped) return mapped;
+    }
+    return null;
+  });
   const [countryFeeds, setCountryFeeds] = useState<Record<string, FeedState>>({});
   const [maritimeNews, setMaritimeNews] = useState<FeedState>({ items: [], loading: true, error: false });
   const [refreshing, setRefreshing] = useState(false);
