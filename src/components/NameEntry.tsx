@@ -267,6 +267,12 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-4 py-8 overflow-y-auto">
       <div className="w-full max-w-md space-y-6 py-8">
+        <button
+          onClick={() => window.history.back()}
+          className="hidden lg:flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4 self-start"
+        >
+          ← Back
+        </button>
         <div className="text-center space-y-3">
           <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center mx-auto overflow-hidden">
             <img src={seamindsLogo} alt="SeaMinds" className="w-10 h-10 object-contain" />
