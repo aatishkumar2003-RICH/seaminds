@@ -517,6 +517,7 @@ export type Database = {
       }
       crew_profiles: {
         Row: {
+          available_from: string | null
           created_at: string
           crew_unique_id: string | null
           cv_data: string | null
@@ -528,6 +529,7 @@ export type Database = {
           home_country: string | null
           home_country_code: string | null
           id: string
+          is_available: boolean | null
           last_login_lat: number | null
           last_login_lng: number | null
           last_name: string
@@ -540,6 +542,8 @@ export type Database = {
           onboarding_complete: boolean
           passport_number: string | null
           port_of_joining: string | null
+          preferred_vessel_types: string[] | null
+          profile_visible: boolean | null
           role: string
           ship_name: string
           user_id: string | null
@@ -550,6 +554,7 @@ export type Database = {
           years_at_sea: string
         }
         Insert: {
+          available_from?: string | null
           created_at?: string
           crew_unique_id?: string | null
           cv_data?: string | null
@@ -561,6 +566,7 @@ export type Database = {
           home_country?: string | null
           home_country_code?: string | null
           id?: string
+          is_available?: boolean | null
           last_login_lat?: number | null
           last_login_lng?: number | null
           last_name?: string
@@ -573,6 +579,8 @@ export type Database = {
           onboarding_complete?: boolean
           passport_number?: string | null
           port_of_joining?: string | null
+          preferred_vessel_types?: string[] | null
+          profile_visible?: boolean | null
           role: string
           ship_name: string
           user_id?: string | null
@@ -583,6 +591,7 @@ export type Database = {
           years_at_sea?: string
         }
         Update: {
+          available_from?: string | null
           created_at?: string
           crew_unique_id?: string | null
           cv_data?: string | null
@@ -594,6 +603,7 @@ export type Database = {
           home_country?: string | null
           home_country_code?: string | null
           id?: string
+          is_available?: boolean | null
           last_login_lat?: number | null
           last_login_lng?: number | null
           last_name?: string
@@ -606,6 +616,8 @@ export type Database = {
           onboarding_complete?: boolean
           passport_number?: string | null
           port_of_joining?: string | null
+          preferred_vessel_types?: string[] | null
+          profile_visible?: boolean | null
           role?: string
           ship_name?: string
           user_id?: string | null
@@ -901,21 +913,72 @@ export type Database = {
           },
         ]
       }
+      manager_crew_contacts: {
+        Row: {
+          created_at: string | null
+          crew_profile_id: string | null
+          id: string
+          manager_id: string | null
+          message: string | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          crew_profile_id?: string | null
+          id?: string
+          manager_id?: string | null
+          message?: string | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          crew_profile_id?: string | null
+          id?: string
+          manager_id?: string | null
+          message?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manager_crew_contacts_crew_profile_id_fkey"
+            columns: ["crew_profile_id"]
+            isOneToOne: false
+            referencedRelation: "crew_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manager_crew_contacts_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "manager_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       manager_profiles: {
         Row: {
+          admin_approved: boolean | null
+          approved_at: string | null
           company_name: string
+          company_verified: boolean | null
           created_at: string
           id: string
           user_id: string
         }
         Insert: {
+          admin_approved?: boolean | null
+          approved_at?: string | null
           company_name: string
+          company_verified?: boolean | null
           created_at?: string
           id?: string
           user_id: string
         }
         Update: {
+          admin_approved?: boolean | null
+          approved_at?: string | null
           company_name?: string
+          company_verified?: boolean | null
           created_at?: string
           id?: string
           user_id?: string
