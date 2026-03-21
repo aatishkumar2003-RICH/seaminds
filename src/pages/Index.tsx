@@ -536,7 +536,9 @@ const Index = () => {
 
           <div className="relative z-10 flex min-h-0 flex-1 flex-col">
             <MobileChrome {...mobileChromeProps} showBackToNews />
-            <VoyageModeBar status={voyageStatus} />
+            <div className="lg:hidden">
+              <VoyageModeBar status={voyageStatus} />
+            </div>
 
             {/* Desktop-only header & stats */}
             <div className="hidden px-8 pb-1 pt-4 lg:block">
