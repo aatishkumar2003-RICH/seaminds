@@ -43,8 +43,12 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
       try {
         await checkStatus();
         await checkExistingCvData();
-        const { data } = await supabase.from("crew_profiles").select("crew_unique_id").eq("id", profileId).maybeSingle();
+        const { data } = await supabase.from("crew_profiles").select("crew_unique_id, is_available, available_from").eq("id", profileId).maybeSingle();
         if (data?.crew_unique_id) setCrewUniqueId(data.crew_unique_id);
+        if (data) {
+          setIsAvailable(data.is_available || false);
+          setAvailableFrom(data.available_from || '');
+        }
       } catch (e) {
         console.error('SMCScoreTab init error:', e);
         setView("payment");
@@ -52,6 +56,13 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
     };
     init();
   }, [profileId]);
+
+  const toggleAvailability = async (val: boolean) => {
+    setIsAvailable(val);
+    await supabase.from('crew_profiles')
+      .update({ is_available: val, available_from: availableFrom || null })
+      .eq('id', profileId);
+  };
 
   useEffect(() => {
     supabase.from('admin_settings').select('value').eq('key', 'price_self_assessment').single()
