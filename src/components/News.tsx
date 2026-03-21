@@ -6,6 +6,21 @@ import { supabase } from "@/integrations/supabase/client";
 
 type CountryKey = "india" | "philippines" | "indonesia" | "ukraine" | "russia" | "china" | "myanmar" | "bangladesh" | "croatia" | "greece" | "uk" | "usa";
 
+const NATIONALITY_TO_COUNTRY: Record<string, CountryKey> = {
+  "Indian": "india", "India": "india",
+  "Filipino": "philippines", "Philippines": "philippines",
+  "Indonesian": "indonesia", "Indonesia": "indonesia",
+  "Ukrainian": "ukraine", "Ukraine": "ukraine",
+  "Russian": "russia", "Russia": "russia",
+  "Chinese": "china", "China": "china",
+  "Burmese": "myanmar", "Myanmar": "myanmar",
+  "Bangladeshi": "bangladesh", "Bangladesh": "bangladesh",
+  "Croatian": "croatia", "Croatia": "croatia",
+  "Greek": "greece", "Greece": "greece",
+  "British": "uk", "United Kingdom": "uk", "UK": "uk",
+  "American": "usa", "USA": "usa", "United States": "usa",
+};
+
 const decodeHTML = (html: string) => {
   const txt = document.createElement('textarea');
   txt.innerHTML = html;
@@ -62,8 +77,14 @@ function timeAgo(dateStr: string): string {
 
 type FeedState = { items: FeedItem[]; loading: boolean; error: boolean };
 
-const News = () => {
-  const [selectedCountry, setSelectedCountry] = useState<CountryKey | null>(null);
+const News = ({ nationality }: { nationality?: string }) => {
+  const [selectedCountry, setSelectedCountry] = useState<CountryKey | null>(() => {
+    if (nationality) {
+      const mapped = NATIONALITY_TO_COUNTRY[nationality];
+      if (mapped) return mapped;
+    }
+    return null;
+  });
   const [countryFeeds, setCountryFeeds] = useState<Record<string, FeedState>>({});
   const [maritimeNews, setMaritimeNews] = useState<FeedState>({ items: [], loading: true, error: false });
   const [refreshing, setRefreshing] = useState(false);

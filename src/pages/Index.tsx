@@ -627,7 +627,7 @@ const Index = () => {
               ) : screen === "opportunities" ? (
                 <ScreenErrorBoundary screenName="Opportunities"><Opportunities profileId={profileId} firstName={firstName} role={role} nationality={nationality} shipName={shipName} /></ScreenErrorBoundary>
               ) : screen === "news" ? (
-                <ScreenErrorBoundary screenName="News"><News /></ScreenErrorBoundary>
+                <ScreenErrorBoundary screenName="News"><News nationality={nationality} /></ScreenErrorBoundary>
               ) : screen === "academy" ? (
                 <ScreenErrorBoundary screenName="Academy"><Academy /></ScreenErrorBoundary>
               ) : screen === "bridge" ? (
