@@ -5,6 +5,8 @@ import { Anchor, LogOut, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTimeOfDay } from "@/hooks/useTimeOfDay";
+import { useVoyageMode } from '@/hooks/useVoyageMode';
+import VoyageModeBar from '@/components/VoyageModeBar';
 
 // Layout components
 import MobileChrome from "@/components/layout/MobileChrome";
