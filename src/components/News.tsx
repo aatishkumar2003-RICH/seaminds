@@ -91,6 +91,7 @@ const News = ({ nationality }: { nationality?: string }) => {
   const [countryFeeds, setCountryFeeds] = useState<Record<string, FeedState>>({});
   const [maritimeNews, setMaritimeNews] = useState<FeedState>({ items: [], loading: true, error: false });
   const [refreshing, setRefreshing] = useState(false);
+  const voyageStatus = useVoyageMode();
 
   const fetchFeed = useCallback(async (feedUrl: string): Promise<{ items: FeedItem[]; error: boolean }> => {
     try {
