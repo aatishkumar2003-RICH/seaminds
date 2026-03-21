@@ -328,6 +328,32 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
           <span className="text-sm font-bold tracking-wide" style={{ color: '#D4AF37' }}>{crewUniqueId}</span>
         </div>
       )}
+      {/* Availability Toggle */}
+      <div className="mx-4 mt-2 mb-1 rounded-xl border p-3 flex items-center justify-between"
+        style={{ background: isAvailable ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.05)', borderColor: isAvailable ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.1)' }}>
+        <div>
+          <div className="text-[13px] font-semibold" style={{ color: isAvailable ? '#22c55e' : '#888' }}>
+            {isAvailable ? '✅ Available for Work' : '🔴 Not Available'}
+          </div>
+          <div className="text-[11px] mt-0.5" style={{ color: '#666' }}>
+            {isAvailable ? 'Companies can find your profile' : 'Your profile is hidden from companies'}
+          </div>
+        </div>
+        <button
+          onClick={() => toggleAvailability(!isAvailable)}
+          className="rounded-full px-4 py-1.5 text-xs font-semibold text-white border-none cursor-pointer"
+          style={{ background: isAvailable ? '#22c55e' : '#333' }}>
+          {isAvailable ? 'Turn Off' : 'Go Available'}
+        </button>
+      </div>
+      {isAvailable && (
+        <div className="mx-4 mt-1 mb-1 flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">Available from:</span>
+          <input type="date" value={availableFrom}
+            onChange={e => { setAvailableFrom(e.target.value); supabase.from('crew_profiles').update({ available_from: e.target.value }).eq('id', profileId); }}
+            className="bg-card border border-border text-foreground px-2 py-1 rounded-md text-xs" />
+        </div>
+      )}
       <CvCard />
       {/* Salary Check Button */}
       <div className="px-4 py-2">
