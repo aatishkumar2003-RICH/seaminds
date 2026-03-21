@@ -30,6 +30,8 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
   const [crewUniqueId, setCrewUniqueId] = useState<string | null>(null);
   const [showCvUpload, setShowCvUpload] = useState(false);
   const [selfPrice, setSelfPrice] = useState(0);
+  const [isAvailable, setIsAvailable] = useState(false);
+  const [availableFrom, setAvailableFrom] = useState('');
 
   // CV parse state
   const [cvStatus, setCvStatus] = useState<CvStatus>("idle");
@@ -41,8 +43,12 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
       try {
         await checkStatus();
         await checkExistingCvData();
-        const { data } = await supabase.from("crew_profiles").select("crew_unique_id").eq("id", profileId).maybeSingle();
+        const { data } = await supabase.from("crew_profiles").select("crew_unique_id, is_available, available_from").eq("id", profileId).maybeSingle();
         if (data?.crew_unique_id) setCrewUniqueId(data.crew_unique_id);
+        if (data) {
+          setIsAvailable(data.is_available || false);
+          setAvailableFrom(data.available_from || '');
+        }
       } catch (e) {
         console.error('SMCScoreTab init error:', e);
         setView("payment");
@@ -50,6 +56,13 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
     };
     init();
   }, [profileId]);
+
+  const toggleAvailability = async (val: boolean) => {
+    setIsAvailable(val);
+    await supabase.from('crew_profiles')
+      .update({ is_available: val, available_from: availableFrom || null })
+      .eq('id', profileId);
+  };
 
   useEffect(() => {
     supabase.from('admin_settings').select('value').eq('key', 'price_self_assessment').single()
@@ -313,6 +326,32 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
         <div className="mx-4 mt-3 mb-1 rounded-xl border px-4 py-3 flex items-center gap-3" style={{ background: 'rgba(212,175,55,0.08)', borderColor: '#D4AF37' }}>
           <span className="text-xs font-semibold" style={{ color: '#D4AF37' }}>Your SeaMinds ID</span>
           <span className="text-sm font-bold tracking-wide" style={{ color: '#D4AF37' }}>{crewUniqueId}</span>
+        </div>
+      )}
+      {/* Availability Toggle */}
+      <div className="mx-4 mt-2 mb-1 rounded-xl border p-3 flex items-center justify-between"
+        style={{ background: isAvailable ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.05)', borderColor: isAvailable ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.1)' }}>
+        <div>
+          <div className="text-[13px] font-semibold" style={{ color: isAvailable ? '#22c55e' : '#888' }}>
+            {isAvailable ? '✅ Available for Work' : '🔴 Not Available'}
+          </div>
+          <div className="text-[11px] mt-0.5" style={{ color: '#666' }}>
+            {isAvailable ? 'Companies can find your profile' : 'Your profile is hidden from companies'}
+          </div>
+        </div>
+        <button
+          onClick={() => toggleAvailability(!isAvailable)}
+          className="rounded-full px-4 py-1.5 text-xs font-semibold text-white border-none cursor-pointer"
+          style={{ background: isAvailable ? '#22c55e' : '#333' }}>
+          {isAvailable ? 'Turn Off' : 'Go Available'}
+        </button>
+      </div>
+      {isAvailable && (
+        <div className="mx-4 mt-1 mb-1 flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">Available from:</span>
+          <input type="date" value={availableFrom}
+            onChange={e => { setAvailableFrom(e.target.value); supabase.from('crew_profiles').update({ available_from: e.target.value }).eq('id', profileId); }}
+            className="bg-card border border-border text-foreground px-2 py-1 rounded-md text-xs" />
         </div>
       )}
       <CvCard />
