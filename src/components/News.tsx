@@ -3,6 +3,9 @@ import { Newspaper, Globe, ExternalLink, RefreshCw, AlertCircle } from "lucide-r
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { voyageCache } from '@/lib/voyageCache';
+import { useVoyageMode } from '@/hooks/useVoyageMode';
+import VoyageModeBar from '@/components/VoyageModeBar';
 
 type CountryKey = "india" | "philippines" | "indonesia" | "ukraine" | "russia" | "china" | "myanmar" | "bangladesh" | "croatia" | "greece" | "uk" | "usa";
 
@@ -88,6 +91,7 @@ const News = ({ nationality }: { nationality?: string }) => {
   const [countryFeeds, setCountryFeeds] = useState<Record<string, FeedState>>({});
   const [maritimeNews, setMaritimeNews] = useState<FeedState>({ items: [], loading: true, error: false });
   const [refreshing, setRefreshing] = useState(false);
+  const voyageStatus = useVoyageMode();
 
   const fetchFeed = useCallback(async (feedUrl: string): Promise<{ items: FeedItem[]; error: boolean }> => {
     try {
@@ -102,6 +106,14 @@ const News = ({ nationality }: { nationality?: string }) => {
   }, []);
 
   const fetchMaritimeNews = useCallback(async () => {
+    if (!navigator.onLine) {
+      const cached = voyageCache.loadNews();
+      if (cached.length > 0) {
+        setMaritimeNews({ items: cached, loading: false, error: false });
+        return;
+      }
+    }
+
     setMaritimeNews(prev => ({ ...prev, loading: true, error: false }));
     const allItems: FeedItem[] = [];
     let hasError = true;
@@ -114,14 +126,16 @@ const News = ({ nationality }: { nationality?: string }) => {
       }
     }
 
-    // Sort by date, take top 5
+    // Sort by date, take top 8
     allItems.sort((a, b) => {
       const da = new Date(a.pubDate).getTime() || 0;
       const db = new Date(b.pubDate).getTime() || 0;
       return db - da;
     });
 
-    setMaritimeNews({ items: allItems.slice(0, 8), loading: false, error: hasError && allItems.length === 0 });
+    const items = allItems.slice(0, 8);
+    setMaritimeNews({ items, loading: false, error: hasError && allItems.length === 0 });
+    voyageCache.saveNews(items);
   }, [fetchFeed]);
 
   const fetchCountryNews = useCallback(async (key: CountryKey) => {
@@ -166,6 +180,7 @@ const News = ({ nationality }: { nationality?: string }) => {
 
   return (
     <div className="flex flex-col h-full">
+      <VoyageModeBar status={voyageStatus} />
       <div className="p-4 border-b border-border flex items-center justify-between">
         <div>
           <h1 className="text-lg font-semibold text-foreground">Maritime News</h1>

@@ -5,6 +5,8 @@ import { Anchor, LogOut, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTimeOfDay } from "@/hooks/useTimeOfDay";
+import { useVoyageMode } from '@/hooks/useVoyageMode';
+import VoyageModeBar from '@/components/VoyageModeBar';
 
 // Layout components
 import MobileChrome from "@/components/layout/MobileChrome";
@@ -41,6 +43,7 @@ const PROFILE_KEY = "seamind_profile_id";
 const Index = () => {
   const navigate = useNavigate();
   const timeOfDay = useTimeOfDay();
+  const voyageStatus = useVoyageMode();
   const [appState, setAppState] = useState<AppState>("loading");
   const [screen, setScreen] = useState<Screen>("chat");
   const [tourActiveScreen, setTourActiveScreen] = useState<Screen | null>(null);
@@ -533,6 +536,7 @@ const Index = () => {
 
           <div className="relative z-10 flex min-h-0 flex-1 flex-col">
             <MobileChrome {...mobileChromeProps} showBackToNews />
+            <VoyageModeBar status={voyageStatus} />
 
             {/* Desktop-only header & stats */}
             <div className="hidden px-8 pb-1 pt-4 lg:block">
