@@ -270,7 +270,7 @@ const SalaryBenchmark = ({ open, onClose }: SalaryBenchmarkProps) => {
                   {fmt(result.min)} — {fmt(result.max)}
                   <span className="text-sm font-normal text-muted-foreground"> / month</span>
                 </p>
-                <p className="text-[10px] text-muted-foreground mt-1">Source: ITF/BIMCO Scale 2025</p>
+                <p className="text-[10px] text-muted-foreground mt-1">Source: ITF/BIMCO Scale 2026</p>
               </div>
 
               {/* Percentile bar */}
