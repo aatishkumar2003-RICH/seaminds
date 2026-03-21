@@ -61,25 +61,17 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
         })}
       </nav>
 
-      <div className="mt-auto flex flex-col items-center gap-1.5">
-        <div className="text-[10px] font-medium text-foreground/80 truncate w-full text-center">{firstName || "Seafarer"}</div>
-        <div className="text-[9px] text-muted-foreground">🔥{streakCount}</div>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button onClick={onReplayTour} className="p-0.5 text-muted-foreground transition-colors hover:text-foreground">
-              <HelpCircle size={12} />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="right" className="text-xs">Replay Tour</TooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button onClick={onSignOut} className="p-0.5 text-muted-foreground transition-colors hover:text-foreground">
-              <LogOut size={12} />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="right" className="text-xs">Sign Out</TooltipContent>
-        </Tooltip>
+      <div className="mt-auto flex flex-col items-start gap-1 w-full px-2">
+        <div className="text-xs font-semibold text-foreground truncate w-full">{firstName || "Seafarer"}</div>
+        <div className="text-[11px] text-muted-foreground">🔥 {streakCount} day streak</div>
+        <button onClick={onReplayTour} className="flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground">
+          <HelpCircle size={14} />
+          <span>Replay Tour</span>
+        </button>
+        <button onClick={onSignOut} className="flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground">
+          <LogOut size={14} />
+          <span>Sign Out</span>
+        </button>
         <div className="w-full">
           <SOSButton onOpenChat={() => onNavClick({ icon: "💬", label: "Chat", screen: "chat", gated: true })} firstName={firstName} shipName={shipName} inline />
         </div>
