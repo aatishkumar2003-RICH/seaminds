@@ -23,7 +23,7 @@ export function useVoyageMode(): VoyageStatus {
       if (type === 'SLOW-2G' || type === '2G') strength = 1;
     }
     if (!online) { strength = 0; type = '—'; }
-    return { isOnline: online, isVoyageMode: !online || strength <= 2, signalStrength: strength, connectionType: type };
+    return { isOnline: online, isVoyageMode: !online || strength <= 1, signalStrength: strength, connectionType: type };
   };
 
   const [status, setStatus] = useState<VoyageStatus>(getStatus);

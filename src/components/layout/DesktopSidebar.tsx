@@ -62,6 +62,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
       </nav>
 
       <div className="mt-auto flex flex-col items-center gap-1.5">
+        <div className="text-[10px] font-medium text-foreground/80 truncate w-full text-center">{firstName || "Seafarer"}</div>
         <div className="text-[9px] text-muted-foreground">🔥{streakCount}</div>
         <Tooltip>
           <TooltipTrigger asChild>
