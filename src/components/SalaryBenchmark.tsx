@@ -325,7 +325,7 @@ const SalaryBenchmark = ({ open, onClose }: SalaryBenchmarkProps) => {
           {/* Disclaimer */}
           <div className="rounded-xl p-3" style={{ background: "rgba(13,27,42,0.6)", border: "1px solid rgba(255,255,255,0.05)" }}>
             <p className="text-[10px] text-muted-foreground text-center leading-tight">
-              Salary ranges are indicative and based on published ITF/BIMCO scales. Actual offers vary by company, flag state, and experience.
+              Salary ranges are indicative and based on published ITF/BIMCO 2026 scales. Actual offers vary by company, flag state, and experience.
             </p>
           </div>
         </div>
