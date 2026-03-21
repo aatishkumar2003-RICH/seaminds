@@ -43,6 +43,7 @@ const PROFILE_KEY = "seamind_profile_id";
 const Index = () => {
   const navigate = useNavigate();
   const timeOfDay = useTimeOfDay();
+  const voyageStatus = useVoyageMode();
   const [appState, setAppState] = useState<AppState>("loading");
   const [screen, setScreen] = useState<Screen>("chat");
   const [tourActiveScreen, setTourActiveScreen] = useState<Screen | null>(null);
