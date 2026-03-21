@@ -720,6 +720,7 @@ const Index = () => {
         )}
 
         {showNPS && <NPSSurvey firstName={firstName} onDismiss={() => setShowNPS(false)} />}
+        <MarketPulseButton onNavigateJobs={() => navigateTo('opportunities')} />
         <PWAInstallPrompt />
 
         {showNotifPrompt && (
