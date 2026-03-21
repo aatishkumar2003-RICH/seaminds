@@ -81,6 +81,7 @@ const HomePage = () => {
       </Helmet>
       <OceanBackground timeOfDay={timeOfDay} />
       <div className="relative z-10">
+        <LiveTicker />
         <HomeNav />
         <HeroSection timeOfDay={timeOfDay} />
         <AppPreviewSection />
