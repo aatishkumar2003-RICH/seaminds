@@ -106,6 +106,14 @@ const News = ({ nationality }: { nationality?: string }) => {
   }, []);
 
   const fetchMaritimeNews = useCallback(async () => {
+    if (!navigator.onLine) {
+      const cached = voyageCache.loadNews();
+      if (cached.length > 0) {
+        setMaritimeNews({ items: cached, loading: false, error: false });
+        return;
+      }
+    }
+
     setMaritimeNews(prev => ({ ...prev, loading: true, error: false }));
     const allItems: FeedItem[] = [];
     let hasError = true;
@@ -118,14 +126,16 @@ const News = ({ nationality }: { nationality?: string }) => {
       }
     }
 
-    // Sort by date, take top 5
+    // Sort by date, take top 8
     allItems.sort((a, b) => {
       const da = new Date(a.pubDate).getTime() || 0;
       const db = new Date(b.pubDate).getTime() || 0;
       return db - da;
     });
 
-    setMaritimeNews({ items: allItems.slice(0, 8), loading: false, error: hasError && allItems.length === 0 });
+    const items = allItems.slice(0, 8);
+    setMaritimeNews({ items, loading: false, error: hasError && allItems.length === 0 });
+    voyageCache.saveNews(items);
   }, [fetchFeed]);
 
   const fetchCountryNews = useCallback(async (key: CountryKey) => {
