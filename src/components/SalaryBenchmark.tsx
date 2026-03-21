@@ -203,7 +203,7 @@ const SalaryBenchmark = ({ open, onClose }: SalaryBenchmarkProps) => {
         <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: "rgba(212,175,55,0.15)" }}>
           <div>
             <h2 className="text-lg font-bold" style={{ color: "#D4AF37" }}>💰 Market Salary Benchmark</h2>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Based on ITF/BIMCO published scales 2025</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Based on ITF/BIMCO published scales 2026</p>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/5 transition-colors">
             <X size={18} className="text-muted-foreground" />
@@ -270,7 +270,7 @@ const SalaryBenchmark = ({ open, onClose }: SalaryBenchmarkProps) => {
                   {fmt(result.min)} — {fmt(result.max)}
                   <span className="text-sm font-normal text-muted-foreground"> / month</span>
                 </p>
-                <p className="text-[10px] text-muted-foreground mt-1">Source: ITF/BIMCO Scale 2025</p>
+                <p className="text-[10px] text-muted-foreground mt-1">Source: ITF/BIMCO Scale 2026</p>
               </div>
 
               {/* Percentile bar */}
