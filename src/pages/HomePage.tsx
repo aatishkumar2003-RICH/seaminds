@@ -71,7 +71,7 @@ const HomePage = () => {
   }
 
   return (
-    <div className="min-h-screen animated-gradient-bg text-foreground relative">
+    <div className="min-h-screen animated-gradient-bg text-foreground relative pt-28">
       <Helmet>
         <title>SeaMinds — The Seafarer's Digital Platform</title>
         <meta name="description" content="The digital platform for seafarers — wellness, career tools, competency scoring and maritime community." />
