@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import HomeNav from "@/components/homepage/HomeNav";
@@ -18,8 +18,16 @@ const HomePage = () => {
   const timeOfDay = useTimeOfDay();
   const navigate = useNavigate();
   const { user, isReady: authReady } = useAuth();
+  const [timedOut, setTimedOut] = useState(false);
 
   useEffect(() => { document.title = "SeaMinds — The Seafarer's Digital Platform"; }, []);
+
+  // Safety timeout: if auth doesn't resolve in 5s, show the page anyway
+  useEffect(() => {
+    if (authReady) return;
+    const t = setTimeout(() => setTimedOut(true), 5000);
+    return () => clearTimeout(t);
+  }, [authReady]);
 
   const organizationLd = {
     "@context": "https://schema.org",
@@ -50,7 +58,7 @@ const HomePage = () => {
     }
   }, [authReady, user, navigate]);
 
-  if (!authReady) {
+  if (!authReady && !timedOut) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">

@@ -180,7 +180,9 @@ const News = ({ nationality }: { nationality?: string }) => {
 
   return (
     <div className="flex flex-col h-full">
-      <VoyageModeBar status={voyageStatus} />
+      <div className="lg:hidden">
+        <VoyageModeBar status={voyageStatus} />
+      </div>
       <div className="p-4 border-b border-border flex items-center justify-between">
         <div>
           <h1 className="text-lg font-semibold text-foreground">Maritime News</h1>
