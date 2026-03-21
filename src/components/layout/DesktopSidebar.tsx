@@ -35,18 +35,19 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
               <TooltipTrigger asChild>
                 <button
                   onClick={() => onNavClick(item)}
-                  className={`relative flex h-8 w-8 items-center justify-center rounded-md border-l-2 text-sm transition-colors ${
+                  className={`relative flex w-full items-center gap-2 rounded-md border-l-2 px-2 py-1.5 text-sm transition-colors ${
                     active
                       ? "border-primary bg-accent text-primary"
                       : "border-transparent text-muted-foreground hover:bg-secondary/70 hover:text-foreground"
                   }`}
                 >
                   <span className={tourActiveScreen === item.screen ? "animate-pulse" : ""}>{item.icon}</span>
+                  <span className="text-xs font-medium">{item.label}</span>
                   {tourActiveScreen === item.screen && (
                     <span className="absolute inset-0 rounded-md bg-primary animate-ping opacity-15" />
                   )}
                   {item.screen === "opportunities" && jobBadgeCount > 0 && (
-                    <span className="absolute right-0.5 top-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-primary text-[7px] font-bold text-primary-foreground">
+                    <span className="ml-auto flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 text-[7px] font-bold text-primary-foreground">
                       {jobBadgeCount}
                     </span>
                   )}

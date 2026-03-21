@@ -491,8 +491,13 @@ const Index = () => {
 
   if (appState === "voyage-report") {
     return (
-      <div className="h-screen bg-background">
-        <div className="mx-auto flex h-full max-w-md flex-col bg-background">
+      <div className="h-screen bg-background flex flex-row">
+        <DesktopSidebar
+          screen={screen} streakCount={streakCount} jobBadgeCount={jobBadgeCount}
+          firstName={firstName} shipName={shipName} tourActiveScreen={tourActiveScreen}
+          onNavClick={handleNavClick} onReplayTour={() => setForceTour(true)} onSignOut={handleSignOut}
+        />
+        <div className="mx-auto flex h-full w-full max-w-md flex-col bg-background">
           <MobileChrome {...mobileChromeProps} />
           <div className="min-h-0 flex-1 overflow-hidden">
             <VoyageReport profileId={profileId} firstName={firstName} role={role} shipName={shipName}
