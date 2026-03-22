@@ -6,6 +6,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+const BATCH_SIZE = 10;
+
 const TITLE_QUERIES: [RegExp, string][] = [
   [/hormuz|red sea|warlike/i, "container ship ocean night dramatic"],
   [/mental|depress|lonely|fatigue/i, "person alone ocean contemplative"],
@@ -55,15 +57,32 @@ Deno.serve(async (req) => {
     });
   }
 
+  let batch = 0;
+  try {
+    const body = await req.json();
+    batch = typeof body.batch === "number" ? body.batch : 0;
+  } catch { /* default batch 0 */ }
+
+  const offset = batch * BATCH_SIZE;
+
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
+  // Get total count
+  const { count: totalCount } = await supabase
+    .from("blog_posts")
+    .select("*", { count: "exact", head: true })
+    .eq("published", true);
+
+  // Get this batch
   const { data: posts, error } = await supabase
     .from("blog_posts")
     .select("id, title, image_url")
-    .eq("published", true);
+    .eq("published", true)
+    .order("created_at", { ascending: true })
+    .range(offset, offset + BATCH_SIZE - 1);
 
   if (error) {
     return new Response(JSON.stringify({ error: error.message }), {
@@ -97,8 +116,18 @@ Deno.serve(async (req) => {
     await sleep(1200);
   }
 
+  const hasMore = (totalCount || 0) > offset + BATCH_SIZE;
+
   return new Response(
-    JSON.stringify({ total: (posts || []).length, updated, errors }),
+    JSON.stringify({
+      batch,
+      batchSize: (posts || []).length,
+      updated,
+      totalArticles: totalCount || 0,
+      hasMore,
+      nextBatch: hasMore ? batch + 1 : null,
+      errors,
+    }),
     { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
 });
