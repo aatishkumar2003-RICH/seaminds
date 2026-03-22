@@ -53,3 +53,6 @@ verify_jwt = false
 
 [functions.monitor-agent]
 verify_jwt = false
+
+[functions.update-blog-images]
+verify_jwt = false
