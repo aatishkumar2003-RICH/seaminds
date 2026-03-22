@@ -642,6 +642,7 @@ export default function AdminDashboard() {
     { id: "country_pricing" as const, label: "Country Pricing" },
     { id: "sub_admins" as const, label: "Sub-Admins" },
     { id: "dpa" as const, label: "SOS / DPA Contacts" },
+    { id: "blog_images" as const, label: "Blog Images" },
   ];
 
   return (
@@ -671,6 +672,7 @@ export default function AdminDashboard() {
       {tab === "country_pricing" && <CountryPricingTab />}
       {tab === "sub_admins" && <SubAdminsTab />}
       {tab === "dpa" && <DPAContactsTab />}
+      {tab === "blog_images" && <BlogImagesTab />}
     </div>
   );
 }
