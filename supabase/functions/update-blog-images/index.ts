@@ -7,31 +7,29 @@ const corsHeaders = {
 };
 
 const TITLE_QUERIES: [RegExp, string][] = [
-  [/hormuz|red sea|warlike/i, "container ship ocean night"],
-  [/mental|depress|lonely|fatigue/i, "person ocean contemplative"],
+  [/hormuz|red sea|warlike/i, "container ship ocean night dramatic"],
+  [/mental|depress|lonely|fatigue/i, "person alone ocean contemplative"],
   [/sire|inspect|tanker|psc/i, "industrial ship port inspection"],
-  [/wage|salary|pay/i, "professional finance office"],
-  [/piracy|guinea/i, "naval security ocean"],
-  [/abandon|repatriat/i, "cargo ship port docked"],
-  [/lng|green|ammonia/i, "sustainable energy industrial ship"],
-  [/stcw|certificate|training/i, "professional maritime training"],
+  [/wage|salary|pay/i, "professional finance office work"],
+  [/piracy|guinea/i, "naval security ocean patrol"],
+  [/abandon|repatriat/i, "cargo ship port harbor"],
+  [/lng|green|ammonia|fuel/i, "sustainable industrial energy ship"],
+  [/stcw|certificate|training/i, "professional maritime training education"],
   [/master|captain|career/i, "ship captain bridge professional"],
-  [/fire|emergency|safety/i, "industrial safety equipment"],
-  [/recruit|illegal|fraud/i, "contract signing professional"],
+  [/fire|emergency|safety/i, "industrial safety rescue"],
+  [/recruit|illegal|fraud/i, "contract signing professional business"],
 ];
 
 function queryForTitle(title: string): string {
   for (const [re, q] of TITLE_QUERIES) {
     if (re.test(title)) return q;
   }
-  return "cargo ship ocean maritime";
+  return "cargo ship ocean maritime professional";
 }
 
 async function fetchUnsplashUrl(query: string, accessKey: string): Promise<string | null> {
-  const url = `https://api.unsplash.com/photos/random?query=${encodeURIComponent(query)}&orientation=landscape`;
-  const res = await fetch(url, {
-    headers: { Authorization: `Client-ID ${accessKey}` },
-  });
+  const url = `https://api.unsplash.com/photos/random?query=${encodeURIComponent(query)}&orientation=landscape&client_id=${accessKey}`;
+  const res = await fetch(url);
   if (!res.ok) {
     console.error("Unsplash error", res.status, await res.text());
     return null;
@@ -96,8 +94,7 @@ Deno.serve(async (req) => {
       errors.push(`${post.id}: no Unsplash result`);
     }
 
-    // Rate limit: 1 second between calls
-    await sleep(1000);
+    await sleep(1200);
   }
 
   return new Response(
