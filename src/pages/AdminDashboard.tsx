@@ -623,6 +623,52 @@ function DPAContactsTab() {
   );
 }
 
+/* ─── Blog Images Tab ─── */
+function BlogImagesTab() {
+  const [running, setRunning] = useState(false);
+  const [result, setResult] = useState<{ total: number; updated: number; errors: string[] } | null>(null);
+
+  const runUpdate = async () => {
+    setRunning(true);
+    setResult(null);
+    try {
+      const res = await supabase.functions.invoke("update-blog-images");
+      if (res.error) throw res.error;
+      setResult(res.data);
+      toast.success(`Updated ${res.data?.updated || 0} blog images`);
+    } catch (e: any) {
+      toast.error(e.message || "Failed to update images");
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  return (
+    <div className="rounded-lg p-6" style={{ background: "#112240" }}>
+      <h2 className="text-xl font-bold mb-4" style={{ color: "#D4AF37" }}>Blog Image Updater</h2>
+      <p className="mb-4 text-sm" style={{ color: "#94A3B8" }}>
+        Fetches a relevant Unsplash image for each published blog post based on its title keywords and updates the image_url. Takes ~1 second per article due to rate limiting.
+      </p>
+      <Button onClick={runUpdate} disabled={running} style={{ background: "#D4AF37", color: "#0D1B2A" }}>
+        {running ? "Updating…" : "🖼️ Update All Blog Images"}
+      </Button>
+      {result && (
+        <div className="mt-4 p-4 rounded" style={{ background: "#0D1B2A" }}>
+          <p style={{ color: "#22c55e" }}>✅ {result.updated} / {result.total} articles updated</p>
+          {result.errors?.length > 0 && (
+            <div className="mt-2">
+              <p style={{ color: "#f59e0b" }}>⚠️ Errors:</p>
+              {result.errors.map((e, i) => (
+                <p key={i} className="text-xs" style={{ color: "#94A3B8" }}>{e}</p>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── Main Dashboard ─── */
 export default function AdminDashboard() {
   const [authed, setAuthed] = useState(localStorage.getItem(LS_KEY) === ADMIN_PIN);
