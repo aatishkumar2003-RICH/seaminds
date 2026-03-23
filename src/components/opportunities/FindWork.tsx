@@ -653,7 +653,14 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                       </Button>
                     </a>
                   )}
-                  {!ext.apply_url && !ext.contact_whatsapp && !ext.contact_email && (
+                  {!ext.apply_url && !ext.contact_whatsapp && !ext.contact_email && ext.company_website && (
+                    <a href={ext.company_website.startsWith('http') ? ext.company_website : `https://${ext.company_website}`} target="_blank" rel="noopener noreferrer" className="flex-1">
+                      <Button size="sm" className="w-full text-xs h-9 gap-1.5">
+                        <Globe size={12} /> Visit Website
+                      </Button>
+                    </a>
+                  )}
+                  {!ext.apply_url && !ext.contact_whatsapp && !ext.contact_email && !ext.company_website && (
                     <Button size="sm" variant="outline" className="w-full text-xs h-9" disabled>
                       No Contact Info
                     </Button>
