@@ -75,10 +75,12 @@ Deno.serve(async (req) => {
       .is('apply_url', null)
       .is('contact_email', null)
       .is('contact_whatsapp', null);
+    const totalExt = stats.externalJobs;
+    const contactPct = totalExt > 0 ? Math.round(((totalExt - (noContactRemaining || 0)) / totalExt) * 100) : 100;
     if (noContactRemaining && noContactRemaining > 0) {
-      actions.push(`📞 ${noContactRemaining} jobs still have no contact info`);
+      actions.push(`📞 ${noContactRemaining} jobs have no contact info — coverage: ${contactPct}%`);
     } else {
-      actions.push(`✅ All jobs have contact info`);
+      actions.push(`✅ All jobs have contact info — 100% coverage`);
     }
 
     // AI insights
