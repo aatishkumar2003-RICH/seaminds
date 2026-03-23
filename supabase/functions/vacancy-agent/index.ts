@@ -307,8 +307,9 @@ async function scrapeSeamanJobSite(): Promise<any[]> {
       const title = content.match(/<h[234][^>]*>([^<]{5,80})<\/h[234]>/)?.[1]?.trim() || '';
       const company = content.match(/class="[^"]*company[^"]*"[^>]*>([^<]{3,60})</)?.[1]?.trim() || null;
       const link = content.match(/href="([^"]*workabroad[^"]*)"/)?.[1] || null;
+      const website = extractWebsite(content, ['workabroad.ph']);
       if (title) {
-        items.push({ title, company_name: company, apply_url: link, nationality_fit: ['Filipino'], source_url: 'seamanjobsite.workabroad.ph' });
+        items.push({ title, company_name: company, apply_url: link, company_website: website, nationality_fit: ['Filipino'], source_url: 'seamanjobsite.workabroad.ph' });
       }
     }
     return items.slice(0, 20);
