@@ -299,9 +299,27 @@ export default function VacancyIntelTab() {
       <div className="rounded-xl bg-card border border-border p-4 space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-foreground">❌ Jobs With No Contact Info</h3>
-          <Button variant="outline" size="sm" onClick={loadNoContact} disabled={loadingNoContact}>
-            {loadingNoContact ? '⏳ Loading...' : noContactJobs ? '🔄 Refresh' : '👁️ Show'}
-          </Button>
+          <div className="flex gap-2">
+            {noContactJobs && noContactJobs.length > 0 && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={async () => {
+                  if (!confirm(`Delete all ${noContactJobs.length} no-contact jobs?`)) return;
+                  const ids = noContactJobs.map(j => j.id);
+                  for (let i = 0; i < ids.length; i += 20) {
+                    await supabase.from('external_vacancies').delete().in('id', ids.slice(i, i + 20));
+                  }
+                  setNoContactJobs([]);
+                }}
+              >
+                🗑️ Delete All ({noContactJobs.length})
+              </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={loadNoContact} disabled={loadingNoContact}>
+              {loadingNoContact ? '⏳ Loading...' : noContactJobs ? '🔄 Refresh' : '👁️ Show'}
+            </Button>
+          </div>
         </div>
         {noContactJobs && (
           <>
