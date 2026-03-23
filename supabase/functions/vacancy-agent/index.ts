@@ -20,6 +20,12 @@ const MARITIME_QUERIES = [
   'AB OS rating seafarer job Philippines hiring',
   'offshore DP officer job vacancy India',
   'FPSO tanker engineer officer job Southeast Asia',
+  'Indonesian seafarer crew job vacancy 2026',
+  'manning agency Indonesia Jakarta seaman hiring',
+  'Ukrainian seafarer officer job vacancy Europe',
+  'крюинг вакансії моряк Україна officer',
+  'Bangladesh seafarer officer engineer job hiring',
+  'Myanmar seaman crew job vacancy hiring',
 ];
 
 const RSS_FEEDS = [
