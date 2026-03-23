@@ -42,7 +42,11 @@ async function fetchGoogleJobs(query: string): Promise<any[]> {
     const url = `https://serpapi.com/search.json?engine=google_jobs&q=${encodeURIComponent(query)}&api_key=${SERPAPI_KEY}&num=10`;
     const res = await fetch(url);
     const data = await res.json();
-    return data.jobs_results || [];
+    return (data.jobs_results || []).slice(0, 5).map((j: any) => ({
+      ...j,
+      apply_url: j.apply_options?.[0]?.link || j.related_links?.[0]?.link || null,
+      contact_email: j.apply_options?.find((o: any) => o.title?.toLowerCase().includes('email'))?.link?.replace('mailto:','') || null,
+    }));
   } catch { return []; }
 }
 
