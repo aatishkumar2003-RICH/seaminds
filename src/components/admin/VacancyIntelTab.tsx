@@ -306,13 +306,26 @@ export default function VacancyIntelTab() {
         {noContactJobs && (
           <>
             <p className="text-xs text-muted-foreground">Showing {noContactJobs.length} jobs with no apply link, email, or WhatsApp</p>
-            {noContactJobs.map((v, i) => (
-              <div key={i} className="flex items-center justify-between border-b border-border pb-2 last:border-0 last:pb-0">
+            {noContactJobs.map((v) => (
+              <div key={v.id} className="flex items-center justify-between border-b border-border pb-2 last:border-0 last:pb-0">
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-foreground truncate">{v.title || `${v.rank_required} — ${v.vessel_type || 'Various'}`}</p>
                   <p className="text-[11px] text-muted-foreground">{v.company_name || 'Unknown'} · {sourceLabel(v.source)} · {v.fetched_at ? new Date(v.fetched_at).toLocaleDateString() : '—'}</p>
                 </div>
-                <span className="text-xs shrink-0" style={{ color: qualityColor(v.quality_score || 0) }}>Q:{v.quality_score}</span>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-xs" style={{ color: qualityColor(v.quality_score || 0) }}>Q:{v.quality_score}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={async () => {
+                      await supabase.from('external_vacancies').delete().eq('id', v.id);
+                      setNoContactJobs(prev => prev?.filter(j => j.id !== v.id) || null);
+                    }}
+                  >
+                    <Trash2 size={14} />
+                  </Button>
+                </div>
               </div>
             ))}
             {!noContactJobs.length && <p className="text-xs text-muted-foreground">🎉 All jobs have contact info!</p>}
