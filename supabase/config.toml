@@ -56,3 +56,6 @@ verify_jwt = false
 
 [functions.update-blog-images]
 verify_jwt = false
+
+[functions.vacancy-agent]
+verify_jwt = false
