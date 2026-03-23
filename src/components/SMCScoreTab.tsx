@@ -44,11 +44,12 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
       try {
         await checkStatus();
         await checkExistingCvData();
-        const { data } = await supabase.from("crew_profiles").select("crew_unique_id, is_available, available_from").eq("id", profileId).maybeSingle();
+        const { data } = await supabase.from("crew_profiles").select("crew_unique_id, is_available, available_from, job_alerts_enabled").eq("id", profileId).maybeSingle();
         if (data?.crew_unique_id) setCrewUniqueId(data.crew_unique_id);
         if (data) {
           setIsAvailable(data.is_available || false);
           setAvailableFrom(data.available_from || '');
+          setJobAlertsEnabled(data.job_alerts_enabled !== false);
         }
       } catch (e) {
         console.error('SMCScoreTab init error:', e);
