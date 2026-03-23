@@ -180,6 +180,39 @@ export default function VacancyIntelTab() {
         </div>
       </div>
 
+
+      {/* Crew Nationality Distribution */}
+      <div className="rounded-xl bg-card border border-border p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-foreground">🌍 Crew Nationality Distribution</h3>
+          <div className="flex gap-3 text-xs text-muted-foreground">
+            <span>👥 Total: <strong className="text-foreground">{stats.totalCrew}</strong></span>
+            <span>✅ Available: <strong className="text-primary">{stats.availableCrew}</strong></span>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+          {stats.crewByNationality.map(n => {
+            const pct = stats.totalCrew ? Math.round((n.count / stats.totalCrew) * 100) : 0;
+            return (
+              <div key={n.nationality} className="rounded-lg bg-secondary p-3 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-foreground truncate">{n.nationality}</span>
+                  <span className="text-xs font-bold text-primary">{n.count}</span>
+                </div>
+                <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
+                  <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+                </div>
+                <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                  <span>{pct}% of crew</span>
+                  <span className="text-primary">{n.available} available</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        {!stats.crewByNationality.length && <p className="text-xs text-muted-foreground">No crew data yet</p>}
+      </div>
+
       {/* Recent Vacancies */}
       <div className="rounded-xl bg-card border border-border p-4 space-y-3">
         <h3 className="text-sm font-semibold text-foreground">Latest Collected Vacancies</h3>
