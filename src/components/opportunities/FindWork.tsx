@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { format, formatDistanceToNow } from "date-fns";
-import { CalendarIcon, Ship, Anchor, Globe, Clock, MapPin, DollarSign, Check, AlertTriangle, Award } from "lucide-react";
+import { CalendarIcon, Ship, Anchor, Globe, Clock, MapPin, DollarSign, Check, AlertTriangle, Award, ExternalLink, Mail, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 const VESSEL_TYPES = [
   "Bulk Carrier", "Tanker", "Chemical Tanker", "Container Ship",
@@ -55,6 +56,25 @@ interface JobPosting {
   verified: boolean;
 }
 
+interface ExternalVacancy {
+  id: string;
+  title: string;
+  rank_required: string | null;
+  vessel_type: string | null;
+  company_name: string | null;
+  salary_text: string | null;
+  joining_port: string | null;
+  joining_date: string | null;
+  contract_duration: string | null;
+  description: string | null;
+  apply_url: string | null;
+  contact_email: string | null;
+  contact_whatsapp: string | null;
+  source: string;
+  quality_score: number | null;
+  created_at: string | null;
+}
+
 // Demo SMC score for development
 const DEMO_SMC_SCORE = 4.17;
 
@@ -68,6 +88,8 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  const [externalVacancies, setExternalVacancies] = useState<ExternalVacancy[]>([]);
+
   useEffect(() => {
     loadData();
   }, []);
@@ -76,10 +98,11 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const [availRes, vacRes, postingsRes] = await Promise.all([
+    const [availRes, vacRes, postingsRes, extRes] = await Promise.all([
       supabase.from("crew_availability").select("*").eq("crew_profile_id", profileId).maybeSingle(),
       supabase.from("job_vacancies").select("*").eq("active", true).order("created_at", { ascending: false }),
       supabase.from("job_postings").select("*").gte("created_at", thirtyDaysAgo.toISOString()).order("created_at", { ascending: false }),
+      supabase.from("external_vacancies").select("*").eq("is_scam_flagged", false).gte("quality_score", 30).order("created_at", { ascending: false }).limit(50),
     ]);
 
     if (availRes.data) {
@@ -91,6 +114,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
 
     if (vacRes.data) setVacancies(vacRes.data);
     if (postingsRes.data) setJobPostings(postingsRes.data);
+    if (extRes.data) setExternalVacancies(extRes.data);
     setLoading(false);
   };
 
@@ -372,6 +396,116 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
               })()}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* AI-Collected External Vacancies */}
+      {externalVacancies.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 px-1">
+            <Globe size={14} className="text-primary" />
+            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">AI-Collected Jobs</h3>
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+              {externalVacancies.length}
+            </Badge>
+          </div>
+          <p className="text-[11px] text-muted-foreground px-1">
+            Aggregated from Google Jobs, RSS feeds & Telegram channels
+          </p>
+          {externalVacancies.map((ext) => {
+            const sourceLabel = ext.source === 'google_jobs' ? '🔍 Google' : ext.source === 'rss_feed' ? '📰 RSS' : ext.source === 'telegram' ? '📱 Telegram' : ext.source;
+            const postedAgo = ext.created_at ? formatDistanceToNow(new Date(ext.created_at), { addSuffix: true }) : '';
+
+            return (
+              <div
+                key={ext.id}
+                className="rounded-xl bg-card border border-border p-4 space-y-3"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <h4 className="text-sm font-semibold text-foreground truncate">{ext.title}</h4>
+                    {ext.company_name && (
+                      <p className="text-xs text-muted-foreground mt-0.5">{ext.company_name}</p>
+                    )}
+                  </div>
+                  <Badge variant="outline" className="text-[10px] shrink-0">{sourceLabel}</Badge>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5">
+                  {ext.rank_required && (
+                    <Badge className="text-[10px] bg-primary/10 text-primary border-0">{ext.rank_required}</Badge>
+                  )}
+                  {ext.vessel_type && (
+                    <Badge variant="secondary" className="text-[10px]">{ext.vessel_type}</Badge>
+                  )}
+                </div>
+
+                <div className="space-y-1.5 text-xs text-muted-foreground">
+                  {ext.joining_port && (
+                    <div className="flex items-center gap-1.5">
+                      <MapPin size={12} className="text-primary/70" />
+                      <span>{ext.joining_port}</span>
+                    </div>
+                  )}
+                  {ext.salary_text && (
+                    <div className="flex items-center gap-1.5">
+                      <DollarSign size={12} className="text-primary/70" />
+                      <span>{ext.salary_text}</span>
+                    </div>
+                  )}
+                  {ext.contract_duration && (
+                    <div className="flex items-center gap-1.5">
+                      <Clock size={12} className="text-primary/70" />
+                      <span>{ext.contract_duration}</span>
+                    </div>
+                  )}
+                </div>
+
+                {ext.description && (
+                  <p className="text-[11px] text-muted-foreground line-clamp-2">{ext.description}</p>
+                )}
+
+                <div className="flex items-center justify-between">
+                  {postedAgo && <p className="text-[10px] text-muted-foreground/60">{postedAgo}</p>}
+                  {ext.quality_score && (
+                    <div className="flex items-center gap-1">
+                      <div className={cn("h-1.5 w-1.5 rounded-full", ext.quality_score >= 70 ? "bg-green-500" : ext.quality_score >= 40 ? "bg-yellow-500" : "bg-red-500")} />
+                      <span className="text-[10px] text-muted-foreground/60">Q{ext.quality_score}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-2">
+                  {ext.apply_url && (
+                    <a href={ext.apply_url} target="_blank" rel="noopener noreferrer" className="flex-1">
+                      <Button size="sm" className="w-full text-xs h-9 gap-1.5">
+                        <ExternalLink size={12} /> Apply
+                      </Button>
+                    </a>
+                  )}
+                  {ext.contact_whatsapp && (
+                    <a href={`https://wa.me/${ext.contact_whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi, I'm interested in the ${ext.rank_required || ext.title} position. My name is ${firstName} ${lastName}, ${role}.`)}`} target="_blank" rel="noopener noreferrer" className={ext.apply_url ? "" : "flex-1"}>
+                      <Button size="sm" variant={ext.apply_url ? "outline" : "default"} className={cn("text-xs h-9 gap-1.5", !ext.apply_url && "w-full bg-green-600 hover:bg-green-700 text-white")}>
+                        <MessageCircle size={12} /> WhatsApp
+                      </Button>
+                    </a>
+                  )}
+                  {ext.contact_email && !ext.apply_url && !ext.contact_whatsapp && (
+                    <a href={`mailto:${ext.contact_email}?subject=${encodeURIComponent(`Application: ${ext.title}`)}&body=${encodeURIComponent(`Dear Hiring Manager,\n\nI am interested in the ${ext.rank_required || ext.title} position.\n\nName: ${firstName} ${lastName}\nRank: ${role}\nNationality: ${nationality}\n\nBest regards`)}`} className="flex-1">
+                      <Button size="sm" className="w-full text-xs h-9 gap-1.5">
+                        <Mail size={12} /> Email
+                      </Button>
+                    </a>
+                  )}
+                  {!ext.apply_url && !ext.contact_whatsapp && !ext.contact_email && (
+                    <Button size="sm" variant="outline" className="w-full text-xs h-9" disabled>
+                      No Contact Info
+                    </Button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
