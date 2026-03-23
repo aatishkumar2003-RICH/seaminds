@@ -43,9 +43,14 @@ async function fetchGoogleJobs(query: string): Promise<any[]> {
     const res = await fetch(url);
     const data = await res.json();
     return (data.jobs_results || []).slice(0, 5).map((j: any) => ({
-      ...j,
-      apply_url: j.apply_options?.[0]?.link || j.related_links?.[0]?.link || null,
-      contact_email: j.apply_options?.find((o: any) => o.title?.toLowerCase().includes('email'))?.link?.replace('mailto:','') || null,
+      title: j.title,
+      company: j.company_name,
+      location: j.location,
+      description: j.description?.substring(0, 400),
+      apply_url: j.apply_options?.[0]?.link || null,
+      contact_email: j.apply_options?.find((o: any) => 
+        o.link?.includes('mailto:'))?.link?.replace('mailto:','') || null,
+      source_name: j.via || null,
     }));
   } catch { return []; }
 }
@@ -116,6 +121,8 @@ async function processWithClaude(rawItems: any[]): Promise<any[]> {
 - apply_url: string or null (IMPORTANT: always include this if available — it is the fallback when no direct contact exists)
 - company_website: string or null (extract company website URL if mentioned)
 - quality_score: number 0-100 (100=complete structured listing, 50=partial flier, 10=vague post)
+
+IMPORTANT RULE: If apply_url is provided in the input, you MUST include it in output. Never set apply_url to null if it was provided. The apply_url is the minimum contact requirement — without it the vacancy is useless. If quality_score would be below 40 but apply_url exists, set quality_score to 45 minimum.
 - is_scam: boolean (true if: requests money from seafarer, no company name AND no contact, salary >$50k/month, generic "all ranks needed")
 - scam_reason: string or null
 - source_type: "structured_listing" | "flier" | "paper_cutting" | "social_post"
