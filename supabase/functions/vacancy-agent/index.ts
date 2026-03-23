@@ -208,15 +208,94 @@ Deno.serve(async (req) => {
 
     stats.saved = stats.google + stats.rss + stats.telegram;
 
+    // Email notifications to available crew with matching ranks
+    let emailsSent = 0;
+    if (stats.saved > 0) {
+      try {
+        // Get newly saved vacancies (last 30 min to catch this run's saves)
+        const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+        const { data: newVacancies } = await supabase
+          .from('external_vacancies')
+          .select('rank_required, vessel_type, company_name, salary_text, title')
+          .gte('fetched_at', thirtyMinAgo)
+          .eq('is_scam_flagged', false)
+          .gte('quality_score', 30);
+
+        if (newVacancies?.length) {
+          // Group new jobs by rank
+          const jobsByRank: Record<string, typeof newVacancies> = {};
+          for (const v of newVacancies) {
+            const rank = (v.rank_required || '').toLowerCase();
+            if (!rank) continue;
+            if (!jobsByRank[rank]) jobsByRank[rank] = [];
+            jobsByRank[rank].push(v);
+          }
+
+          // Get available crew with email
+          const { data: availableCrew } = await supabase
+            .from('crew_profiles')
+            .select('first_name, email, role')
+            .eq('is_available', true)
+            .not('email', 'is', null);
+
+          const RESEND_KEY = Deno.env.get('RESEND_API_KEY');
+          if (availableCrew?.length && RESEND_KEY) {
+            for (const crew of availableCrew) {
+              if (!crew.email) continue;
+              const crewRank = (crew.role || '').toLowerCase();
+              const matchingJobs = jobsByRank[crewRank];
+              if (!matchingJobs?.length) continue;
+
+              const jobListHtml = matchingJobs.slice(0, 5).map(j =>
+                `<tr><td style="padding:8px;border-bottom:1px solid #eee">${j.title || `${j.rank_required} — ${j.vessel_type || 'Various'}`}</td><td style="padding:8px;border-bottom:1px solid #eee">${j.company_name || 'N/A'}</td><td style="padding:8px;border-bottom:1px solid #eee">${j.salary_text || '—'}</td></tr>`
+              ).join('');
+
+              const html = `
+<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px">
+  <div style="background:#0a1628;padding:20px;border-radius:8px 8px 0 0;text-align:center">
+    <h1 style="color:#D4AF37;margin:0;font-size:20px">⚓ New Jobs Match Your Profile</h1>
+  </div>
+  <div style="background:#ffffff;padding:20px;border:1px solid #e5e7eb;border-radius:0 0 8px 8px">
+    <p style="color:#374151;font-size:14px">Hi ${crew.first_name},</p>
+    <p style="color:#374151;font-size:14px">We found <strong>${matchingJobs.length} new ${crew.role}</strong> position${matchingJobs.length > 1 ? 's' : ''} that match your profile:</p>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;margin:16px 0">
+      <tr style="background:#f9fafb"><th style="padding:8px;text-align:left">Position</th><th style="padding:8px;text-align:left">Company</th><th style="padding:8px;text-align:left">Salary</th></tr>
+      ${jobListHtml}
+    </table>
+    ${matchingJobs.length > 5 ? `<p style="color:#6b7280;font-size:13px">+ ${matchingJobs.length - 5} more positions</p>` : ''}
+    <a href="https://seaminds.lovable.app" style="display:inline-block;background:#D4AF37;color:#0a1628;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin:16px 0">View All Jobs →</a>
+    <p style="color:#9ca3af;font-size:12px;margin-top:20px">You're receiving this because you're marked as available on SeaMinds.</p>
+  </div>
+</div>`;
+
+              const emailRes = await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${RESEND_KEY}` },
+                body: JSON.stringify({
+                  from: 'SeaMinds Jobs <jobs@seaminds.life>',
+                  to: [crew.email],
+                  subject: `⚓ ${matchingJobs.length} new ${crew.role} job${matchingJobs.length > 1 ? 's' : ''} found for you`,
+                  html,
+                }),
+              });
+              if (emailRes.ok) emailsSent++;
+            }
+          }
+        }
+      } catch (emailErr) {
+        stats.errors.push(`Email notifications: ${String(emailErr)}`);
+      }
+    }
+
     // Log to app_events
     await supabase.from('app_events').insert({
       event_type: 'vacancy_agent_run',
-      message: `Vacancy agent completed: ${stats.saved} saved`,
+      message: `Vacancy agent completed: ${stats.saved} saved, ${emailsSent} emails sent`,
       severity: 'info',
-      metadata: { ...stats, duration_ms: Date.now() - startTime },
+      metadata: { ...stats, emailsSent, duration_ms: Date.now() - startTime },
     });
 
-    return new Response(JSON.stringify({ success: true, stats }), {
+    return new Response(JSON.stringify({ success: true, stats: { ...stats, emailsSent } }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
