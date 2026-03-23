@@ -201,21 +201,35 @@ const Index = () => {
     checkJobMatches();
   }, [appState, role]);
 
-  // Real-time job alerts
+  // Real-time job alerts (internal + external)
   useEffect(() => {
     if (appState !== "main" || !role) return;
-    const channel = supabase.channel("job-alerts").on("postgres_changes",
-      { event: "INSERT", schema: "public", table: "job_postings" },
-      (payload) => {
-        const nj = payload.new as { rank_required: string; vessel_type: string; joining_port: string; status: string };
-        if (nj.status === "pending_payment") return;
-        if (nj.rank_required === "Any Rank" || nj.rank_required.toLowerCase() === role.toLowerCase()) {
-          setJobMatch({ rank_required: nj.rank_required, vessel_type: nj.vessel_type, joining_port: nj.joining_port });
-          setJobBadgeCount(p => p + 1);
-          try { const a = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH2LkI2IhX99c2xjXmFsgImUm5uWkIeAd3BpZGFhaGyBk5ydnJiRiYB3bmdjYWVsiZOdnpyXkIiAdm5nZGJnbYuVnp+dl5CIgHZuZ2RjZ26Ml56fn5iPiIB2b2dlZGhvjZifn5+Yj4iAdm9nZWRpcI6Zn5+fmI+IgHZvZ2VlaXCPmp+fn5mPiIB2b2dmZWpxj5ufn5+Zj4h/dm9nZmVqcZCbn5+fmY+Hf3ZvZ2ZmanGQm5+gn5mPh392b2dmZmpxkJufoJ+Zj4d/dm9nZmZqcZCcn6CfmY+Hf3ZvZ2ZmanGRnJ+gn5mQh392b2dmZmpxkZyfoJ+ZkId/dm9nZmZqcZGcn6CfmpCHf3ZvZ2ZmanGRnJ+gn5qQh392b2dmZmpxkZyfoJ+akId/dm9nZmZqcZGcn6CfmpCHf3ZvZ2ZmanGRnJ+gn5qQh392cGdmZmpxkZyfoJ+akId/dm9nZmZqcQ=="); a.volume = 0.5; a.play().catch(() => {}); } catch {}
-          toast({ title: "⚓ New Job Match!", description: `${nj.rank_required} on ${nj.vessel_type} — Joining: ${nj.joining_port}` });
-        }
-      }).subscribe();
+    const channel = supabase.channel("job-alerts")
+      .on("postgres_changes",
+        { event: "INSERT", schema: "public", table: "job_postings" },
+        (payload) => {
+          const nj = payload.new as { rank_required: string; vessel_type: string; joining_port: string; status: string };
+          if (nj.status === "pending_payment") return;
+          if (nj.rank_required === "Any Rank" || nj.rank_required.toLowerCase() === role.toLowerCase()) {
+            setJobMatch({ rank_required: nj.rank_required, vessel_type: nj.vessel_type, joining_port: nj.joining_port });
+            setJobBadgeCount(p => p + 1);
+            try { const a = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH2LkI2IhX99c2xjXmFsgImUm5uWkIeAd3BpZGFhaGyBk5ydnJiRiYB3bmdjYWVsiZOdnpyXkIiAdm5nZGJnbYuVnp+dl5CIgHZuZ2RjZ26Ml56fn5iPiIB2b2dlZGhvjZifn5+Yj4iAdm9nZWRpcI6Zn5+fmI+IgHZvZ2VlaXCPmp+fn5mPiIB2b2dmZWpxj5ufn5+Zj4h/dm9nZmVqcZCbn5+fmY+Hf3ZvZ2ZmanGQm5+gn5mPh392b2dmZmpxkJufoJ+Zj4d/dm9nZmZqcZCcn6CfmY+Hf3ZvZ2ZmanGRnJ+gn5mQh392b2dmZmpxkZyfoJ+ZkId/dm9nZmZqcZGcn6CfmpCHf3ZvZ2ZmanGRnJ+gn5qQh392b2dmZmpxkZyfoJ+akId/dm9nZmZqcZGcn6CfmpCHf3ZvZ2ZmanGRnJ+gn5qQh392cGdmZmpxkZyfoJ+akId/dm9nZmZqcQ=="); a.volume = 0.5; a.play().catch(() => {}); } catch {}
+            toast({ title: "⚓ New Job Match!", description: `${nj.rank_required} on ${nj.vessel_type} — Joining: ${nj.joining_port}` });
+          }
+        })
+      .on("postgres_changes",
+        { event: "INSERT", schema: "public", table: "external_vacancies" },
+        (payload) => {
+          const ext = payload.new as { rank_required: string | null; vessel_type: string | null; joining_port: string | null; is_scam_flagged: boolean; quality_score: number | null };
+          if (ext.is_scam_flagged || (ext.quality_score !== null && ext.quality_score < 30)) return;
+          if (ext.rank_required && ext.rank_required.toLowerCase() === role.toLowerCase()) {
+            setJobMatch({ rank_required: ext.rank_required, vessel_type: ext.vessel_type || "Unknown", joining_port: ext.joining_port || "TBD" });
+            setJobBadgeCount(p => p + 1);
+            try { const a = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH2LkI2IhX99c2xjXmFsgImUm5uWkIeAd3BpZGFhaGyBk5ydnJiRiYB3bmdjYWVsiZOdnpyXkIiAdm5nZGJnbYuVnp+dl5CIgHZuZ2RjZ26Ml56fn5iPiIB2b2dlZGhvjZifn5+Yj4iAdm9nZWRpcI6Zn5+fmI+IgHZvZ2VlaXCPmp+fn5mPiIB2b2dmZWpxj5ufn5+Zj4h/dm9nZmVqcZCbn5+fmY+Hf3ZvZ2ZmanGQm5+gn5mPh392b2dmZmpxkJufoJ+Zj4d/dm9nZmZqcZCcn6CfmY+Hf3ZvZ2ZmanGRnJ+gn5mQh392b2dmZmpxkZyfoJ+ZkId/dm9nZmZqcZGcn6CfmpCHf3ZvZ2ZmanGRnJ+gn5qQh392b2dmZmpxkZyfoJ+akId/dm9nZmZqcZGcn6CfmpCHf3ZvZ2ZmanGRnJ+gn5qQh392cGdmZmpxkZyfoJ+akId/dm9nZmZqcQ=="); a.volume = 0.5; a.play().catch(() => {}); } catch {}
+            toast({ title: "🌐 New AI Job Match!", description: `${ext.rank_required} on ${ext.vessel_type || "vessel"} — ${ext.joining_port || "Port TBD"}` });
+          }
+        })
+      .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [appState, role]);
 
