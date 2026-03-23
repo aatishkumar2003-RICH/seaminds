@@ -229,19 +229,6 @@ export default function VacancyIntelTab() {
         </div>
       </div>
 
-  const loadNoContact = async () => {
-    setLoadingNoContact(true);
-    const { data } = await supabase
-      .from('external_vacancies')
-      .select('id, title, rank_required, vessel_type, company_name, source, quality_score, fetched_at')
-      .is('apply_url', null)
-      .is('contact_email', null)
-      .is('contact_whatsapp', null)
-      .order('fetched_at', { ascending: false })
-      .limit(50);
-    setNoContactJobs(data || []);
-    setLoadingNoContact(false);
-  };
 
       {/* Crew Nationality Distribution */}
       <div className="rounded-xl bg-card border border-border p-4 space-y-3">
