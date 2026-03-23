@@ -565,7 +565,10 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                       <p className="text-xs text-muted-foreground mt-0.5">{ext.company_name}</p>
                     )}
                   </div>
-                  <Badge variant="outline" className="text-[10px] shrink-0">{sourceLabel}</Badge>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {regionMatch && <Badge className="text-[10px] bg-primary/20 text-primary border-0">{isIndian ? '🇮🇳' : '🇵🇭'} For You</Badge>}
+                    <Badge variant="outline" className="text-[10px]">{sourceLabel}</Badge>
+                  </div>
                 </div>
 
                 <div className="flex flex-wrap gap-1.5">
