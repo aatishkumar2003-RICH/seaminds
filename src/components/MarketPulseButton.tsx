@@ -112,7 +112,7 @@ export default function MarketPulseButton({
         userRank ? supabase.from('crew_profiles').select('*', { count: 'exact', head: true }).ilike('role', `%${userRank.split(' ')[0]}%`)
           : supabase.from('crew_profiles').select('*', { count: 'exact', head: true }).limit(0),
         // Top paying jobs
-        supabase.from('external_vacancies').select('rank_required, vessel_type, salary_max, company_name, joining_port').not('salary_max', 'is', null).order('salary_max', { ascending: false }).limit(5),
+        supabase.from('external_vacancies').select('rank_required, vessel_type, salary_max, company_name, joining_port, company_website').not('salary_max', 'is', null).order('salary_max', { ascending: false }).limit(5),
         // Last month vacancies for trend
         supabase.from('external_vacancies').select('*', { count: 'exact', head: true }).gte('fetched_at', lastMonth).lt('fetched_at', yesterday),
       ]);
