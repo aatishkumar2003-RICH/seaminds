@@ -171,6 +171,7 @@ async function saveVacancies(items: any[], source: string) {
       apply_url: item.apply_url,
       contact_email: item.contact_email,
       contact_whatsapp: item.contact_whatsapp,
+      company_website: item.company_website || null,
       quality_score: item.quality_score || 50,
       is_verified: false,
       is_scam_flagged: false,
