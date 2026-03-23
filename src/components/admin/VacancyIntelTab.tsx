@@ -151,6 +151,42 @@ export default function VacancyIntelTab() {
         ))}
       </div>
 
+      {/* Contact Coverage */}
+      {stats.contactCoverage && (
+        <div className="rounded-xl bg-card border border-border p-4 space-y-3">
+          <h3 className="text-sm font-semibold text-foreground">📞 Contact Coverage</h3>
+          <div className="flex h-6 rounded-full overflow-hidden bg-muted">
+            {[
+              { val: stats.contactCoverage.withApply, color: '#22c55e', label: 'Apply Link' },
+              { val: stats.contactCoverage.withEmail - (stats.contactCoverage.withApply > 0 ? Math.min(stats.contactCoverage.withEmail, stats.contactCoverage.withApply) : 0), color: '#60a5fa', label: 'Email Only' },
+              { val: stats.contactCoverage.withWhatsapp, color: '#a78bfa', label: 'WhatsApp' },
+              { val: stats.contactCoverage.noContact, color: '#ef4444', label: 'No Contact' },
+            ].filter(s => s.val > 0).map(s => (
+              <div key={s.label} title={`${s.label}: ${s.val}`} style={{ width: `${(s.val / stats.contactCoverage.total) * 100}%`, background: s.color }} />
+            ))}
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+            {[
+              { icon: '🔗', label: 'Apply Link', val: stats.contactCoverage.withApply, color: '#22c55e' },
+              { icon: '📧', label: 'Email', val: stats.contactCoverage.withEmail, color: '#60a5fa' },
+              { icon: '📱', label: 'WhatsApp', val: stats.contactCoverage.withWhatsapp, color: '#a78bfa' },
+              { icon: '🌐', label: 'Website', val: stats.contactCoverage.withWebsite, color: 'hsl(var(--primary))' },
+            ].map(s => (
+              <div key={s.label} className="flex items-center gap-1.5">
+                <span>{s.icon}</span>
+                <span className="text-muted-foreground">{s.label}:</span>
+                <span className="font-semibold" style={{ color: s.color }}>{s.val}</span>
+                <span className="text-muted-foreground/60">({stats.contactCoverage.total > 0 ? Math.round(s.val / stats.contactCoverage.total * 100) : 0}%)</span>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center justify-between text-xs pt-1 border-t border-border">
+            <span className="text-muted-foreground">✅ Has any contact: <strong className="text-foreground">{stats.contactCoverage.withAny}</strong> ({stats.contactCoverage.total > 0 ? Math.round(stats.contactCoverage.withAny / stats.contactCoverage.total * 100) : 0}%)</span>
+            <span className="text-destructive">❌ No contact: <strong>{stats.contactCoverage.noContact}</strong> ({stats.contactCoverage.total > 0 ? Math.round(stats.contactCoverage.noContact / stats.contactCoverage.total * 100) : 0}%)</span>
+          </div>
+        </div>
+      )}
+
       <div className="grid md:grid-cols-2 gap-4">
         {/* By Source */}
         <div className="rounded-xl bg-card border border-border p-4 space-y-3">
