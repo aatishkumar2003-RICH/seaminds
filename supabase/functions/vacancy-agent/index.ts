@@ -284,8 +284,9 @@ async function scrapePinoySeaman(): Promise<any[]> {
       const company = content.match(/(?:agency|company)[:\s]+([^<\n]{3,50})/i)?.[1]?.trim() || null;
       const email = content.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
       const link = content.match(/href="(https?:\/\/[^"]*pinoyseaman[^"]*)"/)?.[1] || null;
+      const website = extractWebsite(content, ['pinoyseaman.ph']);
       if (title && /captain|chief|officer|engineer|bosun|cook|ab|os|wiper|messman/i.test(title)) {
-        items.push({ title, company_name: company, contact_email: email, apply_url: link, nationality_fit: ['Filipino'], source_url: 'pinoyseaman.ph' });
+        items.push({ title, company_name: company, contact_email: email, apply_url: link, company_website: website, nationality_fit: ['Filipino'], source_url: 'pinoyseaman.ph' });
       }
     }
     return items.slice(0, 20);
