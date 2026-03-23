@@ -382,48 +382,68 @@ const PostVacancy = () => {
 
         {/* Pricing Cards */}
         <div className="space-y-2">
-          <label className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">Select Plan</label>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {PLANS.map((plan) => (
-              <button
-                key={plan.id}
-                onClick={() => setSelectedPlan(plan.id)}
-                className="relative rounded-xl p-4 text-left transition-all"
-                style={{
-                  border: selectedPlan === plan.id
-                    ? "2px solid #D4AF37"
-                    : plan.popular
-                    ? "1px solid rgba(212, 175, 55, 0.4)"
-                    : "1px solid hsl(var(--border))",
-                  background: selectedPlan === plan.id
-                    ? "rgba(212, 175, 55, 0.08)"
-                    : "hsl(var(--secondary))",
-                }}
-              >
-                {plan.popular && (
-                  <span
-                    className="absolute -top-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
-                    style={{ background: "#D4AF37", color: "#0a1929" }}
+          {allFree ? (
+            <div style={{
+              background: 'rgba(34,197,94,0.1)',
+              border: '1px solid rgba(34,197,94,0.3)',
+              borderRadius: 12,
+              padding: '16px 20px',
+              textAlign: 'center' as const,
+              marginTop: 16,
+            }}>
+              <div style={{ fontSize: 28, marginBottom: 6 }}>🎉</div>
+              <div style={{ color: '#22c55e', fontWeight: 800, fontSize: 18, marginBottom: 4 }}>
+                Free Posting — Limited Time
+              </div>
+              <div style={{ color: '#888', fontSize: 13 }}>
+                Post unlimited vacancies at no cost until we reach 10,000 crew members.
+              </div>
+            </div>
+          ) : (
+            <>
+              <label className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">Select Plan</label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {PLANS_STATIC.map((plan) => (
+                  <button
+                    key={plan.id}
+                    onClick={() => setSelectedPlan(plan.id)}
+                    className="relative rounded-xl p-4 text-left transition-all"
+                    style={{
+                      border: selectedPlan === plan.id
+                        ? "2px solid #D4AF37"
+                        : plan.popular
+                        ? "1px solid rgba(212, 175, 55, 0.4)"
+                        : "1px solid hsl(var(--border))",
+                      background: selectedPlan === plan.id
+                        ? "rgba(212, 175, 55, 0.08)"
+                        : "hsl(var(--secondary))",
+                    }}
                   >
-                    <Star size={10} fill="currentColor" /> POPULAR
-                  </span>
-                )}
-                <div className="text-lg font-bold text-foreground">{plan.price}</div>
-                <div className="text-sm font-medium text-foreground mt-0.5">{plan.name}</div>
-                <div className="text-[11px] text-muted-foreground mt-1">{plan.desc}</div>
-                <div
-                  className="mt-3 text-center text-xs font-semibold py-1.5 rounded-lg transition-colors"
-                  style={{
-                    background: selectedPlan === plan.id ? "#D4AF37" : "hsl(var(--muted))",
-                    color: selectedPlan === plan.id ? "#0a1929" : "hsl(var(--muted-foreground))",
-                  }}
-                >
-                  {selectedPlan === plan.id ? "✓ Selected" : "Select"}
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
+                    {plan.popular && (
+                      <span
+                        className="absolute -top-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                        style={{ background: "#D4AF37", color: "#0a1929" }}
+                      >
+                        <Star size={10} fill="currentColor" /> POPULAR
+                      </span>
+                    )}
+                    <div className="text-lg font-bold text-foreground">{getPlanPrice(plan.id)}</div>
+                    <div className="text-sm font-medium text-foreground mt-0.5">{plan.name}</div>
+                    <div className="text-[11px] text-muted-foreground mt-1">{plan.desc}</div>
+                    <div
+                      className="mt-3 text-center text-xs font-semibold py-1.5 rounded-lg transition-colors"
+                      style={{
+                        background: selectedPlan === plan.id ? "#D4AF37" : "hsl(var(--muted))",
+                        color: selectedPlan === plan.id ? "#0a1929" : "hsl(var(--muted-foreground))",
+                      }}
+                    >
+                      {selectedPlan === plan.id ? "✓ Selected" : "Select"}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
 
         <Button className="w-full" onClick={handlePostClick} disabled={posting}>
           {posting ? "Submitting..." : "Post Vacancy →"}
