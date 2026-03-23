@@ -10,14 +10,16 @@ const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY')!;
 const TELEGRAM_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN')!;
 
 const MARITIME_QUERIES = [
-  'Captain LNG tanker job vacancy','Chief Engineer bulk carrier hiring',
-  'Chief Officer container ship vacancy','2nd Engineer tanker job',
-  'Master mariner job hiring','Chief Mate vessel job',
-  'Marine Engineer officer vacancy','Bosun AB seaman job hiring',
-  'Filipino seafarer job vacancy','Indonesian seafarers hiring',
-  'Indian seafarer officer job','Ukrainian seafarer vacancy',
-  'offshore DP officer job vacancy','FPSO engineer hiring',
-  'PSV AHTS officer job vacancy',
+  'Captain Chief Engineer seafarer job vacancy India',
+  'Chief Officer 2nd Engineer merchant navy India hiring',
+  'Filipino seafarer officer vacancy hiring 2026',
+  'Manning agency Philippines seaman job hiring',
+  'Master mariner LNG tanker job India Mumbai',
+  'Marine engineer officer job Chennai Kolkata India',
+  'Captain Chief Engineer job Manila Philippines',
+  'AB OS rating seafarer job Philippines hiring',
+  'offshore DP officer job vacancy India',
+  'FPSO tanker engineer officer job Southeast Asia',
 ];
 
 const RSS_FEEDS = [
@@ -171,6 +173,136 @@ async function saveVacancies(items: any[], source: string) {
   return saved;
 }
 
+// INDIA — Seadonna
+async function scrapeSeadonna(): Promise<any[]> {
+  try {
+    const res = await fetch('https://seadonna.com/category/sea-jobs-2', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SeaMinds/1.0)' }
+    });
+    const html = await res.text();
+    const items: any[] = [];
+    const posts = html.matchAll(/<article[^>]*>([\s\S]*?)<\/article>/g);
+    for (const post of posts) {
+      const content = post[1];
+      const title = content.match(/<h[23][^>]*>([^<]{5,80})<\/h[23]>/)?.[1]?.trim() || '';
+      const email = content.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
+      const phone = content.match(/(?:\+91|0)[\d\s-]{9,12}/)?.[0] || null;
+      const link = content.match(/href="([^"]*seadonna\.com[^"]*)"/)?.[1] || null;
+      if (title && /captain|chief|officer|engineer|master|bosun|cook|rating|navy|seafarer/i.test(title)) {
+        items.push({ title, contact_email: email, contact_whatsapp: phone, apply_url: link, nationality_fit: ['Indian'], source_url: 'seadonna.com' });
+      }
+    }
+    return items.slice(0, 20);
+  } catch { return []; }
+}
+
+// INDIA — Wasailor
+async function scrapeWasailor(): Promise<any[]> {
+  try {
+    const res = await fetch('https://www.wasailor.com/', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SeaMinds/1.0)' }
+    });
+    const html = await res.text();
+    const items: any[] = [];
+    const posts = html.matchAll(/<div[^>]*class="[^"]*post[^"]*"[^>]*>([\s\S]*?)<\/div>\s*<\/div>/g);
+    for (const post of posts) {
+      const content = post[1];
+      const title = content.match(/<h[234][^>]*>([^<]{5,80})<\/h[234]>/)?.[1]?.trim() || '';
+      const whatsapp = content.match(/(?:wa\.me\/|whatsapp[:\s]+|\+91)(\+?[\d\s()-]{10,14})/i)?.[1] || null;
+      const email = content.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
+      if (title && /captain|chief|officer|engineer|bosun|cook|ab|gp|rating/i.test(title)) {
+        items.push({ title, contact_whatsapp: whatsapp, contact_email: email, nationality_fit: ['Indian'], source_url: 'wasailor.com' });
+      }
+    }
+    return items.slice(0, 20);
+  } catch { return []; }
+}
+
+// INDIA — SeaJob.net
+async function scrapeSeaJobNet(): Promise<any[]> {
+  try {
+    const res = await fetch('https://www.seajob.net/joblist.asp', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SeaMinds/1.0)' }
+    });
+    const html = await res.text();
+    const items: any[] = [];
+    const rows = html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g);
+    for (const row of rows) {
+      const content = row[1];
+      const cells = Array.from(content.matchAll(/<td[^>]*>([^<]{2,60})<\/td>/g)).map(m => m[1].trim());
+      if (cells.length >= 2 && /captain|chief|officer|engineer|master|bosun/i.test(cells.join(' '))) {
+        const email = content.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
+        items.push({ title: cells[0], vessel_type: cells[1] || null, contact_email: email, nationality_fit: ['Indian'], source_url: 'seajob.net' });
+      }
+    }
+    return items.slice(0, 20);
+  } catch { return []; }
+}
+
+// PHILIPPINES — PinoySeaman
+async function scrapePinoySeaman(): Promise<any[]> {
+  try {
+    const res = await fetch('https://pinoyseaman.ph/home', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SeaMinds/1.0)' }
+    });
+    const html = await res.text();
+    const items: any[] = [];
+    const posts = html.matchAll(/<div[^>]*class="[^"]*job[^"]*"[^>]*>([\s\S]*?)<\/div>\s*(?:<\/div>|<div)/g);
+    for (const post of posts) {
+      const content = post[1];
+      const title = content.match(/<h[234][^>]*>([^<]{5,80})<\/h[234]>/)?.[1]?.trim() || '';
+      const company = content.match(/(?:agency|company)[:\s]+([^<\n]{3,50})/i)?.[1]?.trim() || null;
+      const email = content.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
+      const link = content.match(/href="(https?:\/\/[^"]*pinoyseaman[^"]*)"/)?.[1] || null;
+      if (title && /captain|chief|officer|engineer|bosun|cook|ab|os|wiper|messman/i.test(title)) {
+        items.push({ title, company_name: company, contact_email: email, apply_url: link, nationality_fit: ['Filipino'], source_url: 'pinoyseaman.ph' });
+      }
+    }
+    return items.slice(0, 20);
+  } catch { return []; }
+}
+
+// PHILIPPINES — SeamanJobSite
+async function scrapeSeamanJobSite(): Promise<any[]> {
+  try {
+    const res = await fetch('https://seamanjobsite.workabroad.ph/', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SeaMinds/1.0)' }
+    });
+    const html = await res.text();
+    const items: any[] = [];
+    const jobs = html.matchAll(/class="job[^"]*"[^>]*>([\s\S]*?)(?=class="job|<\/section|<footer)/g);
+    for (const job of jobs) {
+      const content = job[1];
+      const title = content.match(/<h[234][^>]*>([^<]{5,80})<\/h[234]>/)?.[1]?.trim() || '';
+      const company = content.match(/class="[^"]*company[^"]*"[^>]*>([^<]{3,60})</)?.[1]?.trim() || null;
+      const link = content.match(/href="([^"]*workabroad[^"]*)"/)?.[1] || null;
+      if (title) {
+        items.push({ title, company_name: company, apply_url: link, nationality_fit: ['Filipino'], source_url: 'seamanjobsite.workabroad.ph' });
+      }
+    }
+    return items.slice(0, 20);
+  } catch { return []; }
+}
+
+// PHILIPPINES — POEA/DMW Official Job Orders (Government database)
+async function scrapePOEA(): Promise<any[]> {
+  try {
+    const res = await fetch('https://www.dmw.gov.ph/archives/poea/joborder.html', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SeaMinds/1.0)' }
+    });
+    const html = await res.text();
+    const items: any[] = [];
+    const rows = html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g);
+    for (const row of rows) {
+      const cells = Array.from(row[1].matchAll(/<td[^>]*>([^<]{2,80})<\/td>/g)).map(m => m[1].trim());
+      if (cells.length >= 3 && /seaman|seafarer|marine|vessel|ship/i.test(cells.join(' '))) {
+        items.push({ title: cells[0], company_name: cells[1] || null, joining_port: 'Manila', nationality_fit: ['Filipino'], source_url: 'dmw.gov.ph', quality_score: 90 });
+      }
+    }
+    return items.slice(0, 20);
+  } catch { return []; }
+}
+
 Deno.serve(async (req) => {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -222,7 +354,22 @@ Deno.serve(async (req) => {
       stats.telegram = await saveVacancies(processed, 'telegram');
     }
 
-    stats.saved = stats.google + stats.rss + stats.telegram;
+    // 4. India + Philippines focused scraping
+    const indiaPhilippinesRaw: any[] = [
+      ...await scrapeSeadonna(),
+      ...await scrapeWasailor(),
+      ...await scrapeSeaJobNet(),
+      ...await scrapePinoySeaman(),
+      ...await scrapeSeamanJobSite(),
+      ...await scrapePOEA(),
+    ];
+    if (indiaPhilippinesRaw.length) {
+      const processed = await processWithClaude(indiaPhilippinesRaw);
+      const ipSaved = await saveVacancies(processed, 'india_philippines');
+      stats.saved += ipSaved;
+    }
+
+    stats.saved += stats.google + stats.rss + stats.telegram;
 
     // Email notifications to available crew with matching ranks
     let emailsSent = 0;
