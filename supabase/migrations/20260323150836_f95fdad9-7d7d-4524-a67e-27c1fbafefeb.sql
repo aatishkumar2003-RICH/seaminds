@@ -1,0 +1,1 @@
+ALTER TABLE public.crew_profiles ADD COLUMN job_alerts_enabled boolean NOT NULL DEFAULT true;
