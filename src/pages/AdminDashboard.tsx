@@ -687,10 +687,86 @@ function BlogImagesTab() {
   );
 }
 
+/* ─── Agents Tab ─── */
+function AgentsTab() {
+  const [vacancyRunning, setVacancyRunning] = useState(false);
+  const [supervisorRunning, setSupervisorRunning] = useState(false);
+  const [vacancyResult, setVacancyResult] = useState<any>(null);
+  const [supervisorResult, setSupervisorResult] = useState<any>(null);
+
+  const runVacancyAgent = async () => {
+    setVacancyRunning(true);
+    setVacancyResult(null);
+    try {
+      const res = await supabase.functions.invoke("vacancy-agent", { body: {} });
+      if (res.error) throw res.error;
+      setVacancyResult(res.data);
+      toast.success(`Vacancy agent done: ${res.data?.stats?.saved || 0} jobs saved`);
+    } catch (e: any) {
+      setVacancyResult({ success: false, error: e.message });
+      toast.error(e.message || "Vacancy agent failed");
+    } finally {
+      setVacancyRunning(false);
+    }
+  };
+
+  const runSupervisorAgent = async () => {
+    setSupervisorRunning(true);
+    setSupervisorResult(null);
+    try {
+      const res = await supabase.functions.invoke("supervisor-agent", { body: {} });
+      if (res.error) throw res.error;
+      setSupervisorResult(res.data);
+      toast.success("Supervisor report sent!");
+    } catch (e: any) {
+      setSupervisorResult({ success: false, error: e.message });
+      toast.error(e.message || "Supervisor agent failed");
+    } finally {
+      setSupervisorRunning(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Vacancy Agent */}
+      <div className="rounded-lg p-6 border" style={{ background: "#112240", borderColor: "#D4AF3744" }}>
+        <h2 className="text-lg font-bold mb-1" style={{ color: "#D4AF37" }}>🌐 Vacancy Agent</h2>
+        <p className="text-sm mb-4" style={{ color: "#94A3B8" }}>
+          Scrapes Google Jobs, RSS feeds & Telegram channels, processes with AI, and saves structured vacancies. Auto-runs every 6 hours.
+        </p>
+        <Button onClick={runVacancyAgent} disabled={vacancyRunning} style={{ background: "#D4AF37", color: "#0D1B2A" }}>
+          {vacancyRunning ? "Running…" : "▶ Run Vacancy Agent"}
+        </Button>
+        {vacancyResult && (
+          <div className="mt-4 p-4 rounded text-xs font-mono max-h-48 overflow-y-auto" style={{ background: "#0D1B2A", color: vacancyResult.success ? "#22c55e" : "#ef4444" }}>
+            <pre>{JSON.stringify(vacancyResult, null, 2)}</pre>
+          </div>
+        )}
+      </div>
+
+      {/* Supervisor Agent */}
+      <div className="rounded-lg p-6 border" style={{ background: "#112240", borderColor: "#D4AF3744" }}>
+        <h2 className="text-lg font-bold mb-1" style={{ color: "#D4AF37" }}>📊 Supervisor Agent</h2>
+        <p className="text-sm mb-4" style={{ color: "#94A3B8" }}>
+          Gathers platform stats, cleans expired vacancies, generates AI insights, and emails a digest report. Auto-runs at 8am & 8pm WIB.
+        </p>
+        <Button onClick={runSupervisorAgent} disabled={supervisorRunning} style={{ background: "#D4AF37", color: "#0D1B2A" }}>
+          {supervisorRunning ? "Running…" : "▶ Run Supervisor Agent"}
+        </Button>
+        {supervisorResult && (
+          <div className="mt-4 p-4 rounded text-xs font-mono max-h-48 overflow-y-auto" style={{ background: "#0D1B2A", color: supervisorResult.success ? "#22c55e" : "#ef4444" }}>
+            <pre>{JSON.stringify(supervisorResult, null, 2)}</pre>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ─── Main Dashboard ─── */
 export default function AdminDashboard() {
   const [authed, setAuthed] = useState(localStorage.getItem(LS_KEY) === ADMIN_PIN);
-  const [tab, setTab] = useState<"crew" | "pricing" | "discount" | "country_pricing" | "sub_admins" | "dpa" | "blog_images">("crew");
+  const [tab, setTab] = useState<"crew" | "pricing" | "discount" | "country_pricing" | "sub_admins" | "dpa" | "blog_images" | "agents">("crew");
 
   if (!authed) return <PinScreen onAuth={() => setAuthed(true)} />;
 
@@ -707,6 +783,7 @@ export default function AdminDashboard() {
     { id: "sub_admins" as const, label: "Sub-Admins" },
     { id: "dpa" as const, label: "SOS / DPA Contacts" },
     { id: "blog_images" as const, label: "Blog Images" },
+    { id: "agents" as const, label: "🤖 Agents" },
   ];
 
   return (
@@ -737,6 +814,7 @@ export default function AdminDashboard() {
       {tab === "sub_admins" && <SubAdminsTab />}
       {tab === "dpa" && <DPAContactsTab />}
       {tab === "blog_images" && <BlogImagesTab />}
+      {tab === "agents" && <AgentsTab />}
     </div>
   );
 }
