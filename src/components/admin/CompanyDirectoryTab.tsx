@@ -77,6 +77,28 @@ export default function CompanyDirectoryTab() {
   const withWebsite = companies.filter(c => c.website).length;
   const withEmail = companies.filter(c => c.email).length;
 
+  const exportCSV = () => {
+    const headers = ['Company','Website','Email','Vacancies','Ranks','Vessel Types','Sources','Last Seen'];
+    const rows = filtered.map(c => [
+      `"${c.name.replace(/"/g, '""')}"`,
+      c.website || '',
+      c.email || '',
+      c.vacancyCount,
+      `"${c.ranks.join(', ')}"`,
+      `"${c.vesselTypes.join(', ')}"`,
+      `"${c.sources.join(', ')}"`,
+      c.lastSeen ? new Date(c.lastSeen).toLocaleDateString() : '',
+    ].join(','));
+    const csv = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `company-directory-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   if (loading) return <p className="text-muted-foreground text-center py-10">Loading company directory...</p>;
 
   return (
