@@ -572,7 +572,13 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                   <div className="min-w-0">
                     <h4 className="text-sm font-semibold text-foreground truncate">{ext.title}</h4>
                     {ext.company_name && (
-                      <p className="text-xs text-muted-foreground mt-0.5">{ext.company_name}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {ext.company_website ? (
+                          <a href={ext.company_website.startsWith('http') ? ext.company_website : `https://${ext.company_website}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:text-primary transition-colors">
+                            {ext.company_name} <Globe size={10} className="text-primary/70" />
+                          </a>
+                        ) : ext.company_name}
+                      </p>
                     )}
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
