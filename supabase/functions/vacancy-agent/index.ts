@@ -500,6 +500,71 @@ async function scrapeCrewLink(): Promise<any[]> {
   } catch { return []; }
 }
 
+// MarineInsight Jobs — always has email
+async function scrapeMarineInsightJobs(): Promise<any[]> {
+  try {
+    const res = await fetch('https://jobs.marineinsight.com/jobs/', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SeaMinds/1.0)' }
+    });
+    const html = await res.text();
+    const items: any[] = [];
+    const jobs = html.matchAll(/<li[^>]*class="[^"]*job[^"]*"[^>]*>([\s\S]*?)<\/li>/g);
+    for (const job of jobs) {
+      const c = job[1];
+      const title = c.match(/<h3[^>]*>([^<]{5,80})<\/h3>/)?.[1]?.trim() || '';
+      const company = c.match(/class="[^"]*company[^"]*"[^>]*>([^<]{3,60})</)?.[1]?.trim() || null;
+      const email = c.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
+      const link = c.match(/href="([^"]*jobs\.marineinsight[^"]*)"/)?.[1] || null;
+      if (title) items.push({ title, company_name: company, contact_email: email, apply_url: link, source_url: 'jobs.marineinsight.com' });
+    }
+    return items.slice(0, 15);
+  } catch { return []; }
+}
+
+// GLOAP.net — Russian/global, always has email
+async function scrapeGloap(): Promise<any[]> {
+  try {
+    const res = await fetch('https://gloap.net/en/vacancy', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SeaMinds/1.0)' }
+    });
+    const html = await res.text();
+    const items: any[] = [];
+    const jobs = html.matchAll(/class="vacancy[^"]*"[^>]*>([\s\S]*?)(?=class="vacancy|<\/section)/g);
+    for (const job of jobs) {
+      const c = job[1];
+      const title = c.match(/<h[234][^>]*>([^<]{5,80})<\/h[234]>/)?.[1]?.trim() || '';
+      const email = c.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
+      const phone = c.match(/\+\d[\d\s()-]{7,14}/)?.[0] || null;
+      const salary = c.match(/\$[\d,]+/)?.[0] || null;
+      if (title && (email || phone)) {
+        items.push({ title, contact_email: email, contact_whatsapp: phone, salary_text: salary, source_url: 'gloap.net' });
+      }
+    }
+    return items.slice(0, 15);
+  } catch { return []; }
+}
+
+// OceanCrew.org — always has apply email
+async function scrapeOceanCrew(): Promise<any[]> {
+  try {
+    const res = await fetch('https://oceancrew.org/jobs', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SeaMinds/1.0)' }
+    });
+    const html = await res.text();
+    const items: any[] = [];
+    const jobs = html.matchAll(/class="job[^"]*"[^>]*>([\s\S]*?)(?=class="job|<\/main)/g);
+    for (const job of jobs) {
+      const c = job[1];
+      const title = c.match(/<h[234][^>]*>([^<]{5,80})<\/h[234]>/)?.[1]?.trim() || '';
+      const email = c.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
+      const link = c.match(/href="(https?:\/\/[^"]*oceancrew[^"]*)"/)?.[1] || null;
+      const company = c.match(/class="[^"]*employer[^"]*"[^>]*>([^<]{3,60})</)?.[1]?.trim() || null;
+      if (title) items.push({ title, company_name: company, contact_email: email, apply_url: link, source_url: 'oceancrew.org' });
+    }
+    return items.slice(0, 15);
+  } catch { return []; }
+}
+
 Deno.serve(async (req) => {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -564,6 +629,18 @@ Deno.serve(async (req) => {
       const processed = await processWithClaude(indiaPhilippinesRaw);
       const ipSaved = await saveVacancies(processed, 'india_philippines');
       stats.saved += ipSaved;
+    }
+
+    // Email-rich sources
+    const emailSourcesRaw: any[] = [
+      ...await scrapeMarineInsightJobs(),
+      ...await scrapeGloap(),
+      ...await scrapeOceanCrew(),
+    ];
+    if (emailSourcesRaw.length) {
+      const processed = await processWithClaude(emailSourcesRaw);
+      const emailSaved = await saveVacancies(processed, 'email_sources');
+      stats.saved += emailSaved;
     }
 
     // 5. Indonesia, Ukraine, Bangladesh, Myanmar, Global scrapers
