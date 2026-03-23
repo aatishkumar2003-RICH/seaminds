@@ -113,6 +113,20 @@ export default function VacancyIntelTab() {
     setRunning(false);
   };
 
+  const loadNoContact = async () => {
+    setLoadingNoContact(true);
+    const { data } = await supabase
+      .from('external_vacancies')
+      .select('id, title, rank_required, vessel_type, company_name, source, quality_score, fetched_at')
+      .is('apply_url', null)
+      .is('contact_email', null)
+      .is('contact_whatsapp', null)
+      .order('fetched_at', { ascending: false })
+      .limit(50);
+    setNoContactJobs(data || []);
+    setLoadingNoContact(false);
+  };
+
   useEffect(() => { load(); }, []);
 
   const sourceLabel = (s: string) => ({ google_jobs: '🔍 Google Jobs', rss_feed: '📰 RSS Feeds', telegram: '📱 Telegram', internal: '🏢 Internal' }[s] || s);
