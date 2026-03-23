@@ -12,6 +12,9 @@ interface VacancyStats {
   scamFlagged: number;
   recentRuns: { metadata: any; created_at: string }[];
   recentVacancies: { title: string; rank_required: string | null; vessel_type: string | null; company_name: string | null; salary_max: number | null; source: string; quality_score: number | null; fetched_at: string | null }[];
+  crewByNationality: { nationality: string; count: number; available: number }[];
+  totalCrew: number;
+  availableCrew: number;
 }
 
 export default function VacancyIntelTab() {
@@ -25,7 +28,7 @@ export default function VacancyIntelTab() {
     try {
       const today = new Date(); today.setHours(0, 0, 0, 0);
 
-      const [total, bySource, byRank, byVessel, todayRes, avgRes, scamRes, runs, recent] = await Promise.all([
+      const [total, bySource, byRank, byVessel, todayRes, avgRes, scamRes, runs, recent, crewNat] = await Promise.all([
         supabase.from('external_vacancies').select('*', { count: 'exact', head: true }),
         supabase.from('external_vacancies').select('source'),
         supabase.from('external_vacancies').select('rank_required').not('rank_required', 'is', null),
@@ -35,6 +38,7 @@ export default function VacancyIntelTab() {
         supabase.from('external_vacancies').select('*', { count: 'exact', head: true }).eq('is_scam_flagged', true),
         supabase.from('app_events').select('metadata, created_at').eq('event_type', 'vacancy_agent_run').order('created_at', { ascending: false }).limit(5),
         supabase.from('external_vacancies').select('title, rank_required, vessel_type, company_name, salary_max, source, quality_score, fetched_at').order('fetched_at', { ascending: false }).limit(10),
+        supabase.from('crew_profiles').select('nationality, is_available'),
       ]);
 
       const srcMap: Record<string, number> = {};
@@ -52,6 +56,20 @@ export default function VacancyIntelTab() {
       const scores = (avgRes.data || []).map((r: any) => r.quality_score).filter(Boolean) as number[];
       const avgQuality = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
 
+      // Crew nationality distribution
+      const crewData = crewNat.data || [];
+      const natMap: Record<string, { total: number; available: number }> = {};
+      crewData.forEach((c: any) => {
+        const nat = c.nationality || 'Unknown';
+        if (!natMap[nat]) natMap[nat] = { total: 0, available: 0 };
+        natMap[nat].total++;
+        if (c.is_available) natMap[nat].available++;
+      });
+      const crewByNationality = Object.entries(natMap)
+        .map(([nationality, d]) => ({ nationality, count: d.total, available: d.available }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 12);
+
       setStats({
         total: total.count || 0,
         bySource: bySourceArr,
@@ -62,6 +80,9 @@ export default function VacancyIntelTab() {
         scamFlagged: scamRes.count || 0,
         recentRuns: (runs.data || []) as any[],
         recentVacancies: (recent.data || []) as any[],
+        crewByNationality,
+        totalCrew: crewData.length,
+        availableCrew: crewData.filter((c: any) => c.is_available).length,
       });
     } catch (e) { console.error(e); }
     setLoading(false);
@@ -157,6 +178,39 @@ export default function VacancyIntelTab() {
           ))}
           {!stats.byRank.length && <p className="text-xs text-muted-foreground">No data yet</p>}
         </div>
+      </div>
+
+
+      {/* Crew Nationality Distribution */}
+      <div className="rounded-xl bg-card border border-border p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-foreground">🌍 Crew Nationality Distribution</h3>
+          <div className="flex gap-3 text-xs text-muted-foreground">
+            <span>👥 Total: <strong className="text-foreground">{stats.totalCrew}</strong></span>
+            <span>✅ Available: <strong className="text-primary">{stats.availableCrew}</strong></span>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+          {stats.crewByNationality.map(n => {
+            const pct = stats.totalCrew ? Math.round((n.count / stats.totalCrew) * 100) : 0;
+            return (
+              <div key={n.nationality} className="rounded-lg bg-secondary p-3 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-foreground truncate">{n.nationality}</span>
+                  <span className="text-xs font-bold text-primary">{n.count}</span>
+                </div>
+                <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
+                  <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+                </div>
+                <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                  <span>{pct}% of crew</span>
+                  <span className="text-primary">{n.available} available</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        {!stats.crewByNationality.length && <p className="text-xs text-muted-foreground">No crew data yet</p>}
       </div>
 
       {/* Recent Vacancies */}
