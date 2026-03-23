@@ -462,10 +462,32 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
       {externalVacancies.length > 0 && (() => {
         const extRanks = [...new Set(externalVacancies.map(e => e.rank_required).filter(Boolean))] as string[];
         const extVessels = [...new Set(externalVacancies.map(e => e.vessel_type).filter(Boolean))] as string[];
+
+        // Nationality-based relevance scoring
+        const natLower = (nationality || '').toLowerCase();
+        const isIndian = /india|indian/.test(natLower);
+        const isFilipino = /philip|filipino|filipina/.test(natLower);
+        const isRegionRelevant = (ext: ExternalVacancy) => {
+          const src = (ext.source || '').toLowerCase();
+          const title = (ext.title || '').toLowerCase();
+          const desc = (ext.description || '').toLowerCase();
+          const company = (ext.company_name || '').toLowerCase();
+          const port = (ext.joining_port || '').toLowerCase();
+          const combined = `${title} ${desc} ${company} ${port}`;
+          if (isIndian && (src === 'india_philippines' || /india|mumbai|chennai|kolkata|cochin|goa|indian/i.test(combined))) return true;
+          if (isFilipino && (src === 'india_philippines' || /philippines|manila|cebu|filipino|poea|dmw|pinoy/i.test(combined))) return true;
+          return false;
+        };
+
         const filtered = externalVacancies.filter(e =>
           (extRankFilter === "all" || e.rank_required === extRankFilter) &&
           (extVesselFilter === "all" || e.vessel_type === extVesselFilter)
-        );
+        ).sort((a, b) => {
+          const aRelevant = isRegionRelevant(a) ? 1 : 0;
+          const bRelevant = isRegionRelevant(b) ? 1 : 0;
+          if (bRelevant !== aRelevant) return bRelevant - aRelevant;
+          return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+        });
 
         return (
         <div className="space-y-3" id="ai-collected-jobs">
@@ -527,13 +549,14 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
               <p className="text-sm text-muted-foreground">No jobs match your filters.</p>
             </div>
           ) : filtered.map((ext) => {
-            const sourceLabel = ext.source === 'google_jobs' ? '🔍 Google' : ext.source === 'rss_feed' ? '📰 RSS' : ext.source === 'telegram' ? '📱 Telegram' : ext.source;
+            const sourceLabel = ext.source === 'google_jobs' ? '🔍 Google' : ext.source === 'rss_feed' ? '📰 RSS' : ext.source === 'telegram' ? '📱 Telegram' : ext.source === 'india_philippines' ? '🇮🇳🇵🇭 Regional' : ext.source;
             const postedAgo = ext.created_at ? formatDistanceToNow(new Date(ext.created_at), { addSuffix: true }) : '';
+            const regionMatch = (isIndian || isFilipino) && isRegionRelevant(ext);
 
             return (
               <div
                 key={ext.id}
-                className="rounded-xl bg-card border border-border p-4 space-y-3"
+                className={cn("rounded-xl bg-card border p-4 space-y-3", regionMatch ? "border-primary/40 ring-1 ring-primary/20" : "border-border")}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -542,7 +565,10 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                       <p className="text-xs text-muted-foreground mt-0.5">{ext.company_name}</p>
                     )}
                   </div>
-                  <Badge variant="outline" className="text-[10px] shrink-0">{sourceLabel}</Badge>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {regionMatch && <Badge className="text-[10px] bg-primary/20 text-primary border-0">{isIndian ? '🇮🇳' : '🇵🇭'} For You</Badge>}
+                    <Badge variant="outline" className="text-[10px]">{sourceLabel}</Badge>
+                  </div>
                 </div>
 
                 <div className="flex flex-wrap gap-1.5">
