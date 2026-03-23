@@ -294,6 +294,31 @@ export default function VacancyIntelTab() {
         {!stats.recentVacancies.length && <p className="text-xs text-muted-foreground">No vacancies collected yet — click "Run Agent Now" above</p>}
       </div>
 
+      {/* No Contact Jobs */}
+      <div className="rounded-xl bg-card border border-border p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-foreground">❌ Jobs With No Contact Info</h3>
+          <Button variant="outline" size="sm" onClick={loadNoContact} disabled={loadingNoContact}>
+            {loadingNoContact ? '⏳ Loading...' : noContactJobs ? '🔄 Refresh' : '👁️ Show'}
+          </Button>
+        </div>
+        {noContactJobs && (
+          <>
+            <p className="text-xs text-muted-foreground">Showing {noContactJobs.length} jobs with no apply link, email, or WhatsApp</p>
+            {noContactJobs.map((v, i) => (
+              <div key={i} className="flex items-center justify-between border-b border-border pb-2 last:border-0 last:pb-0">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">{v.title || `${v.rank_required} — ${v.vessel_type || 'Various'}`}</p>
+                  <p className="text-[11px] text-muted-foreground">{v.company_name || 'Unknown'} · {sourceLabel(v.source)} · {v.fetched_at ? new Date(v.fetched_at).toLocaleDateString() : '—'}</p>
+                </div>
+                <span className="text-xs shrink-0" style={{ color: qualityColor(v.quality_score || 0) }}>Q:{v.quality_score}</span>
+              </div>
+            ))}
+            {!noContactJobs.length && <p className="text-xs text-muted-foreground">🎉 All jobs have contact info!</p>}
+          </>
+        )}
+      </div>
+
       {/* Agent Run History */}
       <div className="rounded-xl bg-card border border-border p-4 space-y-3">
         <h3 className="text-sm font-semibold text-foreground">Agent Run History (Last 5)</h3>
