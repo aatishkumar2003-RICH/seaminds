@@ -241,7 +241,15 @@ const PostVacancy = () => {
     setSelectedPlan("single");
   };
 
-  const currentPlan = PLANS.find((p) => p.id === selectedPlan)!;
+  const currentPlan = PLANS_STATIC.find((p) => p.id === selectedPlan)!;
+  const getPlanPrice = (id: PricingPlan) => {
+    const v = jobPrices[id];
+    if (v === 0) return 'FREE';
+    if (id === 'monthly') return `$${v}/month`;
+    if (id === 'annual') return `$${v}/year`;
+    return `$${v}`;
+  };
+  const allFree = jobPrices.single === 0 && jobPrices.monthly === 0 && jobPrices.annual === 0;
 
   return (
     <div className="space-y-4 pt-3">
