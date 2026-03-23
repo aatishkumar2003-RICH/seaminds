@@ -183,7 +183,7 @@ export default function VacancyIntelTab() {
         {stats.recentRuns.map((r, i) => (
           <div key={i} className="flex items-center justify-between text-xs border-b border-border pb-2 last:border-0 last:pb-0">
             <span className="text-muted-foreground">{new Date(r.created_at).toLocaleString('en-GB', { timeZone: 'Asia/Jakarta' })} WIB</span>
-            <span className="text-foreground">✅ Saved: {(r.metadata as any)?.saved || (r.metadata as any)?.total || 0} · Google: {(r.metadata as any)?.google || 0} · RSS: {(r.metadata as any)?.rss || 0}</span>
+            <span className="text-foreground">✅ Saved: {(r.metadata as any)?.saved || (r.metadata as any)?.total || 0} · Google: {(r.metadata as any)?.google || 0} · RSS: {(r.metadata as any)?.rss || 0} · 📧 Emails: {(r.metadata as any)?.emailsSent || 0}</span>
           </div>
         ))}
         {!stats.recentRuns.length && <p className="text-xs text-muted-foreground">No runs yet</p>}
