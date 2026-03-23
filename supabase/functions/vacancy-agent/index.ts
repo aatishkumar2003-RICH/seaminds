@@ -349,8 +349,9 @@ async function scrapePelaut(): Promise<any[]> {
       const title = content.match(/<h[234][^>]*>([^<]{5,80})<\/h[234]>/)?.[1]?.trim() || '';
       const company = content.match(/(?:company|perusahaan)[:\s]+([^<\n]{3,50})/i)?.[1]?.trim() || null;
       const link = content.match(/href="([^"]*pelaut[^"]*)"/)?.[1] || null;
+      const website = extractWebsite(content, ['pelaut.com']);
       if (title && /captain|chief|officer|engineer|bosun|cook|ab|os|rating|nakhoda|masinis|mualim/i.test(title)) {
-        items.push({ title, company_name: company, apply_url: link, nationality_fit: ['Indonesian'], source_url: 'pelaut.com' });
+        items.push({ title, company_name: company, apply_url: link, company_website: website, nationality_fit: ['Indonesian'], source_url: 'pelaut.com' });
       }
     }
     return items.slice(0, 20);
