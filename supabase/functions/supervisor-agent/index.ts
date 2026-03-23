@@ -108,7 +108,7 @@ ${insights.replace(/\n/g,'<br>')}
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${RESEND_KEY}` },
       body: JSON.stringify({
         from: 'SeaMinds Supervisor <monitor@resend.dev>',
-        to: ['info@indossol.com'],
+        to: ['aatishkumar2003@gmail.com'],
         subject: `⚓ SeaMinds Report — ${stats.crew} crew · ${stats.internalJobs + stats.externalJobs} jobs`,
         html,
       }),
