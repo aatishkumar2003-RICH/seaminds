@@ -533,6 +533,22 @@ Deno.serve(async (req) => {
       stats.saved += ipSaved;
     }
 
+    // 5. Indonesia, Ukraine, Bangladesh, Myanmar, Global scrapers
+    const expandedRegionalRaw: any[] = [
+      ...await scrapePelaut(),
+      ...await scrapeKapal(),
+      ...await scrapeCrewBoard(),
+      ...await scrapeMoryak(),
+      ...await scrapeMarineJobBD(),
+      ...await scrapeMyanmar(),
+      ...await scrapeCrewLink(),
+    ];
+    if (expandedRegionalRaw.length) {
+      const processed = await processWithClaude(expandedRegionalRaw);
+      const erSaved = await saveVacancies(processed, 'regional_global');
+      stats.saved += erSaved;
+    }
+
     stats.saved += stats.google + stats.rss + stats.telegram;
 
     // Email notifications to available crew with matching ranks
