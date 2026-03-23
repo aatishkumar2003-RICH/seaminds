@@ -261,7 +261,8 @@ async function scrapeSeaJobNet(): Promise<any[]> {
       const cells = Array.from(content.matchAll(/<td[^>]*>([^<]{2,60})<\/td>/g)).map(m => m[1].trim());
       if (cells.length >= 2 && /captain|chief|officer|engineer|master|bosun/i.test(cells.join(' '))) {
         const email = content.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
-        items.push({ title: cells[0], vessel_type: cells[1] || null, contact_email: email, nationality_fit: ['Indian'], source_url: 'seajob.net' });
+        const website = extractWebsite(content, ['seajob.net']);
+        items.push({ title: cells[0], vessel_type: cells[1] || null, contact_email: email, company_website: website, nationality_fit: ['Indian'], source_url: 'seajob.net' });
       }
     }
     return items.slice(0, 20);
