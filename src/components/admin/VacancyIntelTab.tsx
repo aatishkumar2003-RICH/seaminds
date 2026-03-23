@@ -12,6 +12,9 @@ interface VacancyStats {
   scamFlagged: number;
   recentRuns: { metadata: any; created_at: string }[];
   recentVacancies: { title: string; rank_required: string | null; vessel_type: string | null; company_name: string | null; salary_max: number | null; source: string; quality_score: number | null; fetched_at: string | null }[];
+  crewByNationality: { nationality: string; count: number; available: number }[];
+  totalCrew: number;
+  availableCrew: number;
 }
 
 export default function VacancyIntelTab() {
