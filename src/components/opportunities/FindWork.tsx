@@ -70,6 +70,7 @@ interface ExternalVacancy {
   apply_url: string | null;
   contact_email: string | null;
   contact_whatsapp: string | null;
+  company_website: string | null;
   source: string;
   quality_score: number | null;
   created_at: string | null;
