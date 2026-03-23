@@ -10,14 +10,16 @@ const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY')!;
 const TELEGRAM_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN')!;
 
 const MARITIME_QUERIES = [
-  'Captain LNG tanker job vacancy','Chief Engineer bulk carrier hiring',
-  'Chief Officer container ship vacancy','2nd Engineer tanker job',
-  'Master mariner job hiring','Chief Mate vessel job',
-  'Marine Engineer officer vacancy','Bosun AB seaman job hiring',
-  'Filipino seafarer job vacancy','Indonesian seafarers hiring',
-  'Indian seafarer officer job','Ukrainian seafarer vacancy',
-  'offshore DP officer job vacancy','FPSO engineer hiring',
-  'PSV AHTS officer job vacancy',
+  'Captain Chief Engineer seafarer job vacancy India',
+  'Chief Officer 2nd Engineer merchant navy India hiring',
+  'Filipino seafarer officer vacancy hiring 2026',
+  'Manning agency Philippines seaman job hiring',
+  'Master mariner LNG tanker job India Mumbai',
+  'Marine engineer officer job Chennai Kolkata India',
+  'Captain Chief Engineer job Manila Philippines',
+  'AB OS rating seafarer job Philippines hiring',
+  'offshore DP officer job vacancy India',
+  'FPSO tanker engineer officer job Southeast Asia',
 ];
 
 const RSS_FEEDS = [
