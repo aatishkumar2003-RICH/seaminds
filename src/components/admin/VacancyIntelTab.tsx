@@ -28,7 +28,7 @@ export default function VacancyIntelTab() {
     try {
       const today = new Date(); today.setHours(0, 0, 0, 0);
 
-      const [total, bySource, byRank, byVessel, todayRes, avgRes, scamRes, runs, recent] = await Promise.all([
+      const [total, bySource, byRank, byVessel, todayRes, avgRes, scamRes, runs, recent, crewNat] = await Promise.all([
         supabase.from('external_vacancies').select('*', { count: 'exact', head: true }),
         supabase.from('external_vacancies').select('source'),
         supabase.from('external_vacancies').select('rank_required').not('rank_required', 'is', null),
@@ -38,6 +38,7 @@ export default function VacancyIntelTab() {
         supabase.from('external_vacancies').select('*', { count: 'exact', head: true }).eq('is_scam_flagged', true),
         supabase.from('app_events').select('metadata, created_at').eq('event_type', 'vacancy_agent_run').order('created_at', { ascending: false }).limit(5),
         supabase.from('external_vacancies').select('title, rank_required, vessel_type, company_name, salary_max, source, quality_score, fetched_at').order('fetched_at', { ascending: false }).limit(10),
+        supabase.from('crew_profiles').select('nationality, is_available'),
       ]);
 
       const srcMap: Record<string, number> = {};
