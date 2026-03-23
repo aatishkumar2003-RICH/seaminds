@@ -56,6 +56,20 @@ export default function VacancyIntelTab() {
       const scores = (avgRes.data || []).map((r: any) => r.quality_score).filter(Boolean) as number[];
       const avgQuality = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
 
+      // Crew nationality distribution
+      const crewData = crewNat.data || [];
+      const natMap: Record<string, { total: number; available: number }> = {};
+      crewData.forEach((c: any) => {
+        const nat = c.nationality || 'Unknown';
+        if (!natMap[nat]) natMap[nat] = { total: 0, available: 0 };
+        natMap[nat].total++;
+        if (c.is_available) natMap[nat].available++;
+      });
+      const crewByNationality = Object.entries(natMap)
+        .map(([nationality, d]) => ({ nationality, count: d.total, available: d.available }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 12);
+
       setStats({
         total: total.count || 0,
         bySource: bySourceArr,
@@ -66,6 +80,9 @@ export default function VacancyIntelTab() {
         scamFlagged: scamRes.count || 0,
         recentRuns: (runs.data || []) as any[],
         recentVacancies: (recent.data || []) as any[],
+        crewByNationality,
+        totalCrew: crewData.length,
+        availableCrew: crewData.filter((c: any) => c.is_available).length,
       });
     } catch (e) { console.error(e); }
     setLoading(false);
