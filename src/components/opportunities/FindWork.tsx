@@ -88,6 +88,8 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  const [extRankFilter, setExtRankFilter] = useState("all");
+  const [extVesselFilter, setExtVesselFilter] = useState("all");
   const [externalVacancies, setExternalVacancies] = useState<ExternalVacancy[]>([]);
 
   useEffect(() => {
