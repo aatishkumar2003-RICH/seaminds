@@ -61,7 +61,7 @@ interface MarketData {
   myCompetition: number;
   myCompetitionLevel: 'Low' | 'Medium' | 'High';
   topPorts: { port: string; count: number }[];
-  topJobs: { rank: string; vessel: string; salary: number; company: string; port: string }[];
+  topJobs: { rank: string; vessel: string; salary: number; company: string; port: string; website: string | null }[];
   salaryTrend: number;
   totalVacancies: number;
   newVacancies24h: number;
