@@ -467,6 +467,11 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
         const natLower = (nationality || '').toLowerCase();
         const isIndian = /india|indian/.test(natLower);
         const isFilipino = /philip|filipino|filipina/.test(natLower);
+        const isIndonesian = /indonesia|indonesian/.test(natLower);
+        const isUkrainian = /ukrain/.test(natLower);
+        const isBangladeshi = /bangladesh/.test(natLower);
+        const isMyanmar = /myanmar|burm/.test(natLower);
+        const hasRegion = isIndian || isFilipino || isIndonesian || isUkrainian || isBangladeshi || isMyanmar;
         const isRegionRelevant = (ext: ExternalVacancy) => {
           const src = (ext.source || '').toLowerCase();
           const title = (ext.title || '').toLowerCase();
@@ -476,6 +481,10 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
           const combined = `${title} ${desc} ${company} ${port}`;
           if (isIndian && (src === 'india_philippines' || /india|mumbai|chennai|kolkata|cochin|goa|indian/i.test(combined))) return true;
           if (isFilipino && (src === 'india_philippines' || /philippines|manila|cebu|filipino|poea|dmw|pinoy/i.test(combined))) return true;
+          if (isIndonesian && (src === 'regional_global' || /indonesia|jakarta|surabaya|indonesian|pelaut/i.test(combined))) return true;
+          if (isUkrainian && (src === 'regional_global' || /ukrain|odesa|odessa|ukrainian|крюінг/i.test(combined))) return true;
+          if (isBangladeshi && (src === 'regional_global' || /bangladesh|chittagong|dhaka|bangladeshi/i.test(combined))) return true;
+          if (isMyanmar && (src === 'regional_global' || /myanmar|yangon|burmese/i.test(combined))) return true;
           return false;
         };
 
@@ -549,9 +558,9 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
               <p className="text-sm text-muted-foreground">No jobs match your filters.</p>
             </div>
           ) : filtered.map((ext) => {
-            const sourceLabel = ext.source === 'google_jobs' ? '🔍 Google' : ext.source === 'rss_feed' ? '📰 RSS' : ext.source === 'telegram' ? '📱 Telegram' : ext.source === 'india_philippines' ? '🇮🇳🇵🇭 Regional' : ext.source;
+            const sourceLabel = ext.source === 'google_jobs' ? '🔍 Google' : ext.source === 'rss_feed' ? '📰 RSS' : ext.source === 'telegram' ? '📱 Telegram' : ext.source === 'india_philippines' ? '🇮🇳🇵🇭 Regional' : ext.source === 'regional_global' ? '🌏 Regional' : ext.source;
             const postedAgo = ext.created_at ? formatDistanceToNow(new Date(ext.created_at), { addSuffix: true }) : '';
-            const regionMatch = (isIndian || isFilipino) && isRegionRelevant(ext);
+            const regionMatch = hasRegion && isRegionRelevant(ext);
 
             return (
               <div
@@ -566,7 +575,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                     )}
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    {regionMatch && <Badge className="text-[10px] bg-primary/20 text-primary border-0">{isIndian ? '🇮🇳' : '🇵🇭'} For You</Badge>}
+                    {regionMatch && <Badge className="text-[10px] bg-primary/20 text-primary border-0">{isIndian ? '🇮🇳' : isFilipino ? '🇵🇭' : isIndonesian ? '🇮🇩' : isUkrainian ? '🇺🇦' : isBangladeshi ? '🇧🇩' : isMyanmar ? '🇲🇲' : '🌍'} For You</Badge>}
                     <Badge variant="outline" className="text-[10px]">{sourceLabel}</Badge>
                   </div>
                 </div>

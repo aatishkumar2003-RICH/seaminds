@@ -20,6 +20,12 @@ const MARITIME_QUERIES = [
   'AB OS rating seafarer job Philippines hiring',
   'offshore DP officer job vacancy India',
   'FPSO tanker engineer officer job Southeast Asia',
+  'Indonesian seafarer crew job vacancy 2026',
+  'manning agency Indonesia Jakarta seaman hiring',
+  'Ukrainian seafarer officer job vacancy Europe',
+  'крюинг вакансії моряк Україна officer',
+  'Bangladesh seafarer officer engineer job hiring',
+  'Myanmar seaman crew job vacancy hiring',
 ];
 
 const RSS_FEEDS = [
@@ -29,7 +35,7 @@ const RSS_FEEDS = [
   'https://www.marineinsight.com/feed',
 ];
 
-const TELEGRAM_CHANNELS = ['offshorevacancies', 'seafarersvacancies', 'marinemanjobs'];
+const TELEGRAM_CHANNELS = ['offshorevacancies', 'seafarersvacancies', 'marinemanjobs', 'craborabota', 'seabordjobs', 'marinejobbangladesh'];
 
 async function fetchGoogleJobs(query: string): Promise<any[]> {
   try {
@@ -303,6 +309,164 @@ async function scrapePOEA(): Promise<any[]> {
   } catch { return []; }
 }
 
+// INDONESIA — Pelaut.com (Indonesian seafarer portal)
+async function scrapePelaut(): Promise<any[]> {
+  try {
+    const res = await fetch('https://pelaut.com/lowongan', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SeaMinds/1.0)' }
+    });
+    const html = await res.text();
+    const items: any[] = [];
+    const posts = html.matchAll(/<div[^>]*class="[^"]*job[^"]*"[^>]*>([\s\S]*?)<\/div>\s*(?:<\/div>|<div)/g);
+    for (const post of posts) {
+      const content = post[1];
+      const title = content.match(/<h[234][^>]*>([^<]{5,80})<\/h[234]>/)?.[1]?.trim() || '';
+      const company = content.match(/(?:company|perusahaan)[:\s]+([^<\n]{3,50})/i)?.[1]?.trim() || null;
+      const link = content.match(/href="([^"]*pelaut[^"]*)"/)?.[1] || null;
+      if (title && /captain|chief|officer|engineer|bosun|cook|ab|os|rating|nakhoda|masinis|mualim/i.test(title)) {
+        items.push({ title, company_name: company, apply_url: link, nationality_fit: ['Indonesian'], source_url: 'pelaut.com' });
+      }
+    }
+    return items.slice(0, 20);
+  } catch { return []; }
+}
+
+// INDONESIA — Kapal.co.id
+async function scrapeKapal(): Promise<any[]> {
+  try {
+    const res = await fetch('https://kapal.co.id/lowongan-kerja-pelaut', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SeaMinds/1.0)' }
+    });
+    const html = await res.text();
+    const items: any[] = [];
+    const posts = html.matchAll(/<article[^>]*>([\s\S]*?)<\/article>/g);
+    for (const post of posts) {
+      const content = post[1];
+      const title = content.match(/<h[234][^>]*>([^<]{5,100})<\/h[234]>/)?.[1]?.trim() || '';
+      const email = content.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
+      const phone = content.match(/(?:\+62|08)[\d\s-]{8,14}/)?.[0] || null;
+      const link = content.match(/href="([^"]*kapal\.co\.id[^"]*)"/)?.[1] || null;
+      if (title && /captain|chief|officer|engineer|bosun|cook|rating|nakhoda|masinis|mualim|pelaut/i.test(title)) {
+        items.push({ title, contact_email: email, contact_whatsapp: phone, apply_url: link, nationality_fit: ['Indonesian'], source_url: 'kapal.co.id' });
+      }
+    }
+    return items.slice(0, 20);
+  } catch { return []; }
+}
+
+// UKRAINE — CrewBoard (Ukrainian manning portal)
+async function scrapeCrewBoard(): Promise<any[]> {
+  try {
+    const res = await fetch('https://crewboard.net/vacancies', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SeaMinds/1.0)' }
+    });
+    const html = await res.text();
+    const items: any[] = [];
+    const rows = html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g);
+    for (const row of rows) {
+      const content = row[1];
+      const cells = Array.from(content.matchAll(/<td[^>]*>([\s\S]{2,120}?)<\/td>/g)).map(m => m[1].replace(/<[^>]+>/g, '').trim());
+      if (cells.length >= 2 && /captain|chief|officer|engineer|master|bosun|cook|electrician|motorman/i.test(cells.join(' '))) {
+        const email = content.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
+        const link = content.match(/href="([^"]*crewboard[^"]*)"/)?.[1] || null;
+        items.push({ title: cells[0], vessel_type: cells[1] || null, company_name: cells[2] || null, contact_email: email, apply_url: link, nationality_fit: ['Ukrainian'], source_url: 'crewboard.net' });
+      }
+    }
+    return items.slice(0, 20);
+  } catch { return []; }
+}
+
+// UKRAINE — MarineTraffic Jobs / Moryak.info
+async function scrapeMoryak(): Promise<any[]> {
+  try {
+    const res = await fetch('https://moryak.info/vacancy/', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SeaMinds/1.0)' }
+    });
+    const html = await res.text();
+    const items: any[] = [];
+    const posts = html.matchAll(/<div[^>]*class="[^"]*vacanc[^"]*"[^>]*>([\s\S]*?)<\/div>\s*(?:<\/div>|<div)/g);
+    for (const post of posts) {
+      const content = post[1];
+      const title = content.match(/<h[234][^>]*>([^<]{5,100})<\/h[234]>/)?.[1]?.trim() ||
+                    content.match(/<a[^>]*>([^<]{5,100})<\/a>/)?.[1]?.trim() || '';
+      const company = content.match(/(?:company|компанія|компания)[:\s]+([^<\n]{3,50})/i)?.[1]?.trim() || null;
+      const email = content.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
+      const link = content.match(/href="([^"]*moryak\.info[^"]*)"/)?.[1] || null;
+      if (title && /captain|chief|officer|engineer|master|bosun|cook|капітан|механік|помічник|штурман/i.test(title)) {
+        items.push({ title, company_name: company, contact_email: email, apply_url: link, nationality_fit: ['Ukrainian'], source_url: 'moryak.info' });
+      }
+    }
+    return items.slice(0, 20);
+  } catch { return []; }
+}
+
+// BANGLADESH — MarineJob BD
+async function scrapeMarineJobBD(): Promise<any[]> {
+  try {
+    const res = await fetch('https://marinejobbd.com/', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SeaMinds/1.0)' }
+    });
+    const html = await res.text();
+    const items: any[] = [];
+    const posts = html.matchAll(/<article[^>]*>([\s\S]*?)<\/article>/g);
+    for (const post of posts) {
+      const content = post[1];
+      const title = content.match(/<h[234][^>]*>([^<]{5,100})<\/h[234]>/)?.[1]?.trim() || '';
+      const email = content.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
+      const phone = content.match(/(?:\+880|01)[\d\s-]{8,13}/)?.[0] || null;
+      const link = content.match(/href="([^"]*marinejobbd[^"]*)"/)?.[1] || null;
+      if (title && /captain|chief|officer|engineer|bosun|cook|ab|os|rating|seaman|seafarer/i.test(title)) {
+        items.push({ title, contact_email: email, contact_whatsapp: phone, apply_url: link, nationality_fit: ['Bangladeshi'], source_url: 'marinejobbd.com' });
+      }
+    }
+    return items.slice(0, 20);
+  } catch { return []; }
+}
+
+// MYANMAR — Myanmar Seafarer Portal
+async function scrapeMyanmar(): Promise<any[]> {
+  try {
+    const res = await fetch('https://www.myanmarseafarers.org/jobs', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SeaMinds/1.0)' }
+    });
+    const html = await res.text();
+    const items: any[] = [];
+    const posts = html.matchAll(/<div[^>]*class="[^"]*(?:job|post|listing)[^"]*"[^>]*>([\s\S]*?)<\/div>\s*(?:<\/div>|<div)/g);
+    for (const post of posts) {
+      const content = post[1];
+      const title = content.match(/<h[234][^>]*>([^<]{5,100})<\/h[234]>/)?.[1]?.trim() || '';
+      const company = content.match(/(?:company|agency)[:\s]+([^<\n]{3,50})/i)?.[1]?.trim() || null;
+      const link = content.match(/href="([^"]*myanmarseafarers[^"]*)"/)?.[1] || null;
+      if (title && /captain|chief|officer|engineer|bosun|cook|ab|os|rating|seaman/i.test(title)) {
+        items.push({ title, company_name: company, apply_url: link, nationality_fit: ['Myanmar'], source_url: 'myanmarseafarers.org' });
+      }
+    }
+    return items.slice(0, 20);
+  } catch { return []; }
+}
+
+// GLOBAL — CrewLink Maritime
+async function scrapeCrewLink(): Promise<any[]> {
+  try {
+    const res = await fetch('https://www.crewlink.com/jobs', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SeaMinds/1.0)' }
+    });
+    const html = await res.text();
+    const items: any[] = [];
+    const posts = html.matchAll(/<div[^>]*class="[^"]*(?:job|vacancy|listing)[^"]*"[^>]*>([\s\S]*?)<\/div>\s*(?:<\/div>|<div)/g);
+    for (const post of posts) {
+      const content = post[1];
+      const title = content.match(/<h[234][^>]*>([^<]{5,100})<\/h[234]>/)?.[1]?.trim() || '';
+      const company = content.match(/(?:company|employer)[:\s]+([^<\n]{3,50})/i)?.[1]?.trim() || null;
+      const link = content.match(/href="([^"]*crewlink[^"]*)"/)?.[1] || null;
+      if (title) {
+        items.push({ title, company_name: company, apply_url: link, nationality_fit: [], source_url: 'crewlink.com' });
+      }
+    }
+    return items.slice(0, 20);
+  } catch { return []; }
+}
+
 Deno.serve(async (req) => {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -367,6 +531,22 @@ Deno.serve(async (req) => {
       const processed = await processWithClaude(indiaPhilippinesRaw);
       const ipSaved = await saveVacancies(processed, 'india_philippines');
       stats.saved += ipSaved;
+    }
+
+    // 5. Indonesia, Ukraine, Bangladesh, Myanmar, Global scrapers
+    const expandedRegionalRaw: any[] = [
+      ...await scrapePelaut(),
+      ...await scrapeKapal(),
+      ...await scrapeCrewBoard(),
+      ...await scrapeMoryak(),
+      ...await scrapeMarineJobBD(),
+      ...await scrapeMyanmar(),
+      ...await scrapeCrewLink(),
+    ];
+    if (expandedRegionalRaw.length) {
+      const processed = await processWithClaude(expandedRegionalRaw);
+      const erSaved = await saveVacancies(processed, 'regional_global');
+      stats.saved += erSaved;
     }
 
     stats.saved += stats.google + stats.rss + stats.telegram;
