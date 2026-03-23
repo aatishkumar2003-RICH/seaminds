@@ -544,7 +544,8 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
             );
           })}
         </div>
-      )}
+        );
+      })()}
     </div>
   );
 };
