@@ -238,8 +238,9 @@ async function scrapeWasailor(): Promise<any[]> {
       const title = content.match(/<h[234][^>]*>([^<]{5,80})<\/h[234]>/)?.[1]?.trim() || '';
       const whatsapp = content.match(/(?:wa\.me\/|whatsapp[:\s]+|\+91)(\+?[\d\s()-]{10,14})/i)?.[1] || null;
       const email = content.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
+      const website = extractWebsite(content, ['wasailor.com']);
       if (title && /captain|chief|officer|engineer|bosun|cook|ab|gp|rating/i.test(title)) {
-        items.push({ title, contact_whatsapp: whatsapp, contact_email: email, nationality_fit: ['Indian'], source_url: 'wasailor.com' });
+        items.push({ title, contact_whatsapp: whatsapp, contact_email: email, company_website: website, nationality_fit: ['Indian'], source_url: 'wasailor.com' });
       }
     }
     return items.slice(0, 20);
