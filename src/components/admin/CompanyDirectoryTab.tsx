@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Globe, Mail, Building2, ExternalLink, Search } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Globe, Mail, Building2, ExternalLink, Search, Download } from 'lucide-react';
 
 interface CompanyEntry {
   name: string;
@@ -76,12 +77,37 @@ export default function CompanyDirectoryTab() {
   const withWebsite = companies.filter(c => c.website).length;
   const withEmail = companies.filter(c => c.email).length;
 
+  const exportCSV = () => {
+    const headers = ['Company','Website','Email','Vacancies','Ranks','Vessel Types','Sources','Last Seen'];
+    const rows = filtered.map(c => [
+      `"${c.name.replace(/"/g, '""')}"`,
+      c.website || '',
+      c.email || '',
+      c.vacancyCount,
+      `"${c.ranks.join(', ')}"`,
+      `"${c.vesselTypes.join(', ')}"`,
+      `"${c.sources.join(', ')}"`,
+      c.lastSeen ? new Date(c.lastSeen).toLocaleDateString() : '',
+    ].join(','));
+    const csv = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `company-directory-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   if (loading) return <p className="text-muted-foreground text-center py-10">Loading company directory...</p>;
 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h2 className="text-lg font-bold text-foreground">🏢 Company Directory</h2>
+        <Button variant="outline" size="sm" onClick={exportCSV} className="gap-1.5">
+          <Download size={14} /> Export CSV
+        </Button>
         <div className="flex gap-3 text-xs text-muted-foreground">
           <span>Total: <strong className="text-foreground">{companies.length}</strong></span>
           <span>🌐 With Website: <strong className="text-primary">{withWebsite}</strong></span>
