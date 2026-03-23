@@ -15,6 +15,7 @@ interface VacancyStats {
   crewByNationality: { nationality: string; count: number; available: number }[];
   totalCrew: number;
   availableCrew: number;
+  contactCoverage: { withApply: number; withEmail: number; withWhatsapp: number; withWebsite: number; withAny: number; noContact: number; total: number };
 }
 
 export default function VacancyIntelTab() {
