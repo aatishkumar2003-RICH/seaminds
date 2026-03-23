@@ -68,6 +68,19 @@ Deno.serve(async (req) => {
       .lt('quality_score', 25);
     if (lowQ && lowQ > 0) actions.push(`⚠️ ${lowQ} low-quality vacancies (score <25) — review in admin`);
 
+    // Count remaining no-contact jobs
+    const { count: noContactRemaining } = await supabase
+      .from('external_vacancies')
+      .select('*', { count: 'exact', head: true })
+      .is('apply_url', null)
+      .is('contact_email', null)
+      .is('contact_whatsapp', null);
+    if (noContactRemaining && noContactRemaining > 0) {
+      actions.push(`📞 ${noContactRemaining} jobs still have no contact info`);
+    } else {
+      actions.push(`✅ All jobs have contact info`);
+    }
+
     // AI insights
     const insightRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
