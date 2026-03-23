@@ -491,8 +491,9 @@ async function scrapeCrewLink(): Promise<any[]> {
       const title = content.match(/<h[234][^>]*>([^<]{5,100})<\/h[234]>/)?.[1]?.trim() || '';
       const company = content.match(/(?:company|employer)[:\s]+([^<\n]{3,50})/i)?.[1]?.trim() || null;
       const link = content.match(/href="([^"]*crewlink[^"]*)"/)?.[1] || null;
+      const website = extractWebsite(content, ['crewlink.com']);
       if (title) {
-        items.push({ title, company_name: company, apply_url: link, nationality_fit: [], source_url: 'crewlink.com' });
+        items.push({ title, company_name: company, apply_url: link, company_website: website, nationality_fit: [], source_url: 'crewlink.com' });
       }
     }
     return items.slice(0, 20);
