@@ -710,6 +710,90 @@ export type Database = {
         }
         Relationships: []
       }
+      external_vacancies: {
+        Row: {
+          apply_url: string | null
+          company_name: string | null
+          contact_email: string | null
+          contact_whatsapp: string | null
+          contract_duration: string | null
+          created_at: string | null
+          description: string | null
+          expires_at: string | null
+          external_id: string
+          fetched_at: string | null
+          id: string
+          is_scam_flagged: boolean | null
+          is_verified: boolean | null
+          joining_date: string | null
+          joining_port: string | null
+          quality_score: number | null
+          rank_required: string | null
+          raw_data: Json | null
+          salary_max: number | null
+          salary_min: number | null
+          salary_text: string | null
+          scam_flags: Json | null
+          source: string
+          title: string
+          vessel_type: string | null
+        }
+        Insert: {
+          apply_url?: string | null
+          company_name?: string | null
+          contact_email?: string | null
+          contact_whatsapp?: string | null
+          contract_duration?: string | null
+          created_at?: string | null
+          description?: string | null
+          expires_at?: string | null
+          external_id: string
+          fetched_at?: string | null
+          id?: string
+          is_scam_flagged?: boolean | null
+          is_verified?: boolean | null
+          joining_date?: string | null
+          joining_port?: string | null
+          quality_score?: number | null
+          rank_required?: string | null
+          raw_data?: Json | null
+          salary_max?: number | null
+          salary_min?: number | null
+          salary_text?: string | null
+          scam_flags?: Json | null
+          source: string
+          title: string
+          vessel_type?: string | null
+        }
+        Update: {
+          apply_url?: string | null
+          company_name?: string | null
+          contact_email?: string | null
+          contact_whatsapp?: string | null
+          contract_duration?: string | null
+          created_at?: string | null
+          description?: string | null
+          expires_at?: string | null
+          external_id?: string
+          fetched_at?: string | null
+          id?: string
+          is_scam_flagged?: boolean | null
+          is_verified?: boolean | null
+          joining_date?: string | null
+          joining_port?: string | null
+          quality_score?: number | null
+          rank_required?: string | null
+          raw_data?: Json | null
+          salary_max?: number | null
+          salary_min?: number | null
+          salary_text?: string | null
+          scam_flags?: Json | null
+          source?: string
+          title?: string
+          vessel_type?: string | null
+        }
+        Relationships: []
+      }
       family_connections: {
         Row: {
           created_at: string
