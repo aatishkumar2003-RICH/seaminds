@@ -468,7 +468,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
         );
 
         return (
-        <div className="space-y-3">
+        <div className="space-y-3" id="ai-collected-jobs">
           <div className="flex items-center gap-2 px-1">
             <Globe size={14} className="text-primary" />
             <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">AI-Collected Jobs</h3>
