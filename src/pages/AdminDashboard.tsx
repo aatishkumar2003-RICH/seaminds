@@ -820,6 +820,7 @@ export default function AdminDashboard() {
       {tab === "blog_images" && <BlogImagesTab />}
       {tab === "agents" && <AgentsTab />}
       {tab === "vacancy_intel" && <VacancyIntelTab />}
+      {tab === "company_dir" && <CompanyDirectoryTab />}
     </div>
   );
 }
