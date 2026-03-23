@@ -445,8 +445,9 @@ async function scrapeMarineJobBD(): Promise<any[]> {
       const email = content.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
       const phone = content.match(/(?:\+880|01)[\d\s-]{8,13}/)?.[0] || null;
       const link = content.match(/href="([^"]*marinejobbd[^"]*)"/)?.[1] || null;
+      const website = extractWebsite(content, ['marinejobbd.com']);
       if (title && /captain|chief|officer|engineer|bosun|cook|ab|os|rating|seaman|seafarer/i.test(title)) {
-        items.push({ title, contact_email: email, contact_whatsapp: phone, apply_url: link, nationality_fit: ['Bangladeshi'], source_url: 'marinejobbd.com' });
+        items.push({ title, contact_email: email, contact_whatsapp: phone, apply_url: link, company_website: website, nationality_fit: ['Bangladeshi'], source_url: 'marinejobbd.com' });
       }
     }
     return items.slice(0, 20);
