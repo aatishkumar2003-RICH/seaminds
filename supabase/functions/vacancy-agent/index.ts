@@ -27,9 +27,7 @@ const RSS_FEEDS = [
   'https://www.marineinsight.com/feed',
 ];
 
-const TELEGRAM_CHANNELS = [
-  '@offshorevacancies','@seafarersvacancies','@seamindsjobs',
-];
+const TELEGRAM_CHANNELS = ['offshorevacancies', 'seafarersvacancies', 'marinemanjobs'];
 
 async function fetchGoogleJobs(query: string): Promise<any[]> {
   try {
