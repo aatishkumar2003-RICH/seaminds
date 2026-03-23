@@ -105,6 +105,9 @@ export default function CompanyDirectoryTab() {
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h2 className="text-lg font-bold text-foreground">🏢 Company Directory</h2>
+        <Button variant="outline" size="sm" onClick={exportCSV} className="gap-1.5">
+          <Download size={14} /> Export CSV
+        </Button>
         <div className="flex gap-3 text-xs text-muted-foreground">
           <span>Total: <strong className="text-foreground">{companies.length}</strong></span>
           <span>🌐 With Website: <strong className="text-primary">{withWebsite}</strong></span>
