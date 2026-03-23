@@ -23,10 +23,10 @@ const DURATIONS = [
 
 type PricingPlan = "single" | "monthly" | "annual";
 
-const PLANS: { id: PricingPlan; name: string; price: string; desc: string; popular?: boolean }[] = [
-  { id: "single", name: "Single Post", price: "$19", desc: "1 vacancy, visible 30 days" },
-  { id: "monthly", name: "Monthly", price: "$99/month", desc: "Unlimited posts for 30 days", popular: true },
-  { id: "annual", name: "Annual", price: "$799/year", desc: "Unlimited posts, 12 months" },
+const PLANS_STATIC: { id: PricingPlan; name: string; priceKey: string; desc: string; popular?: boolean }[] = [
+  { id: "single", name: "Single Post", priceKey: "single", desc: "1 vacancy, visible 30 days" },
+  { id: "monthly", name: "Monthly", priceKey: "monthly", desc: "Unlimited posts for 30 days", popular: true },
+  { id: "annual", name: "Annual", priceKey: "annual", desc: "Unlimited posts, 12 months" },
 ];
 
 const PostVacancy = () => {
