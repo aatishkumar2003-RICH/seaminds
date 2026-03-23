@@ -70,6 +70,7 @@ interface ExternalVacancy {
   apply_url: string | null;
   contact_email: string | null;
   contact_whatsapp: string | null;
+  company_website: string | null;
   source: string;
   quality_score: number | null;
   created_at: string | null;
@@ -571,7 +572,13 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                   <div className="min-w-0">
                     <h4 className="text-sm font-semibold text-foreground truncate">{ext.title}</h4>
                     {ext.company_name && (
-                      <p className="text-xs text-muted-foreground mt-0.5">{ext.company_name}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {ext.company_website ? (
+                          <a href={ext.company_website.startsWith('http') ? ext.company_website : `https://${ext.company_website}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:text-primary transition-colors">
+                            {ext.company_name} <Globe size={10} className="text-primary/70" />
+                          </a>
+                        ) : ext.company_name}
+                      </p>
                     )}
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
@@ -646,7 +653,14 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                       </Button>
                     </a>
                   )}
-                  {!ext.apply_url && !ext.contact_whatsapp && !ext.contact_email && (
+                  {!ext.apply_url && !ext.contact_whatsapp && !ext.contact_email && ext.company_website && (
+                    <a href={ext.company_website.startsWith('http') ? ext.company_website : `https://${ext.company_website}`} target="_blank" rel="noopener noreferrer" className="flex-1">
+                      <Button size="sm" className="w-full text-xs h-9 gap-1.5">
+                        <Globe size={12} /> Visit Website
+                      </Button>
+                    </a>
+                  )}
+                  {!ext.apply_url && !ext.contact_whatsapp && !ext.contact_email && !ext.company_website && (
                     <Button size="sm" variant="outline" className="w-full text-xs h-9" disabled>
                       No Contact Info
                     </Button>
