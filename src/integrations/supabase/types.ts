@@ -717,6 +717,7 @@ export type Database = {
         Row: {
           apply_url: string | null
           company_name: string | null
+          company_website: string | null
           contact_email: string | null
           contact_whatsapp: string | null
           contract_duration: string | null
@@ -744,6 +745,7 @@ export type Database = {
         Insert: {
           apply_url?: string | null
           company_name?: string | null
+          company_website?: string | null
           contact_email?: string | null
           contact_whatsapp?: string | null
           contract_duration?: string | null
@@ -771,6 +773,7 @@ export type Database = {
         Update: {
           apply_url?: string | null
           company_name?: string | null
+          company_website?: string | null
           contact_email?: string | null
           contact_whatsapp?: string | null
           contract_duration?: string | null

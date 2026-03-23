@@ -1,0 +1,1 @@
+ALTER TABLE external_vacancies ADD COLUMN IF NOT EXISTS company_website text;

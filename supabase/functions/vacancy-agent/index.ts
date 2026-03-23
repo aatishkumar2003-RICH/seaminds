@@ -42,7 +42,11 @@ async function fetchGoogleJobs(query: string): Promise<any[]> {
     const url = `https://serpapi.com/search.json?engine=google_jobs&q=${encodeURIComponent(query)}&api_key=${SERPAPI_KEY}&num=10`;
     const res = await fetch(url);
     const data = await res.json();
-    return data.jobs_results || [];
+    return (data.jobs_results || []).slice(0, 5).map((j: any) => ({
+      ...j,
+      apply_url: j.apply_options?.[0]?.link || j.related_links?.[0]?.link || null,
+      contact_email: j.apply_options?.find((o: any) => o.title?.toLowerCase().includes('email'))?.link?.replace('mailto:','') || null,
+    }));
   } catch { return []; }
 }
 
@@ -107,9 +111,10 @@ async function processWithClaude(rawItems: any[]): Promise<any[]> {
 - joining_port: string or null
 - joining_date: string or null
 - contract_duration: string or null
-- contact_email: string or null
-- contact_whatsapp: string or null
-- apply_url: string or null
+- contact_email: string or null (extract ANY email found in the text, including in URLs like mailto:, or company domain emails inferred from company website)
+- contact_whatsapp: string or null (extract phone numbers, WhatsApp links, wa.me links, any +countrycode numbers)
+- apply_url: string or null (IMPORTANT: always include this if available — it is the fallback when no direct contact exists)
+- company_website: string or null (extract company website URL if mentioned)
 - quality_score: number 0-100 (100=complete structured listing, 50=partial flier, 10=vague post)
 - is_scam: boolean (true if: requests money from seafarer, no company name AND no contact, salary >$50k/month, generic "all ranks needed")
 - scam_reason: string or null
@@ -166,6 +171,7 @@ async function saveVacancies(items: any[], source: string) {
       apply_url: item.apply_url,
       contact_email: item.contact_email,
       contact_whatsapp: item.contact_whatsapp,
+      company_website: item.company_website || null,
       quality_score: item.quality_score || 50,
       is_verified: false,
       is_scam_flagged: false,
