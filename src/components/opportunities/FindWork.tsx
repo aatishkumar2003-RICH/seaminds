@@ -443,6 +443,26 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                 {extVessels.sort().map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
               </SelectContent>
             </Select>
+            <Button
+              size="sm"
+              variant={extRankFilter !== "all" || extVesselFilter !== "all" ? "outline" : "default"}
+              className="h-8 text-xs shrink-0 gap-1"
+              onClick={() => {
+                if (extRankFilter !== "all" || extVesselFilter !== "all") {
+                  setExtRankFilter("all");
+                  setExtVesselFilter("all");
+                } else {
+                  const matchedRank = extRanks.find(r => r.toLowerCase() === role.toLowerCase()) || "all";
+                  const matchedVessel = preferredVessel !== "Any Type"
+                    ? extVessels.find(v => v.toLowerCase().includes(preferredVessel.toLowerCase().split(" ")[0])) || "all"
+                    : "all";
+                  setExtRankFilter(matchedRank);
+                  setExtVesselFilter(matchedVessel);
+                }
+              }}
+            >
+              {extRankFilter !== "all" || extVesselFilter !== "all" ? "✕ Clear" : "🎯 Match Me"}
+            </Button>
           </div>
 
           {filtered.length === 0 ? (
