@@ -27,9 +27,7 @@ const RSS_FEEDS = [
   'https://www.marineinsight.com/feed',
 ];
 
-const TELEGRAM_CHANNELS = [
-  '@offshorevacancies','@seafarersvacancies','@seamindsjobs',
-];
+const TELEGRAM_CHANNELS = ['offshorevacancies', 'seafarersvacancies', 'marinemanjobs'];
 
 async function fetchGoogleJobs(query: string): Promise<any[]> {
   try {
@@ -58,17 +56,35 @@ async function fetchRSS(url: string): Promise<any[]> {
   } catch { return []; }
 }
 
-async function fetchTelegram(channel: string): Promise<any[]> {
+async function fetchTelegramChannel(channel: string): Promise<any[]> {
   try {
-    const channelName = channel.replace('@', '');
-    const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/getUpdates?limit=20`;
-    const res = await fetch(url);
-    const data = await res.json();
-    if (!data.ok) return [];
-    const msgs = (data.result || [])
-      .filter((u: any) => u.channel_post?.chat?.username === channelName && u.channel_post?.text)
-      .map((u: any) => ({ text: u.channel_post.text, date: u.channel_post.date, channel }));
-    return msgs.slice(0, 10);
+    // Read public channel via web preview - no bot membership needed
+    const res = await fetch(`https://t.me/s/${channel}`, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SeaMinds/1.0)' }
+    });
+    const html = await res.text();
+    const items: any[] = [];
+
+    // Extract message blocks
+    const messages = html.matchAll(/<div[^>]*class="[^"]*tgme_widget_message_text[^"]*"[^>]*>([\s\S]*?)<\/div>/g);
+    for (const msg of messages) {
+      const raw = msg[1].replace(/<[^>]+>/g, ' ').trim();
+      if (raw.length < 20) continue;
+      // Only keep messages that look like job postings
+      if (/captain|chief|officer|engineer|bosun|cook|rating|vacancy|hiring|salary|\$|whatsapp|contact|apply/i.test(raw)) {
+        // Extract contact details directly from raw text
+        const email = raw.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
+        const whatsapp = raw.match(/(?:wa\.me\/|whatsapp[:\s]+|📱\s*)(\+?[\d\s()-]{8,15})/i)?.[1]?.trim() || null;
+        const phone = raw.match(/\+\d[\d\s()-]{7,14}/)?.[0] || null;
+        items.push({
+          text: raw.substring(0, 500),
+          channel,
+          contact_email: email,
+          contact_whatsapp: whatsapp || phone,
+        });
+      }
+    }
+    return items.slice(0, 15);
   } catch { return []; }
 }
 
@@ -198,7 +214,7 @@ Deno.serve(async (req) => {
     // 3. Telegram
     const telegramRaw: any[] = [];
     for (const ch of TELEGRAM_CHANNELS) {
-      const msgs = await fetchTelegram(ch);
+      const msgs = await fetchTelegramChannel(ch);
       telegramRaw.push(...msgs);
     }
     if (telegramRaw.length) {
