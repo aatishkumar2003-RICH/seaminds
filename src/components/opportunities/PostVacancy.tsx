@@ -444,6 +444,7 @@ const PostVacancy = () => {
               </div>
             </>
           )}
+        </div>
 
         <Button className="w-full" onClick={handlePostClick} disabled={posting}>
           {posting ? "Submitting..." : "Post Vacancy →"}
