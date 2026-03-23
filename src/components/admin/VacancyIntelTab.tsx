@@ -71,6 +71,14 @@ export default function VacancyIntelTab() {
         .sort((a, b) => b.count - a.count)
         .slice(0, 12);
 
+      const contacts = contactData.data || [];
+      const withApply = contacts.filter((c: any) => c.apply_url).length;
+      const withEmail = contacts.filter((c: any) => c.contact_email).length;
+      const withWhatsapp = contacts.filter((c: any) => c.contact_whatsapp).length;
+      const withWebsite = contacts.filter((c: any) => c.company_website).length;
+      const withAny = contacts.filter((c: any) => c.apply_url || c.contact_email || c.contact_whatsapp || c.company_website).length;
+      const noContact = contacts.length - withAny;
+
       setStats({
         total: total.count || 0,
         bySource: bySourceArr,
@@ -84,6 +92,7 @@ export default function VacancyIntelTab() {
         crewByNationality,
         totalCrew: crewData.length,
         availableCrew: crewData.filter((c: any) => c.is_available).length,
+        contactCoverage: { withApply, withEmail, withWhatsapp, withWebsite, withAny, noContact, total: contacts.length },
       });
     } catch (e) { console.error(e); }
     setLoading(false);
