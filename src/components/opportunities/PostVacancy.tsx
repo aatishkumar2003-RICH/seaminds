@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,10 +23,10 @@ const DURATIONS = [
 
 type PricingPlan = "single" | "monthly" | "annual";
 
-const PLANS: { id: PricingPlan; name: string; price: string; desc: string; popular?: boolean }[] = [
-  { id: "single", name: "Single Post", price: "$19", desc: "1 vacancy, visible 30 days" },
-  { id: "monthly", name: "Monthly", price: "$99/month", desc: "Unlimited posts for 30 days", popular: true },
-  { id: "annual", name: "Annual", price: "$799/year", desc: "Unlimited posts, 12 months" },
+const PLANS_STATIC: { id: PricingPlan; name: string; priceKey: string; desc: string; popular?: boolean }[] = [
+  { id: "single", name: "Single Post", priceKey: "single", desc: "1 vacancy, visible 30 days" },
+  { id: "monthly", name: "Monthly", priceKey: "monthly", desc: "Unlimited posts for 30 days", popular: true },
+  { id: "annual", name: "Annual", priceKey: "annual", desc: "Unlimited posts, 12 months" },
 ];
 
 const PostVacancy = () => {
@@ -48,6 +48,24 @@ const PostVacancy = () => {
   const [aiReading, setAiReading] = useState(false);
   const [aiSuccess, setAiSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [jobPrices, setJobPrices] = useState({ single: 0, monthly: 0, annual: 0 });
+
+  useEffect(() => {
+    supabase.from('admin_settings')
+      .select('key, value')
+      .in('key', ['price_job_single', 'price_job_monthly', 'price_job_annual'])
+      .then(({ data }) => {
+        if (data) {
+          const map: Record<string, number> = {};
+          data.forEach((r: any) => { map[r.key] = Number(r.value) || 0; });
+          setJobPrices({
+            single: map['price_job_single'] || 0,
+            monthly: map['price_job_monthly'] || 0,
+            annual: map['price_job_annual'] || 0,
+          });
+        }
+      });
+  }, []);
 
   const wordCount = additionalNotes.trim().split(/\s+/).filter(Boolean).length;
 
@@ -223,7 +241,15 @@ const PostVacancy = () => {
     setSelectedPlan("single");
   };
 
-  const currentPlan = PLANS.find((p) => p.id === selectedPlan)!;
+  const currentPlan = PLANS_STATIC.find((p) => p.id === selectedPlan)!;
+  const getPlanPrice = (id: PricingPlan) => {
+    const v = jobPrices[id];
+    if (v === 0) return 'FREE';
+    if (id === 'monthly') return `$${v}/month`;
+    if (id === 'annual') return `$${v}/year`;
+    return `$${v}`;
+  };
+  const allFree = jobPrices.single === 0 && jobPrices.monthly === 0 && jobPrices.annual === 0;
 
   return (
     <div className="space-y-4 pt-3">
@@ -356,47 +382,68 @@ const PostVacancy = () => {
 
         {/* Pricing Cards */}
         <div className="space-y-2">
-          <label className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">Select Plan</label>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {PLANS.map((plan) => (
-              <button
-                key={plan.id}
-                onClick={() => setSelectedPlan(plan.id)}
-                className="relative rounded-xl p-4 text-left transition-all"
-                style={{
-                  border: selectedPlan === plan.id
-                    ? "2px solid #D4AF37"
-                    : plan.popular
-                    ? "1px solid rgba(212, 175, 55, 0.4)"
-                    : "1px solid hsl(var(--border))",
-                  background: selectedPlan === plan.id
-                    ? "rgba(212, 175, 55, 0.08)"
-                    : "hsl(var(--secondary))",
-                }}
-              >
-                {plan.popular && (
-                  <span
-                    className="absolute -top-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
-                    style={{ background: "#D4AF37", color: "#0a1929" }}
+          {allFree ? (
+            <div style={{
+              background: 'rgba(34,197,94,0.1)',
+              border: '1px solid rgba(34,197,94,0.3)',
+              borderRadius: 12,
+              padding: '16px 20px',
+              textAlign: 'center' as const,
+              marginTop: 16,
+            }}>
+              <div style={{ fontSize: 28, marginBottom: 6 }}>🎉</div>
+              <div style={{ color: '#22c55e', fontWeight: 800, fontSize: 18, marginBottom: 4 }}>
+                Free Posting — Limited Time
+              </div>
+              <div style={{ color: '#888', fontSize: 13 }}>
+                Post unlimited vacancies at no cost until we reach 10,000 crew members.
+              </div>
+            </div>
+          ) : (
+            <>
+              <label className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">Select Plan</label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {PLANS_STATIC.map((plan) => (
+                  <button
+                    key={plan.id}
+                    onClick={() => setSelectedPlan(plan.id)}
+                    className="relative rounded-xl p-4 text-left transition-all"
+                    style={{
+                      border: selectedPlan === plan.id
+                        ? "2px solid #D4AF37"
+                        : plan.popular
+                        ? "1px solid rgba(212, 175, 55, 0.4)"
+                        : "1px solid hsl(var(--border))",
+                      background: selectedPlan === plan.id
+                        ? "rgba(212, 175, 55, 0.08)"
+                        : "hsl(var(--secondary))",
+                    }}
                   >
-                    <Star size={10} fill="currentColor" /> POPULAR
-                  </span>
-                )}
-                <div className="text-lg font-bold text-foreground">{plan.price}</div>
-                <div className="text-sm font-medium text-foreground mt-0.5">{plan.name}</div>
-                <div className="text-[11px] text-muted-foreground mt-1">{plan.desc}</div>
-                <div
-                  className="mt-3 text-center text-xs font-semibold py-1.5 rounded-lg transition-colors"
-                  style={{
-                    background: selectedPlan === plan.id ? "#D4AF37" : "hsl(var(--muted))",
-                    color: selectedPlan === plan.id ? "#0a1929" : "hsl(var(--muted-foreground))",
-                  }}
-                >
-                  {selectedPlan === plan.id ? "✓ Selected" : "Select"}
-                </div>
-              </button>
-            ))}
-          </div>
+                    {plan.popular && (
+                      <span
+                        className="absolute -top-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                        style={{ background: "#D4AF37", color: "#0a1929" }}
+                      >
+                        <Star size={10} fill="currentColor" /> POPULAR
+                      </span>
+                    )}
+                    <div className="text-lg font-bold text-foreground">{getPlanPrice(plan.id)}</div>
+                    <div className="text-sm font-medium text-foreground mt-0.5">{plan.name}</div>
+                    <div className="text-[11px] text-muted-foreground mt-1">{plan.desc}</div>
+                    <div
+                      className="mt-3 text-center text-xs font-semibold py-1.5 rounded-lg transition-colors"
+                      style={{
+                        background: selectedPlan === plan.id ? "#D4AF37" : "hsl(var(--muted))",
+                        color: selectedPlan === plan.id ? "#0a1929" : "hsl(var(--muted-foreground))",
+                      }}
+                    >
+                      {selectedPlan === plan.id ? "✓ Selected" : "Select"}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
         <Button className="w-full" onClick={handlePostClick} disabled={posting}>
@@ -426,7 +473,7 @@ const PostVacancy = () => {
               style={{ background: "rgba(212, 175, 55, 0.1)", border: "1px solid rgba(212, 175, 55, 0.3)" }}
             >
               <p className="text-sm text-foreground font-medium">
-                Selected Plan: {currentPlan.name} — {currentPlan.price}
+                Selected Plan: {currentPlan.name} — {getPlanPrice(currentPlan.id)}
               </p>
             </div>
 
