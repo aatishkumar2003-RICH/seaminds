@@ -15,6 +15,7 @@ interface VacancyStats {
   crewByNationality: { nationality: string; count: number; available: number }[];
   totalCrew: number;
   availableCrew: number;
+  contactCoverage: { withApply: number; withEmail: number; withWhatsapp: number; withWebsite: number; withAny: number; noContact: number; total: number };
 }
 
 export default function VacancyIntelTab() {
@@ -28,7 +29,7 @@ export default function VacancyIntelTab() {
     try {
       const today = new Date(); today.setHours(0, 0, 0, 0);
 
-      const [total, bySource, byRank, byVessel, todayRes, avgRes, scamRes, runs, recent, crewNat] = await Promise.all([
+      const [total, bySource, byRank, byVessel, todayRes, avgRes, scamRes, runs, recent, crewNat, contactData] = await Promise.all([
         supabase.from('external_vacancies').select('*', { count: 'exact', head: true }),
         supabase.from('external_vacancies').select('source'),
         supabase.from('external_vacancies').select('rank_required').not('rank_required', 'is', null),
@@ -39,6 +40,7 @@ export default function VacancyIntelTab() {
         supabase.from('app_events').select('metadata, created_at').eq('event_type', 'vacancy_agent_run').order('created_at', { ascending: false }).limit(5),
         supabase.from('external_vacancies').select('title, rank_required, vessel_type, company_name, salary_max, source, quality_score, fetched_at').order('fetched_at', { ascending: false }).limit(10),
         supabase.from('crew_profiles').select('nationality, is_available'),
+        supabase.from('external_vacancies').select('apply_url, contact_email, contact_whatsapp, company_website'),
       ]);
 
       const srcMap: Record<string, number> = {};
@@ -70,6 +72,14 @@ export default function VacancyIntelTab() {
         .sort((a, b) => b.count - a.count)
         .slice(0, 12);
 
+      const contacts = contactData.data || [];
+      const withApply = contacts.filter((c: any) => c.apply_url).length;
+      const withEmail = contacts.filter((c: any) => c.contact_email).length;
+      const withWhatsapp = contacts.filter((c: any) => c.contact_whatsapp).length;
+      const withWebsite = contacts.filter((c: any) => c.company_website).length;
+      const withAny = contacts.filter((c: any) => c.apply_url || c.contact_email || c.contact_whatsapp || c.company_website).length;
+      const noContact = contacts.length - withAny;
+
       setStats({
         total: total.count || 0,
         bySource: bySourceArr,
@@ -83,6 +93,7 @@ export default function VacancyIntelTab() {
         crewByNationality,
         totalCrew: crewData.length,
         availableCrew: crewData.filter((c: any) => c.is_available).length,
+        contactCoverage: { withApply, withEmail, withWhatsapp, withWebsite, withAny, noContact, total: contacts.length },
       });
     } catch (e) { console.error(e); }
     setLoading(false);
@@ -139,6 +150,42 @@ export default function VacancyIntelTab() {
           </div>
         ))}
       </div>
+
+      {/* Contact Coverage */}
+      {stats.contactCoverage && (
+        <div className="rounded-xl bg-card border border-border p-4 space-y-3">
+          <h3 className="text-sm font-semibold text-foreground">📞 Contact Coverage</h3>
+          <div className="flex h-6 rounded-full overflow-hidden bg-muted">
+            {[
+              { val: stats.contactCoverage.withApply, color: '#22c55e', label: 'Apply Link' },
+              { val: stats.contactCoverage.withEmail - (stats.contactCoverage.withApply > 0 ? Math.min(stats.contactCoverage.withEmail, stats.contactCoverage.withApply) : 0), color: '#60a5fa', label: 'Email Only' },
+              { val: stats.contactCoverage.withWhatsapp, color: '#a78bfa', label: 'WhatsApp' },
+              { val: stats.contactCoverage.noContact, color: '#ef4444', label: 'No Contact' },
+            ].filter(s => s.val > 0).map(s => (
+              <div key={s.label} title={`${s.label}: ${s.val}`} style={{ width: `${(s.val / stats.contactCoverage.total) * 100}%`, background: s.color }} />
+            ))}
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+            {[
+              { icon: '🔗', label: 'Apply Link', val: stats.contactCoverage.withApply, color: '#22c55e' },
+              { icon: '📧', label: 'Email', val: stats.contactCoverage.withEmail, color: '#60a5fa' },
+              { icon: '📱', label: 'WhatsApp', val: stats.contactCoverage.withWhatsapp, color: '#a78bfa' },
+              { icon: '🌐', label: 'Website', val: stats.contactCoverage.withWebsite, color: 'hsl(var(--primary))' },
+            ].map(s => (
+              <div key={s.label} className="flex items-center gap-1.5">
+                <span>{s.icon}</span>
+                <span className="text-muted-foreground">{s.label}:</span>
+                <span className="font-semibold" style={{ color: s.color }}>{s.val}</span>
+                <span className="text-muted-foreground/60">({stats.contactCoverage.total > 0 ? Math.round(s.val / stats.contactCoverage.total * 100) : 0}%)</span>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center justify-between text-xs pt-1 border-t border-border">
+            <span className="text-muted-foreground">✅ Has any contact: <strong className="text-foreground">{stats.contactCoverage.withAny}</strong> ({stats.contactCoverage.total > 0 ? Math.round(stats.contactCoverage.withAny / stats.contactCoverage.total * 100) : 0}%)</span>
+            <span className="text-destructive">❌ No contact: <strong>{stats.contactCoverage.noContact}</strong> ({stats.contactCoverage.total > 0 ? Math.round(stats.contactCoverage.noContact / stats.contactCoverage.total * 100) : 0}%)</span>
+          </div>
+        </div>
+      )}
 
       <div className="grid md:grid-cols-2 gap-4">
         {/* By Source */}
