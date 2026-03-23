@@ -168,6 +168,7 @@ export default function MarketPulseButton({
       const topJobs = (topJobsRes.data || []).map((v: any) => ({
         rank: v.rank_required || 'Officer', vessel: v.vessel_type || 'Various',
         salary: Number(v.salary_max), company: v.company_name || 'Confidential', port: v.joining_port || 'Worldwide',
+        website: v.company_website || null,
       }));
 
       // Salary trend vs last month
