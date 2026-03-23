@@ -1,0 +1,1 @@
+CREATE POLICY "admin_delete_external_vacancies" ON public.external_vacancies FOR DELETE TO authenticated USING (EXISTS (SELECT 1 FROM admin_profiles WHERE admin_profiles.id = auth.uid()));
