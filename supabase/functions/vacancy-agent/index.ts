@@ -397,7 +397,8 @@ async function scrapeCrewBoard(): Promise<any[]> {
       if (cells.length >= 2 && /captain|chief|officer|engineer|master|bosun|cook|electrician|motorman/i.test(cells.join(' '))) {
         const email = content.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
         const link = content.match(/href="([^"]*crewboard[^"]*)"/)?.[1] || null;
-        items.push({ title: cells[0], vessel_type: cells[1] || null, company_name: cells[2] || null, contact_email: email, apply_url: link, nationality_fit: ['Ukrainian'], source_url: 'crewboard.net' });
+        const website = extractWebsite(content, ['crewboard.net']);
+        items.push({ title: cells[0], vessel_type: cells[1] || null, company_name: cells[2] || null, contact_email: email, apply_url: link, company_website: website, nationality_fit: ['Ukrainian'], source_url: 'crewboard.net' });
       }
     }
     return items.slice(0, 20);
