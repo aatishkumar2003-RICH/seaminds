@@ -767,7 +767,7 @@ function AgentsTab() {
 /* ─── Main Dashboard ─── */
 export default function AdminDashboard() {
   const [authed, setAuthed] = useState(localStorage.getItem(LS_KEY) === ADMIN_PIN);
-  const [tab, setTab] = useState<"crew" | "pricing" | "discount" | "country_pricing" | "sub_admins" | "dpa" | "blog_images" | "agents">("crew");
+  const [tab, setTab] = useState<"crew" | "pricing" | "discount" | "country_pricing" | "sub_admins" | "dpa" | "blog_images" | "agents" | "vacancy_intel">("crew");
 
   if (!authed) return <PinScreen onAuth={() => setAuthed(true)} />;
 
