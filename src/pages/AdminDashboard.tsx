@@ -18,6 +18,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import CountryPricingTab from "@/components/admin/CountryPricingTab";
 import SubAdminsTab from "@/components/admin/SubAdminsTab";
+import VacancyIntelTab from "@/components/admin/VacancyIntelTab";
 
 const ADMIN_PIN = "215151";
 const LS_KEY = "sm_admin_auth";
@@ -766,7 +767,7 @@ function AgentsTab() {
 /* ─── Main Dashboard ─── */
 export default function AdminDashboard() {
   const [authed, setAuthed] = useState(localStorage.getItem(LS_KEY) === ADMIN_PIN);
-  const [tab, setTab] = useState<"crew" | "pricing" | "discount" | "country_pricing" | "sub_admins" | "dpa" | "blog_images" | "agents">("crew");
+  const [tab, setTab] = useState<"crew" | "pricing" | "discount" | "country_pricing" | "sub_admins" | "dpa" | "blog_images" | "agents" | "vacancy_intel">("crew");
 
   if (!authed) return <PinScreen onAuth={() => setAuthed(true)} />;
 
@@ -784,6 +785,7 @@ export default function AdminDashboard() {
     { id: "dpa" as const, label: "SOS / DPA Contacts" },
     { id: "blog_images" as const, label: "Blog Images" },
     { id: "agents" as const, label: "🤖 Agents" },
+    { id: "vacancy_intel" as const, label: "📊 Vacancy Intel" },
   ];
 
   return (
@@ -815,6 +817,7 @@ export default function AdminDashboard() {
       {tab === "dpa" && <DPAContactsTab />}
       {tab === "blog_images" && <BlogImagesTab />}
       {tab === "agents" && <AgentsTab />}
+      {tab === "vacancy_intel" && <VacancyIntelTab />}
     </div>
   );
 }
