@@ -178,6 +178,63 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
 
   return (
     <div className="space-y-5">
+      {/* Recent Matches */}
+      {(() => {
+        const rankMatches = [
+          ...jobPostings.filter(j => j.rank_required.toLowerCase() === role.toLowerCase() || j.rank_required === "Any Rank").map(j => ({
+            id: j.id, title: j.rank_required, company: j.company_name, vessel: j.vessel_type,
+            port: j.joining_port, salary: j.monthly_salary ? `$${j.monthly_salary}/mo` : "Negotiable",
+            source: "posted" as const, date: j.created_at, whatsapp: j.contact_whatsapp, verified: j.verified,
+          })),
+          ...externalVacancies.filter(e => e.rank_required && e.rank_required.toLowerCase() === role.toLowerCase()).map(e => ({
+            id: e.id, title: e.rank_required || e.title, company: e.company_name || "Unknown",
+            vessel: e.vessel_type || "—", port: e.joining_port || "TBD",
+            salary: e.salary_text || "—", source: "ai" as const, date: e.created_at || "",
+            whatsapp: e.contact_whatsapp, verified: false,
+          })),
+        ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
+
+        if (!rankMatches.length) return null;
+
+        return (
+          <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Award size={16} className="text-primary" />
+              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Matches for You</h3>
+              <Badge className="text-[10px] bg-primary text-primary-foreground px-1.5 py-0">{rankMatches.length}</Badge>
+            </div>
+            <p className="text-[11px] text-muted-foreground">Jobs matching your rank: <span className="font-medium text-foreground">{role}</span></p>
+            <div className="space-y-2">
+              {rankMatches.map(m => (
+                <div key={m.id} className="flex items-center justify-between gap-3 rounded-lg bg-card border border-border p-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-semibold text-foreground truncate">{m.title}</span>
+                      {m.verified && <Check size={12} className="text-blue-400 shrink-0" />}
+                      <Badge variant="outline" className="text-[9px] shrink-0">{m.source === "ai" ? "🌐 AI" : "📋 Direct"}</Badge>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground truncate">{m.company} · {m.vessel} · {m.port}</p>
+                    <p className="text-[11px] text-primary font-medium">{m.salary}</p>
+                  </div>
+                  {m.whatsapp ? (
+                    <a href={`https://wa.me/${m.whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi, I'm interested in the ${m.title} position. My name is ${firstName} ${lastName}, ${role}.`)}`} target="_blank" rel="noopener noreferrer">
+                      <Button size="sm" className="h-8 text-xs gap-1 bg-green-600 hover:bg-green-700 text-white shrink-0">
+                        <MessageCircle size={12} /> Apply
+                      </Button>
+                    </a>
+                  ) : (
+                    <Button size="sm" variant="outline" className="h-8 text-xs shrink-0" onClick={() => {
+                      const el = document.getElementById("ai-collected-jobs");
+                      el?.scrollIntoView({ behavior: "smooth" });
+                    }}>View</Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* CV Preview */}
       <div className="rounded-xl bg-card border border-border p-4 space-y-3">
         <div className="flex items-center gap-2 mb-1">
