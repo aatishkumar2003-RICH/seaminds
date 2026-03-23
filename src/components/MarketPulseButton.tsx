@@ -343,7 +343,12 @@ export default function MarketPulseButton({
                         <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '10px 12px', marginBottom: 6 }}>
                           <div>
                             <p style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0', margin: 0 }}>{j.rank}</p>
-                            <p style={{ fontSize: 10, color: '#6b7a8d', margin: 0 }}>{j.vessel} · {j.port}</p>
+                            <p style={{ fontSize: 10, color: '#6b7a8d', margin: 0 }}>
+                              {j.vessel} · {j.port}
+                              {j.website && (
+                                <> · <a href={j.website.startsWith('http') ? j.website : `https://${j.website}`} target="_blank" rel="noopener noreferrer" style={{ color: '#60a5fa', textDecoration: 'none' }}>🌐 Website</a></>
+                              )}
+                            </p>
                           </div>
                           <div style={{ textAlign: 'right' }}>
                             <p style={{ fontSize: 14, fontWeight: 800, color: '#22c55e', margin: 0 }}>${j.salary.toLocaleString()}</p>
