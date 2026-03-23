@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import CountryPricingTab from "@/components/admin/CountryPricingTab";
 import SubAdminsTab from "@/components/admin/SubAdminsTab";
 import VacancyIntelTab from "@/components/admin/VacancyIntelTab";
+import CompanyDirectoryTab from "@/components/admin/CompanyDirectoryTab";
 
 const ADMIN_PIN = "215151";
 const LS_KEY = "sm_admin_auth";
@@ -767,7 +768,7 @@ function AgentsTab() {
 /* ─── Main Dashboard ─── */
 export default function AdminDashboard() {
   const [authed, setAuthed] = useState(localStorage.getItem(LS_KEY) === ADMIN_PIN);
-  const [tab, setTab] = useState<"crew" | "pricing" | "discount" | "country_pricing" | "sub_admins" | "dpa" | "blog_images" | "agents" | "vacancy_intel">("crew");
+  const [tab, setTab] = useState<"crew" | "pricing" | "discount" | "country_pricing" | "sub_admins" | "dpa" | "blog_images" | "agents" | "vacancy_intel" | "company_dir">("crew");
 
   if (!authed) return <PinScreen onAuth={() => setAuthed(true)} />;
 
@@ -786,6 +787,7 @@ export default function AdminDashboard() {
     { id: "blog_images" as const, label: "Blog Images" },
     { id: "agents" as const, label: "🤖 Agents" },
     { id: "vacancy_intel" as const, label: "📊 Vacancy Intel" },
+    { id: "company_dir" as const, label: "🏢 Companies" },
   ];
 
   return (
@@ -818,6 +820,7 @@ export default function AdminDashboard() {
       {tab === "blog_images" && <BlogImagesTab />}
       {tab === "agents" && <AgentsTab />}
       {tab === "vacancy_intel" && <VacancyIntelTab />}
+      {tab === "company_dir" && <CompanyDirectoryTab />}
     </div>
   );
 }
