@@ -473,7 +473,7 @@ const PostVacancy = () => {
               style={{ background: "rgba(212, 175, 55, 0.1)", border: "1px solid rgba(212, 175, 55, 0.3)" }}
             >
               <p className="text-sm text-foreground font-medium">
-                Selected Plan: {currentPlan.name} — {currentPlan.price}
+                Selected Plan: {currentPlan.name} — {getPlanPrice(currentPlan.id)}
               </p>
             </div>
 
