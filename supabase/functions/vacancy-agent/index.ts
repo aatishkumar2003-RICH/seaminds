@@ -43,9 +43,14 @@ async function fetchGoogleJobs(query: string): Promise<any[]> {
     const res = await fetch(url);
     const data = await res.json();
     return (data.jobs_results || []).slice(0, 5).map((j: any) => ({
-      ...j,
-      apply_url: j.apply_options?.[0]?.link || j.related_links?.[0]?.link || null,
-      contact_email: j.apply_options?.find((o: any) => o.title?.toLowerCase().includes('email'))?.link?.replace('mailto:','') || null,
+      title: j.title,
+      company: j.company_name,
+      location: j.location,
+      description: j.description?.substring(0, 400),
+      apply_url: j.apply_options?.[0]?.link || null,
+      contact_email: j.apply_options?.find((o: any) => 
+        o.link?.includes('mailto:'))?.link?.replace('mailto:','') || null,
+      source_name: j.via || null,
     }));
   } catch { return []; }
 }
