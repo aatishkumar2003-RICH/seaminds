@@ -817,6 +817,7 @@ export default function AdminDashboard() {
       {tab === "dpa" && <DPAContactsTab />}
       {tab === "blog_images" && <BlogImagesTab />}
       {tab === "agents" && <AgentsTab />}
+      {tab === "vacancy_intel" && <VacancyIntelTab />}
     </div>
   );
 }
