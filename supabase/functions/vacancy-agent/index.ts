@@ -185,6 +185,21 @@ async function saveVacancies(items: any[], source: string) {
   return saved;
 }
 
+// Helper to extract company website URLs from HTML content
+function extractWebsite(content: string, excludeDomains: string[] = []): string | null {
+  const urls = content.match(/href="(https?:\/\/[^"]{8,100})"/g) || [];
+  for (const u of urls) {
+    const url = u.match(/href="([^"]*)"/)?.[1] || '';
+    if (excludeDomains.some(d => url.includes(d))) continue;
+    if (/\.(pdf|jpg|png|gif|css|js)$/i.test(url)) continue;
+    if (/facebook|twitter|instagram|youtube|linkedin|t\.me|wa\.me|whatsapp|google|apple/i.test(url)) continue;
+    if (/^\w+:\/\/[^/]+\/?$/.test(url) || /\/(about|contact|career|jobs)/i.test(url)) return url;
+  }
+  const wwwMatch = content.match(/(?:website|web|site|www)[:\s]+(?:https?:\/\/)?((?:www\.)?[\w.-]+\.\w{2,6})/i);
+  if (wwwMatch) return `https://${wwwMatch[1]}`;
+  return null;
+}
+
 // INDIA — Seadonna
 async function scrapeSeadonna(): Promise<any[]> {
   try {
@@ -200,8 +215,9 @@ async function scrapeSeadonna(): Promise<any[]> {
       const email = content.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
       const phone = content.match(/(?:\+91|0)[\d\s-]{9,12}/)?.[0] || null;
       const link = content.match(/href="([^"]*seadonna\.com[^"]*)"/)?.[1] || null;
+      const website = extractWebsite(content, ['seadonna.com']);
       if (title && /captain|chief|officer|engineer|master|bosun|cook|rating|navy|seafarer/i.test(title)) {
-        items.push({ title, contact_email: email, contact_whatsapp: phone, apply_url: link, nationality_fit: ['Indian'], source_url: 'seadonna.com' });
+        items.push({ title, contact_email: email, contact_whatsapp: phone, apply_url: link, company_website: website, nationality_fit: ['Indian'], source_url: 'seadonna.com' });
       }
     }
     return items.slice(0, 20);
@@ -222,8 +238,9 @@ async function scrapeWasailor(): Promise<any[]> {
       const title = content.match(/<h[234][^>]*>([^<]{5,80})<\/h[234]>/)?.[1]?.trim() || '';
       const whatsapp = content.match(/(?:wa\.me\/|whatsapp[:\s]+|\+91)(\+?[\d\s()-]{10,14})/i)?.[1] || null;
       const email = content.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
+      const website = extractWebsite(content, ['wasailor.com']);
       if (title && /captain|chief|officer|engineer|bosun|cook|ab|gp|rating/i.test(title)) {
-        items.push({ title, contact_whatsapp: whatsapp, contact_email: email, nationality_fit: ['Indian'], source_url: 'wasailor.com' });
+        items.push({ title, contact_whatsapp: whatsapp, contact_email: email, company_website: website, nationality_fit: ['Indian'], source_url: 'wasailor.com' });
       }
     }
     return items.slice(0, 20);
@@ -244,7 +261,8 @@ async function scrapeSeaJobNet(): Promise<any[]> {
       const cells = Array.from(content.matchAll(/<td[^>]*>([^<]{2,60})<\/td>/g)).map(m => m[1].trim());
       if (cells.length >= 2 && /captain|chief|officer|engineer|master|bosun/i.test(cells.join(' '))) {
         const email = content.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
-        items.push({ title: cells[0], vessel_type: cells[1] || null, contact_email: email, nationality_fit: ['Indian'], source_url: 'seajob.net' });
+        const website = extractWebsite(content, ['seajob.net']);
+        items.push({ title: cells[0], vessel_type: cells[1] || null, contact_email: email, company_website: website, nationality_fit: ['Indian'], source_url: 'seajob.net' });
       }
     }
     return items.slice(0, 20);
@@ -266,8 +284,9 @@ async function scrapePinoySeaman(): Promise<any[]> {
       const company = content.match(/(?:agency|company)[:\s]+([^<\n]{3,50})/i)?.[1]?.trim() || null;
       const email = content.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
       const link = content.match(/href="(https?:\/\/[^"]*pinoyseaman[^"]*)"/)?.[1] || null;
+      const website = extractWebsite(content, ['pinoyseaman.ph']);
       if (title && /captain|chief|officer|engineer|bosun|cook|ab|os|wiper|messman/i.test(title)) {
-        items.push({ title, company_name: company, contact_email: email, apply_url: link, nationality_fit: ['Filipino'], source_url: 'pinoyseaman.ph' });
+        items.push({ title, company_name: company, contact_email: email, apply_url: link, company_website: website, nationality_fit: ['Filipino'], source_url: 'pinoyseaman.ph' });
       }
     }
     return items.slice(0, 20);
@@ -288,8 +307,9 @@ async function scrapeSeamanJobSite(): Promise<any[]> {
       const title = content.match(/<h[234][^>]*>([^<]{5,80})<\/h[234]>/)?.[1]?.trim() || '';
       const company = content.match(/class="[^"]*company[^"]*"[^>]*>([^<]{3,60})</)?.[1]?.trim() || null;
       const link = content.match(/href="([^"]*workabroad[^"]*)"/)?.[1] || null;
+      const website = extractWebsite(content, ['workabroad.ph']);
       if (title) {
-        items.push({ title, company_name: company, apply_url: link, nationality_fit: ['Filipino'], source_url: 'seamanjobsite.workabroad.ph' });
+        items.push({ title, company_name: company, apply_url: link, company_website: website, nationality_fit: ['Filipino'], source_url: 'seamanjobsite.workabroad.ph' });
       }
     }
     return items.slice(0, 20);
@@ -329,8 +349,9 @@ async function scrapePelaut(): Promise<any[]> {
       const title = content.match(/<h[234][^>]*>([^<]{5,80})<\/h[234]>/)?.[1]?.trim() || '';
       const company = content.match(/(?:company|perusahaan)[:\s]+([^<\n]{3,50})/i)?.[1]?.trim() || null;
       const link = content.match(/href="([^"]*pelaut[^"]*)"/)?.[1] || null;
+      const website = extractWebsite(content, ['pelaut.com']);
       if (title && /captain|chief|officer|engineer|bosun|cook|ab|os|rating|nakhoda|masinis|mualim/i.test(title)) {
-        items.push({ title, company_name: company, apply_url: link, nationality_fit: ['Indonesian'], source_url: 'pelaut.com' });
+        items.push({ title, company_name: company, apply_url: link, company_website: website, nationality_fit: ['Indonesian'], source_url: 'pelaut.com' });
       }
     }
     return items.slice(0, 20);
@@ -352,8 +373,9 @@ async function scrapeKapal(): Promise<any[]> {
       const email = content.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
       const phone = content.match(/(?:\+62|08)[\d\s-]{8,14}/)?.[0] || null;
       const link = content.match(/href="([^"]*kapal\.co\.id[^"]*)"/)?.[1] || null;
+      const website = extractWebsite(content, ['kapal.co.id']);
       if (title && /captain|chief|officer|engineer|bosun|cook|rating|nakhoda|masinis|mualim|pelaut/i.test(title)) {
-        items.push({ title, contact_email: email, contact_whatsapp: phone, apply_url: link, nationality_fit: ['Indonesian'], source_url: 'kapal.co.id' });
+        items.push({ title, contact_email: email, contact_whatsapp: phone, apply_url: link, company_website: website, nationality_fit: ['Indonesian'], source_url: 'kapal.co.id' });
       }
     }
     return items.slice(0, 20);
@@ -375,7 +397,8 @@ async function scrapeCrewBoard(): Promise<any[]> {
       if (cells.length >= 2 && /captain|chief|officer|engineer|master|bosun|cook|electrician|motorman/i.test(cells.join(' '))) {
         const email = content.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
         const link = content.match(/href="([^"]*crewboard[^"]*)"/)?.[1] || null;
-        items.push({ title: cells[0], vessel_type: cells[1] || null, company_name: cells[2] || null, contact_email: email, apply_url: link, nationality_fit: ['Ukrainian'], source_url: 'crewboard.net' });
+        const website = extractWebsite(content, ['crewboard.net']);
+        items.push({ title: cells[0], vessel_type: cells[1] || null, company_name: cells[2] || null, contact_email: email, apply_url: link, company_website: website, nationality_fit: ['Ukrainian'], source_url: 'crewboard.net' });
       }
     }
     return items.slice(0, 20);
@@ -398,8 +421,9 @@ async function scrapeMoryak(): Promise<any[]> {
       const company = content.match(/(?:company|компанія|компания)[:\s]+([^<\n]{3,50})/i)?.[1]?.trim() || null;
       const email = content.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
       const link = content.match(/href="([^"]*moryak\.info[^"]*)"/)?.[1] || null;
+      const website = extractWebsite(content, ['moryak.info']);
       if (title && /captain|chief|officer|engineer|master|bosun|cook|капітан|механік|помічник|штурман/i.test(title)) {
-        items.push({ title, company_name: company, contact_email: email, apply_url: link, nationality_fit: ['Ukrainian'], source_url: 'moryak.info' });
+        items.push({ title, company_name: company, contact_email: email, apply_url: link, company_website: website, nationality_fit: ['Ukrainian'], source_url: 'moryak.info' });
       }
     }
     return items.slice(0, 20);
@@ -421,8 +445,9 @@ async function scrapeMarineJobBD(): Promise<any[]> {
       const email = content.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
       const phone = content.match(/(?:\+880|01)[\d\s-]{8,13}/)?.[0] || null;
       const link = content.match(/href="([^"]*marinejobbd[^"]*)"/)?.[1] || null;
+      const website = extractWebsite(content, ['marinejobbd.com']);
       if (title && /captain|chief|officer|engineer|bosun|cook|ab|os|rating|seaman|seafarer/i.test(title)) {
-        items.push({ title, contact_email: email, contact_whatsapp: phone, apply_url: link, nationality_fit: ['Bangladeshi'], source_url: 'marinejobbd.com' });
+        items.push({ title, contact_email: email, contact_whatsapp: phone, apply_url: link, company_website: website, nationality_fit: ['Bangladeshi'], source_url: 'marinejobbd.com' });
       }
     }
     return items.slice(0, 20);
@@ -443,8 +468,9 @@ async function scrapeMyanmar(): Promise<any[]> {
       const title = content.match(/<h[234][^>]*>([^<]{5,100})<\/h[234]>/)?.[1]?.trim() || '';
       const company = content.match(/(?:company|agency)[:\s]+([^<\n]{3,50})/i)?.[1]?.trim() || null;
       const link = content.match(/href="([^"]*myanmarseafarers[^"]*)"/)?.[1] || null;
+      const website = extractWebsite(content, ['myanmarseafarers.org']);
       if (title && /captain|chief|officer|engineer|bosun|cook|ab|os|rating|seaman/i.test(title)) {
-        items.push({ title, company_name: company, apply_url: link, nationality_fit: ['Myanmar'], source_url: 'myanmarseafarers.org' });
+        items.push({ title, company_name: company, apply_url: link, company_website: website, nationality_fit: ['Myanmar'], source_url: 'myanmarseafarers.org' });
       }
     }
     return items.slice(0, 20);
@@ -465,8 +491,9 @@ async function scrapeCrewLink(): Promise<any[]> {
       const title = content.match(/<h[234][^>]*>([^<]{5,100})<\/h[234]>/)?.[1]?.trim() || '';
       const company = content.match(/(?:company|employer)[:\s]+([^<\n]{3,50})/i)?.[1]?.trim() || null;
       const link = content.match(/href="([^"]*crewlink[^"]*)"/)?.[1] || null;
+      const website = extractWebsite(content, ['crewlink.com']);
       if (title) {
-        items.push({ title, company_name: company, apply_url: link, nationality_fit: [], source_url: 'crewlink.com' });
+        items.push({ title, company_name: company, apply_url: link, company_website: website, nationality_fit: [], source_url: 'crewlink.com' });
       }
     }
     return items.slice(0, 20);
