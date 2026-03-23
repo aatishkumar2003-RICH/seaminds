@@ -787,6 +787,7 @@ export default function AdminDashboard() {
     { id: "blog_images" as const, label: "Blog Images" },
     { id: "agents" as const, label: "🤖 Agents" },
     { id: "vacancy_intel" as const, label: "📊 Vacancy Intel" },
+    { id: "company_dir" as const, label: "🏢 Companies" },
   ];
 
   return (
