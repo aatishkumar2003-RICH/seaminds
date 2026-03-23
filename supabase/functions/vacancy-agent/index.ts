@@ -373,8 +373,9 @@ async function scrapeKapal(): Promise<any[]> {
       const email = content.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
       const phone = content.match(/(?:\+62|08)[\d\s-]{8,14}/)?.[0] || null;
       const link = content.match(/href="([^"]*kapal\.co\.id[^"]*)"/)?.[1] || null;
+      const website = extractWebsite(content, ['kapal.co.id']);
       if (title && /captain|chief|officer|engineer|bosun|cook|rating|nakhoda|masinis|mualim|pelaut/i.test(title)) {
-        items.push({ title, contact_email: email, contact_whatsapp: phone, apply_url: link, nationality_fit: ['Indonesian'], source_url: 'kapal.co.id' });
+        items.push({ title, contact_email: email, contact_whatsapp: phone, apply_url: link, company_website: website, nationality_fit: ['Indonesian'], source_url: 'kapal.co.id' });
       }
     }
     return items.slice(0, 20);
