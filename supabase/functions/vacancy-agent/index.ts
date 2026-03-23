@@ -354,7 +354,22 @@ async function scrapePOEA(): Promise<any[]> {
       stats.telegram = await saveVacancies(processed, 'telegram');
     }
 
-    stats.saved = stats.google + stats.rss + stats.telegram;
+    // 4. India + Philippines focused scraping
+    const indiaPhilippinesRaw: any[] = [
+      ...await scrapeSeadonna(),
+      ...await scrapeWasailor(),
+      ...await scrapeSeaJobNet(),
+      ...await scrapePinoySeaman(),
+      ...await scrapeSeamanJobSite(),
+      ...await scrapePOEA(),
+    ];
+    if (indiaPhilippinesRaw.length) {
+      const processed = await processWithClaude(indiaPhilippinesRaw);
+      const ipSaved = await saveVacancies(processed, 'india_philippines');
+      stats.saved += ipSaved;
+    }
+
+    stats.saved += stats.google + stats.rss + stats.telegram;
 
     // Email notifications to available crew with matching ranks
     let emailsSent = 0;
