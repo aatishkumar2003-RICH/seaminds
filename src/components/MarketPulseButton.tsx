@@ -61,7 +61,7 @@ interface MarketData {
   myCompetition: number;
   myCompetitionLevel: 'Low' | 'Medium' | 'High';
   topPorts: { port: string; count: number }[];
-  topJobs: { rank: string; vessel: string; salary: number; company: string; port: string }[];
+  topJobs: { rank: string; vessel: string; salary: number; company: string; port: string; website: string | null }[];
   salaryTrend: number;
   totalVacancies: number;
   newVacancies24h: number;
@@ -112,7 +112,7 @@ export default function MarketPulseButton({
         userRank ? supabase.from('crew_profiles').select('*', { count: 'exact', head: true }).ilike('role', `%${userRank.split(' ')[0]}%`)
           : supabase.from('crew_profiles').select('*', { count: 'exact', head: true }).limit(0),
         // Top paying jobs
-        supabase.from('external_vacancies').select('rank_required, vessel_type, salary_max, company_name, joining_port').not('salary_max', 'is', null).order('salary_max', { ascending: false }).limit(5),
+        supabase.from('external_vacancies').select('rank_required, vessel_type, salary_max, company_name, joining_port, company_website').not('salary_max', 'is', null).order('salary_max', { ascending: false }).limit(5),
         // Last month vacancies for trend
         supabase.from('external_vacancies').select('*', { count: 'exact', head: true }).gte('fetched_at', lastMonth).lt('fetched_at', yesterday),
       ]);
@@ -168,6 +168,7 @@ export default function MarketPulseButton({
       const topJobs = (topJobsRes.data || []).map((v: any) => ({
         rank: v.rank_required || 'Officer', vessel: v.vessel_type || 'Various',
         salary: Number(v.salary_max), company: v.company_name || 'Confidential', port: v.joining_port || 'Worldwide',
+        website: v.company_website || null,
       }));
 
       // Salary trend vs last month
@@ -342,7 +343,12 @@ export default function MarketPulseButton({
                         <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '10px 12px', marginBottom: 6 }}>
                           <div>
                             <p style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0', margin: 0 }}>{j.rank}</p>
-                            <p style={{ fontSize: 10, color: '#6b7a8d', margin: 0 }}>{j.vessel} · {j.port}</p>
+                            <p style={{ fontSize: 10, color: '#6b7a8d', margin: 0 }}>
+                              {j.vessel} · {j.port}
+                              {j.website && (
+                                <> · <a href={j.website.startsWith('http') ? j.website : `https://${j.website}`} target="_blank" rel="noopener noreferrer" style={{ color: '#60a5fa', textDecoration: 'none' }}>🌐 Website</a></>
+                              )}
+                            </p>
                           </div>
                           <div style={{ textAlign: 'right' }}>
                             <p style={{ fontSize: 14, fontWeight: 800, color: '#22c55e', margin: 0 }}>${j.salary.toLocaleString()}</p>
