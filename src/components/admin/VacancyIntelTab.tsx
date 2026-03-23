@@ -23,6 +23,8 @@ export default function VacancyIntelTab() {
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [runResult, setRunResult] = useState<string | null>(null);
+  const [noContactJobs, setNoContactJobs] = useState<any[] | null>(null);
+  const [loadingNoContact, setLoadingNoContact] = useState(false);
 
   const load = async () => {
     setLoading(true);
