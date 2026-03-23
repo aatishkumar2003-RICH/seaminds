@@ -111,9 +111,10 @@ async function processWithClaude(rawItems: any[]): Promise<any[]> {
 - joining_port: string or null
 - joining_date: string or null
 - contract_duration: string or null
-- contact_email: string or null
-- contact_whatsapp: string or null
-- apply_url: string or null
+- contact_email: string or null (extract ANY email found in the text, including in URLs like mailto:, or company domain emails inferred from company website)
+- contact_whatsapp: string or null (extract phone numbers, WhatsApp links, wa.me links, any +countrycode numbers)
+- apply_url: string or null (IMPORTANT: always include this if available — it is the fallback when no direct contact exists)
+- company_website: string or null (extract company website URL if mentioned)
 - quality_score: number 0-100 (100=complete structured listing, 50=partial flier, 10=vague post)
 - is_scam: boolean (true if: requests money from seafarer, no company name AND no contact, salary >$50k/month, generic "all ranks needed")
 - scam_reason: string or null
