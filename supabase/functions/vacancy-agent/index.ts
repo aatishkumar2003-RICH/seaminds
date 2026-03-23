@@ -173,7 +173,137 @@ async function saveVacancies(items: any[], source: string) {
   return saved;
 }
 
-Deno.serve(async (req) => {
+// INDIA — Seadonna
+async function scrapeSeadonna(): Promise<any[]> {
+  try {
+    const res = await fetch('https://seadonna.com/category/sea-jobs-2', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SeaMinds/1.0)' }
+    });
+    const html = await res.text();
+    const items: any[] = [];
+    const posts = html.matchAll(/<article[^>]*>([\s\S]*?)<\/article>/g);
+    for (const post of posts) {
+      const content = post[1];
+      const title = content.match(/<h[23][^>]*>([^<]{5,80})<\/h[23]>/)?.[1]?.trim() || '';
+      const email = content.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
+      const phone = content.match(/(?:\+91|0)[\d\s-]{9,12}/)?.[0] || null;
+      const link = content.match(/href="([^"]*seadonna\.com[^"]*)"/)?.[1] || null;
+      if (title && /captain|chief|officer|engineer|master|bosun|cook|rating|navy|seafarer/i.test(title)) {
+        items.push({ title, contact_email: email, contact_whatsapp: phone, apply_url: link, nationality_fit: ['Indian'], source_url: 'seadonna.com' });
+      }
+    }
+    return items.slice(0, 20);
+  } catch { return []; }
+}
+
+// INDIA — Wasailor
+async function scrapeWasailor(): Promise<any[]> {
+  try {
+    const res = await fetch('https://www.wasailor.com/', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SeaMinds/1.0)' }
+    });
+    const html = await res.text();
+    const items: any[] = [];
+    const posts = html.matchAll(/<div[^>]*class="[^"]*post[^"]*"[^>]*>([\s\S]*?)<\/div>\s*<\/div>/g);
+    for (const post of posts) {
+      const content = post[1];
+      const title = content.match(/<h[234][^>]*>([^<]{5,80})<\/h[234]>/)?.[1]?.trim() || '';
+      const whatsapp = content.match(/(?:wa\.me\/|whatsapp[:\s]+|\+91)(\+?[\d\s()-]{10,14})/i)?.[1] || null;
+      const email = content.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
+      if (title && /captain|chief|officer|engineer|bosun|cook|ab|gp|rating/i.test(title)) {
+        items.push({ title, contact_whatsapp: whatsapp, contact_email: email, nationality_fit: ['Indian'], source_url: 'wasailor.com' });
+      }
+    }
+    return items.slice(0, 20);
+  } catch { return []; }
+}
+
+// INDIA — SeaJob.net
+async function scrapeSeaJobNet(): Promise<any[]> {
+  try {
+    const res = await fetch('https://www.seajob.net/joblist.asp', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SeaMinds/1.0)' }
+    });
+    const html = await res.text();
+    const items: any[] = [];
+    const rows = html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g);
+    for (const row of rows) {
+      const content = row[1];
+      const cells = Array.from(content.matchAll(/<td[^>]*>([^<]{2,60})<\/td>/g)).map(m => m[1].trim());
+      if (cells.length >= 2 && /captain|chief|officer|engineer|master|bosun/i.test(cells.join(' '))) {
+        const email = content.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
+        items.push({ title: cells[0], vessel_type: cells[1] || null, contact_email: email, nationality_fit: ['Indian'], source_url: 'seajob.net' });
+      }
+    }
+    return items.slice(0, 20);
+  } catch { return []; }
+}
+
+// PHILIPPINES — PinoySeaman
+async function scrapePinoySeaman(): Promise<any[]> {
+  try {
+    const res = await fetch('https://pinoyseaman.ph/home', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SeaMinds/1.0)' }
+    });
+    const html = await res.text();
+    const items: any[] = [];
+    const posts = html.matchAll(/<div[^>]*class="[^"]*job[^"]*"[^>]*>([\s\S]*?)<\/div>\s*(?:<\/div>|<div)/g);
+    for (const post of posts) {
+      const content = post[1];
+      const title = content.match(/<h[234][^>]*>([^<]{5,80})<\/h[234]>/)?.[1]?.trim() || '';
+      const company = content.match(/(?:agency|company)[:\s]+([^<\n]{3,50})/i)?.[1]?.trim() || null;
+      const email = content.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
+      const link = content.match(/href="(https?:\/\/[^"]*pinoyseaman[^"]*)"/)?.[1] || null;
+      if (title && /captain|chief|officer|engineer|bosun|cook|ab|os|wiper|messman/i.test(title)) {
+        items.push({ title, company_name: company, contact_email: email, apply_url: link, nationality_fit: ['Filipino'], source_url: 'pinoyseaman.ph' });
+      }
+    }
+    return items.slice(0, 20);
+  } catch { return []; }
+}
+
+// PHILIPPINES — SeamanJobSite
+async function scrapeSeamanJobSite(): Promise<any[]> {
+  try {
+    const res = await fetch('https://seamanjobsite.workabroad.ph/', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SeaMinds/1.0)' }
+    });
+    const html = await res.text();
+    const items: any[] = [];
+    const jobs = html.matchAll(/class="job[^"]*"[^>]*>([\s\S]*?)(?=class="job|<\/section|<footer)/g);
+    for (const job of jobs) {
+      const content = job[1];
+      const title = content.match(/<h[234][^>]*>([^<]{5,80})<\/h[234]>/)?.[1]?.trim() || '';
+      const company = content.match(/class="[^"]*company[^"]*"[^>]*>([^<]{3,60})</)?.[1]?.trim() || null;
+      const link = content.match(/href="([^"]*workabroad[^"]*)"/)?.[1] || null;
+      if (title) {
+        items.push({ title, company_name: company, apply_url: link, nationality_fit: ['Filipino'], source_url: 'seamanjobsite.workabroad.ph' });
+      }
+    }
+    return items.slice(0, 20);
+  } catch { return []; }
+}
+
+// PHILIPPINES — POEA/DMW Official Job Orders (Government database)
+async function scrapePOEA(): Promise<any[]> {
+  try {
+    const res = await fetch('https://www.dmw.gov.ph/archives/poea/joborder.html', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SeaMinds/1.0)' }
+    });
+    const html = await res.text();
+    const items: any[] = [];
+    const rows = html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g);
+    for (const row of rows) {
+      const cells = Array.from(row[1].matchAll(/<td[^>]*>([^<]{2,80})<\/td>/g)).map(m => m[1].trim());
+      if (cells.length >= 3 && /seaman|seafarer|marine|vessel|ship/i.test(cells.join(' '))) {
+        items.push({ title: cells[0], company_name: cells[1] || null, joining_port: 'Manila', nationality_fit: ['Filipino'], source_url: 'dmw.gov.ph', quality_score: 90 });
+      }
+    }
+    return items.slice(0, 20);
+  } catch { return []; }
+}
+
+
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
