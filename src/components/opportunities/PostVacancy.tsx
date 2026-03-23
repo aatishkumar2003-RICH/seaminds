@@ -48,6 +48,24 @@ const PostVacancy = () => {
   const [aiReading, setAiReading] = useState(false);
   const [aiSuccess, setAiSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [jobPrices, setJobPrices] = useState({ single: 0, monthly: 0, annual: 0 });
+
+  useEffect(() => {
+    supabase.from('admin_settings')
+      .select('key, value')
+      .in('key', ['price_job_single', 'price_job_monthly', 'price_job_annual'])
+      .then(({ data }) => {
+        if (data) {
+          const map: Record<string, number> = {};
+          data.forEach((r: any) => { map[r.key] = Number(r.value) || 0; });
+          setJobPrices({
+            single: map['price_job_single'] || 0,
+            monthly: map['price_job_monthly'] || 0,
+            annual: map['price_job_annual'] || 0,
+          });
+        }
+      });
+  }, []);
 
   const wordCount = additionalNotes.trim().split(/\s+/).filter(Boolean).length;
 
