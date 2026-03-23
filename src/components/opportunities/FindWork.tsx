@@ -549,7 +549,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
               <p className="text-sm text-muted-foreground">No jobs match your filters.</p>
             </div>
           ) : filtered.map((ext) => {
-            const sourceLabel = ext.source === 'google_jobs' ? '🔍 Google' : ext.source === 'rss_feed' ? '📰 RSS' : ext.source === 'telegram' ? '📱 Telegram' : ext.source;
+            const sourceLabel = ext.source === 'google_jobs' ? '🔍 Google' : ext.source === 'rss_feed' ? '📰 RSS' : ext.source === 'telegram' ? '📱 Telegram' : ext.source === 'india_philippines' ? '🇮🇳🇵🇭 Regional' : ext.source;
             const postedAgo = ext.created_at ? formatDistanceToNow(new Date(ext.created_at), { addSuffix: true }) : '';
 
             return (
