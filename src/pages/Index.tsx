@@ -175,16 +175,27 @@ const Index = () => {
     fetchSmc();
   }, [appState, profileId]);
 
-  // Job matching
+  // Job matching (internal + external)
   useEffect(() => {
     if (appState !== "main" || !role || sessionStorage.getItem("seamind_job_match_shown")) return;
     const checkJobMatches = async () => {
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      const { data } = await supabase.from("job_postings").select("rank_required, vessel_type, joining_port, status")
-        .neq("status", "pending_payment").gte("created_at", sevenDaysAgo).order("created_at", { ascending: false }).limit(3);
-      if (data) {
-        const match = data.find(j => j.rank_required === "Any Rank" || j.rank_required.toLowerCase() === role.toLowerCase());
-        if (match) { setJobMatch(match); setJobBadgeCount(p => p + 1); sessionStorage.setItem("seamind_job_match_shown", "1"); }
+      const [intRes, extRes] = await Promise.all([
+        supabase.from("job_postings").select("rank_required, vessel_type, joining_port, status")
+          .neq("status", "pending_payment").gte("created_at", sevenDaysAgo).order("created_at", { ascending: false }).limit(3),
+        supabase.from("external_vacancies").select("rank_required, vessel_type, joining_port")
+          .eq("is_scam_flagged", false).gte("quality_score", 30).gte("created_at", sevenDaysAgo)
+          .order("created_at", { ascending: false }).limit(10),
+      ]);
+
+      const internalMatch = intRes.data?.find(j => j.rank_required === "Any Rank" || j.rank_required.toLowerCase() === role.toLowerCase());
+      const externalMatch = extRes.data?.find(j => j.rank_required && j.rank_required.toLowerCase() === role.toLowerCase());
+      const match = internalMatch || externalMatch;
+
+      if (match) {
+        setJobMatch({ rank_required: match.rank_required!, vessel_type: match.vessel_type || "Unknown", joining_port: match.joining_port || "TBD" });
+        setJobBadgeCount(p => p + (extRes.data?.filter(j => j.rank_required && j.rank_required.toLowerCase() === role.toLowerCase()).length || 0) + (internalMatch ? 1 : 0));
+        sessionStorage.setItem("seamind_job_match_shown", "1");
       }
     };
     checkJobMatches();
