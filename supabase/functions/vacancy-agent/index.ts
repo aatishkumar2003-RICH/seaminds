@@ -214,7 +214,7 @@ Deno.serve(async (req) => {
     // 3. Telegram
     const telegramRaw: any[] = [];
     for (const ch of TELEGRAM_CHANNELS) {
-      const msgs = await fetchTelegram(ch);
+      const msgs = await fetchTelegramChannel(ch);
       telegramRaw.push(...msgs);
     }
     if (telegramRaw.length) {
