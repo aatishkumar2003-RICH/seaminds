@@ -42,6 +42,26 @@ Deno.serve(async (req) => {
       actions.push(`✅ Removed ${expired} expired vacancies`);
     }
 
+    // Auto-fix: remove no-contact jobs older than 30 days
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { count: noContactOld } = await supabase
+      .from('external_vacancies')
+      .select('*', { count: 'exact', head: true })
+      .is('apply_url', null)
+      .is('contact_email', null)
+      .is('contact_whatsapp', null)
+      .lt('fetched_at', thirtyDaysAgo);
+    if (noContactOld && noContactOld > 0) {
+      await supabase
+        .from('external_vacancies')
+        .delete()
+        .is('apply_url', null)
+        .is('contact_email', null)
+        .is('contact_whatsapp', null)
+        .lt('fetched_at', thirtyDaysAgo);
+      actions.push(`🧹 Removed ${noContactOld} no-contact jobs older than 30 days`);
+    }
+
     // Check low quality
     const { count: lowQ } = await supabase
       .from('external_vacancies').select('*', { count: 'exact', head: true })
