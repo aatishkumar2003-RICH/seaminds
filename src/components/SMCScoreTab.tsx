@@ -356,6 +356,28 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
             className="bg-card border border-border text-foreground px-2 py-1 rounded-md text-xs" />
         </div>
       )}
+      {/* Job Alert Email Preference */}
+      <div className="mx-4 mt-2 mb-1 rounded-xl border p-3 flex items-center justify-between"
+        style={{ background: jobAlertsEnabled ? 'rgba(96,165,250,0.1)' : 'rgba(255,255,255,0.05)', borderColor: jobAlertsEnabled ? 'rgba(96,165,250,0.3)' : 'rgba(255,255,255,0.1)' }}>
+        <div>
+          <div className="text-[13px] font-semibold" style={{ color: jobAlertsEnabled ? '#60a5fa' : '#888' }}>
+            {jobAlertsEnabled ? '📧 Job Alerts On' : '🔕 Job Alerts Off'}
+          </div>
+          <div className="text-[11px] mt-0.5" style={{ color: '#666' }}>
+            {jobAlertsEnabled ? 'You\'ll get email alerts for matching jobs' : 'No email alerts when new jobs are found'}
+          </div>
+        </div>
+        <button
+          onClick={() => {
+            const newVal = !jobAlertsEnabled;
+            setJobAlertsEnabled(newVal);
+            supabase.from('crew_profiles').update({ job_alerts_enabled: newVal }).eq('id', profileId);
+          }}
+          className="rounded-full px-4 py-1.5 text-xs font-semibold text-white border-none cursor-pointer"
+          style={{ background: jobAlertsEnabled ? '#60a5fa' : '#333' }}>
+          {jobAlertsEnabled ? 'Turn Off' : 'Turn On'}
+        </button>
+      </div>
       <CvCard />
       {/* Salary Check Button */}
       <div className="px-4 py-2">

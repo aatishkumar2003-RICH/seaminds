@@ -252,6 +252,7 @@ Deno.serve(async (req) => {
             .from('crew_profiles')
             .select('first_name, email, role')
             .eq('is_available', true)
+            .eq('job_alerts_enabled', true)
             .not('email', 'is', null);
 
           const RESEND_KEY = Deno.env.get('RESEND_API_KEY');
