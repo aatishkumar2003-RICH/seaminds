@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import CountryPricingTab from "@/components/admin/CountryPricingTab";
 import SubAdminsTab from "@/components/admin/SubAdminsTab";
 import VacancyIntelTab from "@/components/admin/VacancyIntelTab";
+import CompanyDirectoryTab from "@/components/admin/CompanyDirectoryTab";
 
 const ADMIN_PIN = "215151";
 const LS_KEY = "sm_admin_auth";
