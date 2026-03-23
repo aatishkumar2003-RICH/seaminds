@@ -421,8 +421,9 @@ async function scrapeMoryak(): Promise<any[]> {
       const company = content.match(/(?:company|компанія|компания)[:\s]+([^<\n]{3,50})/i)?.[1]?.trim() || null;
       const email = content.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
       const link = content.match(/href="([^"]*moryak\.info[^"]*)"/)?.[1] || null;
+      const website = extractWebsite(content, ['moryak.info']);
       if (title && /captain|chief|officer|engineer|master|bosun|cook|капітан|механік|помічник|штурман/i.test(title)) {
-        items.push({ title, company_name: company, contact_email: email, apply_url: link, nationality_fit: ['Ukrainian'], source_url: 'moryak.info' });
+        items.push({ title, company_name: company, contact_email: email, apply_url: link, company_website: website, nationality_fit: ['Ukrainian'], source_url: 'moryak.info' });
       }
     }
     return items.slice(0, 20);
