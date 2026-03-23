@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { format, formatDistanceToNow } from "date-fns";
-import { CalendarIcon, Ship, Anchor, Globe, Clock, MapPin, DollarSign, Check, AlertTriangle, Award } from "lucide-react";
+import { CalendarIcon, Ship, Anchor, Globe, Clock, MapPin, DollarSign, Check, AlertTriangle, Award, ExternalLink, Mail, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 const VESSEL_TYPES = [
   "Bulk Carrier", "Tanker", "Chemical Tanker", "Container Ship",
@@ -53,6 +54,25 @@ interface JobPosting {
   additional_notes: string | null;
   created_at: string;
   verified: boolean;
+}
+
+interface ExternalVacancy {
+  id: string;
+  title: string;
+  rank_required: string | null;
+  vessel_type: string | null;
+  company_name: string | null;
+  salary_text: string | null;
+  joining_port: string | null;
+  joining_date: string | null;
+  contract_duration: string | null;
+  description: string | null;
+  apply_url: string | null;
+  contact_email: string | null;
+  contact_whatsapp: string | null;
+  source: string;
+  quality_score: number | null;
+  created_at: string | null;
 }
 
 // Demo SMC score for development
