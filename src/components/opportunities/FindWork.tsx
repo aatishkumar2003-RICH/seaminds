@@ -551,11 +551,12 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
           ) : filtered.map((ext) => {
             const sourceLabel = ext.source === 'google_jobs' ? '🔍 Google' : ext.source === 'rss_feed' ? '📰 RSS' : ext.source === 'telegram' ? '📱 Telegram' : ext.source === 'india_philippines' ? '🇮🇳🇵🇭 Regional' : ext.source;
             const postedAgo = ext.created_at ? formatDistanceToNow(new Date(ext.created_at), { addSuffix: true }) : '';
+            const regionMatch = (isIndian || isFilipino) && isRegionRelevant(ext);
 
             return (
               <div
                 key={ext.id}
-                className="rounded-xl bg-card border border-border p-4 space-y-3"
+                className={cn("rounded-xl bg-card border p-4 space-y-3", regionMatch ? "border-primary/40 ring-1 ring-primary/20" : "border-border")}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
