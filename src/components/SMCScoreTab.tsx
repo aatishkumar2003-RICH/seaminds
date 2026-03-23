@@ -32,6 +32,7 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
   const [selfPrice, setSelfPrice] = useState(0);
   const [isAvailable, setIsAvailable] = useState(false);
   const [availableFrom, setAvailableFrom] = useState('');
+  const [jobAlertsEnabled, setJobAlertsEnabled] = useState(true);
 
   // CV parse state
   const [cvStatus, setCvStatus] = useState<CvStatus>("idle");
