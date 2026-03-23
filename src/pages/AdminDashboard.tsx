@@ -785,6 +785,7 @@ export default function AdminDashboard() {
     { id: "dpa" as const, label: "SOS / DPA Contacts" },
     { id: "blog_images" as const, label: "Blog Images" },
     { id: "agents" as const, label: "🤖 Agents" },
+    { id: "vacancy_intel" as const, label: "📊 Vacancy Intel" },
   ];
 
   return (
