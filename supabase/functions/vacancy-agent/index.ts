@@ -631,6 +631,18 @@ Deno.serve(async (req) => {
       stats.saved += ipSaved;
     }
 
+    // Email-rich sources
+    const emailSourcesRaw: any[] = [
+      ...await scrapeMarineInsightJobs(),
+      ...await scrapeGloap(),
+      ...await scrapeOceanCrew(),
+    ];
+    if (emailSourcesRaw.length) {
+      const processed = await processWithClaude(emailSourcesRaw);
+      const emailSaved = await saveVacancies(processed, 'email_sources');
+      stats.saved += emailSaved;
+    }
+
     // 5. Indonesia, Ukraine, Bangladesh, Myanmar, Global scrapers
     const expandedRegionalRaw: any[] = [
       ...await scrapePelaut(),
