@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Globe, Mail, Building2, ExternalLink, Search } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Globe, Mail, Building2, ExternalLink, Search, Download } from 'lucide-react';
 
 interface CompanyEntry {
   name: string;
