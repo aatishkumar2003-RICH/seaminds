@@ -121,6 +121,8 @@ async function processWithClaude(rawItems: any[]): Promise<any[]> {
 - apply_url: string or null (IMPORTANT: always include this if available — it is the fallback when no direct contact exists)
 - company_website: string or null (extract company website URL if mentioned)
 - quality_score: number 0-100 (100=complete structured listing, 50=partial flier, 10=vague post)
+
+IMPORTANT RULE: If apply_url is provided in the input, you MUST include it in output. Never set apply_url to null if it was provided. The apply_url is the minimum contact requirement — without it the vacancy is useless. If quality_score would be below 40 but apply_url exists, set quality_score to 45 minimum.
 - is_scam: boolean (true if: requests money from seafarer, no company name AND no contact, salary >$50k/month, generic "all ranks needed")
 - scam_reason: string or null
 - source_type: "structured_listing" | "flier" | "paper_cutting" | "social_post"
