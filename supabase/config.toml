@@ -59,6 +59,8 @@ verify_jwt = false
 
 [functions.vacancy-agent]
 verify_jwt = false
+schedule = "0 */6 * * *"
 
 [functions.supervisor-agent]
 verify_jwt = false
+schedule = "0 8,20 * * *"
