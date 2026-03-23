@@ -88,6 +88,8 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  const [externalVacancies, setExternalVacancies] = useState<ExternalVacancy[]>([]);
+
   useEffect(() => {
     loadData();
   }, []);
@@ -96,10 +98,11 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const [availRes, vacRes, postingsRes] = await Promise.all([
+    const [availRes, vacRes, postingsRes, extRes] = await Promise.all([
       supabase.from("crew_availability").select("*").eq("crew_profile_id", profileId).maybeSingle(),
       supabase.from("job_vacancies").select("*").eq("active", true).order("created_at", { ascending: false }),
       supabase.from("job_postings").select("*").gte("created_at", thirtyDaysAgo.toISOString()).order("created_at", { ascending: false }),
+      supabase.from("external_vacancies").select("*").eq("is_scam_flagged", false).gte("quality_score", 30).order("created_at", { ascending: false }).limit(50),
     ]);
 
     if (availRes.data) {
@@ -111,6 +114,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
 
     if (vacRes.data) setVacancies(vacRes.data);
     if (postingsRes.data) setJobPostings(postingsRes.data);
+    if (extRes.data) setExternalVacancies(extRes.data);
     setLoading(false);
   };
 
