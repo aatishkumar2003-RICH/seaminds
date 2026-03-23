@@ -402,19 +402,54 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
       )}
 
       {/* AI-Collected External Vacancies */}
-      {externalVacancies.length > 0 && (
+      {externalVacancies.length > 0 && (() => {
+        const extRanks = [...new Set(externalVacancies.map(e => e.rank_required).filter(Boolean))] as string[];
+        const extVessels = [...new Set(externalVacancies.map(e => e.vessel_type).filter(Boolean))] as string[];
+        const filtered = externalVacancies.filter(e =>
+          (extRankFilter === "all" || e.rank_required === extRankFilter) &&
+          (extVesselFilter === "all" || e.vessel_type === extVesselFilter)
+        );
+
+        return (
         <div className="space-y-3">
           <div className="flex items-center gap-2 px-1">
             <Globe size={14} className="text-primary" />
             <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">AI-Collected Jobs</h3>
             <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-              {externalVacancies.length}
+              {filtered.length}
             </Badge>
           </div>
           <p className="text-[11px] text-muted-foreground px-1">
             Aggregated from Google Jobs, RSS feeds & Telegram channels
           </p>
-          {externalVacancies.map((ext) => {
+
+          {/* Filters */}
+          <div className="flex gap-2">
+            <Select value={extRankFilter} onValueChange={setExtRankFilter}>
+              <SelectTrigger className="h-8 text-xs flex-1">
+                <SelectValue placeholder="Rank" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Ranks</SelectItem>
+                {extRanks.sort().map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={extVesselFilter} onValueChange={setExtVesselFilter}>
+              <SelectTrigger className="h-8 text-xs flex-1">
+                <SelectValue placeholder="Vessel" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Vessels</SelectItem>
+                {extVessels.sort().map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {filtered.length === 0 ? (
+            <div className="rounded-xl bg-card border border-border p-6 text-center">
+              <p className="text-sm text-muted-foreground">No jobs match your filters.</p>
+            </div>
+          ) : filtered.map((ext) => {
             const sourceLabel = ext.source === 'google_jobs' ? '🔍 Google' : ext.source === 'rss_feed' ? '📰 RSS' : ext.source === 'telegram' ? '📱 Telegram' : ext.source;
             const postedAgo = ext.created_at ? formatDistanceToNow(new Date(ext.created_at), { addSuffix: true }) : '';
 
