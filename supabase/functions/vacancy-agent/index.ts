@@ -185,6 +185,21 @@ async function saveVacancies(items: any[], source: string) {
   return saved;
 }
 
+// Helper to extract company website URLs from HTML content
+function extractWebsite(content: string, excludeDomains: string[] = []): string | null {
+  const urls = content.match(/href="(https?:\/\/[^"]{8,100})"/g) || [];
+  for (const u of urls) {
+    const url = u.match(/href="([^"]*)"/)?.[1] || '';
+    if (excludeDomains.some(d => url.includes(d))) continue;
+    if (/\.(pdf|jpg|png|gif|css|js)$/i.test(url)) continue;
+    if (/facebook|twitter|instagram|youtube|linkedin|t\.me|wa\.me|whatsapp|google|apple/i.test(url)) continue;
+    if (/^\w+:\/\/[^/]+\/?$/.test(url) || /\/(about|contact|career|jobs)/i.test(url)) return url;
+  }
+  const wwwMatch = content.match(/(?:website|web|site|www)[:\s]+(?:https?:\/\/)?((?:www\.)?[\w.-]+\.\w{2,6})/i);
+  if (wwwMatch) return `https://${wwwMatch[1]}`;
+  return null;
+}
+
 // INDIA — Seadonna
 async function scrapeSeadonna(): Promise<any[]> {
   try {
@@ -200,8 +215,9 @@ async function scrapeSeadonna(): Promise<any[]> {
       const email = content.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
       const phone = content.match(/(?:\+91|0)[\d\s-]{9,12}/)?.[0] || null;
       const link = content.match(/href="([^"]*seadonna\.com[^"]*)"/)?.[1] || null;
+      const website = extractWebsite(content, ['seadonna.com']);
       if (title && /captain|chief|officer|engineer|master|bosun|cook|rating|navy|seafarer/i.test(title)) {
-        items.push({ title, contact_email: email, contact_whatsapp: phone, apply_url: link, nationality_fit: ['Indian'], source_url: 'seadonna.com' });
+        items.push({ title, contact_email: email, contact_whatsapp: phone, apply_url: link, company_website: website, nationality_fit: ['Indian'], source_url: 'seadonna.com' });
       }
     }
     return items.slice(0, 20);
