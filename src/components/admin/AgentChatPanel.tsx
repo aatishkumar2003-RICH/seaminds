@@ -220,7 +220,41 @@ export default function AgentChatPanel() {
             }
             extractedText = fullText.trim().substring(0, 15000);
             if (!extractedText || extractedText.length < 50) {
-              extractedText = `PDF appears to be image-based (scanned). Cannot extract text. Try Vision mode or paste a screenshot.`;
+              // Auto-fallback to Vision mode for scanned/image-based PDFs
+              await supabase.from('agent_conversations').insert({
+                direction: 'from_agent',
+                message: `🔄 Scanned PDF detected — too little text extracted (${extractedText.length} chars). Auto-switching to Vision mode…`,
+                message_type: 'report',
+              });
+              setProgress({ stage: 'Scanned PDF → switching to Vision…', pct: 40 });
+              const totalPages = Math.min(pdf.numPages, 10);
+              const pageImages: string[] = [];
+              for (let i = 1; i <= totalPages; i++) {
+                setProgress({ stage: `Vision: rendering page ${i}/${totalPages}…`, pct: 40 + Math.round((i / totalPages) * 40) });
+                const page = await pdf.getPage(i);
+                const viewport = page.getViewport({ scale: 1.5 });
+                const canvas = document.createElement('canvas');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                const ctx = canvas.getContext('2d')!;
+                await page.render({ canvasContext: ctx, viewport }).promise;
+                pageImages.push(canvas.toDataURL('image/jpeg', 0.85));
+                canvas.remove();
+              }
+              setProgress({ stage: 'Sending pages to Vision agent…', pct: 85 });
+              const vRes = await supabase.functions.invoke('researcher-agent', {
+                method: 'POST',
+                body: { pdf_pages: pageImages, filename: file.name, urgent: true },
+              });
+              setProgress({ stage: 'Processing results…', pct: 95 });
+              const vResult = vRes.data;
+              const vReply = vResult?.pdf_result
+                || (vResult?.total_saved !== undefined ? `✅ Processed "${file.name}" via Vision (${totalPages} pages)\nFound ${vResult.total_saved} vacancies saved.` : `✅ Scanned PDF processed via Vision.`);
+              await supabase.from('agent_conversations').insert({ direction: 'from_agent', message: vReply, message_type: 'report' });
+              await load();
+              setProgress(null);
+              setSending(false);
+              return;
             }
           } catch (e) {
             extractedText = `PDF extraction failed: ${String(e)}. Try Vision mode or paste a screenshot.`;
