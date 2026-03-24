@@ -79,6 +79,27 @@ interface ExternalVacancy {
 // Demo SMC score for development
 const DEMO_SMC_SCORE = 4.17;
 
+const COUNTRY_TABS = [
+  { code: 'all', flag: '🌍', label: 'All' },
+  { code: 'India', flag: '🇮🇳', label: 'India' },
+  { code: 'Philippines', flag: '🇵🇭', label: 'Philippines' },
+  { code: 'Indonesia', flag: '🇮🇩', label: 'Indonesia' },
+  { code: 'Ukraine', flag: '🇺🇦', label: 'Ukraine' },
+  { code: 'Russia', flag: '🇷🇺', label: 'Russia' },
+  { code: 'Myanmar', flag: '🇲🇲', label: 'Myanmar' },
+  { code: 'Bangladesh', flag: '🇧🇩', label: 'Bangladesh' },
+];
+
+const COUNTRY_PORTS: Record<string, string[]> = {
+  India: ['Mumbai', 'Chennai', 'Kolkata', 'Goa', 'Cochin', 'India'],
+  Philippines: ['Manila', 'Cebu', 'Philippines'],
+  Indonesia: ['Jakarta', 'Surabaya', 'Batam', 'Indonesia'],
+  Ukraine: ['Odessa', 'Kherson', 'Ukraine'],
+  Russia: ['St. Petersburg', 'Novorossiysk', 'Russia'],
+  Myanmar: ['Yangon', 'Myanmar'],
+  Bangladesh: ['Chittagong', 'Bangladesh'],
+};
+
 const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSea, shipName }: FindWorkProps) => {
   const [availabilityDate, setAvailabilityDate] = useState<Date>();
   const [preferredVessel, setPreferredVessel] = useState("Any Type");
@@ -88,10 +109,21 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
   const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [countryFilter, setCountryFilter] = useState<string>('all');
 
   const [extRankFilter, setExtRankFilter] = useState("all");
   const [extVesselFilter, setExtVesselFilter] = useState("all");
   const [externalVacancies, setExternalVacancies] = useState<ExternalVacancy[]>([]);
+
+  // Auto-select country based on nationality
+  useEffect(() => {
+    if (nationality && countryFilter === 'all') {
+      const match = COUNTRY_TABS.find(t =>
+        t.code !== 'all' && nationality.toLowerCase().includes(t.code.toLowerCase())
+      );
+      if (match) setCountryFilter(match.code);
+    }
+  }, [nationality]);
 
   useEffect(() => {
     loadData();
@@ -331,16 +363,75 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
         )}
       </div>
 
+      {/* Country filter tabs */}
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: 11, color: '#555', marginBottom: 8, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase' as const }}>
+          Filter by Country
+        </div>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' as const }}>
+          {COUNTRY_TABS.map(tab => (
+            <button
+              key={tab.code}
+              onClick={() => setCountryFilter(tab.code)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '6px 12px', borderRadius: 20,
+                border: countryFilter === tab.code
+                  ? '1px solid #D4AF37'
+                  : '1px solid rgba(255,255,255,0.1)',
+                background: countryFilter === tab.code
+                  ? 'rgba(212,175,55,0.15)'
+                  : 'rgba(255,255,255,0.04)',
+                color: countryFilter === tab.code ? '#D4AF37' : '#888',
+                fontSize: 12, fontWeight: countryFilter === tab.code ? 700 : 400,
+                cursor: 'pointer', transition: 'all 0.2s',
+                whiteSpace: 'nowrap' as const,
+              }}
+            >
+              <span style={{ fontSize: 14 }}>{tab.flag}</span>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {countryFilter !== 'all' && (
+        <div style={{
+          background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.2)',
+          borderRadius: 8, padding: '7px 12px', marginBottom: 10,
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+        }}>
+          <span style={{ color: '#D4AF37', fontSize: 12 }}>
+            {COUNTRY_TABS.find(t => t.code === countryFilter)?.flag} Showing jobs for {countryFilter}
+          </span>
+          <button onClick={() => setCountryFilter('all')} style={{ background: 'none', border: 'none', color: '#555', cursor: 'pointer', fontSize: 11 }}>
+            Clear ✕
+          </button>
+        </div>
+      )}
+
       {/* Job Postings from job_postings table */}
+      {(() => {
+        const filteredPostings = countryFilter === 'all'
+          ? jobPostings
+          : jobPostings.filter((job) => {
+              const ports = COUNTRY_PORTS[countryFilter] || [];
+              const jobPort = (job.joining_port || '').toLowerCase();
+              const jobCompany = (job.company_name || '').toLowerCase();
+              const countryLower = countryFilter.toLowerCase();
+              return ports.some(p => jobPort.includes(p.toLowerCase())) || jobCompany.includes(countryLower);
+            });
+
+        return (
       <div className="space-y-3">
         <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide px-1">Available Positions</h3>
-        {jobPostings.length === 0 ? (
+        {filteredPostings.length === 0 ? (
           <div className="rounded-xl bg-card border border-border p-6 text-center">
             <Ship size={24} className="text-muted-foreground mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">No positions available yet. Check back soon.</p>
+            <p className="text-sm text-muted-foreground">No positions available{countryFilter !== 'all' ? ` for ${countryFilter}` : ''}. Check back soon.</p>
           </div>
         ) : (
-          jobPostings.map((jp) => {
+          filteredPostings.map((jp) => {
             const whatsappNumber = jp.contact_whatsapp.replace(/[^0-9]/g, "");
             const whatsappText = encodeURIComponent(
               `Hi, I am interested in the ${jp.rank_required} position. My name is ${firstName} ${lastName}, ${role}, ${nationality}, ${yearsAtSea} experience.`
@@ -393,6 +484,8 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
           })
         )}
       </div>
+        );
+      })()}
 
       {/* Manager Job Vacancies (legacy) */}
       {vacancies.length > 0 && (
@@ -489,10 +582,20 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
           return false;
         };
 
-        const filtered = externalVacancies.filter(e =>
-          (extRankFilter === "all" || e.rank_required === extRankFilter) &&
-          (extVesselFilter === "all" || e.vessel_type === extVesselFilter)
-        ).sort((a, b) => {
+        const filtered = externalVacancies.filter(e => {
+          const rankMatch = extRankFilter === "all" || e.rank_required === extRankFilter;
+          const vesselMatch = extVesselFilter === "all" || e.vessel_type === extVesselFilter;
+          if (!rankMatch || !vesselMatch) return false;
+          if (countryFilter === 'all') return true;
+          const ports = COUNTRY_PORTS[countryFilter] || [];
+          const jobPort = (e.joining_port || '').toLowerCase();
+          const jobCompany = (e.company_name || '').toLowerCase();
+          const jobDesc = (e.description || '').toLowerCase();
+          const countryLower = countryFilter.toLowerCase();
+          return ports.some(p => jobPort.includes(p.toLowerCase())) ||
+                 jobCompany.includes(countryLower) ||
+                 jobDesc.includes(countryLower);
+        }).sort((a, b) => {
           const aRelevant = isRegionRelevant(a) ? 1 : 0;
           const bRelevant = isRegionRelevant(b) ? 1 : 0;
           if (bRelevant !== aRelevant) return bRelevant - aRelevant;
