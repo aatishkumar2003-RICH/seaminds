@@ -436,6 +436,66 @@ Deno.serve(async (req) => {
     try {
       const body = await req.json();
 
+      // Handle direct image upload via Vision
+      if (body.image_data) {
+        const mediaType = body.image_data.match(/data:(image\/[^;]+);base64,/)?.[1] || 'image/jpeg';
+        const base64 = body.image_data.replace(/^data:image\/[^;]+;base64,/, '');
+
+        const visionRes = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01' },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 3000,
+            messages: [{
+              role: 'user',
+              content: [
+                { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+                { type: 'text', text: `Extract ALL maritime job vacancies from this flier image. Return ONLY a valid JSON array, no markdown.
+
+Each object must have:
+- rank_required: string (e.g. "Captain", "Chief Engineer", "2nd Officer", "Bosun", "AB")
+- vessel_type: string or null (e.g. "LNG", "Bulk Carrier", "Oil Tanker", "Container")
+- company_name: string or null
+- salary_min: number or null (USD/month)
+- salary_max: number or null (USD/month)
+- contact_email: string or null (extract any email visible)
+- contact_whatsapp: string or null (extract any phone/WhatsApp number visible)
+- apply_url: string or null (extract any URL visible)
+- description: string (max 100 chars)
+- title: string
+- quality_score: number 80-95
+- is_scam: false
+
+Create ONE entry per rank listed. Return [] if no vacancies found.` }
+              ]
+            }]
+          }),
+        });
+
+        const visionData = await visionRes.json();
+        const text = visionData.content?.[0]?.text || '[]';
+        let vacancies: any[] = [];
+        try { vacancies = JSON.parse(text.replace(/```json|```/g, '').trim()); } catch {}
+
+        const saved = await saveVacancies(vacancies, 'image_flier', vacancies[0]?.company_name || 'unknown');
+
+        await supabase.from('agent_conversations').insert({
+          direction: 'from_agent',
+          message: vacancies.length > 0
+            ? `✅ Vision processed "${body.image_name || 'flier'}"\nFound ${vacancies.length} vacancies, saved ${saved}.`
+            : `⚠️ No vacancies found in image — ensure it shows a job flier with rank and contact details.`,
+          message_type: 'report',
+        });
+
+        return new Response(JSON.stringify({
+          success: true,
+          vacancies_found: vacancies.length,
+          vacancies_saved: saved,
+          vacancy_list: vacancies.slice(0, 10),
+        }), { headers: { ...cors, 'Content-Type': 'application/json' } });
+      }
+
       // Handle PDF page images directly (bypasses agent_instructions to avoid size limits)
       if (body.pdf_pages && Array.isArray(body.pdf_pages)) {
         const { vacancies, saved, message } = await extractFromPdfPages(body.pdf_pages, body.filename || 'upload.pdf');
