@@ -148,82 +148,29 @@ export default function AgentChatPanel() {
       const isPDF = file.type === 'application/pdf' || file.name.endsWith('.pdf');
 
       if (isImage) {
-        // Call Claude Vision DIRECTLY from browser — no database routing
-        const base64 = await new Promise<string>((resolve) => {
+        // Convert to base64
+        const dataUrl = await new Promise<string>((resolve) => {
           const r = new FileReader();
-          r.onload = () => resolve((r.result as string).split(',')[1]);
+          r.onload = () => resolve(r.result as string);
           r.readAsDataURL(file);
         });
-        const mediaType = file.type || 'image/jpeg';
 
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
+        // Call researcher-agent edge function directly with image — it has the API key
+        const res = await supabase.functions.invoke('researcher-agent', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 3000,
-            messages: [{
-              role: 'user',
-              content: [
-                { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-                { type: 'text', text: `Extract ALL maritime job vacancies from this image/flier. Return a JSON array only, no markdown.
-
-Each vacancy object must have:
-- rank_required: string
-- vessel_type: string or null  
-- company_name: string or null
-- salary_min: number or null (USD/month)
-- salary_max: number or null (USD/month)
-- contact_email: string or null
-- contact_whatsapp: string or null
-- apply_url: string or null
-- description: string (max 100 chars)
-- title: string
-- quality_score: number (80-95 for clear fliers)
-- is_scam: false
-
-Create one entry per rank. Return [] if no vacancies.` }
-              ]
-            }]
-          })
+          body: {
+            image_data: dataUrl,
+            image_name: file.name,
+            urgent: true,
+          },
         });
 
-        const data = await response.json();
-        const text = data.content?.[0]?.text || '[]';
-        let vacancies: any[] = [];
-        try { vacancies = JSON.parse(text.replace(/```json|```/g, '').trim()); } catch {}
-
-        // Save vacancies to database
-        let saved = 0;
-        for (const v of vacancies) {
-          if (!v.rank_required) continue;
-          const { error } = await supabase.from('external_vacancies').upsert({
-            source: 'image_flier',
-            external_id: `flier-${file.name}-${v.rank_required}-${v.vessel_type || 'x'}`.replace(/\s+/g,'_').substring(0,100),
-            title: v.title || `${v.rank_required} — ${v.vessel_type || 'Various'}`,
-            rank_required: v.rank_required,
-            vessel_type: v.vessel_type,
-            company_name: v.company_name,
-            salary_min: v.salary_min,
-            salary_max: v.salary_max,
-            description: v.description,
-            apply_url: v.apply_url,
-            contact_email: v.contact_email,
-            contact_whatsapp: v.contact_whatsapp,
-            quality_score: v.quality_score || 85,
-            is_verified: true,
-            is_scam_flagged: false,
-            scam_flags: [],
-            fetched_at: new Date().toISOString(),
-            expires_at: new Date(Date.now() + 30*24*60*60*1000).toISOString(),
-            raw_data: v,
-          }, { onConflict: 'source,external_id', ignoreDuplicates: true });
-          if (!error) saved++;
-        }
-
-        const reply = vacancies.length > 0
-          ? `✅ Vision processed "${file.name}"\nFound ${vacancies.length} vacancies, saved ${saved} to database:\n\n${vacancies.map((v: any) => `• ${v.rank_required} — ${v.vessel_type || 'Various'} — ${v.contact_email || v.contact_whatsapp || v.apply_url || 'no contact'}`).join('\n')}`
-          : `⚠️ No vacancies found in "${file.name}". Ensure the image shows a job flier with rank, vessel type, and contact details.`;
+        const result = res.data;
+        const reply = result?.vacancies_saved > 0
+          ? `✅ Vision processed "${file.name}"\nFound ${result.vacancies_found} vacancies, saved ${result.vacancies_saved}:\n\n${(result.vacancy_list || []).map((v: any) => `• ${v.rank_required} — ${v.vessel_type || 'Various'} — ${v.contact_email || v.contact_whatsapp || v.apply_url || 'no contact'}`).join('\n')}`
+          : result?.error
+          ? `⚠️ Vision error: ${result.error}`
+          : `⚠️ No vacancies found in "${file.name}". Ensure the image shows a job flier.`;
 
         await supabase.from('agent_conversations').insert({ direction: 'from_agent', message: reply, message_type: 'report' });
 
