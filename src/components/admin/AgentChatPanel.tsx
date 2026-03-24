@@ -63,6 +63,9 @@ export default function AgentChatPanel() {
       message_type: attachment ? 'attachment' : 'instruction',
     });
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 60000);
+
     try {
       let fullInstruction = instruction;
       if (attachment) {
@@ -73,6 +76,10 @@ export default function AgentChatPanel() {
         method: 'POST',
         body: { instruction: fullInstruction, urgent },
       });
+
+      clearTimeout(timeout);
+
+      if (controller.signal.aborted) throw new DOMException('Aborted', 'AbortError');
 
       const result = res.data;
       let reply = '';
@@ -93,10 +100,14 @@ export default function AgentChatPanel() {
         message: reply,
         message_type: 'report',
       });
-    } catch {
+    } catch (err) {
+      clearTimeout(timeout);
+      const isTimeout = err instanceof DOMException && err.name === 'AbortError';
       await supabase.from('agent_conversations').insert({
         direction: 'from_agent',
-        message: '⚠️ Agent is busy or unreachable. Instruction saved — will execute on next scheduled run.',
+        message: isTimeout
+          ? '⏱️ Request timed out after 60 seconds. The agent may still be working — instruction was saved and will execute on next scheduled run.'
+          : '⚠️ Agent is busy or unreachable. Instruction saved — will execute on next scheduled run.',
         message_type: 'report',
       });
     }
