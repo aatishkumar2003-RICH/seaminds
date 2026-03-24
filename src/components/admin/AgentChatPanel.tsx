@@ -313,7 +313,6 @@ export default function AgentChatPanel() {
             </div>
           </div>
         )}
-        </div>
       </div>
 
       {/* Quick commands */}
