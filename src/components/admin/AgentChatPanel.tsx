@@ -97,12 +97,17 @@ export default function AgentChatPanel() {
         message: reply,
         message_type: 'report',
       });
-    } catch {
+    } catch (err: unknown) {
+      const wasCancelled = err instanceof DOMException && err.name === 'AbortError';
       await supabase.from('agent_conversations').insert({
         direction: 'from_agent',
-        message: '⚠️ Agent is busy or unreachable. Instruction saved — will execute on next scheduled run.',
+        message: wasCancelled
+          ? '🛑 Request cancelled by admin.'
+          : '⚠️ Agent is busy or unreachable. Instruction saved — will execute on next scheduled run.',
         message_type: 'report',
       });
+    } finally {
+      abortRef.current = null;
     }
 
     await load();
