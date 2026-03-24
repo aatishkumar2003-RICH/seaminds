@@ -314,7 +314,7 @@ export default function AgentChatPanel() {
         </button>
 
         {/* Text input */}
-        <div style={{ flex: 1 }}>
+        <div style={{ flex: 1, position: 'relative' }}>
           <textarea
             value={input}
             onChange={e => setInput(e.target.value)}
@@ -330,15 +330,28 @@ export default function AgentChatPanel() {
             rows={2}
             style={{
               width: '100%',
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.1)',
+              background: sending ? 'rgba(212,175,55,0.04)' : 'rgba(255,255,255,0.05)',
+              border: `1px solid ${sending ? 'rgba(212,175,55,0.25)' : 'rgba(255,255,255,0.1)'}`,
               borderRadius: 10, padding: '10px 14px',
-              color: 'white', fontSize: 12,
+              color: sending ? '#666' : 'white', fontSize: 12,
               outline: 'none', resize: 'none',
               lineHeight: 1.5,
               boxSizing: 'border-box',
+              transition: 'all 0.2s ease',
             }}
           />
+          {sending && (
+            <div style={{
+              position: 'absolute', top: 6, right: 8,
+              display: 'flex', alignItems: 'center', gap: 4,
+              background: 'rgba(212,175,55,0.15)', borderRadius: 6,
+              padding: '2px 8px',
+            }}>
+              <span style={{ fontSize: 10, animation: 'spin 1s linear infinite', display: 'inline-block' }}>⏳</span>
+              <span style={{ fontSize: 9, color: '#D4AF37', fontWeight: 600, letterSpacing: 0.5 }}>SENDING</span>
+              <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+            </div>
+          )}
         </div>
 
         {/* Send button */}
