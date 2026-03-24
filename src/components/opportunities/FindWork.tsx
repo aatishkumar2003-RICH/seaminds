@@ -582,10 +582,20 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
           return false;
         };
 
-        const filtered = externalVacancies.filter(e =>
-          (extRankFilter === "all" || e.rank_required === extRankFilter) &&
-          (extVesselFilter === "all" || e.vessel_type === extVesselFilter)
-        ).sort((a, b) => {
+        const filtered = externalVacancies.filter(e => {
+          const rankMatch = extRankFilter === "all" || e.rank_required === extRankFilter;
+          const vesselMatch = extVesselFilter === "all" || e.vessel_type === extVesselFilter;
+          if (!rankMatch || !vesselMatch) return false;
+          if (countryFilter === 'all') return true;
+          const ports = COUNTRY_PORTS[countryFilter] || [];
+          const jobPort = (e.joining_port || '').toLowerCase();
+          const jobCompany = (e.company_name || '').toLowerCase();
+          const jobDesc = (e.description || '').toLowerCase();
+          const countryLower = countryFilter.toLowerCase();
+          return ports.some(p => jobPort.includes(p.toLowerCase())) ||
+                 jobCompany.includes(countryLower) ||
+                 jobDesc.includes(countryLower);
+        }).sort((a, b) => {
           const aRelevant = isRegionRelevant(a) ? 1 : 0;
           const bRelevant = isRegionRelevant(b) ? 1 : 0;
           if (bRelevant !== aRelevant) return bRelevant - aRelevant;
