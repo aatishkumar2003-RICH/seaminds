@@ -893,6 +893,66 @@ export type Database = {
         }
         Relationships: []
       }
+      email_leads: {
+        Row: {
+          converted: boolean | null
+          crew_profile_id: string | null
+          email: string
+          first_name: string | null
+          first_seen: string | null
+          id: string
+          last_name: string | null
+          last_seen: string | null
+          nationality: string | null
+          notes: string | null
+          promo_sent: boolean | null
+          role: string | null
+          source: string | null
+          source_detail: string | null
+          total_visits: number | null
+          vessel_type: string | null
+          whatsapp_number: string | null
+        }
+        Insert: {
+          converted?: boolean | null
+          crew_profile_id?: string | null
+          email: string
+          first_name?: string | null
+          first_seen?: string | null
+          id?: string
+          last_name?: string | null
+          last_seen?: string | null
+          nationality?: string | null
+          notes?: string | null
+          promo_sent?: boolean | null
+          role?: string | null
+          source?: string | null
+          source_detail?: string | null
+          total_visits?: number | null
+          vessel_type?: string | null
+          whatsapp_number?: string | null
+        }
+        Update: {
+          converted?: boolean | null
+          crew_profile_id?: string | null
+          email?: string
+          first_name?: string | null
+          first_seen?: string | null
+          id?: string
+          last_name?: string | null
+          last_seen?: string | null
+          nationality?: string | null
+          notes?: string | null
+          promo_sent?: boolean | null
+          role?: string | null
+          source?: string | null
+          source_detail?: string | null
+          total_visits?: number | null
+          vessel_type?: string | null
+          whatsapp_number?: string | null
+        }
+        Relationships: []
+      }
       external_vacancies: {
         Row: {
           apply_url: string | null
@@ -1449,6 +1509,48 @@ export type Database = {
         }
         Relationships: []
       }
+      signup_log: {
+        Row: {
+          email: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          nationality: string | null
+          notified: boolean | null
+          role: string | null
+          ship_name: string | null
+          signed_up_at: string | null
+          vessel_type: string | null
+          whatsapp_number: string | null
+        }
+        Insert: {
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          nationality?: string | null
+          notified?: boolean | null
+          role?: string | null
+          ship_name?: string | null
+          signed_up_at?: string | null
+          vessel_type?: string | null
+          whatsapp_number?: string | null
+        }
+        Update: {
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          nationality?: string | null
+          notified?: boolean | null
+          role?: string | null
+          ship_name?: string | null
+          signed_up_at?: string | null
+          vessel_type?: string | null
+          whatsapp_number?: string | null
+        }
+        Relationships: []
+      }
       smc_assessments: {
         Row: {
           behavioural_score: number | null
@@ -1715,6 +1817,21 @@ export type Database = {
       owns_crew_profile: {
         Args: { _crew_profile_id: string }
         Returns: boolean
+      }
+      upsert_email_lead: {
+        Args: {
+          p_crew_profile_id?: string
+          p_email: string
+          p_first_name?: string
+          p_last_name?: string
+          p_nationality?: string
+          p_role?: string
+          p_source?: string
+          p_source_detail?: string
+          p_vessel_type?: string
+          p_whatsapp?: string
+        }
+        Returns: undefined
       }
     }
     Enums: {
