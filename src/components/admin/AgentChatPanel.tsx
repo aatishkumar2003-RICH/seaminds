@@ -119,7 +119,7 @@ export default function AgentChatPanel() {
       await supabase.from('agent_conversations').insert({
         direction: 'from_agent',
         message: isTimeout
-          ? '⏱️ Request timed out after 60 seconds. The agent may still be working — instruction was saved and will execute on next scheduled run.'
+          ? `⏱️ Request timed out after ${timeoutSec} seconds. The agent may still be working — instruction was saved and will execute on next scheduled run.`
           : '⚠️ Agent is busy or unreachable. Instruction saved — will execute on next scheduled run.',
         message_type: 'report',
       });
