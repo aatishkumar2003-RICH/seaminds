@@ -398,7 +398,8 @@ export default function AgentChatPanel() {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
             →
-        </button>
+          </button>
+        )}
       </div>
 
       {/* Hints */}
