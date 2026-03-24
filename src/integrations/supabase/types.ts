@@ -210,6 +210,45 @@ export type Database = {
           },
         ]
       }
+      company_contacts: {
+        Row: {
+          company_aliases: string[] | null
+          company_name: string
+          country: string | null
+          created_at: string | null
+          crewing_email: string | null
+          hr_email: string | null
+          id: string
+          verified: boolean | null
+          website: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          company_aliases?: string[] | null
+          company_name: string
+          country?: string | null
+          created_at?: string | null
+          crewing_email?: string | null
+          hr_email?: string | null
+          id?: string
+          verified?: boolean | null
+          website?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          company_aliases?: string[] | null
+          company_name?: string
+          country?: string | null
+          created_at?: string | null
+          crewing_email?: string | null
+          hr_email?: string | null
+          id?: string
+          verified?: boolean | null
+          website?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
       company_demo_requests: {
         Row: {
           company_name: string

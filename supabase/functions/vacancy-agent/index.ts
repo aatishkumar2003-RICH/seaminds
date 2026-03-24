@@ -156,11 +156,39 @@ ${JSON.stringify(rawItems.slice(0, 20), null, 1)}`;
   } catch { return []; }
 }
 
+async function enrichWithCompanyContact(companyName: string | null): Promise<{email: string|null, whatsapp: string|null, website: string|null}> {
+  if (!companyName) return { email: null, whatsapp: null, website: null };
+  
+  // Search company_contacts table - exact match first, then alias match
+  const { data } = await supabase
+    .from('company_contacts')
+    .select('crewing_email, hr_email, whatsapp, website')
+    .or(`company_name.ilike.%${companyName}%,company_aliases.cs.{${companyName}}`)
+    .limit(1);
+
+  if (data && data.length > 0) {
+    return {
+      email: data[0].crewing_email || data[0].hr_email,
+      whatsapp: data[0].whatsapp,
+      website: data[0].website,
+    };
+  }
+  return { email: null, whatsapp: null, website: null };
+}
+
 async function saveVacancies(items: any[], source: string) {
   if (!items.length) return 0;
   let saved = 0;
   for (const item of items) {
     if (!item.rank_required || item.is_scam) continue;
+
+    // Enrich with company contact if no email found
+    if (!item.contact_email && item.company_name) {
+      const enriched = await enrichWithCompanyContact(item.company_name);
+      if (enriched.email) item.contact_email = enriched.email;
+      if (enriched.whatsapp && !item.contact_whatsapp) item.contact_whatsapp = enriched.whatsapp;
+      if (enriched.website && !item.apply_url) item.apply_url = `https://${enriched.website}`;
+    }
     const { error } = await supabase.from('external_vacancies').upsert({
       source,
       external_id: item.external_id || `${source}-${Date.now()}-${Math.random()}`,
