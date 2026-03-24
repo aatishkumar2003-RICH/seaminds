@@ -354,7 +354,7 @@ export default function AgentChatPanel() {
       </div>
 
       <div style={{ display: 'flex', gap: 16, marginTop: 8, flexWrap: 'wrap' }}>
-        {['↵ Enter to send', 'Shift+Enter for new line', '📎 Attach PDF/image', 'Paste screenshot directly', 'Drop files anywhere above'].map(hint => (
+        {['↵ Enter to send', 'Shift+Enter for new line', '📎 Attach PDF up to 30MB', 'Paste screenshot directly', 'Drop files anywhere above'].map(hint => (
           <span key={hint} style={{ color: '#333', fontSize: 10 }}>{hint}</span>
         ))}
       </div>
