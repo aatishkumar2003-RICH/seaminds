@@ -24,6 +24,7 @@ export default function AgentChatPanel() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+  const [progress, setProgress] = useState<{ stage: string; pct: number } | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
