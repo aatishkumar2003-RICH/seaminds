@@ -450,7 +450,15 @@ Deno.serve(async (req) => {
               role: 'user',
               content: [
                 { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-                { type: 'text', text: `Extract ALL maritime job vacancies from this flier. Return ONLY a JSON array, no markdown. Each object: rank_required, vessel_type, company_name, salary_min, salary_max, contact_email, contact_whatsapp, apply_url, description (max 100 chars), title, quality_score (80-95), is_scam (false). One entry per rank. Return [] if none.` }
+                { type: 'text', text: `You are reading a page from a maritime industry magazine. This page may contain job advertisements, vacancy notices, hiring announcements, or recruitment fliers — in ANY layout, ANY design, with ANY language mixing.
+
+Extract EVERY job opportunity you can see. Look for: company names, ship types, ranks needed, salary, email addresses, phone numbers, WhatsApp numbers, QR codes, website URLs.
+
+Return ONLY a JSON array. One object per rank/position. If a company lists 5 ranks, return 5 objects each with the company contact details repeated.
+
+Fields: rank_required, vessel_type, company_name, salary_min (number USD/month or null), salary_max (number USD/month or null), contact_email, contact_whatsapp, apply_url, description (max 80 chars), title, quality_score (70-90), is_scam (false).
+
+If this page has NO job content at all (pure news/editorial/advertisement for products), return [].` }
               ]
             }]
           }),
