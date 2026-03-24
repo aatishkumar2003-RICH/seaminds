@@ -79,6 +79,27 @@ interface ExternalVacancy {
 // Demo SMC score for development
 const DEMO_SMC_SCORE = 4.17;
 
+const COUNTRY_TABS = [
+  { code: 'all', flag: '🌍', label: 'All' },
+  { code: 'India', flag: '🇮🇳', label: 'India' },
+  { code: 'Philippines', flag: '🇵🇭', label: 'Philippines' },
+  { code: 'Indonesia', flag: '🇮🇩', label: 'Indonesia' },
+  { code: 'Ukraine', flag: '🇺🇦', label: 'Ukraine' },
+  { code: 'Russia', flag: '🇷🇺', label: 'Russia' },
+  { code: 'Myanmar', flag: '🇲🇲', label: 'Myanmar' },
+  { code: 'Bangladesh', flag: '🇧🇩', label: 'Bangladesh' },
+];
+
+const COUNTRY_PORTS: Record<string, string[]> = {
+  India: ['Mumbai', 'Chennai', 'Kolkata', 'Goa', 'Cochin', 'India'],
+  Philippines: ['Manila', 'Cebu', 'Philippines'],
+  Indonesia: ['Jakarta', 'Surabaya', 'Batam', 'Indonesia'],
+  Ukraine: ['Odessa', 'Kherson', 'Ukraine'],
+  Russia: ['St. Petersburg', 'Novorossiysk', 'Russia'],
+  Myanmar: ['Yangon', 'Myanmar'],
+  Bangladesh: ['Chittagong', 'Bangladesh'],
+};
+
 const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSea, shipName }: FindWorkProps) => {
   const [availabilityDate, setAvailabilityDate] = useState<Date>();
   const [preferredVessel, setPreferredVessel] = useState("Any Type");
@@ -88,10 +109,21 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
   const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [countryFilter, setCountryFilter] = useState<string>('all');
 
   const [extRankFilter, setExtRankFilter] = useState("all");
   const [extVesselFilter, setExtVesselFilter] = useState("all");
   const [externalVacancies, setExternalVacancies] = useState<ExternalVacancy[]>([]);
+
+  // Auto-select country based on nationality
+  useEffect(() => {
+    if (nationality && countryFilter === 'all') {
+      const match = COUNTRY_TABS.find(t =>
+        t.code !== 'all' && nationality.toLowerCase().includes(t.code.toLowerCase())
+      );
+      if (match) setCountryFilter(match.code);
+    }
+  }, [nationality]);
 
   useEffect(() => {
     loadData();
