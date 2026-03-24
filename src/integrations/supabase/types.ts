@@ -50,6 +50,147 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_conversations: {
+        Row: {
+          created_at: string | null
+          direction: string
+          id: string
+          message: string
+          message_type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          direction: string
+          id?: string
+          message: string
+          message_type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          direction?: string
+          id?: string
+          message?: string
+          message_type?: string | null
+        }
+        Relationships: []
+      }
+      agent_instructions: {
+        Row: {
+          created_at: string | null
+          executed_at: string | null
+          id: string
+          instruction: string
+          instruction_type: string | null
+          priority: number | null
+          result: string | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          executed_at?: string | null
+          id?: string
+          instruction: string
+          instruction_type?: string | null
+          priority?: number | null
+          result?: string | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          executed_at?: string | null
+          id?: string
+          instruction?: string
+          instruction_type?: string | null
+          priority?: number | null
+          result?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
+      agent_knowledge: {
+        Row: {
+          check_frequency: string | null
+          company_name: string
+          company_type: string | null
+          created_at: string | null
+          crewing_email: string | null
+          extraction_pattern: string | null
+          fleet_types: string[] | null
+          hr_email: string | null
+          html_selector: string | null
+          id: string
+          is_active: boolean | null
+          last_checked: string | null
+          last_success: string | null
+          notes: string | null
+          preferred_nationalities: string[] | null
+          salary_captain_max: number | null
+          salary_captain_min: number | null
+          success_rate: number | null
+          total_vacancies_found: number | null
+          typical_ranks: string[] | null
+          updated_at: string | null
+          vacancy_url: string | null
+          vacancy_url_secondary: string | null
+          website: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          check_frequency?: string | null
+          company_name: string
+          company_type?: string | null
+          created_at?: string | null
+          crewing_email?: string | null
+          extraction_pattern?: string | null
+          fleet_types?: string[] | null
+          hr_email?: string | null
+          html_selector?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_checked?: string | null
+          last_success?: string | null
+          notes?: string | null
+          preferred_nationalities?: string[] | null
+          salary_captain_max?: number | null
+          salary_captain_min?: number | null
+          success_rate?: number | null
+          total_vacancies_found?: number | null
+          typical_ranks?: string[] | null
+          updated_at?: string | null
+          vacancy_url?: string | null
+          vacancy_url_secondary?: string | null
+          website?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          check_frequency?: string | null
+          company_name?: string
+          company_type?: string | null
+          created_at?: string | null
+          crewing_email?: string | null
+          extraction_pattern?: string | null
+          fleet_types?: string[] | null
+          hr_email?: string | null
+          html_selector?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_checked?: string | null
+          last_success?: string | null
+          notes?: string | null
+          preferred_nationalities?: string[] | null
+          salary_captain_max?: number | null
+          salary_captain_min?: number | null
+          success_rate?: number | null
+          total_vacancies_found?: number | null
+          typical_ranks?: string[] | null
+          updated_at?: string | null
+          vacancy_url?: string | null
+          vacancy_url_secondary?: string | null
+          website?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
       app_events: {
         Row: {
           created_at: string | null
