@@ -320,7 +320,7 @@ export default function AgentChatPanel() {
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => {
-              if (e.key === 'Enter' && !e.shiftKey) {
+              if (e.key === 'Enter' && !e.shiftKey && !sending) {
                 e.preventDefault();
                 handleLinkInText();
               }
