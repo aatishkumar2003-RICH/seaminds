@@ -77,7 +77,7 @@ export default function AgentChatPanel() {
     });
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 60000);
+    const timeout = setTimeout(() => controller.abort(), timeoutSec * 1000);
 
     try {
       let fullInstruction = instruction;
