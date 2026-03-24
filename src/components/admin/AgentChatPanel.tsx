@@ -197,44 +197,68 @@ export default function AgentChatPanel() {
         }
 
       if (!text.trim() || text.trim().length < 100) {
+        stopRef.current = false;
+        const totalPages = pdf.numPages;
+
+        // Ask user which pages to scan
+        const pageInput = window.prompt(
+          `PDF has ${totalPages} pages. Which pages have job listings?\n\nEnter page range (e.g. "7-20") or specific pages (e.g. "7,9,11,15,16,17")\n\nPress Cancel to scan pages 1-15 automatically.`,
+          totalPages > 20 ? '1-20' : `1-${totalPages}`
+        );
+
+        let pagesToScan: number[] = [];
+        if (pageInput === null) {
+          // Cancelled - scan first 15
+          for (let i = 1; i <= Math.min(15, totalPages); i++) pagesToScan.push(i);
+        } else if (pageInput.includes('-')) {
+          const [s, e] = pageInput.split('-').map(Number);
+          for (let i = s; i <= Math.min(e, totalPages); i++) pagesToScan.push(i);
+        } else {
+          pagesToScan = pageInput.split(',').map(Number).filter(n => n > 0 && n <= totalPages);
+        }
+
         await supabase.from('agent_conversations').insert({
           direction: 'from_agent',
-          message: `📄 Scanned PDF — reading ${Math.min(pdf.numPages, 10)} pages via Vision...`,
+          message: `📄 Scanning ${pagesToScan.length} pages via Vision: ${pagesToScan.join(', ')}...`,
           message_type: 'report',
         });
         await load();
 
         let totalSaved = 0;
         const allLines: string[] = [];
-        const pagesToRead = pdf.numPages; // ALL pages
 
-        for (let pageNum = 1; pageNum <= pagesToRead; pageNum++) {
+        for (const pageNum of pagesToScan) {
+          if (stopRef.current) {
+            await supabase.from('agent_conversations').insert({ direction:'from_agent', message:`⛔ Stopped by admin at page ${pageNum}.`, message_type:'report' });
+            break;
+          }
           const page = await pdf.getPage(pageNum);
-          const viewport = page.getViewport({ scale: 1.5 });
+          const viewport = page.getViewport({ scale: 1.8 });
           const canvas = document.createElement('canvas');
           canvas.width = viewport.width;
           canvas.height = viewport.height;
           await page.render({ canvasContext: canvas.getContext('2d')!, viewport }).promise;
-          const imageData = canvas.toDataURL('image/jpeg', 0.85);
+          const imageData = canvas.toDataURL('image/jpeg', 0.9);
 
           const res = await supabase.functions.invoke('researcher-agent', {
             method: 'POST',
-            body: { image_data: imageData, image_name: `${file.name}_p${pageNum}`, urgent: true },
+            body: { image_data: imageData, image_name: `page_${pageNum}`, urgent: true },
           });
 
           if (res.data?.vacancies_saved > 0) {
             totalSaved += res.data.vacancies_saved;
             (res.data.vacancy_list || []).forEach((v: any) => {
-              allLines.push(`• ${v.rank_required} — ${v.vessel_type || 'Various'} — ${v.contact_email || v.contact_whatsapp || 'see listing'}`);
+              allLines.push(`• ${v.rank_required} — ${v.vessel_type||'Various'} — ${v.contact_email||v.contact_whatsapp||'see listing'}`);
             });
+            await supabase.from('agent_conversations').insert({ direction:'from_agent', message:`✅ Page ${pageNum}: found ${res.data.vacancies_saved} vacancies`, message_type:'report' });
+            await load();
           }
         }
 
         const msg = totalSaved > 0
-          ? `✅ PDF "${file.name}" — ${pagesToRead} pages read via Vision\nTotal saved: ${totalSaved}\n\n${allLines.join('\n')}`
-          : `⚠️ ${pagesToRead} pages read — no job vacancies found. Pages may be news/articles. Try uploading a screenshot of a specific jobs page.`;
-
-        await supabase.from('agent_conversations').insert({ direction: 'from_agent', message: msg, message_type: 'report' });
+          ? `✅ PDF complete. Total saved: ${totalSaved}\n\n${allLines.join('\n')}`
+          : `⚠️ No vacancies found on scanned pages. Try different page numbers.`;
+        await supabase.from('agent_conversations').insert({ direction:'from_agent', message:msg, message_type:'report' });
       } else {
           // Send extracted text to researcher agent
           const res = await supabase.functions.invoke('researcher-agent', {
