@@ -28,6 +28,7 @@ export default function AgentChatPanel() {
   const [dragOver, setDragOver] = useState(false);
   const [timeoutSec, setTimeoutSec] = useState(60);
   const [showSettings, setShowSettings] = useState(false);
+  const [pdfMode, setPdfMode] = useState<'text' | 'vision'>('text');
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -145,8 +146,8 @@ export default function AgentChatPanel() {
 
     try {
       if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
-        let extractedText = '';
-        try {
+        if (pdfMode === 'vision') {
+          // Vision mode: render pages to images and send to Claude Vision
           setProgress({ stage: 'Loading PDF.js…', pct: 10 });
           await new Promise<void>((resolve, reject) => {
             if ((window as any).pdfjsLib) { resolve(); return; }
@@ -157,42 +158,89 @@ export default function AgentChatPanel() {
             document.head.appendChild(script);
           });
 
-          setProgress({ stage: 'Parsing PDF…', pct: 30 });
+          setProgress({ stage: 'Parsing PDF…', pct: 20 });
           const arrayBuffer = await file.arrayBuffer();
           const pdf = await (window as any).pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-          let fullText = '';
-          const maxPages = Math.min(pdf.numPages, 30);
-          for (let i = 1; i <= maxPages; i++) {
-            setProgress({ stage: `Extracting page ${i}/${maxPages}…`, pct: 30 + Math.round((i / maxPages) * 50) });
+          const totalPages = Math.min(pdf.numPages, 10);
+          const pageImages: string[] = [];
+          for (let i = 1; i <= totalPages; i++) {
+            setProgress({ stage: `Rendering page ${i}/${totalPages}…`, pct: 20 + Math.round((i / totalPages) * 55) });
             const page = await pdf.getPage(i);
-            const content = await page.getTextContent();
-            const pageText = content.items.map((item: any) => item.str).join(' ');
-            fullText += pageText + '\n';
+            const viewport = page.getViewport({ scale: 1.5 });
+            const canvas = document.createElement('canvas');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            const ctx = canvas.getContext('2d')!;
+            await page.render({ canvasContext: ctx, viewport }).promise;
+            pageImages.push(canvas.toDataURL('image/jpeg', 0.85));
+            canvas.remove();
           }
-          extractedText = fullText.trim().substring(0, 15000);
-          if (!extractedText || extractedText.length < 50) {
-            extractedText = `PDF appears to be image-based (scanned). Cannot extract text. Use the screenshot paste feature instead — take a screenshot of the job page and paste it (Ctrl+V) directly into the chat.`;
-          }
-        } catch (e) {
-          extractedText = `PDF extraction failed: ${String(e)}. Try pasting a screenshot instead.`;
-        }
 
-        setProgress({ stage: 'Sending to agent…', pct: 85 });
-        const instruction = `Extract all maritime job vacancies from this PDF named "${file.name}":\n\n${extractedText}`;
-        const res = await supabase.functions.invoke('researcher-agent', {
-          method: 'POST',
-          body: { instruction, urgent: true },
-        });
-        setProgress({ stage: 'Processing results…', pct: 95 });
-        const result = res.data;
-        let reply = result?.instructions?.length > 0
-          ? result.instructions.join('\n')
-          : result?.total_saved !== undefined
-            ? `✅ Processed "${file.name}"\nFound ${result.total_saved} vacancies.`
-            : `✅ PDF sent to agent for processing.`;
-        await supabase.from('agent_conversations').insert({
-          direction: 'from_agent', message: reply, message_type: 'report',
-        });
+          setProgress({ stage: 'Sending pages to Vision agent…', pct: 80 });
+          await supabase.from('agent_conversations').insert({
+            direction: 'from_admin',
+            message: `📄 PDF "${file.name}" rendered: ${totalPages} page(s) → sending to Vision AI…`,
+            message_type: 'attachment',
+          });
+
+          const res = await supabase.functions.invoke('researcher-agent', {
+            method: 'POST',
+            body: { pdf_pages: pageImages, filename: file.name, urgent: true },
+          });
+          setProgress({ stage: 'Processing results…', pct: 95 });
+          const result = res.data;
+          const reply = result?.pdf_result
+            || (result?.total_saved !== undefined ? `✅ Processed "${file.name}" (${totalPages} pages)\nFound ${result.total_saved} vacancies saved.` : `✅ PDF processed via Vision.`);
+          await supabase.from('agent_conversations').insert({ direction: 'from_agent', message: reply, message_type: 'report' });
+        } else {
+          // Text mode: extract text content
+          let extractedText = '';
+          try {
+            setProgress({ stage: 'Loading PDF.js…', pct: 10 });
+            await new Promise<void>((resolve, reject) => {
+              if ((window as any).pdfjsLib) { resolve(); return; }
+              const script = document.createElement('script');
+              script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+              script.onload = () => { (window as any).pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; resolve(); };
+              script.onerror = reject;
+              document.head.appendChild(script);
+            });
+
+            setProgress({ stage: 'Parsing PDF…', pct: 30 });
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await (window as any).pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            let fullText = '';
+            const maxPages = Math.min(pdf.numPages, 30);
+            for (let i = 1; i <= maxPages; i++) {
+              setProgress({ stage: `Extracting page ${i}/${maxPages}…`, pct: 30 + Math.round((i / maxPages) * 50) });
+              const page = await pdf.getPage(i);
+              const content = await page.getTextContent();
+              const pageText = content.items.map((item: any) => item.str).join(' ');
+              fullText += pageText + '\n';
+            }
+            extractedText = fullText.trim().substring(0, 15000);
+            if (!extractedText || extractedText.length < 50) {
+              extractedText = `PDF appears to be image-based (scanned). Cannot extract text. Try Vision mode or paste a screenshot.`;
+            }
+          } catch (e) {
+            extractedText = `PDF extraction failed: ${String(e)}. Try Vision mode or paste a screenshot.`;
+          }
+
+          setProgress({ stage: 'Sending to agent…', pct: 85 });
+          const instruction = `Extract all maritime job vacancies from this PDF named "${file.name}":\n\n${extractedText}`;
+          const res = await supabase.functions.invoke('researcher-agent', {
+            method: 'POST',
+            body: { instruction, urgent: true },
+          });
+          setProgress({ stage: 'Processing results…', pct: 95 });
+          const result = res.data;
+          const reply = result?.instructions?.length > 0
+            ? result.instructions.join('\n')
+            : result?.total_saved !== undefined
+              ? `✅ Processed "${file.name}"\nFound ${result.total_saved} vacancies.`
+              : `✅ PDF sent to agent for processing.`;
+          await supabase.from('agent_conversations').insert({ direction: 'from_agent', message: reply, message_type: 'report' });
+        }
       } else if (file.type.startsWith('image/')) {
         await handleImageFile(file);
       } else {
@@ -315,19 +363,42 @@ export default function AgentChatPanel() {
           </div>
         </div>
         {showSettings && (
-          <div style={{ marginTop: 12, padding: 12, background: 'rgba(212,175,55,0.05)', border: '1px solid rgba(212,175,55,0.15)', borderRadius: 10 }}>
-            <label style={{ color: '#D4AF37', fontSize: 12, fontWeight: 600 }}>
-              ⏱️ Request timeout: {timeoutSec}s
-            </label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6 }}>
-              <span style={{ color: '#556', fontSize: 10 }}>10s</span>
-              <input type="range" min={10} max={300} step={10} value={timeoutSec}
-                onChange={e => setTimeoutSec(Number(e.target.value))}
-                onMouseUp={() => saveTimeout(timeoutSec)}
-                onTouchEnd={() => saveTimeout(timeoutSec)}
-                style={{ flex: 1, accentColor: '#D4AF37' }}
-              />
-              <span style={{ color: '#556', fontSize: 10 }}>300s</span>
+          <div style={{ marginTop: 12, padding: 12, background: 'rgba(212,175,55,0.05)', border: '1px solid rgba(212,175,55,0.15)', borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div>
+              <label style={{ color: '#D4AF37', fontSize: 12, fontWeight: 600 }}>
+                ⏱️ Request timeout: {timeoutSec}s
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6 }}>
+                <span style={{ color: '#556', fontSize: 10 }}>10s</span>
+                <input type="range" min={10} max={300} step={10} value={timeoutSec}
+                  onChange={e => setTimeoutSec(Number(e.target.value))}
+                  onMouseUp={() => saveTimeout(timeoutSec)}
+                  onTouchEnd={() => saveTimeout(timeoutSec)}
+                  style={{ flex: 1, accentColor: '#D4AF37' }}
+                />
+                <span style={{ color: '#556', fontSize: 10 }}>300s</span>
+              </div>
+            </div>
+            <div>
+              <label style={{ color: '#D4AF37', fontSize: 12, fontWeight: 600 }}>
+                📄 PDF extraction mode
+              </label>
+              <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+                {(['text', 'vision'] as const).map(mode => (
+                  <button key={mode} onClick={() => setPdfMode(mode)}
+                    style={{
+                      padding: '5px 14px', borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                      background: pdfMode === mode ? 'rgba(212,175,55,0.25)' : 'rgba(255,255,255,0.04)',
+                      border: `1px solid ${pdfMode === mode ? '#D4AF37' : 'rgba(255,255,255,0.1)'}`,
+                      color: pdfMode === mode ? '#D4AF37' : '#888',
+                    }}>
+                    {mode === 'text' ? '📝 Text (fast, 30pg)' : '👁️ Vision (accurate, 10pg)'}
+                  </button>
+                ))}
+              </div>
+              <p style={{ color: '#556', fontSize: 10, marginTop: 4 }}>
+                Text: extracts raw text — fast, works for digital PDFs. Vision: renders pages as images and uses AI to read them — better for scanned fliers.
+              </p>
             </div>
           </div>
         )}
