@@ -363,20 +363,41 @@ export default function AgentChatPanel() {
           )}
         </div>
 
-        {/* Send button */}
-        <button
-          onClick={handleLinkInText}
-          disabled={sending || !input.trim()}
-          style={{
-            background: input.trim() && !sending ? 'linear-gradient(135deg,#D4AF37,#e8c547)' : '#1a1a1a',
-            color: input.trim() && !sending ? '#0a1628' : '#333',
-            border: 'none', borderRadius: 10,
-            width: 42, height: 42, flexShrink: 0,
-            fontWeight: 800, fontSize: 18,
-            cursor: input.trim() && !sending ? 'pointer' : 'not-allowed',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-          {sending ? '⏳' : '→'}
+        {/* Send / Cancel button */}
+        {sending ? (
+          <button
+            onClick={() => {
+              abortRef.current?.abort();
+              setSending(false);
+            }}
+            title="Cancel request"
+            style={{
+              background: 'linear-gradient(135deg,#e74c3c,#c0392b)',
+              color: 'white',
+              border: 'none', borderRadius: 10,
+              width: 42, height: 42, flexShrink: 0,
+              fontWeight: 800, fontSize: 16,
+              cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              animation: 'pulse-cancel 1.5s ease-in-out infinite',
+            }}>
+            ✕
+            <style>{`@keyframes pulse-cancel { 0%,100% { box-shadow: 0 0 0 0 rgba(231,76,60,0.4); } 50% { box-shadow: 0 0 0 6px rgba(231,76,60,0); } }`}</style>
+          </button>
+        ) : (
+          <button
+            onClick={handleLinkInText}
+            disabled={!input.trim()}
+            style={{
+              background: input.trim() ? 'linear-gradient(135deg,#D4AF37,#e8c547)' : '#1a1a1a',
+              color: input.trim() ? '#0a1628' : '#333',
+              border: 'none', borderRadius: 10,
+              width: 42, height: 42, flexShrink: 0,
+              fontWeight: 800, fontSize: 18,
+              cursor: input.trim() ? 'pointer' : 'not-allowed',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+            →
         </button>
       </div>
 
