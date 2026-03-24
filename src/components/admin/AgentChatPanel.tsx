@@ -26,8 +26,21 @@ export default function AgentChatPanel() {
   const [sending, setSending] = useState(false);
   const [progress, setProgress] = useState<{ stage: string; pct: number } | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [timeoutSec, setTimeoutSec] = useState(60);
+  const [showSettings, setShowSettings] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    supabase.from('admin_settings').select('value').eq('key', 'agent_timeout_seconds').maybeSingle()
+      .then(({ data }) => { if (data?.value) setTimeoutSec(Math.max(10, Math.min(300, Number(data.value)))); });
+  }, []);
+
+  const saveTimeout = async (val: number) => {
+    const clamped = Math.max(10, Math.min(300, val));
+    setTimeoutSec(clamped);
+    await supabase.from('admin_settings').upsert({ key: 'agent_timeout_seconds', value: String(clamped) });
+  };
 
   const load = async () => {
     const { data } = await supabase
@@ -64,7 +77,7 @@ export default function AgentChatPanel() {
     });
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 60000);
+    const timeout = setTimeout(() => controller.abort(), timeoutSec * 1000);
 
     try {
       let fullInstruction = instruction;
@@ -106,7 +119,7 @@ export default function AgentChatPanel() {
       await supabase.from('agent_conversations').insert({
         direction: 'from_agent',
         message: isTimeout
-          ? '⏱️ Request timed out after 60 seconds. The agent may still be working — instruction was saved and will execute on next scheduled run.'
+          ? `⏱️ Request timed out after ${timeoutSec} seconds. The agent may still be working — instruction was saved and will execute on next scheduled run.`
           : '⚠️ Agent is busy or unreachable. Instruction saved — will execute on next scheduled run.',
         message_type: 'report',
       });
@@ -268,13 +281,38 @@ export default function AgentChatPanel() {
               Type instructions · Paste links · Drop PDFs or images · Agent learns and executes
             </p>
           </div>
-          <button onClick={load} style={{
-            background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.2)',
-            color: '#D4AF37', padding: '6px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 12,
-          }}>
-            🔄 Refresh
-          </button>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button onClick={() => setShowSettings(s => !s)} style={{
+              background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.2)',
+              color: '#D4AF37', padding: '6px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 12,
+            }}>
+              ⚙️ Settings
+            </button>
+            <button onClick={load} style={{
+              background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.2)',
+              color: '#D4AF37', padding: '6px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 12,
+            }}>
+              🔄 Refresh
+            </button>
+          </div>
         </div>
+        {showSettings && (
+          <div style={{ marginTop: 12, padding: 12, background: 'rgba(212,175,55,0.05)', border: '1px solid rgba(212,175,55,0.15)', borderRadius: 10 }}>
+            <label style={{ color: '#D4AF37', fontSize: 12, fontWeight: 600 }}>
+              ⏱️ Request timeout: {timeoutSec}s
+            </label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6 }}>
+              <span style={{ color: '#556', fontSize: 10 }}>10s</span>
+              <input type="range" min={10} max={300} step={10} value={timeoutSec}
+                onChange={e => setTimeoutSec(Number(e.target.value))}
+                onMouseUp={() => saveTimeout(timeoutSec)}
+                onTouchEnd={() => saveTimeout(timeoutSec)}
+                style={{ flex: 1, accentColor: '#D4AF37' }}
+              />
+              <span style={{ color: '#556', fontSize: 10 }}>300s</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Quick commands */}
