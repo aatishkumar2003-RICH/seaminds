@@ -28,6 +28,7 @@ export default function AgentChatPanel() {
   const [dragOver, setDragOver] = useState(false);
   const [timeoutSec, setTimeoutSec] = useState(60);
   const [showSettings, setShowSettings] = useState(false);
+  const [pdfMode, setPdfMode] = useState<'text' | 'vision'>('text');
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
