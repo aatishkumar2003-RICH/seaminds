@@ -320,10 +320,29 @@ export default function AgentChatPanel() {
         {sending && (
           <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 10 }}>
             <div style={{
-              padding: '10px 14px', borderRadius: 12,
+              padding: '10px 14px', borderRadius: 12, minWidth: 220,
               background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
             }}>
-              <p style={{ fontSize: 12, color: '#888' }}>⏳ Agent is processing...</p>
+              <p style={{ fontSize: 12, color: '#888', margin: 0 }}>
+                {progress ? `📄 ${progress.stage}` : '⏳ Agent is processing...'}
+              </p>
+              {progress && (
+                <div style={{ marginTop: 8 }}>
+                  <div style={{
+                    width: '100%', height: 6, borderRadius: 3,
+                    background: 'rgba(255,255,255,0.08)', overflow: 'hidden',
+                  }}>
+                    <div style={{
+                      width: `${progress.pct}%`, height: '100%', borderRadius: 3,
+                      background: 'linear-gradient(90deg, #D4AF37, #e8c547)',
+                      transition: 'width 0.4s ease',
+                    }} />
+                  </div>
+                  <p style={{ fontSize: 10, color: '#556', marginTop: 4, textAlign: 'right' }}>
+                    {progress.pct}%
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}
