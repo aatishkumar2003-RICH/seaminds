@@ -65,6 +65,9 @@ export default function AgentChatPanel() {
     });
 
     try {
+      const controller = new AbortController();
+      abortRef.current = controller;
+
       let fullInstruction = instruction;
       if (attachment) {
         fullInstruction = `${instruction || 'Extract maritime vacancies from this attachment.'}\n\nAttachment name: ${attachment.name}\nAttachment type: ${attachment.type}\nContent preview: ${attachment.content.substring(0, 3000)}`;
