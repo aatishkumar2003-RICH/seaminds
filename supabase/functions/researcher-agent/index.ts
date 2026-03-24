@@ -119,8 +119,9 @@ Output one of these action types as JSON:
 3. Add a company to knowledge base: {"action":"add_company","company":"Name","url":"https://...","email":"hr@...","fleet":["LNG"],"nationalities":["Indian"]}
 4. Set check frequency: {"action":"set_frequency","company":"Name","frequency":"daily"}
 5. Disable a source: {"action":"disable","company":"Name"}
-6. Filter by criteria: {"action":"add_filter","field":"vessel_type","value":"LNG"}
-7. Cannot execute: {"action":"manual_required","reason":"explanation"}
+6. Fetch a specific URL and extract vacancies: {"action":"fetch_url","url":"https://...","company":"Company name if known or Unknown"}
+7. Filter by criteria: {"action":"add_filter","field":"vessel_type","value":"LNG"}
+8. Cannot execute: {"action":"manual_required","reason":"explanation"}
 
 Return ONLY the JSON object, no markdown.`, 500);
 
