@@ -105,18 +105,115 @@ export default function AgentChatPanel() {
   };
 
   const handleFile = async (file: File) => {
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) { alert('File too large. Max 5MB.'); return; }
-    const isImage = file.type.startsWith('image/');
-    const isText = file.type.startsWith('text/') || file.name.endsWith('.txt') || file.name.endsWith('.csv');
-    let content = '';
+    const maxSize = 30 * 1024 * 1024; // 30MB limit
+    if (file.size > maxSize) { alert('File too large. Max 30MB.'); return; }
+    
+    setSending(true);
+    setInput('');
+
+    // Show user we received the file
+    await supabase.from('agent_conversations').insert({
+      direction: 'from_admin',
+      message: `📎 Processing: ${file.name} (${(file.size/1024/1024).toFixed(1)}MB) — extracting text...`,
+      message_type: 'attachment',
+    });
+
+    let extractedText = '';
     let attachType = 'file';
-    if (isText) { content = await file.text(); attachType = 'text'; }
-    else if (isImage) {
-      content = await new Promise<string>((resolve) => { const r = new FileReader(); r.onload = () => resolve(r.result as string); r.readAsDataURL(file); });
-      attachType = 'image';
-    } else { content = `[PDF file: ${file.name}. Size: ${(file.size / 1024).toFixed(0)}KB]`; attachType = 'pdf'; }
-    await sendInstruction(input || `Extract all maritime job vacancies from this ${attachType}.`, true, { type: attachType, name: file.name, content });
+
+    try {
+      if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+        attachType = 'pdf';
+        // Extract text from PDF using FileReader + basic text extraction
+        const arrayBuffer = await file.arrayBuffer();
+        const uint8 = new Uint8Array(arrayBuffer);
+        
+        // Basic PDF text extraction - find text between BT and ET markers
+        let pdfText = '';
+        const decoder = new TextDecoder('latin1');
+        const rawText = decoder.decode(uint8);
+        
+        // Extract text streams from PDF
+        const textMatches = rawText.matchAll(/BT[\s\S]*?ET/g);
+        for (const match of textMatches) {
+          const block = match[0];
+          // Extract strings in parentheses (PDF text format)
+          const strMatches = block.matchAll(/\(([^)]{1,200})\)/g);
+          for (const s of strMatches) {
+            const clean = s[1].replace(/\\[nrt]/g, ' ').replace(/[^\x20-\x7E]/g, '').trim();
+            if (clean.length > 2) pdfText += clean + ' ';
+          }
+        }
+        
+        // Also try to find hex strings
+        const hexMatches = rawText.matchAll(/<([0-9A-Fa-f]{4,})>/g);
+        for (const h of hexMatches) {
+          try {
+            const hex = h[1];
+            let str = '';
+            for (let i = 0; i < hex.length - 1; i += 4) {
+              const code = parseInt(hex.substring(i, i+4), 16);
+              if (code > 31 && code < 127) str += String.fromCharCode(code);
+            }
+            if (str.length > 3) pdfText += str + ' ';
+          } catch {}
+        }
+        
+        extractedText = pdfText.replace(/\s+/g, ' ').trim().substring(0, 15000);
+        
+        if (!extractedText || extractedText.length < 50) {
+          extractedText = `PDF file: ${file.name}. Size: ${(file.size/1024/1024).toFixed(1)}MB. Text extraction yielded minimal content — PDF may be image-based or encrypted. Please use a text-based PDF.`;
+        }
+
+      } else if (file.type.startsWith('image/')) {
+        attachType = 'image';
+        extractedText = await new Promise<string>((resolve) => {
+          const r = new FileReader();
+          r.onload = () => resolve(r.result as string);
+          r.readAsDataURL(file);
+        });
+      } else {
+        attachType = 'text';
+        extractedText = await file.text();
+      }
+    } catch (e) {
+      extractedText = `Error reading file ${file.name}: ${String(e)}`;
+    }
+
+    // Send extracted content to agent — NOT the raw file
+    const instruction = `Extract all maritime job vacancies from this ${attachType} file named "${file.name}". File has been parsed — here is the extracted content:\n\n${extractedText.substring(0, 12000)}`;
+
+    try {
+      const res = await supabase.functions.invoke('researcher-agent', {
+        method: 'POST',
+        body: { instruction, urgent: true },
+      });
+
+      const result = res.data;
+      let reply = '';
+      if (result?.instructions?.length > 0) {
+        reply = result.instructions.join('\n');
+      } else if (result?.total_saved !== undefined) {
+        reply = `✅ Processed "${file.name}"\nFound ${result.total_saved} vacancies saved to database.`;
+      } else {
+        reply = `✅ File processed. Agent is extracting vacancies from "${file.name}".`;
+      }
+
+      await supabase.from('agent_conversations').insert({
+        direction: 'from_agent',
+        message: reply,
+        message_type: 'report',
+      });
+    } catch {
+      await supabase.from('agent_conversations').insert({
+        direction: 'from_agent',
+        message: `⚠️ Could not process "${file.name}" — try a smaller file or paste the text directly.`,
+        message_type: 'report',
+      });
+    }
+
+    await load();
+    setSending(false);
   };
 
   const handlePaste = async (e: React.ClipboardEvent) => {
@@ -257,7 +354,7 @@ export default function AgentChatPanel() {
       </div>
 
       <div style={{ display: 'flex', gap: 16, marginTop: 8, flexWrap: 'wrap' }}>
-        {['↵ Enter to send', 'Shift+Enter for new line', '📎 Attach PDF/image', 'Paste screenshot directly', 'Drop files anywhere above'].map(hint => (
+        {['↵ Enter to send', 'Shift+Enter for new line', '📎 Attach PDF up to 30MB', 'Paste screenshot directly', 'Drop files anywhere above'].map(hint => (
           <span key={hint} style={{ color: '#333', fontSize: 10 }}>{hint}</span>
         ))}
       </div>
