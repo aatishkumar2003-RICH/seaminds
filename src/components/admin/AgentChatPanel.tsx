@@ -145,7 +145,54 @@ export default function AgentChatPanel() {
 
     try {
       if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
-        await handlePdfFile(file);
+        let extractedText = '';
+        try {
+          setProgress({ stage: 'Loading PDF.js…', pct: 10 });
+          await new Promise<void>((resolve, reject) => {
+            if ((window as any).pdfjsLib) { resolve(); return; }
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+            script.onload = () => { (window as any).pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; resolve(); };
+            script.onerror = reject;
+            document.head.appendChild(script);
+          });
+
+          setProgress({ stage: 'Parsing PDF…', pct: 30 });
+          const arrayBuffer = await file.arrayBuffer();
+          const pdf = await (window as any).pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+          let fullText = '';
+          const maxPages = Math.min(pdf.numPages, 30);
+          for (let i = 1; i <= maxPages; i++) {
+            setProgress({ stage: `Extracting page ${i}/${maxPages}…`, pct: 30 + Math.round((i / maxPages) * 50) });
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            const pageText = content.items.map((item: any) => item.str).join(' ');
+            fullText += pageText + '\n';
+          }
+          extractedText = fullText.trim().substring(0, 15000);
+          if (!extractedText || extractedText.length < 50) {
+            extractedText = `PDF appears to be image-based (scanned). Cannot extract text. Use the screenshot paste feature instead — take a screenshot of the job page and paste it (Ctrl+V) directly into the chat.`;
+          }
+        } catch (e) {
+          extractedText = `PDF extraction failed: ${String(e)}. Try pasting a screenshot instead.`;
+        }
+
+        setProgress({ stage: 'Sending to agent…', pct: 85 });
+        const instruction = `Extract all maritime job vacancies from this PDF named "${file.name}":\n\n${extractedText}`;
+        const res = await supabase.functions.invoke('researcher-agent', {
+          method: 'POST',
+          body: { instruction, urgent: true },
+        });
+        setProgress({ stage: 'Processing results…', pct: 95 });
+        const result = res.data;
+        let reply = result?.instructions?.length > 0
+          ? result.instructions.join('\n')
+          : result?.total_saved !== undefined
+            ? `✅ Processed "${file.name}"\nFound ${result.total_saved} vacancies.`
+            : `✅ PDF sent to agent for processing.`;
+        await supabase.from('agent_conversations').insert({
+          direction: 'from_agent', message: reply, message_type: 'report',
+        });
       } else if (file.type.startsWith('image/')) {
         await handleImageFile(file);
       } else {
