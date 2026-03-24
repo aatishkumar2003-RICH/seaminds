@@ -42,7 +42,7 @@ async function fetchPage(url: string): Promise<string> {
 }
 
 // ─── Extract vacancies from image using Claude Vision ─────────────
-async function extractFromImage(base64Data: string, filename: string): Promise<any[]> {
+async function extractFromImage(base64Data: string, _filename: string): Promise<any[]> {
   const mediaType = base64Data.match(/data:(image\/[^;]+);base64,/)?.[1] || 'image/jpeg';
   const base64 = base64Data.replace(/^data:image\/[^;]+;base64,/, '');
   
@@ -95,6 +95,37 @@ Return [] if no vacancies found.`
   try {
     return JSON.parse(text.replace(/```json|```/g, '').trim());
   } catch { return []; }
+}
+
+// ─── Extract vacancies from multiple PDF page images ──────────────
+async function extractFromPdfPages(pageImages: string[], filename: string): Promise<{ vacancies: any[]; saved: number; message: string }> {
+  const allVacancies: any[] = [];
+  const pageResults: string[] = [];
+
+  for (let i = 0; i < pageImages.length; i++) {
+    try {
+      const vacancies = await extractFromImage(pageImages[i], `${filename}_page${i + 1}`);
+      allVacancies.push(...vacancies);
+      if (vacancies.length > 0) {
+        pageResults.push(`Page ${i + 1}: ${vacancies.length} vacancy(ies)`);
+      }
+    } catch (e) {
+      pageResults.push(`Page ${i + 1}: error — ${String(e).substring(0, 80)}`);
+    }
+    // Small delay between pages to avoid rate limiting
+    if (i < pageImages.length - 1) await new Promise(r => setTimeout(r, 1000));
+  }
+
+  const saved = await saveVacancies(allVacancies, 'pdf_vision', allVacancies[0]?.company_name || 'unknown');
+
+  let message = '';
+  if (allVacancies.length > 0) {
+    message = `✅ PDF "${filename}" processed via Vision (${pageImages.length} pages).\nFound ${allVacancies.length} vacancies, saved ${saved}.\n\n${pageResults.join('\n')}\n\nVacancies:\n${allVacancies.map((v: any) => `• ${v.rank_required} — ${v.vessel_type || 'Various'} — ${v.company_name || 'Unknown'} — ${v.contact_email || v.contact_whatsapp || 'no contact'}`).join('\n')}`;
+  } else {
+    message = `⚠️ PDF "${filename}" processed (${pageImages.length} pages) but no vacancies found.\n${pageResults.join('\n')}`;
+  }
+
+  return { vacancies: allVacancies, saved, message };
 }
 
 async function extractVacanciesFromHTML(html: string, company: any): Promise<any[]> {
