@@ -163,6 +163,22 @@ async function processInstructions(): Promise<string[]> {
 
   for (const inst of (instructions || [])) {
     try {
+      // Handle image attachments via Vision
+      if (inst.instruction.includes('data:image/')) {
+        const base64Match = inst.instruction.match(/(data:image\/[^,]+,\S+)/);
+        if (base64Match) {
+          const vacancies = await extractFromImage(base64Match[1], 'flier');
+          const saved = await saveVacancies(vacancies, 'image_flier', vacancies[0]?.company_name || 'unknown');
+          const resultMsg = vacancies.length > 0
+            ? `✅ Image processed via Vision. Found ${vacancies.length} vacancies, saved ${saved}.\n${vacancies.map((v: any) => `• ${v.rank_required} — ${v.vessel_type || 'Various'} — ${v.contact_email || v.contact_whatsapp || 'contact in apply_url'}`).join('\n')}`
+            : '⚠️ Image processed but no vacancies found — image may not contain job listings.';
+          await supabase.from('agent_instructions').update({ status: 'done', result: resultMsg, executed_at: new Date().toISOString() }).eq('id', inst.id);
+          await supabase.from('agent_conversations').insert({ direction: 'from_agent', message: resultMsg, message_type: 'report' });
+          results.push(resultMsg);
+          continue;
+        }
+      }
+
       // Ask Claude to interpret the instruction
       const interpretation = await askClaude(`You are the SeaMinds vacancy agent. Interpret this admin instruction and output a JSON action object.
 
