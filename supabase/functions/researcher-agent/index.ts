@@ -119,8 +119,9 @@ Output one of these action types as JSON:
 3. Add a company to knowledge base: {"action":"add_company","company":"Name","url":"https://...","email":"hr@...","fleet":["LNG"],"nationalities":["Indian"]}
 4. Set check frequency: {"action":"set_frequency","company":"Name","frequency":"daily"}
 5. Disable a source: {"action":"disable","company":"Name"}
-6. Filter by criteria: {"action":"add_filter","field":"vessel_type","value":"LNG"}
-7. Cannot execute: {"action":"manual_required","reason":"explanation"}
+6. Fetch a specific URL and extract vacancies: {"action":"fetch_url","url":"https://...","company":"Company name if known or Unknown"}
+7. Filter by criteria: {"action":"add_filter","field":"vessel_type","value":"LNG"}
+8. Cannot execute: {"action":"manual_required","reason":"explanation"}
 
 Return ONLY the JSON object, no markdown.`, 500);
 
@@ -161,6 +162,24 @@ Return ONLY the JSON object, no markdown.`, 500);
       } else if (action.action === 'disable') {
         await supabase.from('agent_knowledge').update({ is_active: false }).ilike('company_name', `%${action.company}%`);
         resultMsg = `✅ Disabled monitoring for ${action.company}`;
+      } else if (action.action === 'fetch_url') {
+        const url = action.url;
+        if (!url) { resultMsg = '⚠️ No URL provided'; }
+        else {
+          const html = await fetchPage(url);
+          const fakeCompany = {
+            company_name: action.company || 'Unknown',
+            vacancy_url: url,
+            company_type: 'unknown',
+            fleet_types: [],
+            preferred_nationalities: [],
+            crewing_email: null,
+          };
+          const vacancies = await extractVacanciesFromHTML(html, fakeCompany);
+          const saved = await saveVacancies(vacancies, 'manual_url', action.company || 'unknown');
+          resultMsg = `✅ Fetched ${url}\nFound ${vacancies.length} vacancies, saved ${saved} to database.`;
+          if (vacancies.length === 0) resultMsg += '\n⚠️ No vacancies found — page may require login or JavaScript rendering.';
+        }
       } else {
         resultMsg = `⚠️ Manual action needed: ${action.reason || inst.instruction}`;
       }

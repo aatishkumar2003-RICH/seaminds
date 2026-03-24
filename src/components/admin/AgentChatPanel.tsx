@@ -52,7 +52,7 @@ export default function AgentChatPanel() {
   const sendInstruction = async (instruction: string, urgent = false, attachment?: { type: string; name: string; content: string }) => {
     if (!instruction.trim() && !attachment) return;
     setSending(true);
-
+    setInput('');
     const displayMsg = attachment
       ? `${instruction || 'Process this attachment:'}\n📎 ${attachment.name}`
       : instruction;
@@ -102,7 +102,6 @@ export default function AgentChatPanel() {
     }
 
     await load();
-    setInput('');
     setSending(false);
   };
 
@@ -320,7 +319,7 @@ export default function AgentChatPanel() {
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => {
-              if (e.key === 'Enter' && !e.shiftKey) {
+              if (e.key === 'Enter' && !e.shiftKey && !sending) {
                 e.preventDefault();
                 handleLinkInText();
               }
