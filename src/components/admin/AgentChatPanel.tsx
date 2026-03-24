@@ -26,8 +26,21 @@ export default function AgentChatPanel() {
   const [sending, setSending] = useState(false);
   const [progress, setProgress] = useState<{ stage: string; pct: number } | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [timeoutSec, setTimeoutSec] = useState(60);
+  const [showSettings, setShowSettings] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    supabase.from('admin_settings').select('value').eq('key', 'agent_timeout_seconds').maybeSingle()
+      .then(({ data }) => { if (data?.value) setTimeoutSec(Math.max(10, Math.min(300, Number(data.value)))); });
+  }, []);
+
+  const saveTimeout = async (val: number) => {
+    const clamped = Math.max(10, Math.min(300, val));
+    setTimeoutSec(clamped);
+    await supabase.from('admin_settings').upsert({ key: 'agent_timeout_seconds', value: String(clamped) });
+  };
 
   const load = async () => {
     const { data } = await supabase
