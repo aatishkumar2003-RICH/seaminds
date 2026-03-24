@@ -435,6 +435,18 @@ Deno.serve(async (req) => {
   if (req.method === 'POST') {
     try {
       const body = await req.json();
+
+      // Handle PDF page images directly (bypasses agent_instructions to avoid size limits)
+      if (body.pdf_pages && Array.isArray(body.pdf_pages)) {
+        const { vacancies, saved, message } = await extractFromPdfPages(body.pdf_pages, body.filename || 'upload.pdf');
+        await supabase.from('agent_conversations').insert({
+          direction: 'from_agent', message, message_type: 'report',
+        });
+        return new Response(JSON.stringify({ success: true, pdf_result: message, total_saved: saved, vacancies_found: vacancies.length }), {
+          headers: { ...cors, 'Content-Type': 'application/json' },
+        });
+      }
+
       if (body.instruction) {
         await supabase.from('agent_instructions').insert({
           instruction: body.instruction,
@@ -443,7 +455,7 @@ Deno.serve(async (req) => {
         });
         await supabase.from('agent_conversations').insert({
           direction: 'from_admin',
-          message: body.instruction,
+          message: body.instruction.length > 500 ? body.instruction.substring(0, 500) + '… [truncated]' : body.instruction,
           message_type: 'instruction',
         });
         // Execute immediately if urgent
