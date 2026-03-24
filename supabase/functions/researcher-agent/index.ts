@@ -42,7 +42,7 @@ async function fetchPage(url: string): Promise<string> {
 }
 
 // ─── Extract vacancies from image using Claude Vision ─────────────
-async function extractFromImage(base64Data: string, filename: string): Promise<any[]> {
+async function extractFromImage(base64Data: string, _filename: string): Promise<any[]> {
   const mediaType = base64Data.match(/data:(image\/[^;]+);base64,/)?.[1] || 'image/jpeg';
   const base64 = base64Data.replace(/^data:image\/[^;]+;base64,/, '');
   
@@ -95,6 +95,37 @@ Return [] if no vacancies found.`
   try {
     return JSON.parse(text.replace(/```json|```/g, '').trim());
   } catch { return []; }
+}
+
+// ─── Extract vacancies from multiple PDF page images ──────────────
+async function extractFromPdfPages(pageImages: string[], filename: string): Promise<{ vacancies: any[]; saved: number; message: string }> {
+  const allVacancies: any[] = [];
+  const pageResults: string[] = [];
+
+  for (let i = 0; i < pageImages.length; i++) {
+    try {
+      const vacancies = await extractFromImage(pageImages[i], `${filename}_page${i + 1}`);
+      allVacancies.push(...vacancies);
+      if (vacancies.length > 0) {
+        pageResults.push(`Page ${i + 1}: ${vacancies.length} vacancy(ies)`);
+      }
+    } catch (e) {
+      pageResults.push(`Page ${i + 1}: error — ${String(e).substring(0, 80)}`);
+    }
+    // Small delay between pages to avoid rate limiting
+    if (i < pageImages.length - 1) await new Promise(r => setTimeout(r, 1000));
+  }
+
+  const saved = await saveVacancies(allVacancies, 'pdf_vision', allVacancies[0]?.company_name || 'unknown');
+
+  let message = '';
+  if (allVacancies.length > 0) {
+    message = `✅ PDF "${filename}" processed via Vision (${pageImages.length} pages).\nFound ${allVacancies.length} vacancies, saved ${saved}.\n\n${pageResults.join('\n')}\n\nVacancies:\n${allVacancies.map((v: any) => `• ${v.rank_required} — ${v.vessel_type || 'Various'} — ${v.company_name || 'Unknown'} — ${v.contact_email || v.contact_whatsapp || 'no contact'}`).join('\n')}`;
+  } else {
+    message = `⚠️ PDF "${filename}" processed (${pageImages.length} pages) but no vacancies found.\n${pageResults.join('\n')}`;
+  }
+
+  return { vacancies: allVacancies, saved, message };
 }
 
 async function extractVacanciesFromHTML(html: string, company: any): Promise<any[]> {
@@ -404,6 +435,18 @@ Deno.serve(async (req) => {
   if (req.method === 'POST') {
     try {
       const body = await req.json();
+
+      // Handle PDF page images directly (bypasses agent_instructions to avoid size limits)
+      if (body.pdf_pages && Array.isArray(body.pdf_pages)) {
+        const { vacancies, saved, message } = await extractFromPdfPages(body.pdf_pages, body.filename || 'upload.pdf');
+        await supabase.from('agent_conversations').insert({
+          direction: 'from_agent', message, message_type: 'report',
+        });
+        return new Response(JSON.stringify({ success: true, pdf_result: message, total_saved: saved, vacancies_found: vacancies.length }), {
+          headers: { ...cors, 'Content-Type': 'application/json' },
+        });
+      }
+
       if (body.instruction) {
         await supabase.from('agent_instructions').insert({
           instruction: body.instruction,
@@ -412,7 +455,7 @@ Deno.serve(async (req) => {
         });
         await supabase.from('agent_conversations').insert({
           direction: 'from_admin',
-          message: body.instruction,
+          message: body.instruction.length > 500 ? body.instruction.substring(0, 500) + '… [truncated]' : body.instruction,
           message_type: 'instruction',
         });
         // Execute immediately if urgent
