@@ -320,6 +320,20 @@ const Index = () => {
       const ext = cvFile.name.split(".").pop() || "pdf";
       await supabase.storage.from("crew-cvs").upload(`${data.id}/cv.${ext}`, cvFile, { upsert: true });
     }
+    // Silent background: notify admin + log email lead
+    supabase.functions.invoke('notify-signup', {
+      body: {
+        email: data?.email || authUser?.email || '',
+        first_name: profile.firstName || '',
+        last_name: profile.lastName || '',
+        nationality: profile.nationality || '',
+        whatsapp_number: profile.whatsappNumber || '',
+        role: profile.role || '',
+        vessel_type: profile.vesselType || '',
+        ship_name: profile.shipName || '',
+      }
+    }).catch(() => {});
+
     setAppState("welcome");
   };
 
