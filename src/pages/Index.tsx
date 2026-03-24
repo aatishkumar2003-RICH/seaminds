@@ -323,7 +323,7 @@ const Index = () => {
     // Silent background: notify admin + log email lead
     supabase.functions.invoke('notify-signup', {
       body: {
-        email: data?.email || authUser?.email || '',
+        email: authUser?.email || '',
         first_name: profile.firstName || '',
         last_name: profile.lastName || '',
         nationality: profile.nationality || '',
