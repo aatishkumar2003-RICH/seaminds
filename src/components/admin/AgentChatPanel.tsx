@@ -29,6 +29,7 @@ export default function AgentChatPanel() {
   const [dragOver, setDragOver] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   const load = async () => {
     const { data } = await supabase
