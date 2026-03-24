@@ -205,7 +205,7 @@ export default function AgentChatPanel() {
 
         let totalSaved = 0;
         const allLines: string[] = [];
-        const pagesToRead = Math.min(pdf.numPages, 10);
+        const pagesToRead = pdf.numPages; // ALL pages
 
         for (let pageNum = 1; pageNum <= pagesToRead; pageNum++) {
           const page = await pdf.getPage(pageNum);
