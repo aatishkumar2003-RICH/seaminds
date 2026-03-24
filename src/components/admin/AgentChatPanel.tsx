@@ -102,7 +102,6 @@ export default function AgentChatPanel() {
     }
 
     await load();
-    setInput('');
     setSending(false);
   };
 
