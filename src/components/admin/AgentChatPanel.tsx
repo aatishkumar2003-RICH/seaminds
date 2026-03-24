@@ -106,13 +106,13 @@ export default function AgentChatPanel() {
   };
 
   const handleFile = async (file: File) => {
-    const maxSize = 30 * 1024 * 1024; // 30MB limit
+    const maxSize = 30 * 1024 * 1024;
     if (file.size > maxSize) { alert('File too large. Max 30MB.'); return; }
     
     setSending(true);
     setInput('');
+    setProgress({ stage: 'Reading file…', pct: 5 });
 
-    // Show user we received the file
     await supabase.from('agent_conversations').insert({
       direction: 'from_admin',
       message: `📎 Processing: ${file.name} (${(file.size/1024/1024).toFixed(1)}MB) — extracting text...`,
@@ -125,20 +125,19 @@ export default function AgentChatPanel() {
     try {
       if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
         attachType = 'pdf';
-        // Extract text from PDF using FileReader + basic text extraction
+        setProgress({ stage: 'Loading PDF into memory…', pct: 15 });
         const arrayBuffer = await file.arrayBuffer();
         const uint8 = new Uint8Array(arrayBuffer);
         
-        // Basic PDF text extraction - find text between BT and ET markers
+        setProgress({ stage: 'Decoding PDF structure…', pct: 30 });
         let pdfText = '';
         const decoder = new TextDecoder('latin1');
         const rawText = decoder.decode(uint8);
         
-        // Extract text streams from PDF
+        setProgress({ stage: 'Extracting text blocks…', pct: 45 });
         const textMatches = rawText.matchAll(/BT[\s\S]*?ET/g);
         for (const match of textMatches) {
           const block = match[0];
-          // Extract strings in parentheses (PDF text format)
           const strMatches = block.matchAll(/\(([^)]{1,200})\)/g);
           for (const s of strMatches) {
             const clean = s[1].replace(/\\[nrt]/g, ' ').replace(/[^\x20-\x7E]/g, '').trim();
@@ -146,7 +145,7 @@ export default function AgentChatPanel() {
           }
         }
         
-        // Also try to find hex strings
+        setProgress({ stage: 'Extracting hex strings…', pct: 65 });
         const hexMatches = rawText.matchAll(/<([0-9A-Fa-f]{4,})>/g);
         for (const h of hexMatches) {
           try {
@@ -160,6 +159,7 @@ export default function AgentChatPanel() {
           } catch {}
         }
         
+        setProgress({ stage: 'Cleaning extracted text…', pct: 80 });
         extractedText = pdfText.replace(/\s+/g, ' ').trim().substring(0, 15000);
         
         if (!extractedText || extractedText.length < 50) {
@@ -168,6 +168,7 @@ export default function AgentChatPanel() {
 
       } else if (file.type.startsWith('image/')) {
         attachType = 'image';
+        setProgress({ stage: 'Encoding image…', pct: 50 });
         extractedText = await new Promise<string>((resolve) => {
           const r = new FileReader();
           r.onload = () => resolve(r.result as string);
@@ -175,13 +176,14 @@ export default function AgentChatPanel() {
         });
       } else {
         attachType = 'text';
+        setProgress({ stage: 'Reading text file…', pct: 50 });
         extractedText = await file.text();
       }
     } catch (e) {
       extractedText = `Error reading file ${file.name}: ${String(e)}`;
     }
 
-    // Send extracted content to agent — NOT the raw file
+    setProgress({ stage: 'Sending to agent…', pct: 90 });
     const instruction = `Extract all maritime job vacancies from this ${attachType} file named "${file.name}". File has been parsed — here is the extracted content:\n\n${extractedText.substring(0, 12000)}`;
 
     try {
@@ -213,6 +215,7 @@ export default function AgentChatPanel() {
       });
     }
 
+    setProgress(null);
     await load();
     setSending(false);
   };
