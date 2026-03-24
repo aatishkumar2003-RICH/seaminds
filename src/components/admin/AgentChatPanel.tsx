@@ -363,19 +363,42 @@ export default function AgentChatPanel() {
           </div>
         </div>
         {showSettings && (
-          <div style={{ marginTop: 12, padding: 12, background: 'rgba(212,175,55,0.05)', border: '1px solid rgba(212,175,55,0.15)', borderRadius: 10 }}>
-            <label style={{ color: '#D4AF37', fontSize: 12, fontWeight: 600 }}>
-              ⏱️ Request timeout: {timeoutSec}s
-            </label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6 }}>
-              <span style={{ color: '#556', fontSize: 10 }}>10s</span>
-              <input type="range" min={10} max={300} step={10} value={timeoutSec}
-                onChange={e => setTimeoutSec(Number(e.target.value))}
-                onMouseUp={() => saveTimeout(timeoutSec)}
-                onTouchEnd={() => saveTimeout(timeoutSec)}
-                style={{ flex: 1, accentColor: '#D4AF37' }}
-              />
-              <span style={{ color: '#556', fontSize: 10 }}>300s</span>
+          <div style={{ marginTop: 12, padding: 12, background: 'rgba(212,175,55,0.05)', border: '1px solid rgba(212,175,55,0.15)', borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div>
+              <label style={{ color: '#D4AF37', fontSize: 12, fontWeight: 600 }}>
+                ⏱️ Request timeout: {timeoutSec}s
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6 }}>
+                <span style={{ color: '#556', fontSize: 10 }}>10s</span>
+                <input type="range" min={10} max={300} step={10} value={timeoutSec}
+                  onChange={e => setTimeoutSec(Number(e.target.value))}
+                  onMouseUp={() => saveTimeout(timeoutSec)}
+                  onTouchEnd={() => saveTimeout(timeoutSec)}
+                  style={{ flex: 1, accentColor: '#D4AF37' }}
+                />
+                <span style={{ color: '#556', fontSize: 10 }}>300s</span>
+              </div>
+            </div>
+            <div>
+              <label style={{ color: '#D4AF37', fontSize: 12, fontWeight: 600 }}>
+                📄 PDF extraction mode
+              </label>
+              <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+                {(['text', 'vision'] as const).map(mode => (
+                  <button key={mode} onClick={() => setPdfMode(mode)}
+                    style={{
+                      padding: '5px 14px', borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                      background: pdfMode === mode ? 'rgba(212,175,55,0.25)' : 'rgba(255,255,255,0.04)',
+                      border: `1px solid ${pdfMode === mode ? '#D4AF37' : 'rgba(255,255,255,0.1)'}`,
+                      color: pdfMode === mode ? '#D4AF37' : '#888',
+                    }}>
+                    {mode === 'text' ? '📝 Text (fast, 30pg)' : '👁️ Vision (accurate, 10pg)'}
+                  </button>
+                ))}
+              </div>
+              <p style={{ color: '#556', fontSize: 10, marginTop: 4 }}>
+                Text: extracts raw text — fast, works for digital PDFs. Vision: renders pages as images and uses AI to read them — better for scanned fliers.
+              </p>
             </div>
           </div>
         )}
