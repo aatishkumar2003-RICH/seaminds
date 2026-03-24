@@ -162,6 +162,24 @@ Return ONLY the JSON object, no markdown.`, 500);
       } else if (action.action === 'disable') {
         await supabase.from('agent_knowledge').update({ is_active: false }).ilike('company_name', `%${action.company}%`);
         resultMsg = `✅ Disabled monitoring for ${action.company}`;
+      } else if (action.action === 'fetch_url') {
+        const url = action.url;
+        if (!url) { resultMsg = '⚠️ No URL provided'; }
+        else {
+          const html = await fetchPage(url);
+          const fakeCompany = {
+            company_name: action.company || 'Unknown',
+            vacancy_url: url,
+            company_type: 'unknown',
+            fleet_types: [],
+            preferred_nationalities: [],
+            crewing_email: null,
+          };
+          const vacancies = await extractVacanciesFromHTML(html, fakeCompany);
+          const saved = await saveVacancies(vacancies, 'manual_url', action.company || 'unknown');
+          resultMsg = `✅ Fetched ${url}\nFound ${vacancies.length} vacancies, saved ${saved} to database.`;
+          if (vacancies.length === 0) resultMsg += '\n⚠️ No vacancies found — page may require login or JavaScript rendering.';
+        }
       } else {
         resultMsg = `⚠️ Manual action needed: ${action.reason || inst.instruction}`;
       }
