@@ -211,66 +211,6 @@ export default function AgentChatPanel() {
     setSending(false);
   };
 
-  const handlePdfFile = async (file: File) => {
-    setProgress({ stage: 'Loading PDF.js…', pct: 10 });
-    const pdfjsLib = await import('pdfjs-dist');
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
-
-    setProgress({ stage: 'Parsing PDF…', pct: 20 });
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    const totalPages = Math.min(pdf.numPages, 10); // Cap at 10 pages
-
-    const pageImages: string[] = [];
-    for (let i = 1; i <= totalPages; i++) {
-      setProgress({ stage: `Rendering page ${i}/${totalPages}…`, pct: 20 + Math.round((i / totalPages) * 55) });
-      const page = await pdf.getPage(i);
-      const scale = 1.5; // good balance of quality vs size
-      const viewport = page.getViewport({ scale });
-
-      const canvas = document.createElement('canvas');
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-      const ctx = canvas.getContext('2d')!;
-      await page.render({ canvasContext: ctx, viewport }).promise;
-
-      // Convert to JPEG to keep payload manageable
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-      pageImages.push(dataUrl);
-      canvas.remove();
-    }
-
-    setProgress({ stage: 'Sending pages to Vision agent…', pct: 80 });
-
-    await supabase.from('agent_conversations').insert({
-      direction: 'from_admin',
-      message: `📄 PDF "${file.name}" rendered: ${totalPages} page(s) → sending to Vision AI for vacancy extraction...`,
-      message_type: 'attachment',
-    });
-
-    // Send page images directly to edge function (bypass agent_instructions to avoid size limits)
-    const res = await supabase.functions.invoke('researcher-agent', {
-      method: 'POST',
-      body: { pdf_pages: pageImages, filename: file.name, urgent: true },
-    });
-
-    setProgress({ stage: 'Processing results…', pct: 95 });
-    const result = res.data;
-    let reply = '';
-    if (result?.pdf_result) {
-      reply = result.pdf_result;
-    } else if (result?.total_saved !== undefined) {
-      reply = `✅ Processed "${file.name}" (${totalPages} pages)\nFound ${result.total_saved} vacancies saved to database.`;
-    } else {
-      reply = `✅ PDF processed. Agent is extracting vacancies from "${file.name}".`;
-    }
-
-    await supabase.from('agent_conversations').insert({
-      direction: 'from_agent',
-      message: reply,
-      message_type: 'report',
-    });
-  };
 
   const handleImageFile = async (file: File) => {
     setProgress({ stage: 'Encoding image…', pct: 50 });
