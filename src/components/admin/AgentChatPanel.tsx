@@ -195,9 +195,46 @@ export default function AgentChatPanel() {
           text += content.items.map((item: any) => item.str).join(' ') + '\n';
         }
 
-        if (!text.trim() || text.trim().length < 100) {
-          await supabase.from('agent_conversations').insert({ direction: 'from_agent', message: `⚠️ "${file.name}" appears to be a scanned/image PDF. Text extraction yielded no content.\n\nInstead: Take a screenshot of the job pages and paste directly into the chat (Ctrl+V). That will work perfectly.`, message_type: 'report' });
-        } else {
+      if (!text.trim() || text.trim().length < 100) {
+        await supabase.from('agent_conversations').insert({
+          direction: 'from_agent',
+          message: `📄 Scanned PDF — reading ${Math.min(pdf.numPages, 10)} pages via Vision...`,
+          message_type: 'report',
+        });
+        await load();
+
+        let totalSaved = 0;
+        const allLines: string[] = [];
+        const pagesToRead = Math.min(pdf.numPages, 10);
+
+        for (let pageNum = 1; pageNum <= pagesToRead; pageNum++) {
+          const page = await pdf.getPage(pageNum);
+          const viewport = page.getViewport({ scale: 1.5 });
+          const canvas = document.createElement('canvas');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          await page.render({ canvasContext: canvas.getContext('2d')!, viewport }).promise;
+          const imageData = canvas.toDataURL('image/jpeg', 0.85);
+
+          const res = await supabase.functions.invoke('researcher-agent', {
+            method: 'POST',
+            body: { image_data: imageData, image_name: `${file.name}_p${pageNum}`, urgent: true },
+          });
+
+          if (res.data?.vacancies_saved > 0) {
+            totalSaved += res.data.vacancies_saved;
+            (res.data.vacancy_list || []).forEach((v: any) => {
+              allLines.push(`• ${v.rank_required} — ${v.vessel_type || 'Various'} — ${v.contact_email || v.contact_whatsapp || 'see listing'}`);
+            });
+          }
+        }
+
+        const msg = totalSaved > 0
+          ? `✅ PDF "${file.name}" — ${pagesToRead} pages read via Vision\nTotal saved: ${totalSaved}\n\n${allLines.join('\n')}`
+          : `⚠️ ${pagesToRead} pages read — no job vacancies found. Pages may be news/articles. Try uploading a screenshot of a specific jobs page.`;
+
+        await supabase.from('agent_conversations').insert({ direction: 'from_agent', message: msg, message_type: 'report' });
+      } else {
           // Send extracted text to researcher agent
           const res = await supabase.functions.invoke('researcher-agent', {
             method: 'POST',
