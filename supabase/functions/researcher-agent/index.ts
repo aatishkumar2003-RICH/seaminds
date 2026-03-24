@@ -436,7 +436,6 @@ Deno.serve(async (req) => {
     try {
       const body = await req.json();
 
-      // Handle direct image upload via Vision
       if (body.image_data) {
         const mediaType = body.image_data.match(/data:(image\/[^;]+);base64,/)?.[1] || 'image/jpeg';
         const base64 = body.image_data.replace(/^data:image\/[^;]+;base64,/, '');
@@ -451,23 +450,7 @@ Deno.serve(async (req) => {
               role: 'user',
               content: [
                 { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-                { type: 'text', text: `Extract ALL maritime job vacancies from this flier image. Return ONLY a valid JSON array, no markdown.
-
-Each object must have:
-- rank_required: string (e.g. "Captain", "Chief Engineer", "2nd Officer", "Bosun", "AB")
-- vessel_type: string or null (e.g. "LNG", "Bulk Carrier", "Oil Tanker", "Container")
-- company_name: string or null
-- salary_min: number or null (USD/month)
-- salary_max: number or null (USD/month)
-- contact_email: string or null (extract any email visible)
-- contact_whatsapp: string or null (extract any phone/WhatsApp number visible)
-- apply_url: string or null (extract any URL visible)
-- description: string (max 100 chars)
-- title: string
-- quality_score: number 80-95
-- is_scam: false
-
-Create ONE entry per rank listed. Return [] if no vacancies found.` }
+                { type: 'text', text: `Extract ALL maritime job vacancies from this flier. Return ONLY a JSON array, no markdown. Each object: rank_required, vessel_type, company_name, salary_min, salary_max, contact_email, contact_whatsapp, apply_url, description (max 100 chars), title, quality_score (80-95), is_scam (false). One entry per rank. Return [] if none.` }
               ]
             }]
           }),
@@ -483,17 +466,14 @@ Create ONE entry per rank listed. Return [] if no vacancies found.` }
         await supabase.from('agent_conversations').insert({
           direction: 'from_agent',
           message: vacancies.length > 0
-            ? `✅ Vision processed "${body.image_name || 'flier'}"\nFound ${vacancies.length} vacancies, saved ${saved}.`
-            : `⚠️ No vacancies found in image — ensure it shows a job flier with rank and contact details.`,
+            ? `✅ Vision read "${body.image_name || 'image'}"\nFound ${vacancies.length} vacancies, saved ${saved}:\n\n${vacancies.slice(0,10).map((v: any) => `• ${v.rank_required} — ${v.vessel_type || 'Various'} — ${v.contact_email || v.contact_whatsapp || 'see apply_url'}`).join('\n')}`
+            : `⚠️ No vacancies found in image. Ensure the flier shows rank, vessel type, and contact details clearly.`,
           message_type: 'report',
         });
 
-        return new Response(JSON.stringify({
-          success: true,
-          vacancies_found: vacancies.length,
-          vacancies_saved: saved,
-          vacancy_list: vacancies.slice(0, 10),
-        }), { headers: { ...cors, 'Content-Type': 'application/json' } });
+        return new Response(JSON.stringify({ success: true, vacancies_found: vacancies.length, vacancies_saved: saved, vacancy_list: vacancies.slice(0,10) }), {
+          headers: { ...cors, 'Content-Type': 'application/json' },
+        });
       }
 
       // Handle PDF page images directly (bypasses agent_instructions to avoid size limits)
