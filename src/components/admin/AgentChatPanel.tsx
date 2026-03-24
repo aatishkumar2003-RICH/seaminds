@@ -133,215 +133,150 @@ export default function AgentChatPanel() {
   const handleFile = async (file: File) => {
     const maxSize = 30 * 1024 * 1024;
     if (file.size > maxSize) { alert('File too large. Max 30MB.'); return; }
-    
+
     setSending(true);
     setInput('');
-    setProgress({ stage: 'Reading file…', pct: 5 });
 
     await supabase.from('agent_conversations').insert({
       direction: 'from_admin',
-      message: `📎 Processing: ${file.name} (${(file.size/1024/1024).toFixed(1)}MB) — extracting content...`,
+      message: `📎 ${file.name} (${(file.size/1024/1024).toFixed(1)}MB) — processing...`,
       message_type: 'attachment',
     });
 
     try {
-      if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
-        if (pdfMode === 'vision') {
-          // Vision mode: render pages to images and send to Claude Vision
-          setProgress({ stage: 'Loading PDF.js…', pct: 10 });
-          await new Promise<void>((resolve, reject) => {
-            if ((window as any).pdfjsLib) { resolve(); return; }
-            const script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-            script.onload = () => { (window as any).pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; resolve(); };
-            script.onerror = reject;
-            document.head.appendChild(script);
-          });
+      const isImage = file.type.startsWith('image/');
+      const isPDF = file.type === 'application/pdf' || file.name.endsWith('.pdf');
 
-          setProgress({ stage: 'Parsing PDF…', pct: 20 });
-          const arrayBuffer = await file.arrayBuffer();
-          const pdf = await (window as any).pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-          const totalPages = Math.min(pdf.numPages, 10);
-          const pageImages: string[] = [];
-          for (let i = 1; i <= totalPages; i++) {
-            setProgress({ stage: `Rendering page ${i}/${totalPages}…`, pct: 20 + Math.round((i / totalPages) * 55) });
-            const page = await pdf.getPage(i);
-            const viewport = page.getViewport({ scale: 1.5 });
-            const canvas = document.createElement('canvas');
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
-            const ctx = canvas.getContext('2d')!;
-            await page.render({ canvasContext: ctx, viewport }).promise;
-            pageImages.push(canvas.toDataURL('image/jpeg', 0.85));
-            canvas.remove();
-          }
+      if (isImage) {
+        // Call Claude Vision DIRECTLY from browser — no database routing
+        const base64 = await new Promise<string>((resolve) => {
+          const r = new FileReader();
+          r.onload = () => resolve((r.result as string).split(',')[1]);
+          r.readAsDataURL(file);
+        });
+        const mediaType = file.type || 'image/jpeg';
 
-          setProgress({ stage: 'Sending pages to Vision agent…', pct: 80 });
-          await supabase.from('agent_conversations').insert({
-            direction: 'from_admin',
-            message: `📄 PDF "${file.name}" rendered: ${totalPages} page(s) → sending to Vision AI…`,
-            message_type: 'attachment',
-          });
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 3000,
+            messages: [{
+              role: 'user',
+              content: [
+                { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+                { type: 'text', text: `Extract ALL maritime job vacancies from this image/flier. Return a JSON array only, no markdown.
 
-          const res = await supabase.functions.invoke('researcher-agent', {
-            method: 'POST',
-            body: { pdf_pages: pageImages, filename: file.name, urgent: true },
-          });
-          setProgress({ stage: 'Processing results…', pct: 95 });
-          const result = res.data;
-          const reply = result?.pdf_result
-            || (result?.total_saved !== undefined ? `✅ Processed "${file.name}" (${totalPages} pages)\nFound ${result.total_saved} vacancies saved.` : `✅ PDF processed via Vision.`);
-          await supabase.from('agent_conversations').insert({ direction: 'from_agent', message: reply, message_type: 'report' });
+Each vacancy object must have:
+- rank_required: string
+- vessel_type: string or null  
+- company_name: string or null
+- salary_min: number or null (USD/month)
+- salary_max: number or null (USD/month)
+- contact_email: string or null
+- contact_whatsapp: string or null
+- apply_url: string or null
+- description: string (max 100 chars)
+- title: string
+- quality_score: number (80-95 for clear fliers)
+- is_scam: false
+
+Create one entry per rank. Return [] if no vacancies.` }
+              ]
+            }]
+          })
+        });
+
+        const data = await response.json();
+        const text = data.content?.[0]?.text || '[]';
+        let vacancies: any[] = [];
+        try { vacancies = JSON.parse(text.replace(/```json|```/g, '').trim()); } catch {}
+
+        // Save vacancies to database
+        let saved = 0;
+        for (const v of vacancies) {
+          if (!v.rank_required) continue;
+          const { error } = await supabase.from('external_vacancies').upsert({
+            source: 'image_flier',
+            external_id: `flier-${file.name}-${v.rank_required}-${v.vessel_type || 'x'}`.replace(/\s+/g,'_').substring(0,100),
+            title: v.title || `${v.rank_required} — ${v.vessel_type || 'Various'}`,
+            rank_required: v.rank_required,
+            vessel_type: v.vessel_type,
+            company_name: v.company_name,
+            salary_min: v.salary_min,
+            salary_max: v.salary_max,
+            description: v.description,
+            apply_url: v.apply_url,
+            contact_email: v.contact_email,
+            contact_whatsapp: v.contact_whatsapp,
+            quality_score: v.quality_score || 85,
+            is_verified: true,
+            is_scam_flagged: false,
+            scam_flags: [],
+            fetched_at: new Date().toISOString(),
+            expires_at: new Date(Date.now() + 30*24*60*60*1000).toISOString(),
+            raw_data: v,
+          }, { onConflict: 'source,external_id', ignoreDuplicates: true });
+          if (!error) saved++;
+        }
+
+        const reply = vacancies.length > 0
+          ? `✅ Vision processed "${file.name}"\nFound ${vacancies.length} vacancies, saved ${saved} to database:\n\n${vacancies.map((v: any) => `• ${v.rank_required} — ${v.vessel_type || 'Various'} — ${v.contact_email || v.contact_whatsapp || v.apply_url || 'no contact'}`).join('\n')}`
+          : `⚠️ No vacancies found in "${file.name}". Ensure the image shows a job flier with rank, vessel type, and contact details.`;
+
+        await supabase.from('agent_conversations').insert({ direction: 'from_agent', message: reply, message_type: 'report' });
+
+      } else if (isPDF) {
+        // Load PDF.js and extract text
+        await new Promise<void>((resolve, reject) => {
+          if ((window as any).pdfjsLib) { resolve(); return; }
+          const s = document.createElement('script');
+          s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+          s.onload = () => { (window as any).pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; resolve(); };
+          s.onerror = reject;
+          document.head.appendChild(s);
+        });
+
+        const buf = await file.arrayBuffer();
+        const pdf = await (window as any).pdfjsLib.getDocument({ data: buf }).promise;
+        let text = '';
+        const maxP = Math.min(pdf.numPages, 40);
+        for (let i = 1; i <= maxP; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          text += content.items.map((item: any) => item.str).join(' ') + '\n';
+        }
+
+        if (!text.trim() || text.trim().length < 100) {
+          await supabase.from('agent_conversations').insert({ direction: 'from_agent', message: `⚠️ "${file.name}" appears to be a scanned/image PDF. Text extraction yielded no content.\n\nInstead: Take a screenshot of the job pages and paste directly into the chat (Ctrl+V). That will work perfectly.`, message_type: 'report' });
         } else {
-          // Text mode: extract text content
-          let extractedText = '';
-          try {
-            setProgress({ stage: 'Loading PDF.js…', pct: 10 });
-            await new Promise<void>((resolve, reject) => {
-              if ((window as any).pdfjsLib) { resolve(); return; }
-              const script = document.createElement('script');
-              script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-              script.onload = () => { (window as any).pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; resolve(); };
-              script.onerror = reject;
-              document.head.appendChild(script);
-            });
-
-            setProgress({ stage: 'Parsing PDF…', pct: 30 });
-            const arrayBuffer = await file.arrayBuffer();
-            const pdf = await (window as any).pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-            let fullText = '';
-            const maxPages = Math.min(pdf.numPages, 30);
-            for (let i = 1; i <= maxPages; i++) {
-              setProgress({ stage: `Extracting page ${i}/${maxPages}…`, pct: 30 + Math.round((i / maxPages) * 50) });
-              const page = await pdf.getPage(i);
-              const content = await page.getTextContent();
-              const pageText = content.items.map((item: any) => item.str).join(' ');
-              fullText += pageText + '\n';
-            }
-            extractedText = fullText.trim().substring(0, 15000);
-            if (!extractedText || extractedText.length < 50) {
-              // Auto-fallback to Vision mode for scanned/image-based PDFs
-              await supabase.from('agent_conversations').insert({
-                direction: 'from_agent',
-                message: `🔄 Scanned PDF detected — too little text extracted (${extractedText.length} chars). Auto-switching to Vision mode…`,
-                message_type: 'report',
-              });
-              setProgress({ stage: 'Scanned PDF → switching to Vision…', pct: 40 });
-              const totalPages = Math.min(pdf.numPages, 10);
-              const pageImages: string[] = [];
-              for (let i = 1; i <= totalPages; i++) {
-                setProgress({ stage: `Vision: rendering page ${i}/${totalPages}…`, pct: 40 + Math.round((i / totalPages) * 40) });
-                const page = await pdf.getPage(i);
-                const viewport = page.getViewport({ scale: 1.5 });
-                const canvas = document.createElement('canvas');
-                canvas.width = viewport.width;
-                canvas.height = viewport.height;
-                const ctx = canvas.getContext('2d')!;
-                await page.render({ canvasContext: ctx, viewport }).promise;
-                pageImages.push(canvas.toDataURL('image/jpeg', 0.85));
-                canvas.remove();
-              }
-              setProgress({ stage: 'Sending pages to Vision agent…', pct: 85 });
-              const vRes = await supabase.functions.invoke('researcher-agent', {
-                method: 'POST',
-                body: { pdf_pages: pageImages, filename: file.name, urgent: true },
-              });
-              setProgress({ stage: 'Processing results…', pct: 95 });
-              const vResult = vRes.data;
-              const vReply = vResult?.pdf_result
-                || (vResult?.total_saved !== undefined ? `✅ Processed "${file.name}" via Vision (${totalPages} pages)\nFound ${vResult.total_saved} vacancies saved.` : `✅ Scanned PDF processed via Vision.`);
-              await supabase.from('agent_conversations').insert({ direction: 'from_agent', message: vReply, message_type: 'report' });
-              await load();
-              setProgress(null);
-              setSending(false);
-              return;
-            }
-          } catch (e) {
-            extractedText = `PDF extraction failed: ${String(e)}. Try Vision mode or paste a screenshot.`;
-          }
-
-          setProgress({ stage: 'Sending to agent…', pct: 85 });
-          const instruction = `Extract all maritime job vacancies from this PDF named "${file.name}":\n\n${extractedText}`;
+          // Send extracted text to researcher agent
           const res = await supabase.functions.invoke('researcher-agent', {
             method: 'POST',
-            body: { instruction, urgent: true },
+            body: { instruction: `Extract all maritime job vacancies from this PDF named "${file.name}". Here is the extracted text:\n\n${text.substring(0, 12000)}`, urgent: true },
           });
-          setProgress({ stage: 'Processing results…', pct: 95 });
           const result = res.data;
-          const reply = result?.instructions?.length > 0
-            ? result.instructions.join('\n')
-            : result?.total_saved !== undefined
-              ? `✅ Processed "${file.name}"\nFound ${result.total_saved} vacancies.`
-              : `✅ PDF sent to agent for processing.`;
+          const reply = result?.total_saved !== undefined
+            ? `✅ PDF "${file.name}" processed.\nPages read: ${maxP}. Vacancies saved: ${result.total_saved}.`
+            : `✅ PDF text extracted from "${file.name}" and sent to agent.`;
           await supabase.from('agent_conversations').insert({ direction: 'from_agent', message: reply, message_type: 'report' });
         }
-      } else if (file.type.startsWith('image/')) {
-        await handleImageFile(file);
       } else {
-        await handleTextFile(file);
+        const textContent = await file.text();
+        const res = await supabase.functions.invoke('researcher-agent', {
+          method: 'POST',
+          body: { instruction: `Extract maritime vacancies from file "${file.name}":\n\n${textContent.substring(0,8000)}`, urgent: true },
+        });
+        const result = res.data;
+        await supabase.from('agent_conversations').insert({ direction: 'from_agent', message: `✅ File processed. Saved: ${result?.total_saved || 0} vacancies.`, message_type: 'report' });
       }
     } catch (e) {
-      await supabase.from('agent_conversations').insert({
-        direction: 'from_agent',
-        message: `⚠️ Could not process "${file.name}" — ${String(e)}`,
-        message_type: 'report',
-      });
+      await supabase.from('agent_conversations').insert({ direction: 'from_agent', message: `⚠️ Error processing file: ${String(e)}`, message_type: 'report' });
     }
 
-    setProgress(null);
     await load();
     setSending(false);
-  };
-
-
-  const handleImageFile = async (file: File) => {
-    setProgress({ stage: 'Encoding image…', pct: 50 });
-    const dataUrl = await new Promise<string>((resolve) => {
-      const r = new FileReader();
-      r.onload = () => resolve(r.result as string);
-      r.readAsDataURL(file);
-    });
-
-    setProgress({ stage: 'Sending to agent…', pct: 80 });
-    const instruction = `Extract all maritime job vacancies from this image named "${file.name}".\n\n${dataUrl}`;
-    const res = await supabase.functions.invoke('researcher-agent', {
-      method: 'POST',
-      body: { instruction, urgent: true },
-    });
-
-    const result = res.data;
-    let reply = result?.instructions?.length > 0
-      ? result.instructions.join('\n')
-      : result?.total_saved !== undefined
-        ? `✅ Processed "${file.name}"\nFound ${result.total_saved} vacancies.`
-        : `✅ Image sent to agent for processing.`;
-
-    await supabase.from('agent_conversations').insert({
-      direction: 'from_agent', message: reply, message_type: 'report',
-    });
-  };
-
-  const handleTextFile = async (file: File) => {
-    setProgress({ stage: 'Reading text…', pct: 50 });
-    const text = await file.text();
-    setProgress({ stage: 'Sending to agent…', pct: 80 });
-
-    const instruction = `Extract all maritime job vacancies from this text file named "${file.name}":\n\n${text.substring(0, 12000)}`;
-    const res = await supabase.functions.invoke('researcher-agent', {
-      method: 'POST',
-      body: { instruction, urgent: true },
-    });
-
-    const result = res.data;
-    let reply = result?.instructions?.length > 0
-      ? result.instructions.join('\n')
-      : result?.total_saved !== undefined
-        ? `✅ Processed "${file.name}"\nFound ${result.total_saved} vacancies.`
-        : `✅ File sent to agent for processing.`;
-
-    await supabase.from('agent_conversations').insert({
-      direction: 'from_agent', message: reply, message_type: 'report',
-    });
   };
 
   const handlePaste = async (e: React.ClipboardEvent) => {
