@@ -41,7 +41,62 @@ async function fetchPage(url: string): Promise<string> {
   }
 }
 
-// ─── Extract vacancies from HTML using Claude ─────────────────────
+// ─── Extract vacancies from image using Claude Vision ─────────────
+async function extractFromImage(base64Data: string, filename: string): Promise<any[]> {
+  const mediaType = base64Data.match(/data:(image\/[^;]+);base64,/)?.[1] || 'image/jpeg';
+  const base64 = base64Data.replace(/^data:image\/[^;]+;base64,/, '');
+  
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': ANTHROPIC_KEY,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 3000,
+      messages: [{
+        role: 'user',
+        content: [
+          {
+            type: 'image',
+            source: { type: 'base64', media_type: mediaType, data: base64 },
+          },
+          {
+            type: 'text',
+            text: `You are a maritime vacancy extraction specialist. Extract ALL job vacancies visible in this image/flier.
+
+Return ONLY a valid JSON array of vacancy objects. Each object must have:
+- rank_required: string (e.g. "Captain", "Chief Engineer", "2nd Officer", "Bosun", "AB")
+- vessel_type: string or null (e.g. "LNG", "Bulk Carrier", "Oil Tanker", "Chemical Tanker")  
+- company_name: string or null
+- salary_min: number or null (USD/month)
+- salary_max: number or null (USD/month)
+- contact_email: string or null (extract any email visible)
+- contact_whatsapp: string or null (extract any phone/WhatsApp number)
+- apply_url: string or null (extract any URL visible)
+- joining_port: string or null
+- contract_duration: string or null
+- description: string (max 100 chars summary)
+- quality_score: number 70-95 (image fliers are generally good quality)
+- is_scam: false
+- title: string
+
+If multiple ranks are listed under one vessel type, create separate entries for each rank.
+Return [] if no vacancies found.`
+          }
+        ],
+      }],
+    }),
+  });
+  const data = await res.json();
+  const text = data.content?.[0]?.text || '[]';
+  try {
+    return JSON.parse(text.replace(/```json|```/g, '').trim());
+  } catch { return []; }
+}
+
 async function extractVacanciesFromHTML(html: string, company: any): Promise<any[]> {
   if (!html || html.length < 100) return [];
   
