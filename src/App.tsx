@@ -111,6 +111,7 @@ const App = () => (
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           <CookieConsent />
+          <PWAInstallPrompt />
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
