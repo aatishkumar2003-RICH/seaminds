@@ -33,6 +33,7 @@ import BlogPost from "./pages/BlogPost";
 import AdminDashboard from "./pages/AdminDashboard";
 import Verify from "./pages/Verify";
 import CookieConsent from "./components/CookieConsent";
+import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import { AuthProvider } from "./contexts/AuthContext";
 
 const queryClient = new QueryClient();
