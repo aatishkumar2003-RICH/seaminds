@@ -9,6 +9,7 @@ import HowItWorksSection from "@/components/homepage/HowItWorksSection";
 import BentoGrid from "@/components/homepage/BentoGrid";
 import CompaniesB2BSection from "@/components/homepage/CompaniesB2BSection";
 import TestimonialsSection from "@/components/homepage/TestimonialsSection";
+import SMCShowcase from "@/components/homepage/SMCShowcase";
 import FinalCTA from "@/components/homepage/FinalCTA";
 import HomeFooter from "@/components/homepage/HomeFooter";
 import LiveTicker from "@/components/homepage/LiveTicker";
@@ -87,9 +88,10 @@ const HomePage = () => {
         <AppPreviewSection />
         <HowItWorksSection />
         <BentoGrid />
-        <CompaniesB2BSection />
-        <TestimonialsSection />
-        <FinalCTA />
+          <CompaniesB2BSection />
+          <SMCShowcase />
+          <TestimonialsSection />
+          <FinalCTA />
         <HomeFooter />
       </div>
     </div>
