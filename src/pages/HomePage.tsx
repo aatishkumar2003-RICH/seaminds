@@ -88,9 +88,10 @@ const HomePage = () => {
         <AppPreviewSection />
         <HowItWorksSection />
         <BentoGrid />
-        <CompaniesB2BSection />
-        <TestimonialsSection />
-        <FinalCTA />
+          <CompaniesB2BSection />
+          <SMCShowcase />
+          <TestimonialsSection />
+          <FinalCTA />
         <HomeFooter />
       </div>
     </div>
