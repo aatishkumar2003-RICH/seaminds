@@ -61,6 +61,7 @@ const VesselOnboardingCard = ({ profileId, existingShipName, existingRole, onBac
           ship_name: vesselName.trim(),
           vessel_type: vesselType,
           role: normalizedRole,
+          rank,
           port_of_joining: portOfJoining.trim(),
           onboarding_complete: true,
           ...(passportNumber ? { passport_number: passportNumber } : {}),
@@ -69,7 +70,7 @@ const VesselOnboardingCard = ({ profileId, existingShipName, existingRole, onBac
         .eq("id", profileId);
 
       if (error) throw error;
-      onComplete({ vesselName: vesselName.trim(), vesselType, rank: normalizedRole, portOfJoining: portOfJoining.trim() });
+      onComplete({ vesselName: vesselName.trim(), vesselType, rank, portOfJoining: portOfJoining.trim() });
     } catch (e: any) {
       console.error("Onboarding save failed:", e);
       toast.error("Failed to save — please try again");
