@@ -830,6 +830,17 @@ const ResumeBuilder = () => {
                 <div><label className={lbl}>Date of Birth <span className="text-red-500">*</span></label><input type="date" className={inp} value={personal.dob} onChange={e => P("dob", e.target.value)} /></div>
               </div>
               <div className="grid grid-cols-2 gap-3">
+                <div><label className={lbl}>Gender <span className="text-red-500">*</span></label>
+                  <select className={sel} value={personal.gender} onChange={e => P("gender", e.target.value)}>
+                    <option value="">Select...</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div><label className={lbl}>Passport Number <span className="text-red-500">*</span></label><input className={inp} placeholder="P1234567A" value={personal.passportNo} onChange={e => P("passportNo", e.target.value)} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
                 <div><label className={lbl}>Passport Number <span className="text-red-500">*</span></label><input className={inp} placeholder="P1234567A" value={personal.passportNo} onChange={e => P("passportNo", e.target.value)} /></div>
                 <div><label className={lbl}>CDC / Seaman Book No.</label><input className={inp} placeholder="CDC-123456" value={personal.cdcNo} onChange={e => P("cdcNo", e.target.value)} /></div>
               </div>
