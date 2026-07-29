@@ -7,6 +7,7 @@ interface CVRow {
   path: string;
   size: number;
   uploaded_at: string;
+  cv_uid?: string;
   first_name?: string;
   last_name?: string;
   email?: string;
@@ -28,19 +29,61 @@ const parseMaybeJson = (value: any) => {
   }
 };
 
+const asArray = (value: any) => {
+  const parsed = parseMaybeJson(value);
+  return Array.isArray(parsed) ? parsed : [];
+};
+
+const text = (...values: any[]) => {
+  for (const value of values) {
+    if (value === null || value === undefined) continue;
+    const str = String(value).trim();
+    if (str) return str;
+  }
+  return "";
+};
+
+const getFullName = (row: CVRow) => text(`${row.first_name || ""} ${row.last_name || ""}`.trim(), row.email, "Unnamed crew");
+
+const fmtDate = (value: any) => {
+  const dateText = text(value);
+  if (!dateText) return "—";
+  const parsed = new Date(dateText);
+  if (Number.isNaN(parsed.getTime())) return dateText;
+  return parsed.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+};
+
+const addPdfSection = (pdf: any, title: string, y: number) => {
+  pdf.setFillColor(13, 27, 42);
+  pdf.rect(14, y, 182, 7, "F");
+  pdf.setTextColor(212, 175, 55);
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(10);
+  pdf.text(title, 17, y + 5);
+  return y + 11;
+};
+
+const ensurePage = (pdf: any, y: number) => {
+  if (y < 280) return y;
+  pdf.addPage();
+  return 16;
+};
+
 const normalizeBuiltCV = (row: any) => {
   if (!row) return null;
   const medical = parseMaybeJson(row.medical) || {};
+  const personal = medical?.personal || {};
   return {
     ...row,
-    certificates: parseMaybeJson(row.certificates),
-    sea_service: parseMaybeJson(row.sea_service),
-    education: parseMaybeJson(row.education),
+    certificates: asArray(row.certificates),
+    sea_service: asArray(row.sea_service),
+    education: asArray(row.education),
     medical,
-    personal: medical?.personal || {},
+    personal,
     skills: medical?.skills || {},
     training: medical?.training || [],
     photo: medical?.photo || null,
+    cv_uid: text(medical?.cv_uid, personal?.cvUid, personal?.cv_uid),
   };
 };
 
@@ -138,19 +181,21 @@ export default function CVDatabaseTab() {
         const parsed = parsedByUser[uid];
         const profile = profByUser[uid] || {};
         const personal = parsed?.personal || {};
+        const latestSea = (parsed?.sea_service || []).find((s: any) => text(s.vesselName, s.vessel_name));
         return {
           user_id: uid,
           path: file?.path || "",
           size: file?.size || 0,
           uploaded_at: file?.uploaded_at || parsed?.updated_at || "",
+          cv_uid: text(profile.crew_unique_id, parsed?.cv_uid, personal.cvUid, personal.cv_uid),
           ...profile,
-          first_name: profile.first_name || personal.firstName || personal.first_name || "",
-          last_name: profile.last_name || personal.lastName || personal.last_name || "",
-          email: profile.email || personal.email || "",
-          role: profile.rank || profile.role || personal.rank || personal.applyingFor || "",
-          nationality: profile.nationality || personal.nationality || "",
-          whatsapp_number: profile.whatsapp_number || personal.phone || personal.whatsapp || "",
-          ship_name: profile.ship_name || "",
+          first_name: text(profile.first_name, personal.firstName, personal.first_name, personal.name?.split(" ")?.[0]),
+          last_name: text(profile.last_name, personal.lastName, personal.last_name, personal.name?.split(" ")?.slice(1).join(" ")),
+          email: text(profile.email, personal.email),
+          role: text(profile.rank, personal.rank, personal.applyingFor, profile.role, latestSea?.rankOnBoard, latestSea?.rank),
+          nationality: text(profile.nationality, personal.nationality),
+          whatsapp_number: text(profile.whatsapp_number, personal.phone, personal.whatsapp),
+          ship_name: text(profile.ship_name, personal.currentVessel, latestSea?.vesselName, latestSea?.vessel_name),
           parsed,
           source: file && parsed ? "both" : file ? "uploaded" : "built",
         };
@@ -179,6 +224,151 @@ export default function CVDatabaseTab() {
     window.open(data.signedUrl, "_blank");
   };
 
+  const downloadBuiltCV = async (row: CVRow) => {
+    if (!row.parsed) return toast.error("No built CV data available");
+    try {
+      const { jsPDF } = await import("jspdf");
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const parsed = row.parsed;
+      const personal = parsed.personal || {};
+      const sea = asArray(parsed.sea_service);
+      const certs = asArray(parsed.certificates);
+      const education = asArray(parsed.education);
+      const training = asArray(parsed.training);
+      const skills = parsed.skills || {};
+      const name = getFullName(row);
+      let y = 16;
+
+      pdf.setFillColor(13, 27, 42);
+      pdf.rect(0, 0, 210, 31, "F");
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(18);
+      pdf.text(name.toUpperCase(), 14, 13, { maxWidth: 126 });
+      pdf.setTextColor(212, 175, 55);
+      pdf.setFontSize(10);
+      pdf.text(text(row.role, personal.rank, "Rank not specified"), 14, 22, { maxWidth: 126 });
+      pdf.setFillColor(212, 175, 55);
+      pdf.roundedRect(146, 8, 50, 12, 2, 2, "F");
+      pdf.setTextColor(13, 27, 42);
+      pdf.setFontSize(8);
+      pdf.text(text(row.cv_uid, "CV UID PENDING"), 171, 16, { align: "center" });
+      y = 38;
+
+      pdf.setTextColor(30, 30, 30);
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(9);
+      const contactLines = [
+        [`Nationality`, text(row.nationality, personal.nationality, "—")],
+        [`Gender`, text(personal.gender, "—")],
+        [`DOB`, fmtDate(personal.dob || personal.date_of_birth)],
+        [`Passport`, text(personal.passportNo, personal.passport_no, "—")],
+        [`CDC/SB`, text(personal.cdcNo, personal.cdc_no, "—")],
+        [`WhatsApp`, text(row.whatsapp_number, personal.phone, personal.whatsapp, "—")],
+        [`Email`, text(row.email, personal.email, "—")],
+        [`Available`, fmtDate(personal.availableFrom)],
+      ];
+      contactLines.forEach(([label, value], index) => {
+        const x = index % 2 === 0 ? 14 : 108;
+        const lineY = y + Math.floor(index / 2) * 6;
+        pdf.setFont("helvetica", "bold");
+        pdf.text(`${label}:`, x, lineY);
+        pdf.setFont("helvetica", "normal");
+        pdf.text(value, x + 24, lineY, { maxWidth: 65 });
+      });
+      y += 30;
+
+      if (text(personal.summary)) {
+        y = addPdfSection(pdf, "PROFESSIONAL SUMMARY", y);
+        pdf.setTextColor(35, 35, 35);
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(9);
+        const lines = pdf.splitTextToSize(personal.summary, 178);
+        pdf.text(lines, 14, y);
+        y += lines.length * 5 + 5;
+      }
+
+      if (sea.some((s: any) => text(s.vesselName, s.vessel_name))) {
+        y = ensurePage(pdf, addPdfSection(pdf, "SEA SERVICE", y));
+        pdf.setFontSize(8);
+        sea.filter((s: any) => text(s.vesselName, s.vessel_name)).forEach((s: any, index: number) => {
+          y = ensurePage(pdf, y);
+          pdf.setTextColor(13, 27, 42);
+          pdf.setFont("helvetica", "bold");
+          pdf.text(`${index + 1}. ${text(s.vesselName, s.vessel_name)}`, 14, y);
+          pdf.setFont("helvetica", "normal");
+          pdf.setTextColor(45, 45, 45);
+          pdf.text([
+            text(s.rankOnBoard, s.rank, row.role),
+            text(s.vesselType, s.vessel_type),
+            text(s.company),
+            `${text(s.fromDate, s.sign_on)} - ${text(s.toDate, s.sign_off)}`,
+          ].filter(Boolean).join(" | "), 18, y + 5, { maxWidth: 176 });
+          y += 12;
+        });
+      } else if (/cadet|trainee/i.test(text(row.role, personal.rank))) {
+        y = ensurePage(pdf, addPdfSection(pdf, "SEA SERVICE", y));
+        pdf.setTextColor(70, 70, 70);
+        pdf.setFont("helvetica", "italic");
+        pdf.setFontSize(9);
+        pdf.text("New joiner / cadet profile — sea service not required yet.", 14, y);
+        y += 10;
+      }
+
+      if (certs.some((c: any) => text(c.name))) {
+        y = ensurePage(pdf, addPdfSection(pdf, "CERTIFICATES", y));
+        pdf.setFontSize(8);
+        certs.filter((c: any) => text(c.name)).forEach((c: any, index: number) => {
+          y = ensurePage(pdf, y);
+          pdf.setTextColor(13, 27, 42);
+          pdf.setFont("helvetica", "bold");
+          pdf.text(`${index + 1}. ${text(c.name)}`, 14, y, { maxWidth: 86 });
+          pdf.setTextColor(45, 45, 45);
+          pdf.setFont("helvetica", "normal");
+          pdf.text(`No: ${text(c.number, c.cert_no, "—")} | Exp: ${fmtDate(c.expiryDate || c.expiry_date)}`, 108, y, { maxWidth: 86 });
+          y += 6;
+        });
+        y += 4;
+      }
+
+      if (education.some((e: any) => text(e.institution, e.qualification)) || training.some((t: any) => text(t.courseName))) {
+        y = ensurePage(pdf, addPdfSection(pdf, "EDUCATION & TRAINING", y));
+        pdf.setTextColor(45, 45, 45);
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(8);
+        [...education, ...training].forEach((item: any) => {
+          y = ensurePage(pdf, y);
+          pdf.text(`• ${text(item.qualification, item.courseName, item.institution)} ${text(item.institution) ? `— ${text(item.institution)}` : ""}`, 14, y, { maxWidth: 178 });
+          y += 5;
+        });
+        y += 4;
+      }
+
+      if (text(skills.engineTypes, skills.cargoTypes, skills.computerSkills, skills.other)) {
+        y = ensurePage(pdf, addPdfSection(pdf, "SKILLS", y));
+        pdf.setTextColor(45, 45, 45);
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(8);
+        const skillText = [
+          text(skills.engineTypes) && `Engine: ${text(skills.engineTypes)}`,
+          text(skills.cargoTypes) && `Cargo: ${text(skills.cargoTypes)}`,
+          Array.isArray(skills.ecdis) && skills.ecdis.length ? `ECDIS: ${skills.ecdis.join(", ")}` : "",
+          text(skills.computerSkills) && `Computer: ${text(skills.computerSkills)}`,
+          text(skills.other),
+        ].filter(Boolean).join("\n");
+        pdf.text(pdf.splitTextToSize(skillText, 178), 14, y);
+      }
+
+      pdf.setFontSize(7);
+      pdf.setTextColor(120, 120, 120);
+      pdf.text(`Generated from SeaMinds Admin CV Database • ${new Date().toLocaleString()}`, 14, 290);
+      pdf.save(`SeaMinds-CV-${text(row.cv_uid, row.user_id).replace(/[^A-Za-z0-9-]/g, '')}-${name.replace(/\s+/g, '-')}.pdf`);
+    } catch (e) {
+      console.error("Admin CV PDF error:", e);
+      toast.error("Could not generate CV PDF");
+    }
+  };
+
   const filtered = rows.filter((r) => {
     if (!query.trim()) return true;
     const q = query.toLowerCase();
@@ -189,6 +379,7 @@ export default function CVDatabaseTab() {
   });
 
   const withParsed = rows.filter((r) => r.parsed).length;
+  const readyForPdf = rows.filter((r) => r.parsed || r.path).length;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -205,6 +396,10 @@ export default function CVDatabaseTab() {
         <div style={card}>
           <div style={{ color: "#9CA3AF", fontSize: 12 }}>PDF files uploaded</div>
           <div style={{ color: "#D4AF37", fontSize: 26, fontWeight: 700 }}>{rows.filter((r) => r.path).length}</div>
+        </div>
+        <div style={card}>
+          <div style={{ color: "#9CA3AF", fontSize: 12 }}>Ready to download</div>
+          <div style={{ color: "#D4AF37", fontSize: 26, fontWeight: 700 }}>{readyForPdf}</div>
         </div>
       </div>
 
@@ -241,6 +436,7 @@ export default function CVDatabaseTab() {
           <thead>
             <tr>
               <th style={th}>Name</th>
+              <th style={th}>CV UID</th>
               <th style={th}>Rank</th>
               <th style={th}>Nationality</th>
               <th style={th}>WhatsApp</th>
@@ -256,8 +452,9 @@ export default function CVDatabaseTab() {
             {filtered.map((r) => (
               <tr key={r.user_id}>
                 <td style={td}>
-                  {(r.first_name || "") + " " + (r.last_name || "") || <span style={{ color: "#6b7280" }}>—</span>}
+                  {getFullName(r) || <span style={{ color: "#6b7280" }}>—</span>}
                 </td>
+                <td style={td}><span style={{ color: "#D4AF37", fontFamily: "monospace", fontWeight: 700 }}>{r.cv_uid || "—"}</span></td>
                 <td style={td}>{r.role || "—"}</td>
                 <td style={td}>{r.nationality || "—"}</td>
                 <td style={td}>{r.whatsapp_number || "—"}</td>
@@ -282,6 +479,19 @@ export default function CVDatabaseTab() {
                         }}
                       >
                         View PDF
+                      </button>
+                    )}
+
+                    {r.parsed && (
+                      <button
+                        onClick={() => downloadBuiltCV(r)}
+                        style={{
+                          padding: "6px 10px", borderRadius: 6, cursor: "pointer",
+                          background: "#D4AF37", color: "#0D1B2A",
+                          border: "none", fontWeight: 600, fontSize: 12,
+                        }}
+                      >
+                        Generate PDF
                       </button>
                     )}
 
