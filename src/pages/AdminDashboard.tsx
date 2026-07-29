@@ -21,6 +21,7 @@ import SubAdminsTab from "@/components/admin/SubAdminsTab";
 import VacancyIntelTab from "@/components/admin/VacancyIntelTab";
 import CompanyDirectoryTab from "@/components/admin/CompanyDirectoryTab";
 import AgentChatPanel from "@/components/admin/AgentChatPanel";
+import CVDatabaseTab from "@/components/admin/CVDatabaseTab";
 
 const ADMIN_PIN = "215151";
 const LS_KEY = "sm_admin_auth";
