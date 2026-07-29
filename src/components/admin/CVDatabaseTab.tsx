@@ -238,16 +238,19 @@ export default function CVDatabaseTab() {
                 </td>
                 <td style={td}>
                   <div style={{ display: "flex", gap: 8 }}>
-                    <button
-                      onClick={() => openCV(r.path)}
-                      style={{
-                        padding: "6px 10px", borderRadius: 6, cursor: "pointer",
-                        background: "#D4AF37", color: "#0D1B2A",
-                        border: "none", fontWeight: 600, fontSize: 12,
-                      }}
-                    >
-                      View PDF
-                    </button>
+                    {r.path && (
+                      <button
+                        onClick={() => openCV(r.path)}
+                        style={{
+                          padding: "6px 10px", borderRadius: 6, cursor: "pointer",
+                          background: "#D4AF37", color: "#0D1B2A",
+                          border: "none", fontWeight: 600, fontSize: 12,
+                        }}
+                      >
+                        View PDF
+                      </button>
+                    )}
+
                     {r.parsed && (
                       <button
                         onClick={() => setSelected(r)}
