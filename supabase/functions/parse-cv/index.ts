@@ -23,7 +23,7 @@ Return ONLY valid JSON with these exact fields (use empty string if not found):
   "imoNumber": "",
   "bio": ""
 }
-For rank use exactly one of: Captain, Chief Officer, 2nd Officer, 3rd Officer, Chief Engineer, 2nd Engineer, 3rd Engineer, 4th Engineer, ETO, Bosun, AB Seaman, OS, Oiler, Cook, Steward
+For rank use exactly one of: Captain, Chief Officer, 2nd Officer, 3rd Officer, Chief Engineer, 2nd Engineer, 3rd Engineer, 4th Engineer, ETO, Bosun, AB Seaman, OS, Oiler, Cook, Steward, Deck Cadet, Engine Cadet, ETO Cadet, Trainee Officer (Deck), Trainee Officer (Engine), Trainee OS, Trainee Cook
 For yearsAtSea use format: Less than 1 year, 1-3 years, 3-7 years, 7-15 years, 15+ years
 Return ONLY the JSON object, no other text.`;
 
