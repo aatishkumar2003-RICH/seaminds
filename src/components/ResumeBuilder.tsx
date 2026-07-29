@@ -556,7 +556,38 @@ const ResumeBuilder = () => {
           user_id: user.id,
         };
         if (/^\d{4}-\d{2}-\d{2}/.test(savedPersonal.dob || '')) profilePayload.date_of_birth = savedPersonal.dob;
-        await supabase.from('crew_profiles').upsert({ id: user.id, ...profilePayload } as any, { onConflict: 'id' });
+        const { data: existingProfile } = await supabase
+          .from('crew_profiles')
+          .select('id, first_name, last_name, email, role, rank, nationality, whatsapp_number, ship_name, years_at_sea, gender, passport_number, crew_unique_id, date_of_birth')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (existingProfile) {
+          const updatePayload: Record<string, any> = {};
+          const fillIfMissing = (column: string, current: any, next: any) => {
+            if ((current === null || current === undefined || String(current).trim() === '') && next !== null && next !== undefined && String(next).trim() !== '') {
+              updatePayload[column] = next;
+            }
+          };
+          fillIfMissing('first_name', existingProfile.first_name, profilePayload.first_name);
+          fillIfMissing('last_name', existingProfile.last_name, profilePayload.last_name);
+          fillIfMissing('email', existingProfile.email, profilePayload.email);
+          fillIfMissing('nationality', existingProfile.nationality, profilePayload.nationality);
+          fillIfMissing('whatsapp_number', existingProfile.whatsapp_number, profilePayload.whatsapp_number);
+          fillIfMissing('ship_name', existingProfile.ship_name, profilePayload.ship_name);
+          fillIfMissing('years_at_sea', existingProfile.years_at_sea, profilePayload.years_at_sea);
+          fillIfMissing('gender', existingProfile.gender, profilePayload.gender);
+          fillIfMissing('passport_number', existingProfile.passport_number, profilePayload.passport_number);
+          fillIfMissing('crew_unique_id', existingProfile.crew_unique_id, profilePayload.crew_unique_id);
+          fillIfMissing('date_of_birth', existingProfile.date_of_birth, profilePayload.date_of_birth);
+          if ((!existingProfile.rank || existingProfile.rank === existingProfile.role) && profilePayload.rank) updatePayload.rank = profilePayload.rank;
+          if ((!existingProfile.role || existingProfile.role === 'Rating') && profilePayload.role) updatePayload.role = profilePayload.role;
+          if (Object.keys(updatePayload).length > 0) {
+            await supabase.from('crew_profiles').update(updatePayload).eq('id', user.id);
+          }
+        } else {
+          await supabase.from('crew_profiles').insert({ id: user.id, ...profilePayload, onboarded: false, onboarding_complete: false } as any);
+        }
       }
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
