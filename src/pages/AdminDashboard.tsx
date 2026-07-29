@@ -769,10 +769,119 @@ function AgentsTab() {
   );
 }
 
+/* ─── Activity Tab ─── */
+function ActivityTab() {
+  const [crew, setCrew] = useState<any[]>([]);
+  const [leads, setLeads] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    const [c, l] = await Promise.all([
+      supabase.from("crew_profiles").select("id, first_name, last_name, role, nationality, vessel_type, ship_name, whatsapp_number, created_at").order("created_at", { ascending: false }).limit(500),
+      supabase.from("email_leads").select("*").order("last_seen", { ascending: false }).limit(500),
+    ]);
+    setCrew(c.data || []);
+    setLeads(l.data || []);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    load();
+    const id = setInterval(load, 30000);
+    return () => clearInterval(id);
+  }, [load]);
+
+  const converted = leads.filter((l) => l.converted).length;
+  const card = { background: "#112240", borderColor: "#D4AF3744" };
+  const th = { color: "#D4AF37" };
+  const td: React.CSSProperties = { color: "#E0E0E0" };
+
+  if (loading) return <p style={{ color: "#D4AF37" }}>Loading…</p>;
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="rounded-lg p-4 border" style={card}>
+          <p className="text-sm" style={{ color: "#94A3B8" }}>Total Registered Crew</p>
+          <p className="text-3xl font-bold" style={{ color: "#D4AF37" }}>{crew.length}</p>
+        </div>
+        <div className="rounded-lg p-4 border" style={card}>
+          <p className="text-sm" style={{ color: "#94A3B8" }}>Total Email Leads</p>
+          <p className="text-3xl font-bold" style={{ color: "#D4AF37" }}>{leads.length}</p>
+        </div>
+        <div className="rounded-lg p-4 border" style={card}>
+          <p className="text-sm" style={{ color: "#94A3B8" }}>Converted Leads</p>
+          <p className="text-3xl font-bold" style={{ color: "#D4AF37" }}>{converted}</p>
+        </div>
+      </div>
+
+      <div className="rounded-lg p-4 border" style={card}>
+        <h2 className="text-lg font-bold mb-3" style={{ color: "#D4AF37" }}>👥 Registered Crew ({crew.length})</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr style={{ borderBottom: "1px solid #D4AF3744" }}>
+                {["Name", "Rank", "Nationality", "Vessel Type", "Ship Name", "WhatsApp", "Joined"].map((h) => (
+                  <th key={h} className="text-left p-2" style={th}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {crew.map((r) => (
+                <tr key={r.id} style={{ borderBottom: "1px solid #1B2838" }}>
+                  <td className="p-2" style={td}>{r.first_name} {r.last_name}</td>
+                  <td className="p-2" style={td}>{r.role || "—"}</td>
+                  <td className="p-2" style={td}>{r.nationality || "—"}</td>
+                  <td className="p-2" style={td}>{r.vessel_type || "—"}</td>
+                  <td className="p-2" style={td}>{r.ship_name || "—"}</td>
+                  <td className="p-2" style={td}>{r.whatsapp_number || "—"}</td>
+                  <td className="p-2" style={td}>{r.created_at ? new Date(r.created_at).toLocaleDateString() : "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="rounded-lg p-4 border" style={card}>
+        <h2 className="text-lg font-bold mb-3" style={{ color: "#D4AF37" }}>📧 Email Leads ({leads.length})</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr style={{ borderBottom: "1px solid #D4AF3744" }}>
+                {["Email", "Name", "Role", "Source", "Visits", "Converted", "Last Seen"].map((h) => (
+                  <th key={h} className="text-left p-2" style={th}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {leads.map((l) => (
+                <tr key={l.id} style={{ borderBottom: "1px solid #1B2838" }}>
+                  <td className="p-2" style={td}>{l.email}</td>
+                  <td className="p-2" style={td}>{[l.first_name, l.last_name].filter(Boolean).join(" ") || "—"}</td>
+                  <td className="p-2" style={td}>{l.role || "—"}</td>
+                  <td className="p-2" style={td}>{l.source || "—"}</td>
+                  <td className="p-2" style={td}>{l.visits ?? 0}</td>
+                  <td className="p-2">
+                    <Badge style={l.converted ? { background: "#22c55e", color: "#0D1B2A" } : { background: "#64748B", color: "#fff" }}>
+                      {l.converted ? "yes" : "no"}
+                    </Badge>
+                  </td>
+                  <td className="p-2" style={td}>{l.last_seen ? new Date(l.last_seen).toLocaleString() : "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Main Dashboard ─── */
 export default function AdminDashboard() {
   const [authed, setAuthed] = useState(localStorage.getItem(LS_KEY) === ADMIN_PIN);
-  const [tab, setTab] = useState<"crew" | "pricing" | "discount" | "country_pricing" | "sub_admins" | "dpa" | "blog_images" | "agents" | "vacancy_intel" | "company_dir">("crew");
+  const [tab, setTab] = useState<"crew" | "activity" | "pricing" | "discount" | "country_pricing" | "sub_admins" | "dpa" | "blog_images" | "agents" | "vacancy_intel" | "company_dir">("crew");
 
   if (!authed) return <PinScreen onAuth={() => setAuthed(true)} />;
 
@@ -783,6 +892,7 @@ export default function AdminDashboard() {
 
   const tabs = [
     { id: "crew" as const, label: "Crew Search" },
+    { id: "activity" as const, label: "📋 Activity" },
     { id: "pricing" as const, label: "Pricing" },
     { id: "discount" as const, label: "Discount Codes" },
     { id: "country_pricing" as const, label: "Country Pricing" },
@@ -816,6 +926,7 @@ export default function AdminDashboard() {
       </div>
 
       {tab === "crew" && <CrewSearchTab />}
+      {tab === "activity" && <ActivityTab />}
       {tab === "pricing" && <PricingTab />}
       {tab === "discount" && <DiscountCodesTab />}
       {tab === "country_pricing" && <CountryPricingTab />}
