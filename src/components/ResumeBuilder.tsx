@@ -203,6 +203,13 @@ const buildSmartCVId = (opts: { nationality: string; gender: string; currentRank
   return `SM-${nat}-${gen}-${rnk}-${h}`;
 };
 
+const broadRoleFromRank = (rank: string) => {
+  if (/captain|master/i.test(rank)) return "Captain";
+  if (/engine|eto|eeo|fitter|oiler|wiper|electrician|refrigeration/i.test(rank)) return "Engineer";
+  if (/officer|mate|deck cadet/i.test(rank)) return "Officer";
+  return "Rating";
+};
+
 // ─────────── COMPONENT ───────────
 const ResumeBuilder = () => {
   const { accessToken, user } = useAuth();
@@ -449,12 +456,27 @@ const ResumeBuilder = () => {
 
   // ── Download PDF ──
   const handleDownloadPDF = async () => {
+    setGeneratingPdf(true);
     try {
       const { default: html2canvas } = await import('html2canvas');
       const { jsPDF } = await import('jspdf');
       const el = document.getElementById('cv-preview');
-      if (!el) return;
-      const canvas = await html2canvas(el, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff' });
+      if (!el) {
+        alert('CV preview is not ready yet. Please try again.');
+        return;
+      }
+
+      await saveCVData({ personal, sea, certs, edu, skills, photo, training });
+
+      const canvas = await html2canvas(el, {
+        scale: window.devicePixelRatio > 2 ? 1.5 : 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        windowWidth: el.scrollWidth,
+        windowHeight: el.scrollHeight,
+      });
       const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const imgData = canvas.toDataURL('image/png');
       const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -469,26 +491,74 @@ const ResumeBuilder = () => {
         pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
         heightLeft -= pdf.internal.pageSize.getHeight();
       }
-      pdf.save(`SeaMinds-CV-${personal.firstName || 'Seafarer'}-${personal.lastName || ''}.pdf`);
-    } catch (e) { console.error(e); }
+
+      const fileName = `SeaMinds-CV-${smartCVId}-${personal.firstName || 'Seafarer'}-${personal.lastName || ''}.pdf`.replace(/\s+/g, '-');
+      if (user?.id) {
+        try {
+          const blob = pdf.output('blob');
+          await supabase.storage
+            .from('crew-cvs')
+            .upload(`${user.id}/seaminds-cv.pdf`, blob, { upsert: true, contentType: 'application/pdf' });
+        } catch (uploadError) {
+          console.warn('CV PDF admin sync failed:', uploadError);
+        }
+      }
+      pdf.save(fileName);
+    } catch (e) {
+      console.error(e);
+      alert('Could not generate the PDF. Please try again from the CV preview screen.');
+    } finally {
+      setGeneratingPdf(false);
+    }
   };
 
   // ── Auto-save state ──
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [generatingPdf, setGeneratingPdf] = useState(false);
 
   // ── Auto-save CV data to Supabase ──
   const saveCVData = async (data: any) => {
     try {
       if (!user) return;
       setSaveStatus('saving');
+      const savedLastRank = (data.sea || []).find((s: SeaEntry) => s.vesselName && s.rankOnBoard)?.rankOnBoard || '';
+      const savedCvUid = buildSmartCVId({
+        nationality: data.personal?.nationality || '',
+        gender: data.personal?.gender || '',
+        currentRank: data.personal?.rank || '',
+        lastRank: savedLastRank,
+        seed: user.id || data.personal?.email || `${data.personal?.firstName || ''}${data.personal?.lastName || ''}${data.personal?.passportNo || ''}`,
+      });
+      const savedPersonal = { ...data.personal, cvUid: savedCvUid, cv_uid: savedCvUid };
       await supabase.from('crew_cv_data').upsert({
         user_id: user.id,
-        certificates: JSON.stringify(data.certs) as any,
-        sea_service: JSON.stringify(data.sea) as any,
-        education: JSON.stringify(data.edu) as any,
-        medical: JSON.stringify({ personal: data.personal, skills: data.skills, photo: data.photo, training: data.training }) as any,
+        certificates: data.certs as any,
+        sea_service: data.sea as any,
+        education: data.edu as any,
+        medical: { personal: savedPersonal, skills: data.skills || {}, photo: data.photo || null, training: data.training || [], cv_uid: savedCvUid } as any,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_id' });
+
+      if (savedPersonal.firstName || savedPersonal.lastName || savedPersonal.rank || savedPersonal.email || savedPersonal.phone) {
+        const profilePayload: Record<string, any> = {
+          first_name: savedPersonal.firstName || user.email?.split('@')[0] || 'Crew',
+          last_name: savedPersonal.lastName || '',
+          email: savedPersonal.email || user.email || null,
+          role: broadRoleFromRank(savedPersonal.rank || savedPersonal.applyingFor || ''),
+          rank: savedPersonal.rank || savedPersonal.applyingFor || null,
+          nationality: savedPersonal.nationality || '',
+          whatsapp_number: savedPersonal.phone || savedPersonal.whatsapp || '',
+          ship_name: savedPersonal.currentVessel || 'Not assigned',
+          years_at_sea: savedPersonal.yearsAtSea || '',
+          gender: savedPersonal.gender || null,
+          passport_number: savedPersonal.passportNo || null,
+          crew_unique_id: savedCvUid,
+          user_id: user.id,
+          onboarded: false,
+        };
+        if (/^\d{4}-\d{2}-\d{2}/.test(savedPersonal.dob || '')) profilePayload.date_of_birth = savedPersonal.dob;
+        await supabase.from('crew_profiles').upsert({ id: user.id, ...profilePayload } as any, { onConflict: 'id' });
+      }
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
     } catch (e) { console.error('CV save error:', e); setSaveStatus('idle'); }
@@ -1225,7 +1295,7 @@ const ResumeBuilder = () => {
 
           {/* Preview Button */}
           <div className="pb-4">
-            <button onClick={() => setView("preview")}
+            <button onClick={handlePreviewClick}
               className="w-full bg-[#D4AF37] text-[#0D1B2A] py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-3 shadow-lg hover:bg-yellow-400 transition-colors mt-3">
               <Eye size={20} /> Preview My CV →
             </button>
@@ -1241,9 +1311,10 @@ const ResumeBuilder = () => {
               className="px-4 py-3 bg-[#132236] text-gray-300 rounded-xl text-sm font-medium flex items-center gap-2 hover:text-white transition-colors">
               <ArrowLeft size={16} /> Back to Edit
             </button>
-            <button onClick={handleDownloadPDF}
+            <button onClick={handleDownloadPDF} disabled={generatingPdf}
               className="flex-1 bg-[#D4AF37] text-[#0D1B2A] py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-yellow-400 transition-colors shadow-lg">
-              <Printer size={18} /> Download PDF
+              {generatingPdf ? <Loader2 size={18} className="animate-spin" /> : <Printer size={18} />}
+              {generatingPdf ? 'Generating…' : 'Download PDF'}
             </button>
           </div>
 
