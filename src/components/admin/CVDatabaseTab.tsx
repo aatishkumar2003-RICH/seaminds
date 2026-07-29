@@ -52,29 +52,21 @@ export default function CVDatabaseTab() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      // 1) List all CV files from storage
-      const { data: files, error: filesErr } = await supabase.storage
+      // 1) List all CV files from storage bucket (uploaded PDFs)
+      const { data: files } = await supabase.storage
         .from("crew-cvs")
         .list("", { limit: 1000, sortBy: { column: "created_at", order: "desc" } });
-      if (filesErr) throw filesErr;
 
-      // Files are stored as {user_id}/cv.pdf → list top-level user_id folders
-      const userIds: string[] = [];
       const filesByUser: Record<string, { path: string; size: number; uploaded_at: string }> = {};
-
-      // If the top-level entries are folders, we need to list each; also handle flat files.
       for (const f of files || []) {
         if (f.id && f.metadata) {
-          // Flat file at root — path is the name (unusual for this bucket)
           filesByUser[f.name] = {
             path: f.name,
             size: (f.metadata as any).size || 0,
             uploaded_at: (f as any).created_at || "",
           };
         } else {
-          // Folder representing a user_id
           const uid = f.name;
-          userIds.push(uid);
           const { data: inner } = await supabase.storage
             .from("crew-cvs")
             .list(uid, { limit: 5, sortBy: { column: "created_at", order: "desc" } });
@@ -89,37 +81,45 @@ export default function CVDatabaseTab() {
         }
       }
 
-      const ids = Object.keys(filesByUser);
-      if (ids.length === 0) {
-        setRows([]);
-        return;
-      }
-
-      // 2) Fetch matching crew profiles
-      const { data: profiles } = await supabase
-        .from("crew_profiles")
-        .select("id, first_name, last_name, email, role, nationality, whatsapp_number, ship_name")
-        .in("id", ids);
-
-      // 3) Fetch matching parsed CV data
+      // 2) Fetch ALL parsed/built CV data (Resume Builder saves here)
       const { data: parsedRows } = await supabase
         .from("crew_cv_data")
         .select("*")
-        .in("user_id", ids);
+        .order("updated_at", { ascending: false });
+
+      // 3) Union: every user that has either a stored PDF or a crew_cv_data row
+      const allIds = new Set<string>([
+        ...Object.keys(filesByUser),
+        ...((parsedRows || []).map((r: any) => r.user_id)),
+      ]);
+      const ids = Array.from(allIds);
+      if (ids.length === 0) { setRows([]); return; }
+
+      // 4) Fetch matching crew profiles
+      const { data: profiles } = await supabase
+        .from("crew_profiles")
+        .select("id, first_name, last_name, email, role, rank, nationality, whatsapp_number, ship_name")
+        .in("id", ids);
 
       const profByUser: Record<string, any> = {};
       (profiles || []).forEach((p: any) => (profByUser[p.id] = p));
       const parsedByUser: Record<string, any> = {};
       (parsedRows || []).forEach((r: any) => (parsedByUser[r.user_id] = r));
 
-      const merged: CVRow[] = ids.map((uid) => ({
-        user_id: uid,
-        ...filesByUser[uid],
-        ...(profByUser[uid] || {}),
-        parsed: parsedByUser[uid],
-      }));
+      const merged: CVRow[] = ids.map((uid) => {
+        const file = filesByUser[uid];
+        const parsed = parsedByUser[uid];
+        return {
+          user_id: uid,
+          path: file?.path || "",
+          size: file?.size || 0,
+          uploaded_at: file?.uploaded_at || parsed?.updated_at || "",
+          ...(profByUser[uid] || {}),
+          role: (profByUser[uid] as any)?.rank || (profByUser[uid] as any)?.role,
+          parsed,
+        };
+      });
 
-      // Sort newest upload first
       merged.sort((a, b) => (b.uploaded_at || "").localeCompare(a.uploaded_at || ""));
       setRows(merged);
     } catch (e: any) {
@@ -129,6 +129,7 @@ export default function CVDatabaseTab() {
       setLoading(false);
     }
   }, []);
+
 
   useEffect(() => {
     load();
