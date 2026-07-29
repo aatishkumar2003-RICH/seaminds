@@ -1014,6 +1014,7 @@ export default function AdminDashboard() {
 
       {tab === "crew" && <CrewSearchTab />}
       {tab === "activity" && <ActivityTab />}
+      {tab === "cv_database" && <CVDatabaseTab />}
       {tab === "pricing" && <PricingTab />}
       {tab === "discount" && <DiscountCodesTab />}
       {tab === "country_pricing" && <CountryPricingTab />}
