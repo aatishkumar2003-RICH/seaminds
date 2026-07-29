@@ -154,6 +154,7 @@ const ResumeBuilder = () => {
   // ── Form state (keep existing names) ──
   const [personal, setPersonal] = useState({
     firstName: "", lastName: "", rank: "", applyingFor: "", nationality: "",
+    gender: "",
     dob: "", phone: "", email: "", address: "",
     passportNo: "", cdcNo: "", cdcCountry: "", summary: "",
     emergencyName: "", emergencyPhone: "",
