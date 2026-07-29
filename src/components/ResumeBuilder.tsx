@@ -1261,18 +1261,28 @@ const ResumeBuilder = () => {
               </div>
               {/* Name & info */}
               <div style={{ flex:1 }}>
-                <div style={{ background:'#0D1B2A', padding:'10px 14px', marginBottom:'6px' }}>
-                  <div style={{ fontSize:'22px', fontWeight:'900', color:'#FFFFFF', letterSpacing:'2px', textTransform:'uppercase', lineHeight:'1.1' }}>
-                    {personal.firstName || personal.lastName ? `${personal.firstName} ${personal.lastName}`.trim() : 'YOUR NAME'}
+                <div style={{ background:'#0D1B2A', padding:'10px 14px', marginBottom:'6px', display:'flex', alignItems:'center', justifyContent:'space-between', gap:'10px' }}>
+                  <div style={{ minWidth:0 }}>
+                    <div style={{ fontSize:'22px', fontWeight:'900', color:'#FFFFFF', letterSpacing:'2px', textTransform:'uppercase', lineHeight:'1.1' }}>
+                      {personal.firstName || personal.lastName ? `${personal.firstName} ${personal.lastName}`.trim() : 'YOUR NAME'}
+                    </div>
+                    <div style={{ fontSize:'12px', color:'#D4AF37', fontWeight:'bold', marginTop:'3px', letterSpacing:'1px', textTransform:'uppercase' }}>
+                      {personal.rank || 'RANK / POSITION'}
+                      {personal.applyingFor ? <span style={{ color:'#aaa', fontWeight:'normal', fontSize:'10px' }}> | Seeking: {personal.applyingFor}</span> : ''}
+                    </div>
                   </div>
-                  <div style={{ fontSize:'12px', color:'#D4AF37', fontWeight:'bold', marginTop:'3px', letterSpacing:'1px', textTransform:'uppercase' }}>
-                    {personal.rank || 'RANK / POSITION'}
-                    {personal.applyingFor ? <span style={{ color:'#aaa', fontWeight:'normal', fontSize:'10px' }}> | Seeking: {personal.applyingFor}</span> : ''}
+                  {/* SMART CV UNIQUE ID */}
+                  <div title="SeaMinds Unique CV ID · Nationality · Gender · Rank · Hash" style={{ flexShrink:0, textAlign:'right' }}>
+                    <div style={{ fontSize:'7px', color:'#D4AF37', letterSpacing:'1.5px', fontWeight:'bold', textTransform:'uppercase', marginBottom:'2px' }}>CV UID</div>
+                    <div style={{ fontFamily:'"Courier New", monospace', fontSize:'11px', color:'#FFFFFF', background:'#D4AF37', padding:'3px 7px', borderRadius:'3px', letterSpacing:'0.5px', fontWeight:'bold', border:'1px solid #D4AF37' }}>
+                      <span style={{ color:'#0D1B2A' }}>{smartCVId}</span>
+                    </div>
                   </div>
                 </div>
                 {/* Two-column contact details */}
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'2px 16px', fontSize:'9px', color:'#333', lineHeight:'1.8' }}>
                   {personal.nationality && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Nationality: </span>{personal.nationality}</div>}
+                  {personal.gender && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Gender: </span>{personal.gender}</div>}
                   {personal.dob && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Date of Birth: </span>{fmtDate(personal.dob)}</div>}
                   {personal.passportNo && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Passport: </span>{personal.passportNo}</div>}
                   {personal.cdcNo && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>CDC/SB: </span>{personal.cdcNo}{personal.cdcCountry ? ` (${personal.cdcCountry})` : ''}</div>}
