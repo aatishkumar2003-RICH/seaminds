@@ -977,7 +977,7 @@ export default function AdminDashboard() {
 
   const tabs = [
     { id: "crew" as const, label: "Crew Search" },
-    { id: "activity" as const, label: "📋 Activity" },
+    { id: "activity" as const, label: "📋 Crew Activity" },
     { id: "pricing" as const, label: "Pricing" },
     { id: "discount" as const, label: "Discount Codes" },
     { id: "country_pricing" as const, label: "Country Pricing" },
