@@ -410,16 +410,16 @@ Deno.serve(async (req) => {
         const mediaType = body.image_data.match(/data:(image\/[^;]+);base64,/)?.[1] || 'image/jpeg';
         const base64 = body.image_data.replace(/^data:image\/[^;]+;base64,/, '');
 
-        const visionRes = await fetch('https://api.anthropic.com/v1/messages', {
+        const visionRes = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}` },
           body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
+            model: 'gpt-4o',
             max_tokens: 3000,
             messages: [{
               role: 'user',
               content: [
-                { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+                { type: 'image_url', image_url: { url: `data:${mediaType};base64,${base64}` } },
                 { type: 'text', text: `You are reading a page from a maritime industry magazine. This page may contain job advertisements, vacancy notices, hiring announcements, or recruitment fliers — in ANY layout, ANY design, with ANY language mixing.
 
 Extract EVERY job opportunity you can see. Look for: company names, ship types, ranks needed, salary, email addresses, phone numbers, WhatsApp numbers, QR codes, website URLs.
@@ -435,9 +435,10 @@ If this page has NO job content at all (pure news/editorial/advertisement for pr
         });
 
         const visionData = await visionRes.json();
-        const text = visionData.content?.[0]?.text || '[]';
+        const text = visionData.choices?.[0]?.message?.content || '[]';
         let vacancies: any[] = [];
         try { vacancies = JSON.parse(text.replace(/```json|```/g, '').trim()); } catch {}
+
 
         const saved = await saveVacancies(vacancies, 'image_flier', vacancies[0]?.company_name || 'unknown');
 
