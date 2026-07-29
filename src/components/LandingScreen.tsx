@@ -60,6 +60,19 @@ const LandingScreen = ({ onGetStarted, onManagerLogin }: LandingScreenProps) => 
       return;
     }
     setEmailSent(true);
+    // Notify admin that a new email visitor requested magic link
+    supabase.functions.invoke('notify-signup', {
+      body: {
+        email,
+        first_name: '',
+        last_name: '',
+        nationality: '',
+        whatsapp_number: '',
+        role: 'Email Magic Link Request',
+        vessel_type: '',
+        ship_name: '',
+      }
+    }).catch(() => {});
   };
 
   return (
