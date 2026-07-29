@@ -128,6 +128,81 @@ const isEngineerRank = (rank: string) => {
 
 const uid = () => String(Date.now()) + String(Math.random()).slice(2, 6);
 
+// ─────────── SMART CV UNIQUE ID ───────────
+// Format: SM-<NAT3>-<G>-<RANK3>-<HASH5>
+//   NAT3  = ISO-ish 3-letter nationality code (e.g. IND, PHI, UKR)
+//   G     = M / F / X (gender)
+//   RANK3 = compact rank code (CAP, CE, 2OF, ETO, CDT, TRN, etc.)
+//   HASH5 = deterministic base36 hash of user id / email → stable per crew
+const NAT_MAP: Record<string, string> = {
+  indian: 'IND', india: 'IND', filipino: 'PHI', philippines: 'PHI', philippine: 'PHI',
+  ukrainian: 'UKR', ukraine: 'UKR', russian: 'RUS', russia: 'RUS',
+  british: 'GBR', 'united kingdom': 'GBR', uk: 'GBR', american: 'USA', 'united states': 'USA', usa: 'USA',
+  bangladeshi: 'BGD', bangladesh: 'BGD', pakistani: 'PAK', pakistan: 'PAK',
+  srilankan: 'LKA', 'sri lankan': 'LKA', 'sri lanka': 'LKA',
+  nepalese: 'NPL', nepal: 'NPL', myanmar: 'MMR', burmese: 'MMR',
+  indonesian: 'IDN', indonesia: 'IDN', chinese: 'CHN', china: 'CHN',
+  vietnamese: 'VNM', vietnam: 'VNM', turkish: 'TUR', turkey: 'TUR',
+  greek: 'GRC', greece: 'GRC', polish: 'POL', poland: 'POL',
+  romanian: 'ROU', romania: 'ROU', croatian: 'HRV', croatia: 'HRV',
+  german: 'DEU', germany: 'DEU', french: 'FRA', france: 'FRA',
+  italian: 'ITA', italy: 'ITA', spanish: 'ESP', spain: 'ESP',
+  nigerian: 'NGA', nigeria: 'NGA', egyptian: 'EGY', egypt: 'EGY',
+  brazilian: 'BRA', brazil: 'BRA',
+};
+const RANK_MAP: Array<[RegExp, string]> = [
+  [/master|captain/i, 'CAP'],
+  [/chief\s*officer|chief mate|c\/?o\b/i, 'CO'],
+  [/2nd\s*off|second\s*off/i, '2OF'],
+  [/3rd\s*off|third\s*off/i, '3OF'],
+  [/deck\s*cadet|trainee\s*officer\s*\(deck\)/i, 'DCT'],
+  [/chief\s*eng|c\/?e\b/i, 'CE'],
+  [/2nd\s*eng|second\s*eng/i, '2E'],
+  [/3rd\s*eng|third\s*eng/i, '3E'],
+  [/4th\s*eng|fourth\s*eng/i, '4E'],
+  [/eto\s*cadet/i, 'ETC'],
+  [/eto|electro/i, 'ETO'],
+  [/engine\s*cadet|trainee\s*officer\s*\(engine\)/i, 'ECT'],
+  [/bosun|boatswain/i, 'BSN'],
+  [/ab\b|able\s*seaman/i, 'AB'],
+  [/os\b|ordinary\s*seaman|trainee\s*os/i, 'OS'],
+  [/fitter/i, 'FTR'],
+  [/oiler|wiper/i, 'OLR'],
+  [/cook|trainee\s*cook/i, 'CK'],
+  [/steward|messman/i, 'STW'],
+  [/cadet/i, 'CDT'],
+  [/trainee/i, 'TRN'],
+];
+const codeNationality = (n: string): string => {
+  if (!n) return 'XXX';
+  const key = n.trim().toLowerCase();
+  if (NAT_MAP[key]) return NAT_MAP[key];
+  return (key.replace(/[^a-z]/g, '').slice(0, 3) || 'XXX').toUpperCase();
+};
+const codeGender = (g: string): string => {
+  const s = (g || '').trim().toLowerCase();
+  if (s.startsWith('m')) return 'M';
+  if (s.startsWith('f')) return 'F';
+  return 'X';
+};
+const codeRank = (rank: string): string => {
+  if (!rank) return 'XXX';
+  for (const [re, code] of RANK_MAP) if (re.test(rank)) return code;
+  return rank.replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase() || 'XXX';
+};
+const hash5 = (seed: string): string => {
+  let h = 5381;
+  for (let i = 0; i < seed.length; i++) h = ((h << 5) + h) ^ seed.charCodeAt(i);
+  return (Math.abs(h) >>> 0).toString(36).toUpperCase().padStart(5, '0').slice(-5);
+};
+const buildSmartCVId = (opts: { nationality: string; gender: string; currentRank: string; lastRank: string; seed: string }) => {
+  const nat = codeNationality(opts.nationality);
+  const gen = codeGender(opts.gender);
+  const rnk = codeRank(opts.lastRank || opts.currentRank);
+  const h = hash5(opts.seed || `${opts.nationality}|${opts.currentRank}|${opts.lastRank}`);
+  return `SM-${nat}-${gen}-${rnk}-${h}`;
+};
+
 // ─────────── COMPONENT ───────────
 const ResumeBuilder = () => {
   const { accessToken, user } = useAuth();
@@ -154,6 +229,7 @@ const ResumeBuilder = () => {
   // ── Form state (keep existing names) ──
   const [personal, setPersonal] = useState({
     firstName: "", lastName: "", rank: "", applyingFor: "", nationality: "",
+    gender: "",
     dob: "", phone: "", email: "", address: "",
     passportNo: "", cdcNo: "", cdcCountry: "", summary: "",
     emergencyName: "", emergencyPhone: "",
@@ -493,6 +569,14 @@ const ResumeBuilder = () => {
   const filledTraining = training.filter(t => t.courseName);
   const fullName = `${personal.firstName} ${personal.lastName}`.trim() || "Your Name";
   const isEngineer = isEngineerRank(personal.rank);
+  const lastSeaRank = (sea.find(s => s.vesselName && s.rankOnBoard)?.rankOnBoard) || '';
+  const smartCVId = buildSmartCVId({
+    nationality: personal.nationality,
+    gender: personal.gender,
+    currentRank: personal.rank,
+    lastRank: lastSeaRank,
+    seed: user?.id || personal.email || `${personal.firstName}${personal.lastName}${personal.passportNo}`,
+  });
 
   const CertStatusBadge = ({ expiry }: { expiry: string }) => {
     const st = certStatus(expiry);
@@ -754,9 +838,17 @@ const ResumeBuilder = () => {
                 <div><label className={lbl}>Date of Birth <span className="text-red-500">*</span></label><input type="date" className={inp} value={personal.dob} onChange={e => P("dob", e.target.value)} /></div>
               </div>
               <div className="grid grid-cols-2 gap-3">
+                <div><label className={lbl}>Gender <span className="text-red-500">*</span></label>
+                  <select className={sel} value={personal.gender} onChange={e => P("gender", e.target.value)}>
+                    <option value="">Select...</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
                 <div><label className={lbl}>Passport Number <span className="text-red-500">*</span></label><input className={inp} placeholder="P1234567A" value={personal.passportNo} onChange={e => P("passportNo", e.target.value)} /></div>
-                <div><label className={lbl}>CDC / Seaman Book No.</label><input className={inp} placeholder="CDC-123456" value={personal.cdcNo} onChange={e => P("cdcNo", e.target.value)} /></div>
               </div>
+              <div><label className={lbl}>CDC / Seaman Book No.</label><input className={inp} placeholder="CDC-123456" value={personal.cdcNo} onChange={e => P("cdcNo", e.target.value)} /></div>
               <div><label className={lbl}>CDC Issue Country</label><input className={inp} placeholder="Philippines" value={personal.cdcCountry} onChange={e => P("cdcCountry", e.target.value)} /></div>
               <div className="grid grid-cols-2 gap-3">
                 <div><label className={lbl}>WhatsApp / Phone <span className="text-red-500">*</span></label><input className={inp} placeholder="+63..." value={personal.phone} onChange={e => P("phone", e.target.value)} /></div>
@@ -1169,18 +1261,28 @@ const ResumeBuilder = () => {
               </div>
               {/* Name & info */}
               <div style={{ flex:1 }}>
-                <div style={{ background:'#0D1B2A', padding:'10px 14px', marginBottom:'6px' }}>
-                  <div style={{ fontSize:'22px', fontWeight:'900', color:'#FFFFFF', letterSpacing:'2px', textTransform:'uppercase', lineHeight:'1.1' }}>
-                    {personal.firstName || personal.lastName ? `${personal.firstName} ${personal.lastName}`.trim() : 'YOUR NAME'}
+                <div style={{ background:'#0D1B2A', padding:'10px 14px', marginBottom:'6px', display:'flex', alignItems:'center', justifyContent:'space-between', gap:'10px' }}>
+                  <div style={{ minWidth:0 }}>
+                    <div style={{ fontSize:'22px', fontWeight:'900', color:'#FFFFFF', letterSpacing:'2px', textTransform:'uppercase', lineHeight:'1.1' }}>
+                      {personal.firstName || personal.lastName ? `${personal.firstName} ${personal.lastName}`.trim() : 'YOUR NAME'}
+                    </div>
+                    <div style={{ fontSize:'12px', color:'#D4AF37', fontWeight:'bold', marginTop:'3px', letterSpacing:'1px', textTransform:'uppercase' }}>
+                      {personal.rank || 'RANK / POSITION'}
+                      {personal.applyingFor ? <span style={{ color:'#aaa', fontWeight:'normal', fontSize:'10px' }}> | Seeking: {personal.applyingFor}</span> : ''}
+                    </div>
                   </div>
-                  <div style={{ fontSize:'12px', color:'#D4AF37', fontWeight:'bold', marginTop:'3px', letterSpacing:'1px', textTransform:'uppercase' }}>
-                    {personal.rank || 'RANK / POSITION'}
-                    {personal.applyingFor ? <span style={{ color:'#aaa', fontWeight:'normal', fontSize:'10px' }}> | Seeking: {personal.applyingFor}</span> : ''}
+                  {/* SMART CV UNIQUE ID */}
+                  <div title="SeaMinds Unique CV ID · Nationality · Gender · Rank · Hash" style={{ flexShrink:0, textAlign:'right' }}>
+                    <div style={{ fontSize:'7px', color:'#D4AF37', letterSpacing:'1.5px', fontWeight:'bold', textTransform:'uppercase', marginBottom:'2px' }}>CV UID</div>
+                    <div style={{ fontFamily:'"Courier New", monospace', fontSize:'11px', color:'#FFFFFF', background:'#D4AF37', padding:'3px 7px', borderRadius:'3px', letterSpacing:'0.5px', fontWeight:'bold', border:'1px solid #D4AF37' }}>
+                      <span style={{ color:'#0D1B2A' }}>{smartCVId}</span>
+                    </div>
                   </div>
                 </div>
                 {/* Two-column contact details */}
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'2px 16px', fontSize:'9px', color:'#333', lineHeight:'1.8' }}>
                   {personal.nationality && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Nationality: </span>{personal.nationality}</div>}
+                  {personal.gender && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Gender: </span>{personal.gender}</div>}
                   {personal.dob && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Date of Birth: </span>{fmtDate(personal.dob)}</div>}
                   {personal.passportNo && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Passport: </span>{personal.passportNo}</div>}
                   {personal.cdcNo && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>CDC/SB: </span>{personal.cdcNo}{personal.cdcCountry ? ` (${personal.cdcCountry})` : ''}</div>}
