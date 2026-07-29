@@ -725,6 +725,7 @@ export type Database = {
           port_of_joining: string | null
           preferred_vessel_types: string[] | null
           profile_visible: boolean | null
+          rank: string | null
           role: string
           ship_name: string
           user_id: string | null
@@ -763,6 +764,7 @@ export type Database = {
           port_of_joining?: string | null
           preferred_vessel_types?: string[] | null
           profile_visible?: boolean | null
+          rank?: string | null
           role: string
           ship_name: string
           user_id?: string | null
@@ -801,6 +803,7 @@ export type Database = {
           port_of_joining?: string | null
           preferred_vessel_types?: string[] | null
           profile_visible?: boolean | null
+          rank?: string | null
           role?: string
           ship_name?: string
           user_id?: string | null
