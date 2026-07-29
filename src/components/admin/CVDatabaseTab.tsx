@@ -15,7 +15,34 @@ interface CVRow {
   whatsapp_number?: string;
   ship_name?: string;
   parsed?: any;
+  source: "uploaded" | "built" | "both";
 }
+
+const parseMaybeJson = (value: any) => {
+  if (!value) return value;
+  if (typeof value !== "string") return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+};
+
+const normalizeBuiltCV = (row: any) => {
+  if (!row) return null;
+  const medical = parseMaybeJson(row.medical) || {};
+  return {
+    ...row,
+    certificates: parseMaybeJson(row.certificates),
+    sea_service: parseMaybeJson(row.sea_service),
+    education: parseMaybeJson(row.education),
+    medical,
+    personal: medical?.personal || {},
+    skills: medical?.skills || {},
+    training: medical?.training || [],
+    photo: medical?.photo || null,
+  };
+};
 
 const card: React.CSSProperties = {
   background: "#112240",
@@ -104,19 +131,28 @@ export default function CVDatabaseTab() {
       const profByUser: Record<string, any> = {};
       (profiles || []).forEach((p: any) => (profByUser[p.id] = p));
       const parsedByUser: Record<string, any> = {};
-      (parsedRows || []).forEach((r: any) => (parsedByUser[r.user_id] = r));
+      (parsedRows || []).forEach((r: any) => (parsedByUser[r.user_id] = normalizeBuiltCV(r)));
 
       const merged: CVRow[] = ids.map((uid) => {
         const file = filesByUser[uid];
         const parsed = parsedByUser[uid];
+        const profile = profByUser[uid] || {};
+        const personal = parsed?.personal || {};
         return {
           user_id: uid,
           path: file?.path || "",
           size: file?.size || 0,
           uploaded_at: file?.uploaded_at || parsed?.updated_at || "",
-          ...(profByUser[uid] || {}),
-          role: (profByUser[uid] as any)?.rank || (profByUser[uid] as any)?.role,
+          ...profile,
+          first_name: profile.first_name || personal.firstName || personal.first_name || "",
+          last_name: profile.last_name || personal.lastName || personal.last_name || "",
+          email: profile.email || personal.email || "",
+          role: profile.rank || profile.role || personal.rank || personal.applyingFor || "",
+          nationality: profile.nationality || personal.nationality || "",
+          whatsapp_number: profile.whatsapp_number || personal.phone || personal.whatsapp || "",
+          ship_name: profile.ship_name || "",
           parsed,
+          source: file && parsed ? "both" : file ? "uploaded" : "built",
         };
       });
 
@@ -159,16 +195,16 @@ export default function CVDatabaseTab() {
       {/* Summary */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px,1fr))", gap: 12 }}>
         <div style={card}>
-          <div style={{ color: "#9CA3AF", fontSize: 12 }}>Total CVs uploaded</div>
+          <div style={{ color: "#9CA3AF", fontSize: 12 }}>Total CV records</div>
           <div style={{ color: "#D4AF37", fontSize: 26, fontWeight: 700 }}>{rows.length}</div>
         </div>
         <div style={card}>
-          <div style={{ color: "#9CA3AF", fontSize: 12 }}>Parsed by AI</div>
+          <div style={{ color: "#9CA3AF", fontSize: 12 }}>Built in Resume Builder</div>
           <div style={{ color: "#D4AF37", fontSize: 26, fontWeight: 700 }}>{withParsed}</div>
         </div>
         <div style={card}>
-          <div style={{ color: "#9CA3AF", fontSize: 12 }}>Awaiting parse</div>
-          <div style={{ color: "#D4AF37", fontSize: 26, fontWeight: 700 }}>{rows.length - withParsed}</div>
+          <div style={{ color: "#9CA3AF", fontSize: 12 }}>PDF files uploaded</div>
+          <div style={{ color: "#D4AF37", fontSize: 26, fontWeight: 700 }}>{rows.filter((r) => r.path).length}</div>
         </div>
       </div>
 
@@ -212,7 +248,7 @@ export default function CVDatabaseTab() {
               <th style={th}>Ship</th>
               <th style={th}>Uploaded</th>
               <th style={th}>Size</th>
-              <th style={th}>AI Parsed</th>
+              <th style={th}>Source</th>
               <th style={th}>Actions</th>
             </tr>
           </thead>
@@ -230,11 +266,9 @@ export default function CVDatabaseTab() {
                 <td style={td}>{r.uploaded_at ? new Date(r.uploaded_at).toLocaleDateString() : "—"}</td>
                 <td style={td}>{r.size ? `${(r.size / 1024).toFixed(0)} KB` : "—"}</td>
                 <td style={td}>
-                  {r.parsed ? (
-                    <span style={{ color: "#10b981", fontWeight: 600 }}>Yes</span>
-                  ) : (
-                    <span style={{ color: "#f59e0b" }}>No</span>
-                  )}
+                  <span style={{ color: r.source === "built" ? "#10b981" : "#D4AF37", fontWeight: 600 }}>
+                    {r.source === "both" ? "Built + PDF" : r.source === "built" ? "Built CV" : "PDF"}
+                  </span>
                 </td>
                 <td style={td}>
                   <div style={{ display: "flex", gap: 8 }}>
