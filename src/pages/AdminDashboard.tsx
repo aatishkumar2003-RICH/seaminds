@@ -769,52 +769,76 @@ function AgentsTab() {
   );
 }
 
-/* ─── Activity Tab ─── */
+/* ─── Crew Activity Tab ─── */
 function ActivityTab() {
   const [crew, setCrew] = useState<any[]>([]);
   const [leads, setLeads] = useState<any[]>([]);
+  const [smc, setSmc] = useState<any[]>([]);
+  const [apps, setApps] = useState<any[]>([]);
+  const [chatCount, setChatCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    const [c, l] = await Promise.all([
-      supabase.from("crew_profiles").select("id, first_name, last_name, role, nationality, vessel_type, ship_name, whatsapp_number, created_at").order("created_at", { ascending: false }).limit(500),
+    const [c, l, s, a, ch] = await Promise.all([
+      supabase
+        .from("crew_profiles")
+        .select("id, first_name, last_name, role, nationality, vessel_type, ship_name, whatsapp_number, created_at")
+        .order("created_at", { ascending: false })
+        .limit(500),
       supabase.from("email_leads").select("*").order("last_seen", { ascending: false }).limit(500),
+      supabase
+        .from("smc_assessments")
+        .select("id, overall_score, score_band, completed_at, started_at, status, crew_profiles(first_name, last_name, role)")
+        .order("completed_at", { ascending: false, nullsFirst: false })
+        .limit(500),
+      supabase
+        .from("contact_requests")
+        .select("id, company_name, rank_required, vessel_type, created_at, crew_profiles(first_name, last_name)")
+        .order("created_at", { ascending: false })
+        .limit(500),
+      supabase.from("chat_messages").select("id", { count: "exact", head: true }),
     ]);
     setCrew(c.data || []);
     setLeads(l.data || []);
+    setSmc(s.data || []);
+    setApps(a.data || []);
+    setChatCount(ch.count || 0);
     setLoading(false);
   }, []);
 
   useEffect(() => {
     load();
-    const id = setInterval(load, 30000);
+    const id = setInterval(load, 60000);
     return () => clearInterval(id);
   }, [load]);
 
   const converted = leads.filter((l) => l.converted).length;
+  const smcCompleted = smc.filter((s) => s.completed_at || s.status === "completed").length;
   const card = { background: "#112240", borderColor: "#D4AF3744" };
   const th = { color: "#D4AF37" };
   const td: React.CSSProperties = { color: "#E0E0E0" };
 
   if (loading) return <p style={{ color: "#D4AF37" }}>Loading…</p>;
 
+  const summary = [
+    { label: "Total Registered Crew", value: crew.length },
+    { label: "SMC Certificates", value: smcCompleted },
+    { label: "Wellness Chat Messages", value: chatCount },
+    { label: "Job Applications", value: apps.length },
+  ];
+
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="rounded-lg p-4 border" style={card}>
-          <p className="text-sm" style={{ color: "#94A3B8" }}>Total Registered Crew</p>
-          <p className="text-3xl font-bold" style={{ color: "#D4AF37" }}>{crew.length}</p>
-        </div>
-        <div className="rounded-lg p-4 border" style={card}>
-          <p className="text-sm" style={{ color: "#94A3B8" }}>Total Email Leads</p>
-          <p className="text-3xl font-bold" style={{ color: "#D4AF37" }}>{leads.length}</p>
-        </div>
-        <div className="rounded-lg p-4 border" style={card}>
-          <p className="text-sm" style={{ color: "#94A3B8" }}>Converted Leads</p>
-          <p className="text-3xl font-bold" style={{ color: "#D4AF37" }}>{converted}</p>
-        </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {summary.map((s) => (
+          <div key={s.label} className="rounded-lg p-4 border" style={card}>
+            <p className="text-sm" style={{ color: "#94A3B8" }}>{s.label}</p>
+            <p className="text-3xl font-bold" style={{ color: "#D4AF37" }}>{s.value}</p>
+          </div>
+        ))}
       </div>
 
+      {/* Crew */}
       <div className="rounded-lg p-4 border" style={card}>
         <h2 className="text-lg font-bold mb-3" style={{ color: "#D4AF37" }}>👥 Registered Crew ({crew.length})</h2>
         <div className="overflow-x-auto">
@@ -843,6 +867,67 @@ function ActivityTab() {
         </div>
       </div>
 
+      {/* SMC */}
+      <div className="rounded-lg p-4 border" style={card}>
+        <h2 className="text-lg font-bold mb-3" style={{ color: "#D4AF37" }}>🎖️ SMC Certificates ({smc.length})</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr style={{ borderBottom: "1px solid #D4AF3744" }}>
+                {["Crew Name", "Rank", "Overall Score", "Band", "Status", "Generated"].map((h) => (
+                  <th key={h} className="text-left p-2" style={th}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {smc.map((r) => {
+                const cp = r.crew_profiles || {};
+                return (
+                  <tr key={r.id} style={{ borderBottom: "1px solid #1B2838" }}>
+                    <td className="p-2" style={td}>{cp.first_name || "—"} {cp.last_name || ""}</td>
+                    <td className="p-2" style={td}>{cp.role || "—"}</td>
+                    <td className="p-2" style={td}>{r.overall_score ?? "—"}</td>
+                    <td className="p-2" style={td}>{r.score_band || "—"}</td>
+                    <td className="p-2" style={td}>{r.status || "—"}</td>
+                    <td className="p-2" style={td}>{r.completed_at ? new Date(r.completed_at).toLocaleDateString() : "—"}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Job Applications */}
+      <div className="rounded-lg p-4 border" style={card}>
+        <h2 className="text-lg font-bold mb-3" style={{ color: "#D4AF37" }}>💼 Job Applications ({apps.length})</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr style={{ borderBottom: "1px solid #D4AF3744" }}>
+                {["Crew Name", "Job Title", "Applied"].map((h) => (
+                  <th key={h} className="text-left p-2" style={th}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {apps.map((r) => {
+                const cp = r.crew_profiles || {};
+                const title = [r.rank_required, r.vessel_type, r.company_name].filter(Boolean).join(" · ");
+                return (
+                  <tr key={r.id} style={{ borderBottom: "1px solid #1B2838" }}>
+                    <td className="p-2" style={td}>{cp.first_name || "—"} {cp.last_name || ""}</td>
+                    <td className="p-2" style={td}>{title || "—"}</td>
+                    <td className="p-2" style={td}>{r.created_at ? new Date(r.created_at).toLocaleDateString() : "—"}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Email Leads */}
       <div className="rounded-lg p-4 border" style={card}>
         <h2 className="text-lg font-bold mb-3" style={{ color: "#D4AF37" }}>📧 Email Leads ({leads.length})</h2>
         <div className="overflow-x-auto">
