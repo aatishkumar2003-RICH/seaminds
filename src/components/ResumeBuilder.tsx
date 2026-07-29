@@ -128,6 +128,81 @@ const isEngineerRank = (rank: string) => {
 
 const uid = () => String(Date.now()) + String(Math.random()).slice(2, 6);
 
+// ─────────── SMART CV UNIQUE ID ───────────
+// Format: SM-<NAT3>-<G>-<RANK3>-<HASH5>
+//   NAT3  = ISO-ish 3-letter nationality code (e.g. IND, PHI, UKR)
+//   G     = M / F / X (gender)
+//   RANK3 = compact rank code (CAP, CE, 2OF, ETO, CDT, TRN, etc.)
+//   HASH5 = deterministic base36 hash of user id / email → stable per crew
+const NAT_MAP: Record<string, string> = {
+  indian: 'IND', india: 'IND', filipino: 'PHI', philippines: 'PHI', philippine: 'PHI',
+  ukrainian: 'UKR', ukraine: 'UKR', russian: 'RUS', russia: 'RUS',
+  british: 'GBR', 'united kingdom': 'GBR', uk: 'GBR', american: 'USA', 'united states': 'USA', usa: 'USA',
+  bangladeshi: 'BGD', bangladesh: 'BGD', pakistani: 'PAK', pakistan: 'PAK',
+  srilankan: 'LKA', 'sri lankan': 'LKA', 'sri lanka': 'LKA',
+  nepalese: 'NPL', nepal: 'NPL', myanmar: 'MMR', burmese: 'MMR',
+  indonesian: 'IDN', indonesia: 'IDN', chinese: 'CHN', china: 'CHN',
+  vietnamese: 'VNM', vietnam: 'VNM', turkish: 'TUR', turkey: 'TUR',
+  greek: 'GRC', greece: 'GRC', polish: 'POL', poland: 'POL',
+  romanian: 'ROU', romania: 'ROU', croatian: 'HRV', croatia: 'HRV',
+  german: 'DEU', germany: 'DEU', french: 'FRA', france: 'FRA',
+  italian: 'ITA', italy: 'ITA', spanish: 'ESP', spain: 'ESP',
+  nigerian: 'NGA', nigeria: 'NGA', egyptian: 'EGY', egypt: 'EGY',
+  brazilian: 'BRA', brazil: 'BRA',
+};
+const RANK_MAP: Array<[RegExp, string]> = [
+  [/master|captain/i, 'CAP'],
+  [/chief\s*officer|chief mate|c\/?o\b/i, 'CO'],
+  [/2nd\s*off|second\s*off/i, '2OF'],
+  [/3rd\s*off|third\s*off/i, '3OF'],
+  [/deck\s*cadet|trainee\s*officer\s*\(deck\)/i, 'DCT'],
+  [/chief\s*eng|c\/?e\b/i, 'CE'],
+  [/2nd\s*eng|second\s*eng/i, '2E'],
+  [/3rd\s*eng|third\s*eng/i, '3E'],
+  [/4th\s*eng|fourth\s*eng/i, '4E'],
+  [/eto\s*cadet/i, 'ETC'],
+  [/eto|electro/i, 'ETO'],
+  [/engine\s*cadet|trainee\s*officer\s*\(engine\)/i, 'ECT'],
+  [/bosun|boatswain/i, 'BSN'],
+  [/ab\b|able\s*seaman/i, 'AB'],
+  [/os\b|ordinary\s*seaman|trainee\s*os/i, 'OS'],
+  [/fitter/i, 'FTR'],
+  [/oiler|wiper/i, 'OLR'],
+  [/cook|trainee\s*cook/i, 'CK'],
+  [/steward|messman/i, 'STW'],
+  [/cadet/i, 'CDT'],
+  [/trainee/i, 'TRN'],
+];
+const codeNationality = (n: string): string => {
+  if (!n) return 'XXX';
+  const key = n.trim().toLowerCase();
+  if (NAT_MAP[key]) return NAT_MAP[key];
+  return (key.replace(/[^a-z]/g, '').slice(0, 3) || 'XXX').toUpperCase();
+};
+const codeGender = (g: string): string => {
+  const s = (g || '').trim().toLowerCase();
+  if (s.startsWith('m')) return 'M';
+  if (s.startsWith('f')) return 'F';
+  return 'X';
+};
+const codeRank = (rank: string): string => {
+  if (!rank) return 'XXX';
+  for (const [re, code] of RANK_MAP) if (re.test(rank)) return code;
+  return rank.replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase() || 'XXX';
+};
+const hash5 = (seed: string): string => {
+  let h = 5381;
+  for (let i = 0; i < seed.length; i++) h = ((h << 5) + h) ^ seed.charCodeAt(i);
+  return (Math.abs(h) >>> 0).toString(36).toUpperCase().padStart(5, '0').slice(-5);
+};
+const buildSmartCVId = (opts: { nationality: string; gender: string; currentRank: string; lastRank: string; seed: string }) => {
+  const nat = codeNationality(opts.nationality);
+  const gen = codeGender(opts.gender);
+  const rnk = codeRank(opts.lastRank || opts.currentRank);
+  const h = hash5(opts.seed || `${opts.nationality}|${opts.currentRank}|${opts.lastRank}`);
+  return `SM-${nat}-${gen}-${rnk}-${h}`;
+};
+
 // ─────────── COMPONENT ───────────
 const ResumeBuilder = () => {
   const { accessToken, user } = useAuth();
