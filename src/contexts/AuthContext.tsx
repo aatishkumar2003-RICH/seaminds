@@ -42,10 +42,47 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // 2. Single listener for all auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (event, session) => {
         setSession(session);
         if (session) {
           resetRefreshFailureCount();
+        }
+        if (event === "SIGNED_IN" && session?.user) {
+          const uid = session.user.id;
+          const key = `seamind_login_notified_${uid}`;
+          const last = Number(localStorage.getItem(key) || 0);
+          // Throttle: notify at most once every 12 hours per user
+          if (Date.now() - last > 12 * 60 * 60 * 1000) {
+            localStorage.setItem(key, String(Date.now()));
+            const meta: any = session.user.user_metadata || {};
+            const email = session.user.email || "";
+            const provider = (session.user.app_metadata as any)?.provider || "email";
+            const firstName = meta.first_name || meta.given_name || (meta.name ? String(meta.name).split(" ")[0] : "");
+            const lastName = meta.last_name || meta.family_name || (meta.name ? String(meta.name).split(" ").slice(1).join(" ") : "");
+            const phone = session.user.phone || meta.phone || "";
+            // Persist to email_leads DB (email + name + phone + source)
+            supabase.rpc("upsert_email_lead", {
+              p_email: email,
+              p_first_name: firstName,
+              p_last_name: lastName,
+              p_whatsapp: phone,
+              p_source: `login_${provider}`,
+              p_crew_profile_id: uid,
+            } as any).then(() => {}, () => {});
+            // Admin email alert on every login
+            supabase.functions.invoke("notify-signup", {
+              body: {
+                email,
+                first_name: firstName,
+                last_name: lastName,
+                nationality: "",
+                whatsapp_number: phone,
+                role: `Login via ${provider}`,
+                vessel_type: "",
+                ship_name: "",
+              },
+            }).catch(() => {});
+          }
         }
       }
     );
