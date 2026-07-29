@@ -539,7 +539,7 @@ const ResumeBuilder = () => {
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_id' });
 
-      if (savedPersonal.firstName || savedPersonal.lastName || savedPersonal.rank || savedPersonal.email || savedPersonal.phone) {
+      if (savedPersonal.firstName || savedPersonal.lastName || savedPersonal.email || savedPersonal.phone) {
         const profilePayload: Record<string, any> = {
           first_name: savedPersonal.firstName || user.email?.split('@')[0] || 'Crew',
           last_name: savedPersonal.lastName || '',
@@ -554,7 +554,6 @@ const ResumeBuilder = () => {
           passport_number: savedPersonal.passportNo || null,
           crew_unique_id: savedCvUid,
           user_id: user.id,
-          onboarded: false,
         };
         if (/^\d{4}-\d{2}-\d{2}/.test(savedPersonal.dob || '')) profilePayload.date_of_birth = savedPersonal.dob;
         await supabase.from('crew_profiles').upsert({ id: user.id, ...profilePayload } as any, { onConflict: 'id' });
