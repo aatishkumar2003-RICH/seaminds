@@ -21,6 +21,7 @@ import SubAdminsTab from "@/components/admin/SubAdminsTab";
 import VacancyIntelTab from "@/components/admin/VacancyIntelTab";
 import CompanyDirectoryTab from "@/components/admin/CompanyDirectoryTab";
 import AgentChatPanel from "@/components/admin/AgentChatPanel";
+import CVDatabaseTab from "@/components/admin/CVDatabaseTab";
 
 const ADMIN_PIN = "215151";
 const LS_KEY = "sm_admin_auth";
@@ -966,7 +967,7 @@ function ActivityTab() {
 /* ─── Main Dashboard ─── */
 export default function AdminDashboard() {
   const [authed, setAuthed] = useState(localStorage.getItem(LS_KEY) === ADMIN_PIN);
-  const [tab, setTab] = useState<"crew" | "activity" | "pricing" | "discount" | "country_pricing" | "sub_admins" | "dpa" | "blog_images" | "agents" | "vacancy_intel" | "company_dir">("crew");
+  const [tab, setTab] = useState<"crew" | "activity" | "cv_database" | "pricing" | "discount" | "country_pricing" | "sub_admins" | "dpa" | "blog_images" | "agents" | "vacancy_intel" | "company_dir">("crew");
 
   if (!authed) return <PinScreen onAuth={() => setAuthed(true)} />;
 
@@ -978,6 +979,7 @@ export default function AdminDashboard() {
   const tabs = [
     { id: "crew" as const, label: "Crew Search" },
     { id: "activity" as const, label: "📋 Crew Activity" },
+    { id: "cv_database" as const, label: "📄 CV Database" },
     { id: "pricing" as const, label: "Pricing" },
     { id: "discount" as const, label: "Discount Codes" },
     { id: "country_pricing" as const, label: "Country Pricing" },
@@ -1012,6 +1014,7 @@ export default function AdminDashboard() {
 
       {tab === "crew" && <CrewSearchTab />}
       {tab === "activity" && <ActivityTab />}
+      {tab === "cv_database" && <CVDatabaseTab />}
       {tab === "pricing" && <PricingTab />}
       {tab === "discount" && <DiscountCodesTab />}
       {tab === "country_pricing" && <CountryPricingTab />}
