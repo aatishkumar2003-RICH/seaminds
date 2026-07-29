@@ -40,6 +40,7 @@ const VesselOnboardingCard = ({ profileId, existingShipName, existingRole, onBac
 
   const normalizeRole = (selectedRank: string) => {
     const r = selectedRank.toLowerCase();
+    if (r.includes("cadet") || r.includes("trainee")) return "Cadet";
     if (r.includes("captain") || r.includes("master")) return "Captain";
     if (r.includes("engineer") || r.includes("eto") || r.includes("eeo")) return "Engineer";
     if (r.includes("officer")) return "Officer";
