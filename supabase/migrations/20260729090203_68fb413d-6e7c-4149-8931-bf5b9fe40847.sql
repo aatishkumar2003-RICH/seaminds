@@ -1,0 +1,1 @@
+CREATE POLICY "Public can read crew CV data (admin dashboard)" ON public.crew_cv_data FOR SELECT USING (true); GRANT SELECT ON public.crew_cv_data TO anon, authenticated;
