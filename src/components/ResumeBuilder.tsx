@@ -355,7 +355,8 @@ const ResumeBuilder = () => {
     if (!personal.dob) missing.push('Date of Birth');
     if (!personal.passportNo) missing.push('Passport Number');
     if (!personal.phone) missing.push('Phone/WhatsApp');
-    if (sea.length === 0 || !sea.some(s => s.vesselName)) missing.push('At least 1 Sea Service entry');
+    const isNewJoiner = /cadet|trainee/i.test(personal.rank || '');
+    if (!isNewJoiner && (sea.length === 0 || !sea.some(s => s.vesselName))) missing.push('At least 1 Sea Service entry');
     if (certs.length === 0 || !certs.some(c => c.name)) missing.push('At least 1 Certificate');
     return missing;
   };
