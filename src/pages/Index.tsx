@@ -374,6 +374,9 @@ const Index = () => {
   const saveProfileGate = async () => {
     if (!role || !nationality || !shipName || !whatsappNumber) return;
     const dbRole = role.includes("Captain") || role.includes("Master") ? "Captain"
+      : (role.includes("Engine Cadet") || role.includes("ETO Cadet") || role.includes("Trainee Officer (Engine)")) ? "Engineer"
+      : (role.includes("Deck Cadet") || role.includes("Trainee Officer (Deck)")) ? "Officer"
+      : role.includes("Trainee") ? "Rating"
       : role.includes("Engineer") || role.includes("ETO") ? "Engineer"
       : role.includes("Officer") ? "Officer" : "Rating";
     if (profileId) {
@@ -405,7 +408,7 @@ const Index = () => {
       <div className="w-full max-w-sm space-y-3">
         <select className="w-full rounded-xl border border-border bg-secondary px-4 py-3 text-sm text-foreground outline-none focus:border-primary" value={role} onChange={e => handleProfileGateUpdate("rank", e.target.value)}>
           <option value="">Select your rank...</option>
-          {["Captain / Master","Chief Officer","2nd Officer","3rd Officer","Chief Engineer","2nd Engineer","3rd Engineer","4th Engineer","ETO / EEO","Bosun","AB Seaman","Ordinary Seaman (OS)","Fitter","Oiler","Cook","Messman / Steward","Deck Cadet","Engine Cadet"].map(r => <option key={r} value={r}>{r}</option>)}
+          {["Captain / Master","Chief Officer","2nd Officer","3rd Officer","Chief Engineer","2nd Engineer","3rd Engineer","4th Engineer","ETO / EEO","Bosun","AB Seaman","Ordinary Seaman (OS)","Fitter","Oiler","Cook","Messman / Steward","Deck Cadet","Engine Cadet","ETO Cadet","Trainee Officer (Deck)","Trainee Officer (Engine)","Trainee OS","Trainee Cook"].map(r => <option key={r} value={r}>{r}</option>)}
         </select>
         <input className="w-full rounded-xl border border-border bg-secondary px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary" placeholder="Nationality (e.g. Filipino)" value={nationality} onChange={e => handleProfileGateUpdate("nationality", e.target.value)} />
         <input className="w-full rounded-xl border border-border bg-secondary px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary" placeholder="Ship Name (e.g. MV Pacific Star)" value={shipName} onChange={e => handleProfileGateUpdate("shipName", e.target.value)} />

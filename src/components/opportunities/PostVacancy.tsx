@@ -9,7 +9,10 @@ import { UploadCloud, CheckCircle, Loader2, Star, X } from "lucide-react";
 const RANKS = [
   "Captain", "Chief Officer", "2nd Officer", "3rd Officer",
   "Chief Engineer", "2nd Engineer", "3rd Engineer", "4th Engineer",
-  "ETO", "Bosun", "AB Seaman", "OS", "Oiler", "Cook", "Steward", "Any Rank",
+  "ETO", "Bosun", "AB Seaman", "OS", "Oiler", "Cook", "Steward",
+  "Deck Cadet", "Engine Cadet", "ETO Cadet",
+  "Trainee Officer (Deck)", "Trainee Officer (Engine)", "Trainee OS", "Trainee Cook",
+  "Any Rank",
 ];
 
 const VESSEL_TYPES = [

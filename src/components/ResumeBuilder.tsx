@@ -38,8 +38,9 @@ const RANKS = [
   "Captain / Master","Chief Officer","2nd Officer","3rd Officer",
   "Chief Engineer","2nd Engineer","3rd Engineer","4th Engineer","ETO / EEO",
   "Bosun","AB Seaman","Ordinary Seaman (OS)","Fitter","Oiler","Wiper",
-  "Cook","Messman / Steward","Deck Cadet","Engine Cadet","Pumpman",
+  "Cook","Messman / Steward","Deck Cadet","Engine Cadet","ETO Cadet","Pumpman",
   "Electrician","Refrigeration Engineer","Radio Officer",
+  "Trainee Officer (Deck)","Trainee Officer (Engine)","Trainee OS","Trainee Cook",
 ];
 
 const VESSEL_TYPES = [

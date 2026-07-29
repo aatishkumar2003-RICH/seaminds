@@ -15,7 +15,10 @@ const RANKS = [
   "Captain / Master", "Chief Officer", "2nd Officer", "3rd Officer",
   "Chief Engineer", "2nd Engineer", "3rd Engineer", "4th Engineer",
   "ETO / EEO", "Bosun", "AB Seaman", "Ordinary Seaman (OS)",
-  "Fitter", "Oiler", "Cook", "Messman / Steward", "Deck Cadet", "Engine Cadet",
+  "Fitter", "Oiler", "Cook", "Messman / Steward",
+  "Deck Cadet", "Engine Cadet", "ETO Cadet",
+  "Trainee Officer (Deck)", "Trainee Officer (Engine)",
+  "Trainee OS", "Trainee Cook",
 ];
 
 const VESSEL_TYPES = [
@@ -37,7 +40,11 @@ const VesselOnboardingCard = ({ profileId, existingShipName, existingRole, onBac
 
   const normalizeRole = (selectedRank: string) => {
     const r = selectedRank.toLowerCase();
+    if (r.includes("cadet") || r.includes("trainee")) return "Cadet";
     if (r.includes("captain") || r.includes("master")) return "Captain";
+    if (r.includes("engine cadet") || r.includes("trainee officer (engine)") || r.includes("eto cadet")) return "Engineer";
+    if (r.includes("deck cadet") || r.includes("trainee officer (deck)")) return "Officer";
+    if (r.includes("trainee")) return "Rating";
     if (r.includes("engineer") || r.includes("eto") || r.includes("eeo")) return "Engineer";
     if (r.includes("officer")) return "Officer";
     return "Rating";
