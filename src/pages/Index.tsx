@@ -374,7 +374,9 @@ const Index = () => {
   const saveProfileGate = async () => {
     if (!role || !nationality || !shipName || !whatsappNumber) return;
     const dbRole = role.includes("Captain") || role.includes("Master") ? "Captain"
-      : role.includes("Cadet") || role.includes("Trainee") ? "Cadet"
+      : (role.includes("Engine Cadet") || role.includes("ETO Cadet") || role.includes("Trainee Officer (Engine)")) ? "Engineer"
+      : (role.includes("Deck Cadet") || role.includes("Trainee Officer (Deck)")) ? "Officer"
+      : role.includes("Trainee") ? "Rating"
       : role.includes("Engineer") || role.includes("ETO") ? "Engineer"
       : role.includes("Officer") ? "Officer" : "Rating";
     if (profileId) {
