@@ -45,6 +45,57 @@ const text = (...values: any[]) => {
 
 const getFullName = (row: CVRow) => text(`${row.first_name || ""} ${row.last_name || ""}`.trim(), row.email, "Unnamed crew");
 
+const NAT_MAP: Record<string, string> = {
+  indian: "IND", india: "IND", filipino: "PHI", philippines: "PHI", philippine: "PHI",
+  indonesian: "IDN", indonesia: "IDN", romanian: "ROU", romania: "ROU",
+  vietnamese: "VNM", vietnam: "VNM", vietnamesee: "VNM", chinese: "CHN", china: "CHN",
+  bangladeshi: "BGD", bangladesh: "BGD", pakistani: "PAK", pakistan: "PAK",
+  srilankan: "LKA", "sri lankan": "LKA", ukrainian: "UKR", ukraine: "UKR",
+};
+
+const codeNationality = (value: string) => {
+  const key = text(value).toLowerCase();
+  return NAT_MAP[key] || key.replace(/[^a-z]/g, "").slice(0, 3).toUpperCase() || "XXX";
+};
+
+const codeGender = (value: string) => {
+  const key = text(value).toLowerCase();
+  if (key.startsWith("m")) return "M";
+  if (key.startsWith("f")) return "F";
+  return "X";
+};
+
+const codeRank = (value: string) => {
+  const rank = text(value);
+  if (/eto\s*cadet/i.test(rank)) return "ETC";
+  if (/deck\s*cadet|trainee\s*officer\s*\(deck\)/i.test(rank)) return "DCT";
+  if (/engine\s*cadet|trainee\s*officer\s*\(engine\)/i.test(rank)) return "ECT";
+  if (/master|captain/i.test(rank)) return "CAP";
+  if (/chief\s*officer|chief mate|c\/?o\b/i.test(rank)) return "CO";
+  if (/2nd\s*off|second\s*off/i.test(rank)) return "2OF";
+  if (/3rd\s*off|third\s*off/i.test(rank)) return "3OF";
+  if (/chief\s*eng|c\/?e\b/i.test(rank)) return "CE";
+  if (/2nd\s*eng|second\s*eng|\b2e\b/i.test(rank)) return "2E";
+  if (/3rd\s*eng|third\s*eng/i.test(rank)) return "3E";
+  if (/4th\s*eng|fourth\s*eng/i.test(rank)) return "4E";
+  if (/eto|electro/i.test(rank)) return "ETO";
+  if (/trainee\s*os|ordinary\s*seaman|\bos\b/i.test(rank)) return "OS";
+  if (/trainee\s*cook|cook/i.test(rank)) return "CK";
+  if (/cadet/i.test(rank)) return "CDT";
+  if (/trainee/i.test(rank)) return "TRN";
+  return rank.replace(/[^A-Za-z0-9]/g, "").slice(0, 3).toUpperCase() || "XXX";
+};
+
+const hash5 = (seed: string) => {
+  let h = 5381;
+  for (let i = 0; i < seed.length; i += 1) h = ((h << 5) + h) ^ seed.charCodeAt(i);
+  return (Math.abs(h) >>> 0).toString(36).toUpperCase().padStart(5, "0").slice(-5);
+};
+
+const buildAdminCvUid = (opts: { nationality?: string; gender?: string; rank?: string; lastRank?: string; seed: string }) => {
+  return `SM-${codeNationality(opts.nationality || "")}-${codeGender(opts.gender || "")}-${codeRank(opts.lastRank || opts.rank || "")}-${hash5(opts.seed)}`;
+};
+
 const fmtDate = (value: any) => {
   const dateText = text(value);
   if (!dateText) return "—";
@@ -182,12 +233,19 @@ export default function CVDatabaseTab() {
         const profile = profByUser[uid] || {};
         const personal = parsed?.personal || {};
         const latestSea = (parsed?.sea_service || []).find((s: any) => text(s.vesselName, s.vessel_name));
+        const smartCvUid = buildAdminCvUid({
+          nationality: text(personal.nationality, profile.nationality),
+          gender: text(personal.gender, profile.gender),
+          rank: text(personal.rank, personal.applyingFor, profile.rank, profile.role),
+          lastRank: text(latestSea?.rankOnBoard, latestSea?.rank),
+          seed: text(uid, personal.email, profile.email),
+        });
         return {
           user_id: uid,
           path: file?.path || "",
           size: file?.size || 0,
           uploaded_at: file?.uploaded_at || parsed?.updated_at || "",
-          cv_uid: text(profile.crew_unique_id, parsed?.cv_uid, personal.cvUid, personal.cv_uid),
+          cv_uid: text(parsed?.cv_uid, personal.cvUid, personal.cv_uid, smartCvUid, profile.crew_unique_id),
           ...profile,
           first_name: text(profile.first_name, personal.firstName, personal.first_name, personal.name?.split(" ")?.[0]),
           last_name: text(profile.last_name, personal.lastName, personal.last_name, personal.name?.split(" ")?.slice(1).join(" ")),
