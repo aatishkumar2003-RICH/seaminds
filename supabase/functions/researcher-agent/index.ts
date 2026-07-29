@@ -143,7 +143,7 @@ If NO vacancies found, return empty array [].
 Page text:
 ${trimmed}`;
 
-  const result = await askClaude(prompt, 3000);
+  const result = await askAI(prompt, 3000);
   try {
     return JSON.parse(result.replace(/```json|```/g, '').trim());
   } catch {
@@ -181,7 +181,7 @@ async function processInstructions(): Promise<string[]> {
       }
 
       // Ask Claude to interpret the instruction
-      const interpretation = await askClaude(`You are the SeaMinds vacancy agent. Interpret this admin instruction and output a JSON action object.
+      const interpretation = await askAI(`You are the SeaMinds vacancy agent. Interpret this admin instruction and output a JSON action object.
 
 Instruction: "${inst.instruction}"
 
