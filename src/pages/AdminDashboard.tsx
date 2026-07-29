@@ -778,7 +778,7 @@ function ActivityTab() {
   const load = useCallback(async () => {
     const [c, l] = await Promise.all([
       supabase.from("crew_profiles").select("id, first_name, last_name, role, nationality, vessel_type, ship_name, whatsapp_number, created_at").order("created_at", { ascending: false }).limit(500),
-      (supabase.from as any)("email_leads").select("*").order("last_seen", { ascending: false }).limit(500),
+      supabase.from("email_leads").select("*").order("last_seen", { ascending: false }).limit(500),
     ]);
     setCrew(c.data || []);
     setLeads(l.data || []);
