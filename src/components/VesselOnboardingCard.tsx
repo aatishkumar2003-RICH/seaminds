@@ -61,6 +61,7 @@ const VesselOnboardingCard = ({ profileId, existingShipName, existingRole, onBac
           ship_name: vesselName.trim(),
           vessel_type: vesselType,
           role: normalizedRole,
+          rank,
           port_of_joining: portOfJoining.trim(),
           onboarding_complete: true,
           ...(passportNumber ? { passport_number: passportNumber } : {}),
