@@ -168,7 +168,7 @@ export default function CVDatabaseTab() {
       // 4) Fetch matching crew profiles
       const { data: profiles } = await supabase
         .from("crew_profiles")
-        .select("id, first_name, last_name, email, role, rank, nationality, whatsapp_number, ship_name")
+        .select("id, first_name, last_name, email, role, rank, nationality, whatsapp_number, ship_name, crew_unique_id")
         .in("id", ids);
 
       const profByUser: Record<string, any> = {};
@@ -513,7 +513,7 @@ export default function CVDatabaseTab() {
             ))}
             {!loading && filtered.length === 0 && (
               <tr>
-                <td style={td} colSpan={10}>
+                <td style={td} colSpan={11}>
                   <div style={{ padding: 24, textAlign: "center", color: "#6b7280" }}>
                     No CVs found.
                   </div>
