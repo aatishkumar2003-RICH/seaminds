@@ -569,6 +569,14 @@ const ResumeBuilder = () => {
   const filledTraining = training.filter(t => t.courseName);
   const fullName = `${personal.firstName} ${personal.lastName}`.trim() || "Your Name";
   const isEngineer = isEngineerRank(personal.rank);
+  const lastSeaRank = (sea.find(s => s.vesselName && s.rankOnBoard)?.rankOnBoard) || '';
+  const smartCVId = buildSmartCVId({
+    nationality: personal.nationality,
+    gender: personal.gender,
+    currentRank: personal.rank,
+    lastRank: lastSeaRank,
+    seed: user?.id || personal.email || `${personal.firstName}${personal.lastName}${personal.passportNo}`,
+  });
 
   const CertStatusBadge = ({ expiry }: { expiry: string }) => {
     const st = certStatus(expiry);
