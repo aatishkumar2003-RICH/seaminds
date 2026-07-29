@@ -4,26 +4,25 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_URL')!,
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 );
-const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY')!;
 
-// ─── Claude helper ───────────────────────────────────────────────
-async function askClaude(prompt: string, maxTokens = 2000): Promise<string> {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+// ─── OpenAI helper ───────────────────────────────────────────────
+async function askAI(prompt: string, maxTokens = 2000): Promise<string> {
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': ANTHROPIC_KEY,
-      'anthropic-version': '2023-06-01',
+      'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
+      model: 'gpt-4o-mini',
       max_tokens: maxTokens,
       messages: [{ role: 'user', content: prompt }],
     }),
   });
   const data = await res.json();
-  return data.content?.[0]?.text || '';
+  return data.choices?.[0]?.message?.content || '';
 }
+
 
 // ─── Fetch a URL with timeout ─────────────────────────────────────
 async function fetchPage(url: string): Promise<string> {
