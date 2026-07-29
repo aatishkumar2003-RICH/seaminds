@@ -926,6 +926,7 @@ export default function AdminDashboard() {
       </div>
 
       {tab === "crew" && <CrewSearchTab />}
+      {tab === "activity" && <ActivityTab />}
       {tab === "pricing" && <PricingTab />}
       {tab === "discount" && <DiscountCodesTab />}
       {tab === "country_pricing" && <CountryPricingTab />}
