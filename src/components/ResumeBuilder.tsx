@@ -817,7 +817,12 @@ const ResumeBuilder = () => {
           )}
 
           {/* ── SEA SERVICE ── */}
-          <Section id="sea" icon={<Ship size={16} />} title="Sea Service Record" badge={`${sea.filter(s => s.vesselName).length}`} />
+          <Section id="sea" icon={<Ship size={16} />} title={/cadet|trainee/i.test(personal.rank || '') ? "Sea Service Record (Optional — new joiner)" : "Sea Service Record"} badge={`${sea.filter(s => s.vesselName).length}`} />
+          {openSection === "sea" && /cadet|trainee/i.test(personal.rank || '') && (
+            <div className="bg-[#0a1929] rounded-xl p-3 mb-2 text-[11px] text-[#D4AF37] border border-[#1e3a5f]">
+              ⚓ As a cadet/trainee you are exempt from sea service. Skip this section, or add training vessel time if you have any.
+            </div>
+          )}
           {openSection === "sea" && (
             <div className="bg-[#0a1929] rounded-xl p-4 space-y-4 mb-1">
               {sea.map((e, idx) => (
