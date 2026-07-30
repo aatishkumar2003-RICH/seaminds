@@ -32,6 +32,7 @@ import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import AdminDashboard from "./pages/AdminDashboard";
 import Verify from "./pages/Verify";
+import OAuthConsent from "./pages/OAuthConsent";
 import CookieConsent from "./components/CookieConsent";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -108,6 +109,7 @@ const App = () => (
             <Route path="/jobs" element={<Navigate to="/app" replace />} />
             <Route path="/for-seafarers" element={<Navigate to="/app" replace />} />
             <Route path="/verify/:id" element={<Verify />} />
+            <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           <CookieConsent />
