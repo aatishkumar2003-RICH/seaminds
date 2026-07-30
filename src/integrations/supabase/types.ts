@@ -764,6 +764,7 @@ export type Database = {
           onboarded: boolean
           onboarding_complete: boolean
           passport_number: string | null
+          phone_valid: boolean
           port_of_joining: string | null
           preferred_vessel_types: string[] | null
           profile_visible: boolean | null
@@ -775,6 +776,7 @@ export type Database = {
           vessel_type: string | null
           voyage_start_date: string | null
           whatsapp_number: string | null
+          whatsapp_verification_token: string | null
           whatsapp_verified: boolean
           whatsapp_verified_at: string | null
           years_at_sea: string
@@ -808,6 +810,7 @@ export type Database = {
           onboarded?: boolean
           onboarding_complete?: boolean
           passport_number?: string | null
+          phone_valid?: boolean
           port_of_joining?: string | null
           preferred_vessel_types?: string[] | null
           profile_visible?: boolean | null
@@ -819,6 +822,7 @@ export type Database = {
           vessel_type?: string | null
           voyage_start_date?: string | null
           whatsapp_number?: string | null
+          whatsapp_verification_token?: string | null
           whatsapp_verified?: boolean
           whatsapp_verified_at?: string | null
           years_at_sea?: string
@@ -852,6 +856,7 @@ export type Database = {
           onboarded?: boolean
           onboarding_complete?: boolean
           passport_number?: string | null
+          phone_valid?: boolean
           port_of_joining?: string | null
           preferred_vessel_types?: string[] | null
           profile_visible?: boolean | null
@@ -863,6 +868,7 @@ export type Database = {
           vessel_type?: string | null
           voyage_start_date?: string | null
           whatsapp_number?: string | null
+          whatsapp_verification_token?: string | null
           whatsapp_verified?: boolean
           whatsapp_verified_at?: string | null
           years_at_sea?: string
@@ -1369,6 +1375,57 @@ export type Database = {
           created_at?: string
           id?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      mobile_verifications: {
+        Row: {
+          created_at: string
+          email: string | null
+          email_verified: boolean
+          full_name: string | null
+          id: string
+          notes: string | null
+          phone_number: string
+          provider: string
+          updated_at: string
+          user_id: string
+          verification_status: string
+          verification_token: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          email_verified?: boolean
+          full_name?: string | null
+          id?: string
+          notes?: string | null
+          phone_number: string
+          provider?: string
+          updated_at?: string
+          user_id: string
+          verification_status?: string
+          verification_token: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          email_verified?: boolean
+          full_name?: string | null
+          id?: string
+          notes?: string | null
+          phone_number?: string
+          provider?: string
+          updated_at?: string
+          user_id?: string
+          verification_status?: string
+          verification_token?: string
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Relationships: []
       }
