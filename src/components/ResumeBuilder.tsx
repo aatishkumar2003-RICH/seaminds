@@ -669,9 +669,11 @@ const ResumeBuilder = () => {
           fillIfMissing('date_of_birth', existingProfile.date_of_birth, profilePayload.date_of_birth);
           if ((!existingProfile.rank || existingProfile.rank === existingProfile.role) && profilePayload.rank) updatePayload.rank = profilePayload.rank;
           if ((!existingProfile.role || existingProfile.role === 'Rating') && profilePayload.role) updatePayload.role = profilePayload.role;
+          updatePayload.cdc_applied = !!savedPersonal.cdcApplied;
           if (Object.keys(updatePayload).length > 0) {
-            await supabase.from('crew_profiles').update(updatePayload).eq('id', user.id);
+            await supabase.from('crew_profiles').update(updatePayload as any).eq('id', user.id);
           }
+
         } else {
           await supabase.from('crew_profiles').insert({ id: user.id, ...profilePayload, onboarded: false, onboarding_complete: false } as any);
         }
