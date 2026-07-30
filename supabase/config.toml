@@ -68,3 +68,5 @@ schedule = "0 8,20 * * *"
 [functions.researcher-agent]
 verify_jwt = false
 schedule = "0 */6 * * *"
+[functions.verify-contact]
+verify_jwt = false
