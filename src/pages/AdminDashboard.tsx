@@ -22,6 +22,7 @@ import VacancyIntelTab from "@/components/admin/VacancyIntelTab";
 import CompanyDirectoryTab from "@/components/admin/CompanyDirectoryTab";
 import AgentChatPanel from "@/components/admin/AgentChatPanel";
 import CVDatabaseTab from "@/components/admin/CVDatabaseTab";
+import MobileVerificationTab from "@/components/admin/MobileVerificationTab";
 import ActivityFullTab from "@/components/admin/ActivityTab";
 
 const ADMIN_PIN = "215151";
