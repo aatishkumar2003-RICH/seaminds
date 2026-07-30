@@ -321,6 +321,23 @@ const Index = () => {
       await supabase.storage.from("crew-cvs").upload(`${data.id}/cv.${ext}`, cvFile, { upsert: true });
     }
     // Silent background: notify admin + log email lead
+    (supabase.rpc('upsert_email_lead', {
+      p_email: authUser?.email || '',
+      p_first_name: profile.firstName || '',
+      p_last_name: profile.lastName || '',
+      p_nationality: profile.nationality || '',
+      p_whatsapp: profile.whatsappNumber || '',
+      p_role: profile.role || '',
+      p_vessel_type: profile.vesselType || '',
+      p_source: 'registration',
+      p_crew_profile_id: data.id,
+    } as any) as any).then(() => {}, () => {});
+    (supabase.from('app_events').insert({
+      event_type: 'crew_registered',
+      message: `New crew registered: ${profile.firstName || ''} ${profile.lastName || ''}`.trim(),
+      user_id: uid || null,
+      metadata: { nationality: profile.nationality, role: profile.role, vessel_type: profile.vesselType },
+    } as any) as any).then(() => {}, () => {});
     supabase.functions.invoke('notify-signup', {
       body: {
         email: authUser?.email || '',
