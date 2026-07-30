@@ -969,7 +969,7 @@ function ActivityTab() {
 /* ─── Main Dashboard ─── */
 export default function AdminDashboard() {
   const [authed, setAuthed] = useState(localStorage.getItem(LS_KEY) === ADMIN_PIN);
-  const [tab, setTab] = useState<"crew" | "activity" | "activity_full" | "cv_database" | "pricing" | "discount" | "country_pricing" | "sub_admins" | "dpa" | "blog_images" | "agents" | "vacancy_intel" | "company_dir">("crew");
+  const [tab, setTab] = useState<"crew" | "activity" | "activity_full" | "cv_database" | "mobile_verify" | "pricing" | "discount" | "country_pricing" | "sub_admins" | "dpa" | "blog_images" | "agents" | "vacancy_intel" | "company_dir">("crew");
 
   if (!authed) return <PinScreen onAuth={() => setAuthed(true)} />;
 
@@ -983,6 +983,7 @@ export default function AdminDashboard() {
     { id: "activity" as const, label: "📋 Crew Activity" },
     { id: "activity_full" as const, label: "📋 Activity" },
     { id: "cv_database" as const, label: "📄 CV Database" },
+    { id: "mobile_verify" as const, label: "📱 Mobile Verification" },
     { id: "pricing" as const, label: "Pricing" },
     { id: "discount" as const, label: "Discount Codes" },
     { id: "country_pricing" as const, label: "Country Pricing" },
@@ -1019,6 +1020,7 @@ export default function AdminDashboard() {
       {tab === "activity" && <ActivityTab />}
       {tab === "activity_full" && <ActivityFullTab />}
       {tab === "cv_database" && <CVDatabaseTab />}
+      {tab === "mobile_verify" && <MobileVerificationTab />}
       {tab === "pricing" && <PricingTab />}
       {tab === "discount" && <DiscountCodesTab />}
       {tab === "country_pricing" && <CountryPricingTab />}
