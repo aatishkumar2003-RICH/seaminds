@@ -644,9 +644,13 @@ const ResumeBuilder = () => {
       // Fetch crew_unique_id from crew_profiles
       const { data: profileData } = await supabase.from('crew_profiles')
         .select('crew_unique_id')
-        .eq('user_id', user.id)
+        .eq('id', user.id)
         .maybeSingle();
-      if (profileData?.crew_unique_id) setCrewUniqueId(profileData.crew_unique_id);
+      if (profileData?.crew_unique_id) {
+        cvIdRef.current = profileData.crew_unique_id;
+        setCrewUniqueId(profileData.crew_unique_id);
+      }
+
     };
     loadCV();
   }, []);
