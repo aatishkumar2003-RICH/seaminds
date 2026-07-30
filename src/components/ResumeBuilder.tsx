@@ -318,12 +318,36 @@ const ResumeBuilder = () => {
 
   const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = ev => setPhoto(ev.target?.result as string);
-      reader.readAsDataURL(file);
-    }
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const raw = ev.target?.result as string;
+      // Normalise to a plain JPEG data URL (fixes HEIC/large/rotated images not
+      // rendering inside the html2canvas PDF snapshot)
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const maxW = 400;
+          const scale = Math.min(1, maxW / img.naturalWidth);
+          const c = document.createElement('canvas');
+          c.width = Math.max(1, Math.round(img.naturalWidth * scale));
+          c.height = Math.max(1, Math.round(img.naturalHeight * scale));
+          const ctx = c.getContext('2d');
+          if (!ctx) { setPhoto(raw); return; }
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, c.width, c.height);
+          ctx.drawImage(img, 0, 0, c.width, c.height);
+          setPhoto(c.toDataURL('image/jpeg', 0.85));
+        } catch {
+          setPhoto(raw);
+        }
+      };
+      img.onerror = () => setPhoto(raw);
+      img.src = raw;
+    };
+    reader.readAsDataURL(file);
   };
+
 
   // ── AI Scan (now with confirmation) ──
   const handleScanCV = async (ev: React.ChangeEvent<HTMLInputElement>) => {
@@ -470,6 +494,20 @@ const ResumeBuilder = () => {
 
       await saveCVData({ personal, sea, certs, edu, skills, photo, training });
 
+      // Make sure every image (incl. the passport photo) is fully decoded
+      // before html2canvas snapshots the node, otherwise it renders blank.
+      await Promise.all(
+        Array.from(el.querySelectorAll('img')).map(img =>
+          img.complete && img.naturalWidth > 0
+            ? (img.decode ? img.decode().catch(() => undefined) : Promise.resolve())
+            : new Promise<void>(resolve => {
+                img.onload = () => resolve();
+                img.onerror = () => resolve();
+                setTimeout(resolve, 3000);
+              })
+        )
+      );
+
       const canvas = await html2canvas(el, {
         scale: window.devicePixelRatio > 2 ? 1.5 : 2,
         useCORS: true,
@@ -478,7 +516,22 @@ const ResumeBuilder = () => {
         logging: false,
         windowWidth: el.scrollWidth,
         windowHeight: el.scrollHeight,
+        imageTimeout: 15000,
+        onclone: (_doc, clonedEl) => {
+          // html2canvas ignores object-fit — emulate the crop with a background image
+          clonedEl.querySelectorAll('img').forEach(img => {
+            const src = img.getAttribute('src') || '';
+            if (!src) return;
+            const cs = window.getComputedStyle(img);
+            if (cs.objectFit === 'cover' || cs.objectFit === 'contain') {
+              const wrap = img as HTMLImageElement;
+              wrap.style.objectFit = 'fill';
+            }
+            img.setAttribute('crossorigin', 'anonymous');
+          });
+        },
       });
+
       const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const imgData = canvas.toDataURL('image/png');
       const pdfWidth = pdf.internal.pageSize.getWidth();

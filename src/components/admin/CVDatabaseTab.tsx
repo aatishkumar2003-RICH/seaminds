@@ -336,6 +336,20 @@ export default function CVDatabaseTab() {
       pdf.text(text(row.cv_uid, "CV UID PENDING"), 171, 16, { align: "center" });
       y = 38;
 
+      // Passport photo (top-right, below the UID chip)
+      const photoData: string | null = (parsed as any).photo || (row as any).photo || null;
+      if (photoData && typeof photoData === "string" && photoData.startsWith("data:image")) {
+        try {
+          const fmt = photoData.includes("image/png") ? "PNG" : "JPEG";
+          pdf.setDrawColor(212, 175, 55);
+          pdf.rect(163, 36, 26, 32);
+          pdf.addImage(photoData, fmt, 163, 36, 26, 32, undefined, "FAST");
+        } catch (photoErr) {
+          console.warn("CV photo could not be embedded:", photoErr);
+        }
+      }
+
+
       pdf.setTextColor(30, 30, 30);
       pdf.setFont("helvetica", "normal");
       pdf.setFontSize(9);
@@ -349,14 +363,17 @@ export default function CVDatabaseTab() {
         [`Email`, text(row.email, personal.email, "—")],
         [`Available`, fmtDate(personal.availableFrom)],
       ];
+      const hasPhoto = !!(photoData && typeof photoData === "string" && photoData.startsWith("data:image"));
       contactLines.forEach(([label, value], index) => {
-        const x = index % 2 === 0 ? 14 : 108;
+        const isRight = index % 2 === 1;
+        const x = isRight ? 100 : 14;
         const lineY = y + Math.floor(index / 2) * 6;
         pdf.setFont("helvetica", "bold");
         pdf.text(`${label}:`, x, lineY);
         pdf.setFont("helvetica", "normal");
-        pdf.text(value, x + 24, lineY, { maxWidth: 65 });
+        pdf.text(value, x + 24, lineY, { maxWidth: isRight && hasPhoto ? 38 : 65 });
       });
+
       y += 30;
 
       if (text(personal.summary)) {
