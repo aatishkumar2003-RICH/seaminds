@@ -639,9 +639,11 @@ const ResumeBuilder = () => {
           years_at_sea: savedPersonal.yearsAtSea || '',
           gender: savedPersonal.gender || null,
           passport_number: savedPersonal.passportNo || null,
+          cdc_applied: !!savedPersonal.cdcApplied,
           crew_unique_id: savedCvUid,
           user_id: user.id,
         };
+
         if (/^\d{4}-\d{2}-\d{2}/.test(savedPersonal.dob || '')) profilePayload.date_of_birth = savedPersonal.dob;
         const { data: existingProfile } = await supabase
           .from('crew_profiles')
