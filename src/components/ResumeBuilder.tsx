@@ -1390,7 +1390,7 @@ const ResumeBuilder = () => {
                     </div>
                   </div>
                   {/* SMART CV UNIQUE ID */}
-                  <div title="SeaMinds Unique CV ID · Nationality · Gender · Rank · Hash" style={{ flexShrink:0, textAlign:'right' }}>
+                  <div title="SeaMinds Unique CV ID · Country · Code · Gender (read-only)" style={{ flexShrink:0, textAlign:'right' }}>
                     <div style={{ fontSize:'7px', color:'#D4AF37', letterSpacing:'1.5px', fontWeight:'bold', textTransform:'uppercase', marginBottom:'2px' }}>CV UID</div>
                     <div style={{ fontFamily:'"Courier New", monospace', fontSize:'11px', color:'#FFFFFF', background:'#D4AF37', padding:'3px 7px', borderRadius:'3px', letterSpacing:'0.5px', fontWeight:'bold', border:'1px solid #D4AF37' }}>
                       <span style={{ color:'#0D1B2A' }}>{smartCVId}</span>
