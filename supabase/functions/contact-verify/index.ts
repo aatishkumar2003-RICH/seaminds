@@ -12,7 +12,9 @@ const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-api-version, accept, accept-profile, content-profile, prefer, range',
+  'Access-Control-Max-Age': '86400',
 };
 
 // Always 200 so the browser SDK surfaces our structured error instead of a
