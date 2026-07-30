@@ -240,10 +240,15 @@ const ResumeBuilder = () => {
     firstName: "", lastName: "", rank: "", applyingFor: "", nationality: "",
     gender: "",
     dob: "", phone: "", email: "", address: "",
-    passportNo: "", cdcNo: "", cdcCountry: "", summary: "",
+    passportNo: "", cdcNo: "", cdcCountry: "", cdcApplied: false, summary: "",
     emergencyName: "", emergencyPhone: "",
     expectedSalaryMin: "", expectedSalaryMax: "", availableFrom: "",
   });
+
+  // ── Verified contact details (confirmed by 6-digit code) ──
+  const [verifiedEmail, setVerifiedEmail] = useState("");
+  const [verifiedPhone, setVerifiedPhone] = useState("");
+
 
   const [sea, setSea] = useState<SeaEntry[]>([{
     id: "1", vesselName: "", imoNumber: "", vesselType: "", flagState: "",
