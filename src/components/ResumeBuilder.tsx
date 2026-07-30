@@ -459,6 +459,10 @@ const ResumeBuilder = () => {
   };
 
   // ── Completion check ──
+  const isNewJoinerRank = /cadet|trainee/i.test(personal.rank || '');
+  const emailVerified = !!personal.email && personal.email.trim().toLowerCase() === verifiedEmail.trim().toLowerCase();
+  const phoneVerified = !!personal.phone && personal.phone.trim() === verifiedPhone.trim();
+
   const getCompletionStatus = () => {
     const missing: string[] = [];
     if (!photo) missing.push('Photo');
@@ -466,14 +470,21 @@ const ResumeBuilder = () => {
     if (!personal.lastName) missing.push('Last Name');
     if (!personal.rank) missing.push('Current Rank');
     if (!personal.nationality) missing.push('Nationality');
+    if (!personal.gender) missing.push('Gender');
     if (!personal.dob) missing.push('Date of Birth');
     if (!personal.passportNo) missing.push('Passport Number');
-    if (!personal.phone) missing.push('Phone/WhatsApp');
-    const isNewJoiner = /cadet|trainee/i.test(personal.rank || '');
+    if (!personal.cdcNo && !personal.cdcApplied) missing.push('CDC / Seaman Book No. (or tick "Applied for")');
+    if (!personal.phone) missing.push('WhatsApp / Mobile Number');
+    if (!personal.email) missing.push('Email Address');
+    if (personal.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(personal.email.trim())) missing.push('A valid Email Address');
+    if (personal.email && !emailVerified) missing.push('Email verification (send & enter the 6-digit code)');
+    if (personal.phone && !phoneVerified) missing.push('WhatsApp verification (send & enter the 6-digit code)');
+    const isNewJoiner = isNewJoinerRank;
     if (!isNewJoiner && (sea.length === 0 || !sea.some(s => s.vesselName))) missing.push('At least 1 Sea Service entry');
     if (certs.length === 0 || !certs.some(c => c.name)) missing.push('At least 1 Certificate');
     return missing;
   };
+
 
   const handlePreviewClick = () => {
     const missing = getCompletionStatus();
