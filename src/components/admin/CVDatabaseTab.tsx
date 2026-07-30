@@ -588,7 +588,20 @@ export default function CVDatabaseTab() {
                         Data
                       </button>
                     )}
+
+                    <button
+                      onClick={() => regenerateId(r)}
+                      title="Admin only — issue a new unique CV ID"
+                      style={{
+                        padding: "6px 10px", borderRadius: 6, cursor: "pointer",
+                        background: "transparent", color: "#94a3b8",
+                        border: "1px solid #334155", fontWeight: 600, fontSize: 12,
+                      }}
+                    >
+                      Regenerate ID
+                    </button>
                   </div>
+
                 </td>
               </tr>
             ))}
