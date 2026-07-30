@@ -505,6 +505,45 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_verifications: {
+        Row: {
+          attempts: number
+          channel: string
+          code_hash: string
+          created_at: string
+          expires_at: string
+          id: string
+          target: string
+          updated_at: string
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          attempts?: number
+          channel: string
+          code_hash: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          target: string
+          updated_at?: string
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          attempts?: number
+          channel?: string
+          code_hash?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          target?: string
+          updated_at?: string
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       country_pricing: {
         Row: {
           active: boolean | null
@@ -698,11 +737,14 @@ export type Database = {
       crew_profiles: {
         Row: {
           available_from: string | null
+          cdc_applied: boolean
           created_at: string
           crew_unique_id: string | null
           cv_data: string | null
           date_of_birth: string | null
           email: string | null
+          email_verified: boolean
+          email_verified_at: string | null
           first_name: string
           gender: string | null
           home_city: string | null
@@ -733,15 +775,20 @@ export type Database = {
           vessel_type: string | null
           voyage_start_date: string | null
           whatsapp_number: string | null
+          whatsapp_verified: boolean
+          whatsapp_verified_at: string | null
           years_at_sea: string
         }
         Insert: {
           available_from?: string | null
+          cdc_applied?: boolean
           created_at?: string
           crew_unique_id?: string | null
           cv_data?: string | null
           date_of_birth?: string | null
           email?: string | null
+          email_verified?: boolean
+          email_verified_at?: string | null
           first_name: string
           gender?: string | null
           home_city?: string | null
@@ -772,15 +819,20 @@ export type Database = {
           vessel_type?: string | null
           voyage_start_date?: string | null
           whatsapp_number?: string | null
+          whatsapp_verified?: boolean
+          whatsapp_verified_at?: string | null
           years_at_sea?: string
         }
         Update: {
           available_from?: string | null
+          cdc_applied?: boolean
           created_at?: string
           crew_unique_id?: string | null
           cv_data?: string | null
           date_of_birth?: string | null
           email?: string | null
+          email_verified?: boolean
+          email_verified_at?: string | null
           first_name?: string
           gender?: string | null
           home_city?: string | null
@@ -811,6 +863,8 @@ export type Database = {
           vessel_type?: string | null
           voyage_start_date?: string | null
           whatsapp_number?: string | null
+          whatsapp_verified?: boolean
+          whatsapp_verified_at?: string | null
           years_at_sea?: string
         }
         Relationships: []

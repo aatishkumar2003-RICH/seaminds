@@ -8,6 +8,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { generateUniqueCvId, genderChar, CV_ID_PATTERN } from "@/lib/cvId";
+import ContactVerify from "@/components/cv/ContactVerify";
+
 
 
 // ─────────── TYPES ───────────
@@ -240,10 +242,15 @@ const ResumeBuilder = () => {
     firstName: "", lastName: "", rank: "", applyingFor: "", nationality: "",
     gender: "",
     dob: "", phone: "", email: "", address: "",
-    passportNo: "", cdcNo: "", cdcCountry: "", summary: "",
+    passportNo: "", cdcNo: "", cdcCountry: "", cdcApplied: false, summary: "",
     emergencyName: "", emergencyPhone: "",
     expectedSalaryMin: "", expectedSalaryMax: "", availableFrom: "",
   });
+
+  // ── Verified contact details (confirmed by 6-digit code) ──
+  const [verifiedEmail, setVerifiedEmail] = useState("");
+  const [verifiedPhone, setVerifiedPhone] = useState("");
+
 
   const [sea, setSea] = useState<SeaEntry[]>([{
     id: "1", vesselName: "", imoNumber: "", vesselType: "", flagState: "",
@@ -454,6 +461,10 @@ const ResumeBuilder = () => {
   };
 
   // ── Completion check ──
+  const isNewJoinerRank = /cadet|trainee/i.test(personal.rank || '');
+  const emailVerified = !!personal.email && personal.email.trim().toLowerCase() === verifiedEmail.trim().toLowerCase();
+  const phoneVerified = !!personal.phone && personal.phone.trim() === verifiedPhone.trim();
+
   const getCompletionStatus = () => {
     const missing: string[] = [];
     if (!photo) missing.push('Photo');
@@ -461,14 +472,21 @@ const ResumeBuilder = () => {
     if (!personal.lastName) missing.push('Last Name');
     if (!personal.rank) missing.push('Current Rank');
     if (!personal.nationality) missing.push('Nationality');
+    if (!personal.gender) missing.push('Gender');
     if (!personal.dob) missing.push('Date of Birth');
     if (!personal.passportNo) missing.push('Passport Number');
-    if (!personal.phone) missing.push('Phone/WhatsApp');
-    const isNewJoiner = /cadet|trainee/i.test(personal.rank || '');
+    if (!personal.cdcNo && !personal.cdcApplied) missing.push('CDC / Seaman Book No. (or tick "Applied for")');
+    if (!personal.phone) missing.push('WhatsApp / Mobile Number');
+    if (!personal.email) missing.push('Email Address');
+    if (personal.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(personal.email.trim())) missing.push('A valid Email Address');
+    if (personal.email && !emailVerified) missing.push('Email verification (send & enter the 6-digit code)');
+    if (personal.phone && !phoneVerified) missing.push('WhatsApp verification (send & enter the 6-digit code)');
+    const isNewJoiner = isNewJoinerRank;
     if (!isNewJoiner && (sea.length === 0 || !sea.some(s => s.vesselName))) missing.push('At least 1 Sea Service entry');
     if (certs.length === 0 || !certs.some(c => c.name)) missing.push('At least 1 Certificate');
     return missing;
   };
+
 
   const handlePreviewClick = () => {
     const missing = getCompletionStatus();
@@ -623,9 +641,11 @@ const ResumeBuilder = () => {
           years_at_sea: savedPersonal.yearsAtSea || '',
           gender: savedPersonal.gender || null,
           passport_number: savedPersonal.passportNo || null,
+          cdc_applied: !!savedPersonal.cdcApplied,
           crew_unique_id: savedCvUid,
           user_id: user.id,
         };
+
         if (/^\d{4}-\d{2}-\d{2}/.test(savedPersonal.dob || '')) profilePayload.date_of_birth = savedPersonal.dob;
         const { data: existingProfile } = await supabase
           .from('crew_profiles')
@@ -653,9 +673,11 @@ const ResumeBuilder = () => {
           fillIfMissing('date_of_birth', existingProfile.date_of_birth, profilePayload.date_of_birth);
           if ((!existingProfile.rank || existingProfile.rank === existingProfile.role) && profilePayload.rank) updatePayload.rank = profilePayload.rank;
           if ((!existingProfile.role || existingProfile.role === 'Rating') && profilePayload.role) updatePayload.role = profilePayload.role;
+          updatePayload.cdc_applied = !!savedPersonal.cdcApplied;
           if (Object.keys(updatePayload).length > 0) {
-            await supabase.from('crew_profiles').update(updatePayload).eq('id', user.id);
+            await supabase.from('crew_profiles').update(updatePayload as any).eq('id', user.id);
           }
+
         } else {
           await supabase.from('crew_profiles').insert({ id: user.id, ...profilePayload, onboarded: false, onboarding_complete: false } as any);
         }
@@ -694,15 +716,19 @@ const ResumeBuilder = () => {
         const eduData = typeof data.education === 'string' ? JSON.parse(data.education) : data.education;
         if (Array.isArray(eduData) && eduData.length > 0) setEdu(eduData);
       } catch (e) { console.error('CV load error:', e); }
-      // Fetch crew_unique_id from crew_profiles
+      // Fetch crew_unique_id + verification status from crew_profiles
       const { data: profileData } = await supabase.from('crew_profiles')
-        .select('crew_unique_id')
+        .select('crew_unique_id, email, whatsapp_number, email_verified, whatsapp_verified')
         .eq('id', user.id)
         .maybeSingle();
       if (profileData?.crew_unique_id) {
         cvIdRef.current = profileData.crew_unique_id;
         setCrewUniqueId(profileData.crew_unique_id);
       }
+      const prof: any = profileData;
+      if (prof?.email_verified && prof?.email) setVerifiedEmail(prof.email);
+      if (prof?.whatsapp_verified && prof?.whatsapp_number) setVerifiedPhone(prof.whatsapp_number);
+
 
     };
     loadCV();
@@ -1018,12 +1044,35 @@ const ResumeBuilder = () => {
                 </div>
                 <div><label className={lbl}>Passport Number <span className="text-red-500">*</span></label><input className={inp} placeholder="P1234567A" value={personal.passportNo} onChange={e => P("passportNo", e.target.value)} /></div>
               </div>
-              <div><label className={lbl}>CDC / Seaman Book No.</label><input className={inp} placeholder="CDC-123456" value={personal.cdcNo} onChange={e => P("cdcNo", e.target.value)} /></div>
-              <div><label className={lbl}>CDC Issue Country</label><input className={inp} placeholder="Philippines" value={personal.cdcCountry} onChange={e => P("cdcCountry", e.target.value)} /></div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><label className={lbl}>WhatsApp / Phone <span className="text-red-500">*</span></label><input className={inp} placeholder="+63..." value={personal.phone} onChange={e => P("phone", e.target.value)} /></div>
-                <div><label className={lbl}>Email</label><input className={inp} placeholder="name@email.com" value={personal.email} onChange={e => P("email", e.target.value)} /></div>
+              <div>
+                <label className={lbl}>CDC / Seaman Book No. <span className="text-red-500">*</span></label>
+                <input className={inp} placeholder="CDC-123456" value={personal.cdcNo} disabled={!!personal.cdcApplied}
+                  onChange={e => P("cdcNo", e.target.value)} style={personal.cdcApplied ? { opacity: 0.5 } : undefined} />
+                <label className="flex items-center gap-2 mt-2 text-[11px] text-gray-400 cursor-pointer">
+                  <input type="checkbox" checked={!!personal.cdcApplied}
+                    onChange={e => { P("cdcApplied", e.target.checked as any); if (e.target.checked) P("cdcNo", ""); }} />
+                  Applied for / in process — new cadet, no Seaman Book yet
+                </label>
               </div>
+              {!personal.cdcApplied && (
+                <div><label className={lbl}>CDC Issue Country</label><input className={inp} placeholder="Philippines" value={personal.cdcCountry} onChange={e => P("cdcCountry", e.target.value)} /></div>
+              )}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={lbl}>WhatsApp / Mobile <span className="text-red-500">*</span></label>
+                  <input className={inp} placeholder="+63..." value={personal.phone} onChange={e => P("phone", e.target.value)} />
+                  <ContactVerify channel="whatsapp" value={personal.phone} verifiedValue={verifiedPhone} onVerified={setVerifiedPhone} />
+                </div>
+                <div>
+                  <label className={lbl}>Email <span className="text-red-500">*</span></label>
+                  <input className={inp} placeholder="name@email.com" value={personal.email} onChange={e => P("email", e.target.value)} />
+                  <ContactVerify channel="email" value={personal.email} verifiedValue={verifiedEmail} onVerified={setVerifiedEmail} />
+                </div>
+              </div>
+              <p className="text-[10px] text-gray-500">
+                Both your email and WhatsApp must be verified with a 6-digit code before your CV can be generated — this keeps the SeaMinds crew database contactable and trusted by employers.
+              </p>
+
               <div><label className={lbl}>Home Address</label><input className={inp} placeholder="Manila, Philippines" value={personal.address} onChange={e => P("address", e.target.value)} /></div>
 
               {/* Expected Salary Range */}
@@ -1456,10 +1505,11 @@ const ResumeBuilder = () => {
                   {personal.gender && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Gender: </span>{personal.gender}</div>}
                   {personal.dob && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Date of Birth: </span>{fmtDate(personal.dob)}</div>}
                   {personal.passportNo && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Passport: </span>{personal.passportNo}</div>}
-                  {personal.cdcNo && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>CDC/SB: </span>{personal.cdcNo}{personal.cdcCountry ? ` (${personal.cdcCountry})` : ''}</div>}
-                  {personal.phone && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>WhatsApp: </span>{personal.phone}</div>}
-                  {personal.email && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Email: </span>{personal.email}</div>}
+                  {(personal.cdcNo || personal.cdcApplied) && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>CDC/SB: </span>{personal.cdcApplied ? 'Applied for (in process)' : `${personal.cdcNo}${personal.cdcCountry ? ` (${personal.cdcCountry})` : ''}`}</div>}
+                  {personal.phone && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>WhatsApp: </span>{personal.phone}{phoneVerified ? <span style={{ color:'#0a7d3f', fontWeight:'bold' }}> ✓ verified</span> : ''}</div>}
+                  {personal.email && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Email: </span>{personal.email}{emailVerified ? <span style={{ color:'#0a7d3f', fontWeight:'bold' }}> ✓ verified</span> : ''}</div>}
                   {personal.address && <div style={{ gridColumn:'span 2' }}><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Address: </span>{personal.address}</div>}
+
                 </div>
                 {/* Availability row */}
                 {(personal.availableFrom || personal.expectedSalaryMin) && (
