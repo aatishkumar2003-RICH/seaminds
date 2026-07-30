@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
+import { generateUniqueCvId } from "@/lib/cvId";
+
 
 interface CVRow {
   user_id: string;
