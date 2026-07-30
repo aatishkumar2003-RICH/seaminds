@@ -1505,10 +1505,11 @@ const ResumeBuilder = () => {
                   {personal.gender && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Gender: </span>{personal.gender}</div>}
                   {personal.dob && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Date of Birth: </span>{fmtDate(personal.dob)}</div>}
                   {personal.passportNo && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Passport: </span>{personal.passportNo}</div>}
-                  {personal.cdcNo && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>CDC/SB: </span>{personal.cdcNo}{personal.cdcCountry ? ` (${personal.cdcCountry})` : ''}</div>}
-                  {personal.phone && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>WhatsApp: </span>{personal.phone}</div>}
-                  {personal.email && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Email: </span>{personal.email}</div>}
+                  {(personal.cdcNo || personal.cdcApplied) && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>CDC/SB: </span>{personal.cdcApplied ? 'Applied for (in process)' : `${personal.cdcNo}${personal.cdcCountry ? ` (${personal.cdcCountry})` : ''}`}</div>}
+                  {personal.phone && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>WhatsApp: </span>{personal.phone}{phoneVerified ? <span style={{ color:'#0a7d3f', fontWeight:'bold' }}> ✓ verified</span> : ''}</div>}
+                  {personal.email && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Email: </span>{personal.email}{emailVerified ? <span style={{ color:'#0a7d3f', fontWeight:'bold' }}> ✓ verified</span> : ''}</div>}
                   {personal.address && <div style={{ gridColumn:'span 2' }}><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Address: </span>{personal.address}</div>}
+
                 </div>
                 {/* Availability row */}
                 {(personal.availableFrom || personal.expectedSalaryMin) && (
