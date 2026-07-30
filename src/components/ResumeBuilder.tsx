@@ -318,12 +318,36 @@ const ResumeBuilder = () => {
 
   const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = ev => setPhoto(ev.target?.result as string);
-      reader.readAsDataURL(file);
-    }
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const raw = ev.target?.result as string;
+      // Normalise to a plain JPEG data URL (fixes HEIC/large/rotated images not
+      // rendering inside the html2canvas PDF snapshot)
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const maxW = 400;
+          const scale = Math.min(1, maxW / img.naturalWidth);
+          const c = document.createElement('canvas');
+          c.width = Math.max(1, Math.round(img.naturalWidth * scale));
+          c.height = Math.max(1, Math.round(img.naturalHeight * scale));
+          const ctx = c.getContext('2d');
+          if (!ctx) { setPhoto(raw); return; }
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, c.width, c.height);
+          ctx.drawImage(img, 0, 0, c.width, c.height);
+          setPhoto(c.toDataURL('image/jpeg', 0.85));
+        } catch {
+          setPhoto(raw);
+        }
+      };
+      img.onerror = () => setPhoto(raw);
+      img.src = raw;
+    };
+    reader.readAsDataURL(file);
   };
+
 
   // ── AI Scan (now with confirmation) ──
   const handleScanCV = async (ev: React.ChangeEvent<HTMLInputElement>) => {
