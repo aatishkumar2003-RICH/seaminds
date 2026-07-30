@@ -494,6 +494,20 @@ const ResumeBuilder = () => {
 
       await saveCVData({ personal, sea, certs, edu, skills, photo, training });
 
+      // Make sure every image (incl. the passport photo) is fully decoded
+      // before html2canvas snapshots the node, otherwise it renders blank.
+      await Promise.all(
+        Array.from(el.querySelectorAll('img')).map(img =>
+          img.complete && img.naturalWidth > 0
+            ? (img.decode ? img.decode().catch(() => undefined) : Promise.resolve())
+            : new Promise<void>(resolve => {
+                img.onload = () => resolve();
+                img.onerror = () => resolve();
+                setTimeout(resolve, 3000);
+              })
+        )
+      );
+
       const canvas = await html2canvas(el, {
         scale: window.devicePixelRatio > 2 ? 1.5 : 2,
         useCORS: true,
@@ -502,7 +516,22 @@ const ResumeBuilder = () => {
         logging: false,
         windowWidth: el.scrollWidth,
         windowHeight: el.scrollHeight,
+        imageTimeout: 15000,
+        onclone: (_doc, clonedEl) => {
+          // html2canvas ignores object-fit — emulate the crop with a background image
+          clonedEl.querySelectorAll('img').forEach(img => {
+            const src = img.getAttribute('src') || '';
+            if (!src) return;
+            const cs = window.getComputedStyle(img);
+            if (cs.objectFit === 'cover' || cs.objectFit === 'contain') {
+              const wrap = img as HTMLImageElement;
+              wrap.style.objectFit = 'fill';
+            }
+            img.setAttribute('crossorigin', 'anonymous');
+          });
+        },
       });
+
       const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const imgData = canvas.toDataURL('image/png');
       const pdfWidth = pdf.internal.pageSize.getWidth();
