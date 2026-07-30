@@ -516,19 +516,34 @@ const ResumeBuilder = () => {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [generatingPdf, setGeneratingPdf] = useState(false);
 
+  // ── Unique CV ID (COUNTRY-XXXX-GENDER), generated once and read-only ──
+  const cvIdRef = useRef<string>('');
+  const ensureCvId = async (nationality: string, gender: string): Promise<string> => {
+    if (!user) return cvIdRef.current;
+    const g = genderChar(gender);
+    if (cvIdRef.current && !(cvIdRef.current.endsWith('-X') && g !== 'X')) return cvIdRef.current;
+    if (!cvIdRef.current) {
+      const { data: prof } = await supabase
+        .from('crew_profiles').select('crew_unique_id').eq('id', user.id).maybeSingle();
+      const existing = prof?.crew_unique_id || '';
+      if (existing && CV_ID_PATTERN.test(existing) && !(existing.endsWith('-X') && g !== 'X')) {
+        cvIdRef.current = existing;
+        setCrewUniqueId(existing);
+        return existing;
+      }
+    }
+    const fresh = await generateUniqueCvId({ nationality, gender });
+    cvIdRef.current = fresh;
+    setCrewUniqueId(fresh);
+    return fresh;
+  };
+
   // ── Auto-save CV data to Supabase ──
   const saveCVData = async (data: any) => {
     try {
       if (!user) return;
       setSaveStatus('saving');
-      const savedLastRank = (data.sea || []).find((s: SeaEntry) => s.vesselName && s.rankOnBoard)?.rankOnBoard || '';
-      const savedCvUid = buildSmartCVId({
-        nationality: data.personal?.nationality || '',
-        gender: data.personal?.gender || '',
-        currentRank: data.personal?.rank || '',
-        lastRank: savedLastRank,
-        seed: user.id || data.personal?.email || `${data.personal?.firstName || ''}${data.personal?.lastName || ''}${data.personal?.passportNo || ''}`,
-      });
+      const savedCvUid = await ensureCvId(data.personal?.nationality || '', data.personal?.gender || '');
       const savedPersonal = { ...data.personal, cvUid: savedCvUid, cv_uid: savedCvUid };
       await supabase.from('crew_cv_data').upsert({
         user_id: user.id,
@@ -538,6 +553,7 @@ const ResumeBuilder = () => {
         medical: { personal: savedPersonal, skills: data.skills || {}, photo: data.photo || null, training: data.training || [], cv_uid: savedCvUid } as any,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_id' });
+
 
       if (savedPersonal.firstName || savedPersonal.lastName || savedPersonal.email || savedPersonal.phone) {
         const profilePayload: Record<string, any> = {
