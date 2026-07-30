@@ -72,7 +72,8 @@ async function sendEmail(to: string, code: string) {
       if (res.ok) return;
       const body2 = await res.text();
       log('resend fallback error', res.status, body2);
-      throw new Error(`Email delivery failed (${res.status}). ${body2.slice(0, 180)}`);
+      throw new Error('Email codes are not active yet: the SeaMinds sender domain still needs to be verified with the email provider. Please verify your WhatsApp number instead, or contact SeaMinds support.');
+
     }
     throw new Error(`Email delivery failed (${res.status}). ${body.slice(0, 180)}`);
   }
