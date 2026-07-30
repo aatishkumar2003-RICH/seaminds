@@ -193,6 +193,12 @@ Deno.serve(async (req) => {
       return json({ success: false, error: 'Enter the number in international format with country code (e.g. +639171234567)' });
     }
 
+    // WhatsApp OTP delivery is disabled — mobile numbers are confirmed via the
+    // prefilled WhatsApp Business message + admin approval flow instead.
+    if (channel === 'whatsapp') {
+      return json({ success: false, error: 'WhatsApp code verification is no longer used. Use "Verify via WhatsApp" in the CV form, or verify your email.' });
+    }
+
     if (op === 'send') {
       // Rate limit: max 5 codes per channel per hour
       const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
