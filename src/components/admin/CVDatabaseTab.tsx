@@ -336,6 +336,20 @@ export default function CVDatabaseTab() {
       pdf.text(text(row.cv_uid, "CV UID PENDING"), 171, 16, { align: "center" });
       y = 38;
 
+      // Passport photo (top-right, below the UID chip)
+      const photoData: string | null = (parsed as any).photo || (row as any).photo || null;
+      if (photoData && typeof photoData === "string" && photoData.startsWith("data:image")) {
+        try {
+          const fmt = photoData.includes("image/png") ? "PNG" : "JPEG";
+          pdf.setDrawColor(212, 175, 55);
+          pdf.rect(163, 36, 26, 32);
+          pdf.addImage(photoData, fmt, 163, 36, 26, 32, undefined, "FAST");
+        } catch (photoErr) {
+          console.warn("CV photo could not be embedded:", photoErr);
+        }
+      }
+
+
       pdf.setTextColor(30, 30, 30);
       pdf.setFont("helvetica", "normal");
       pdf.setFontSize(9);
