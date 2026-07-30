@@ -479,8 +479,8 @@ const ResumeBuilder = () => {
     if (!personal.phone) missing.push('WhatsApp / Mobile Number');
     if (!personal.email) missing.push('Email Address');
     if (personal.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(personal.email.trim())) missing.push('A valid Email Address');
-    if (personal.email && !emailVerified) missing.push('Email verification (send & enter the 6-digit code)');
-    if (personal.phone && !phoneVerified) missing.push('WhatsApp verification (send & enter the 6-digit code)');
+    if (!emailVerified && !phoneVerified) missing.push('Verify at least one contact method (Email or WhatsApp)');
+
     const isNewJoiner = isNewJoinerRank;
     if (!isNewJoiner && (sea.length === 0 || !sea.some(s => s.vesselName))) missing.push('At least 1 Sea Service entry');
     if (certs.length === 0 || !certs.some(c => c.name)) missing.push('At least 1 Certificate');
