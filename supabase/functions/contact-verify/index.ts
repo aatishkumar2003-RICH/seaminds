@@ -7,6 +7,8 @@ const EMAIL_FROM = Deno.env.get('EMAIL_FROM') || 'SeaMinds <noreply@seaminds.lif
 const TWILIO_SID = Deno.env.get('TWILIO_ACCOUNT_SID') || '';
 const TWILIO_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN') || '';
 const TWILIO_WA_FROM = Deno.env.get('TWILIO_WHATSAPP_FROM') || '';
+const TWILIO_CONTENT_SID = Deno.env.get('TWILIO_CONTENT_SID') || '';
+const TWILIO_MESSAGING_SERVICE_SID = Deno.env.get('TWILIO_MESSAGING_SERVICE_SID') || '';
 
 const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
@@ -81,32 +83,70 @@ async function sendEmail(to: string, code: string) {
   }
 }
 
-async function sendWhatsApp(to: string, code: string): Promise<boolean> {
-  if (!TWILIO_SID || !TWILIO_TOKEN || !TWILIO_WA_FROM) {
-    log('twilio not configured');
-    return false;
-  }
-  const from = TWILIO_WA_FROM.startsWith('whatsapp:') ? TWILIO_WA_FROM : `whatsapp:${TWILIO_WA_FROM}`;
-  const body = new URLSearchParams({
-    From: from,
-    To: `whatsapp:${to}`,
-    Body: `⚓ SeaMinds: your verification code is ${code}. Valid for 10 minutes.`,
-  });
+// Known Twilio WhatsApp Sandbox senders (freeform body messages allowed for joined numbers)
+const SANDBOX_SENDERS = ['+14155238886', '+17372508034'];
+
+async function twilioPost(params: URLSearchParams) {
   const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/Messages.json`, {
     method: 'POST',
     headers: {
       Authorization: `Basic ${btoa(`${TWILIO_SID}:${TWILIO_TOKEN}`)}`,
       'Content-Type': 'application/x-www-form-urlencoded',
     },
-    body,
+    body: params,
   });
-  if (!res.ok) {
-    const txt = await res.text();
-    log('twilio error', res.status, txt);
-    throw new Error(`WhatsApp delivery failed (${res.status}). ${txt.slice(0, 180)}`);
-  }
-  return true;
+  const text = await res.text();
+  let parsed: any = null;
+  try { parsed = JSON.parse(text); } catch { /* non-JSON */ }
+  return { ok: res.ok, status: res.status, text, parsed };
 }
+
+async function sendWhatsApp(to: string, code: string): Promise<boolean> {
+  if (!TWILIO_SID || !TWILIO_TOKEN || !TWILIO_WA_FROM) {
+    log('twilio not configured');
+    return false;
+  }
+  const bare = TWILIO_WA_FROM.replace(/^whatsapp:/, '').trim();
+  const from = `whatsapp:${bare}`;
+  const isSandbox = SANDBOX_SENDERS.includes(bare);
+  const body = `Your SeaMinds verification code is ${code}. It expires in 10 minutes.`;
+
+  // 1) Freeform body message (works for Sandbox and inside a 24h session window)
+  const freeform = new URLSearchParams({ From: from, To: `whatsapp:${to}`, Body: body });
+  log('twilio request', { mode: isSandbox ? 'sandbox' : 'production', api: 'messages-freeform', From: from, To: `whatsapp:${to}` });
+  let r = await twilioPost(freeform);
+  log('twilio response', { status: r.status, body: r.text.slice(0, 600) });
+  if (r.ok) return true;
+
+  const twilioCode = r.parsed?.code;
+
+  // 2) Production senders outside a session require an approved template (Content API)
+  if (twilioCode === 21654 || twilioCode === 63016) {
+    if (TWILIO_CONTENT_SID) {
+      const templated = new URLSearchParams({
+        From: from,
+        To: `whatsapp:${to}`,
+        ContentSid: TWILIO_CONTENT_SID,
+        ContentVariables: JSON.stringify({ '1': code }),
+      });
+      if (TWILIO_MESSAGING_SERVICE_SID) {
+        templated.delete('From');
+        templated.set('MessagingServiceSid', TWILIO_MESSAGING_SERVICE_SID);
+      }
+      log('twilio request', { api: 'content-template', ContentSid: TWILIO_CONTENT_SID, To: `whatsapp:${to}` });
+      r = await twilioPost(templated);
+      log('twilio response', { status: r.status, body: r.text.slice(0, 600) });
+      if (r.ok) return true;
+    } else if (isSandbox) {
+      throw new Error('WhatsApp sandbox message rejected: this number has not joined the Twilio Sandbox yet. Send the join code to the sandbox number on WhatsApp, then try again — or verify your email instead.');
+    } else {
+      throw new Error('WhatsApp needs an approved template for this sender (Twilio error 21654). Add a TWILIO_CONTENT_SID secret with your approved OTP template, or verify your email instead.');
+    }
+  }
+
+  throw new Error(`WhatsApp delivery failed (${r.status}). ${(r.parsed?.message || r.text).slice(0, 200)}`);
+}
+
 
 // Accepts both the new explicit actions and the legacy {action, channel} shape.
 function parseAction(payload: Record<string, unknown>) {
