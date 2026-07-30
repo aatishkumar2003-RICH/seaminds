@@ -710,15 +710,19 @@ const ResumeBuilder = () => {
         const eduData = typeof data.education === 'string' ? JSON.parse(data.education) : data.education;
         if (Array.isArray(eduData) && eduData.length > 0) setEdu(eduData);
       } catch (e) { console.error('CV load error:', e); }
-      // Fetch crew_unique_id from crew_profiles
+      // Fetch crew_unique_id + verification status from crew_profiles
       const { data: profileData } = await supabase.from('crew_profiles')
-        .select('crew_unique_id')
+        .select('crew_unique_id, email, whatsapp_number, email_verified, whatsapp_verified')
         .eq('id', user.id)
         .maybeSingle();
       if (profileData?.crew_unique_id) {
         cvIdRef.current = profileData.crew_unique_id;
         setCrewUniqueId(profileData.crew_unique_id);
       }
+      const prof: any = profileData;
+      if (prof?.email_verified && prof?.email) setVerifiedEmail(prof.email);
+      if (prof?.whatsapp_verified && prof?.whatsapp_number) setVerifiedPhone(prof.whatsapp_number);
+
 
     };
     loadCV();
