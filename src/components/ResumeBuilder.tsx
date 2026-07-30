@@ -1042,12 +1042,35 @@ const ResumeBuilder = () => {
                 </div>
                 <div><label className={lbl}>Passport Number <span className="text-red-500">*</span></label><input className={inp} placeholder="P1234567A" value={personal.passportNo} onChange={e => P("passportNo", e.target.value)} /></div>
               </div>
-              <div><label className={lbl}>CDC / Seaman Book No.</label><input className={inp} placeholder="CDC-123456" value={personal.cdcNo} onChange={e => P("cdcNo", e.target.value)} /></div>
-              <div><label className={lbl}>CDC Issue Country</label><input className={inp} placeholder="Philippines" value={personal.cdcCountry} onChange={e => P("cdcCountry", e.target.value)} /></div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><label className={lbl}>WhatsApp / Phone <span className="text-red-500">*</span></label><input className={inp} placeholder="+63..." value={personal.phone} onChange={e => P("phone", e.target.value)} /></div>
-                <div><label className={lbl}>Email</label><input className={inp} placeholder="name@email.com" value={personal.email} onChange={e => P("email", e.target.value)} /></div>
+              <div>
+                <label className={lbl}>CDC / Seaman Book No. <span className="text-red-500">*</span></label>
+                <input className={inp} placeholder="CDC-123456" value={personal.cdcNo} disabled={!!personal.cdcApplied}
+                  onChange={e => P("cdcNo", e.target.value)} style={personal.cdcApplied ? { opacity: 0.5 } : undefined} />
+                <label className="flex items-center gap-2 mt-2 text-[11px] text-gray-400 cursor-pointer">
+                  <input type="checkbox" checked={!!personal.cdcApplied}
+                    onChange={e => { P("cdcApplied", e.target.checked as any); if (e.target.checked) P("cdcNo", ""); }} />
+                  Applied for / in process — new cadet, no Seaman Book yet
+                </label>
               </div>
+              {!personal.cdcApplied && (
+                <div><label className={lbl}>CDC Issue Country</label><input className={inp} placeholder="Philippines" value={personal.cdcCountry} onChange={e => P("cdcCountry", e.target.value)} /></div>
+              )}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={lbl}>WhatsApp / Mobile <span className="text-red-500">*</span></label>
+                  <input className={inp} placeholder="+63..." value={personal.phone} onChange={e => P("phone", e.target.value)} />
+                  <ContactVerify channel="whatsapp" value={personal.phone} verifiedValue={verifiedPhone} onVerified={setVerifiedPhone} />
+                </div>
+                <div>
+                  <label className={lbl}>Email <span className="text-red-500">*</span></label>
+                  <input className={inp} placeholder="name@email.com" value={personal.email} onChange={e => P("email", e.target.value)} />
+                  <ContactVerify channel="email" value={personal.email} verifiedValue={verifiedEmail} onVerified={setVerifiedEmail} />
+                </div>
+              </div>
+              <p className="text-[10px] text-gray-500">
+                Both your email and WhatsApp must be verified with a 6-digit code before your CV can be generated — this keeps the SeaMinds crew database contactable and trusted by employers.
+              </p>
+
               <div><label className={lbl}>Home Address</label><input className={inp} placeholder="Manila, Philippines" value={personal.address} onChange={e => P("address", e.target.value)} /></div>
 
               {/* Expected Salary Range */}
