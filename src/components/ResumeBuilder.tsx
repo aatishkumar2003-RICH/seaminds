@@ -596,7 +596,7 @@ const ResumeBuilder = () => {
           fillIfMissing('years_at_sea', existingProfile.years_at_sea, profilePayload.years_at_sea);
           fillIfMissing('gender', existingProfile.gender, profilePayload.gender);
           fillIfMissing('passport_number', existingProfile.passport_number, profilePayload.passport_number);
-          fillIfMissing('crew_unique_id', existingProfile.crew_unique_id, profilePayload.crew_unique_id);
+          if (savedCvUid && existingProfile.crew_unique_id !== savedCvUid) updatePayload.crew_unique_id = savedCvUid;
           fillIfMissing('date_of_birth', existingProfile.date_of_birth, profilePayload.date_of_birth);
           if ((!existingProfile.rank || existingProfile.rank === existingProfile.role) && profilePayload.rank) updatePayload.rank = profilePayload.rank;
           if ((!existingProfile.role || existingProfile.role === 'Rating') && profilePayload.role) updatePayload.role = profilePayload.role;
