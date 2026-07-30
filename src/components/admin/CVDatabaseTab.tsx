@@ -363,14 +363,17 @@ export default function CVDatabaseTab() {
         [`Email`, text(row.email, personal.email, "—")],
         [`Available`, fmtDate(personal.availableFrom)],
       ];
+      const hasPhoto = !!(photoData && typeof photoData === "string" && photoData.startsWith("data:image"));
       contactLines.forEach(([label, value], index) => {
-        const x = index % 2 === 0 ? 14 : 108;
+        const isRight = index % 2 === 1;
+        const x = isRight ? 100 : 14;
         const lineY = y + Math.floor(index / 2) * 6;
         pdf.setFont("helvetica", "bold");
         pdf.text(`${label}:`, x, lineY);
         pdf.setFont("helvetica", "normal");
-        pdf.text(value, x + 24, lineY, { maxWidth: 65 });
+        pdf.text(value, x + 24, lineY, { maxWidth: isRight && hasPhoto ? 38 : 65 });
       });
+
       y += 30;
 
       if (text(personal.summary)) {
