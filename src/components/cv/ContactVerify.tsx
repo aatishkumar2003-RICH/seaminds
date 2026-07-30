@@ -52,7 +52,7 @@ const ContactVerify = ({ channel, value, verifiedValue, onVerified }: ContactVer
 
   const call = async (action: string, extra: Record<string, unknown> = {}) => {
     if (!accessToken) throw new Error("Please sign in again to verify your contact.");
-    const { data, error } = await supabase.functions.invoke("verify-contact", {
+    const { data, error } = await supabase.functions.invoke("contact-verify", {
       body: { action, channel, target, fallback_email: user?.email || "", ...extra },
       headers: { Authorization: `Bearer ${accessToken}` },
     });
