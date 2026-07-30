@@ -1070,8 +1070,9 @@ const ResumeBuilder = () => {
                 </div>
               </div>
               <p className="text-[10px] text-gray-500">
-                Both your email and WhatsApp must be verified with a 6-digit code before your CV can be generated — this keeps the SeaMinds crew database contactable and trusted by employers.
+                Verify at least one contact method — email or WhatsApp — with a 6-digit code before your CV can be generated. This keeps the SeaMinds crew database contactable and trusted by employers.
               </p>
+
 
               <div><label className={lbl}>Home Address</label><input className={inp} placeholder="Manila, Philippines" value={personal.address} onChange={e => P("address", e.target.value)} /></div>
 
