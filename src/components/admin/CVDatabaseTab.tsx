@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
+import { generateUniqueCvId } from "@/lib/cvId";
+
 
 interface CVRow {
   user_id: string;
@@ -274,6 +276,26 @@ export default function CVDatabaseTab() {
     load();
   }, [load]);
 
+  const regenerateId = async (row: CVRow) => {
+    const gender =
+      row.parsed?.personal?.gender ||
+      row.parsed?.medical?.personal?.gender ||
+      (row.cv_uid?.endsWith("-F") ? "Female" : "Male");
+    if (!window.confirm(`Regenerate CV ID for ${row.first_name || row.user_id}?`)) return;
+    try {
+      const fresh = await generateUniqueCvId({ nationality: row.nationality, gender });
+      const { error } = await supabase
+        .from("crew_profiles")
+        .update({ crew_unique_id: fresh })
+        .eq("id", row.user_id);
+      if (error) throw error;
+      setRows((prev) => prev.map((r) => (r.user_id === row.user_id ? { ...r, cv_uid: fresh } : r)));
+      toast.success(`New CV ID: ${fresh}`);
+    } catch (e: any) {
+      toast.error(e?.message || "Could not regenerate ID");
+    }
+  };
+
   const openCV = async (path: string) => {
     const { data, error } = await supabase.storage
       .from("crew-cvs")
@@ -281,6 +303,7 @@ export default function CVDatabaseTab() {
     if (error || !data) return toast.error("Cannot open CV");
     window.open(data.signedUrl, "_blank");
   };
+
 
   const downloadBuiltCV = async (row: CVRow) => {
     if (!row.parsed) return toast.error("No built CV data available");
@@ -565,7 +588,20 @@ export default function CVDatabaseTab() {
                         Data
                       </button>
                     )}
+
+                    <button
+                      onClick={() => regenerateId(r)}
+                      title="Admin only — issue a new unique CV ID"
+                      style={{
+                        padding: "6px 10px", borderRadius: 6, cursor: "pointer",
+                        background: "transparent", color: "#94a3b8",
+                        border: "1px solid #334155", fontWeight: 600, fontSize: 12,
+                      }}
+                    >
+                      Regenerate ID
+                    </button>
                   </div>
+
                 </td>
               </tr>
             ))}

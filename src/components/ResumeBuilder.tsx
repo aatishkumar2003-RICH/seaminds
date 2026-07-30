@@ -7,6 +7,8 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { generateUniqueCvId, genderChar, CV_ID_PATTERN } from "@/lib/cvId";
+
 
 // ─────────── TYPES ───────────
 interface SeaEntry {
@@ -516,19 +518,34 @@ const ResumeBuilder = () => {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [generatingPdf, setGeneratingPdf] = useState(false);
 
+  // ── Unique CV ID (COUNTRY-XXXX-GENDER), generated once and read-only ──
+  const cvIdRef = useRef<string>('');
+  const ensureCvId = async (nationality: string, gender: string): Promise<string> => {
+    if (!user) return cvIdRef.current;
+    const g = genderChar(gender);
+    if (cvIdRef.current && !(cvIdRef.current.endsWith('-X') && g !== 'X')) return cvIdRef.current;
+    if (!cvIdRef.current) {
+      const { data: prof } = await supabase
+        .from('crew_profiles').select('crew_unique_id').eq('id', user.id).maybeSingle();
+      const existing = prof?.crew_unique_id || '';
+      if (existing && CV_ID_PATTERN.test(existing) && !(existing.endsWith('-X') && g !== 'X')) {
+        cvIdRef.current = existing;
+        setCrewUniqueId(existing);
+        return existing;
+      }
+    }
+    const fresh = await generateUniqueCvId({ nationality, gender });
+    cvIdRef.current = fresh;
+    setCrewUniqueId(fresh);
+    return fresh;
+  };
+
   // ── Auto-save CV data to Supabase ──
   const saveCVData = async (data: any) => {
     try {
       if (!user) return;
       setSaveStatus('saving');
-      const savedLastRank = (data.sea || []).find((s: SeaEntry) => s.vesselName && s.rankOnBoard)?.rankOnBoard || '';
-      const savedCvUid = buildSmartCVId({
-        nationality: data.personal?.nationality || '',
-        gender: data.personal?.gender || '',
-        currentRank: data.personal?.rank || '',
-        lastRank: savedLastRank,
-        seed: user.id || data.personal?.email || `${data.personal?.firstName || ''}${data.personal?.lastName || ''}${data.personal?.passportNo || ''}`,
-      });
+      const savedCvUid = await ensureCvId(data.personal?.nationality || '', data.personal?.gender || '');
       const savedPersonal = { ...data.personal, cvUid: savedCvUid, cv_uid: savedCvUid };
       await supabase.from('crew_cv_data').upsert({
         user_id: user.id,
@@ -538,6 +555,7 @@ const ResumeBuilder = () => {
         medical: { personal: savedPersonal, skills: data.skills || {}, photo: data.photo || null, training: data.training || [], cv_uid: savedCvUid } as any,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_id' });
+
 
       if (savedPersonal.firstName || savedPersonal.lastName || savedPersonal.email || savedPersonal.phone) {
         const profilePayload: Record<string, any> = {
@@ -578,7 +596,7 @@ const ResumeBuilder = () => {
           fillIfMissing('years_at_sea', existingProfile.years_at_sea, profilePayload.years_at_sea);
           fillIfMissing('gender', existingProfile.gender, profilePayload.gender);
           fillIfMissing('passport_number', existingProfile.passport_number, profilePayload.passport_number);
-          fillIfMissing('crew_unique_id', existingProfile.crew_unique_id, profilePayload.crew_unique_id);
+          if (savedCvUid && existingProfile.crew_unique_id !== savedCvUid) updatePayload.crew_unique_id = savedCvUid;
           fillIfMissing('date_of_birth', existingProfile.date_of_birth, profilePayload.date_of_birth);
           if ((!existingProfile.rank || existingProfile.rank === existingProfile.role) && profilePayload.rank) updatePayload.rank = profilePayload.rank;
           if ((!existingProfile.role || existingProfile.role === 'Rating') && profilePayload.role) updatePayload.role = profilePayload.role;
@@ -626,9 +644,13 @@ const ResumeBuilder = () => {
       // Fetch crew_unique_id from crew_profiles
       const { data: profileData } = await supabase.from('crew_profiles')
         .select('crew_unique_id')
-        .eq('user_id', user.id)
+        .eq('id', user.id)
         .maybeSingle();
-      if (profileData?.crew_unique_id) setCrewUniqueId(profileData.crew_unique_id);
+      if (profileData?.crew_unique_id) {
+        cvIdRef.current = profileData.crew_unique_id;
+        setCrewUniqueId(profileData.crew_unique_id);
+      }
+
     };
     loadCV();
   }, []);
@@ -670,13 +692,8 @@ const ResumeBuilder = () => {
   const fullName = `${personal.firstName} ${personal.lastName}`.trim() || "Your Name";
   const isEngineer = isEngineerRank(personal.rank);
   const lastSeaRank = (sea.find(s => s.vesselName && s.rankOnBoard)?.rankOnBoard) || '';
-  const smartCVId = buildSmartCVId({
-    nationality: personal.nationality,
-    gender: personal.gender,
-    currentRank: personal.rank,
-    lastRank: lastSeaRank,
-    seed: user?.id || personal.email || `${personal.firstName}${personal.lastName}${personal.passportNo}`,
-  });
+  const smartCVId = crewUniqueId || 'Generating…';
+
 
   const CertStatusBadge = ({ expiry }: { expiry: string }) => {
     const st = certStatus(expiry);
@@ -1373,7 +1390,7 @@ const ResumeBuilder = () => {
                     </div>
                   </div>
                   {/* SMART CV UNIQUE ID */}
-                  <div title="SeaMinds Unique CV ID · Nationality · Gender · Rank · Hash" style={{ flexShrink:0, textAlign:'right' }}>
+                  <div title="SeaMinds Unique CV ID · Country · Code · Gender (read-only)" style={{ flexShrink:0, textAlign:'right' }}>
                     <div style={{ fontSize:'7px', color:'#D4AF37', letterSpacing:'1.5px', fontWeight:'bold', textTransform:'uppercase', marginBottom:'2px' }}>CV UID</div>
                     <div style={{ fontFamily:'"Courier New", monospace', fontSize:'11px', color:'#FFFFFF', background:'#D4AF37', padding:'3px 7px', borderRadius:'3px', letterSpacing:'0.5px', fontWeight:'bold', border:'1px solid #D4AF37' }}>
                       <span style={{ color:'#0D1B2A' }}>{smartCVId}</span>

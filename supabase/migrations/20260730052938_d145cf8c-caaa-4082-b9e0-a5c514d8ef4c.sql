@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS crew_profiles_crew_unique_id_key ON public.crew_profiles (crew_unique_id) WHERE crew_unique_id IS NOT NULL;
