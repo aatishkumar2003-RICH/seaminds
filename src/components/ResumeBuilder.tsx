@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { generateUniqueCvId, genderChar, CV_ID_PATTERN } from "@/lib/cvId";
 import ContactVerify from "@/components/cv/ContactVerify";
+import MobileVerify from "@/components/cv/MobileVerify";
+import { validatePhone } from "@/lib/verification/mobileProviders";
 
 
 
@@ -250,6 +252,7 @@ const ResumeBuilder = () => {
   // ── Verified contact details (confirmed by 6-digit code) ──
   const [verifiedEmail, setVerifiedEmail] = useState("");
   const [verifiedPhone, setVerifiedPhone] = useState("");
+  const [whatsappStatus, setWhatsappStatus] = useState<'unverified' | 'pending' | 'verified'>('unverified');
 
 
   const [sea, setSea] = useState<SeaEntry[]>([{
@@ -463,7 +466,8 @@ const ResumeBuilder = () => {
   // ── Completion check ──
   const isNewJoinerRank = /cadet|trainee/i.test(personal.rank || '');
   const emailVerified = !!personal.email && personal.email.trim().toLowerCase() === verifiedEmail.trim().toLowerCase();
-  const phoneVerified = !!personal.phone && personal.phone.trim() === verifiedPhone.trim();
+  const phoneVerified = whatsappStatus === 'verified';
+  const phoneFormatError = personal.phone ? validatePhone(personal.phone) : '';
 
   const getCompletionStatus = () => {
     const missing: string[] = [];
@@ -479,7 +483,8 @@ const ResumeBuilder = () => {
     if (!personal.phone) missing.push('WhatsApp / Mobile Number');
     if (!personal.email) missing.push('Email Address');
     if (personal.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(personal.email.trim())) missing.push('A valid Email Address');
-    if (!emailVerified && !phoneVerified) missing.push('Verify at least one contact method (Email or WhatsApp)');
+    if (personal.phone && phoneFormatError) missing.push('A valid mobile number in international format');
+    if (!emailVerified) missing.push('Verify your email address with the 6-digit code');
 
     const isNewJoiner = isNewJoinerRank;
     if (!isNewJoiner && (sea.length === 0 || !sea.some(s => s.vesselName))) missing.push('At least 1 Sea Service entry');
@@ -1061,7 +1066,12 @@ const ResumeBuilder = () => {
                 <div>
                   <label className={lbl}>WhatsApp / Mobile <span className="text-red-500">*</span></label>
                   <input className={inp} placeholder="+63..." value={personal.phone} onChange={e => P("phone", e.target.value)} />
-                  <ContactVerify channel="whatsapp" value={personal.phone} verifiedValue={verifiedPhone} onVerified={setVerifiedPhone} />
+                  <MobileVerify
+                    phone={personal.phone}
+                    email={personal.email}
+                    fullName={`${personal.firstName} ${personal.lastName}`.trim()}
+                    onStatusChange={setWhatsappStatus}
+                  />
                 </div>
                 <div>
                   <label className={lbl}>Email <span className="text-red-500">*</span></label>
@@ -1070,7 +1080,7 @@ const ResumeBuilder = () => {
                 </div>
               </div>
               <p className="text-[10px] text-gray-500">
-                Verify at least one contact method — email or WhatsApp — with a 6-digit code before your CV can be generated. This keeps the SeaMinds crew database contactable and trusted by employers.
+                Your email must be verified with a 6-digit code before your CV can be generated. WhatsApp verification is optional — tap "Verify via WhatsApp" and just press SEND on the prefilled message.
               </p>
 
 
@@ -1507,7 +1517,7 @@ const ResumeBuilder = () => {
                   {personal.dob && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Date of Birth: </span>{fmtDate(personal.dob)}</div>}
                   {personal.passportNo && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Passport: </span>{personal.passportNo}</div>}
                   {(personal.cdcNo || personal.cdcApplied) && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>CDC/SB: </span>{personal.cdcApplied ? 'Applied for (in process)' : `${personal.cdcNo}${personal.cdcCountry ? ` (${personal.cdcCountry})` : ''}`}</div>}
-                  {personal.phone && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>WhatsApp: </span>{personal.phone}{phoneVerified ? <span style={{ color:'#0a7d3f', fontWeight:'bold' }}> ✓ verified</span> : ''}</div>}
+                  {personal.phone && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>WhatsApp: </span>{personal.phone}{phoneVerified ? <span style={{ color:'#0a7d3f', fontWeight:'bold' }}> 🟢 WhatsApp Verified</span> : <span style={{ color:'#8a6d00' }}> 🟡 Not verified</span>}</div>}
                   {personal.email && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Email: </span>{personal.email}{emailVerified ? <span style={{ color:'#0a7d3f', fontWeight:'bold' }}> ✓ verified</span> : ''}</div>}
                   {personal.address && <div style={{ gridColumn:'span 2' }}><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Address: </span>{personal.address}</div>}
 
