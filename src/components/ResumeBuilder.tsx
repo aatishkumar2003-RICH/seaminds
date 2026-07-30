@@ -688,13 +688,8 @@ const ResumeBuilder = () => {
   const fullName = `${personal.firstName} ${personal.lastName}`.trim() || "Your Name";
   const isEngineer = isEngineerRank(personal.rank);
   const lastSeaRank = (sea.find(s => s.vesselName && s.rankOnBoard)?.rankOnBoard) || '';
-  const smartCVId = buildSmartCVId({
-    nationality: personal.nationality,
-    gender: personal.gender,
-    currentRank: personal.rank,
-    lastRank: lastSeaRank,
-    seed: user?.id || personal.email || `${personal.firstName}${personal.lastName}${personal.passportNo}`,
-  });
+  const smartCVId = crewUniqueId || 'Generating…';
+
 
   const CertStatusBadge = ({ expiry }: { expiry: string }) => {
     const st = certStatus(expiry);
