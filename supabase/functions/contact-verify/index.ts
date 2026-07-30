@@ -7,6 +7,8 @@ const EMAIL_FROM = Deno.env.get('EMAIL_FROM') || 'SeaMinds <noreply@seaminds.lif
 const TWILIO_SID = Deno.env.get('TWILIO_ACCOUNT_SID') || '';
 const TWILIO_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN') || '';
 const TWILIO_WA_FROM = Deno.env.get('TWILIO_WHATSAPP_FROM') || '';
+const TWILIO_CONTENT_SID = Deno.env.get('TWILIO_CONTENT_SID') || '';
+const TWILIO_MESSAGING_SERVICE_SID = Deno.env.get('TWILIO_MESSAGING_SERVICE_SID') || '';
 
 const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
