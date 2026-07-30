@@ -7,6 +7,8 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { generateUniqueCvId, genderChar, CV_ID_PATTERN } from "@/lib/cvId";
+
 
 // ─────────── TYPES ───────────
 interface SeaEntry {
