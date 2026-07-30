@@ -8,6 +8,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { generateUniqueCvId, genderChar, CV_ID_PATTERN } from "@/lib/cvId";
+import ContactVerify from "@/components/cv/ContactVerify";
+
 
 
 // ─────────── TYPES ───────────
