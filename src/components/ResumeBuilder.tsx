@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { generateUniqueCvId, genderChar, CV_ID_PATTERN } from "@/lib/cvId";
+import { generateUniqueCvId, genderChar, countryCodeFromNationality, CV_ID_PATTERN } from "@/lib/cvId";
 import ContactVerify from "@/components/cv/ContactVerify";
 import MobileVerify from "@/components/cv/MobileVerify";
 import { validatePhone } from "@/lib/verification/mobileProviders";
@@ -594,17 +594,25 @@ const ResumeBuilder = () => {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [generatingPdf, setGeneratingPdf] = useState(false);
 
-  // ── Unique CV ID (COUNTRY-XXXX-GENDER), generated once and read-only ──
+  // ── Unique CV ID (COUNTRY-XXXX-GENDER) derived from the CV's nationality + gender ──
   const cvIdRef = useRef<string>('');
   const ensureCvId = async (nationality: string, gender: string): Promise<string> => {
     if (!user) return cvIdRef.current;
+    // Nationality + gender are mandatory — no ID is issued until both are provided.
+    if (!nationality?.trim() || !gender?.trim()) return '';
+
+    const cc = countryCodeFromNationality(nationality);
     const g = genderChar(gender);
-    if (cvIdRef.current && !(cvIdRef.current.endsWith('-X') && g !== 'X')) return cvIdRef.current;
+    const matches = (id: string) =>
+      CV_ID_PATTERN.test(id) && id.startsWith(`${cc}-`) && id.endsWith(`-${g}`);
+
+    if (cvIdRef.current && matches(cvIdRef.current)) return cvIdRef.current;
+
     if (!cvIdRef.current) {
       const { data: prof } = await supabase
         .from('crew_profiles').select('crew_unique_id').eq('id', user.id).maybeSingle();
       const existing = prof?.crew_unique_id || '';
-      if (existing && CV_ID_PATTERN.test(existing) && !(existing.endsWith('-X') && g !== 'X')) {
+      if (existing && matches(existing)) {
         cvIdRef.current = existing;
         setCrewUniqueId(existing);
         return existing;
@@ -615,6 +623,7 @@ const ResumeBuilder = () => {
     setCrewUniqueId(fresh);
     return fresh;
   };
+
 
   // ── Auto-save CV data to Supabase ──
   const saveCVData = async (data: any) => {
@@ -647,7 +656,7 @@ const ResumeBuilder = () => {
           gender: savedPersonal.gender || null,
           passport_number: savedPersonal.passportNo || null,
           cdc_applied: !!savedPersonal.cdcApplied,
-          crew_unique_id: savedCvUid,
+          crew_unique_id: savedCvUid || null,
           user_id: user.id,
         };
 
