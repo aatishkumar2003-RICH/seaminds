@@ -478,7 +478,7 @@ const ResumeBuilder = () => {
     if (!personal.nationality) missing.push('Nationality');
     if (!personal.gender) missing.push('Gender');
     if (!personal.dob) missing.push('Date of Birth');
-    if (!personal.passportNo) missing.push('Passport Number');
+    if (!personal.passportNo && !personal.passportApplied) missing.push('Passport Number (or tick "Applied for")');
     if (!personal.cdcNo && !personal.cdcApplied) missing.push('CDC / Seaman Book No. (or tick "Applied for")');
     if (!personal.phone) missing.push('WhatsApp / Mobile Number');
     if (!personal.email) missing.push('Email Address');
