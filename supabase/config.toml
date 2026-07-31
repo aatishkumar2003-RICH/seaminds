@@ -71,3 +71,6 @@ schedule = "0 */6 * * *"
 
 [functions.contact-verify]
 verify_jwt = false
+
+[functions.manager-search]
+verify_jwt = false

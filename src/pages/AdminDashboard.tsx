@@ -999,9 +999,23 @@ export default function AdminDashboard() {
     <div className="min-h-screen p-4 md:p-8" style={{ background: "#0D1B2A" }}>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold" style={{ color: "#D4AF37" }}>SeaMinds Admin</h1>
-        <Button variant="outline" onClick={lock} style={{ borderColor: "#D4AF37", color: "#D4AF37" }}>
-          <Lock className="w-4 h-4 mr-1" /> Lock
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              const url = `${window.location.origin}/manager-search`;
+              navigator.clipboard?.writeText(url)
+                .then(() => toast.success(`Manager search link copied: ${url}`))
+                .catch(() => window.prompt("Copy the manager search link:", url));
+            }}
+            style={{ borderColor: "#D4AF37", color: "#D4AF37" }}
+          >
+            🔍 Manager Search
+          </Button>
+          <Button variant="outline" onClick={lock} style={{ borderColor: "#D4AF37", color: "#D4AF37" }}>
+            <Lock className="w-4 h-4 mr-1" /> Lock
+          </Button>
+        </div>
       </div>
 
       <div className="flex gap-2 mb-6 flex-wrap">

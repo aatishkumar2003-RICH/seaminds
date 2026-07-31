@@ -94,6 +94,21 @@ const hash5 = (seed: string) => {
   return (Math.abs(h) >>> 0).toString(36).toUpperCase().padStart(5, "0").slice(-5);
 };
 
+/** Auto-Match: count active vacancies matching the crew rank (and vessel type when known). */
+const countMatches = (row: CVRow, vacancies: any[]) => {
+  const crewRank = codeRank(text(row.role));
+  if (!crewRank || crewRank === "XXX") return 0;
+  const personal = row.parsed?.personal || {};
+  const crewVessel = text(personal.currentVesselType, personal.vesselType, row.ship_name).toLowerCase();
+  return vacancies.filter((v) => {
+    if (codeRank(text(v.rank_required)) !== crewRank) return false;
+    const vType = text(v.vessel_type).toLowerCase();
+    if (!vType || !crewVessel) return true;
+    return vType.includes(crewVessel) || crewVessel.includes(vType);
+  }).length;
+};
+
+
 const buildAdminCvUid = (opts: { nationality?: string; gender?: string; rank?: string; lastRank?: string; seed: string }) => {
   return `SM-${codeNationality(opts.nationality || "")}-${codeGender(opts.gender || "")}-${codeRank(opts.lastRank || opts.rank || "")}-${hash5(opts.seed)}`;
 };
@@ -171,6 +186,7 @@ export default function CVDatabaseTab() {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<CVRow | null>(null);
   const [query, setQuery] = useState("");
+  const [vacancies, setVacancies] = useState<any[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -263,6 +279,13 @@ export default function CVDatabaseTab() {
 
       merged.sort((a, b) => (b.uploaded_at || "").localeCompare(a.uploaded_at || ""));
       setRows(merged);
+
+      // Auto-Match source data: open vacancies
+      const { data: openVacancies } = await supabase
+        .from("job_vacancies")
+        .select("id, rank_required, vessel_type, company_name, active")
+        .eq("active", true);
+      setVacancies(openVacancies || []);
     } catch (e: any) {
       console.error("CV load error:", e);
       toast.error("Failed to load CVs");
@@ -542,6 +565,7 @@ export default function CVDatabaseTab() {
               <th style={th}>Ship</th>
               <th style={th}>Uploaded</th>
               <th style={th}>Size</th>
+              <th style={th}>Auto-Match</th>
               <th style={th}>Source</th>
               <th style={th}>Actions</th>
             </tr>
@@ -560,6 +584,24 @@ export default function CVDatabaseTab() {
                 <td style={td}>{r.ship_name || "—"}</td>
                 <td style={td}>{r.uploaded_at ? new Date(r.uploaded_at).toLocaleDateString() : "—"}</td>
                 <td style={td}>{r.size ? `${(r.size / 1024).toFixed(0)} KB` : "—"}</td>
+                <td style={td}>
+                  {(() => {
+                    const matches = countMatches(r, vacancies);
+                    return matches > 0 ? (
+                      <span
+                        title="Active vacancies matching this rank / vessel type"
+                        style={{
+                          background: "#D4AF37", color: "#0D1B2A", fontWeight: 700,
+                          fontSize: 11, padding: "3px 8px", borderRadius: 999, whiteSpace: "nowrap",
+                        }}
+                      >
+                        {matches} {matches === 1 ? "match" : "matches"}
+                      </span>
+                    ) : (
+                      <span style={{ color: "#6b7280", fontSize: 12 }}>No match</span>
+                    );
+                  })()}
+                </td>
                 <td style={td}>
                   <span style={{ color: r.source === "built" ? "#10b981" : "#D4AF37", fontWeight: 600 }}>
                     {r.source === "both" ? "Built + PDF" : r.source === "built" ? "Built CV" : "PDF"}
@@ -624,7 +666,7 @@ export default function CVDatabaseTab() {
             ))}
             {!loading && filtered.length === 0 && (
               <tr>
-                <td style={td} colSpan={11}>
+                <td style={td} colSpan={12}>
                   <div style={{ padding: 24, textAlign: "center", color: "#6b7280" }}>
                     No CVs found.
                   </div>
