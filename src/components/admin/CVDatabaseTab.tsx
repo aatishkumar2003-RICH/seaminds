@@ -94,6 +94,21 @@ const hash5 = (seed: string) => {
   return (Math.abs(h) >>> 0).toString(36).toUpperCase().padStart(5, "0").slice(-5);
 };
 
+/** Auto-Match: count active vacancies matching the crew rank (and vessel type when known). */
+const countMatches = (row: CVRow, vacancies: any[]) => {
+  const crewRank = codeRank(text(row.role));
+  if (!crewRank || crewRank === "XXX") return 0;
+  const personal = row.parsed?.personal || {};
+  const crewVessel = text(personal.currentVesselType, personal.vesselType, row.ship_name).toLowerCase();
+  return vacancies.filter((v) => {
+    if (codeRank(text(v.rank_required)) !== crewRank) return false;
+    const vType = text(v.vessel_type).toLowerCase();
+    if (!vType || !crewVessel) return true;
+    return vType.includes(crewVessel) || crewVessel.includes(vType);
+  }).length;
+};
+
+
 const buildAdminCvUid = (opts: { nationality?: string; gender?: string; rank?: string; lastRank?: string; seed: string }) => {
   return `SM-${codeNationality(opts.nationality || "")}-${codeGender(opts.gender || "")}-${codeRank(opts.lastRank || opts.rank || "")}-${hash5(opts.seed)}`;
 };
