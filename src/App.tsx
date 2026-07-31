@@ -97,6 +97,7 @@ const App = () => (
             <Route path="/app" element={<Index />} />
             <Route path="/manager" element={<ManagerAuth />} />
             <Route path="/manager/dashboard" element={<ManagerDashboard />} />
+            <Route path="/manager-search" element={<ManagerSearch />} />
             <Route path="/terms" element={<TermsOfService />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/pricing" element={<Pricing />} />
