@@ -244,7 +244,7 @@ const ResumeBuilder = () => {
     firstName: "", lastName: "", rank: "", applyingFor: "", nationality: "",
     gender: "",
     dob: "", phone: "", email: "", address: "",
-    passportNo: "", cdcNo: "", cdcCountry: "", cdcApplied: false, summary: "",
+    passportNo: "", passportApplied: false, cdcNo: "", cdcCountry: "", cdcApplied: false, summary: "",
     emergencyName: "", emergencyPhone: "",
     expectedSalaryMin: "", expectedSalaryMax: "", availableFrom: "",
   });
@@ -478,7 +478,7 @@ const ResumeBuilder = () => {
     if (!personal.nationality) missing.push('Nationality');
     if (!personal.gender) missing.push('Gender');
     if (!personal.dob) missing.push('Date of Birth');
-    if (!personal.passportNo) missing.push('Passport Number');
+    if (!personal.passportNo && !personal.passportApplied) missing.push('Passport Number (or tick "Applied for")');
     if (!personal.cdcNo && !personal.cdcApplied) missing.push('CDC / Seaman Book No. (or tick "Applied for")');
     if (!personal.phone) missing.push('WhatsApp / Mobile Number');
     if (!personal.email) missing.push('Email Address');
@@ -1047,7 +1047,16 @@ const ResumeBuilder = () => {
                     <option value="Other">Other</option>
                   </select>
                 </div>
-                <div><label className={lbl}>Passport Number <span className="text-red-500">*</span></label><input className={inp} placeholder="P1234567A" value={personal.passportNo} onChange={e => P("passportNo", e.target.value)} /></div>
+                <div>
+                  <label className={lbl}>Passport Number <span className="text-red-500">*</span></label>
+                  <input className={inp} placeholder="P1234567A" value={personal.passportNo} disabled={!!personal.passportApplied}
+                    onChange={e => P("passportNo", e.target.value)} style={personal.passportApplied ? { opacity: 0.5 } : undefined} />
+                  <label className="flex items-center gap-2 mt-2 text-[11px] text-gray-400 cursor-pointer">
+                    <input type="checkbox" checked={!!personal.passportApplied}
+                      onChange={e => { P("passportApplied", e.target.checked as any); if (e.target.checked) P("passportNo", ""); }} />
+                    Applied for / in process
+                  </label>
+                </div>
               </div>
               <div>
                 <label className={lbl}>CDC / Seaman Book No. <span className="text-red-500">*</span></label>
@@ -1515,7 +1524,7 @@ const ResumeBuilder = () => {
                   {personal.nationality && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Nationality: </span>{personal.nationality}</div>}
                   {personal.gender && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Gender: </span>{personal.gender}</div>}
                   {personal.dob && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Date of Birth: </span>{fmtDate(personal.dob)}</div>}
-                  {personal.passportNo && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Passport: </span>{personal.passportNo}</div>}
+                  {(personal.passportNo || personal.passportApplied) && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Passport: </span>{personal.passportApplied ? 'Applied for (in process)' : personal.passportNo}</div>}
                   {(personal.cdcNo || personal.cdcApplied) && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>CDC/SB: </span>{personal.cdcApplied ? 'Applied for (in process)' : `${personal.cdcNo}${personal.cdcCountry ? ` (${personal.cdcCountry})` : ''}`}</div>}
                   {personal.phone && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>WhatsApp: </span>{personal.phone}{phoneVerified ? <span style={{ color:'#0a7d3f', fontWeight:'bold' }}> 🟢 WhatsApp Verified</span> : <span style={{ color:'#8a6d00' }}> 🟡 Not verified</span>}</div>}
                   {personal.email && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Email: </span>{personal.email}{emailVerified ? <span style={{ color:'#0a7d3f', fontWeight:'bold' }}> ✓ verified</span> : ''}</div>}
