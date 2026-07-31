@@ -565,6 +565,7 @@ export default function CVDatabaseTab() {
               <th style={th}>Ship</th>
               <th style={th}>Uploaded</th>
               <th style={th}>Size</th>
+              <th style={th}>Auto-Match</th>
               <th style={th}>Source</th>
               <th style={th}>Actions</th>
             </tr>
