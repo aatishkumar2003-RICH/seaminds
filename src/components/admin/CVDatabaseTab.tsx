@@ -666,7 +666,7 @@ export default function CVDatabaseTab() {
             ))}
             {!loading && filtered.length === 0 && (
               <tr>
-                <td style={td} colSpan={11}>
+                <td style={td} colSpan={12}>
                   <div style={{ padding: 24, textAlign: "center", color: "#6b7280" }}>
                     No CVs found.
                   </div>
