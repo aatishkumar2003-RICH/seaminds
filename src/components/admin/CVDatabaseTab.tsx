@@ -585,6 +585,24 @@ export default function CVDatabaseTab() {
                 <td style={td}>{r.uploaded_at ? new Date(r.uploaded_at).toLocaleDateString() : "—"}</td>
                 <td style={td}>{r.size ? `${(r.size / 1024).toFixed(0)} KB` : "—"}</td>
                 <td style={td}>
+                  {(() => {
+                    const matches = countMatches(r, vacancies);
+                    return matches > 0 ? (
+                      <span
+                        title="Active vacancies matching this rank / vessel type"
+                        style={{
+                          background: "#D4AF37", color: "#0D1B2A", fontWeight: 700,
+                          fontSize: 11, padding: "3px 8px", borderRadius: 999, whiteSpace: "nowrap",
+                        }}
+                      >
+                        {matches} {matches === 1 ? "match" : "matches"}
+                      </span>
+                    ) : (
+                      <span style={{ color: "#6b7280", fontSize: 12 }}>No match</span>
+                    );
+                  })()}
+                </td>
+                <td style={td}>
                   <span style={{ color: r.source === "built" ? "#10b981" : "#D4AF37", fontWeight: 600 }}>
                     {r.source === "both" ? "Built + PDF" : r.source === "built" ? "Built CV" : "PDF"}
                   </span>
