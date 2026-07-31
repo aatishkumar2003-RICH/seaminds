@@ -656,7 +656,7 @@ const ResumeBuilder = () => {
           gender: savedPersonal.gender || null,
           passport_number: savedPersonal.passportNo || null,
           cdc_applied: !!savedPersonal.cdcApplied,
-          crew_unique_id: savedCvUid,
+          crew_unique_id: savedCvUid || null,
           user_id: user.id,
         };
 
