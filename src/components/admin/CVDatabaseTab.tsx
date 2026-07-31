@@ -264,6 +264,13 @@ export default function CVDatabaseTab() {
 
       merged.sort((a, b) => (b.uploaded_at || "").localeCompare(a.uploaded_at || ""));
       setRows(merged);
+
+      // Auto-Match source data: open vacancies
+      const { data: openVacancies } = await supabase
+        .from("job_vacancies")
+        .select("id, rank_required, vessel_type, company_name, active")
+        .eq("active", true);
+      setVacancies(openVacancies || []);
     } catch (e: any) {
       console.error("CV load error:", e);
       toast.error("Failed to load CVs");
