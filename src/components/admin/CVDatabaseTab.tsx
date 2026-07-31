@@ -171,6 +171,7 @@ export default function CVDatabaseTab() {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<CVRow | null>(null);
   const [query, setQuery] = useState("");
+  const [vacancies, setVacancies] = useState<any[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
