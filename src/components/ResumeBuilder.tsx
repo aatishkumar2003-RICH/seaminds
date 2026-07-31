@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { generateUniqueCvId, genderChar, CV_ID_PATTERN } from "@/lib/cvId";
+import { generateUniqueCvId, genderChar, countryCodeFromNationality, CV_ID_PATTERN } from "@/lib/cvId";
 import ContactVerify from "@/components/cv/ContactVerify";
 import MobileVerify from "@/components/cv/MobileVerify";
 import { validatePhone } from "@/lib/verification/mobileProviders";
