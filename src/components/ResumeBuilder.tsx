@@ -244,7 +244,7 @@ const ResumeBuilder = () => {
     firstName: "", lastName: "", rank: "", applyingFor: "", nationality: "",
     gender: "",
     dob: "", phone: "", email: "", address: "",
-    passportNo: "", cdcNo: "", cdcCountry: "", cdcApplied: false, summary: "",
+    passportNo: "", passportApplied: false, cdcNo: "", cdcCountry: "", cdcApplied: false, summary: "",
     emergencyName: "", emergencyPhone: "",
     expectedSalaryMin: "", expectedSalaryMax: "", availableFrom: "",
   });
