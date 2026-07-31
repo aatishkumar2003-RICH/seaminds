@@ -1047,7 +1047,16 @@ const ResumeBuilder = () => {
                     <option value="Other">Other</option>
                   </select>
                 </div>
-                <div><label className={lbl}>Passport Number <span className="text-red-500">*</span></label><input className={inp} placeholder="P1234567A" value={personal.passportNo} onChange={e => P("passportNo", e.target.value)} /></div>
+                <div>
+                  <label className={lbl}>Passport Number <span className="text-red-500">*</span></label>
+                  <input className={inp} placeholder="P1234567A" value={personal.passportNo} disabled={!!personal.passportApplied}
+                    onChange={e => P("passportNo", e.target.value)} style={personal.passportApplied ? { opacity: 0.5 } : undefined} />
+                  <label className="flex items-center gap-2 mt-2 text-[11px] text-gray-400 cursor-pointer">
+                    <input type="checkbox" checked={!!personal.passportApplied}
+                      onChange={e => { P("passportApplied", e.target.checked as any); if (e.target.checked) P("passportNo", ""); }} />
+                    Applied for / in process
+                  </label>
+                </div>
               </div>
               <div>
                 <label className={lbl}>CDC / Seaman Book No. <span className="text-red-500">*</span></label>
