@@ -22,6 +22,7 @@ import ForCompanies from "./pages/ForCompanies";
 import Index from "./pages/Index";
 import ManagerAuth from "./pages/ManagerAuth";
 import ManagerDashboard from "./pages/ManagerDashboard";
+import ManagerSearch from "./pages/ManagerSearch";
 import NotFound from "./pages/NotFound";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
