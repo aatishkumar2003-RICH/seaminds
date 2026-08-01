@@ -1353,27 +1353,42 @@ export type Database = {
           admin_approved: boolean | null
           approved_at: string | null
           company_name: string
+          company_type: string | null
           company_verified: boolean | null
+          country: string | null
           created_at: string
+          designation: string | null
+          full_name: string | null
           id: string
+          phone: string | null
           user_id: string
         }
         Insert: {
           admin_approved?: boolean | null
           approved_at?: string | null
           company_name: string
+          company_type?: string | null
           company_verified?: boolean | null
+          country?: string | null
           created_at?: string
+          designation?: string | null
+          full_name?: string | null
           id?: string
+          phone?: string | null
           user_id: string
         }
         Update: {
           admin_approved?: boolean | null
           approved_at?: string | null
           company_name?: string
+          company_type?: string | null
           company_verified?: boolean | null
+          country?: string | null
           created_at?: string
+          designation?: string | null
+          full_name?: string | null
           id?: string
+          phone?: string | null
           user_id?: string
         }
         Relationships: []
