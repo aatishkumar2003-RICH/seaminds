@@ -25,39 +25,59 @@ import CVDatabaseTab from "@/components/admin/CVDatabaseTab";
 import MobileVerificationTab from "@/components/admin/MobileVerificationTab";
 import ActivityFullTab from "@/components/admin/ActivityTab";
 
-const ADMIN_PIN = "215151";
-const LS_KEY = "sm_admin_auth";
+// Admin = the SeaMinds owner account. The browser only checks that this exact
+// authenticated user is signed in (it just hides the UI). Real enforcement is
+// server-side: RLS policies keyed to this same id. auth.uid() cannot be faked.
+const ADMIN_UID = "492ee966-e015-4440-a415-6ad6275a4a9b";
 
-/* ─── PIN Screen ─── */
-function PinScreen({ onAuth }: { onAuth: () => void }) {
-  const [pin, setPin] = useState("");
+/* ─── Admin Login ─── */
+function AdminLogin({ onAuth }: { onAuth: () => void }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (pin === ADMIN_PIN) {
-      localStorage.setItem(LS_KEY, ADMIN_PIN);
-      onAuth();
-    } else {
-      setError("Incorrect PIN");
+    setError("");
+    setLoading(true);
+    const { data, error: signErr } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+    setLoading(false);
+    if (signErr) { setError(signErr.message); return; }
+    if (data.user?.id !== ADMIN_UID) {
+      await supabase.auth.signOut();
+      setError("This account does not have admin access.");
+      return;
     }
+    onAuth();
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: "#0D1B2A" }}>
       <form onSubmit={handleSubmit} className="flex flex-col items-center gap-4 w-80">
-        <h1 className="text-2xl font-bold" style={{ color: "#D4AF37" }}>Enter Admin PIN</h1>
+        <h1 className="text-2xl font-bold" style={{ color: "#D4AF37" }}>SeaMinds Admin</h1>
+        <Input
+          type="email"
+          value={email}
+          onChange={(e) => { setEmail(e.target.value); setError(""); }}
+          placeholder="Admin email"
+          className="text-center border-2"
+          style={{ borderColor: "#D4AF37", background: "#1B2838", color: "#D4AF37" }}
+        />
         <Input
           type="password"
-          value={pin}
-          onChange={(e) => { setPin(e.target.value); setError(""); }}
-          placeholder="PIN"
+          value={password}
+          onChange={(e) => { setPassword(e.target.value); setError(""); }}
+          placeholder="Password"
           className="text-center border-2"
           style={{ borderColor: "#D4AF37", background: "#1B2838", color: "#D4AF37" }}
         />
         {error && <p className="text-red-400 text-sm">{error}</p>}
-        <Button type="submit" className="w-full" style={{ background: "#D4AF37", color: "#0D1B2A" }}>
-          Submit
+        <Button type="submit" disabled={loading} className="w-full" style={{ background: "#D4AF37", color: "#0D1B2A" }}>
+          {loading ? "Signing in…" : "Sign in"}
         </Button>
       </form>
     </div>
