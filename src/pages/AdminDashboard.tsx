@@ -988,15 +988,31 @@ function ActivityTab() {
 
 /* ─── Main Dashboard ─── */
 export default function AdminDashboard() {
-  const [authed, setAuthed] = useState(localStorage.getItem(LS_KEY) === ADMIN_PIN);
+  const [authed, setAuthed] = useState<boolean | null>(null);
   const [tab, setTab] = useState<"crew" | "activity" | "activity_full" | "cv_database" | "mobile_verify" | "pricing" | "discount" | "country_pricing" | "sub_admins" | "dpa" | "blog_images" | "agents" | "vacancy_intel" | "company_dir">("crew");
 
-  if (!authed) return <PinScreen onAuth={() => setAuthed(true)} />;
+  useEffect(() => {
+    let active = true;
+    const evaluate = (uid: string | undefined) => { if (active) setAuthed(uid === ADMIN_UID); };
+    supabase.auth.getUser().then(({ data }) => evaluate(data.user?.id));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => evaluate(session?.user?.id));
+    return () => { active = false; sub.subscription.unsubscribe(); };
+  }, []);
 
-  const lock = () => {
-    localStorage.removeItem(LS_KEY);
+  if (authed === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#0D1B2A", color: "#D4AF37" }}>
+        Checking access…
+      </div>
+    );
+  }
+  if (!authed) return <AdminLogin onAuth={() => setAuthed(true)} />;
+
+  const lock = async () => {
+    await supabase.auth.signOut();
     setAuthed(false);
   };
+
 
   const tabs = [
     { id: "crew" as const, label: "Crew Search" },
