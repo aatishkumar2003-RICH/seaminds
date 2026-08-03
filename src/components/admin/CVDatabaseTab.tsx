@@ -330,6 +330,8 @@ export default function CVDatabaseTab() {
 
   const downloadBuiltCV = async (row: CVRow) => {
     if (!row.parsed) return toast.error("No built CV data available");
+    // Open a tab synchronously (inside the click) so mobile browsers don't block it.
+    const win = window.open("", "_blank");
     try {
       const { jsPDF } = await import("jspdf");
       const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
@@ -483,9 +485,16 @@ export default function CVDatabaseTab() {
       pdf.setFontSize(7);
       pdf.setTextColor(120, 120, 120);
       pdf.text(`Generated from SeaMinds Admin CV Database • ${new Date().toLocaleString()}`, 14, 290);
-      pdf.save(`SeaMinds-CV-${text(row.cv_uid, row.user_id).replace(/[^A-Za-z0-9-]/g, '')}-${name.replace(/\s+/g, '-')}.pdf`);
+      const fileName = `SeaMinds-CV-${text(row.cv_uid, row.user_id).replace(/[^A-Za-z0-9-]/g, '')}-${name.replace(/\s+/g, '-')}.pdf`;
+      const blobUrl = pdf.output("bloburl");
+      if (win) {
+        win.location.href = blobUrl as unknown as string;
+      } else {
+        pdf.save(fileName);
+      }
     } catch (e) {
       console.error("Admin CV PDF error:", e);
+      if (win) win.close();
       toast.error("Could not generate CV PDF");
     }
   };
