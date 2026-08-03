@@ -961,6 +961,7 @@ export type Database = {
           converted: boolean | null
           crew_profile_id: string | null
           email: string
+          email_verified: boolean | null
           first_name: string | null
           first_seen: string | null
           id: string
@@ -968,11 +969,14 @@ export type Database = {
           last_seen: string | null
           nationality: string | null
           notes: string | null
+          phone_verified: boolean | null
           promo_sent: boolean | null
+          retained_from_deleted_cv: boolean | null
           role: string | null
           source: string | null
           source_detail: string | null
           total_visits: number | null
+          verified_at: string | null
           vessel_type: string | null
           whatsapp_number: string | null
         }
@@ -980,6 +984,7 @@ export type Database = {
           converted?: boolean | null
           crew_profile_id?: string | null
           email: string
+          email_verified?: boolean | null
           first_name?: string | null
           first_seen?: string | null
           id?: string
@@ -987,11 +992,14 @@ export type Database = {
           last_seen?: string | null
           nationality?: string | null
           notes?: string | null
+          phone_verified?: boolean | null
           promo_sent?: boolean | null
+          retained_from_deleted_cv?: boolean | null
           role?: string | null
           source?: string | null
           source_detail?: string | null
           total_visits?: number | null
+          verified_at?: string | null
           vessel_type?: string | null
           whatsapp_number?: string | null
         }
@@ -999,6 +1007,7 @@ export type Database = {
           converted?: boolean | null
           crew_profile_id?: string | null
           email?: string
+          email_verified?: boolean | null
           first_name?: string | null
           first_seen?: string | null
           id?: string
@@ -1006,11 +1015,14 @@ export type Database = {
           last_seen?: string | null
           nationality?: string | null
           notes?: string | null
+          phone_verified?: boolean | null
           promo_sent?: boolean | null
+          retained_from_deleted_cv?: boolean | null
           role?: string | null
           source?: string | null
           source_detail?: string | null
           total_visits?: number | null
+          verified_at?: string | null
           vessel_type?: string | null
           whatsapp_number?: string | null
         }
