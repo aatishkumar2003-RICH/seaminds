@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'SeaMinds Monitor <monitor@resend.dev>',
+      from: 'SeaMinds Monitor <crew@seaminds.life>',
       to: ['aatishkumar2003@gmail.com'],
       subject: `⚓ SeaMinds: ${errors.length > 0 ? `🔴 ${errors.length} errors` : '✅ All good'} · ${signups.length} new crew · Total: ${totalCrew}`,
       html,
