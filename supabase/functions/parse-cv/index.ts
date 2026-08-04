@@ -27,11 +27,39 @@ For rank use exactly one of: Captain, Chief Officer, 2nd Officer, 3rd Officer, C
 For yearsAtSea use format: Less than 1 year, 1-3 years, 3-7 years, 7-15 years, 15+ years
 Return ONLY the JSON object, no other text.`;
 
+async function requireUser(req: Request) {
+  const token = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
+  if (!token) return null;
+  const res = await fetch(`${Deno.env.get("SUPABASE_URL")}/auth/v1/user`, {
+    headers: { Authorization: `Bearer ${token}`, apikey: Deno.env.get("SUPABASE_ANON_KEY") ?? "" },
+  });
+  if (!res.ok) return null;
+  const user = await res.json();
+  return user?.id ? user : null;
+}
+
+// ~10 MB of base64 payload max
+const MAX_BASE64_LENGTH = 10 * 1024 * 1024;
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
+  const user = await requireUser(req);
+  if (!user) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
     const { file_base64, mime_type } = await req.json();
+    if (typeof file_base64 !== "string" || !file_base64 || file_base64.length > MAX_BASE64_LENGTH) {
+      return new Response(JSON.stringify({ error: "Invalid or oversized file (max ~7MB)." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
