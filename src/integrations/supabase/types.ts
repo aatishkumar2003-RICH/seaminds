@@ -1955,6 +1955,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
       owns_crew_profile: {
         Args: { _crew_profile_id: string }
         Returns: boolean

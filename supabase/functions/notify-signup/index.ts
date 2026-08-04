@@ -2,11 +2,63 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 const RESEND_KEY = Deno.env.get('RESEND_API_KEY')!;
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const clip = (v: unknown, n = 120) => (typeof v === 'string' ? v.slice(0, n) : '');
+
+async function getUser(req: Request) {
+  const token = (req.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '').trim();
+  if (!token) return null;
+  const { data } = await supabase.auth.getUser(token);
+  return data?.user ?? null;
+}
+
+// Fallback protection for unauthenticated (pre-login magic-link) calls
+async function allowAnonymous(ip: string) {
+  const key = `notify-signup:${ip}`;
+  const now = new Date();
+  const { data } = await supabase.from('auth_rate_limits').select('*').eq('ip_address', key).maybeSingle();
+  if (!data) {
+    await supabase.from('auth_rate_limits').insert({ ip_address: key, attempt_count: 1, window_start: now.toISOString(), last_attempt: now.toISOString() });
+    return true;
+  }
+  const windowStart = new Date(data.window_start).getTime();
+  if (windowStart < Date.now() - 60 * 60 * 1000) {
+    await supabase.from('auth_rate_limits').update({ attempt_count: 1, window_start: now.toISOString(), last_attempt: now.toISOString() }).eq('ip_address', key);
+    return true;
+  }
+  if (data.attempt_count >= 3) return false;
+  await supabase.from('auth_rate_limits').update({ attempt_count: data.attempt_count + 1, last_attempt: now.toISOString() }).eq('ip_address', key);
+  return true;
+}
+
 Deno.serve(async (req) => {
   const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type' };
   if (req.method === 'OPTIONS') return new Response(null, { headers: cors });
   try {
-    const { email, first_name, last_name, nationality, whatsapp_number, role, vessel_type, ship_name } = await req.json();
+    const user = await getUser(req);
+    if (!user) {
+      const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+      if (!(await allowAnonymous(ip))) {
+        return new Response(JSON.stringify({ success: false, error: 'Rate limit exceeded' }), {
+          status: 429, headers: { ...cors, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    const body = await req.json();
+    const email = user?.email || clip(body.email);
+    if (!EMAIL_RE.test(email)) {
+      return new Response(JSON.stringify({ success: false, error: 'Invalid email' }), {
+        status: 400, headers: { ...cors, 'Content-Type': 'application/json' },
+      });
+    }
+    const first_name = clip(body.first_name, 60);
+    const last_name = clip(body.last_name, 60);
+    const nationality = clip(body.nationality, 60);
+    const whatsapp_number = clip(body.whatsapp_number, 30);
+    const role = clip(body.role, 60);
+    const vessel_type = clip(body.vessel_type, 60);
+    const ship_name = clip(body.ship_name, 60);
 
     // Save to signup log
     await supabase.from('signup_log').insert({ email, first_name, last_name, nationality, whatsapp_number, role, vessel_type, ship_name, notified: true }).catch(() => {});
