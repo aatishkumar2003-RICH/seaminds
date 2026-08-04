@@ -11,6 +11,20 @@ Deno.serve(async (req) => {
     // Save to signup log
     await supabase.from('signup_log').insert({ email, first_name, last_name, nationality, whatsapp_number, role, vessel_type, ship_name, notified: true }).catch(() => {});
 
+    // Log the signup as an app event so the monitor digest can report it
+    await supabase.from('app_events').insert({
+      event_type: 'crew_signup',
+      message: `${first_name || ''} ${last_name || ''} joined SeaMinds`.trim(),
+      severity: 'info',
+      emailed: false,
+      metadata: {
+        name: `${first_name || ''} ${last_name || ''}`.trim(),
+        rank: role || '',
+        nationality: nationality || '',
+        email: email || '',
+      },
+    }).catch(() => {});
+
     // Upsert to email leads
     await supabase.rpc('upsert_email_lead', { p_email: email, p_first_name: first_name, p_last_name: last_name, p_nationality: nationality, p_whatsapp: whatsapp_number, p_role: role, p_vessel_type: vessel_type, p_source: 'registration' }).catch(() => {});
 
