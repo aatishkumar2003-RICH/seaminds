@@ -54,15 +54,12 @@ function getSuggestedTopics(query: string): string[] {
 
 const Academy = () => {
   const [activeTopicId, setActiveTopicId] = useState<string | null>(null);
-  const [showRestHours, setShowRestHours] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<string | null>(null);
 
   const activeTopic = ALL_TOPICS.find((t) => t.id === activeTopicId);
 
-  if (showRestHours) {
-    return <RestHoursTracker onBack={() => setShowRestHours(false)} />;
-  }
+
 
   if (activeTopic) {
     return (
