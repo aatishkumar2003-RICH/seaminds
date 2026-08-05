@@ -15,8 +15,8 @@ export const NAV_ITEMS: NavItem[] = [
   { icon: "📄", label: "My CV", screen: "resume" },
   { icon: "📜", label: "Certificates", screen: "certs" },
   { icon: "🏆", label: "My Score", screen: "smc" },
-  { icon: "🔧", label: "Tech Help", screen: "bridge" },
-  { icon: "🎓", label: "Academy", screen: "academy" },
+  { icon: "📚", label: "Learn", screen: "academy" },
+
   { icon: "👥", label: "Community", screen: "community", gated: true },
   { icon: "📰", label: "News", screen: "news" },
 ];
