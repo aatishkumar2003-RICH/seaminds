@@ -22,7 +22,7 @@ const HomePage = () => {
   const { user, isReady: authReady } = useAuth();
   const [timedOut, setTimedOut] = useState(false);
 
-  useEffect(() => { document.title = "SeaMinds — The Seafarer's Digital Platform"; }, []);
+  useEffect(() => { document.title = "Seafarer Jobs, Crew Wellness & Verified Maritime Talent | SeaMinds"; }, []);
 
   // Safety timeout: if auth doesn't resolve in 5s, show the page anyway
   useEffect(() => {
@@ -53,6 +53,31 @@ const HomePage = () => {
     ],
   };
 
+  const websiteLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "SeaMinds",
+    url: "https://seaminds.life",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: "https://seaminds.life/app?q={search_term_string}",
+      "query-input": "required name=search_term_string",
+    },
+  };
+
+  const serviceLd = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    serviceType: "Maritime crew recruitment and seafarer welfare platform",
+    provider: { "@type": "Organization", name: "SeaMinds", url: "https://seaminds.life" },
+    areaServed: "Worldwide",
+    audience: [
+      { "@type": "Audience", audienceType: "Seafarers" },
+      { "@type": "Audience", audienceType: "Manning agencies and ship managers" },
+    ],
+    description: "Maritime job vacancies, verified seafarer profiles, SMC competency scoring, MLC 2006 rest hours tracking and AI crew wellness support.",
+  };
+
   // Redirect authenticated users to /app
   useEffect(() => {
     if (authReady && user) {
@@ -74,11 +99,22 @@ const HomePage = () => {
   return (
     <div className="min-h-screen animated-gradient-bg text-foreground relative pt-28">
       <Helmet>
-        <title>SeaMinds — The Seafarer's Digital Platform</title>
-        <meta name="description" content="The digital platform for seafarers — wellness, career tools, competency scoring and maritime community." />
+        <title>Seafarer Jobs, Crew Wellness & Verified Maritime Talent | SeaMinds</title>
+        <meta name="description" content="SeaMinds is the digital platform for seafarers and manning companies — maritime jobs and vacancies, AI crew wellness support, MLC 2006 rest hours tracking, certificate wallet, seafarer CV builder and the SMC verified competency score. Free for seafarers worldwide." />
+        <meta name="keywords" content="seafarer jobs, maritime jobs, ship jobs, marine jobs, seaman jobs, crew recruitment, manning agency, hire seafarers, verified crew database, seafarer CV, MLC 2006 rest hours, seafarer wellness, mental health at sea, deck cadet jobs, engine cadet jobs, ETO jobs, chief officer vacancy, able seaman vacancy, crewing manager, maritime recruitment platform, seafarer competency score" />
+        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
         <link rel="canonical" href="https://seaminds.life" />
+        <meta property="og:title" content="Seafarer Jobs, Crew Wellness & Verified Maritime Talent | SeaMinds" />
+        <meta property="og:description" content="Maritime jobs, AI wellness support, MLC rest hours, certificate wallet and verified competency scoring — built for seafarers and the companies who hire them." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://seaminds.life" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Seafarer Jobs, Crew Wellness & Verified Maritime Talent | SeaMinds" />
+        <meta name="twitter:description" content="Maritime jobs, AI wellness support, MLC rest hours, certificate wallet and verified competency scoring — built for seafarers and the companies who hire them." />
         <script type="application/ld+json">{JSON.stringify(organizationLd)}</script>
         <script type="application/ld+json">{JSON.stringify(faqLd)}</script>
+        <script type="application/ld+json">{JSON.stringify(websiteLd)}</script>
+        <script type="application/ld+json">{JSON.stringify(serviceLd)}</script>
       </Helmet>
       <OceanBackground timeOfDay={timeOfDay} />
       <div className="relative z-10">
