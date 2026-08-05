@@ -33,6 +33,7 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
   const [isAvailable, setIsAvailable] = useState(false);
   const [availableFrom, setAvailableFrom] = useState('');
   const [jobAlertsEnabled, setJobAlertsEnabled] = useState(true);
+  const [started, setStarted] = useState(false);
 
   // CV parse state
   const [cvStatus, setCvStatus] = useState<CvStatus>("idle");
@@ -300,12 +301,73 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
     </div>
   );
 
+  const ScoreHero = () => (
+    <div className="flex flex-col h-full overflow-y-auto px-5 py-6">
+      <div className="rounded-3xl p-6 text-center" style={{
+        background: "linear-gradient(160deg, rgba(212,175,55,0.18), rgba(13,27,42,0.4))",
+        border: "1px solid rgba(212,175,55,0.45)",
+      }}>
+        <div className="text-5xl mb-3">🏆</div>
+        <h1 className="text-2xl font-extrabold mb-2" style={{ color: "#D4AF37" }}>
+          What's Your Competency Score?
+        </h1>
+        <p className="text-sm mb-1" style={{ color: "#e2e8f0" }}>
+          The SeaMinds Competency Score (SMC) rates you from
+        </p>
+        <p className="text-3xl font-black mb-4" style={{ color: "#D4AF37" }}>0.00 → 5.00 ⭐</p>
+        <p className="text-xs leading-relaxed" style={{ color: "#94a3b8" }}>
+          Technical knowledge · Experience · Communication · Behaviour · Wellness
+        </p>
+      </div>
+
+      <div className="mt-5 space-y-3">
+        {[
+          { icon: "🚀", title: "Be seen first", text: "Manning companies sort crew by score. Higher score, higher in the list." },
+          { icon: "⚓", title: "Reach prime jobs", text: "Top vessels and better contracts ask for proven competency." },
+          { icon: "💰", title: "Negotiate stronger", text: "A verified score is evidence when you talk about salary." },
+          { icon: "📜", title: "Get your certificate", text: "A shareable SeaMinds certificate with a QR code employers can verify." },
+        ].map((b) => (
+          <div key={b.title} className="flex gap-3 rounded-2xl p-3.5" style={{ background: "#112240", border: "1px solid #1e3a5f" }}>
+            <span className="text-xl shrink-0">{b.icon}</span>
+            <div>
+              <p className="text-sm font-bold" style={{ color: "#fff" }}>{b.title}</p>
+              <p className="text-[11px] leading-snug" style={{ color: "#94a3b8" }}>{b.text}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={() => setStarted(true)}
+        className="w-full mt-6 rounded-2xl py-4 font-extrabold text-base"
+        style={{ background: "#D4AF37", color: "#0D1B2A", border: "none", cursor: "pointer" }}
+      >
+        ⚡ Check My Score
+      </button>
+
+      <p className="text-center text-[11px] mt-3" style={{ color: "#64748b" }}>
+        {selfPrice > 0 ? `$${selfPrice} · takes about 10 minutes` : "Free for now · takes about 10 minutes"}
+      </p>
+      <p className="text-center text-[11px] mt-1" style={{ color: "#64748b" }}>
+        You'll be asked for your CV and certificates next.
+      </p>
+      <div className="h-6" />
+    </div>
+  );
+
+  if (view === "payment" && !started) return <ScoreHero />;
+
   return (
     <div className="flex flex-col h-full overflow-y-auto">
-      <button onClick={() => window.history.back()}
-        style={{ background:'transparent', border:'none', color:'#D4AF37', fontSize:'13px', cursor:'pointer', marginBottom:'8px', marginLeft:'16px', marginTop:'8px', display:'flex', alignItems:'center', gap:'4px' }}>
-        ← Back
-      </button>
+      {(started || view !== "payment") && (
+        <button onClick={() => {
+          if (view === "payment") setStarted(false);
+          else window.history.back();
+        }}
+          style={{ background:'transparent', border:'none', color:'#D4AF37', fontSize:'13px', cursor:'pointer', marginBottom:'8px', marginLeft:'16px', marginTop:'8px', display:'flex', alignItems:'center', gap:'4px' }}>
+          ← Back
+        </button>
+      )}
       {/* CV Upload Modal */}
       {showCvUpload && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={() => setShowCvUpload(false)}>
@@ -324,75 +386,79 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
           </div>
         </div>
       )}
-      {crewUniqueId && (
-        <div className="mx-4 mt-3 mb-1 rounded-xl border px-4 py-3 flex items-center gap-3" style={{ background: 'rgba(212,175,55,0.08)', borderColor: '#D4AF37' }}>
-          <span className="text-xs font-semibold" style={{ color: '#D4AF37' }}>Your SeaMinds ID</span>
-          <span className="text-sm font-bold tracking-wide" style={{ color: '#D4AF37' }}>{crewUniqueId}</span>
-        </div>
+      {(view !== "payment" || started) && (
+        <>
+          {crewUniqueId && (
+            <div className="mx-4 mt-3 mb-1 rounded-xl border px-4 py-3 flex items-center gap-3" style={{ background: 'rgba(212,175,55,0.08)', borderColor: '#D4AF37' }}>
+              <span className="text-xs font-semibold" style={{ color: '#D4AF37' }}>Your SeaMinds ID</span>
+              <span className="text-sm font-bold tracking-wide" style={{ color: '#D4AF37' }}>{crewUniqueId}</span>
+            </div>
+          )}
+          {/* Availability Toggle */}
+          <div className="mx-4 mt-2 mb-1 rounded-xl border p-3 flex items-center justify-between"
+            style={{ background: isAvailable ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.05)', borderColor: isAvailable ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.1)' }}>
+            <div>
+              <div className="text-[13px] font-semibold" style={{ color: isAvailable ? '#22c55e' : '#888' }}>
+                {isAvailable ? '✅ Available for Work' : '🔴 Not Available'}
+              </div>
+              <div className="text-[11px] mt-0.5" style={{ color: '#666' }}>
+                {isAvailable ? 'Companies can find your profile' : 'Your profile is hidden from companies'}
+              </div>
+            </div>
+            <button
+              onClick={() => toggleAvailability(!isAvailable)}
+              className="rounded-full px-4 py-1.5 text-xs font-semibold text-white border-none cursor-pointer"
+              style={{ background: isAvailable ? '#22c55e' : '#333' }}>
+              {isAvailable ? 'Turn Off' : 'Go Available'}
+            </button>
+          </div>
+          {isAvailable && (
+            <div className="mx-4 mt-1 mb-1 flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Available from:</span>
+              <input type="date" value={availableFrom}
+                onChange={e => { setAvailableFrom(e.target.value); supabase.from('crew_profiles').update({ available_from: e.target.value }).eq('id', profileId); }}
+                className="bg-card border border-border text-foreground px-2 py-1 rounded-md text-xs" />
+            </div>
+          )}
+          {/* Job Alert Email Preference */}
+          <div className="mx-4 mt-2 mb-1 rounded-xl border p-3 flex items-center justify-between"
+            style={{ background: jobAlertsEnabled ? 'rgba(96,165,250,0.1)' : 'rgba(255,255,255,0.05)', borderColor: jobAlertsEnabled ? 'rgba(96,165,250,0.3)' : 'rgba(255,255,255,0.1)' }}>
+            <div>
+              <div className="text-[13px] font-semibold" style={{ color: jobAlertsEnabled ? '#60a5fa' : '#888' }}>
+                {jobAlertsEnabled ? '📧 Job Alerts On' : '🔕 Job Alerts Off'}
+              </div>
+              <div className="text-[11px] mt-0.5" style={{ color: '#666' }}>
+                {jobAlertsEnabled ? 'You\'ll get email alerts for matching jobs' : 'No email alerts when new jobs are found'}
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                const newVal = !jobAlertsEnabled;
+                setJobAlertsEnabled(newVal);
+                supabase.from('crew_profiles').update({ job_alerts_enabled: newVal }).eq('id', profileId);
+              }}
+              className="rounded-full px-4 py-1.5 text-xs font-semibold text-white border-none cursor-pointer"
+              style={{ background: jobAlertsEnabled ? '#60a5fa' : '#333' }}>
+              {jobAlertsEnabled ? 'Turn Off' : 'Turn On'}
+            </button>
+          </div>
+          <CvCard />
+          {/* Salary Check Button */}
+          <div className="px-4 py-2">
+            <button
+              onClick={() => setSalaryOpen(true)}
+              className="w-full py-3 rounded-xl font-bold text-sm transition-all"
+              style={{
+                background: "rgba(212,175,55,0.1)",
+                border: "1.5px solid #D4AF37",
+                color: "#D4AF37",
+              }}
+            >
+              💰 Salary Check
+            </button>
+          </div>
+        </>
       )}
-      {/* Availability Toggle */}
-      <div className="mx-4 mt-2 mb-1 rounded-xl border p-3 flex items-center justify-between"
-        style={{ background: isAvailable ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.05)', borderColor: isAvailable ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.1)' }}>
-        <div>
-          <div className="text-[13px] font-semibold" style={{ color: isAvailable ? '#22c55e' : '#888' }}>
-            {isAvailable ? '✅ Available for Work' : '🔴 Not Available'}
-          </div>
-          <div className="text-[11px] mt-0.5" style={{ color: '#666' }}>
-            {isAvailable ? 'Companies can find your profile' : 'Your profile is hidden from companies'}
-          </div>
-        </div>
-        <button
-          onClick={() => toggleAvailability(!isAvailable)}
-          className="rounded-full px-4 py-1.5 text-xs font-semibold text-white border-none cursor-pointer"
-          style={{ background: isAvailable ? '#22c55e' : '#333' }}>
-          {isAvailable ? 'Turn Off' : 'Go Available'}
-        </button>
-      </div>
-      {isAvailable && (
-        <div className="mx-4 mt-1 mb-1 flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">Available from:</span>
-          <input type="date" value={availableFrom}
-            onChange={e => { setAvailableFrom(e.target.value); supabase.from('crew_profiles').update({ available_from: e.target.value }).eq('id', profileId); }}
-            className="bg-card border border-border text-foreground px-2 py-1 rounded-md text-xs" />
-        </div>
-      )}
-      {/* Job Alert Email Preference */}
-      <div className="mx-4 mt-2 mb-1 rounded-xl border p-3 flex items-center justify-between"
-        style={{ background: jobAlertsEnabled ? 'rgba(96,165,250,0.1)' : 'rgba(255,255,255,0.05)', borderColor: jobAlertsEnabled ? 'rgba(96,165,250,0.3)' : 'rgba(255,255,255,0.1)' }}>
-        <div>
-          <div className="text-[13px] font-semibold" style={{ color: jobAlertsEnabled ? '#60a5fa' : '#888' }}>
-            {jobAlertsEnabled ? '📧 Job Alerts On' : '🔕 Job Alerts Off'}
-          </div>
-          <div className="text-[11px] mt-0.5" style={{ color: '#666' }}>
-            {jobAlertsEnabled ? 'You\'ll get email alerts for matching jobs' : 'No email alerts when new jobs are found'}
-          </div>
-        </div>
-        <button
-          onClick={() => {
-            const newVal = !jobAlertsEnabled;
-            setJobAlertsEnabled(newVal);
-            supabase.from('crew_profiles').update({ job_alerts_enabled: newVal }).eq('id', profileId);
-          }}
-          className="rounded-full px-4 py-1.5 text-xs font-semibold text-white border-none cursor-pointer"
-          style={{ background: jobAlertsEnabled ? '#60a5fa' : '#333' }}>
-          {jobAlertsEnabled ? 'Turn Off' : 'Turn On'}
-        </button>
-      </div>
-      <CvCard />
-      {/* Salary Check Button */}
-      <div className="px-4 py-2">
-        <button
-          onClick={() => setSalaryOpen(true)}
-          className="w-full py-3 rounded-xl font-bold text-sm transition-all"
-          style={{
-            background: "rgba(212,175,55,0.1)",
-            border: "1.5px solid #D4AF37",
-            color: "#D4AF37",
-          }}
-        >
-          💰 Salary Check
-        </button>
-      </div>
       <SalaryBenchmark open={salaryOpen} onClose={() => setSalaryOpen(false)} />
       {view === "certificate" && (
         <div className="pt-1">
