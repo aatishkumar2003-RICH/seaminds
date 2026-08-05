@@ -145,11 +145,14 @@ const ManagerSearch = () => {
         footer: `SeaMinds Manager Crew Search • ${new Date().toLocaleString()}`,
       });
     } catch (e: any) {
-      toast.error(e?.message || "Could not generate CV PDF");
+      const msg = e?.message || "Could not generate CV PDF";
+      if (isAuthError(msg)) { navigate("/manager"); return; }
+      toast.error(msg);
     } finally {
       setPdfBusy(null);
     }
   };
+
 
   const contactWhatsApp = (row: CrewResult) => {
     const digits = (row.whatsapp_number || "").replace(/[^\d]/g, "");
