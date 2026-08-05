@@ -270,11 +270,11 @@ const ManagerSearch = () => {
                 </div>
                 <span style={{
                   fontSize: 11, fontWeight: 700, padding: "4px 8px", borderRadius: 999,
-                  background: r.is_available ? "rgba(16,185,129,0.15)" : "rgba(148,163,184,0.15)",
-                  color: r.is_available ? "#10b981" : "#94a3b8",
+                  background: r.is_available ? "rgba(16,185,129,0.15)" : "rgba(212,175,55,0.15)",
+                  color: r.is_available ? "#10b981" : GOLD,
                   whiteSpace: "nowrap",
                 }}>
-                  {r.is_available ? "Available now" : "Not available"}
+                  {r.is_available ? "Available now" : "Availability on request"}
                 </span>
               </div>
 
