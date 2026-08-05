@@ -24,6 +24,8 @@ import WelfareDashboard from "@/components/WelfareDashboard";
 import Opportunities from "@/components/Opportunities";
 import News from "@/components/News";
 import Academy from "@/components/Academy";
+import Knowledge from "@/components/Knowledge";
+
 import Community from "@/components/Community";
 import Bridge from "@/components/Bridge";
 import SMCScoreTab from "@/components/SMCScoreTab";
@@ -750,7 +752,7 @@ const Index = () => {
               ) : screen === "news" ? (
                 <ScreenErrorBoundary screenName="News"><News nationality={nationality} /></ScreenErrorBoundary>
               ) : screen === "academy" ? (
-                <ScreenErrorBoundary screenName="Academy"><Academy /></ScreenErrorBoundary>
+                <ScreenErrorBoundary screenName="Learn"><Knowledge profileId={profileId} /></ScreenErrorBoundary>
               ) : screen === "bridge" ? (
                 <ScreenErrorBoundary screenName="Bridge"><Bridge profileId={profileId} /></ScreenErrorBoundary>
               ) : screen === "vesselrating" ? (

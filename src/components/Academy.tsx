@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Shield, Ship, MapPin, FileText, Scale, Search, Youtube, Globe, ExternalLink, Sparkles, Clock } from "lucide-react";
+import { Shield, Ship, MapPin, FileText, Scale, Search, Youtube, Globe, ExternalLink, Sparkles } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import DrillDownTopic from "@/components/academy/DrillDownTopic";
-import RestHoursTracker from "@/components/academy/RestHoursTracker";
+
 import { ALL_TOPICS } from "@/components/academy/academyData";
 
 const ICON_MAP = { Shield, Ship, MapPin, FileText, Scale } as const;
@@ -54,15 +54,12 @@ function getSuggestedTopics(query: string): string[] {
 
 const Academy = () => {
   const [activeTopicId, setActiveTopicId] = useState<string | null>(null);
-  const [showRestHours, setShowRestHours] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<string | null>(null);
 
   const activeTopic = ALL_TOPICS.find((t) => t.id === activeTopicId);
 
-  if (showRestHours) {
-    return <RestHoursTracker onBack={() => setShowRestHours(false)} />;
-  }
+
 
   if (activeTopic) {
     return (
@@ -95,11 +92,8 @@ const Academy = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-border">
-        <h1 className="text-lg font-semibold text-foreground">Academy</h1>
-        <p className="text-xs text-muted-foreground mt-0.5">Search any maritime topic or browse below</p>
-      </div>
       <ScrollArea className="flex-1">
+
         <div className="p-4 space-y-4">
           {/* Search Bar */}
           <div className="rounded-xl bg-primary/10 border-2 border-primary/40 p-3 space-y-2">
@@ -198,24 +192,8 @@ const Academy = () => {
             </div>
           )}
 
-          {/* Rest Hours Tracker */}
-          <div>
-            <p className="text-[11px] font-semibold text-primary uppercase tracking-wider mb-2">Tools</p>
-            <button
-              onClick={() => setShowRestHours(true)}
-              className="w-full rounded-xl bg-card border border-primary/30 p-4 text-left hover:border-primary/50 transition-colors flex items-center gap-3"
-            >
-              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                <Clock size={18} className="text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground">My Rest Hours Log</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">STCW compliance tracker — private to you</p>
-              </div>
-            </button>
-          </div>
-
           {/* Existing Topic Cards */}
+
           {CATEGORIES.map((cat) => (
             <div key={cat.id}>
               <p className="text-[11px] font-semibold text-primary uppercase tracking-wider mb-2">{cat.label}</p>

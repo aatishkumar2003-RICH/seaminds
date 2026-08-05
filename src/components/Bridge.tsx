@@ -768,10 +768,7 @@ const Bridge = ({ profileId }: BridgeProps) => {
   // Home view
   return (
     <div className="flex flex-col h-full px-4 py-3 overflow-y-auto">
-      <div className="text-center mb-4">
-        <h1 className="text-xl font-bold tracking-wider" style={{ color: "#D4AF37" }}>PMS</h1>
-        <p className="text-xs text-muted-foreground">Planned Maintenance & Reference</p>
-      </div>
+
 
       <form onSubmit={handleSubmit} className="relative mb-3">
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
