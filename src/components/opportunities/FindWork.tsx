@@ -744,13 +744,8 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
 
                 <div className="flex items-center justify-between">
                   {postedAgo && <p className="text-[10px] text-muted-foreground/60">{postedAgo}</p>}
-                  {ext.quality_score && (
-                    <div className="flex items-center gap-1">
-                      <div className={cn("h-1.5 w-1.5 rounded-full", ext.quality_score >= 70 ? "bg-green-500" : ext.quality_score >= 40 ? "bg-yellow-500" : "bg-red-500")} />
-                      <span className="text-[10px] text-muted-foreground/60">Q{ext.quality_score}</span>
-                    </div>
-                  )}
                 </div>
+
 
                 <div className="flex gap-2">
                   {ext.apply_url && (
