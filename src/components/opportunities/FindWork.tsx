@@ -549,7 +549,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                 )}
               </div>
               {(() => {
-                const meetsScore = !v.min_smc_score || DEMO_SMC_SCORE >= v.min_smc_score;
+                const meetsScore = !v.min_smc_score || (smcScore ?? 0) >= v.min_smc_score;
                 if (meetsScore) {
                   return <Button size="sm" className="w-full" onClick={() => handleApply(v)}>Apply Now</Button>;
                 }
