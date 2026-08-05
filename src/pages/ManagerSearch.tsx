@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { generateCvPdf } from "@/lib/cvPdf";
@@ -7,7 +8,7 @@ const NAVY = "#0D1B2A";
 const GOLD = "#D4AF37";
 const CARD = "#112240";
 const BORDER = "#1e3a5f";
-const SS_KEY = "seaminds_manager_search_code";
+
 
 const RANKS = [
   "Captain / Master", "Chief Officer", "2nd Officer", "3rd Officer",
