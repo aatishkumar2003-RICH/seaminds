@@ -699,9 +699,12 @@ const Index = () => {
                 </div>
               )}
 
-              <div className="mx-4 mb-2 lg:mx-8">
-                <CvViewsCard />
-              </div>
+              {screen === "chat" && (
+                <div className="mx-4 mb-2 lg:mx-8">
+                  <CvViewsCard />
+                </div>
+              )}
+
 
               {screen === "chat" ? (
                 profileComplete ? (onboardingComplete ? <ScreenErrorBoundary screenName="Chat"><CrewChat profileId={profileId} firstName={firstName} role={role} shipName={shipName} voyageStartDate={voyageStartDate} /></ScreenErrorBoundary> : vesselOnboardingUI) : profileGateUI
