@@ -1,6 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
-const MANAGER_ACCESS_CODE = Deno.env.get("MANAGER_ACCESS_CODE") || "SEAMANAGER2026";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
