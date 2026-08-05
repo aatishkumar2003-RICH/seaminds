@@ -165,7 +165,7 @@ const ManagerSearch = () => {
 
   const availableCount = useMemo(() => results.filter((r) => r.is_available).length, [results]);
 
-  if (!accessCode) return <GateScreen onUnlock={setAccessCode} />;
+  if (!ready) return null;
 
   return (
     <div style={{ minHeight: "100vh", background: NAVY, padding: "24px 16px" }}>
