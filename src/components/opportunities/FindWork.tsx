@@ -508,7 +508,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
       {/* Manager Job Vacancies (legacy) */}
       {vacancies.length > 0 && (
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide px-1">Manager Vacancies</h3>
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide px-1">Direct from Companies</h3>
           {vacancies.map((v) => (
             <div key={v.id} className="rounded-xl bg-card border border-border p-4 space-y-3">
               <div className="flex items-start justify-between">
