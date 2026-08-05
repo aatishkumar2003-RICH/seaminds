@@ -61,11 +61,10 @@ const ManagerAssessmentRequest = ({ crewProfileId, crewName, onPaymentSuccess }:
     if (!discountCode.trim()) return;
     setCheckingCode(true);
     setDiscountError('');
-    const { data } = await supabase.from('discount_codes')
-      .select('*')
-      .eq('code', discountCode.trim().toUpperCase())
-      .eq('active', true)
-      .maybeSingle();
+    const { data } = await supabase.rpc('validate_discount_code', {
+      input_code: discountCode.trim(),
+      product_scope: 'manager_assessment'
+    }).maybeSingle();
     if (!data) { setDiscountError('Invalid or expired code.'); setCheckingCode(false); return; }
     if (data.valid_until && new Date(data.valid_until) < new Date()) { setDiscountError('This code has expired.'); setCheckingCode(false); return; }
     if (data.max_uses !== null && (data.uses_count ?? 0) >= data.max_uses) { setDiscountError('This code has reached its maximum uses.'); setCheckingCode(false); return; }
@@ -77,16 +76,9 @@ const ManagerAssessmentRequest = ({ crewProfileId, crewName, onPaymentSuccess }:
 
   const incrementDiscountUses = async () => {
     if (!discountApplied || !discountCode) return;
-    const codeUpper = discountCode.trim().toUpperCase();
-    const { data: codeRow } = await supabase.from('discount_codes')
-      .select('uses_count')
-      .eq('code', codeUpper)
-      .maybeSingle();
-    if (codeRow) {
-      await supabase.from('discount_codes')
-        .update({ uses_count: (codeRow.uses_count ?? 0) + 1 })
-        .eq('code', codeUpper);
-    }
+    await supabase.rpc('increment_discount_uses', {
+      input_code: discountCode.trim()
+    });
   };
 
   const handlePayment = async (productKey: string, amount?: number) => {
