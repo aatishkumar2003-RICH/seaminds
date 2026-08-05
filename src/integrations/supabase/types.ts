@@ -1242,6 +1242,7 @@ export type Database = {
           contact_whatsapp: string
           contract_duration: string
           created_at: string
+          flier_url: string | null
           id: string
           joining_port: string
           monthly_salary: string | null
@@ -1257,6 +1258,7 @@ export type Database = {
           contact_whatsapp: string
           contract_duration: string
           created_at?: string
+          flier_url?: string | null
           id?: string
           joining_port: string
           monthly_salary?: string | null
@@ -1272,6 +1274,7 @@ export type Database = {
           contact_whatsapp?: string
           contract_duration?: string
           created_at?: string
+          flier_url?: string | null
           id?: string
           joining_port?: string
           monthly_salary?: string | null

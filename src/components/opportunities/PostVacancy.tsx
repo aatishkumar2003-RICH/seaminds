@@ -50,6 +50,7 @@ const PostVacancy = () => {
   const [uploadedFileName, setUploadedFileName] = useState("");
   const [aiReading, setAiReading] = useState(false);
   const [aiSuccess, setAiSuccess] = useState(false);
+  const [flierUrl, setFlierUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [jobPrices, setJobPrices] = useState({ single: 0, monthly: 0, annual: 0 });
 
@@ -89,6 +90,18 @@ const PostVacancy = () => {
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
+
+      try {
+        const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+        const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from("job-fliers")
+          .upload(path, file, { contentType: file.type, upsert: false });
+        if (!upErr) {
+          const { data: pub } = supabase.storage.from("job-fliers").getPublicUrl(path);
+          setFlierUrl(pub?.publicUrl || null);
+        }
+      } catch { /* flier image is optional */ }
 
       const { data, error } = await supabase.functions.invoke("parse-flier", {
         body: { imageBase64: base64, mimeType: file.type },
@@ -204,6 +217,7 @@ const PostVacancy = () => {
     setAdditionalNotes("");
     setUploadedFileName("");
     setAiSuccess(false);
+    setFlierUrl(null);
     setSelectedPlan("single");
   };
 
@@ -219,6 +233,7 @@ const PostVacancy = () => {
       contact_whatsapp: contactWhatsapp,
       company_name: companyName,
       additional_notes: additionalNotes || null,
+      flier_url: flierUrl,
       status: isFree ? "active" : "pending_payment",
       plan: selectedPlan,
     } as any);
