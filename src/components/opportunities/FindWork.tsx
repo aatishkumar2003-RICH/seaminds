@@ -624,14 +624,15 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
         <div className="space-y-3" id="ai-collected-jobs">
           <div className="flex items-center gap-2 px-1">
             <Globe size={14} className="text-primary" />
-            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">AI-Collected Jobs</h3>
+            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">More Jobs</h3>
             <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
               {filtered.length}
             </Badge>
           </div>
           <p className="text-[11px] text-muted-foreground px-1">
-            Aggregated from Google Jobs, RSS feeds & Telegram channels
+            Fresh vacancies collected from across the industry
           </p>
+
 
           {/* Filters */}
           <div className="flex gap-2">
