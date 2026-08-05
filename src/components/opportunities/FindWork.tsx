@@ -286,100 +286,84 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
         );
       })()}
 
-      {/* CV Preview */}
-      <div className="rounded-xl bg-card border border-border p-4 space-y-3">
-        <div className="flex items-center gap-2 mb-1">
-          <Anchor size={16} className="text-primary" />
-          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Maritime CV Preview</h3>
-        </div>
-        <div className="grid grid-cols-2 gap-3 text-xs">
+      {/* Availability & visibility preferences (collapsible) */}
+      <div className="rounded-xl bg-card border border-border overflow-hidden">
+        <button
+          onClick={() => setShowPrefs(!showPrefs)}
+          className="w-full flex items-center justify-between px-4 py-3 text-left"
+        >
           <div>
-            <span className="text-muted-foreground">Name</span>
-            <p className="text-foreground font-medium">{firstName} {lastName}</p>
+            <p className="text-sm font-semibold text-foreground">
+              {visible ? "✅ Companies can find you" : "⚪ You are hidden from companies"}
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              Tap to set when you are available
+            </p>
           </div>
-          <div>
-            <span className="text-muted-foreground">Rank</span>
-            <p className="text-foreground font-medium">{role}</p>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Nationality</span>
-            <p className="text-foreground font-medium">{nationality || "Not set"}</p>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Years at Sea</span>
-            <p className="text-foreground font-medium">{yearsAtSea || "Not set"}</p>
-          </div>
-          <div className="col-span-2">
-            <span className="text-muted-foreground">Current / Last Vessel</span>
-            <p className="text-foreground font-medium">{shipName}</p>
-          </div>
-        </div>
-      </div>
+          <span className="text-primary text-xs font-bold">{showPrefs ? "−" : "+"}</span>
+        </button>
+        {showPrefs && (
+          <div className="px-4 pb-4 space-y-4 border-t border-border pt-4">
+            <div className="space-y-1.5">
+              <label className="text-xs text-muted-foreground">Availability Date</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !availabilityDate && "text-muted-foreground")}>
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {availabilityDate ? format(availabilityDate, "PPP") : "Select date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={availabilityDate} onSelect={setAvailabilityDate} initialFocus className={cn("p-3 pointer-events-auto")} />
+                </PopoverContent>
+              </Popover>
+            </div>
 
-      {/* Availability Fields */}
-      <div className="rounded-xl bg-card border border-border p-4 space-y-4">
-        <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Complete Your Profile</h3>
+            <div className="space-y-1.5">
+              <label className="text-xs text-muted-foreground">Preferred Vessel Type</label>
+              <Select value={preferredVessel} onValueChange={setPreferredVessel}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {VESSEL_TYPES.map((v) => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
 
-        <div className="space-y-1.5">
-          <label className="text-xs text-muted-foreground">Availability Date</label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !availabilityDate && "text-muted-foreground")}>
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {availabilityDate ? format(availabilityDate, "PPP") : "Select date"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar mode="single" selected={availabilityDate} onSelect={setAvailabilityDate} initialFocus className={cn("p-3 pointer-events-auto")} />
-            </PopoverContent>
-          </Popover>
-        </div>
+            <div className="space-y-1.5">
+              <label className="text-xs text-muted-foreground">One Line About Me <span className="text-muted-foreground/60">(optional, max 20 words)</span></label>
+              <Input
+                value={aboutMe}
+                onChange={(e) => {
+                  const words = e.target.value.trim().split(/\s+/).filter(Boolean);
+                  if (words.length <= 20) setAboutMe(e.target.value);
+                }}
+                placeholder="e.g. Experienced officer with tanker specialization"
+                className="text-sm"
+              />
+              <p className="text-[10px] text-muted-foreground">{wordCount}/20 words</p>
+            </div>
 
-        <div className="space-y-1.5">
-          <label className="text-xs text-muted-foreground">Preferred Vessel Type</label>
-          <Select value={preferredVessel} onValueChange={setPreferredVessel}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {VESSEL_TYPES.map((v) => <SelectItem key={v} value={v}>{v}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
+            <Button size="sm" onClick={() => saveAvailability()} disabled={saving} className="w-full">
+              {saving ? "Saving..." : "Save Profile"}
+            </Button>
 
-        <div className="space-y-1.5">
-          <label className="text-xs text-muted-foreground">One Line About Me <span className="text-muted-foreground/60">(optional, max 20 words)</span></label>
-          <Input
-            value={aboutMe}
-            onChange={(e) => {
-              const words = e.target.value.trim().split(/\s+/).filter(Boolean);
-              if (words.length <= 20) setAboutMe(e.target.value);
-            }}
-            placeholder="e.g. Experienced officer with tanker specialization"
-            className="text-sm"
-          />
-          <p className="text-[10px] text-muted-foreground">{wordCount}/20 words</p>
-        </div>
-
-        <Button size="sm" onClick={() => saveAvailability()} disabled={saving} className="w-full">
-          {saving ? "Saving..." : "Save Profile"}
-        </Button>
-      </div>
-
-      {/* Visibility Toggle */}
-      <div className="rounded-xl bg-card border border-border p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-semibold text-foreground">Make Me Visible to Employers</h3>
-            <p className="text-[10px] text-muted-foreground mt-0.5">Employers can find and contact you</p>
-          </div>
-          <Switch checked={visible} onCheckedChange={handleToggle} className="scale-125" />
-        </div>
-        {visible && (
-          <div className="mt-3 flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-lg px-3 py-2">
-            <Check size={14} className="text-primary" />
-            <span className="text-xs text-primary font-medium">Profile Active — Employers Can Find You</span>
+            <div className="flex items-center justify-between pt-2 border-t border-border">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Make Me Visible to Employers</h3>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Employers can find and contact you</p>
+              </div>
+              <Switch checked={visible} onCheckedChange={handleToggle} className="scale-125" />
+            </div>
+            {visible && (
+              <div className="flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-lg px-3 py-2">
+                <Check size={14} className="text-primary" />
+                <span className="text-xs text-primary font-medium">Profile Active — Employers Can Find You</span>
+              </div>
+            )}
           </div>
         )}
       </div>
+
 
       {/* Country filter tabs */}
       <div style={{ marginBottom: 14 }}>
