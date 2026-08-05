@@ -1955,6 +1955,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      increment_discount_uses: {
+        Args: { input_code: string }
+        Returns: undefined
+      }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       owns_crew_profile: {
         Args: { _crew_profile_id: string }
@@ -1975,6 +1979,29 @@ export type Database = {
           p_whatsapp?: string
         }
         Returns: undefined
+      }
+      validate_discount_code: {
+        Args: { input_code: string; product_scope: string }
+        Returns: {
+          active: boolean | null
+          applies_to: string
+          code: string
+          created_at: string | null
+          created_by: string | null
+          discount_type: string
+          discount_value: number
+          id: string
+          max_uses: number | null
+          uses_count: number | null
+          valid_from: string | null
+          valid_until: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "discount_codes"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
     }
     Enums: {
