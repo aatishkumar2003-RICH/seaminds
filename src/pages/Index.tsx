@@ -38,6 +38,7 @@ import VesselOnboardingCard from "@/components/VesselOnboardingCard";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import OnboardingTour from "@/components/OnboardingTour";
 import MarketPulseButton from "@/components/MarketPulseButton";
+import CvViewsCard from "@/components/CvViewsCard";
 
 const PROFILE_KEY = "seamind_profile_id";
 
