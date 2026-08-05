@@ -128,6 +128,9 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [countryFilter, setCountryFilter] = useState<string>('all');
+  const [showPrefs, setShowPrefs] = useState(false);
+  const [smcScore, setSmcScore] = useState<number | null>(null);
+
 
   const [extRankFilter, setExtRankFilter] = useState("all");
   const [extVesselFilter, setExtVesselFilter] = useState("all");
