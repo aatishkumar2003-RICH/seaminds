@@ -83,7 +83,8 @@ const isAuthError = (msg: string) => /sign in|not registered|session/i.test(msg 
 
 
 const ManagerSearch = () => {
-  const [accessCode, setAccessCode] = useState<string | null>(() => sessionStorage.getItem(SS_KEY));
+  const navigate = useNavigate();
+  const [ready, setReady] = useState(false);
   const [rank, setRank] = useState("");
   const [nationality, setNationality] = useState("");
   const [vesselType, setVesselType] = useState("");
@@ -93,38 +94,42 @@ const ManagerSearch = () => {
   const [searched, setSearched] = useState(false);
   const [pdfBusy, setPdfBusy] = useState<string | null>(null);
 
-  const search = async (code = accessCode) => {
-    if (!code) return;
+  const search = async () => {
     setLoading(true);
     try {
       const data = await callFn({
-        accessCode: code,
         action: "search",
         filters: { rank, nationality, vesselType, availability },
       });
       setResults(data.results || []);
       setSearched(true);
     } catch (e: any) {
-      if (/access code/i.test(e?.message || "")) {
-        sessionStorage.removeItem(SS_KEY);
-        setAccessCode(null);
-      }
-      toast.error(e?.message || "Search failed");
+      const msg = e?.message || "Search failed";
+      if (isAuthError(msg)) { navigate("/manager"); return; }
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (accessCode) search(accessCode);
+    let active = true;
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      if (!active) return;
+      if (!data?.user) { navigate("/manager"); return; }
+      setReady(true);
+      search();
+    })();
+    return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accessCode]);
+  }, []);
 
   const viewFullCv = async (row: CrewResult) => {
-    if (!accessCode) return;
     setPdfBusy(row.user_id);
     try {
-      const data = await callFn({ accessCode, action: "cv", userId: row.user_id });
+      const data = await callFn({ action: "cv", userId: row.user_id });
+
       if (!data.cv) {
         toast.error("This crew member has not built a CV yet");
         return;
