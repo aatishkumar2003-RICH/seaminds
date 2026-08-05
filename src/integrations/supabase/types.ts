@@ -1982,7 +1982,51 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      question_bank_public: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          difficulty: string | null
+          domain: string | null
+          id: string | null
+          options: Json | null
+          question: string | null
+          rank_group: string | null
+          rank_specific: string | null
+          regulation: string | null
+          times_used: number | null
+          vessel_type: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          difficulty?: string | null
+          domain?: string | null
+          id?: string | null
+          options?: Json | null
+          question?: string | null
+          rank_group?: string | null
+          rank_specific?: string | null
+          regulation?: string | null
+          times_used?: number | null
+          vessel_type?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          difficulty?: string | null
+          domain?: string | null
+          id?: string | null
+          options?: Json | null
+          question?: string | null
+          rank_group?: string | null
+          rank_specific?: string | null
+          regulation?: string | null
+          times_used?: number | null
+          vessel_type?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_admin_settings: {
