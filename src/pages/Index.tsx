@@ -750,7 +750,7 @@ const Index = () => {
               ) : screen === "news" ? (
                 <ScreenErrorBoundary screenName="News"><News nationality={nationality} /></ScreenErrorBoundary>
               ) : screen === "academy" ? (
-                <ScreenErrorBoundary screenName="Academy"><Academy /></ScreenErrorBoundary>
+                <ScreenErrorBoundary screenName="Learn"><Knowledge profileId={profileId} /></ScreenErrorBoundary>
               ) : screen === "bridge" ? (
                 <ScreenErrorBoundary screenName="Bridge"><Bridge profileId={profileId} /></ScreenErrorBoundary>
               ) : screen === "vesselrating" ? (
