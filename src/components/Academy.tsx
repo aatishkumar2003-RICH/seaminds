@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import DrillDownTopic from "@/components/academy/DrillDownTopic";
-import RestHoursTracker from "@/components/academy/RestHoursTracker";
+
 import { ALL_TOPICS } from "@/components/academy/academyData";
 
 const ICON_MAP = { Shield, Ship, MapPin, FileText, Scale } as const;
