@@ -6,7 +6,7 @@ const supabase = createClient(
 );
 
 const SERPAPI_KEY = Deno.env.get('SERPAPI_KEY')!;
-const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY')!;
+
 const TELEGRAM_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN')!;
 
 const MARITIME_QUERIES = [
@@ -105,7 +105,7 @@ async function fetchTelegramChannel(channel: string): Promise<any[]> {
   } catch { return []; }
 }
 
-async function processWithClaude(rawItems: any[]): Promise<any[]> {
+async function processWithAI(rawItems: any[]): Promise<any[]> {
   if (!rawItems.length) return [];
   const prompt = `You are a maritime job data extractor. Extract structured vacancy data from these raw job postings. For each item, output a JSON object with these exact fields:
 - rank_required: string (e.g. "Captain", "Chief Engineer", "2nd Officer", "AB", "Cook" — use standard maritime ranks only)
@@ -135,25 +135,25 @@ Return ONLY a valid JSON array. No markdown, no explanation. If an item is not a
 Raw items:
 ${JSON.stringify(rawItems.slice(0, 20), null, 1)}`;
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': ANTHROPIC_KEY,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 4000,
-      messages: [{ role: 'user', content: prompt }],
-    }),
-  });
-  const data = await res.json();
-  const text = data.content?.[0]?.text || '[]';
   try {
-    const clean = text.replace(/```json|```/g, '').trim();
-    return JSON.parse(clean);
-  } catch { return []; }
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        max_tokens: 4000,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+    const data = await res.json();
+    const text = data.choices?.[0]?.message?.content || '[]';
+    return JSON.parse(text.replace(/```json|```/g, '').trim());
+  } catch {
+    return [];
+  }
 }
 
 async function enrichWithCompanyContact(companyName: string | null): Promise<{email: string|null, whatsapp: string|null, website: string|null}> {
