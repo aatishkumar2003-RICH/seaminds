@@ -154,7 +154,7 @@ const Index = () => {
   // NPS survey — 3 min delay
   useEffect(() => {
     if (appState !== "main" || localStorage.getItem("seaminds_nps_shown")) return;
-    const timer = setTimeout(() => setShowNPS(true), 180000);
+    const timer = setTimeout(() => setShowNPS(true), 600000);
     return () => clearTimeout(timer);
   }, [appState]);
 
@@ -162,7 +162,7 @@ const Index = () => {
   useEffect(() => {
     if (appState !== "main" || localStorage.getItem("seaminds_notif_asked")) return;
     if (!("Notification" in window) || Notification.permission !== "default") return;
-    const timer = setTimeout(() => setShowNotifPrompt(true), 120000);
+    const timer = setTimeout(() => setShowNotifPrompt(true), 420000);
     return () => clearTimeout(timer);
   }, [appState]);
 

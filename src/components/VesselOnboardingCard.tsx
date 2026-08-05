@@ -79,6 +79,35 @@ const VesselOnboardingCard = ({ profileId, existingShipName, existingRole, onBac
     }
   };
 
+  const handleSkip = async () => {
+    if (saving) return;
+    setSaving(true);
+    const safeRank = rank || existingRole || "";
+    try {
+      const payload: any = { onboarding_complete: true };
+      if (vesselName.trim()) payload.ship_name = vesselName.trim();
+      if (vesselType) payload.vessel_type = vesselType;
+      if (safeRank) { payload.rank = safeRank; payload.role = normalizeRole(safeRank); }
+      if (portOfJoining.trim()) payload.port_of_joining = portOfJoining.trim();
+      if (passportNumber) payload.passport_number = passportNumber;
+      if (dateOfBirth) payload.date_of_birth = dateOfBirth;
+      const { error } = await supabase.from("crew_profiles").update(payload).eq("id", profileId);
+      if (error) throw error;
+    } catch (e: any) {
+      console.error("Onboarding skip save failed:", e);
+    } finally {
+      setSaving(false);
+    }
+    onComplete({
+      vesselName: vesselName.trim() || "",
+      vesselType: vesselType || "",
+      rank: safeRank,
+      portOfJoining: portOfJoining.trim() || "",
+    });
+  };
+
+
+
   const inputClass =
     "w-full bg-[#132236] border border-[#1e3a5f] rounded-xl px-4 py-3 text-white text-sm focus:border-[#D4AF37] focus:outline-none placeholder:text-gray-600";
 
@@ -170,6 +199,14 @@ const VesselOnboardingCard = ({ profileId, existingShipName, existingRole, onBac
           style={{ background: "#D4AF37", color: "#0D1B2A" }}
         >
           {saving ? "Saving..." : "Continue →"}
+        </button>
+
+        <button
+          onClick={handleSkip}
+          disabled={saving}
+          className="w-full py-2 text-xs text-gray-400 hover:text-gray-300 bg-transparent transition-colors disabled:opacity-40"
+        >
+          Skip for now — I'll add this later
         </button>
       </div>
     </div>
