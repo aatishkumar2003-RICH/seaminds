@@ -33,6 +33,8 @@ import ResumeBuilder from "@/components/ResumeBuilder";
 import SOSButton from "@/components/SOSButton";
 import VoyageReport from "@/components/VoyageReport";
 import CertWallet from "@/components/CertWallet";
+import MyDocuments from "@/components/MyDocuments";
+
 import RestHoursTracker from "@/components/RestHoursTracker";
 import VesselRating from "@/components/VesselRating";
 import NPSSurvey from "@/components/NPSSurvey";
@@ -758,7 +760,8 @@ const Index = () => {
               ) : screen === "vesselrating" ? (
                 <ScreenErrorBoundary screenName="Vessel Rating"><VesselRating onBack={() => setScreen("community")} /></ScreenErrorBoundary>
               ) : screen === "resume" ? (
-                <ScreenErrorBoundary screenName="CV Builder"><ResumeBuilder /></ScreenErrorBoundary>
+                <ScreenErrorBoundary screenName="Documents"><MyDocuments profileId={profileId} /></ScreenErrorBoundary>
+
               ) : screen === "certs" ? (
                 <ScreenErrorBoundary screenName="Certificates"><CertWallet profileId={profileId} /></ScreenErrorBoundary>
               ) : screen === "smc" ? (
