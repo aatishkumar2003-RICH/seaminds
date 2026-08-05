@@ -212,7 +212,7 @@ const ManagerDashboard = () => {
             🔍 Search Crew
           </button>
           <button
-            onClick={() => navigate("/opportunities")}
+            onClick={() => navigate("/post-vacancy")}
             className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-[#0D1B2A] text-[#D4AF37] border border-[#D4AF37]/40 hover:bg-[#D4AF37]/10 transition-colors"
           >
             📢 Post Vacancy

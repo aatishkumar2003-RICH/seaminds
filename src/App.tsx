@@ -32,6 +32,7 @@ import CollegePage from "./pages/CollegePage";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import JobFeed from "./pages/JobFeed";
+import PostVacancyPage from "./pages/PostVacancyPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import Verify from "./pages/Verify";
 import OAuthConsent from "./pages/OAuthConsent";
@@ -99,7 +100,8 @@ const App = () => (
             <Route path="/feed" element={<JobFeed />} />
             <Route path="/manager" element={<ManagerAuth />} />
             <Route path="/manager/dashboard" element={<ManagerDashboard />} />
-            <Route path="/manager-search" element={<ManagerSearch />} />
+           <Route path="/manager-search" element={<ManagerSearch />} />
+           <Route path="/post-vacancy" element={<PostVacancyPage />} />
             <Route path="/terms" element={<TermsOfService />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/pricing" element={<Pricing />} />
