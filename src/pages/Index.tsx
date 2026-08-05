@@ -39,6 +39,8 @@ import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import OnboardingTour from "@/components/OnboardingTour";
 import MarketPulseButton from "@/components/MarketPulseButton";
 import CvViewsCard from "@/components/CvViewsCard";
+import BottomNav from "@/components/layout/BottomNav";
+
 
 const PROFILE_KEY = "seamind_profile_id";
 
