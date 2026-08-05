@@ -74,3 +74,6 @@ verify_jwt = false
 
 [functions.manager-search]
 verify_jwt = false
+
+[functions.telegram-broadcast]
+verify_jwt = false
