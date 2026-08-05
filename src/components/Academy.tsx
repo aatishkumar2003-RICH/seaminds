@@ -198,24 +198,8 @@ const Academy = () => {
             </div>
           )}
 
-          {/* Rest Hours Tracker */}
-          <div>
-            <p className="text-[11px] font-semibold text-primary uppercase tracking-wider mb-2">Tools</p>
-            <button
-              onClick={() => setShowRestHours(true)}
-              className="w-full rounded-xl bg-card border border-primary/30 p-4 text-left hover:border-primary/50 transition-colors flex items-center gap-3"
-            >
-              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                <Clock size={18} className="text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground">My Rest Hours Log</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">STCW compliance tracker — private to you</p>
-              </div>
-            </button>
-          </div>
-
           {/* Existing Topic Cards */}
+
           {CATEGORIES.map((cat) => (
             <div key={cat.id}>
               <p className="text-[11px] font-semibold text-primary uppercase tracking-wider mb-2">{cat.label}</p>
