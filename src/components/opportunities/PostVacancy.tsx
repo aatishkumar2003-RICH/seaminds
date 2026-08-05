@@ -193,43 +193,7 @@ const PostVacancy = () => {
     }
   };
 
-  const handlePostClick = () => {
-    if (!rankRequired || !vesselType || !contractDuration || !joiningPort || !contactWhatsapp || !companyName) {
-      toast({ title: "Missing Fields", description: "Please fill all required fields.", variant: "destructive" });
-      return;
-    }
-    if (wordCount > 100) {
-      toast({ title: "Too Long", description: "Additional notes must be 100 words or less.", variant: "destructive" });
-      return;
-    }
-    setShowPaymentModal(true);
-  };
-
-  const handleConfirmPayment = async () => {
-    setPosting(true);
-
-    const { error } = await supabase.from("job_postings" as any).insert({
-      rank_required: rankRequired,
-      vessel_type: vesselType,
-      contract_duration: contractDuration,
-      monthly_salary: salaryNegotiable ? "Negotiable" : (salaryMin && salaryMax ? `$${salaryMin}–$${salaryMax}/mo` : salaryMin ? `From $${salaryMin}/mo` : null),
-      joining_port: joiningPort,
-      contact_whatsapp: contactWhatsapp,
-      company_name: companyName,
-      additional_notes: additionalNotes || null,
-      status: "pending_payment",
-      plan: selectedPlan,
-    } as any);
-
-    setPosting(false);
-
-    if (error) {
-      toast({ title: "Error", description: "Failed to submit vacancy.", variant: "destructive" });
-      return;
-    }
-
-    setShowPaymentModal(false);
-    toast({ title: "✅ Received!", description: "Your vacancy goes live within 2 hours after payment confirmation." });
+  const resetForm = () => {
     setRankRequired("");
     setVesselType("");
     setContractDuration("");
@@ -242,6 +206,60 @@ const PostVacancy = () => {
     setAiSuccess(false);
     setSelectedPlan("single");
   };
+
+  const submitVacancy = async (isFree: boolean) => {
+    setPosting(true);
+
+    const { error } = await supabase.from("job_postings" as any).insert({
+      rank_required: rankRequired,
+      vessel_type: vesselType,
+      contract_duration: contractDuration,
+      monthly_salary: salaryNegotiable ? "Negotiable" : (salaryMin && salaryMax ? `$${salaryMin}–$${salaryMax}/mo` : salaryMin ? `From $${salaryMin}/mo` : null),
+      joining_port: joiningPort,
+      contact_whatsapp: contactWhatsapp,
+      company_name: companyName,
+      additional_notes: additionalNotes || null,
+      status: isFree ? "active" : "pending_payment",
+      plan: selectedPlan,
+    } as any);
+
+    setPosting(false);
+
+    if (error) {
+      toast({ title: "Error", description: "Failed to submit vacancy.", variant: "destructive" });
+      return false;
+    }
+
+    resetForm();
+    return true;
+  };
+
+  const handlePostClick = async () => {
+    if (!rankRequired || !vesselType || !contractDuration || !joiningPort || !contactWhatsapp || !companyName) {
+      toast({ title: "Missing Fields", description: "Please fill all required fields.", variant: "destructive" });
+      return;
+    }
+    if (wordCount > 100) {
+      toast({ title: "Too Long", description: "Additional notes must be 100 words or less.", variant: "destructive" });
+      return;
+    }
+    if (allFree) {
+      const ok = await submitVacancy(true);
+      if (ok) {
+        toast({ title: "✅ Vacancy is live!", description: "Your vacancy is now visible to seafarers." });
+      }
+      return;
+    }
+    setShowPaymentModal(true);
+  };
+
+  const handleConfirmPayment = async () => {
+    const ok = await submitVacancy(false);
+    if (!ok) return;
+    setShowPaymentModal(false);
+    toast({ title: "✅ Received!", description: "Your vacancy goes live within 2 hours after payment confirmation." });
+  };
+
 
   const currentPlan = PLANS_STATIC.find((p) => p.id === selectedPlan)!;
   const getPlanPrice = (id: PricingPlan) => {
