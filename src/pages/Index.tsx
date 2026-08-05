@@ -24,6 +24,8 @@ import WelfareDashboard from "@/components/WelfareDashboard";
 import Opportunities from "@/components/Opportunities";
 import News from "@/components/News";
 import Academy from "@/components/Academy";
+import Knowledge from "@/components/Knowledge";
+
 import Community from "@/components/Community";
 import Bridge from "@/components/Bridge";
 import SMCScoreTab from "@/components/SMCScoreTab";
