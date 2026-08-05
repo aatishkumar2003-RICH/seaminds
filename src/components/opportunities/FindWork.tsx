@@ -560,7 +560,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                       <span className="text-xs font-medium text-amber-300">Score Required: {v.min_smc_score?.toFixed(2)}</span>
                     </div>
                     <p className="text-[11px] text-muted-foreground">
-                      Your Score: <span className="text-foreground font-medium">{DEMO_SMC_SCORE.toFixed(2)}</span> — Visit Academy to Improve
+                      Your Score: <span className="text-foreground font-medium">{smcScore !== null ? smcScore.toFixed(2) : "Not assessed"}</span> — Visit Academy to Improve
                     </p>
                   </div>
                 );
