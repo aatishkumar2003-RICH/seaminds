@@ -38,6 +38,7 @@ import VesselOnboardingCard from "@/components/VesselOnboardingCard";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import OnboardingTour from "@/components/OnboardingTour";
 import MarketPulseButton from "@/components/MarketPulseButton";
+import CvViewsCard from "@/components/CvViewsCard";
 
 const PROFILE_KEY = "seamind_profile_id";
 
@@ -697,6 +698,10 @@ const Index = () => {
                   <button onClick={() => setJobMatch(null)} className="p-0.5 text-muted-foreground"><X size={14} /></button>
                 </div>
               )}
+
+              <div className="mx-4 mb-2 lg:mx-8">
+                <CvViewsCard />
+              </div>
 
               {screen === "chat" ? (
                 profileComplete ? (onboardingComplete ? <ScreenErrorBoundary screenName="Chat"><CrewChat profileId={profileId} firstName={firstName} role={role} shipName={shipName} voyageStartDate={voyageStartDate} /></ScreenErrorBoundary> : vesselOnboardingUI) : profileGateUI
