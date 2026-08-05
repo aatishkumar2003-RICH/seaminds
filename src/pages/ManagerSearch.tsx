@@ -178,7 +178,7 @@ const ManagerSearch = () => {
             </p>
           </div>
           <button
-            onClick={() => { sessionStorage.removeItem(SS_KEY); setAccessCode(null); }}
+            onClick={async () => { await supabase.auth.signOut(); navigate("/manager"); }}
             style={ghostBtn}
           >
             Sign out
