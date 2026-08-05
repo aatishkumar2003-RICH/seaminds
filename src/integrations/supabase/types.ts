@@ -1955,6 +1955,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_admin_settings: {
+        Args: { p_keys: string[] }
+        Returns: {
+          key: string
+          value: string
+        }[]
+      }
       increment_discount_uses: {
         Args: { input_code: string }
         Returns: undefined
