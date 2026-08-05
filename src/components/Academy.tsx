@@ -95,11 +95,8 @@ const Academy = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-border">
-        <h1 className="text-lg font-semibold text-foreground">Academy</h1>
-        <p className="text-xs text-muted-foreground mt-0.5">Search any maritime topic or browse below</p>
-      </div>
       <ScrollArea className="flex-1">
+
         <div className="p-4 space-y-4">
           {/* Search Bar */}
           <div className="rounded-xl bg-primary/10 border-2 border-primary/40 p-3 space-y-2">
