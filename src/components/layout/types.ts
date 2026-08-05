@@ -12,8 +12,8 @@ export const NAV_ITEMS: NavItem[] = [
   { icon: "💬", label: "Wellness Chat", screen: "chat", gated: true },
   { icon: "💼", label: "Jobs", screen: "opportunities" },
   { icon: "⏱", label: "Rest Hours", screen: "resthours", gated: true },
-  { icon: "📄", label: "My CV", screen: "resume" },
-  { icon: "📜", label: "Certificates", screen: "certs" },
+  { icon: "📄", label: "My Documents", screen: "resume" },
+
   { icon: "🏆", label: "My Score", screen: "smc" },
   { icon: "📚", label: "Learn", screen: "academy" },
 
