@@ -86,11 +86,10 @@ const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) 
     if (!discountCode.trim()) return;
     setCheckingCode(true);
     setDiscountError('');
-    const { data } = await supabase.from('discount_codes')
-      .select('*')
-      .eq('code', discountCode.trim().toUpperCase())
-      .eq('active', true)
-      .maybeSingle();
+    const { data } = await supabase.rpc('validate_discount_code', {
+      input_code: discountCode.trim(),
+      product_scope: 'self_assessment'
+    }).maybeSingle();
     if (!data) { setDiscountError('Invalid or expired code.'); setCheckingCode(false); return; }
     if (data.valid_until && new Date(data.valid_until) < new Date()) { setDiscountError('This code has expired.'); setCheckingCode(false); return; }
     if (data.max_uses !== null && (data.uses_count ?? 0) >= data.max_uses) { setDiscountError('This code has reached its maximum uses.'); setCheckingCode(false); return; }
@@ -126,16 +125,9 @@ const CrewPaymentGate = ({ profileId, onPaymentSuccess }: CrewPaymentGateProps) 
         }
         // Increment discount code uses on successful payment initiation
         if (discountApplied && discountCode) {
-          const codeUpper = discountCode.trim().toUpperCase();
-          const { data: codeRow } = await supabase.from('discount_codes')
-            .select('uses_count')
-            .eq('code', codeUpper)
-            .maybeSingle();
-          if (codeRow) {
-            await supabase.from('discount_codes')
-              .update({ uses_count: (codeRow.uses_count ?? 0) + 1 })
-              .eq('code', codeUpper);
-          }
+          await supabase.rpc('increment_discount_uses', {
+            input_code: discountCode.trim()
+          });
         }
       } catch (err) {
         console.error("Payment error:", err);
