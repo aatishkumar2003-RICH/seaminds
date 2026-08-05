@@ -79,46 +79,8 @@ const callFn = async (payload: Record<string, unknown>) => {
   return data;
 };
 
-const GateScreen = ({ onUnlock }: { onUnlock: (code: string) => void }) => {
-  const [code, setCode] = useState("");
-  const [busy, setBusy] = useState(false);
+const isAuthError = (msg: string) => /sign in|not registered|session/i.test(msg || "");
 
-  const submit = async () => {
-    if (!code.trim()) return;
-    setBusy(true);
-    try {
-      await callFn({ accessCode: code.trim(), action: "verify" });
-      sessionStorage.setItem(SS_KEY, code.trim());
-      onUnlock(code.trim());
-    } catch (e: any) {
-      toast.error(e?.message || "Invalid access code");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <div style={{ minHeight: "100vh", background: NAVY, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-      <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: 28, width: "100%", maxWidth: 380 }}>
-        <h1 style={{ color: GOLD, fontSize: 20, fontWeight: 700, marginBottom: 6 }}>SeaMinds Crew Search</h1>
-        <p style={{ color: "#9CA3AF", fontSize: 13, marginBottom: 20 }}>
-          Manager access only. Enter your access code to browse verified crew CVs.
-        </p>
-        <input
-          type="password"
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && submit()}
-          placeholder="Manager access code"
-          style={{ ...input, marginBottom: 14 }}
-        />
-        <button onClick={submit} disabled={busy} style={{ ...goldBtn, width: "100%", opacity: busy ? 0.6 : 1 }}>
-          {busy ? "Checking…" : "Enter Crew Search"}
-        </button>
-      </div>
-    </div>
-  );
-};
 
 const ManagerSearch = () => {
   const [accessCode, setAccessCode] = useState<string | null>(() => sessionStorage.getItem(SS_KEY));
