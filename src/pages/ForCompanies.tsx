@@ -86,11 +86,11 @@ const ForCompanies = () => {
 
   useEffect(() => {
     supabase
-      .from("admin_settings")
-      .select("key, value")
-      .in("key", ["price_job_monthly", "price_company_annual"])
+      .rpc("get_admin_settings", {
+        p_keys: ["price_job_monthly", "price_company_annual"]
+      })
       .then(({ data }) => {
-        data?.forEach((row) => {
+        data?.forEach((row: any) => {
           if (row.key === "price_job_monthly") setJobPrice(Number(row.value));
           if (row.key === "price_company_annual") setCompanyPrice(Number(row.value));
         });

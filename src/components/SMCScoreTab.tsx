@@ -67,8 +67,8 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
   };
 
   useEffect(() => {
-    supabase.from('admin_settings').select('value').eq('key', 'price_self_assessment').single()
-      .then(({ data }) => { if (data?.value) setSelfPrice(Number(data.value)); });
+    supabase.rpc('get_admin_settings', { p_keys: ['price_self_assessment'] })
+      .then(({ data }) => { if (data?.[0]?.value) setSelfPrice(Number(data[0].value)); });
   }, []);
 
   const checkExistingCvData = async () => {

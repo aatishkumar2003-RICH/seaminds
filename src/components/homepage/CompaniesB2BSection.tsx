@@ -24,8 +24,8 @@ const CompaniesB2BSection = () => {
   const [jobPrice, setJobPrice] = useState(0);
 
   useEffect(() => {
-    supabase.from('admin_settings').select('value').eq('key', 'price_job_monthly').single()
-      .then(({ data }) => { if (data?.value) setJobPrice(Number(data.value)); });
+    supabase.rpc('get_admin_settings', { p_keys: ['price_job_monthly'] })
+      .then(({ data }) => { if (data?.[0]?.value) setJobPrice(Number(data[0].value)); });
   }, []);
 
   return (

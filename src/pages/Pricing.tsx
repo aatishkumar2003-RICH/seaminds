@@ -93,10 +93,12 @@ const Pricing = () => {
   useEffect(() => { document.title = "SeaMinds | Pricing"; }, []);
 
   useEffect(() => {
-    supabase.from('admin_settings').select('key, value').then(({ data }) => {
+    supabase.rpc('get_admin_settings', {
+      p_keys: ['price_free', 'price_pro', 'price_company']
+    }).then(({ data }) => {
       if (!data) return;
       const p: Record<string, number> = {};
-      data.forEach(r => { p[r.key] = Number(r.value); });
+      data.forEach((r: any) => { p[r.key] = Number(r.value); });
       setPrices(prev => ({
         free: p.price_free ?? prev.free,
         pro: p.price_pro ?? prev.pro,

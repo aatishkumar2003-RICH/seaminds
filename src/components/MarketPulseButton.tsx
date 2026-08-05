@@ -198,17 +198,26 @@ export default function MarketPulseButton({
   return (
     <>
       {/* Floating button */}
-      <button onClick={() => setOpen(true)} style={{
-        position: 'fixed', bottom: 72, right: 16, zIndex: 50,
-        background: 'linear-gradient(135deg,#0a1628,#1a2e47)',
-        border: `1px solid ${pulse ? '#D4AF37' : 'rgba(212,175,55,0.4)'}`,
-        borderRadius: 12, padding: '7px 12px', cursor: 'pointer',
-        display: 'flex', alignItems: 'center', gap: 6,
-        boxShadow: `0 4px 20px rgba(212,175,55,${pulse ? '0.4' : '0.15'})`,
-        transition: 'all 0.3s ease',
-      }}>
-        <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', animation: 'pulse 2s infinite' }} />
-        <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1.5, color: '#D4AF37' }}>MARKET</span>
+      <button
+        onClick={() => setOpen(true)}
+        aria-label="Open SeaMarkets"
+        style={{
+          position: 'fixed', top: '50%', right: 0, transform: 'translateY(-50%)', zIndex: 50,
+          background: 'linear-gradient(135deg,#0a1628,#1a2e47)',
+          border: `1px solid ${pulse ? '#D4AF37' : 'rgba(212,175,55,0.4)'}`,
+          borderRight: 'none',
+          borderRadius: '12px 0 0 12px',
+          padding: '12px 5px', cursor: 'pointer',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7,
+          boxShadow: `-3px 0 16px rgba(212,175,55,${pulse ? '0.35' : '0.12'})`,
+          transition: 'all 0.3s ease',
+        }}
+      >
+        <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', animation: 'pulse 2s infinite' }} />
+        <span style={{
+          fontSize: 9, fontWeight: 800, letterSpacing: 1.5, color: '#D4AF37',
+          writingMode: 'vertical-rl', textOrientation: 'mixed',
+        }}>MARKET</span>
       </button>
 
       {/* Panel */}
