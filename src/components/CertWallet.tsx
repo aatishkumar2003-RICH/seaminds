@@ -236,18 +236,6 @@ const CertWallet = ({ profileId }: CertWalletProps) => {
 
   return (
     <div className="flex flex-col h-full px-4 py-3 overflow-y-auto">
-      <button onClick={() => window.history.back()}
-        style={{ background:'transparent', border:'none', color:'#D4AF37', fontSize:'13px', cursor:'pointer', marginBottom:'12px', display:'flex', alignItems:'center', gap:'4px' }}>
-        ← Back
-      </button>
-      <div className="mb-4">
-        <h1 className="text-xl font-bold" style={{ color: "#D4AF37" }}>
-          📜 Certificate Wallet
-        </h1>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          Track expiry. Never miss renewal.
-        </p>
-      </div>
 
       {expiringSoonCount > 0 && (
         <div
