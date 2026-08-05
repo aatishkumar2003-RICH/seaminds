@@ -303,29 +303,19 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
 
   const ScoreHero = () => (
     <div className="flex flex-col h-full overflow-y-auto px-5 py-6">
-      <div className="rounded-3xl p-6 text-center" style={{
-        background: "linear-gradient(160deg, rgba(212,175,55,0.18), rgba(13,27,42,0.4))",
-        border: "1px solid rgba(212,175,55,0.45)",
-      }}>
+      <div className="rounded-3xl p-6 text-center" style={{ background: "linear-gradient(160deg, rgba(212,175,55,0.18), rgba(13,27,42,0.4))", border: "1px solid rgba(212,175,55,0.45)" }}>
         <div className="text-5xl mb-3">🏆</div>
-        <h1 className="text-2xl font-extrabold mb-2" style={{ color: "#D4AF37" }}>
-          What's Your Competency Score?
-        </h1>
-        <p className="text-sm mb-1" style={{ color: "#e2e8f0" }}>
-          The SeaMinds Competency Score (SMC) rates you from
-        </p>
+        <h1 className="text-2xl font-extrabold mb-2" style={{ color: "#D4AF37" }}>What's Your Competency Score?</h1>
+        <p className="text-sm mb-1" style={{ color: "#e2e8f0" }}>The SeaMinds Competency Score rates you from</p>
         <p className="text-3xl font-black mb-4" style={{ color: "#D4AF37" }}>0.00 → 5.00 ⭐</p>
-        <p className="text-xs leading-relaxed" style={{ color: "#94a3b8" }}>
-          Technical knowledge · Experience · Communication · Behaviour · Wellness
-        </p>
+        <p className="text-xs" style={{ color: "#94a3b8" }}>Technical · Experience · Communication · Behaviour · Wellness</p>
       </div>
-
       <div className="mt-5 space-y-3">
         {[
-          { icon: "🚀", title: "Be seen first", text: "Manning companies sort crew by score. Higher score, higher in the list." },
-          { icon: "⚓", title: "Reach prime jobs", text: "Top vessels and better contracts ask for proven competency." },
-          { icon: "💰", title: "Negotiate stronger", text: "A verified score is evidence when you talk about salary." },
-          { icon: "📜", title: "Get your certificate", text: "A shareable SeaMinds certificate with a QR code employers can verify." },
+          { icon: "🚀", title: "Be seen first", text: "Companies sort crew by score. Higher score, higher in the list." },
+          { icon: "⚓", title: "Reach prime jobs", text: "Better vessels and contracts ask for proven competency." },
+          { icon: "💰", title: "Negotiate stronger", text: "A verified score is evidence when you discuss salary." },
+          { icon: "📜", title: "Get your certificate", text: "A shareable certificate with a QR code employers can verify." },
         ].map((b) => (
           <div key={b.title} className="flex gap-3 rounded-2xl p-3.5" style={{ background: "#112240", border: "1px solid #1e3a5f" }}>
             <span className="text-xl shrink-0">{b.icon}</span>
@@ -336,21 +326,13 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
           </div>
         ))}
       </div>
-
-      <button
-        onClick={() => setStarted(true)}
-        className="w-full mt-6 rounded-2xl py-4 font-extrabold text-base"
-        style={{ background: "#D4AF37", color: "#0D1B2A", border: "none", cursor: "pointer" }}
-      >
+      <button onClick={() => setStarted(true)} className="w-full mt-6 rounded-2xl py-4 font-extrabold text-base" style={{ background: "#D4AF37", color: "#0D1B2A", border: "none", cursor: "pointer" }}>
         ⚡ Check My Score
       </button>
-
       <p className="text-center text-[11px] mt-3" style={{ color: "#64748b" }}>
-        {selfPrice > 0 ? `$${selfPrice} · takes about 10 minutes` : "Free for now · takes about 10 minutes"}
+        {selfPrice > 0 ? `$${selfPrice} · about 10 minutes` : "Free for now · about 10 minutes"}
       </p>
-      <p className="text-center text-[11px] mt-1" style={{ color: "#64748b" }}>
-        You'll be asked for your CV and certificates next.
-      </p>
+      <p className="text-center text-[11px] mt-1" style={{ color: "#64748b" }}>You'll be asked for your CV and certificates next.</p>
       <div className="h-6" />
     </div>
   );
