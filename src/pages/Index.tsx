@@ -382,7 +382,7 @@ const Index = () => {
     window.location.reload();
   };
 
-  const profileComplete = !!(role && nationality && shipName && whatsappNumber);
+  const profileComplete = !!(role && nationality && whatsappNumber);
 
   const handleProfileGateUpdate = (field: string, value: string) => {
     if (field === "rank") setRole(value);
@@ -392,7 +392,7 @@ const Index = () => {
   };
 
   const saveProfileGate = async () => {
-    if (!role || !nationality || !shipName || !whatsappNumber) return;
+    if (!role || !nationality || !whatsappNumber) return;
     const dbRole = role.includes("Captain") || role.includes("Master") ? "Captain"
       : (role.includes("Engine Cadet") || role.includes("ETO Cadet") || role.includes("Trainee Officer (Engine)")) ? "Engineer"
       : (role.includes("Deck Cadet") || role.includes("Trainee Officer (Deck)")) ? "Officer"
@@ -425,14 +425,14 @@ const Index = () => {
         <svg xmlns="http://www.w3.org/2000/svg" width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
       </div>
       <h2 className="mb-2 text-lg font-bold text-foreground">Complete Your Profile</h2>
-      <p className="mb-6 text-sm text-muted-foreground">CHAT, WELFARE and COMMUNITY are personalised for you. We need 4 quick details.</p>
+      <p className="mb-6 text-sm text-muted-foreground">CHAT, WELFARE and COMMUNITY are personalised for you. We need 3 quick details.</p>
       <div className="w-full max-w-sm space-y-3">
         <select className="w-full rounded-xl border border-border bg-secondary px-4 py-3 text-sm text-foreground outline-none focus:border-primary" value={role} onChange={e => handleProfileGateUpdate("rank", e.target.value)}>
           <option value="">Select your rank...</option>
           {["Captain / Master","Chief Officer","2nd Officer","3rd Officer","Chief Engineer","2nd Engineer","3rd Engineer","4th Engineer","ETO / EEO","Bosun","AB Seaman","Ordinary Seaman (OS)","Fitter","Oiler","Cook","Messman / Steward","Deck Cadet","Engine Cadet","ETO Cadet","Trainee Officer (Deck)","Trainee Officer (Engine)","Trainee OS","Trainee Cook"].map(r => <option key={r} value={r}>{r}</option>)}
         </select>
         <input className="w-full rounded-xl border border-border bg-secondary px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary" placeholder="Nationality (e.g. Filipino)" value={nationality} onChange={e => handleProfileGateUpdate("nationality", e.target.value)} />
-        <input className="w-full rounded-xl border border-border bg-secondary px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary" placeholder="Ship Name (e.g. MV Pacific Star)" value={shipName} onChange={e => handleProfileGateUpdate("shipName", e.target.value)} />
+        <input className="w-full rounded-xl border border-border bg-secondary px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary" placeholder="Ship Name (optional)" value={shipName} onChange={e => handleProfileGateUpdate("shipName", e.target.value)} />
         <input className="w-full rounded-xl border border-border bg-secondary px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary" placeholder="WhatsApp Number (+63...)" value={whatsappNumber} onChange={e => handleProfileGateUpdate("whatsappNumber", e.target.value)} />
         <button onClick={saveProfileGate} className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90">
           Unlock My Tabs →

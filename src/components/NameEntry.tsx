@@ -195,6 +195,7 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
   const [vesselTypeVal, setVesselTypeVal] = useState("");
   const [formError, setFormError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [showMore, setShowMore] = useState(false);
 
   // Auto-select country code when nationality changes
   useEffect(() => {
@@ -203,9 +204,7 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
     }
   }, [nationality]);
 
-  const canSubmit =
-    firstName.trim() && lastName.trim() && shipName.trim() && role &&
-    nationality.trim() && yearsAtSea && phoneNumber.trim();
+  const canSubmit = firstName.trim() && role && nationality.trim() && phoneNumber.trim();
 
   const cleanWhatsappNumber = (dialCode: string, rawNumber: string): string => {
     let clean = (dialCode + rawNumber.trim()).replace(/\s/g, '');
@@ -278,7 +277,7 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
             <img src={seamindsLogo} alt="SeaMinds" className="w-10 h-10 object-contain" />
           </div>
           <h1 className="text-xl font-semibold text-foreground">Welcome to SeaMinds</h1>
-          <p className="text-sm text-muted-foreground">Tell us a little about yourself</p>
+          <p className="text-sm text-muted-foreground">Just 4 quick details to get started</p>
         </div>
 
         <div className="space-y-4">
@@ -297,207 +296,34 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
             onFileReady={(file) => setCvFile(file)}
           />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className={labelClass}>First Name *</label>
-              <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="e.g. Rajan" className={inputClass} />
-            </div>
-            <div className="space-y-1.5">
-              <label className={labelClass}>Last Name *</label>
-              <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="e.g. Santos" className={inputClass} />
-            </div>
-          </div>
-
-          {/* Ship Name */}
+          {/* First Name */}
           <div className="space-y-1.5">
-            <label className={labelClass}>Ship Name *</label>
-            <input type="text" value={shipName} onChange={(e) => setShipName(e.target.value)} placeholder="e.g. MV Pacific Star" className={inputClass} />
+            <label className={labelClass}>First Name *</label>
+            <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="e.g. Rajan" className={inputClass} />
           </div>
 
-          {/* Vessel IMO Number */}
+          {/* Role */}
           <div className="space-y-1.5">
-            <label className={labelClass}>Vessel IMO Number (optional)</label>
-            <input type="text" value={vesselImo} onChange={(e) => setVesselImo(e.target.value)} placeholder="e.g. 9234567" className={inputClass} />
-          </div>
-
-
-          {/* Voyage Start Date + Date of Birth */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className={labelClass}>Voyage Start Date</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button
-                    type="button"
-                    className={cn(
-                      selectClass,
-                      "flex items-center justify-between text-left",
-                      !voyageStartDate && "text-muted-foreground"
-                    )}
-                  >
-                    {voyageStartDate ? format(voyageStartDate, "PPP") : "Select date"}
-                    <CalendarIcon size={16} className="text-muted-foreground" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={voyageStartDate}
-                    onSelect={setVoyageStartDate}
-                    disabled={(date) => date > new Date()}
-                    initialFocus
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="space-y-1.5">
-              <label className={labelClass}>Date of Birth</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button
-                    type="button"
-                    className={cn(
-                      selectClass,
-                      "flex items-center justify-between text-left",
-                      !dateOfBirth && "text-muted-foreground"
-                    )}
-                  >
-                    {dateOfBirth ? format(dateOfBirth, "PPP") : "Select date"}
-                    <CalendarIcon size={16} className="text-muted-foreground" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={dateOfBirth}
-                    onSelect={setDateOfBirth}
-                    disabled={(date) => date > new Date() || date < new Date("1940-01-01")}
-                    initialFocus
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                </PopoverContent>
-              </Popover>
+            <label className={labelClass}>Your Role *</label>
+            <div className="relative">
+              <select value={role} onChange={(e) => setRole(e.target.value)} className={selectClass}>
+                <option value="" disabled>Select role</option>
+                {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+              </select>
+              <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             </div>
           </div>
 
-          {/* Role + Gender */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className={labelClass}>Your Role *</label>
-              <div className="relative">
-                <select value={role} onChange={(e) => setRole(e.target.value)} className={selectClass}>
-                  <option value="" disabled>Select role</option>
-                  {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
-                </select>
-                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <label className={labelClass}>Gender</label>
-              <div className="relative">
-                <select value={gender} onChange={(e) => setGender(e.target.value)} className={selectClass}>
-                  <option value="">Prefer not to say</option>
-                  {GENDERS.map((g) => <option key={g} value={g}>{g}</option>)}
-                </select>
-                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-              </div>
-            </div>
-          </div>
-
-          {/* Nationality + Manning Agency */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className={labelClass}>Nationality *</label>
-              <div className="relative">
-                <select value={nationality} onChange={(e) => setNationality(e.target.value)} className={selectClass}>
-                  <option value="" disabled>Select nationality</option>
-                  {NATIONALITIES.map((n) => <option key={n} value={n}>{n}</option>)}
-                </select>
-                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-              </div>
-            </div>
-            <div className="space-y-1.5 relative">
-              <label className={labelClass}>Manning Agency</label>
-              <input
-                type="text"
-                value={manningAgency}
-                onChange={(e) => {
-                  setManningAgency(e.target.value);
-                  setAgencyFilter(e.target.value);
-                  setShowAgencyDropdown(true);
-                }}
-                onFocus={() => setShowAgencyDropdown(true)}
-                onBlur={() => setTimeout(() => setShowAgencyDropdown(false), 150)}
-                placeholder="e.g. Anglo-Eastern"
-                className={inputClass}
-              />
-              {showAgencyDropdown && (
-                <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl overflow-hidden shadow-lg max-h-40 overflow-y-auto">
-                  {AGENCIES.filter((a) => !agencyFilter || a.toLowerCase().includes(agencyFilter.toLowerCase())).map((a) => (
-                    <button
-                      key={a}
-                      type="button"
-                      onMouseDown={() => {
-                        setManningAgency(a);
-                        setShowAgencyDropdown(false);
-                      }}
-                      className="w-full text-left text-sm px-4 py-2.5 text-foreground hover:bg-secondary transition-colors"
-                    >
-                      {a}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Manning Agent Phone */}
+          {/* Nationality */}
           <div className="space-y-1.5">
-            <label className={labelClass}>Manning Agent Phone (WhatsApp preferred)</label>
-            <div className="flex w-full gap-2">
-              <CountryCodeSelect value={agentCountryCode} onChange={setAgentCountryCode} codes={COUNTRY_CODES} />
-              <input
-                type="tel"
-                inputMode="numeric"
-                value={manningAgentPhone}
-                onChange={(e) => setManningAgentPhone(e.target.value.replace(/[^0-9]/g, ""))}
-                placeholder="Agent WhatsApp number"
-                className="flex-1 rounded-xl border border-border bg-secondary px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary"
-              />
+            <label className={labelClass}>Nationality *</label>
+            <div className="relative">
+              <select value={nationality} onChange={(e) => setNationality(e.target.value)} className={selectClass}>
+                <option value="" disabled>Select nationality</option>
+                {NATIONALITIES.map((n) => <option key={n} value={n}>{n}</option>)}
+              </select>
+              <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             </div>
-          </div>
-
-          {/* Port of Joining + Vessel Type */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className={labelClass}>Port of Joining</label>
-              <input type="text" value={portOfJoiningVal} onChange={(e) => setPortOfJoiningVal(e.target.value)} placeholder="e.g. Singapore" className={inputClass} />
-            </div>
-            <div className="space-y-1.5">
-              <label className={labelClass}>Vessel Type</label>
-              <div className="relative">
-                <select value={vesselTypeVal} onChange={(e) => setVesselTypeVal(e.target.value)} className={selectClass}>
-                  <option value="">Select vessel type</option>
-                  {VESSEL_TYPES.map((v) => <option key={v} value={v}>{v}</option>)}
-                </select>
-                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className={labelClass}>Years at Sea *</label>
-              <div className="relative">
-                <select value={yearsAtSea} onChange={(e) => setYearsAtSea(e.target.value)} className={selectClass}>
-                  <option value="" disabled>Select experience</option>
-                  {YEARS_OPTIONS.map((y) => <option key={y} value={y}>{y}</option>)}
-                </select>
-                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-              </div>
-            </div>
-            <div />
           </div>
 
           {/* WhatsApp Number */}
@@ -515,6 +341,189 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
               />
             </div>
           </div>
+
+          <button
+            type="button"
+            onClick={() => setShowMore(!showMore)}
+            className="w-full text-left text-xs text-primary font-semibold py-2"
+          >
+            {showMore ? "− Hide extra details" : "+ Add more details (optional)"}
+          </button>
+
+          {showMore && (
+            <div className="space-y-4">
+              {/* Last Name */}
+              <div className="space-y-1.5">
+                <label className={labelClass}>Last Name</label>
+                <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="e.g. Santos" className={inputClass} />
+              </div>
+
+              {/* Ship Name */}
+              <div className="space-y-1.5">
+                <label className={labelClass}>Ship Name (leave blank if at home)</label>
+                <input type="text" value={shipName} onChange={(e) => setShipName(e.target.value)} placeholder="e.g. MV Pacific Star" className={inputClass} />
+              </div>
+
+              {/* Vessel IMO Number */}
+              <div className="space-y-1.5">
+                <label className={labelClass}>Vessel IMO Number (optional)</label>
+                <input type="text" value={vesselImo} onChange={(e) => setVesselImo(e.target.value)} placeholder="e.g. 9234567" className={inputClass} />
+              </div>
+
+              {/* Voyage Start Date + Date of Birth */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className={labelClass}>Voyage Start Date</label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className={cn(
+                          selectClass,
+                          "flex items-center justify-between text-left",
+                          !voyageStartDate && "text-muted-foreground"
+                        )}
+                      >
+                        {voyageStartDate ? format(voyageStartDate, "PPP") : "Select date"}
+                        <CalendarIcon size={16} className="text-muted-foreground" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={voyageStartDate}
+                        onSelect={setVoyageStartDate}
+                        disabled={(date) => date > new Date()}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div className="space-y-1.5">
+                  <label className={labelClass}>Date of Birth</label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className={cn(
+                          selectClass,
+                          "flex items-center justify-between text-left",
+                          !dateOfBirth && "text-muted-foreground"
+                        )}
+                      >
+                        {dateOfBirth ? format(dateOfBirth, "PPP") : "Select date"}
+                        <CalendarIcon size={16} className="text-muted-foreground" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={dateOfBirth}
+                        onSelect={setDateOfBirth}
+                        disabled={(date) => date > new Date() || date < new Date("1940-01-01")}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
+
+              {/* Gender */}
+              <div className="space-y-1.5">
+                <label className={labelClass}>Gender</label>
+                <div className="relative">
+                  <select value={gender} onChange={(e) => setGender(e.target.value)} className={selectClass}>
+                    <option value="">Prefer not to say</option>
+                    {GENDERS.map((g) => <option key={g} value={g}>{g}</option>)}
+                  </select>
+                  <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Manning Agency */}
+              <div className="space-y-1.5 relative">
+                <label className={labelClass}>Manning Agency</label>
+                <input
+                  type="text"
+                  value={manningAgency}
+                  onChange={(e) => {
+                    setManningAgency(e.target.value);
+                    setAgencyFilter(e.target.value);
+                    setShowAgencyDropdown(true);
+                  }}
+                  onFocus={() => setShowAgencyDropdown(true)}
+                  onBlur={() => setTimeout(() => setShowAgencyDropdown(false), 150)}
+                  placeholder="e.g. Anglo-Eastern"
+                  className={inputClass}
+                />
+                {showAgencyDropdown && (
+                  <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl overflow-hidden shadow-lg max-h-40 overflow-y-auto">
+                    {AGENCIES.filter((a) => !agencyFilter || a.toLowerCase().includes(agencyFilter.toLowerCase())).map((a) => (
+                      <button
+                        key={a}
+                        type="button"
+                        onMouseDown={() => {
+                          setManningAgency(a);
+                          setShowAgencyDropdown(false);
+                        }}
+                        className="w-full text-left text-sm px-4 py-2.5 text-foreground hover:bg-secondary transition-colors"
+                      >
+                        {a}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Manning Agent Phone */}
+              <div className="space-y-1.5">
+                <label className={labelClass}>Manning Agent Phone (WhatsApp preferred)</label>
+                <div className="flex w-full gap-2">
+                  <CountryCodeSelect value={agentCountryCode} onChange={setAgentCountryCode} codes={COUNTRY_CODES} />
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    value={manningAgentPhone}
+                    onChange={(e) => setManningAgentPhone(e.target.value.replace(/[^0-9]/g, ""))}
+                    placeholder="Agent WhatsApp number"
+                    className="flex-1 rounded-xl border border-border bg-secondary px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary"
+                  />
+                </div>
+              </div>
+
+              {/* Port of Joining + Vessel Type */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className={labelClass}>Port of Joining</label>
+                  <input type="text" value={portOfJoiningVal} onChange={(e) => setPortOfJoiningVal(e.target.value)} placeholder="e.g. Singapore" className={inputClass} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className={labelClass}>Vessel Type</label>
+                  <div className="relative">
+                    <select value={vesselTypeVal} onChange={(e) => setVesselTypeVal(e.target.value)} className={selectClass}>
+                      <option value="">Select vessel type</option>
+                      {VESSEL_TYPES.map((v) => <option key={v} value={v}>{v}</option>)}
+                    </select>
+                    <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Years at Sea */}
+              <div className="space-y-1.5">
+                <label className={labelClass}>Years at Sea</label>
+                <div className="relative">
+                  <select value={yearsAtSea} onChange={(e) => setYearsAtSea(e.target.value)} className={selectClass}>
+                    <option value="" disabled>Select experience</option>
+                    {YEARS_OPTIONS.map((y) => <option key={y} value={y}>{y}</option>)}
+                  </select>
+                  <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {formError && (
@@ -528,7 +537,7 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
           disabled={!canSubmit || submitting}
           className="w-full bg-primary text-primary-foreground font-medium text-sm rounded-xl py-3.5 disabled:opacity-30 transition-opacity"
         >
-          {submitting ? "Saving..." : "Continue"}
+          {submitting ? "Saving..." : "Create My Free Account"}
         </button>
       </div>
     </div>
