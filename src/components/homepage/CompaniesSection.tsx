@@ -9,8 +9,8 @@ const CompaniesSection = () => {
   const [companyPrice, setCompanyPrice] = useState(0);
 
   useEffect(() => {
-    supabase.from('admin_settings').select('value').eq('key', 'price_company_annual').single()
-      .then(({ data }) => { if (data?.value) setCompanyPrice(Number(data.value)); });
+    supabase.rpc('get_admin_settings', { p_keys: ['price_company_annual'] })
+      .then(({ data }) => { if (data?.[0]?.value) setCompanyPrice(Number(data[0].value)); });
   }, []);
 
   const benefits = [
