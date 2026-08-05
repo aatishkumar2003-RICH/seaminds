@@ -6,15 +6,15 @@ interface Props {
   profileId: string;
 }
 
-const MyDocuments = ({ profileId }: Props) => {
+const CvAndCertificates = ({ profileId }: Props) => {
   const [mode, setMode] = useState<"cv" | "certs">("cv");
 
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 pt-3 pb-2 border-b border-border">
-        <h1 className="text-lg font-semibold text-foreground">My Documents</h1>
+        <h1 className="text-lg font-semibold text-foreground">CV / Certificate</h1>
         <p className="text-xs text-muted-foreground mt-0.5">
-          Your CV and certificates — everything companies ask for
+          Build your CV and keep your certificates in one place
         </p>
         <div className="flex gap-2 mt-3">
           {([
@@ -44,4 +44,4 @@ const MyDocuments = ({ profileId }: Props) => {
   );
 };
 
-export default MyDocuments;
+export default CvAndCertificates;
