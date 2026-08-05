@@ -194,7 +194,7 @@ const ManagerDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border px-6 py-4 flex items-center justify-between">
+      <header className="border-b border-border px-6 py-4 flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
             <Anchor size={20} className="text-primary" />
@@ -204,9 +204,23 @@ const ManagerDashboard = () => {
             <p className="text-xs text-muted-foreground">{companyName}</p>
           </div>
         </div>
-        <button onClick={handleLogout} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-          <LogOut size={14} /> Logout
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => navigate("/manager-search")}
+            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-[#0D1B2A] text-[#D4AF37] border border-[#D4AF37]/40 hover:bg-[#D4AF37]/10 transition-colors"
+          >
+            🔍 Search Crew
+          </button>
+          <button
+            onClick={() => navigate("/opportunities")}
+            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-[#0D1B2A] text-[#D4AF37] border border-[#D4AF37]/40 hover:bg-[#D4AF37]/10 transition-colors"
+          >
+            📢 Post Vacancy
+          </button>
+          <button onClick={handleLogout} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+            <LogOut size={14} /> Logout
+          </button>
+        </div>
       </header>
 
       <div className="max-w-6xl mx-auto px-6 py-6 space-y-6">
