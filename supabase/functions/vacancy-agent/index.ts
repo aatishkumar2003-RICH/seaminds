@@ -804,15 +804,21 @@ Deno.serve(async (req) => {
     // Log to app_events
     await supabase.from('app_events').insert({
       event_type: 'vacancy_agent_run',
-      message: `Vacancy agent completed: ${stats.saved} saved, ${emailsSent} emails sent`,
+      message: `Vacancy agent completed (group ${group}): ${stats.saved} saved, ${emailsSent} emails sent`,
       severity: 'info',
-      metadata: { ...stats, emailsSent, duration_ms: Date.now() - startTime },
+      metadata: { ...stats, group, emailsSent, duration_ms: Date.now() - startTime },
     });
 
-    return new Response(JSON.stringify({ success: true, stats: { ...stats, emailsSent } }), {
+    return new Response(JSON.stringify({ success: true, group, stats: { ...stats, emailsSent } }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
+    await supabase.from('app_events').insert({
+      event_type: 'vacancy_agent_run',
+      message: `Vacancy agent FAILED: ${String(error).substring(0, 200)}`,
+      severity: 'error',
+      metadata: { error: String(error) },
+    });
     return new Response(JSON.stringify({ success: false, error: String(error) }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
