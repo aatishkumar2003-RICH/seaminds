@@ -1960,6 +1960,7 @@ export type Database = {
         Args: { _crew_profile_id: string }
         Returns: boolean
       }
+      seaminds_housekeeping: { Args: never; Returns: string }
       upsert_email_lead: {
         Args: {
           p_crew_profile_id?: string

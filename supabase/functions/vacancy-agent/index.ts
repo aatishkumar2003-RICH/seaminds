@@ -6,7 +6,7 @@ const supabase = createClient(
 );
 
 const SERPAPI_KEY = Deno.env.get('SERPAPI_KEY')!;
-const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY')!;
+
 const TELEGRAM_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN')!;
 
 const MARITIME_QUERIES = [
@@ -105,7 +105,7 @@ async function fetchTelegramChannel(channel: string): Promise<any[]> {
   } catch { return []; }
 }
 
-async function processWithClaude(rawItems: any[]): Promise<any[]> {
+async function processWithAI(rawItems: any[]): Promise<any[]> {
   if (!rawItems.length) return [];
   const prompt = `You are a maritime job data extractor. Extract structured vacancy data from these raw job postings. For each item, output a JSON object with these exact fields:
 - rank_required: string (e.g. "Captain", "Chief Engineer", "2nd Officer", "AB", "Cook" — use standard maritime ranks only)
@@ -135,25 +135,25 @@ Return ONLY a valid JSON array. No markdown, no explanation. If an item is not a
 Raw items:
 ${JSON.stringify(rawItems.slice(0, 20), null, 1)}`;
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': ANTHROPIC_KEY,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 4000,
-      messages: [{ role: 'user', content: prompt }],
-    }),
-  });
-  const data = await res.json();
-  const text = data.content?.[0]?.text || '[]';
   try {
-    const clean = text.replace(/```json|```/g, '').trim();
-    return JSON.parse(clean);
-  } catch { return []; }
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        max_tokens: 4000,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+    const data = await res.json();
+    const text = data.choices?.[0]?.message?.content || '[]';
+    return JSON.parse(text.replace(/```json|```/g, '').trim());
+  } catch {
+    return [];
+  }
 }
 
 async function enrichWithCompanyContact(companyName: string | null): Promise<{email: string|null, whatsapp: string|null, website: string|null}> {
@@ -621,8 +621,12 @@ Deno.serve(async (req) => {
 
   const startTime = Date.now();
   const stats = { google: 0, rss: 0, telegram: 0, saved: 0, errors: [] as string[] };
+  const GROUP_COUNT = 5;
+  const group = Number(new URL(req.url).searchParams.get('group') ??
+                (Math.floor(Date.now() / (2 * 60 * 60 * 1000)) % GROUP_COUNT));
 
   try {
+    if (group === 0) {
     // 1. Google Jobs via SerpAPI
     const googleRaw: any[] = [];
     for (const query of MARITIME_QUERIES.slice(0, 8)) {
@@ -634,10 +638,12 @@ Deno.serve(async (req) => {
       await new Promise(r => setTimeout(r, 500));
     }
     if (googleRaw.length) {
-      const processed = await processWithClaude(googleRaw);
+      const processed = await processWithAI(googleRaw);
       stats.google = await saveVacancies(processed, 'google_jobs');
     }
+    }
 
+    if (group === 1) {
     // 2. RSS Feeds
     const rssRaw: any[] = [];
     for (const feed of RSS_FEEDS) {
@@ -648,10 +654,12 @@ Deno.serve(async (req) => {
       /captain|chief|officer|engineer|bosun|seaman|seafarer|vacancy|hiring|crew|maritime job/i.test(i.title + i.description)
     );
     if (rssJobItems.length) {
-      const processed = await processWithClaude(rssJobItems);
+      const processed = await processWithAI(rssJobItems);
       stats.rss = await saveVacancies(processed, 'rss_feed');
     }
+    }
 
+    if (group === 2) {
     // 3. Telegram
     const telegramRaw: any[] = [];
     for (const ch of TELEGRAM_CHANNELS) {
@@ -659,10 +667,12 @@ Deno.serve(async (req) => {
       telegramRaw.push(...msgs);
     }
     if (telegramRaw.length) {
-      const processed = await processWithClaude(telegramRaw.map(m => ({ text: m.text, channel: m.channel })));
+      const processed = await processWithAI(telegramRaw.map(m => ({ text: m.text, channel: m.channel })));
       stats.telegram = await saveVacancies(processed, 'telegram');
     }
+    }
 
+    if (group === 3) {
     // 4. India + Philippines focused scraping
     const indiaPhilippinesRaw: any[] = [
       ...await scrapeSeadonna(),
@@ -673,11 +683,13 @@ Deno.serve(async (req) => {
       ...await scrapePOEA(),
     ];
     if (indiaPhilippinesRaw.length) {
-      const processed = await processWithClaude(indiaPhilippinesRaw);
+      const processed = await processWithAI(indiaPhilippinesRaw);
       const ipSaved = await saveVacancies(processed, 'india_philippines');
       stats.saved += ipSaved;
     }
+    }
 
+    if (group === 4) {
     // Email-rich sources
     const emailSourcesRaw: any[] = [
       ...await scrapeMarineInsightJobs(),
@@ -685,7 +697,7 @@ Deno.serve(async (req) => {
       ...await scrapeOceanCrew(),
     ];
     if (emailSourcesRaw.length) {
-      const processed = await processWithClaude(emailSourcesRaw);
+      const processed = await processWithAI(emailSourcesRaw);
       const emailSaved = await saveVacancies(processed, 'email_sources');
       stats.saved += emailSaved;
     }
@@ -701,9 +713,10 @@ Deno.serve(async (req) => {
       ...await scrapeCrewLink(),
     ];
     if (expandedRegionalRaw.length) {
-      const processed = await processWithClaude(expandedRegionalRaw);
+      const processed = await processWithAI(expandedRegionalRaw);
       const erSaved = await saveVacancies(processed, 'regional_global');
       stats.saved += erSaved;
+    }
     }
 
     stats.saved += stats.google + stats.rss + stats.telegram;
@@ -791,15 +804,21 @@ Deno.serve(async (req) => {
     // Log to app_events
     await supabase.from('app_events').insert({
       event_type: 'vacancy_agent_run',
-      message: `Vacancy agent completed: ${stats.saved} saved, ${emailsSent} emails sent`,
+      message: `Vacancy agent completed (group ${group}): ${stats.saved} saved, ${emailsSent} emails sent`,
       severity: 'info',
-      metadata: { ...stats, emailsSent, duration_ms: Date.now() - startTime },
+      metadata: { ...stats, group, emailsSent, duration_ms: Date.now() - startTime },
     });
 
-    return new Response(JSON.stringify({ success: true, stats: { ...stats, emailsSent } }), {
+    return new Response(JSON.stringify({ success: true, group, stats: { ...stats, emailsSent } }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
+    await supabase.from('app_events').insert({
+      event_type: 'vacancy_agent_run',
+      message: `Vacancy agent FAILED: ${String(error).substring(0, 200)}`,
+      severity: 'error',
+      metadata: { error: String(error) },
+    });
     return new Response(JSON.stringify({ success: false, error: String(error) }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
