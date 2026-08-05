@@ -875,6 +875,33 @@ export type Database = {
         }
         Relationships: []
       }
+      cv_access_log: {
+        Row: {
+          action: string
+          company_name: string | null
+          created_at: string
+          crew_user_id: string | null
+          id: string
+          manager_user_id: string
+        }
+        Insert: {
+          action?: string
+          company_name?: string | null
+          created_at?: string
+          crew_user_id?: string | null
+          id?: string
+          manager_user_id: string
+        }
+        Update: {
+          action?: string
+          company_name?: string | null
+          created_at?: string
+          crew_user_id?: string | null
+          id?: string
+          manager_user_id?: string
+        }
+        Relationships: []
+      }
       discount_codes: {
         Row: {
           active: boolean | null

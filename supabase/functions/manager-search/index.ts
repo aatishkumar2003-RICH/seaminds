@@ -1,6 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
-const MANAGER_ACCESS_CODE = Deno.env.get("MANAGER_ACCESS_CODE") || "SEAMANAGER2026";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -35,13 +34,25 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const { accessCode, action = "search", filters = {}, userId } = body ?? {};
+    const { action = "search", filters = {}, userId } = body ?? {};
 
-    if (String(accessCode || "").trim().toUpperCase() !== MANAGER_ACCESS_CODE.toUpperCase()) {
-      return json({ success: false, error: "Invalid manager access code" }, 401);
-    }
+    const authHeader = req.headers.get("Authorization") || "";
+    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+    const unauth = () => json({ success: false, error: "Please sign in as a manager." }, 401);
+    if (!token) return unauth();
 
-    if (action === "verify") return json({ success: true });
+    const { data: userData, error: userErr } = await admin.auth.getUser(token);
+    const authUser = userData?.user;
+    if (userErr || !authUser) return unauth();
+
+    const { data: manager } = await admin
+      .from("manager_profiles")
+      .select("company_name")
+      .eq("user_id", authUser.id)
+      .maybeSingle();
+    if (!manager) return unauth();
+
+    if (action === "verify") return json({ success: true, company: manager.company_name });
 
     if (action === "cv") {
       if (!userId) return json({ success: false, error: "Missing userId" }, 400);
@@ -56,8 +67,17 @@ Deno.serve(async (req) => {
         .eq("id", userId)
         .maybeSingle();
       if (!cv && !profile) return json({ success: false, error: "CV not found" }, 404);
+      try {
+        await admin.from("cv_access_log").insert({
+          manager_user_id: authUser.id,
+          company_name: manager.company_name,
+          crew_user_id: userId,
+          action: "cv_view",
+        });
+      } catch (_e) { /* logging must never block the CV */ }
       return json({ success: true, cv: cv ? { ...cv, medical: parseMaybeJson(cv.medical) } : null, profile });
     }
+
 
     // ---- search ----
     let query = admin
