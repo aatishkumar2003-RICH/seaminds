@@ -1,8 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, FileText } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import FindWork from "@/components/opportunities/FindWork";
-import PostVacancy from "@/components/opportunities/PostVacancy";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -65,8 +62,8 @@ const Opportunities = ({ profileId, firstName, role, nationality, shipName }: Op
   return (
     <div className="flex flex-col h-full">
       <div className="p-4 border-b border-border">
-        <h1 className="text-lg font-semibold text-foreground">Opportunities</h1>
-        <p className="text-xs text-muted-foreground mt-0.5">Find work or post vacancies</p>
+        <h1 className="text-lg font-semibold text-foreground">Jobs</h1>
+        <p className="text-xs text-muted-foreground mt-0.5">Live vacancies matched to your rank</p>
       </div>
 
       {/* Contact Request Notifications */}
@@ -114,33 +111,16 @@ const Opportunities = ({ profileId, firstName, role, nationality, shipName }: Op
         </a>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
-        <Tabs defaultValue="find" className="h-full flex flex-col">
-          <TabsList className="mx-4 mt-3 bg-secondary">
-            <TabsTrigger value="find" className="flex-1 gap-1.5 text-xs">
-              <Search size={14} /> Find Work
-            </TabsTrigger>
-            <TabsTrigger value="post" className="flex-1 gap-1.5 text-xs">
-              <FileText size={14} /> Post a Vacancy
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="find" className="flex-1 overflow-y-auto px-4 pb-4">
-            <FindWork
-              profileId={profileId}
-              firstName={firstName}
-              lastName={lastName}
-              role={role}
-              nationality={nationality}
-              yearsAtSea={yearsAtSea}
-              shipName={shipName}
-            />
-          </TabsContent>
-
-          <TabsContent value="post" className="flex-1 overflow-y-auto px-4 pb-4">
-            <PostVacancy />
-          </TabsContent>
-        </Tabs>
+      <div className="flex-1 overflow-y-auto px-4 pb-4 pt-3">
+        <FindWork
+          profileId={profileId}
+          firstName={firstName}
+          lastName={lastName}
+          role={role}
+          nationality={nationality}
+          yearsAtSea={yearsAtSea}
+          shipName={shipName}
+        />
       </div>
     </div>
   );
