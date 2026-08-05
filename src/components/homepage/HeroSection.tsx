@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, ShieldCheck, Globe2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { type TimeOfDay, getGreeting } from "@/hooks/useTimeOfDay";
 
@@ -13,7 +13,7 @@ const HeroSection = ({ timeOfDay = "day" }: Props) => {
 
   return (
     <section className="relative pt-28 pb-16 md:pt-32 md:pb-20 overflow-hidden">
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
         <div className="max-w-3xl mx-auto">
           <div className="text-center">
             <p className="text-xs uppercase tracking-[0.3em] text-primary mb-4 font-mono-score">
@@ -22,17 +22,41 @@ const HeroSection = ({ timeOfDay = "day" }: Props) => {
             <p className="text-sm md:text-base text-primary/80 mb-2 font-medium tracking-wide">
               {greeting}
             </p>
+
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-3">
-              One Platform. Every Seafarer Needs.
+              One Platform. Everything a Seafarer Needs.
             </h1>
+
             <p className="text-lg md:text-xl text-primary gold-glow mb-3 font-semibold">
               Wellness · Career · Community · Certification
             </p>
-            <p className="text-muted-foreground text-sm md:text-base max-w-xl mx-auto mb-8">
-              Built from 12 months of research with 10,000+ seafarers. Because the people at sea should design what the people at sea use.
+
+            <p className="text-muted-foreground text-sm md:text-base max-w-xl mx-auto mb-6">
+              Where decades of maritime expertise meet world-class digital
+              architecture — because the people at sea should shape what the
+              people at sea use.
             </p>
+
+            <div
+              className="mx-auto mb-7 max-w-lg rounded-2xl px-4 py-3 flex items-start gap-3 text-left"
+              style={{
+                border: "1px solid hsl(var(--primary) / 0.35)",
+                background: "hsl(var(--primary) / 0.07)",
+              }}
+            >
+              <ShieldCheck className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+              <p className="text-xs md:text-sm text-foreground/90 leading-relaxed">
+                <span className="font-semibold text-primary">Your conversations are sealed.</span>{" "}
+                Your mood check-ins and AI chats are private — never shown to your
+                company, your manning agent, or your captain.
+              </p>
+            </div>
+
             <div className="mb-6 overflow-hidden scrollbar-hide">
-              <div className="flex flex-row flex-nowrap gap-2 justify-center lg:animate-pill-drift pb-1 overflow-x-auto lg:overflow-visible" style={{ scrollbarWidth: "none" }}>
+              <div
+                className="flex flex-row flex-nowrap gap-2 justify-center lg:animate-pill-drift pb-1 overflow-x-auto lg:overflow-visible"
+                style={{ scrollbarWidth: "none" }}
+              >
                 {[...Array(2)].flatMap((_, dupeIdx) =>
                   [
                     "🔥 Streak Tracker", "⏱ MLC Rest Hours", "📜 Cert Wallet", "💰 Salary Check",
@@ -41,7 +65,7 @@ const HeroSection = ({ timeOfDay = "day" }: Props) => {
                   ].map((pill) => (
                     <button
                       key={`${pill}-${dupeIdx}`}
-                      onClick={() => navigate('/app')}
+                      onClick={() => navigate("/app")}
                       className="shrink-0 rounded-full px-3.5 py-1.5 text-[11px] font-semibold whitespace-nowrap text-primary transition-colors hover:bg-primary/15"
                       style={{
                         border: "1px solid hsl(var(--primary) / 0.5)",
@@ -55,17 +79,33 @@ const HeroSection = ({ timeOfDay = "day" }: Props) => {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">
-              <Button size="lg" onClick={() => navigate('/app')} className="text-sm px-6 h-11">
-                I Am Crew — Get Started Free <ChevronRight className="ml-1 w-4 h-4" />
+            <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
+              <Button size="lg" onClick={() => navigate("/app")} className="text-sm px-6 h-11">
+                I Am Crew — Join Free <ChevronRight className="ml-1 w-4 h-4" />
               </Button>
-              <Button size="lg" variant="outline" onClick={() => navigate('/for-companies')} className="text-sm px-6 h-11">
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => navigate("/for-companies")}
+                className="text-sm px-6 h-11"
+              >
                 I Am a Company — Hire Verified Crew
               </Button>
             </div>
 
-            <div className="flex flex-row flex-nowrap gap-6 justify-center text-xs text-muted-foreground font-mono-score overflow-hidden whitespace-nowrap">
-              {["1,890,000 seafarers need this", "25% suffer depression at sea", "0 platforms built for them"].map((stat, i) => (
+            <div className="flex items-center justify-center gap-2 mb-5 text-[11px] md:text-xs text-muted-foreground">
+              <Globe2 className="w-3.5 h-3.5 text-primary/70 shrink-0" />
+              <span className="truncate">
+                English · Tiếng Việt · Tagalog · Bahasa · हिन्दी · Русский
+              </span>
+            </div>
+
+            <div className="flex flex-row flex-wrap gap-x-6 gap-y-2 justify-center text-xs text-muted-foreground font-mono-score">
+              {[
+                "Free to join — no card",
+                "Seafarers from 15 countries",
+                "MLC 2006 aligned",
+              ].map((stat, i) => (
                 <span key={i} className="flex items-center gap-1.5 shrink-0">
                   <span className="w-1 h-1 rounded-full bg-primary shrink-0" />
                   {stat}
@@ -73,7 +113,6 @@ const HeroSection = ({ timeOfDay = "day" }: Props) => {
               ))}
             </div>
           </div>
-
         </div>
       </div>
     </section>
