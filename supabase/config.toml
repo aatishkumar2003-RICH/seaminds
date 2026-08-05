@@ -77,3 +77,7 @@ verify_jwt = false
 
 [functions.telegram-broadcast]
 verify_jwt = false
+
+[functions.blog-writer]
+verify_jwt = false
+
