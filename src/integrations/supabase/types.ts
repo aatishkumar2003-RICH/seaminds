@@ -1081,6 +1081,7 @@ export type Database = {
           salary_text: string | null
           scam_flags: Json | null
           source: string
+          telegram_posted: boolean | null
           title: string
           vessel_type: string | null
         }
@@ -1109,6 +1110,7 @@ export type Database = {
           salary_text?: string | null
           scam_flags?: Json | null
           source: string
+          telegram_posted?: boolean | null
           title: string
           vessel_type?: string | null
         }
@@ -1137,6 +1139,7 @@ export type Database = {
           salary_text?: string | null
           scam_flags?: Json | null
           source?: string
+          telegram_posted?: boolean | null
           title?: string
           vessel_type?: string | null
         }
@@ -1249,6 +1252,7 @@ export type Database = {
           plan: string
           rank_required: string
           status: string
+          telegram_posted: boolean | null
           verified: boolean
           vessel_type: string
         }
@@ -1265,6 +1269,7 @@ export type Database = {
           plan?: string
           rank_required: string
           status?: string
+          telegram_posted?: boolean | null
           verified?: boolean
           vessel_type: string
         }
@@ -1281,6 +1286,7 @@ export type Database = {
           plan?: string
           rank_required?: string
           status?: string
+          telegram_posted?: boolean | null
           verified?: boolean
           vessel_type?: string
         }
