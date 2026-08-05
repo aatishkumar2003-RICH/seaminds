@@ -9,17 +9,16 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: NavItem[] = [
-  { icon: "💬", label: "Chat", screen: "chat", gated: true },
-  { icon: "❤️", label: "Welfare", screen: "dashboard", gated: true },
-  { icon: "⏱", label: "Rest Hours", screen: "resthours", gated: true },
+  { icon: "💬", label: "Wellness Chat", screen: "chat", gated: true },
   { icon: "💼", label: "Jobs", screen: "opportunities" },
-  { icon: "📄", label: "CV", screen: "resume" },
-  { icon: "📰", label: "News", screen: "news" },
+  { icon: "⏱", label: "Rest Hours", screen: "resthours", gated: true },
+  { icon: "📄", label: "My CV", screen: "resume" },
+  { icon: "📜", label: "Certificates", screen: "certs" },
+  { icon: "🏆", label: "My Score", screen: "smc" },
+  { icon: "🔧", label: "Tech Help", screen: "bridge" },
   { icon: "🎓", label: "Academy", screen: "academy" },
-  { icon: "🔧", label: "PMS", screen: "bridge" },
   { icon: "👥", label: "Community", screen: "community", gated: true },
-  { icon: "🏆", label: "SMC", screen: "smc" },
-  { icon: "📜", label: "Certs", screen: "certs" },
+  { icon: "📰", label: "News", screen: "news" },
 ];
 
 export const NATIONALITY_FLAGS: Record<string, string> = {
