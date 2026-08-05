@@ -359,13 +359,15 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
-      <button onClick={() => {
-        if (view === "payment") setStarted(false);
-        else window.history.back();
-      }}
-        style={{ background:'transparent', border:'none', color:'#D4AF37', fontSize:'13px', cursor:'pointer', marginBottom:'8px', marginLeft:'16px', marginTop:'8px', display:'flex', alignItems:'center', gap:'4px' }}>
-        ← Back
-      </button>
+      {(started || view !== "payment") && (
+        <button onClick={() => {
+          if (view === "payment") setStarted(false);
+          else window.history.back();
+        }}
+          style={{ background:'transparent', border:'none', color:'#D4AF37', fontSize:'13px', cursor:'pointer', marginBottom:'8px', marginLeft:'16px', marginTop:'8px', display:'flex', alignItems:'center', gap:'4px' }}>
+          ← Back
+        </button>
+      )}
       {/* CV Upload Modal */}
       {showCvUpload && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={() => setShowCvUpload(false)}>
