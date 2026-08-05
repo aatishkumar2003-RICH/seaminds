@@ -12,7 +12,7 @@ const TABS: { icon: string; label: string; screen: Screen; gated?: boolean }[] =
   { icon: "💬", label: "Chat", screen: "chat", gated: true },
   { icon: "💼", label: "Jobs", screen: "opportunities" },
   { icon: "⏱", label: "Rest", screen: "resthours", gated: true },
-  { icon: "📄", label: "Docs", screen: "resume" },
+  { icon: "📄", label: "CV / Cert", screen: "resume" },
 ];
 
 const BottomNav: React.FC<Props> = ({ screen, jobBadgeCount, onNavClick, onMore }) => (
