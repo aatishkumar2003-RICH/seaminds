@@ -31,6 +31,7 @@ import Contact from "./pages/Contact";
 import CollegePage from "./pages/CollegePage";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
+import JobFeed from "./pages/JobFeed";
 import AdminDashboard from "./pages/AdminDashboard";
 import Verify from "./pages/Verify";
 import OAuthConsent from "./pages/OAuthConsent";
@@ -95,6 +96,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/app" element={<Index />} />
+            <Route path="/feed" element={<JobFeed />} />
             <Route path="/manager" element={<ManagerAuth />} />
             <Route path="/manager/dashboard" element={<ManagerDashboard />} />
             <Route path="/manager-search" element={<ManagerSearch />} />
