@@ -76,8 +76,8 @@ interface ExternalVacancy {
   created_at: string | null;
 }
 
-// Demo SMC score for development
-const DEMO_SMC_SCORE = 4.17;
+
+
 
 const COUNTRY_TABS = [
   { code: 'all', flag: '🌍', label: 'All' },
