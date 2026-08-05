@@ -39,6 +39,8 @@ import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import OnboardingTour from "@/components/OnboardingTour";
 import MarketPulseButton from "@/components/MarketPulseButton";
 import CvViewsCard from "@/components/CvViewsCard";
+import BottomNav from "@/components/layout/BottomNav";
+
 
 const PROFILE_KEY = "seamind_profile_id";
 
@@ -685,8 +687,37 @@ const Index = () => {
               </div>
             )}
 
+            {/* Mobile stat cards */}
+            <div className="lg:hidden px-3 pt-2 pb-1">
+              <div className="grid grid-cols-4 gap-1">
+                <button onClick={() => setScreen("chat")} style={cardStyle} className="flex-1 py-3">
+                  <div className="text-lg">🔥</div>
+                  <div className="text-sm font-bold text-foreground">{streakCount}</div>
+                  <div className="text-[9px] text-muted-foreground">day streak</div>
+                </button>
+                <button onClick={() => setScreen("certs")}
+                  style={{ ...cardStyle, border: expiringSoon > 0 ? "1px solid rgba(245,158,11,0.4)" : cardStyle.border }} className="flex-1 py-3">
+                  <div className="text-lg">📜</div>
+                  <div className="text-sm font-bold" style={{ color: expiringSoon > 0 ? "#f59e0b" : "#22c55e" }}>{expiringSoon}</div>
+                  <div className="text-[9px] text-muted-foreground">expiring</div>
+                </button>
+                <button onClick={() => setScreen("resthours")}
+                  style={{ ...cardStyle, border: restHours < 10 && restHours > 0 ? "1px solid rgba(239,68,68,0.4)" : cardStyle.border }} className="flex-1 py-3">
+                  <div className="text-lg">⏱</div>
+                  <div className="text-sm font-bold" style={{ color: restHours >= 10 ? "#22c55e" : restHours > 0 ? "#ef4444" : "#888" }}>{restHours || "—"}</div>
+                  <div className="text-[9px] text-muted-foreground">hrs rest</div>
+                </button>
+                <button onClick={() => setScreen("smc")} style={cardStyle} className="flex-1 py-3">
+                  <div className="text-lg">🏆</div>
+                  <div className="text-sm font-bold text-foreground">{smcScore !== null ? smcScore : "Get"}</div>
+                  <div className="text-[9px] text-muted-foreground">SMC</div>
+                </button>
+              </div>
+            </div>
+
             {/* Main content area */}
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto pb-16 lg:pb-0">
+
               {screen === "chat" && jobMatch && (
                 <div className="mx-4 mb-2 flex items-center justify-between gap-2 rounded-[10px] border p-[10px]"
                   style={{ borderColor: "rgba(255,255,255,0.2)", background: "rgba(26, 58, 92, 0.9)" }}>
@@ -699,9 +730,12 @@ const Index = () => {
                 </div>
               )}
 
-              <div className="mx-4 mb-2 lg:mx-8">
-                <CvViewsCard />
-              </div>
+              {screen === "chat" && (
+                <div className="mx-4 mb-2 lg:mx-8">
+                  <CvViewsCard />
+                </div>
+              )}
+
 
               {screen === "chat" ? (
                 profileComplete ? (onboardingComplete ? <ScreenErrorBoundary screenName="Chat"><CrewChat profileId={profileId} firstName={firstName} role={role} shipName={shipName} voyageStartDate={voyageStartDate} /></ScreenErrorBoundary> : vesselOnboardingUI) : profileGateUI
@@ -731,6 +765,14 @@ const Index = () => {
             </div>
           </div>
         </div>
+
+        <BottomNav
+          screen={screen}
+          jobBadgeCount={jobBadgeCount}
+          onNavClick={handleNavClick}
+          onMore={() => setDrawerOpen(true)}
+        />
+
 
         {/* Feedback modal */}
         {showFeedback && (
