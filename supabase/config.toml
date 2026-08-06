@@ -88,3 +88,7 @@ verify_jwt = false
 [functions.ship-photos]
 verify_jwt = false
 
+[functions.vacancy-card]
+verify_jwt = false
+
+
