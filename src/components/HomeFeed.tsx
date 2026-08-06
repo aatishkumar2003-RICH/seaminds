@@ -7,20 +7,6 @@ const NAVY = "#0D1B2A";
 const CARD = "#112240";
 const BORDER = "#1e3a5f";
 
-const SHIP_PHOTOS = [
-  "https://images.unsplash.com/photo-1605281317010-fe5ffe798166?w=800&q=70",
-  "https://images.unsplash.com/photo-1494412574643-ff11b0a5c1c3?w=800&q=70",
-  "https://images.unsplash.com/photo-1520383278046-eaa4b0d2d754?w=800&q=70",
-  "https://images.unsplash.com/photo-1519060825752-c4c2f4c4d0f5?w=800&q=70",
-  "https://images.unsplash.com/photo-1573112307548-5b9c1a1c1d1a?w=800&q=70",
-];
-const SHIP_CAPTIONS = [
-  "Container giant departing at first light",
-  "Heavy weather in the North Atlantic",
-  "Alongside at night — cargo ops in progress",
-  "Anchorage at sunrise, waiting for berth",
-  "Full ahead — open ocean passage",
-];
 
 const LANG_BY_NATIONALITY: Record<string, string> = {
   Filipino: "tl", Indian: "hi", Indonesian: "id",
