@@ -136,15 +136,8 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
   const [extVesselFilter, setExtVesselFilter] = useState("all");
   const [externalVacancies, setExternalVacancies] = useState<ExternalVacancy[]>([]);
 
-  // Auto-select country based on nationality
-  useEffect(() => {
-    if (nationality && countryFilter === 'all') {
-      const match = COUNTRY_TABS.find(t =>
-        t.code !== 'all' && nationality.toLowerCase().includes(t.code.toLowerCase())
-      );
-      if (match) setCountryFilter(match.code);
-    }
-  }, [nationality]);
+  // No country filter by default — show all positions until user taps a country
+
 
   useEffect(() => {
     loadData();
