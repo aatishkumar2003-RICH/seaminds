@@ -851,7 +851,9 @@ const Index = () => {
           </div>
         )}
       </div>
-      <OnboardingTour enabled={appState === "main"} forceShow={forceTour} onForceShowConsumed={() => setForceTour(false)} onNavigate={(s) => { navigateTo(s); setTourActiveScreen(s); }} onDismiss={() => setTourActiveScreen(null)} />
+      <Suspense fallback={null}>
+        <OnboardingTour enabled={appState === "main"} forceShow={forceTour} onForceShowConsumed={() => setForceTour(false)} onNavigate={(s) => { navigateTo(s); setTourActiveScreen(s); }} onDismiss={() => setTourActiveScreen(null)} />
+      </Suspense>
     </>
   );
 };
