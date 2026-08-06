@@ -68,6 +68,31 @@ const OceanBackground = ({ timeOfDay }: Props) => {
     night: "hsla(35,55%,72%,0.18)",
   };
 
+  if (reducedMotion) {
+    return (
+      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none" style={{ opacity: 0.4 }} aria-hidden="true">
+        <div className="absolute inset-0" style={{ background: skyGradients[timeOfDay] }} />
+        <svg
+          className="absolute bottom-0 left-0 w-full"
+          style={{ height: "30%" }}
+          viewBox="0 0 1440 320"
+          preserveAspectRatio="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path opacity={opacities[2]} fill={colors[2]}
+            d="M0,288 C200,270 400,300 600,290 C800,280 1000,260 1200,280 C1300,290 1400,300 1440,288 L1440,320 L0,320 Z"
+          />
+          <path opacity={opacities[1]} fill={colors[1]}
+            d="M0,256 C160,240 320,280 480,272 C640,264 800,220 960,240 C1120,260 1280,280 1440,256 L1440,320 L0,320 Z"
+          />
+          <path opacity={opacities[0]} fill={colors[0]}
+            d="M0,224 C120,200 240,260 360,240 C480,220 600,180 720,192 C840,204 960,260 1080,256 C1200,252 1320,200 1440,224 L1440,320 L0,320 Z"
+          />
+        </svg>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none" style={{ opacity: 0.4 }} aria-hidden="true">
       {/* Sky gradient */}
