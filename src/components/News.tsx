@@ -7,7 +7,7 @@ import { voyageCache } from '@/lib/voyageCache';
 import { useVoyageMode } from '@/hooks/useVoyageMode';
 import VoyageModeBar from '@/components/VoyageModeBar';
 
-type CountryKey = "india" | "philippines" | "indonesia" | "ukraine" | "russia" | "china" | "myanmar" | "bangladesh" | "croatia" | "greece" | "uk" | "usa";
+type CountryKey = "india" | "philippines" | "indonesia" | "vietnam" | "malaysia" | "pakistan" | "thailand" | "srilanka" | "nepal" | "ukraine" | "russia" | "china" | "myanmar" | "bangladesh" | "romania" | "croatia" | "greece" | "uk" | "usa";
 
 const NATIONALITY_TO_COUNTRY: Record<string, CountryKey> = {
   "Indian": "india", "India": "india",
