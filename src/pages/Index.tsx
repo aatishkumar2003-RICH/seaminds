@@ -553,7 +553,7 @@ const Index = () => {
         <div className="mx-auto flex h-full w-full max-w-md flex-col bg-background">
           <MobileChrome {...mobileChromeProps} />
           <div className="min-h-0 flex-1">
-            <WelcomeScreens onComplete={handleWelcomeComplete} />
+            <Suspense fallback={null}><WelcomeScreens onComplete={handleWelcomeComplete} /></Suspense>
           </div>
         </div>
       </div>
