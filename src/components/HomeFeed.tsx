@@ -352,6 +352,12 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
                     </p>
                     {q.explanation && <p className="text-[11px]" style={{ color: "#cbd5e1" }}>{q.explanation}</p>}
                     {q.regulation && <p className="text-[10px] mt-1" style={{ color: "#94a3b8" }}>📘 {q.regulation}</p>}
+                    <ShareResult
+                      compact
+                      text={chosen === q.correct_index
+                        ? `I got today's SeaMinds maritime question right ⚓🧠 Can you? "${q.question}"`
+                        : `Tough maritime question of the day on SeaMinds ⚓🧠 "${q.question}" — can you get it right?`}
+                    />
                   </div>
                 )}
               </article>

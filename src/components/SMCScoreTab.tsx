@@ -492,6 +492,9 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
               >
                 🔄 Retake Assessment — Improve My Score
               </button>
+              <ShareResult
+                text="I just got my SeaMinds Competency Score ⚓🏆 Check yours free — it takes 10 minutes."
+              />
               <p className="text-center text-[11px] mt-2" style={{ color: "#64748b" }}>
                 You can retake the assessment as many times as you like. Your latest score is the one companies see.
               </p>
