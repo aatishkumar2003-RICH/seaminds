@@ -571,8 +571,10 @@ const Index = () => {
         <div className="mx-auto flex h-full w-full max-w-md flex-col bg-background">
           <MobileChrome {...mobileChromeProps} />
           <div className="min-h-0 flex-1 overflow-hidden">
-            <VoyageReport profileId={profileId} firstName={firstName} role={role} shipName={shipName}
-              voyageStartDate={voyageStartDate} nationality={nationality} onClose={() => setAppState("main")} />
+            <Suspense fallback={null}>
+              <VoyageReport profileId={profileId} firstName={firstName} role={role} shipName={shipName}
+                voyageStartDate={voyageStartDate} nationality={nationality} onClose={() => setAppState("main")} />
+            </Suspense>
           </div>
         </div>
       </div>
