@@ -54,7 +54,7 @@ const Index = () => {
   const timeOfDay = useTimeOfDay();
   const voyageStatus = useVoyageMode();
   const [appState, setAppState] = useState<AppState>("loading");
-  const [screen, setScreen] = useState<Screen>("chat");
+  const [screen, setScreen] = useState<Screen>("home");
   const [tourActiveScreen, setTourActiveScreen] = useState<Screen | null>(null);
   const [prevScreen, setPrevScreen] = useState<Screen | null>(null);
   const [profileId, setProfileId] = useState("");
@@ -70,7 +70,7 @@ const Index = () => {
   const [utcTime, setUtcTime] = useState("");
   const [jobMatch, setJobMatch] = useState<{ rank_required: string; vessel_type: string; joining_port: string } | null>(null);
   const [jobBadgeCount, setJobBadgeCount] = useState(0);
-  const [targetScreen, setTargetScreen] = useState<Screen>("chat");
+  const [targetScreen, setTargetScreen] = useState<Screen>("home");
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
   const [feedbackSummary, setFeedbackSummary] = useState("");
@@ -267,7 +267,7 @@ const Index = () => {
         clearTimeout(fallbackTimer);
         if (authUser) {
           const fullName = authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'Seafarer';
-          setFirstName(fullName.split(' ')[0]); setAppState('main'); setScreen('news');
+          setFirstName(fullName.split(' ')[0]); setAppState('main'); setScreen('home');
           return;
         }
         setAppState('landing');
@@ -281,7 +281,7 @@ const Index = () => {
     if (!authReady || !authUser) return;
     if (localStorage.getItem('seamind_profile_id')) return;
     const fullName = authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'Seafarer';
-    setFirstName(fullName.split(' ')[0]); setAppState('main'); setScreen('news');
+    setFirstName(fullName.split(' ')[0]); setAppState('main'); setScreen('home');
   }, [authUser, authReady]);
 
   const handleNameSubmit = async (profile: {
