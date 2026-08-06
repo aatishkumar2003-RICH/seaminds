@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { Anchor, LogOut, X } from "lucide-react";
@@ -17,36 +17,35 @@ import { NATIONALITY_FLAGS, DRAWER_WIDTH, type AppState, type Screen, type NavIt
 // Screen components
 import LandingScreen from "@/components/LandingScreen";
 import OceanBackground from "@/components/homepage/OceanBackground";
-import NameEntry from "@/components/NameEntry";
-import WelcomeScreens from "@/components/WelcomeScreens";
-import CrewChat from "@/components/CrewChat";
-import WelfareDashboard from "@/components/WelfareDashboard";
-import Opportunities from "@/components/Opportunities";
-import News from "@/components/News";
-import Academy from "@/components/Academy";
-import Knowledge from "@/components/Knowledge";
-
-import Community from "@/components/Community";
-import Bridge from "@/components/Bridge";
-import SMCScoreTab from "@/components/SMCScoreTab";
-import ResumeBuilder from "@/components/ResumeBuilder";
 import SOSButton from "@/components/SOSButton";
-import VoyageReport from "@/components/VoyageReport";
-import CertWallet from "@/components/CertWallet";
-import CvAndCertificates from "@/components/CvAndCertificates";
 import HomeFeed from "@/components/HomeFeed";
 import NotificationBell from "@/components/NotificationBell";
-
-
-import RestHoursTracker from "@/components/RestHoursTracker";
-import VesselRating from "@/components/VesselRating";
-import NPSSurvey from "@/components/NPSSurvey";
-import VesselOnboardingCard from "@/components/VesselOnboardingCard";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
-import OnboardingTour from "@/components/OnboardingTour";
-import MarketPulseButton from "@/components/MarketPulseButton";
 import CvViewsCard from "@/components/CvViewsCard";
 import BottomNav from "@/components/layout/BottomNav";
+
+// Lazily-loaded screens — each downloads only when opened
+const CrewChat = lazy(() => import("@/components/CrewChat"));
+const WelfareDashboard = lazy(() => import("@/components/WelfareDashboard"));
+const Opportunities = lazy(() => import("@/components/Opportunities"));
+const News = lazy(() => import("@/components/News"));
+const Academy = lazy(() => import("@/components/Academy"));
+const Knowledge = lazy(() => import("@/components/Knowledge"));
+const Community = lazy(() => import("@/components/Community"));
+const Bridge = lazy(() => import("@/components/Bridge"));
+const SMCScoreTab = lazy(() => import("@/components/SMCScoreTab"));
+const ResumeBuilder = lazy(() => import("@/components/ResumeBuilder"));
+const VoyageReport = lazy(() => import("@/components/VoyageReport"));
+const CertWallet = lazy(() => import("@/components/CertWallet"));
+const CvAndCertificates = lazy(() => import("@/components/CvAndCertificates"));
+const RestHoursTracker = lazy(() => import("@/components/RestHoursTracker"));
+const VesselRating = lazy(() => import("@/components/VesselRating"));
+const NPSSurvey = lazy(() => import("@/components/NPSSurvey"));
+const VesselOnboardingCard = lazy(() => import("@/components/VesselOnboardingCard"));
+const OnboardingTour = lazy(() => import("@/components/OnboardingTour"));
+const MarketPulseButton = lazy(() => import("@/components/MarketPulseButton"));
+const WelcomeScreens = lazy(() => import("@/components/WelcomeScreens"));
+const NameEntry = lazy(() => import("@/components/NameEntry"));
 
 
 const PROFILE_KEY = "seamind_profile_id";
@@ -454,7 +453,9 @@ const Index = () => {
   };
 
   const vesselOnboardingUI = (
-    <VesselOnboardingCard profileId={profileId} existingShipName={shipName} existingRole={role} onBack={() => setScreen("news")} onComplete={handleVesselOnboardingComplete} />
+    <Suspense fallback={null}>
+      <VesselOnboardingCard profileId={profileId} existingShipName={shipName} existingRole={role} onBack={() => setScreen("news")} onComplete={handleVesselOnboardingComplete} />
+    </Suspense>
   );
 
   const handleFeedbackSubmit = async () => {
@@ -536,7 +537,7 @@ const Index = () => {
         <div className="mx-auto flex h-full w-full max-w-md flex-col bg-background">
           <MobileChrome {...mobileChromeProps} />
           <div className="min-h-0 flex-1 overflow-y-auto">
-            <NameEntry onSubmit={handleNameSubmit} />
+            <Suspense fallback={null}><NameEntry onSubmit={handleNameSubmit} /></Suspense>
           </div>
         </div>
       </div>
@@ -554,7 +555,7 @@ const Index = () => {
         <div className="mx-auto flex h-full w-full max-w-md flex-col bg-background">
           <MobileChrome {...mobileChromeProps} />
           <div className="min-h-0 flex-1">
-            <WelcomeScreens onComplete={handleWelcomeComplete} />
+            <Suspense fallback={null}><WelcomeScreens onComplete={handleWelcomeComplete} /></Suspense>
           </div>
         </div>
       </div>
@@ -572,8 +573,10 @@ const Index = () => {
         <div className="mx-auto flex h-full w-full max-w-md flex-col bg-background">
           <MobileChrome {...mobileChromeProps} />
           <div className="min-h-0 flex-1 overflow-hidden">
-            <VoyageReport profileId={profileId} firstName={firstName} role={role} shipName={shipName}
-              voyageStartDate={voyageStartDate} nationality={nationality} onClose={() => setAppState("main")} />
+            <Suspense fallback={null}>
+              <VoyageReport profileId={profileId} firstName={firstName} role={role} shipName={shipName}
+                voyageStartDate={voyageStartDate} nationality={nationality} onClose={() => setAppState("main")} />
+            </Suspense>
           </div>
         </div>
       </div>
@@ -724,6 +727,15 @@ const Index = () => {
               )}
 
 
+              <Suspense fallback={
+                <div className="flex items-center justify-center py-20">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-primary pulse-dot" style={{ animationDelay: "0s" }} />
+                    <span className="w-2 h-2 rounded-full bg-primary pulse-dot" style={{ animationDelay: "0.3s" }} />
+                    <span className="w-2 h-2 rounded-full bg-primary pulse-dot" style={{ animationDelay: "0.6s" }} />
+                  </div>
+                </div>
+              }>
               {screen === "home" ? (
                 <ScreenErrorBoundary screenName="Feed"><HomeFeed profileId={profileId} rank={role} nationality={nationality} onNavigate={(s) => setScreen(s as any)} /></ScreenErrorBoundary>
               ) : screen === "chat" ? (
@@ -752,6 +764,7 @@ const Index = () => {
               ) : screen === "smc" ? (
                 <ScreenErrorBoundary screenName="SMC Score"><SMCScoreTab profileId={profileId} firstName={firstName} lastName={lastName} rank={role} shipName={shipName} /></ScreenErrorBoundary>
               ) : null}
+              </Suspense>
             </div>
           </div>
         </div>
@@ -816,13 +829,15 @@ const Index = () => {
           </div>
         )}
 
-        {showNPS && <NPSSurvey firstName={firstName} onDismiss={() => setShowNPS(false)} />}
-        <MarketPulseButton
-          onNavigateJobs={() => navigateTo('opportunities')}
-          userRank={role || undefined}
-          userVessel={vesselType || undefined}
-          userNationality={nationality || undefined}
-        />
+        <Suspense fallback={null}>{showNPS && <NPSSurvey firstName={firstName} onDismiss={() => setShowNPS(false)} />}</Suspense>
+        <Suspense fallback={null}>
+          <MarketPulseButton
+            onNavigateJobs={() => navigateTo('opportunities')}
+            userRank={role || undefined}
+            userVessel={vesselType || undefined}
+            userNationality={nationality || undefined}
+          />
+        </Suspense>
         <PWAInstallPrompt />
 
         {showNotifPrompt && (
@@ -852,7 +867,9 @@ const Index = () => {
           </div>
         )}
       </div>
-      <OnboardingTour enabled={appState === "main"} forceShow={forceTour} onForceShowConsumed={() => setForceTour(false)} onNavigate={(s) => { navigateTo(s); setTourActiveScreen(s); }} onDismiss={() => setTourActiveScreen(null)} />
+      <Suspense fallback={null}>
+        <OnboardingTour enabled={appState === "main"} forceShow={forceTour} onForceShowConsumed={() => setForceTour(false)} onNavigate={(s) => { navigateTo(s); setTourActiveScreen(s); }} onDismiss={() => setTourActiveScreen(null)} />
+      </Suspense>
     </>
   );
 };
