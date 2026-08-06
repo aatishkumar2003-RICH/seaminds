@@ -58,29 +58,6 @@ const Community = ({ shipName, manningAgency, profileId, firstName, voyageStartD
     }
   };
 
-  const handlePortSearch = async () => {
-    if (!portInput.trim()) return;
-    setPortSearched(true);
-    // Search chat messages for port mentions
-    const { data: msgs } = await supabase
-      .from("chat_messages")
-      .select("crew_profile_id")
-      .eq("role", "user")
-      .ilike("content", `%port: ${portInput.trim()}%`)
-      .gte("created_at", new Date(Date.now() - 24 * 3600000).toISOString());
-
-    // Count unique crew
-    const uniqueIds = new Set((msgs || []).map((m) => m.crew_profile_id));
-    setPortCount(uniqueIds.size);
-
-    // Also register current user's port
-    await supabase.from("chat_messages").insert({
-      crew_profile_id: profileId,
-      role: "user",
-      content: `port: ${portInput.trim()}`,
-    });
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
