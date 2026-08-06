@@ -1178,6 +1178,36 @@ export type Database = {
         }
         Relationships: []
       }
+      feed_interactions: {
+        Row: {
+          action: string
+          created_at: string
+          crew_id: string
+          id: string
+          item_id: string
+          item_type: string
+          position: number | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          crew_id: string
+          id?: string
+          item_id: string
+          item_type: string
+          position?: number | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          crew_id?: string
+          id?: string
+          item_id?: string
+          item_type?: string
+          position?: number | null
+        }
+        Relationships: []
+      }
       interview_pre_form: {
         Row: {
           accident_history: string | null
@@ -1624,6 +1654,33 @@ export type Database = {
           regulation?: string | null
           times_used?: number | null
           vessel_type?: string | null
+        }
+        Relationships: []
+      }
+      quiz_answers: {
+        Row: {
+          chosen_index: number | null
+          created_at: string
+          crew_id: string
+          id: string
+          is_correct: boolean | null
+          question_id: string
+        }
+        Insert: {
+          chosen_index?: number | null
+          created_at?: string
+          crew_id: string
+          id?: string
+          is_correct?: boolean | null
+          question_id: string
+        }
+        Update: {
+          chosen_index?: number | null
+          created_at?: string
+          crew_id?: string
+          id?: string
+          is_correct?: boolean | null
+          question_id?: string
         }
         Relationships: []
       }
