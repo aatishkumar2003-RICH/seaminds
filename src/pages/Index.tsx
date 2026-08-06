@@ -635,7 +635,11 @@ const Index = () => {
                   <span className="text-sm font-bold text-foreground">{firstName || "Seafarer"}</span>
                   {role && <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground">{role}</span>}
                 </div>
-                <span className="text-xs font-mono text-muted-foreground">{utcTime}</span>
+                <div className="flex items-center gap-2">
+                  <NotificationBell profileId={profileId} onNavigate={(s) => setScreen(s as any)} />
+                  <span className="text-xs font-mono text-muted-foreground">{utcTime}</span>
+                </div>
+
               </div>
 
               {/* Stats cards */}
