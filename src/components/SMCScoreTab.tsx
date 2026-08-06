@@ -478,7 +478,21 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
             onExit={() => setView("payment")}
           />
         ) : (
-          <SMCScoreCertificate />
+          <>
+            <SMCScoreCertificate />
+            <div className="px-4 pb-6">
+              <button
+                onClick={startRetake}
+                className="w-full mt-4 rounded-2xl py-3.5 font-bold text-sm"
+                style={{ background: "transparent", color: "#D4AF37", border: "1px solid #D4AF37", cursor: "pointer" }}
+              >
+                🔄 Retake Assessment — Improve My Score
+              </button>
+              <p className="text-center text-[11px] mt-2" style={{ color: "#64748b" }}>
+                You can retake the assessment as many times as you like. Your latest score is the one companies see.
+              </p>
+            </div>
+          </>
         )}
       </div>
     </div>
