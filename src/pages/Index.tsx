@@ -453,7 +453,9 @@ const Index = () => {
   };
 
   const vesselOnboardingUI = (
-    <VesselOnboardingCard profileId={profileId} existingShipName={shipName} existingRole={role} onBack={() => setScreen("news")} onComplete={handleVesselOnboardingComplete} />
+    <Suspense fallback={null}>
+      <VesselOnboardingCard profileId={profileId} existingShipName={shipName} existingRole={role} onBack={() => setScreen("news")} onComplete={handleVesselOnboardingComplete} />
+    </Suspense>
   );
 
   const handleFeedbackSubmit = async () => {
