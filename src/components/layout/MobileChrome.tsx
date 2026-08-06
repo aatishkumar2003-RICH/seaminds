@@ -27,7 +27,9 @@ interface MobileChromeProps {
   jobBadgeCount: number;
   shipName: string;
   showBackToNews?: boolean;
+  headerRight?: React.ReactNode;
   tourActiveScreen?: Screen | null;
+
   onNavClick: (item: NavItem) => void;
   onNavigateToNews: () => void;
   onReplayTour: () => void;
@@ -73,7 +75,9 @@ const MobileChrome: React.FC<MobileChromeProps> = (props) => {
         firstName={firstName}
         nationality={props.nationality}
         appState={props.appState}
+        headerRight={props.headerRight}
       />
+
     </>
   );
 };

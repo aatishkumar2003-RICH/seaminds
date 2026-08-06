@@ -70,9 +70,13 @@ const PWAInstallPrompt = () => {
 
   return (
     <div
-      className="fixed bottom-4 left-4 right-4 z-[60] mx-auto max-w-md rounded-xl border border-primary/40 p-4 shadow-xl backdrop-blur-md sm:left-auto sm:right-4"
-      style={{ background: "hsl(var(--background) / 0.95)" }}
+      className="pwa-install-card fixed left-4 right-4 z-[60] mx-auto max-w-md rounded-xl border border-primary/40 p-4 shadow-xl backdrop-blur-md sm:left-auto sm:right-4"
+      style={{
+        background: "hsl(var(--background) / 0.95)",
+        bottom: "calc(76px + env(safe-area-inset-bottom, 0px))",
+      }}
     >
+
       <button
         onClick={handleDismiss}
         aria-label="Dismiss"

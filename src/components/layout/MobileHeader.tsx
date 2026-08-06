@@ -10,10 +10,12 @@ interface MobileHeaderProps {
   firstName: string;
   nationality: string;
   appState?: AppState;
+  headerRight?: React.ReactNode;
 }
 
+
 const MobileHeader: React.FC<MobileHeaderProps> = ({
-  onMenuOpen, showBackToNews, screen, onNavigateToNews, firstName, nationality, appState,
+  onMenuOpen, showBackToNews, screen, onNavigateToNews, firstName, nationality, appState, headerRight,
 }) => {
   if (appState === "landing") return null;
 
@@ -31,11 +33,15 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
         <img src={seamindsLogo} alt="SeaMinds" className="h-6 w-6 rounded-full object-contain" />
         <span className="text-sm font-bold text-foreground">SeaMinds</span>
       </div>
-      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary">
-        <span className="text-base">{flag}</span>
+      <div className="flex items-center gap-1">
+        {headerRight}
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary">
+          <span className="text-base">{flag}</span>
+        </div>
       </div>
     </div>
   );
 };
+
 
 export default MobileHeader;

@@ -35,6 +35,8 @@ import VoyageReport from "@/components/VoyageReport";
 import CertWallet from "@/components/CertWallet";
 import CvAndCertificates from "@/components/CvAndCertificates";
 import HomeFeed from "@/components/HomeFeed";
+import NotificationBell from "@/components/NotificationBell";
+
 
 import RestHoursTracker from "@/components/RestHoursTracker";
 import VesselRating from "@/components/VesselRating";
@@ -620,7 +622,7 @@ const Index = () => {
           </div>
 
           <div className="relative z-10 flex min-h-0 flex-1 flex-col">
-            <MobileChrome {...mobileChromeProps} showBackToNews />
+            <MobileChrome {...mobileChromeProps} showBackToNews headerRight={<NotificationBell profileId={profileId} onNavigate={(s) => setScreen(s as any)} />} />
             <div className="lg:hidden">
               <VoyageModeBar status={voyageStatus} />
             </div>
@@ -633,7 +635,11 @@ const Index = () => {
                   <span className="text-sm font-bold text-foreground">{firstName || "Seafarer"}</span>
                   {role && <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground">{role}</span>}
                 </div>
-                <span className="text-xs font-mono text-muted-foreground">{utcTime}</span>
+                <div className="flex items-center gap-2">
+                  <NotificationBell profileId={profileId} onNavigate={(s) => setScreen(s as any)} />
+                  <span className="text-xs font-mono text-muted-foreground">{utcTime}</span>
+                </div>
+
               </div>
 
               {/* Stats cards */}

@@ -313,3 +313,11 @@ button, a, [role="button"] { touch-action: manipulation; cursor: pointer; }
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 }
+
+@layer utilities {
+  @media (min-width: 1024px) {
+    .pwa-install-card {
+      bottom: calc(1rem + env(safe-area-inset-bottom, 0px)) !important;
+    }
+  }
+}
