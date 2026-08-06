@@ -37,7 +37,7 @@ const supabase = createClient(
 const esc = (s: string) =>
   (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-const wrap = (text: string, maxChars: number): string[] => {
+const wrap = (text: string, maxChars: number, maxLines: number): string[] => {
   const words = (text || "").split(" ");
   const lines: string[] = [];
   let line = "";
@@ -46,15 +46,44 @@ const wrap = (text: string, maxChars: number): string[] => {
     else line = (line + " " + w).trim();
   }
   if (line) lines.push(line.trim());
-  return lines.slice(0, 2);
+  return lines.slice(0, maxLines);
 };
 
 function buildSvg(v: {
   rank: string; vessel: string; company: string; salary: string; port: string;
 }): string {
   const NAVY = "#0D1B2A", GOLD = "#D4AF37", CARD = "#112240";
-  const rankLines = wrap(v.rank || "Crew Wanted", 16);
-  const rankY = rankLines.length > 1 ? 330 : 360;
+
+  // Scale the rank text down as it gets longer so nothing is cut off
+  const rankText = v.rank || "Crew Wanted";
+  let rankSize = 76, rankChars = 17;
+  if (rankText.length > 44) { rankSize = 50; rankChars = 26; }
+  else if (rankText.length > 26) { rankSize = 62; rankChars = 21; }
+  const rankLines = wrap(rankText, rankChars, 3);
+
+  let y = 300;
+  const parts: string[] = [];
+
+  rankLines.forEach((l) => {
+    parts.push(`<text x="90" y="${y}" font-family="DejaVu Sans" font-size="${rankSize}" font-weight="900" fill="#ffffff">${esc(l)}</text>`);
+    y += rankSize + 12;
+  });
+
+  y += 18;
+  parts.push(`<text x="90" y="${y}" font-family="DejaVu Sans" font-size="34" font-weight="700" fill="${GOLD}">${esc(v.vessel || "All Vessel Types")}</text>`);
+  y += 50;
+
+  parts.push(`<text x="90" y="${y}" font-family="DejaVu Sans" font-size="27" fill="#cbd5e1">${esc(v.company || "Verified Manning Company")}</text>`);
+  y += 60;
+
+  // Always render a salary block so the card never looks empty
+  const salaryText = v.salary && String(v.salary).trim() ? v.salary : "Salary on request";
+  const salaryColour = v.salary && String(v.salary).trim() ? "#22c55e" : "#94a3b8";
+  parts.push(`<rect x="90" y="${y}" width="900" height="96" rx="16" fill="${CARD}" stroke="${salaryColour}" stroke-opacity="0.4"/>`);
+  parts.push(`<text x="130" y="${y + 62}" font-family="DejaVu Sans" font-size="40" font-weight="900" fill="${salaryColour}">${esc(salaryText)}</text>`);
+  y += 140;
+
+  parts.push(`<text x="90" y="${y}" font-family="DejaVu Sans" font-size="27" fill="#94a3b8">Joining: ${esc(v.port && String(v.port).trim() ? v.port : "To be confirmed")}</text>`);
 
   return `<svg width="1080" height="1080" viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg">
   <defs>
@@ -62,40 +91,20 @@ function buildSvg(v: {
       <stop offset="0%" stop-color="${NAVY}"/>
       <stop offset="100%" stop-color="#08121f"/>
     </linearGradient>
-    <linearGradient id="wave" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="${GOLD}" stop-opacity="0.15"/>
-      <stop offset="100%" stop-color="${GOLD}" stop-opacity="0.02"/>
-    </linearGradient>
   </defs>
   <rect width="1080" height="1080" fill="url(#bg)"/>
   <rect x="0" y="0" width="1080" height="1080" fill="none" stroke="${GOLD}" stroke-width="6" stroke-opacity="0.5"/>
 
-  <!-- top bar -->
   <circle cx="90" cy="90" r="34" fill="${CARD}" stroke="${GOLD}" stroke-width="2"/>
-  <text x="90" y="102" font-family="DejaVu Sans" font-size="30" font-weight="900" fill="${GOLD}" text-anchor="middle">SM</text>
-  <text x="140" y="82" font-family="DejaVu Sans" font-size="30" font-weight="800" fill="#ffffff">SeaMinds</text>
-  <text x="140" y="112" font-family="DejaVu Sans" font-size="18" letter-spacing="3" fill="${GOLD}">SEAFARER JOB ALERT</text>
+  <text x="90" y="102" font-family="DejaVu Sans" font-size="28" font-weight="900" fill="${GOLD}" text-anchor="middle">SM</text>
+  <text x="142" y="82" font-family="DejaVu Sans" font-size="30" font-weight="800" fill="#ffffff">SeaMinds</text>
+  <text x="142" y="112" font-family="DejaVu Sans" font-size="17" letter-spacing="3" fill="${GOLD}">SEAFARER JOB ALERT</text>
 
-  <!-- rank, huge -->
-  ${rankLines.map((l, i) => `<text x="90" y="${rankY + i * 84}" font-family="DejaVu Sans" font-size="76" font-weight="900" fill="#ffffff">${esc(l)}</text>`).join("\n  ")}
+  ${parts.join("\n  ")}
 
-  <!-- vessel -->
-  <text x="90" y="${rankY + rankLines.length * 84 + 20}" font-family="DejaVu Sans" font-size="34" fill="${GOLD}" font-weight="700">${esc(v.vessel || "All Vessel Types")}</text>
-
-  <!-- company -->
-  <text x="90" y="${rankY + rankLines.length * 84 + 66}" font-family="DejaVu Sans" font-size="26" fill="#cbd5e1">${esc(v.company || "Verified Manning Company")}</text>
-
-  <!-- salary card -->
-  ${v.salary ? `
-  <rect x="90" y="${rankY + rankLines.length * 84 + 100}" width="900" height="90" rx="16" fill="${CARD}" stroke="#22c55e" stroke-opacity="0.4"/>
-  <text x="130" y="${rankY + rankLines.length * 84 + 158}" font-family="DejaVu Sans" font-size="42" font-weight="900" fill="#22c55e">${esc(v.salary)}</text>
-  ` : ""}
-
-  ${v.port ? `<text x="90" y="1010" font-family="DejaVu Sans" font-size="26" fill="#94a3b8">Joining: ${esc(v.port)}</text>` : ""}
-
-  <!-- footer -->
-  <rect x="0" y="984" width="1080" height="96" fill="${CARD}"/>
-  <text x="540" y="1044" font-family="DejaVu Sans" font-size="30" font-weight="800" fill="${GOLD}" text-anchor="middle">Apply free — seaminds.life</text>
+  <rect x="0" y="960" width="1080" height="120" fill="${CARD}"/>
+  <text x="540" y="1012" font-family="DejaVu Sans" font-size="31" font-weight="800" fill="${GOLD}" text-anchor="middle">Apply free — seaminds.life</text>
+  <text x="540" y="1052" font-family="DejaVu Sans" font-size="21" fill="#94a3b8" text-anchor="middle">Verified maritime vacancies for seafarers</text>
 </svg>`;
 }
 
