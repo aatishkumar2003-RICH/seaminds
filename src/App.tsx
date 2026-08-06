@@ -33,6 +33,7 @@ import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import JobFeed from "./pages/JobFeed";
 import PostVacancyPage from "./pages/PostVacancyPage";
+import JoinLanding from "./pages/JoinLanding";
 import AdminDashboard from "./pages/AdminDashboard";
 import Verify from "./pages/Verify";
 import OAuthConsent from "./pages/OAuthConsent";
@@ -118,6 +119,7 @@ const App = () => (
             <Route path="/" element={<HomePage />} />
             <Route path="/app" element={<Index />} />
             <Route path="/feed" element={<JobFeed />} />
+            <Route path="/join" element={<JoinLanding />} />
             <Route path="/manager" element={<ManagerAuth />} />
             <Route path="/manager/dashboard" element={<ManagerDashboard />} />
            <Route path="/manager-search" element={<ManagerSearch />} />
