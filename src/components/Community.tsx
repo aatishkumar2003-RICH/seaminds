@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { Compass, Shield, Users, Ship, MapPin, AlertTriangle, CheckCircle, Heart, Send, Mail, Anchor, FileText, Download, Eye } from "lucide-react";
-import MyDocumentsSection from "@/components/smc/MyDocumentsSection";
+import { Compass, Shield, Users, Ship, AlertTriangle, CheckCircle, Heart, Send, Mail, Anchor, FileText, Download, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -14,7 +13,7 @@ interface CommunityProps {
   onOpenVesselRating: () => void;
 }
 
-const MOOD_WORDS = ["Tired", "Good", "Homesick", "Motivated", "Grateful", "Lonely", "Strong", "Bored", "Hopeful", "Calm"];
+
 
 const SAFETY_CATEGORIES = [
   { id: "physical", emoji: "🔴", label: "Physical Safety", desc: "Unsafe equipment, missing PPE, structural damage" },
@@ -28,11 +27,6 @@ const SAFETY_CATEGORIES = [
 const Community = ({ shipName, manningAgency, profileId, firstName, voyageStartDate, onCompleteVoyage, onOpenVesselRating }: CommunityProps) => {
   const [companyCount, setCompanyCount] = useState(0);
   const [vesselCount, setVesselCount] = useState(0);
-  const [portInput, setPortInput] = useState("");
-  const [portCount, setPortCount] = useState<number | null>(null);
-  const [portSearched, setPortSearched] = useState(false);
-  const [vesselWords, setVesselWords] = useState<string[]>([]);
-  const [selectedWord, setSelectedWord] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
