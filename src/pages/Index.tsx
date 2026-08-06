@@ -34,6 +34,7 @@ import SOSButton from "@/components/SOSButton";
 import VoyageReport from "@/components/VoyageReport";
 import CertWallet from "@/components/CertWallet";
 import CvAndCertificates from "@/components/CvAndCertificates";
+import HomeFeed from "@/components/HomeFeed";
 
 import RestHoursTracker from "@/components/RestHoursTracker";
 import VesselRating from "@/components/VesselRating";
@@ -145,6 +146,7 @@ const Index = () => {
   // Page title
   useEffect(() => {
     const titles: Record<Screen, string> = {
+      home: "SeaMinds | Home",
       chat: "SeaMinds | Wellness", dashboard: "SeaMinds | Wellness",
       opportunities: "SeaMinds | Opportunities", news: "SeaMinds | News",
       academy: "SeaMinds | Academy", bridge: "SeaMinds | PMS",
