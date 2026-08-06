@@ -81,3 +81,6 @@ verify_jwt = false
 [functions.blog-writer]
 verify_jwt = false
 
+
+[functions.sitemap]
+verify_jwt = false
