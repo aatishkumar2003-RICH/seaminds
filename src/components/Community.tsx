@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { Compass, Shield, Users, Ship, MapPin, AlertTriangle, CheckCircle, Heart, Send, Mail, Anchor, FileText, Download, Eye } from "lucide-react";
-import MyDocumentsSection from "@/components/smc/MyDocumentsSection";
+import { Compass, Shield, Users, Ship, AlertTriangle, CheckCircle, Heart, Send, Mail, Anchor, FileText, Download, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -14,7 +13,7 @@ interface CommunityProps {
   onOpenVesselRating: () => void;
 }
 
-const MOOD_WORDS = ["Tired", "Good", "Homesick", "Motivated", "Grateful", "Lonely", "Strong", "Bored", "Hopeful", "Calm"];
+
 
 const SAFETY_CATEGORIES = [
   { id: "physical", emoji: "🔴", label: "Physical Safety", desc: "Unsafe equipment, missing PPE, structural damage" },
@@ -28,11 +27,6 @@ const SAFETY_CATEGORIES = [
 const Community = ({ shipName, manningAgency, profileId, firstName, voyageStartDate, onCompleteVoyage, onOpenVesselRating }: CommunityProps) => {
   const [companyCount, setCompanyCount] = useState(0);
   const [vesselCount, setVesselCount] = useState(0);
-  const [portInput, setPortInput] = useState("");
-  const [portCount, setPortCount] = useState<number | null>(null);
-  const [portSearched, setPortSearched] = useState(false);
-  const [vesselWords, setVesselWords] = useState<string[]>([]);
-  const [selectedWord, setSelectedWord] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -42,8 +36,6 @@ const Community = ({ shipName, manningAgency, profileId, firstName, voyageStartD
   const loadData = async () => {
     setLoading(true);
     try {
-      const oneWeekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
-
       // Vessel crew count
       const { count: vCount } = await supabase
         .from("crew_profiles")
@@ -59,76 +51,11 @@ const Community = ({ shipName, manningAgency, profileId, firstName, voyageStartD
           .eq("manning_agency", manningAgency);
         setCompanyCount(cCount || 0);
       }
-
-      // Load vessel mood words from chat messages (last 7 days)
-      const { data: crewIds } = await supabase
-        .from("crew_profiles")
-        .select("id")
-        .eq("ship_name", shipName);
-
-      if (crewIds && crewIds.length > 0) {
-        const ids = crewIds.map((c) => c.id);
-        const { data: msgs } = await supabase
-          .from("chat_messages")
-          .select("content")
-          .eq("role", "user")
-          .in("crew_profile_id", ids)
-          .gte("created_at", oneWeekAgo);
-
-        // Extract mood words from messages
-        const words: string[] = [];
-        (msgs || []).forEach((m) => {
-          const lower = m.content.toLowerCase();
-          MOOD_WORDS.forEach((w) => {
-            if (lower.includes(w.toLowerCase()) && !words.includes(w)) {
-              words.push(w);
-            }
-          });
-        });
-        setVesselWords(words);
-      }
     } catch (e) {
       console.error("Community load error:", e);
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleWordTap = async (word: string) => {
-    setSelectedWord(word);
-    // Store as a chat message so it appears in vessel word cloud
-    await supabase.from("chat_messages").insert({
-      crew_profile_id: profileId,
-      role: "user",
-      content: `mood word: ${word}`,
-    });
-    // Add to local list
-    if (!vesselWords.includes(word)) {
-      setVesselWords((prev) => [...prev, word]);
-    }
-  };
-
-  const handlePortSearch = async () => {
-    if (!portInput.trim()) return;
-    setPortSearched(true);
-    // Search chat messages for port mentions
-    const { data: msgs } = await supabase
-      .from("chat_messages")
-      .select("crew_profile_id")
-      .eq("role", "user")
-      .ilike("content", `%port: ${portInput.trim()}%`)
-      .gte("created_at", new Date(Date.now() - 24 * 3600000).toISOString());
-
-    // Count unique crew
-    const uniqueIds = new Set((msgs || []).map((m) => m.crew_profile_id));
-    setPortCount(uniqueIds.size);
-
-    // Also register current user's port
-    await supabase.from("chat_messages").insert({
-      crew_profile_id: profileId,
-      role: "user",
-      content: `port: ${portInput.trim()}`,
-    });
   };
 
   if (loading) {
@@ -155,6 +82,9 @@ const Community = ({ shipName, manningAgency, profileId, firstName, voyageStartD
       </div>
 
       <div className="flex-1 overflow-y-auto px-5 py-6 space-y-6">
+
+        {/* SECTION — Anonymous Safety Reporting (moved to top: this is a legal MLC 2006 / ISM right and must not be buried) */}
+        <SafetyReportSection shipName={shipName} manningAgency={manningAgency} />
 
         {/* SECTION 1 — My Company */}
         {manningAgency && (
@@ -191,80 +121,7 @@ const Community = ({ shipName, manningAgency, profileId, firstName, voyageStartD
             </div>
           </div>
 
-          {/* Word cloud */}
-          <p className="text-xs text-muted-foreground mb-3">How is your day? Tap a word:</p>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {MOOD_WORDS.map((word) => {
-              const isActive = vesselWords.includes(word);
-              const isSelected = selectedWord === word;
-              return (
-                <button
-                  key={word}
-                  onClick={() => handleWordTap(word)}
-                  disabled={!!selectedWord}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                    isSelected
-                      ? "bg-primary text-primary-foreground"
-                      : isActive
-                      ? "bg-primary/20 text-primary border border-primary/30"
-                      : "bg-secondary text-muted-foreground hover:bg-secondary/80"
-                  } disabled:opacity-60`}
-                >
-                  {word}
-                </button>
-              );
-            })}
-          </div>
-          {selectedWord && (
-            <p className="text-xs text-primary mt-2">✓ You selected "{selectedWord}"</p>
-          )}
         </div>
-
-        {/* SECTION 3 — Port Community */}
-        <div className="bg-card rounded-2xl border border-border p-6">
-          <p className="text-xs text-muted-foreground uppercase tracking-widest mb-3">Port Community</p>
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
-              <MapPin size={18} className="text-primary" />
-            </div>
-            <p className="text-sm text-muted-foreground">Find crew in your port</p>
-          </div>
-
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={portInput}
-              onChange={(e) => {
-                setPortInput(e.target.value);
-                setPortSearched(false);
-              }}
-              placeholder="Enter your current port"
-              className="flex-1 bg-secondary text-foreground text-sm rounded-xl px-4 py-3 placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary"
-            />
-            <button
-              onClick={handlePortSearch}
-              disabled={!portInput.trim()}
-              className="bg-primary text-primary-foreground text-sm font-medium px-4 py-3 rounded-xl disabled:opacity-30 transition-opacity"
-            >
-              Search
-            </button>
-          </div>
-
-          {portSearched && portCount !== null && (
-            <div className="mt-4 bg-secondary rounded-xl p-4 text-center">
-              <p className="text-2xl font-bold text-primary">{portCount + 1}</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                SeaMinds crew in {portInput} today
-              </p>
-              <p className="text-sm text-foreground mt-3 italic">
-                You are not alone in this port.
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* SECTION — My Documents */}
-        <MyDocumentsSection profileId={profileId} />
 
         {/* SECTION 4 — Family Connection */}
         <FamilyConnectionSection profileId={profileId} firstName={firstName} shipName={shipName} voyageStartDate={voyageStartDate} />
@@ -288,9 +145,6 @@ const Community = ({ shipName, manningAgency, profileId, firstName, voyageStartD
             Complete My Voyage
           </button>
         </div>
-
-        {/* SECTION 6 — Anonymous Safety Reporting */}
-        <SafetyReportSection shipName={shipName} manningAgency={manningAgency} />
 
         {/* SECTION — Rate Your Vessel */}
         <div className="bg-card rounded-2xl border border-border p-6">
