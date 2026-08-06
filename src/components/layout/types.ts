@@ -1,5 +1,5 @@
 export type AppState = "loading" | "landing" | "name-entry" | "welcome" | "main" | "voyage-report";
-export type Screen = "chat" | "dashboard" | "opportunities" | "news" | "academy" | "bridge" | "community" | "smc" | "resume" | "certs" | "resthours" | "vesselrating";
+export type Screen = "home" | "chat" | "dashboard" | "opportunities" | "news" | "academy" | "bridge" | "community" | "smc" | "resume" | "certs" | "resthours" | "vesselrating";
 
 export interface NavItem {
   icon: string;
@@ -9,6 +9,7 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: NavItem[] = [
+  { icon: "🏠", label: "Home", screen: "home" },
   { icon: "💬", label: "Wellness Chat", screen: "chat", gated: true },
   { icon: "💼", label: "Jobs", screen: "opportunities" },
   { icon: "⏱", label: "Rest Hours", screen: "resthours", gated: true },

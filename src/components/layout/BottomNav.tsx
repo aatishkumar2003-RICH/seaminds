@@ -9,9 +9,9 @@ interface Props {
 }
 
 const TABS: { icon: string; label: string; screen: Screen; gated?: boolean }[] = [
-  { icon: "💬", label: "Chat", screen: "chat", gated: true },
+  { icon: "🏠", label: "Home", screen: "home" },
   { icon: "💼", label: "Jobs", screen: "opportunities" },
-  { icon: "⏱", label: "Rest", screen: "resthours", gated: true },
+  { icon: "💬", label: "Chat", screen: "chat", gated: true },
   { icon: "📄", label: "CV / Cert", screen: "resume" },
 ];
 
