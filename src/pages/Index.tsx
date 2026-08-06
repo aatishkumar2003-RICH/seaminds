@@ -17,36 +17,35 @@ import { NATIONALITY_FLAGS, DRAWER_WIDTH, type AppState, type Screen, type NavIt
 // Screen components
 import LandingScreen from "@/components/LandingScreen";
 import OceanBackground from "@/components/homepage/OceanBackground";
-import NameEntry from "@/components/NameEntry";
-import WelcomeScreens from "@/components/WelcomeScreens";
-import CrewChat from "@/components/CrewChat";
-import WelfareDashboard from "@/components/WelfareDashboard";
-import Opportunities from "@/components/Opportunities";
-import News from "@/components/News";
-import Academy from "@/components/Academy";
-import Knowledge from "@/components/Knowledge";
-
-import Community from "@/components/Community";
-import Bridge from "@/components/Bridge";
-import SMCScoreTab from "@/components/SMCScoreTab";
-import ResumeBuilder from "@/components/ResumeBuilder";
 import SOSButton from "@/components/SOSButton";
-import VoyageReport from "@/components/VoyageReport";
-import CertWallet from "@/components/CertWallet";
-import CvAndCertificates from "@/components/CvAndCertificates";
 import HomeFeed from "@/components/HomeFeed";
 import NotificationBell from "@/components/NotificationBell";
-
-
-import RestHoursTracker from "@/components/RestHoursTracker";
-import VesselRating from "@/components/VesselRating";
-import NPSSurvey from "@/components/NPSSurvey";
-import VesselOnboardingCard from "@/components/VesselOnboardingCard";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
-import OnboardingTour from "@/components/OnboardingTour";
-import MarketPulseButton from "@/components/MarketPulseButton";
 import CvViewsCard from "@/components/CvViewsCard";
 import BottomNav from "@/components/layout/BottomNav";
+
+// Lazily-loaded screens — each downloads only when opened
+const CrewChat = lazy(() => import("@/components/CrewChat"));
+const WelfareDashboard = lazy(() => import("@/components/WelfareDashboard"));
+const Opportunities = lazy(() => import("@/components/Opportunities"));
+const News = lazy(() => import("@/components/News"));
+const Academy = lazy(() => import("@/components/Academy"));
+const Knowledge = lazy(() => import("@/components/Knowledge"));
+const Community = lazy(() => import("@/components/Community"));
+const Bridge = lazy(() => import("@/components/Bridge"));
+const SMCScoreTab = lazy(() => import("@/components/SMCScoreTab"));
+const ResumeBuilder = lazy(() => import("@/components/ResumeBuilder"));
+const VoyageReport = lazy(() => import("@/components/VoyageReport"));
+const CertWallet = lazy(() => import("@/components/CertWallet"));
+const CvAndCertificates = lazy(() => import("@/components/CvAndCertificates"));
+const RestHoursTracker = lazy(() => import("@/components/RestHoursTracker"));
+const VesselRating = lazy(() => import("@/components/VesselRating"));
+const NPSSurvey = lazy(() => import("@/components/NPSSurvey"));
+const VesselOnboardingCard = lazy(() => import("@/components/VesselOnboardingCard"));
+const OnboardingTour = lazy(() => import("@/components/OnboardingTour"));
+const MarketPulseButton = lazy(() => import("@/components/MarketPulseButton"));
+const WelcomeScreens = lazy(() => import("@/components/WelcomeScreens"));
+const NameEntry = lazy(() => import("@/components/NameEntry"));
 
 
 const PROFILE_KEY = "seamind_profile_id";
