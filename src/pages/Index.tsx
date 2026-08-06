@@ -35,6 +35,8 @@ import VoyageReport from "@/components/VoyageReport";
 import CertWallet from "@/components/CertWallet";
 import CvAndCertificates from "@/components/CvAndCertificates";
 import HomeFeed from "@/components/HomeFeed";
+import NotificationBell from "@/components/NotificationBell";
+
 
 import RestHoursTracker from "@/components/RestHoursTracker";
 import VesselRating from "@/components/VesselRating";
