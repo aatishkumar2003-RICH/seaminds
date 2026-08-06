@@ -36,8 +36,6 @@ const Community = ({ shipName, manningAgency, profileId, firstName, voyageStartD
   const loadData = async () => {
     setLoading(true);
     try {
-      const oneWeekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
-
       // Vessel crew count
       const { count: vCount } = await supabase
         .from("crew_profiles")
@@ -53,52 +51,10 @@ const Community = ({ shipName, manningAgency, profileId, firstName, voyageStartD
           .eq("manning_agency", manningAgency);
         setCompanyCount(cCount || 0);
       }
-
-      // Load vessel mood words from chat messages (last 7 days)
-      const { data: crewIds } = await supabase
-        .from("crew_profiles")
-        .select("id")
-        .eq("ship_name", shipName);
-
-      if (crewIds && crewIds.length > 0) {
-        const ids = crewIds.map((c) => c.id);
-        const { data: msgs } = await supabase
-          .from("chat_messages")
-          .select("content")
-          .eq("role", "user")
-          .in("crew_profile_id", ids)
-          .gte("created_at", oneWeekAgo);
-
-        // Extract mood words from messages
-        const words: string[] = [];
-        (msgs || []).forEach((m) => {
-          const lower = m.content.toLowerCase();
-          MOOD_WORDS.forEach((w) => {
-            if (lower.includes(w.toLowerCase()) && !words.includes(w)) {
-              words.push(w);
-            }
-          });
-        });
-        setVesselWords(words);
-      }
     } catch (e) {
       console.error("Community load error:", e);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleWordTap = async (word: string) => {
-    setSelectedWord(word);
-    // Store as a chat message so it appears in vessel word cloud
-    await supabase.from("chat_messages").insert({
-      crew_profile_id: profileId,
-      role: "user",
-      content: `mood word: ${word}`,
-    });
-    // Add to local list
-    if (!vesselWords.includes(word)) {
-      setVesselWords((prev) => [...prev, word]);
     }
   };
 
