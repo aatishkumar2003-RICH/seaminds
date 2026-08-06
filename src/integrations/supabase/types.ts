@@ -1522,6 +1522,42 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          crew_id: string
+          icon: string | null
+          id: string
+          kind: string
+          read: boolean | null
+          screen: string | null
+          title: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          crew_id: string
+          icon?: string | null
+          id?: string
+          kind: string
+          read?: boolean | null
+          screen?: string | null
+          title: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          crew_id?: string
+          icon?: string | null
+          id?: string
+          kind?: string
+          read?: boolean | null
+          screen?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       nps_responses: {
         Row: {
           comment: string | null
@@ -2122,6 +2158,7 @@ export type Database = {
       }
     }
     Functions: {
+      build_daily_notifications: { Args: never; Returns: string }
       get_admin_settings: {
         Args: { p_keys: string[] }
         Returns: {
