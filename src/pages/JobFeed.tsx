@@ -132,6 +132,17 @@ const JobFeed = () => {
               }}>{f}</button>
             ))}
           </div>
+
+          <div className="flex gap-2 mt-2">
+            <a href="https://whatsapp.com/channel/0029Vb8xcAJBFLgOKwwdTJ2V" target="_blank" rel="noopener noreferrer"
+              style={{ flex: 1, textAlign: "center", background: "#25D366", color: "#fff", borderRadius: 10, padding: "7px 0", fontSize: 12, fontWeight: 700, textDecoration: "none" }}>
+              📲 Job alerts on WhatsApp
+            </a>
+            <a href="https://t.me/seamindsjobs" target="_blank" rel="noopener noreferrer"
+              style={{ flex: 1, textAlign: "center", background: "#229ED9", color: "#fff", borderRadius: 10, padding: "7px 0", fontSize: 12, fontWeight: 700, textDecoration: "none" }}>
+              Telegram
+            </a>
+          </div>
         </div>
       </header>
 

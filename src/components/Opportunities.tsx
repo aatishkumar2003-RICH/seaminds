@@ -111,6 +111,20 @@ const Opportunities = ({ profileId, firstName, role, nationality, shipName }: Op
         </a>
       </div>
 
+      {/* WhatsApp Channel Banner */}
+      <a
+        href="https://whatsapp.com/channel/0029Vb8xcAJBFLgOKwwdTJ2V"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mx-4 mt-2 flex items-center justify-between gap-3 rounded-xl px-4 py-3"
+        style={{ background: "rgba(37,211,102,0.12)", border: "1px solid rgba(37,211,102,0.4)" }}
+      >
+        <span className="text-sm font-medium text-foreground">📲 Job alerts on WhatsApp</span>
+        <span className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold" style={{ background: "#25D366", color: "#fff" }}>
+          Join Channel →
+        </span>
+      </a>
+
       <div className="flex-1 overflow-y-auto px-4 pb-4 pt-3">
         <FindWork
           profileId={profileId}

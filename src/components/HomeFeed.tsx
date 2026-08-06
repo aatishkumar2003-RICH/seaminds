@@ -48,6 +48,7 @@ type Card =
   | { kind: "stats"; id: string; data: { items: any[] } }
   | { kind: "salary"; id: string; data: { rows: { rank: string; salary: string }[] } }
   | { kind: "quiz"; id: string; data: any }
+  | { kind: "channels"; id: string; data: Record<string, never> }
   | { kind: "nudge"; id: string; data: { icon: string; title: string; text: string; cta: string; screen: string } };
 
 const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props) => {
@@ -173,6 +174,7 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
       } else if (salaryRows.length) {
         out.push({ kind: "salary", id: `sal-${cycle}`, data: { rows: salaryRows } });
       }
+      if (cycle === 0) out.push({ kind: "channels", id: "ch-1", data: {} });
       pushVac();
       if (quizzes[qi]) out.push({ kind: "quiz", id: `q-${quizzes[qi].id}`, data: quizzes[qi++] });
       pushArt();
@@ -302,6 +304,31 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
               </article>
             );
           }
+
+          if (c.kind === "channels") {
+            return (
+              <article key={c.id} className="rounded-2xl p-4" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
+                <p className="text-[10px] font-bold tracking-wider mb-1" style={{ color: GOLD }}>🔔 NEVER MISS A JOB</p>
+                <p className="text-[12px] mb-3" style={{ color: "#cbd5e1" }}>
+                  Get every new vacancy the moment it lands — free, on the app you already use.
+                </p>
+                <div className="flex gap-2">
+                  <a href="https://whatsapp.com/channel/0029Vb8xcAJBFLgOKwwdTJ2V" target="_blank" rel="noopener noreferrer"
+                    className="flex-1 rounded-xl py-2.5 text-center text-[12px] font-bold"
+                    style={{ background: "#25D366", color: "#fff" }}>
+                    WhatsApp
+                  </a>
+                  <a href="https://t.me/seamindsjobs" target="_blank" rel="noopener noreferrer"
+                    className="flex-1 rounded-xl py-2.5 text-center text-[12px] font-bold"
+                    style={{ background: "#229ED9", color: "#fff" }}>
+                    Telegram
+                  </a>
+                </div>
+              </article>
+            );
+          }
+
+
 
           if (c.kind === "salary") {
             return (
