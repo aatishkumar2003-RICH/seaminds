@@ -215,6 +215,22 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
     trackEvent("smc_assessment_start", { rank });
   };
 
+  const startRetake = async () => {
+    setStarted(true);
+    const { data } = await supabase
+      .from("smc_assessments")
+      .insert({ crew_profile_id: profileId, status: "in_progress", current_step: 1 })
+      .select("id")
+      .single();
+    if (data) {
+      setAssessmentId(data.id);
+    } else {
+      setAssessmentId("temp-" + Date.now());
+    }
+    setView("assessment");
+    trackEvent("smc_assessment_retake", { rank });
+  };
+
   if (view === "loading") {
     return (
       <div className="flex items-center justify-center h-full">
@@ -301,43 +317,45 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
     </div>
   );
 
-  const ScoreHero = () => (
-    <div className="flex flex-col h-full overflow-y-auto px-5 py-6">
-      <div className="rounded-3xl p-6 text-center" style={{ background: "linear-gradient(160deg, rgba(212,175,55,0.18), rgba(13,27,42,0.4))", border: "1px solid rgba(212,175,55,0.45)" }}>
-        <div className="text-5xl mb-3">🏆</div>
-        <h1 className="text-2xl font-extrabold mb-2" style={{ color: "#D4AF37" }}>What's Your Competency Score?</h1>
-        <p className="text-sm mb-1" style={{ color: "#e2e8f0" }}>The SeaMinds Competency Score rates you from</p>
-        <p className="text-3xl font-black mb-4" style={{ color: "#D4AF37" }}>0.00 → 5.00 ⭐</p>
-        <p className="text-xs" style={{ color: "#94a3b8" }}>Technical · Experience · Communication · Behaviour · Wellness</p>
-      </div>
-      <div className="mt-5 space-y-3">
-        {[
-          { icon: "🚀", title: "Be seen first", text: "Companies sort crew by score. Higher score, higher in the list." },
-          { icon: "⚓", title: "Reach prime jobs", text: "Better vessels and contracts ask for proven competency." },
-          { icon: "💰", title: "Negotiate stronger", text: "A verified score is evidence when you discuss salary." },
-          { icon: "📜", title: "Get your certificate", text: "A shareable certificate with a QR code employers can verify." },
-        ].map((b) => (
-          <div key={b.title} className="flex gap-3 rounded-2xl p-3.5" style={{ background: "#112240", border: "1px solid #1e3a5f" }}>
-            <span className="text-xl shrink-0">{b.icon}</span>
-            <div>
-              <p className="text-sm font-bold" style={{ color: "#fff" }}>{b.title}</p>
-              <p className="text-[11px] leading-snug" style={{ color: "#94a3b8" }}>{b.text}</p>
+  const ScoreHero = () => {
+    return (
+      <div className="flex flex-col h-full overflow-y-auto px-5 py-6">
+        <div className="rounded-3xl p-6 text-center" style={{ background: "linear-gradient(160deg, rgba(212,175,55,0.18), rgba(13,27,42,0.4))", border: "1px solid rgba(212,175,55,0.45)" }}>
+          <div className="text-5xl mb-3">🏆</div>
+          <h1 className="text-2xl font-extrabold mb-2" style={{ color: "#D4AF37" }}>What's Your Competency Score?</h1>
+          <p className="text-sm mb-1" style={{ color: "#e2e8f0" }}>The SeaMinds Competency Score rates you from</p>
+          <p className="text-3xl font-black mb-4" style={{ color: "#D4AF37" }}>0.00 → 5.00 ⭐</p>
+          <p className="text-xs" style={{ color: "#94a3b8" }}>Technical · Experience · Communication · Behaviour · Wellness</p>
+        </div>
+        <div className="mt-5 space-y-3">
+          {[
+            { icon: "🚀", title: "Be seen first", text: "Companies sort crew by score. Higher score, higher in the list." },
+            { icon: "⚓", title: "Reach prime jobs", text: "Better vessels and contracts ask for proven competency." },
+            { icon: "💰", title: "Negotiate stronger", text: "A verified score is evidence when you discuss salary." },
+            { icon: "📜", title: "Get your certificate", text: "A shareable certificate with a QR code employers can verify." },
+          ].map((b) => (
+            <div key={b.title} className="flex gap-3 rounded-2xl p-3.5" style={{ background: "#112240", border: "1px solid #1e3a5f" }}>
+              <span className="text-xl shrink-0">{b.icon}</span>
+              <div>
+                <p className="text-sm font-bold" style={{ color: "#fff" }}>{b.title}</p>
+                <p className="text-[11px] leading-snug" style={{ color: "#94a3b8" }}>{b.text}</p>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
+        <button onClick={() => setStarted(true)} className="w-full mt-6 rounded-2xl py-4 font-extrabold text-base" style={{ background: "#D4AF37", color: "#0D1B2A", border: "none", cursor: "pointer" }}>
+          ⚡ Check My Score
+        </button>
+        <p className="text-center text-[11px] mt-3" style={{ color: "#64748b" }}>
+          {selfPrice > 0 ? `$${selfPrice} · about 10 minutes` : "Free for now · about 10 minutes"}
+        </p>
+        <p className="text-center text-[11px] mt-1" style={{ color: "#64748b" }}>You'll be asked for your CV and certificates next.</p>
+        <div className="h-6" />
       </div>
-      <button onClick={() => setStarted(true)} className="w-full mt-6 rounded-2xl py-4 font-extrabold text-base" style={{ background: "#D4AF37", color: "#0D1B2A", border: "none", cursor: "pointer" }}>
-        ⚡ Check My Score
-      </button>
-      <p className="text-center text-[11px] mt-3" style={{ color: "#64748b" }}>
-        {selfPrice > 0 ? `$${selfPrice} · about 10 minutes` : "Free for now · about 10 minutes"}
-      </p>
-      <p className="text-center text-[11px] mt-1" style={{ color: "#64748b" }}>You'll be asked for your CV and certificates next.</p>
-      <div className="h-6" />
-    </div>
-  );
+    );
+  };
 
-  if (view === "payment" && !started) return <ScoreHero />;
+  if (view === "payment" && !started) return ScoreHero();
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
@@ -460,7 +478,21 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
             onExit={() => setView("payment")}
           />
         ) : (
-          <SMCScoreCertificate />
+          <>
+            <SMCScoreCertificate />
+            <div className="px-4 pb-6">
+              <button
+                onClick={startRetake}
+                className="w-full mt-4 rounded-2xl py-3.5 font-bold text-sm"
+                style={{ background: "transparent", color: "#D4AF37", border: "1px solid #D4AF37", cursor: "pointer" }}
+              >
+                🔄 Retake Assessment — Improve My Score
+              </button>
+              <p className="text-center text-[11px] mt-2" style={{ color: "#64748b" }}>
+                You can retake the assessment as many times as you like. Your latest score is the one companies see.
+              </p>
+            </div>
+          </>
         )}
       </div>
     </div>
