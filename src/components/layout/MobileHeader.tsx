@@ -10,7 +10,9 @@ interface MobileHeaderProps {
   firstName: string;
   nationality: string;
   appState?: AppState;
+  headerRight?: React.ReactNode;
 }
+
 
 const MobileHeader: React.FC<MobileHeaderProps> = ({
   onMenuOpen, showBackToNews, screen, onNavigateToNews, firstName, nationality, appState,
