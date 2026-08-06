@@ -7,20 +7,6 @@ const NAVY = "#0D1B2A";
 const CARD = "#112240";
 const BORDER = "#1e3a5f";
 
-const SHIP_PHOTOS = [
-  "https://images.unsplash.com/photo-1605281317010-fe5ffe798166?w=800&q=70",
-  "https://images.unsplash.com/photo-1494412574643-ff11b0a5c1c3?w=800&q=70",
-  "https://images.unsplash.com/photo-1520383278046-eaa4b0d2d754?w=800&q=70",
-  "https://images.unsplash.com/photo-1519060825752-c4c2f4c4d0f5?w=800&q=70",
-  "https://images.unsplash.com/photo-1573112307548-5b9c1a1c1d1a?w=800&q=70",
-];
-const SHIP_CAPTIONS = [
-  "Container giant departing at first light",
-  "Heavy weather in the North Atlantic",
-  "Alongside at night — cargo ops in progress",
-  "Anchorage at sunrise, waiting for berth",
-  "Full ahead — open ocean passage",
-];
 
 const LANG_BY_NATIONALITY: Record<string, string> = {
   Filipino: "tl", Indian: "hi", Indonesian: "id",
@@ -57,6 +43,7 @@ type Card =
   | { kind: "vacancy"; id: string; data: any }
   | { kind: "article"; id: string; data: any }
   | { kind: "ship"; id: string; data: { photo: string; caption: string } }
+  | { kind: "stats"; id: string; data: { items: any[] } }
   | { kind: "salary"; id: string; data: { rows: { rank: string; salary: string }[] } }
   | { kind: "quiz"; id: string; data: any }
   | { kind: "nudge"; id: string; data: { icon: string; title: string; text: string; cta: string; screen: string } };
@@ -80,7 +67,7 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
     const lang = LANG_BY_NATIONALITY[nationality] || "en";
     const dept = deptOf(rank);
 
-    const [vacRes, postRes, artRes, quizRes, profRes] = await Promise.all([
+    const [vacRes, postRes, artRes, quizRes, profRes, shipRes, streakRes, scoreRes] = await Promise.all([
       supabase.from("external_vacancies")
         .select("id, rank_required, vessel_type, company_name, salary_text, joining_port, contract_duration, contact_whatsapp, apply_url, is_verified, fetched_at")
         .order("fetched_at", { ascending: false }).limit(40),
@@ -95,7 +82,20 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
         .select("id, question, options, correct_index, explanation, regulation")
         .eq("active", true).limit(30),
       supabase.from("crew_profiles").select("is_available, whatsapp_verified").eq("id", profileId).maybeSingle(),
+      supabase.from("ship_photos" as any).select("id, photo_url, caption").eq("active", true).limit(20),
+      supabase.from("wellness_streaks").select("current_streak").eq("crew_profile_id", profileId).maybeSingle(),
+      supabase.from("smc_assessments").select("overall_score").eq("crew_profile_id", profileId).eq("status", "completed").order("completed_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
+
+    const ships = (((shipRes.data as any[]) || []).sort(() => Math.random() - 0.5));
+    const streak = (streakRes.data as any)?.current_streak;
+    const score = (scoreRes.data as any)?.overall_score;
+    const statItems = [
+      { icon: "🔥", value: streak ?? 0, label: "day streak", screen: "chat" },
+      { icon: "📜", value: "—", label: "certificates", screen: "resume" },
+      { icon: "⏱", value: "—", label: "rest hours", screen: "resthours" },
+      { icon: "🏆", value: score ? Number(score).toFixed(1) : "Get", label: "SMC", screen: "smc", highlight: true },
+    ];
 
     // Fall back to English articles if the language has none
     let articles: any[] = (artRes.data as any[]) || [];
@@ -159,9 +159,15 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
 
     for (let cycle = 0; cycle < 10; cycle++) {
       pushVac();
+      if (cycle === 0) out.push({ kind: "stats", id: "stats", data: { items: statItems } });
       if (cycle % 2 === 0) {
-        out.push({ kind: "ship", id: `s-${si}`, data: { photo: SHIP_PHOTOS[si % SHIP_PHOTOS.length], caption: SHIP_CAPTIONS[si % SHIP_CAPTIONS.length] } });
-        si++;
+        if (ships.length) {
+          const sp = ships[si % ships.length];
+          out.push({ kind: "ship", id: `s-${si}`, data: { photo: sp.photo_url, caption: sp.caption || "Life at sea" } });
+          si++;
+        } else if (salaryRows.length) {
+          out.push({ kind: "salary", id: `sal-${cycle}`, data: { rows: salaryRows } });
+        }
       } else if (salaryRows.length) {
         out.push({ kind: "salary", id: `sal-${cycle}`, data: { rows: salaryRows } });
       }
@@ -258,6 +264,25 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
                     style={{ background: GOLD, color: NAVY, border: "none", cursor: "pointer" }}>
                     {v.whatsapp ? <><MessageCircle size={14} /> Apply on WhatsApp</> : <><ExternalLink size={14} /> View & Apply</>}
                   </button>
+                </div>
+              </article>
+            );
+          }
+
+          if (c.kind === "stats") {
+            return (
+              <article key={c.id} className="rounded-2xl p-4" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
+                <p className="text-[10px] font-bold tracking-wider mb-3" style={{ color: GOLD }}>⚓ YOUR PROGRESS</p>
+                <div className="grid grid-cols-4 gap-2">
+                  {c.data.items.map((s: any, k: number) => (
+                    <button key={k} onClick={() => onNavigate?.(s.screen)}
+                      className="rounded-xl py-2.5 text-center"
+                      style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${BORDER}`, cursor: "pointer" }}>
+                      <div className="text-base leading-none mb-1">{s.icon}</div>
+                      <div className="text-sm font-extrabold" style={{ color: s.highlight ? GOLD : "#fff" }}>{s.value}</div>
+                      <div className="text-[9px] mt-0.5" style={{ color: "#94a3b8" }}>{s.label}</div>
+                    </button>
+                  ))}
                 </div>
               </article>
             );

@@ -694,7 +694,7 @@ const Index = () => {
             )}
 
             {/* Mobile stat cards */}
-            <div className="lg:hidden px-3 pt-2 pb-1">
+            <div className={`lg:hidden px-3 pt-2 pb-1 ${screen === "home" ? "hidden" : ""}`}>
               <div className="grid grid-cols-4 gap-1">
                 <button onClick={() => setScreen("chat")} style={cardStyle} className="flex-1 py-3">
                   <div className="text-lg">🔥</div>

@@ -1743,6 +1743,36 @@ export type Database = {
         }
         Relationships: []
       }
+      ship_photos: {
+        Row: {
+          active: boolean | null
+          caption: string | null
+          created_at: string | null
+          credit: string | null
+          id: string
+          photo_url: string
+          query: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          caption?: string | null
+          created_at?: string | null
+          credit?: string | null
+          id?: string
+          photo_url: string
+          query?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          caption?: string | null
+          created_at?: string | null
+          credit?: string | null
+          id?: string
+          photo_url?: string
+          query?: string | null
+        }
+        Relationships: []
+      }
       signup_log: {
         Row: {
           email: string | null
