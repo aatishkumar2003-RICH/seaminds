@@ -122,7 +122,9 @@ Return ONLY valid JSON, no markdown fences:
 
     // Announce it on Telegram so it reaches people immediately
     const TG = Deno.env.get("TELEGRAM_BOT_TOKEN");
-    const CHANNEL = Deno.env.get("TELEGRAM_CHANNEL") || "@seamindsjobs";
+    const CHANNEL = Deno.env.get("TELEGRAM_BLOG_CHANNEL")
+      || Deno.env.get("TELEGRAM_CHANNEL")
+      || "@seamindsjobs";
     if (TG) {
       try {
         await fetch(`https://api.telegram.org/bot${TG}/sendMessage`, {
@@ -131,7 +133,7 @@ Return ONLY valid JSON, no markdown fences:
           body: JSON.stringify({
             chat_id: CHANNEL,
             parse_mode: "HTML",
-            text: `📖 <b>${parsed.title || topic}</b>\n\n${parsed.excerpt || ""}\n\n🔗 https://seaminds.life/blog/${slug}`,
+            text: `⚓ <b>New Article</b>\n\n<b>${parsed.title || topic}</b>\n\n${parsed.excerpt || ""}\n\n#seafarer #maritime #seaminds #crewlife\n\n👉 https://seaminds.life/blog/${slug}`,
           }),
         });
       } catch { /* telegram is optional */ }
