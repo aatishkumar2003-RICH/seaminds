@@ -112,7 +112,7 @@ const App = () => (
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/for-companies" element={<ForCompanies />} />
             <Route path="/smc-score" element={<ScrollRedirect hash="smc-score" />} />
-            <Route path="/jobs" element={<Navigate to="/app" replace />} />
+            <Route path="/jobs" element={<Navigate to="/feed" replace />} />
             <Route path="/for-seafarers" element={<Navigate to="/app" replace />} />
             <Route path="/verify/:id" element={<Verify />} />
             <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
