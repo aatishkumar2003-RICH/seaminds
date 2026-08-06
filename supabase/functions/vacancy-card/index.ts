@@ -2,11 +2,30 @@ import { Resvg, initWasm } from "https://esm.sh/@resvg/resvg-wasm@2.6.2";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 let wasmReady = false;
+let fontBuffer: Uint8Array | null = null;
+
+const FONT_URLS = [
+  "https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans-Bold.ttf",
+  "https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf",
+];
+
 async function ensureWasm() {
-  if (wasmReady) return;
-  const wasmRes = await fetch("https://esm.sh/@resvg/resvg-wasm@2.6.2/index_bg.wasm");
-  await initWasm(await wasmRes.arrayBuffer());
-  wasmReady = true;
+  if (!wasmReady) {
+    const wasmRes = await fetch("https://esm.sh/@resvg/resvg-wasm@2.6.2/index_bg.wasm");
+    await initWasm(await wasmRes.arrayBuffer());
+    wasmReady = true;
+  }
+  if (!fontBuffer) {
+    for (const url of FONT_URLS) {
+      try {
+        const res = await fetch(url);
+        if (res.ok) {
+          fontBuffer = new Uint8Array(await res.arrayBuffer());
+          break;
+        }
+      } catch { /* try next */ }
+    }
+  }
 }
 
 const supabase = createClient(
@@ -53,30 +72,30 @@ function buildSvg(v: {
 
   <!-- top bar -->
   <circle cx="90" cy="90" r="34" fill="${CARD}" stroke="${GOLD}" stroke-width="2"/>
-  <text x="90" y="102" font-family="Arial, sans-serif" font-size="30" font-weight="900" fill="${GOLD}" text-anchor="middle">SM</text>
-  <text x="140" y="82" font-family="Arial, sans-serif" font-size="30" font-weight="800" fill="#ffffff">SeaMinds</text>
-  <text x="140" y="112" font-family="Arial, sans-serif" font-size="18" letter-spacing="3" fill="${GOLD}">SEAFARER JOB ALERT</text>
+  <text x="90" y="102" font-family="DejaVu Sans" font-size="30" font-weight="900" fill="${GOLD}" text-anchor="middle">SM</text>
+  <text x="140" y="82" font-family="DejaVu Sans" font-size="30" font-weight="800" fill="#ffffff">SeaMinds</text>
+  <text x="140" y="112" font-family="DejaVu Sans" font-size="18" letter-spacing="3" fill="${GOLD}">SEAFARER JOB ALERT</text>
 
   <!-- rank, huge -->
-  ${rankLines.map((l, i) => `<text x="90" y="${rankY + i * 84}" font-family="Arial, sans-serif" font-size="76" font-weight="900" fill="#ffffff">${esc(l)}</text>`).join("\n  ")}
+  ${rankLines.map((l, i) => `<text x="90" y="${rankY + i * 84}" font-family="DejaVu Sans" font-size="76" font-weight="900" fill="#ffffff">${esc(l)}</text>`).join("\n  ")}
 
   <!-- vessel -->
-  <text x="90" y="${rankY + rankLines.length * 84 + 20}" font-family="Arial, sans-serif" font-size="34" fill="${GOLD}" font-weight="700">${esc(v.vessel || "All Vessel Types")}</text>
+  <text x="90" y="${rankY + rankLines.length * 84 + 20}" font-family="DejaVu Sans" font-size="34" fill="${GOLD}" font-weight="700">${esc(v.vessel || "All Vessel Types")}</text>
 
   <!-- company -->
-  <text x="90" y="${rankY + rankLines.length * 84 + 66}" font-family="Arial, sans-serif" font-size="26" fill="#cbd5e1">${esc(v.company || "Verified Manning Company")}</text>
+  <text x="90" y="${rankY + rankLines.length * 84 + 66}" font-family="DejaVu Sans" font-size="26" fill="#cbd5e1">${esc(v.company || "Verified Manning Company")}</text>
 
   <!-- salary card -->
   ${v.salary ? `
   <rect x="90" y="${rankY + rankLines.length * 84 + 100}" width="900" height="90" rx="16" fill="${CARD}" stroke="#22c55e" stroke-opacity="0.4"/>
-  <text x="130" y="${rankY + rankLines.length * 84 + 158}" font-family="Arial, sans-serif" font-size="42" font-weight="900" fill="#22c55e">💰 ${esc(v.salary)}</text>
+  <text x="130" y="${rankY + rankLines.length * 84 + 158}" font-family="DejaVu Sans" font-size="42" font-weight="900" fill="#22c55e">${esc(v.salary)}</text>
   ` : ""}
 
-  ${v.port ? `<text x="90" y="1010" font-family="Arial, sans-serif" font-size="26" fill="#94a3b8">📍 Joining: ${esc(v.port)}</text>` : ""}
+  ${v.port ? `<text x="90" y="1010" font-family="DejaVu Sans" font-size="26" fill="#94a3b8">Joining: ${esc(v.port)}</text>` : ""}
 
   <!-- footer -->
   <rect x="0" y="984" width="1080" height="96" fill="${CARD}"/>
-  <text x="540" y="1044" font-family="Arial, sans-serif" font-size="30" font-weight="800" fill="${GOLD}" text-anchor="middle">Apply free — seaminds.life</text>
+  <text x="540" y="1044" font-family="DejaVu Sans" font-size="30" font-weight="800" fill="${GOLD}" text-anchor="middle">Apply free — seaminds.life</text>
 </svg>`;
 }
 
@@ -128,7 +147,14 @@ Deno.serve(async (req) => {
     }
 
     const svg = buildSvg(vacancy);
-    const resvg = new Resvg(svg, { fitTo: { mode: "width", value: 1080 } });
+    const resvg = new Resvg(svg, {
+      fitTo: { mode: "width", value: 1080 },
+      font: {
+        fontBuffers: fontBuffer ? [fontBuffer] : [],
+        defaultFontFamily: "DejaVu Sans",
+        loadSystemFonts: false,
+      },
+    });
     const png = resvg.render().asPng();
 
     if (save && id) {
@@ -145,6 +171,12 @@ Deno.serve(async (req) => {
 
     return new Response(png, { headers: { ...cors, "Content-Type": "image/png", "Cache-Control": "public, max-age=86400" } });
   } catch (e) {
+    await supabase.from("app_events").insert({
+      event_type: "vacancy_card",
+      message: `Vacancy card FAILED: ${String(e).substring(0, 200)}`,
+      severity: "error",
+      emailed: true,
+    }).then(() => {}, () => {});
     return new Response(JSON.stringify({ success: false, error: String(e) }), {
       status: 200, headers: { ...cors, "Content-Type": "application/json" },
     });
