@@ -2,11 +2,30 @@ import { Resvg, initWasm } from "https://esm.sh/@resvg/resvg-wasm@2.6.2";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 let wasmReady = false;
+let fontBuffer: Uint8Array | null = null;
+
+const FONT_URLS = [
+  "https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans-Bold.ttf",
+  "https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf",
+];
+
 async function ensureWasm() {
-  if (wasmReady) return;
-  const wasmRes = await fetch("https://esm.sh/@resvg/resvg-wasm@2.6.2/index_bg.wasm");
-  await initWasm(await wasmRes.arrayBuffer());
-  wasmReady = true;
+  if (!wasmReady) {
+    const wasmRes = await fetch("https://esm.sh/@resvg/resvg-wasm@2.6.2/index_bg.wasm");
+    await initWasm(await wasmRes.arrayBuffer());
+    wasmReady = true;
+  }
+  if (!fontBuffer) {
+    for (const url of FONT_URLS) {
+      try {
+        const res = await fetch(url);
+        if (res.ok) {
+          fontBuffer = new Uint8Array(await res.arrayBuffer());
+          break;
+        }
+      } catch { /* try next */ }
+    }
+  }
 }
 
 const supabase = createClient(
