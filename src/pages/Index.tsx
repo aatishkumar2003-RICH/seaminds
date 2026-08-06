@@ -743,7 +743,9 @@ const Index = () => {
               )}
 
 
-              {screen === "chat" ? (
+              {screen === "home" ? (
+                <ScreenErrorBoundary screenName="Feed"><HomeFeed profileId={profileId} rank={role} nationality={nationality} onNavigate={(s) => setScreen(s as any)} /></ScreenErrorBoundary>
+              ) : screen === "chat" ? (
                 profileComplete ? (onboardingComplete ? <ScreenErrorBoundary screenName="Chat"><CrewChat profileId={profileId} firstName={firstName} role={role} shipName={shipName} voyageStartDate={voyageStartDate} /></ScreenErrorBoundary> : vesselOnboardingUI) : profileGateUI
               ) : screen === "dashboard" ? (
                 profileComplete ? (onboardingComplete ? <ScreenErrorBoundary screenName="Welfare Dashboard"><WelfareDashboard shipName={shipName} /></ScreenErrorBoundary> : vesselOnboardingUI) : profileGateUI
