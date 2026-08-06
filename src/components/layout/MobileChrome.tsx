@@ -75,7 +75,9 @@ const MobileChrome: React.FC<MobileChromeProps> = (props) => {
         firstName={firstName}
         nationality={props.nationality}
         appState={props.appState}
+        headerRight={props.headerRight}
       />
+
     </>
   );
 };
