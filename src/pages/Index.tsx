@@ -620,7 +620,7 @@ const Index = () => {
           </div>
 
           <div className="relative z-10 flex min-h-0 flex-1 flex-col">
-            <MobileChrome {...mobileChromeProps} showBackToNews />
+            <MobileChrome {...mobileChromeProps} showBackToNews headerRight={<NotificationBell profileId={profileId} onNavigate={(s) => setScreen(s as any)} />} />
             <div className="lg:hidden">
               <VoyageModeBar status={voyageStatus} />
             </div>
