@@ -7,17 +7,24 @@ import { voyageCache } from '@/lib/voyageCache';
 import { useVoyageMode } from '@/hooks/useVoyageMode';
 import VoyageModeBar from '@/components/VoyageModeBar';
 
-type CountryKey = "india" | "philippines" | "indonesia" | "ukraine" | "russia" | "china" | "myanmar" | "bangladesh" | "croatia" | "greece" | "uk" | "usa";
+type CountryKey = "india" | "philippines" | "indonesia" | "vietnam" | "malaysia" | "pakistan" | "thailand" | "srilanka" | "nepal" | "ukraine" | "russia" | "china" | "myanmar" | "bangladesh" | "romania" | "croatia" | "greece" | "uk" | "usa";
 
 const NATIONALITY_TO_COUNTRY: Record<string, CountryKey> = {
   "Indian": "india", "India": "india",
   "Filipino": "philippines", "Philippines": "philippines",
   "Indonesian": "indonesia", "Indonesia": "indonesia",
+  "Vietnamese": "vietnam", "Vietnam": "vietnam",
+  "Malaysian": "malaysia", "Malaysia": "malaysia",
+  "Pakistani": "pakistan", "Pakistan": "pakistan",
+  "Thai": "thailand", "Thailand": "thailand",
+  "Sri Lankan": "srilanka", "Sri Lanka": "srilanka",
+  "Nepali": "nepal", "Nepalese": "nepal", "Nepal": "nepal",
   "Ukrainian": "ukraine", "Ukraine": "ukraine",
   "Russian": "russia", "Russia": "russia",
   "Chinese": "china", "China": "china",
   "Burmese": "myanmar", "Myanmar": "myanmar",
   "Bangladeshi": "bangladesh", "Bangladesh": "bangladesh",
+  "Romanian": "romania", "Romania": "romania",
   "Croatian": "croatia", "Croatia": "croatia",
   "Greek": "greece", "Greece": "greece",
   "British": "uk", "United Kingdom": "uk", "UK": "uk",
@@ -41,12 +48,19 @@ const COUNTRIES: { key: CountryKey; name: string; flag: string; feedUrl: string;
   { key: "india", name: "India", flag: "🇮🇳", feedUrl: "https://feeds.feedburner.com/ndtvnews-top-stories", moreUrl: "https://ndtv.com", moreLabel: "ndtv.com" },
   { key: "philippines", name: "Philippines", flag: "🇵🇭", feedUrl: "https://inquirer.net/feed", moreUrl: "https://inquirer.net", moreLabel: "inquirer.net" },
   { key: "indonesia", name: "Indonesia", flag: "🇮🇩", feedUrl: "https://kompas.com/rss/headlines", moreUrl: "https://kompas.com", moreLabel: "kompas.com" },
+  { key: "vietnam", name: "Vietnam", flag: "🇻🇳", feedUrl: "https://e.vnexpress.net/rss/news.rss", moreUrl: "https://e.vnexpress.net", moreLabel: "vnexpress.net" },
+  { key: "malaysia", name: "Malaysia", flag: "🇲🇾", feedUrl: "https://www.thestar.com.my/rss/News/Nation", moreUrl: "https://thestar.com.my", moreLabel: "thestar.com.my" },
+  { key: "pakistan", name: "Pakistan", flag: "🇵🇰", feedUrl: "https://www.dawn.com/feeds/home", moreUrl: "https://dawn.com", moreLabel: "dawn.com" },
+  { key: "thailand", name: "Thailand", flag: "🇹🇭", feedUrl: "https://www.bangkokpost.com/rss/data/topstories.xml", moreUrl: "https://bangkokpost.com", moreLabel: "bangkokpost.com" },
+  { key: "srilanka", name: "Sri Lanka", flag: "🇱🇰", feedUrl: "https://www.dailymirror.lk/RSS_Feeds/breaking-news", moreUrl: "https://dailymirror.lk", moreLabel: "dailymirror.lk" },
+  { key: "nepal", name: "Nepal", flag: "🇳🇵", feedUrl: "https://kathmandupost.com/rss", moreUrl: "https://kathmandupost.com", moreLabel: "kathmandupost.com" },
   { key: "ukraine", name: "Ukraine", flag: "🇺🇦", feedUrl: "https://ukrinform.net/rss/block-ato", moreUrl: "https://ukrinform.net", moreLabel: "ukrinform.net" },
   { key: "russia", name: "Russia", flag: "🇷🇺", feedUrl: "https://tass.com/rss/v2.xml", moreUrl: "https://tass.com", moreLabel: "tass.com" },
   { key: "china", name: "China", flag: "🇨🇳", feedUrl: "https://www.chinadaily.com.cn/rss/world_rss.xml", moreUrl: "https://chinadaily.com.cn", moreLabel: "chinadaily.com.cn" },
   { key: "myanmar", name: "Myanmar", flag: "🇲🇲", feedUrl: "https://www.irrawaddy.com/feed", moreUrl: "https://irrawaddy.com", moreLabel: "irrawaddy.com" },
   { key: "bangladesh", name: "Bangladesh", flag: "🇧🇩", feedUrl: "https://www.thedailystar.net/frontpage/rss.xml", moreUrl: "https://thedailystar.net", moreLabel: "thedailystar.net" },
   { key: "croatia", name: "Croatia", flag: "🇭🇷", feedUrl: "https://www.total-croatia-news.com/feed", moreUrl: "https://total-croatia-news.com", moreLabel: "total-croatia-news.com" },
+  { key: "romania", name: "Romania", flag: "🇷🇴", feedUrl: "https://www.romania-insider.com/rss.xml", moreUrl: "https://romania-insider.com", moreLabel: "romania-insider.com" },
   { key: "greece", name: "Greece", flag: "🇬🇷", feedUrl: "https://www.ekathimerini.com/rss", moreUrl: "https://ekathimerini.com", moreLabel: "ekathimerini.com" },
   { key: "uk", name: "United Kingdom", flag: "🇬🇧", feedUrl: "https://feeds.bbci.co.uk/news/rss.xml", moreUrl: "https://bbc.co.uk", moreLabel: "bbc.co.uk" },
   { key: "usa", name: "USA", flag: "🇺🇸", feedUrl: "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml", moreUrl: "https://nytimes.com", moreLabel: "nytimes.com" },
@@ -91,6 +105,7 @@ const News = ({ nationality }: { nationality?: string }) => {
   const [countryFeeds, setCountryFeeds] = useState<Record<string, FeedState>>({});
   const [maritimeNews, setMaritimeNews] = useState<FeedState>({ items: [], loading: true, error: false });
   const [refreshing, setRefreshing] = useState(false);
+  const [showAllCountries, setShowAllCountries] = useState(!selectedCountry);
   const voyageStatus = useVoyageMode();
 
   const fetchFeed = useCallback(async (feedUrl: string): Promise<{ items: FeedItem[]; error: boolean }> => {
@@ -204,26 +219,36 @@ const News = ({ nationality }: { nationality?: string }) => {
         <div className="rounded-xl bg-card border border-border p-4 space-y-3">
           <div className="flex items-center gap-2 mb-1">
             <Globe size={16} className="text-primary" />
-            <h2 className="text-sm font-semibold text-foreground">
+            <h2 className="text-sm font-semibold text-foreground flex-1">
               {selectedCountry ? `${countryInfo?.flag} ${countryInfo?.name} News` : "Select your home country for local news"}
             </h2>
-          </div>
-          <div className="grid grid-cols-4 gap-2">
-            {COUNTRIES.map((c) => (
+            {selectedCountry && (
               <button
-                key={c.key}
-                onClick={() => setSelectedCountry(c.key)}
-                className={`flex flex-col items-center gap-1 rounded-lg p-2 transition-colors ${
-                  selectedCountry === c.key
-                    ? "bg-primary/20 border border-primary/40"
-                    : "bg-secondary/50 border border-transparent hover:bg-secondary"
-                }`}
+                onClick={() => setShowAllCountries((v) => !v)}
+                className="text-[11px] font-semibold text-primary"
               >
-                <span className="text-xl">{c.flag}</span>
-                <span className="text-[9px] text-muted-foreground leading-tight text-center">{c.name}</span>
+                {showAllCountries ? "Hide" : "Change"}
               </button>
-            ))}
+            )}
           </div>
+          {(showAllCountries || !selectedCountry) && (
+            <div className="grid grid-cols-4 gap-2">
+              {COUNTRIES.map((c) => (
+                <button
+                  key={c.key}
+                  onClick={() => { setSelectedCountry(c.key); setShowAllCountries(false); }}
+                  className={`flex flex-col items-center gap-1 rounded-lg p-2 transition-colors ${
+                    selectedCountry === c.key
+                      ? "bg-primary/20 border border-primary/40"
+                      : "bg-secondary/50 border border-transparent hover:bg-secondary"
+                  }`}
+                >
+                  <span className="text-xl">{c.flag}</span>
+                  <span className="text-[9px] text-muted-foreground leading-tight text-center">{c.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Country News */}
