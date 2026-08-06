@@ -215,6 +215,22 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
     trackEvent("smc_assessment_start", { rank });
   };
 
+  const startRetake = async () => {
+    setStarted(true);
+    const { data } = await supabase
+      .from("smc_assessments")
+      .insert({ crew_profile_id: profileId, status: "in_progress", current_step: 1 })
+      .select("id")
+      .single();
+    if (data) {
+      setAssessmentId(data.id);
+    } else {
+      setAssessmentId("temp-" + Date.now());
+    }
+    setView("assessment");
+    trackEvent("smc_assessment_retake", { rank });
+  };
+
   if (view === "loading") {
     return (
       <div className="flex items-center justify-center h-full">
