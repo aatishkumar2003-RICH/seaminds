@@ -723,6 +723,15 @@ const Index = () => {
               )}
 
 
+              <Suspense fallback={
+                <div className="flex items-center justify-center py-20">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-primary pulse-dot" style={{ animationDelay: "0s" }} />
+                    <span className="w-2 h-2 rounded-full bg-primary pulse-dot" style={{ animationDelay: "0.3s" }} />
+                    <span className="w-2 h-2 rounded-full bg-primary pulse-dot" style={{ animationDelay: "0.6s" }} />
+                  </div>
+                </div>
+              }>
               {screen === "home" ? (
                 <ScreenErrorBoundary screenName="Feed"><HomeFeed profileId={profileId} rank={role} nationality={nationality} onNavigate={(s) => setScreen(s as any)} /></ScreenErrorBoundary>
               ) : screen === "chat" ? (
@@ -751,6 +760,7 @@ const Index = () => {
               ) : screen === "smc" ? (
                 <ScreenErrorBoundary screenName="SMC Score"><SMCScoreTab profileId={profileId} firstName={firstName} lastName={lastName} rank={role} shipName={shipName} /></ScreenErrorBoundary>
               ) : null}
+              </Suspense>
             </div>
           </div>
         </div>
