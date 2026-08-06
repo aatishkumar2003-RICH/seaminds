@@ -429,7 +429,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
         {filteredPostings.length === 0 ? (
           <div className="rounded-xl bg-card border border-border p-6 text-center">
             <Ship size={24} className="text-muted-foreground mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">No positions available{countryFilter !== 'all' ? ` for ${countryFilter}` : ''}. Check back soon.</p>
+            <p className="text-sm text-muted-foreground">No company postings yet — scroll down for more jobs from across the industry.</p>
           </div>
         ) : (
           filteredPostings.map((jp) => {
