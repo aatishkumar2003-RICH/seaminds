@@ -193,7 +193,7 @@ const OceanBackground = ({ timeOfDay }: Props) => {
       {/* Bioluminescence (night only) */}
       {timeOfDay === "night" && (
         <div className="absolute bottom-0 left-0 w-full" style={{ height: "25%" }}>
-          {Array.from({ length: 12 }, (_, i) => (
+          {Array.from({ length: 6 }, (_, i) => (
             <div key={i} className="absolute rounded-full animate-biolum" style={{
               left: `${8 + i * 8}%`,
               bottom: `${Math.random() * 40 + 5}%`,
