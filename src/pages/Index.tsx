@@ -86,6 +86,7 @@ const Index = () => {
   const [portOfJoining, setPortOfJoining] = useState("");
   const [forceTour, setForceTour] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
+  const contentRef = React.useRef<HTMLDivElement>(null);
 
   // Drawer / swipe state
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -107,6 +108,11 @@ const Index = () => {
       localStorage.setItem('seamind_swipe_hint_seen', '1');
     }
   }, [drawerOpen, showSwipeHint]);
+
+  // Reset scroll when switching screens
+  useEffect(() => {
+    if (contentRef.current) contentRef.current.scrollTop = 0;
+  }, [screen]);
 
   // Edge swipe to open drawer
   useEffect(() => {
@@ -706,7 +712,7 @@ const Index = () => {
 
 
             {/* Main content area */}
-            <div className="flex-1 overflow-y-auto pb-16 lg:pb-0">
+            <div ref={contentRef} className="flex-1 overflow-y-auto pb-16 lg:pb-0">
 
               {screen === "chat" && jobMatch && (
                 <div className="mx-4 mb-2 flex items-center justify-between gap-2 rounded-[10px] border p-[10px]"
