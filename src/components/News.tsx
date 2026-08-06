@@ -219,26 +219,36 @@ const News = ({ nationality }: { nationality?: string }) => {
         <div className="rounded-xl bg-card border border-border p-4 space-y-3">
           <div className="flex items-center gap-2 mb-1">
             <Globe size={16} className="text-primary" />
-            <h2 className="text-sm font-semibold text-foreground">
+            <h2 className="text-sm font-semibold text-foreground flex-1">
               {selectedCountry ? `${countryInfo?.flag} ${countryInfo?.name} News` : "Select your home country for local news"}
             </h2>
-          </div>
-          <div className="grid grid-cols-4 gap-2">
-            {COUNTRIES.map((c) => (
+            {selectedCountry && (
               <button
-                key={c.key}
-                onClick={() => setSelectedCountry(c.key)}
-                className={`flex flex-col items-center gap-1 rounded-lg p-2 transition-colors ${
-                  selectedCountry === c.key
-                    ? "bg-primary/20 border border-primary/40"
-                    : "bg-secondary/50 border border-transparent hover:bg-secondary"
-                }`}
+                onClick={() => setShowAllCountries((v) => !v)}
+                className="text-[11px] font-semibold text-primary"
               >
-                <span className="text-xl">{c.flag}</span>
-                <span className="text-[9px] text-muted-foreground leading-tight text-center">{c.name}</span>
+                {showAllCountries ? "Hide" : "Change"}
               </button>
-            ))}
+            )}
           </div>
+          {(showAllCountries || !selectedCountry) && (
+            <div className="grid grid-cols-4 gap-2">
+              {COUNTRIES.map((c) => (
+                <button
+                  key={c.key}
+                  onClick={() => { setSelectedCountry(c.key); setShowAllCountries(false); }}
+                  className={`flex flex-col items-center gap-1 rounded-lg p-2 transition-colors ${
+                    selectedCountry === c.key
+                      ? "bg-primary/20 border border-primary/40"
+                      : "bg-secondary/50 border border-transparent hover:bg-secondary"
+                  }`}
+                >
+                  <span className="text-xl">{c.flag}</span>
+                  <span className="text-[9px] text-muted-foreground leading-tight text-center">{c.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Country News */}
