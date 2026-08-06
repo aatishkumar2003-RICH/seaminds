@@ -269,6 +269,25 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
             );
           }
 
+          if (c.kind === "stats") {
+            return (
+              <article key={c.id} className="rounded-2xl p-4" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
+                <p className="text-[10px] font-bold tracking-wider mb-3" style={{ color: GOLD }}>⚓ YOUR PROGRESS</p>
+                <div className="grid grid-cols-4 gap-2">
+                  {c.data.items.map((s: any, k: number) => (
+                    <button key={k} onClick={() => onNavigate?.(s.screen)}
+                      className="rounded-xl py-2.5 text-center"
+                      style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${BORDER}`, cursor: "pointer" }}>
+                      <div className="text-base leading-none mb-1">{s.icon}</div>
+                      <div className="text-sm font-extrabold" style={{ color: s.highlight ? GOLD : "#fff" }}>{s.value}</div>
+                      <div className="text-[9px] mt-0.5" style={{ color: "#94a3b8" }}>{s.label}</div>
+                    </button>
+                  ))}
+                </div>
+              </article>
+            );
+          }
+
           if (c.kind === "ship") {
             return (
               <article key={c.id} className="rounded-2xl overflow-hidden" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
