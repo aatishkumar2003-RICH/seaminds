@@ -699,33 +699,8 @@ const Index = () => {
               </div>
             )}
 
-            {/* Mobile stat cards */}
-            <div className={`lg:hidden px-3 pt-2 pb-1 ${screen === "home" ? "hidden" : ""}`}>
-              <div className="grid grid-cols-4 gap-1">
-                <button onClick={() => setScreen("chat")} style={cardStyle} className="flex-1 py-3">
-                  <div className="text-lg">🔥</div>
-                  <div className="text-sm font-bold text-foreground">{streakCount}</div>
-                  <div className="text-[9px] text-muted-foreground">day streak</div>
-                </button>
-                <button onClick={() => setScreen("certs")}
-                  style={{ ...cardStyle, border: expiringSoon > 0 ? "1px solid rgba(245,158,11,0.4)" : cardStyle.border }} className="flex-1 py-3">
-                  <div className="text-lg">📜</div>
-                  <div className="text-sm font-bold" style={{ color: expiringSoon > 0 ? "#f59e0b" : "#22c55e" }}>{expiringSoon}</div>
-                  <div className="text-[9px] text-muted-foreground">expiring</div>
-                </button>
-                <button onClick={() => setScreen("resthours")}
-                  style={{ ...cardStyle, border: restHours < 10 && restHours > 0 ? "1px solid rgba(239,68,68,0.4)" : cardStyle.border }} className="flex-1 py-3">
-                  <div className="text-lg">⏱</div>
-                  <div className="text-sm font-bold" style={{ color: restHours >= 10 ? "#22c55e" : restHours > 0 ? "#ef4444" : "#888" }}>{restHours || "—"}</div>
-                  <div className="text-[9px] text-muted-foreground">hrs rest</div>
-                </button>
-                <button onClick={() => setScreen("smc")} style={cardStyle} className="flex-1 py-3">
-                  <div className="text-lg">🏆</div>
-                  <div className="text-sm font-bold text-foreground">{smcScore !== null ? smcScore : "Get"}</div>
-                  <div className="text-[9px] text-muted-foreground">SMC</div>
-                </button>
-              </div>
-            </div>
+
+
 
             {/* Main content area */}
             <div className="flex-1 overflow-y-auto pb-16 lg:pb-0">

@@ -7,7 +7,8 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
-const DISMISS_KEY = "sm_pwa_install_dismissed_v1";
+const DISMISS_KEY = "sm_install_dismissed";
+const SHOW_DELAY_MS = 45000;
 
 const PWAInstallPrompt = () => {
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
@@ -15,7 +16,7 @@ const PWAInstallPrompt = () => {
   const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
-    // Already installed?
+    // Already installed / running standalone? Never render.
     const isStandalone =
       window.matchMedia("(display-mode: standalone)").matches ||
       window.matchMedia("(display-mode: fullscreen)").matches ||
@@ -23,19 +24,22 @@ const PWAInstallPrompt = () => {
       window.navigator.standalone === true;
     if (isStandalone) return;
 
-    if (sessionStorage.getItem(DISMISS_KEY) === "1") return;
+    if (localStorage.getItem(DISMISS_KEY) === "1") return;
 
     const ua = window.navigator.userAgent.toLowerCase();
     const iOS = /iphone|ipad|ipod/.test(ua) && !/crios|fxios/.test(ua);
-    if (iOS) {
-      setIsIOS(true);
-      setVisible(true);
-    }
+    if (iOS) setIsIOS(true);
+
+    let canShow = iOS;
+
+    const timer = window.setTimeout(() => {
+      if (canShow) setVisible(true);
+    }, SHOW_DELAY_MS);
 
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferred(e as BeforeInstallPromptEvent);
-      setVisible(true);
+      canShow = true;
     };
     window.addEventListener("beforeinstallprompt", handler);
 
@@ -46,6 +50,7 @@ const PWAInstallPrompt = () => {
     window.addEventListener("appinstalled", installed);
 
     return () => {
+      window.clearTimeout(timer);
       window.removeEventListener("beforeinstallprompt", handler);
       window.removeEventListener("appinstalled", installed);
     };
@@ -62,7 +67,7 @@ const PWAInstallPrompt = () => {
   };
 
   const handleDismiss = () => {
-    sessionStorage.setItem(DISMISS_KEY, "1");
+    localStorage.setItem(DISMISS_KEY, "1");
     setVisible(false);
   };
 
@@ -76,7 +81,6 @@ const PWAInstallPrompt = () => {
         bottom: "calc(76px + env(safe-area-inset-bottom, 0px))",
       }}
     >
-
       <button
         onClick={handleDismiss}
         aria-label="Dismiss"
@@ -95,7 +99,7 @@ const PWAInstallPrompt = () => {
               ? "Tap Share, then \"Add to Home Screen\" to install."
               : "Get the full app experience on your device."}
           </p>
-          {!isIOS && (
+          {!isIOS && deferred && (
             <Button size="sm" onClick={handleInstall} className="mt-3 h-8 text-xs">
               Install App
             </Button>
