@@ -48,6 +48,7 @@ type Card =
   | { kind: "stats"; id: string; data: { items: any[] } }
   | { kind: "salary"; id: string; data: { rows: { rank: string; salary: string }[] } }
   | { kind: "quiz"; id: string; data: any }
+  | { kind: "channels"; id: string; data: Record<string, never> }
   | { kind: "nudge"; id: string; data: { icon: string; title: string; text: string; cta: string; screen: string } };
 
 const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props) => {
