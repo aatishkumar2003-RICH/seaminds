@@ -224,13 +224,22 @@ const BlogPost = () => {
         })()}
 
         {/* Article content */}
-        <div
-          className="text-base leading-relaxed space-y-4"
-          style={{ color: "#CBD5E1" }}
-        >
-          {post.content.split("\n").filter(Boolean).map((para, i) => (
-            <p key={i}>{para}</p>
-          ))}
+        <div className="text-base leading-relaxed space-y-4" style={{ color: "#CBD5E1" }}>
+          {post.content.split("\n").filter((l) => l.trim()).map((line, i) => {
+            const t = line.trim();
+            const bold = (s: string) =>
+              s.split(/(\*\*[^*]+\*\*)/g).map((part, j) =>
+                part.startsWith("**") && part.endsWith("**")
+                  ? <strong key={j} style={{ color: "#E0E6ED" }}>{part.slice(2, -2)}</strong>
+                  : <React.Fragment key={j}>{part}</React.Fragment>
+              );
+            if (t.startsWith("### ")) return <h3 key={i} className="text-lg font-bold mt-6 mb-1" style={{ color: "#D4AF37" }}>{t.slice(4)}</h3>;
+            if (t.startsWith("## ")) return <h2 key={i} className="text-xl font-bold mt-8 mb-2" style={{ color: "#D4AF37" }}>{t.slice(3)}</h2>;
+            if (t.startsWith("# ")) return <h2 key={i} className="text-2xl font-bold mt-8 mb-2" style={{ color: "#D4AF37" }}>{t.slice(2)}</h2>;
+            if (/^[-*]\s+/.test(t)) return <li key={i} className="ml-5 list-disc">{bold(t.replace(/^[-*]\s+/, ""))}</li>;
+            if (/^\d+\.\s+/.test(t)) return <li key={i} className="ml-5 list-decimal">{bold(t.replace(/^\d+\.\s+/, ""))}</li>;
+            return <p key={i}>{bold(t)}</p>;
+          })}
         </div>
 
         {/* CTA box */}
