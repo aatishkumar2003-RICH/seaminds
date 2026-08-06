@@ -174,6 +174,7 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
       } else if (salaryRows.length) {
         out.push({ kind: "salary", id: `sal-${cycle}`, data: { rows: salaryRows } });
       }
+      if (cycle === 0) out.push({ kind: "channels", id: "ch-1", data: {} });
       pushVac();
       if (quizzes[qi]) out.push({ kind: "quiz", id: `q-${quizzes[qi].id}`, data: quizzes[qi++] });
       pushArt();
