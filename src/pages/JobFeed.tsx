@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { Anchor, MapPin, Ship, BadgeCheck, MessageCircle, ExternalLink } from "lucide-react";
+import { trackPixel } from "@/lib/metaPixel";
 
 const NAVY = "#0D1B2A";
 const GOLD = "#D4AF37";
@@ -90,6 +91,7 @@ const JobFeed = () => {
   }, [items, filter]);
 
   const apply = (i: FeedItem) => {
+    trackPixel("Contact", { content_name: "job_apply_public" });
     if (i.whatsapp) {
       const d = i.whatsapp.replace(/[^\d]/g, "");
       if (d) return window.open(`https://wa.me/${d}?text=${encodeURIComponent(`Hello, I am interested in the ${i.rank} position (seen on SeaMinds).`)}`, "_blank");

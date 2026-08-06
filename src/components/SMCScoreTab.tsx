@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { trackEvent } from "@/lib/analytics";
+import { trackPixel } from "@/lib/metaPixel";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Upload, RefreshCw, Check, FileText, Anchor, Award, HeartPulse, X } from "lucide-react";
@@ -200,6 +201,7 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
   };
 
   const handlePaymentSuccess = async () => {
+    trackPixel("StartTrial", { content_name: "smc_assessment" });
     const { data } = await supabase
       .from("smc_assessments")
       .insert({ crew_profile_id: profileId, status: "in_progress", current_step: 1 })
@@ -216,6 +218,7 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
   };
 
   const startRetake = async () => {
+    trackPixel("StartTrial", { content_name: "smc_assessment" });
     setStarted(true);
     const { data } = await supabase
       .from("smc_assessments")

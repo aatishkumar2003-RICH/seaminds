@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -39,9 +39,28 @@ import OAuthConsent from "./pages/OAuthConsent";
 import CookieConsent from "./components/CookieConsent";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import { AuthProvider } from "./contexts/AuthContext";
+import { initMetaPixel, captureAdSource, trackPixel } from "@/lib/metaPixel";
 
 const queryClient = new QueryClient();
 const APP_THEME_COLOR = "#0D1B2A";
+
+/** Loads the Meta Pixel once and tracks SPA page views. */
+const MetaPixelManager = () => {
+  const location = useLocation();
+  const first = useRef(true);
+
+  useEffect(() => {
+    captureAdSource();
+    initMetaPixel();
+  }, []);
+
+  useEffect(() => {
+    if (first.current) { first.current = false; return; }
+    trackPixel("PageView");
+  }, [location.pathname]);
+
+  return null;
+};
 
 const ThemeColorManager = () => {
   const location = useLocation();
@@ -94,6 +113,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <ThemeColorManager />
+          <MetaPixelManager />
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/app" element={<Index />} />

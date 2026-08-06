@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import CvUpload from "@/components/CvUpload";
 import CountryCodeSelect from "@/components/CountryCodeSelect";
 import { logEvent } from "@/lib/logEvent";
+import { trackPixel } from "@/lib/metaPixel";
 
 interface NameEntryProps {
   onSubmit: (data: {
@@ -242,7 +243,10 @@ const NameEntry = ({ onSubmit }: NameEntryProps) => {
         dateOfBirth: dateOfBirth ? format(dateOfBirth, "yyyy-MM-dd") : "",
       }, cvFile);
       if (errorMsg) setFormError(errorMsg);
-      else await logEvent('crew_signup', 'New crew signed up', 'info', { name: `${firstName.trim()} ${lastName.trim()}`, rank: role, nationality: nationality.trim() });
+      else {
+        trackPixel("CompleteRegistration", { content_name: "crew_signup" });
+        await logEvent('crew_signup', 'New crew signed up', 'info', { name: `${firstName.trim()} ${lastName.trim()}`, rank: role, nationality: nationality.trim() });
+      }
     } catch (err: any) {
       console.error('Failed to create profile:', err);
       await logEvent('profile_create_error', err?.message || 'Unknown error', 'error', { code: err?.code });
