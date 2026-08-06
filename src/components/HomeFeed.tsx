@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { MessageCircle, ExternalLink, RefreshCw } from "lucide-react";
 import { trackPixel } from "@/lib/metaPixel";
+import ShareResult from "@/components/ShareResult";
 
 const GOLD = "#D4AF37";
 const NAVY = "#0D1B2A";

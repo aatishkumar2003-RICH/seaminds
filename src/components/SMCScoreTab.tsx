@@ -11,6 +11,7 @@ import AssessmentFlow from "@/components/smc/AssessmentFlow";
 import MyDocumentsSection from "@/components/smc/MyDocumentsSection";
 import SalaryBenchmark from "@/components/SalaryBenchmark";
 import CvUpload from "@/components/CvUpload";
+import ShareResult from "@/components/ShareResult";
 
 interface SMCScoreTabProps {
   profileId: string;
