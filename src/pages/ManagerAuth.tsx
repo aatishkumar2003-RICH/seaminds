@@ -5,6 +5,7 @@ import seamindsLogo from "@/assets/seaminds-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { checkRateLimit } from "@/lib/rateLimiter";
+import { trackPixel } from "@/lib/metaPixel";
 
 const COMPANY_SUGGESTIONS = [
   "Fleet Management Ltd", "Anglo-Eastern", "Synergy Marine", "V.Group", "BSM",
@@ -81,6 +82,7 @@ const ManagerAuth = () => {
         designation: designation || null,
       });
       if (profileErr) { toast.error("Could not save company details. Please try again."); setLoading(false); return; }
+      trackPixel("CompleteRegistration", { content_name: "company_signup" });
     }
     toast.success("Welcome aboard! Your company account is ready.");
     navigate("/manager/dashboard");

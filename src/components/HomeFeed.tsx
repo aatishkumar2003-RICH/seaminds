@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { MessageCircle, ExternalLink, RefreshCw } from "lucide-react";
+import { trackPixel } from "@/lib/metaPixel";
 
 const GOLD = "#D4AF37";
 const NAVY = "#0D1B2A";
@@ -193,6 +194,7 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
 
   const applyTo = (v: any) => {
     log("vacancy", v.id, "apply");
+    trackPixel("Contact", { content_name: "job_apply", content_category: v.rank || "crew" });
     if (v.whatsapp) {
       const d = String(v.whatsapp).replace(/[^\d]/g, "");
       if (d) return window.open(`https://wa.me/${d}?text=${encodeURIComponent(`Hello, I am interested in the ${v.rank} position (seen on SeaMinds).`)}`, "_blank");
