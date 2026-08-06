@@ -815,13 +815,15 @@ const Index = () => {
           </div>
         )}
 
-        {showNPS && <NPSSurvey firstName={firstName} onDismiss={() => setShowNPS(false)} />}
-        <MarketPulseButton
-          onNavigateJobs={() => navigateTo('opportunities')}
-          userRank={role || undefined}
-          userVessel={vesselType || undefined}
-          userNationality={nationality || undefined}
-        />
+        <Suspense fallback={null}>{showNPS && <NPSSurvey firstName={firstName} onDismiss={() => setShowNPS(false)} />}</Suspense>
+        <Suspense fallback={null}>
+          <MarketPulseButton
+            onNavigateJobs={() => navigateTo('opportunities')}
+            userRank={role || undefined}
+            userVessel={vesselType || undefined}
+            userNationality={nationality || undefined}
+          />
+        </Suspense>
         <PWAInstallPrompt />
 
         {showNotifPrompt && (
