@@ -27,8 +27,11 @@ const waveOpacities: Record<TimeOfDay, [number, number, number]> = {
 };
 
 const OceanBackground = ({ timeOfDay }: Props) => {
+  const reducedMotion = typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
   const stars = useMemo(() => {
-    return Array.from({ length: 90 }, (_, i) => ({
+    return Array.from({ length: 30 }, (_, i) => ({
       id: i,
       left: Math.random() * 100,
       top: Math.random() * 55,
