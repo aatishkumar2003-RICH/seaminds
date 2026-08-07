@@ -97,6 +97,8 @@ Deno.serve(async (req) => {
           role: "user",
           content: `Write a helpful article for working seafarers titled "${topic}".
 
+LANGUAGE: ${lang.note} The title, excerpt and the entire article body must be in ${lang.name}.
+
 Rules:
 - 700-900 words, written for seafarers whose first language may not be English. Use simple, clear sentences.
 - Practical and specific. Reference real regulations (MLC 2006, STCW, SOLAS, MARPOL) where relevant and accurate.
