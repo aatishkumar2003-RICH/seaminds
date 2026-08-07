@@ -163,12 +163,13 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
 
     // Interleave: vacancy · ship/salary · vacancy · quiz · article · vacancy · article · nudge
     const out: Card[] = [];
-    let vi = 0, ai = 0, qi = 0, ni = 0, si = 0;
+    let vi = 0, ai = 0, qi = 0, ni = 0, si = 0, ci = 0;
     const pushVac = () => { if (vacancies[vi]) out.push({ kind: "vacancy", id: vacancies[vi].id, data: vacancies[vi++] }); };
     const pushArt = () => { if (articles[ai]) out.push({ kind: "article", id: `a-${articles[ai].id}`, data: articles[ai++] }); };
 
     for (let cycle = 0; cycle < 10; cycle++) {
       pushVac();
+      if (companyPosts[ci]) out.push({ kind: "company", id: `c-${companyPosts[ci].id}`, data: companyPosts[ci++] });
       if (cycle === 0) out.push({ kind: "stats", id: "stats", data: { items: statItems } });
       if (cycle % 2 === 0) {
         if (ships.length) {
