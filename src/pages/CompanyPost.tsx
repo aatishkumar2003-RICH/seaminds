@@ -33,6 +33,8 @@ const CompanyPost = () => {
   const [publishing, setPublishing] = useState(false);
   const [checkingContent, setCheckingContent] = useState(false);
   const [toTelegram, setToTelegram] = useState(true);
+  const [aiWriting, setAiWriting] = useState(false);
+  const [ranks, setRanks] = useState<string[]>([]);
 
   useEffect(() => {
     (async () => {
