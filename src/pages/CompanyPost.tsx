@@ -125,6 +125,7 @@ const CompanyPost = () => {
         link_url: linkUrl.trim() || null,
         verified,
         telegram_posted: !toTelegram,
+        ranks_detected: ranks.length ? ranks : null,
       }).select("id").single();
       if (error) throw error;
 
