@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Download, X } from "lucide-react";
+import { Download, Share, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface BeforeInstallPromptEvent extends Event {
@@ -13,7 +13,10 @@ const SHOW_DELAY_MS = 45000;
 const PWAInstallPrompt = () => {
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
   const [visible, setVisible] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
+
+  const isIOS = typeof navigator !== "undefined" &&
+    /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+  const isAndroid = typeof navigator !== "undefined" && /Android/i.test(navigator.userAgent);
 
   useEffect(() => {
     // Already installed / running standalone? Never render.
@@ -26,20 +29,16 @@ const PWAInstallPrompt = () => {
 
     if (localStorage.getItem(DISMISS_KEY) === "1") return;
 
-    const ua = window.navigator.userAgent.toLowerCase();
-    const iOS = /iphone|ipad|ipod/.test(ua) && !/crios|fxios/.test(ua);
-    if (iOS) setIsIOS(true);
-
-    let canShow = iOS;
+    // Desktop: do not render at all.
+    if (!isIOS && !isAndroid) return;
 
     const timer = window.setTimeout(() => {
-      if (canShow) setVisible(true);
+      setVisible(true);
     }, SHOW_DELAY_MS);
 
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferred(e as BeforeInstallPromptEvent);
-      canShow = true;
     };
     window.addEventListener("beforeinstallprompt", handler);
 
@@ -57,13 +56,18 @@ const PWAInstallPrompt = () => {
   }, []);
 
   const handleInstall = async () => {
-    if (!deferred) return;
-    await deferred.prompt();
-    const { outcome } = await deferred.userChoice;
-    if (outcome === "accepted" || outcome === "dismissed") {
-      setDeferred(null);
-      setVisible(false);
+    if (deferred) {
+      await deferred.prompt();
+      const { outcome } = await deferred.userChoice;
+      if (outcome === "accepted" || outcome === "dismissed") {
+        setDeferred(null);
+        setVisible(false);
+      }
+      return;
     }
+    // Fallback to Play Store listing.
+    window.open("https://play.google.com/store/apps/details?id=life.seaminds.twa", "_blank");
+    setVisible(false);
   };
 
   const handleDismiss = () => {
@@ -93,16 +97,31 @@ const PWAInstallPrompt = () => {
           <Download className="h-5 w-5 text-primary" />
         </div>
         <div className="flex-1">
-          <p className="text-sm font-semibold text-foreground">Install SeaMinds</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {isIOS
-              ? "Tap Share, then \"Add to Home Screen\" to install."
-              : "Get the full app experience on your device."}
-          </p>
-          {!isIOS && deferred && (
-            <Button size="sm" onClick={handleInstall} className="mt-3 h-8 text-xs">
-              Install App
-            </Button>
+          {isIOS ? (
+            <>
+              <p className="text-sm font-semibold text-foreground">Add SeaMinds to your Home Screen</p>
+              <div className="mt-2 space-y-1.5">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span>1.</span>
+                  <span>Tap the Share button</span>
+                  <Share size={14} className="text-primary" />
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span>2.</span>
+                  <span>Choose "Add to Home Screen"</span>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-semibold text-foreground">Install SeaMinds</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Get the app — jobs, alerts and your CV in your pocket.
+              </p>
+              <Button size="sm" onClick={handleInstall} className="mt-3 h-8 text-xs">
+                Get the App
+              </Button>
+            </>
           )}
         </div>
       </div>
