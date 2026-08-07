@@ -691,6 +691,21 @@ export default function CVDatabaseTab() {
                     >
                       Regenerate ID
                     </button>
+
+                    <button
+                      onClick={() => deleteCrew(r)}
+                      disabled={deletingId === r.user_id}
+                      title="Owner only — permanently delete this crew record"
+                      style={{
+                        padding: "6px 10px", borderRadius: 6, cursor: "pointer",
+                        background: "transparent", color: "#ef4444",
+                        border: "1px solid rgba(239,68,68,0.5)", fontWeight: 600, fontSize: 12,
+                        opacity: deletingId === r.user_id ? 0.5 : 1,
+                      }}
+                    >
+                      {deletingId === r.user_id ? "Deleting…" : "Delete"}
+                    </button>
+
                   </div>
 
                 </td>
