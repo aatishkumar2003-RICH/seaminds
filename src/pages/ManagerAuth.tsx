@@ -29,6 +29,8 @@ const ManagerAuth = () => {
   const [phone, setPhone] = useState("");
   const [designation, setDesignation] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resetting, setResetting] = useState(false);
+
 
   const bumpRateLimit = async (key: string) => {
     const now = new Date().toISOString();
@@ -59,6 +61,17 @@ const ManagerAuth = () => {
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     if (error) { toast.error(error.message); await bumpRateLimit(key); setLoading(false); return; }
     navigate("/manager/dashboard");
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email.trim()) { toast.error("Enter your work email first, then tap Forgot password."); return; }
+    setResetting(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setResetting(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Reset link sent. Check your email inbox and spam folder.");
   };
 
   const handleSignup = async () => {
@@ -166,12 +179,23 @@ const ManagerAuth = () => {
           {loading ? "Please wait..." : mode === "login" ? "Sign in" : "Create free account"}
         </button>
 
+        {mode === "login" && (
+          <button
+            onClick={handleForgotPassword}
+            disabled={resetting}
+            className="w-full text-xs text-muted-foreground hover:text-primary transition-colors"
+          >
+            {resetting ? "Sending reset link..." : "Forgot password?"}
+          </button>
+        )}
+
         {mode === "signup" && (
           <p className="text-[11px] text-center text-muted-foreground leading-relaxed">
             Free for manning companies during launch — no credit card. By registering you agree to use crew data for genuine recruitment only.
           </p>
         )}
       </div>
+
     </div>
   );
 };

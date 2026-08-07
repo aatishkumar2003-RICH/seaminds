@@ -34,6 +34,7 @@ import BlogPost from "./pages/BlogPost";
 import JobFeed from "./pages/JobFeed";
 import PostVacancyPage from "./pages/PostVacancyPage";
 import JoinLanding from "./pages/JoinLanding";
+import ResetPassword from "./pages/ResetPassword";
 import AdminDashboard from "./pages/AdminDashboard";
 import Verify from "./pages/Verify";
 import OAuthConsent from "./pages/OAuthConsent";
@@ -128,6 +129,7 @@ const App = () => (
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/colleges" element={<CollegePage />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
