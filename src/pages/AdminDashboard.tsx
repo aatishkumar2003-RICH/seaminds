@@ -20,6 +20,7 @@ import CountryPricingTab from "@/components/admin/CountryPricingTab";
 import SubAdminsTab from "@/components/admin/SubAdminsTab";
 import VacancyIntelTab from "@/components/admin/VacancyIntelTab";
 import CompanyDirectoryTab from "@/components/admin/CompanyDirectoryTab";
+import CompanyPostsTab from "@/components/admin/CompanyPostsTab";
 import AgentChatPanel from "@/components/admin/AgentChatPanel";
 import CVDatabaseTab from "@/components/admin/CVDatabaseTab";
 import MobileVerificationTab from "@/components/admin/MobileVerificationTab";
@@ -989,7 +990,7 @@ function ActivityTab() {
 /* ─── Main Dashboard ─── */
 export default function AdminDashboard() {
   const [authed, setAuthed] = useState<boolean | null>(null);
-  const [tab, setTab] = useState<"crew" | "activity" | "activity_full" | "cv_database" | "mobile_verify" | "pricing" | "discount" | "country_pricing" | "sub_admins" | "dpa" | "blog_images" | "agents" | "vacancy_intel" | "company_dir">("crew");
+  const [tab, setTab] = useState<"crew" | "activity" | "activity_full" | "cv_database" | "mobile_verify" | "pricing" | "discount" | "country_pricing" | "sub_admins" | "dpa" | "blog_images" | "agents" | "vacancy_intel" | "company_dir" | "company_posts">("crew");
 
   useEffect(() => {
     let active = true;
@@ -1029,6 +1030,7 @@ export default function AdminDashboard() {
     { id: "agents" as const, label: "🤖 Agents" },
     { id: "vacancy_intel" as const, label: "📊 Vacancy Intel" },
     { id: "company_dir" as const, label: "🏢 Companies" },
+    { id: "company_posts" as const, label: "Company Posts" },
   ];
 
   return (
@@ -1080,6 +1082,7 @@ export default function AdminDashboard() {
       {tab === "agents" && <AgentsTab />}
       {tab === "vacancy_intel" && <VacancyIntelTab />}
       {tab === "company_dir" && <CompanyDirectoryTab />}
+      {tab === "company_posts" && <CompanyPostsTab />}
     </div>
   );
 }
