@@ -429,6 +429,7 @@ export type Database = {
           flagged: boolean | null
           id: string
           image_url: string | null
+          interested_count: number | null
           link_url: string | null
           manager_id: string
           post_type: string
@@ -448,6 +449,7 @@ export type Database = {
           flagged?: boolean | null
           id?: string
           image_url?: string | null
+          interested_count?: number | null
           link_url?: string | null
           manager_id: string
           post_type?: string
@@ -467,6 +469,7 @@ export type Database = {
           flagged?: boolean | null
           id?: string
           image_url?: string | null
+          interested_count?: number | null
           link_url?: string | null
           manager_id?: string
           post_type?: string
@@ -1639,6 +1642,30 @@ export type Database = {
         }
         Relationships: []
       }
+      post_engagement: {
+        Row: {
+          action: string
+          created_at: string
+          crew_id: string
+          id: string
+          post_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          crew_id: string
+          id?: string
+          post_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          crew_id?: string
+          id?: string
+          post_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           company_name: string | null
@@ -2219,11 +2246,26 @@ export type Database = {
     }
     Functions: {
       build_daily_notifications: { Args: never; Returns: string }
+      engage_company_post: {
+        Args: { p_action: string; p_post_id: string }
+        Returns: Json
+      }
       get_admin_settings: {
         Args: { p_keys: string[] }
         Returns: {
           key: string
           value: string
+        }[]
+      }
+      get_interested_crew: {
+        Args: { p_post_id: string }
+        Returns: {
+          crew_id: string
+          first_name: string
+          nationality: string
+          rank: string
+          since: string
+          whatsapp: string
         }[]
       }
       increment_discount_uses: {
