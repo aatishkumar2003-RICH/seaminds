@@ -96,6 +96,7 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
       supabase.from("smc_assessments").select("overall_score").eq("crew_profile_id", profileId).eq("status", "completed").order("completed_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
 
+    const companyPosts = ((cpostRes.data as any[]) || []);
     const ships = (((shipRes.data as any[]) || []).sort(() => Math.random() - 0.5));
     const streak = (streakRes.data as any)?.current_streak;
     const score = (scoreRes.data as any)?.overall_score;
