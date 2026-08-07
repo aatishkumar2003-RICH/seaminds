@@ -253,6 +253,61 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
 
       <div className="px-4 space-y-3">
         {shown.map((c, i) => {
+          if (c.kind === "company") {
+            const p = c.data;
+            const TYPE_LABEL: Record<string, string> = {
+              hiring: "🚢 Hiring", update: "📢 Company Update", fleet: "⚓ Fleet News",
+              training: "🎓 Training", welfare: "🤝 Crew Welfare",
+            };
+            return (
+              <article key={c.id} className="rounded-2xl overflow-hidden" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
+                {p.image_url && (
+                  <img src={p.image_url} alt={p.company_name} loading="lazy"
+                    className="w-full object-cover" style={{ maxHeight: 420 }} />
+                )}
+                <div className="p-4 space-y-2.5">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[13px] font-extrabold truncate" style={{ color: GOLD }}>{p.company_name}</span>
+                    {p.verified && <span className="text-[11px]" style={{ color: "#22c55e" }}>✅</span>}
+                    <span className="ml-auto text-[10px] shrink-0" style={{ color: "#94a3b8" }}>{timeAgo(p.created_at)}</span>
+                  </div>
+                  <span className="inline-block rounded-full px-2.5 py-1 text-[10px] font-bold"
+                    style={{ background: "rgba(212,175,55,0.12)", color: GOLD, border: `1px solid rgba(212,175,55,0.35)` }}>
+                    {TYPE_LABEL[p.post_type] || "📢 Update"}
+                  </span>
+                  <p className="text-[13px] leading-relaxed whitespace-pre-wrap" style={{ color: "#e2e8f0" }}>{p.caption}</p>
+                  <div className="flex gap-2">
+                    {p.whatsapp && (
+                      <button
+                        onClick={() => {
+                          log("company_post", p.id, "apply", i);
+                          const d = String(p.whatsapp).replace(/[^\d]/g, "");
+                          if (d) window.open(`https://wa.me/${d}?text=${encodeURIComponent(`Hello ${p.company_name}, I saw your post on SeaMinds and would like to apply.`)}`, "_blank");
+                        }}
+                        className="flex-1 rounded-xl py-2.5 font-bold text-[13px] flex items-center justify-center gap-2"
+                        style={{ background: GOLD, color: NAVY, border: "none", cursor: "pointer" }}
+                      >
+                        <MessageCircle size={14} /> Apply on WhatsApp
+                      </button>
+                    )}
+                    {p.link_url && (
+                      <button
+                        onClick={() => { log("company_post", p.id, "link", i); window.open(p.link_url, "_blank"); }}
+                        className="rounded-xl px-4 py-2.5 font-bold text-[13px]"
+                        style={{ background: "transparent", color: GOLD, border: `1px solid ${GOLD}`, cursor: "pointer" }}
+                      >
+                        <ExternalLink size={14} />
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[9.5px] leading-snug" style={{ color: "#64748b" }}>
+                    Posted by the company. SeaMinds does not endorse third-party advertisements.
+                  </p>
+                </div>
+              </article>
+            );
+          }
+
           if (c.kind === "vacancy") {
             const v = c.data;
             return (
