@@ -136,7 +136,7 @@ Return ONLY valid JSON, no markdown fences:
       excerpt: parsed.excerpt || null,
       slug,
       image_url: imageUrl,
-      language: "en",
+      language: lang.code,
       region: "global",
       published: true,
     });
@@ -155,7 +155,7 @@ Return ONLY valid JSON, no markdown fences:
           body: JSON.stringify({
             chat_id: CHANNEL,
             parse_mode: "HTML",
-            text: `⚓ <b>New Article</b>\n\n<b>${parsed.title || topic}</b>\n\n${parsed.excerpt || ""}\n\n#seafarer #maritime #seaminds #crewlife\n\n👉 ${Deno.env.get("SUPABASE_URL")}/functions/v1/share?type=blog&slug=${slug}`,
+            text: `⚓ <b>New Article</b>\n\n<b>${parsed.title || topic}</b>\n\n${parsed.excerpt || ""}\n\n#seafarer #maritime #seaminds #crewlife${lang.code !== "en" ? ` #${lang.name.toLowerCase()}` : ""}\n\n👉 ${Deno.env.get("SUPABASE_URL")}/functions/v1/share?type=blog&slug=${slug}`,
           }),
         });
       } catch { /* telegram is optional */ }
