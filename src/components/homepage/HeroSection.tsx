@@ -12,14 +12,14 @@ const HeroSection = ({ timeOfDay = "day" }: Props) => {
   const greeting = getGreeting(timeOfDay);
 
   return (
-    <section className="relative pt-28 pb-16 md:pt-32 md:pb-20 overflow-hidden">
+    <section className="relative pt-14 pb-10 sm:pt-20 sm:pb-14 md:pt-32 md:pb-20 overflow-hidden">
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
         <div className="max-w-3xl mx-auto">
           <div className="text-center">
-            <p className="text-xs uppercase tracking-[0.3em] text-primary mb-4 font-mono-score">
+            <p className="text-[10px] sm:text-xs uppercase tracking-[0.25em] sm:tracking-[0.3em] text-primary mb-2 sm:mb-4 font-mono-score">
               AI-Powered Maritime Platform
             </p>
-            <p className="text-sm md:text-base text-primary/80 mb-2 font-medium tracking-wide">
+            <p className="text-sm md:text-base text-primary/80 mb-1 sm:mb-2 font-medium tracking-wide">
               {greeting}
             </p>
 
