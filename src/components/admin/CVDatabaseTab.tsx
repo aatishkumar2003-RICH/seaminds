@@ -317,8 +317,29 @@ export default function CVDatabaseTab() {
       toast.success(`New CV ID: ${fresh}`);
     } catch (e: any) {
       toast.error(e?.message || "Could not regenerate ID");
+  };
+
+  const deleteCrew = async (row: CVRow) => {
+    const name = getFullName(row);
+    if (!window.confirm(
+      `Delete ${name}?\n\nTheir CV, documents, chats and profile will be permanently removed.\nTheir email and phone stay in your contact registry.\n\nThis cannot be undone.`
+    )) return;
+    setDeletingId(row.user_id);
+    try {
+      const { data, error } = await supabase.functions.invoke("delete-crew", {
+        body: { crewId: row.user_id },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Delete failed");
+      toast.success(data.contactPreserved ? "Deleted. Contact kept in registry." : "Deleted.");
+      await load();
+    } catch (err: any) {
+      toast.error(err?.message || "Could not delete");
+    } finally {
+      setDeletingId(null);
     }
   };
+
 
   const openCV = async (path: string) => {
     const { data, error } = await supabase.storage
