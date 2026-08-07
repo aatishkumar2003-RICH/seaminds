@@ -43,6 +43,7 @@ interface Props {
 
 type Card =
   | { kind: "vacancy"; id: string; data: any }
+  | { kind: "company"; id: string; data: any }
   | { kind: "article"; id: string; data: any }
   | { kind: "ship"; id: string; data: { photo: string; caption: string } }
   | { kind: "stats"; id: string; data: { items: any[] } }
