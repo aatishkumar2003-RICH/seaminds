@@ -24,6 +24,8 @@ interface FeedItem {
   applyUrl: string | null;
   verified: boolean;
   posted: string;
+  caption?: string;
+  isCompanyPost?: boolean;
 }
 
 const GROUPS: Record<string, string[]> = {
@@ -50,14 +52,18 @@ const JobFeed = () => {
   useEffect(() => {
     (async () => {
       try {
-        const [posts, ext] = await Promise.all([
+        const [posts, ext, cposts] = await Promise.all([
           supabase.from("job_postings" as any)
             .select("id, rank_required, vessel_type, monthly_salary, joining_port, contract_duration, company_name, contact_whatsapp, verified, flier_url, created_at, status")
             .eq("status", "active").order("created_at", { ascending: false }).limit(60),
           supabase.from("external_vacancies" as any)
             .select("id, rank_required, vessel_type, company_name, salary_text, joining_port, contract_duration, contact_whatsapp, apply_url, is_verified, fetched_at")
             .order("fetched_at", { ascending: false }).limit(60),
+          supabase.from("company_posts" as any)
+            .select("id, company_name, post_type, caption, image_url, whatsapp, link_url, verified, created_at")
+            .eq("status", "live").order("created_at", { ascending: false }).limit(30),
         ]);
+
 
         const a: FeedItem[] = ((posts.data as any[]) || []).map((r) => ({
           id: `p-${r.id}`, source: "company",
@@ -77,7 +83,17 @@ const JobFeed = () => {
           verified: !!r.is_verified, posted: r.fetched_at,
         }));
 
-        setItems([...a, ...b].sort((x, y) => +new Date(y.posted) - +new Date(x.posted)));
+        const c: FeedItem[] = (((cposts as any).data as any[]) || []).map((r) => ({
+          id: `c-${r.id}`, source: "company" as const,
+          rank: r.company_name, vessel: "",
+          company: r.company_name, salary: null,
+          port: null, duration: null, flier: r.image_url,
+          whatsapp: r.whatsapp, applyUrl: r.link_url,
+          verified: !!r.verified, posted: r.created_at,
+          caption: r.caption, isCompanyPost: true,
+        }));
+
+        setItems([...a, ...b, ...c].sort((x, y) => +new Date(y.posted) - +new Date(x.posted)));
       } finally {
         setLoading(false);
       }
@@ -174,11 +190,15 @@ const JobFeed = () => {
                 <span style={{ fontSize: 10, color: "#94a3b8", whiteSpace: "nowrap" }}>{timeAgo(i.posted)}</span>
               </div>
 
+              {i.isCompanyPost ? (
+                <p style={{ fontSize: 13, color: "#e2e8f0", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{i.caption}</p>
+              ) : (
               <div style={{ display: "flex", flexWrap: "wrap", gap: 12, fontSize: 12, color: "#cbd5e1" }}>
                 <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Ship size={13} style={{ color: "#94a3b8" }} />{i.vessel}</span>
                 {i.port && <span style={{ display: "flex", alignItems: "center", gap: 4 }}><MapPin size={13} style={{ color: "#94a3b8" }} />{i.port}</span>}
                 {i.duration && <span style={{ color: "#94a3b8" }}>{i.duration}</span>}
               </div>
+              )}
 
               {i.salary && (
                 <div style={{ color: "#22c55e", fontWeight: 800, fontSize: 15 }}>{i.salary}</div>

@@ -43,6 +43,7 @@ interface Props {
 
 type Card =
   | { kind: "vacancy"; id: string; data: any }
+  | { kind: "company"; id: string; data: any }
   | { kind: "article"; id: string; data: any }
   | { kind: "ship"; id: string; data: { photo: string; caption: string } }
   | { kind: "stats"; id: string; data: { items: any[] } }
@@ -70,13 +71,18 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
     const lang = LANG_BY_NATIONALITY[nationality] || "en";
     const dept = deptOf(rank);
 
-    const [vacRes, postRes, artRes, quizRes, profRes, shipRes, streakRes, scoreRes] = await Promise.all([
+    const [vacRes, postRes, cpostRes, artRes, quizRes, profRes, shipRes, streakRes, scoreRes] = await Promise.all([
       supabase.from("external_vacancies")
         .select("id, rank_required, vessel_type, company_name, salary_text, joining_port, contract_duration, contact_whatsapp, apply_url, is_verified, fetched_at")
         .order("fetched_at", { ascending: false }).limit(40),
       supabase.from("job_postings" as any)
         .select("id, rank_required, vessel_type, company_name, monthly_salary, joining_port, contract_duration, contact_whatsapp, flier_url, verified, created_at")
         .eq("status", "active").order("created_at", { ascending: false }).limit(15),
+      supabase.from("company_posts" as any)
+        .select("id, company_name, post_type, caption, image_url, whatsapp, link_url, verified, created_at")
+        .eq("status", "live")
+        .order("created_at", { ascending: false })
+        .limit(15),
       supabase.from("blog_posts")
         .select("id, title, excerpt, slug, image_url, created_at, language")
         .eq("published", true).eq("language", lang)
@@ -90,6 +96,7 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
       supabase.from("smc_assessments").select("overall_score").eq("crew_profile_id", profileId).eq("status", "completed").order("completed_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
 
+    const companyPosts = ((cpostRes.data as any[]) || []);
     const ships = (((shipRes.data as any[]) || []).sort(() => Math.random() - 0.5));
     const streak = (streakRes.data as any)?.current_streak;
     const score = (scoreRes.data as any)?.overall_score;
@@ -156,12 +163,13 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
 
     // Interleave: vacancy · ship/salary · vacancy · quiz · article · vacancy · article · nudge
     const out: Card[] = [];
-    let vi = 0, ai = 0, qi = 0, ni = 0, si = 0;
+    let vi = 0, ai = 0, qi = 0, ni = 0, si = 0, ci = 0;
     const pushVac = () => { if (vacancies[vi]) out.push({ kind: "vacancy", id: vacancies[vi].id, data: vacancies[vi++] }); };
     const pushArt = () => { if (articles[ai]) out.push({ kind: "article", id: `a-${articles[ai].id}`, data: articles[ai++] }); };
 
     for (let cycle = 0; cycle < 10; cycle++) {
       pushVac();
+      if (companyPosts[ci]) out.push({ kind: "company", id: `c-${companyPosts[ci].id}`, data: companyPosts[ci++] });
       if (cycle === 0) out.push({ kind: "stats", id: "stats", data: { items: statItems } });
       if (cycle % 2 === 0) {
         if (ships.length) {
@@ -245,6 +253,61 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
 
       <div className="px-4 space-y-3">
         {shown.map((c, i) => {
+          if (c.kind === "company") {
+            const p = c.data;
+            const TYPE_LABEL: Record<string, string> = {
+              hiring: "🚢 Hiring", update: "📢 Company Update", fleet: "⚓ Fleet News",
+              training: "🎓 Training", welfare: "🤝 Crew Welfare",
+            };
+            return (
+              <article key={c.id} className="rounded-2xl overflow-hidden" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
+                {p.image_url && (
+                  <img src={p.image_url} alt={p.company_name} loading="lazy"
+                    className="w-full object-cover" style={{ maxHeight: 420 }} />
+                )}
+                <div className="p-4 space-y-2.5">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[13px] font-extrabold truncate" style={{ color: GOLD }}>{p.company_name}</span>
+                    {p.verified && <span className="text-[11px]" style={{ color: "#22c55e" }}>✅</span>}
+                    <span className="ml-auto text-[10px] shrink-0" style={{ color: "#94a3b8" }}>{timeAgo(p.created_at)}</span>
+                  </div>
+                  <span className="inline-block rounded-full px-2.5 py-1 text-[10px] font-bold"
+                    style={{ background: "rgba(212,175,55,0.12)", color: GOLD, border: `1px solid rgba(212,175,55,0.35)` }}>
+                    {TYPE_LABEL[p.post_type] || "📢 Update"}
+                  </span>
+                  <p className="text-[13px] leading-relaxed whitespace-pre-wrap" style={{ color: "#e2e8f0" }}>{p.caption}</p>
+                  <div className="flex gap-2">
+                    {p.whatsapp && (
+                      <button
+                        onClick={() => {
+                          log("company_post", p.id, "apply", i);
+                          const d = String(p.whatsapp).replace(/[^\d]/g, "");
+                          if (d) window.open(`https://wa.me/${d}?text=${encodeURIComponent(`Hello ${p.company_name}, I saw your post on SeaMinds and would like to apply.`)}`, "_blank");
+                        }}
+                        className="flex-1 rounded-xl py-2.5 font-bold text-[13px] flex items-center justify-center gap-2"
+                        style={{ background: GOLD, color: NAVY, border: "none", cursor: "pointer" }}
+                      >
+                        <MessageCircle size={14} /> Apply on WhatsApp
+                      </button>
+                    )}
+                    {p.link_url && (
+                      <button
+                        onClick={() => { log("company_post", p.id, "link", i); window.open(p.link_url, "_blank"); }}
+                        className="rounded-xl px-4 py-2.5 font-bold text-[13px]"
+                        style={{ background: "transparent", color: GOLD, border: `1px solid ${GOLD}`, cursor: "pointer" }}
+                      >
+                        <ExternalLink size={14} />
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[9.5px] leading-snug" style={{ color: "#64748b" }}>
+                    Posted by the company. SeaMinds does not endorse third-party advertisements.
+                  </p>
+                </div>
+              </article>
+            );
+          }
+
           if (c.kind === "vacancy") {
             const v = c.data;
             return (
