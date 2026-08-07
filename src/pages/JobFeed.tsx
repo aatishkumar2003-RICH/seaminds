@@ -53,6 +53,7 @@ const timeAgo = (iso: string) => {
 const JobFeed = () => {
   const navigate = useNavigate();
   const [items, setItems] = useState<FeedItem[]>([]);
+  const [ships, setShips] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("All");
 
