@@ -74,6 +74,21 @@ const CompanyPost = () => {
   const publish = async () => {
     if (!caption.trim()) { toast.error("Write something to post."); return; }
     setPublishing(true);
+      setCheckingContent(true);
+      try {
+        const { data: check } = await supabase.functions.invoke("post-check", {
+          body: { caption: caption.trim(), imageUrl },
+        });
+        if (check && check.allowed === false) {
+          toast.error(check.reason || "This post does not appear to be maritime related.");
+          setCheckingContent(false);
+          setPublishing(false);
+          return;
+        }
+      } catch {
+        // Never block a company on a check failure
+      }
+      setCheckingContent(false);
     try {
       const { data, error } = await supabase.from("company_posts" as any).insert({
         manager_id: managerId,
