@@ -190,11 +190,15 @@ const JobFeed = () => {
                 <span style={{ fontSize: 10, color: "#94a3b8", whiteSpace: "nowrap" }}>{timeAgo(i.posted)}</span>
               </div>
 
+              {i.isCompanyPost ? (
+                <p style={{ fontSize: 13, color: "#e2e8f0", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{i.caption}</p>
+              ) : (
               <div style={{ display: "flex", flexWrap: "wrap", gap: 12, fontSize: 12, color: "#cbd5e1" }}>
                 <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Ship size={13} style={{ color: "#94a3b8" }} />{i.vessel}</span>
                 {i.port && <span style={{ display: "flex", alignItems: "center", gap: 4 }}><MapPin size={13} style={{ color: "#94a3b8" }} />{i.port}</span>}
                 {i.duration && <span style={{ color: "#94a3b8" }}>{i.duration}</span>}
               </div>
+              )}
 
               {i.salary && (
                 <div style={{ color: "#22c55e", fontWeight: 800, fontSize: 15 }}>{i.salary}</div>
