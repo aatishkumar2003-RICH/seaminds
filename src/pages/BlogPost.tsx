@@ -18,6 +18,54 @@ interface BlogPostData {
   region: string | null;
 }
 
+const LOCALISED: Record<string, Record<string, string>> = {
+  en: {
+    tipTitle: "SeaMinds tracks this for you",
+    tipBody: "SeaMinds reads your certificates from your CV and warns you before they expire. Free for seafarers.",
+    ctaTitle: "Get hired faster",
+    ctaBody: "Build your verified maritime CV, get your competency score, and let manning companies find you. New vacancies added every 2 hours.",
+    ctaButton: "Join Free",
+    ctaJobs: "See Live Jobs",
+    ctaFree: "Free for seafarers. No agent fees. No card needed.",
+  },
+  vi: {
+    tipTitle: "SeaMinds theo dõi giúp bạn",
+    tipBody: "SeaMinds đọc chứng chỉ từ CV của bạn và nhắc bạn trước khi hết hạn. Miễn phí cho thuyền viên.",
+    ctaTitle: "Tìm việc nhanh hơn",
+    ctaBody: "Tạo CV hàng hải đã xác minh, nhận điểm năng lực, và để các công ty tuyển dụng tìm thấy bạn. Việc làm mới mỗi 2 giờ.",
+    ctaButton: "Tham gia miễn phí",
+    ctaJobs: "Xem việc làm",
+    ctaFree: "Miễn phí cho thuyền viên. Không phí môi giới.",
+  },
+  tl: {
+    tipTitle: "Sinusubaybayan ito ng SeaMinds para sa iyo",
+    tipBody: "Binabasa ng SeaMinds ang iyong mga sertipiko mula sa CV at binabalaan ka bago mag-expire. Libre para sa mga marino.",
+    ctaTitle: "Mas mabilis matanggap sa trabaho",
+    ctaBody: "Gumawa ng verified maritime CV, kunin ang iyong competency score, at hayaang mahanap ka ng mga manning company. May bagong bakante kada 2 oras.",
+    ctaButton: "Sumali nang Libre",
+    ctaJobs: "Tingnan ang Trabaho",
+    ctaFree: "Libre para sa mga marino. Walang agent fee.",
+  },
+  hi: {
+    tipTitle: "SeaMinds आपके लिए इसका ध्यान रखता है",
+    tipBody: "SeaMinds आपके CV से प्रमाणपत्र पढ़ता है और समाप्त होने से पहले आपको सूचित करता है। नाविकों के लिए निःशुल्क।",
+    ctaTitle: "तेज़ी से नौकरी पाएं",
+    ctaBody: "अपना सत्यापित समुद्री CV बनाएं, अपना योग्यता स्कोर प्राप्त करें, और कंपनियों को आपको खोजने दें। हर 2 घंटे में नई रिक्तियां।",
+    ctaButton: "निःशुल्क जुड़ें",
+    ctaJobs: "नौकरियां देखें",
+    ctaFree: "नाविकों के लिए निःशुल्क। कोई एजेंट शुल्क नहीं।",
+  },
+  id: {
+    tipTitle: "SeaMinds melacaknya untuk Anda",
+    tipBody: "SeaMinds membaca sertifikat dari CV Anda dan memperingatkan sebelum kedaluwarsa. Gratis untuk pelaut.",
+    ctaTitle: "Dapatkan pekerjaan lebih cepat",
+    ctaBody: "Buat CV maritim terverifikasi, dapatkan skor kompetensi, dan biarkan perusahaan menemukan Anda. Lowongan baru setiap 2 jam.",
+    ctaButton: "Gabung Gratis",
+    ctaJobs: "Lihat Lowongan",
+    ctaFree: "Gratis untuk pelaut. Tanpa biaya agen.",
+  },
+};
+
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
@@ -114,6 +162,10 @@ const BlogPost = () => {
           };
           return (
             <>
+              <html lang={post.language || "en"} />
+              <meta property="og:locale" content={
+                ({ en: "en_US", vi: "vi_VN", tl: "tl_PH", hi: "hi_IN", id: "id_ID" } as Record<string, string>)[post.language || "en"] || "en_US"
+              } />
               <title>{post.title} — SeaMinds Blog</title>
               <meta name="description" content={desc} />
               <link rel="canonical" href={`https://seaminds.life/blog/${slug}`} />
@@ -240,6 +292,39 @@ const BlogPost = () => {
             if (/^\d+\.\s+/.test(t)) return <li key={i} className="ml-5 list-decimal">{bold(t.replace(/^\d+\.\s+/, ""))}</li>;
             return <p key={i}>{bold(t)}</p>;
           })}
+        </div>
+
+        {/* Mid-article tip */}
+        <div className="rounded-2xl p-4 my-8" style={{ background: "rgba(212,175,55,0.08)", border: "1px solid rgba(212,175,55,0.3)" }}>
+          <p className="text-sm font-bold mb-1.5" style={{ color: "#D4AF37" }}>
+            💡 {LOCALISED[post.language || "en"]?.tipTitle || LOCALISED.en.tipTitle}
+          </p>
+          <p className="text-[13px] leading-relaxed" style={{ color: "#CBD5E1" }}>
+            {LOCALISED[post.language || "en"]?.tipBody || LOCALISED.en.tipBody}
+          </p>
+        </div>
+
+        {/* End-of-article CTA */}
+        <div className="rounded-2xl p-6 my-8 text-center" style={{ background: "#112240", border: "1px solid #1e3a5f" }}>
+          <p className="text-lg font-extrabold mb-2" style={{ color: "#D4AF37" }}>
+            ⚓ {LOCALISED[post.language || "en"]?.ctaTitle || LOCALISED.en.ctaTitle}
+          </p>
+          <p className="text-[13px] leading-relaxed mb-4" style={{ color: "#CBD5E1" }}>
+            {LOCALISED[post.language || "en"]?.ctaBody || LOCALISED.en.ctaBody}
+          </p>
+          <div className="flex flex-col sm:flex-row gap-2 justify-center">
+            <a href="/app" className="rounded-xl px-5 py-3 text-sm font-bold"
+              style={{ background: "#D4AF37", color: "#0D1B2A", textDecoration: "none" }}>
+              {LOCALISED[post.language || "en"]?.ctaButton || LOCALISED.en.ctaButton}
+            </a>
+            <a href="/feed" className="rounded-xl px-5 py-3 text-sm font-bold"
+              style={{ background: "transparent", color: "#D4AF37", border: "1px solid #D4AF37", textDecoration: "none" }}>
+              {LOCALISED[post.language || "en"]?.ctaJobs || LOCALISED.en.ctaJobs}
+            </a>
+          </div>
+          <p className="text-[11px] mt-3" style={{ color: "#64748b" }}>
+            {LOCALISED[post.language || "en"]?.ctaFree || LOCALISED.en.ctaFree}
+          </p>
         </div>
 
         {/* CTA box */}
