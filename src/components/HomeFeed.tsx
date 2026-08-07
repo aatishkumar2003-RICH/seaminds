@@ -58,6 +58,7 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
   const [refreshing, setRefreshing] = useState(false);
   const [visible, setVisible] = useState(8);
   const [quizState, setQuizState] = useState<Record<string, number>>({});
+  const [engaged, setEngaged] = useState<Record<string, { interested: boolean; saved: boolean; count: number }>>({});
 
   const log = useCallback(async (item_type: string, item_id: string, action: string, position?: number) => {
     try {
@@ -66,6 +67,26 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
       } as any);
     } catch { /* never block the feed */ }
   }, [profileId]);
+
+  const engage = async (postId: string, action: "interested" | "save" | "view", position?: number) => {
+    try {
+      const { data } = await supabase.rpc("engage_company_post" as any, { p_post_id: postId, p_action: action });
+      const res: any = data;
+      if (action !== "view") log("company_post", postId, action, position);
+      if (action === "interested" && res?.active) {
+        alert("The company can now see you are interested. Keep your CV and availability up to date.");
+      }
+      setEngaged((s) => ({
+        ...s,
+        [postId]: {
+          interested: action === "interested" ? !!res?.active : (s[postId]?.interested ?? false),
+          saved: action === "save" ? true : (s[postId]?.saved ?? false),
+          count: typeof res?.interested === "number" ? res.interested : (s[postId]?.count ?? 0),
+        },
+      }));
+    } catch { /* never break the feed */ }
+  };
+
 
   const build = useCallback(async () => {
     const lang = LANG_BY_NATIONALITY[nationality] || "en";
