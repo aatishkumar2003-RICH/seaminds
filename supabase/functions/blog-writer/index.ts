@@ -62,15 +62,26 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Pick the first topic that has not been published yet
+    // Pick the first topic+language pair that has not been published yet
     const { data: existing } = await supabase.from("blog_posts").select("slug");
     const used = new Set((existing || []).map((r: any) => r.slug));
-    const topic = TOPICS.find((t) => !used.has(slugify(t)));
+
+    let topic: string | null = null;
+    let lang = LANGUAGES[0];
+    outer:
+    for (const t of TOPICS) {
+      for (const L of LANGUAGES) {
+        const candidate = L.code === "en" ? slugify(t) : `${slugify(t)}-${L.code}`;
+        if (!used.has(candidate)) { topic = t; lang = L; break outer; }
+      }
+    }
+
     if (!topic) {
       return new Response(JSON.stringify({ success: true, skipped: "all topics used" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const slug = lang.code === "en" ? slugify(topic) : `${slugify(topic)}-${lang.code}`;
 
     // Write the article with GPT-4o-mini
     const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
