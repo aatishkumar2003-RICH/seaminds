@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import PasswordInput from "@/components/PasswordInput";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -39,10 +40,10 @@ const ResetPassword = () => {
             Open this page from the reset link in your email.
           </p>
         )}
-        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-          placeholder="New password" className={inputClass} />
-        <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)}
-          placeholder="Confirm new password" className={inputClass} />
+        <PasswordInput value={password} onChange={setPassword}
+          placeholder="New password" className={inputClass} autoComplete="new-password" />
+        <PasswordInput value={confirm} onChange={setConfirm}
+          placeholder="Confirm new password" className={inputClass} autoComplete="new-password" onEnter={save} />
         <button onClick={save} disabled={loading || !ready}
           className="w-full bg-primary text-primary-foreground font-medium text-sm rounded-xl py-3.5 disabled:opacity-30">
           {loading ? "Saving..." : "Save new password"}

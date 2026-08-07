@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { trackPixel } from "@/lib/metaPixel";
+import PasswordInput from "@/components/PasswordInput";
 
 const COMPANY_SUGGESTIONS = [
   "Fleet Management Ltd", "Anglo-Eastern", "Synergy Marine", "V.Group", "BSM",
@@ -171,7 +172,13 @@ const ManagerAuth = () => {
           </div>
           <div className="space-y-1.5">
             <label className={labelClass}>Password *</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className={inputClass} />
+            <PasswordInput
+              value={password}
+              onChange={setPassword}
+              className={inputClass}
+              autoComplete={mode === "login" ? "current-password" : "new-password"}
+              onEnter={mode === "login" ? handleLogin : handleSignup}
+            />
           </div>
         </div>
 

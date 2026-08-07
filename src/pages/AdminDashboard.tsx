@@ -24,6 +24,7 @@ import AgentChatPanel from "@/components/admin/AgentChatPanel";
 import CVDatabaseTab from "@/components/admin/CVDatabaseTab";
 import MobileVerificationTab from "@/components/admin/MobileVerificationTab";
 import ActivityFullTab from "@/components/admin/ActivityTab";
+import PasswordInput from "@/components/PasswordInput";
 
 // Admin = the SeaMinds owner account. The browser only checks that this exact
 // authenticated user is signed in (it just hides the UI). Real enforcement is
@@ -67,12 +68,11 @@ function AdminLogin({ onAuth }: { onAuth: () => void }) {
           className="text-center border-2"
           style={{ borderColor: "#D4AF37", background: "#1B2838", color: "#D4AF37" }}
         />
-        <Input
-          type="password"
+        <PasswordInput
           value={password}
-          onChange={(e) => { setPassword(e.target.value); setError(""); }}
+          onChange={(v) => { setPassword(v); setError(""); }}
           placeholder="Password"
-          className="text-center border-2"
+          className="text-center border-2 rounded-md w-full px-3 py-2 text-sm"
           style={{ borderColor: "#D4AF37", background: "#1B2838", color: "#D4AF37" }}
         />
         {error && <p className="text-red-400 text-sm">{error}</p>}
