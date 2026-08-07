@@ -57,6 +57,32 @@ const buildMessage = (v: any) => {
   return lines.join("\n");
 };
 
+const TYPE_LABEL: Record<string, string> = {
+  hiring: "🚢 HIRING",
+  update: "📢 COMPANY UPDATE",
+  fleet: "⚓ FLEET NEWS",
+  training: "🎓 TRAINING",
+  welfare: "🤝 CREW WELFARE",
+};
+
+const buildCompanyMessage = (p: any) => {
+  const lines: string[] = [];
+  lines.push(`${TYPE_LABEL[p.post_type] || "📢 UPDATE"}`);
+  lines.push("");
+  lines.push(`<b>${esc(p.company_name)}</b>${p.verified ? " ✅" : ""}`);
+  lines.push("");
+  lines.push(esc(p.caption || ""));
+  lines.push("");
+  if (p.whatsapp) {
+    const d = String(p.whatsapp).replace(/[^\d]/g, "");
+    if (d) lines.push(`📲 Apply on WhatsApp: https://wa.me/${d}`);
+  }
+  if (p.link_url) lines.push(`🔗 ${esc(p.link_url)}`);
+  lines.push("");
+  lines.push(`🌊 More jobs: ${Deno.env.get("SUPABASE_URL")}/functions/v1/share?type=jobs`);
+  return lines.join("\n");
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
