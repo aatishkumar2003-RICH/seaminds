@@ -101,10 +101,11 @@ const JobFeed = () => {
           port: null, duration: null, flier: r.image_url,
           whatsapp: r.whatsapp, applyUrl: r.link_url,
           verified: !!r.verified, posted: r.created_at,
-          caption: r.caption, isCompanyPost: true,
+          caption: r.caption, isCompanyPost: true, postType: r.post_type,
         }));
 
         setItems([...a, ...b, ...c].sort((x, y) => +new Date(y.posted) - +new Date(x.posted)));
+        setShips((((shipRes as any).data as any[]) || []).sort(() => Math.random() - 0.5));
       } finally {
         setLoading(false);
       }
