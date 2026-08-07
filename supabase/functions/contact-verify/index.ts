@@ -282,8 +282,34 @@ Deno.serve(async (req) => {
     const profileUpdate = channel === 'email'
       ? { email_verified: true, email_verified_at: now, email: target }
       : { whatsapp_verified: true, whatsapp_verified_at: now, whatsapp_number: target };
-    const { error: profErr } = await admin.from('crew_profiles').update(profileUpdate).eq('user_id', user.id);
-    if (profErr) log('profile update warning', profErr.message);
+    // crew_profiles.id IS the auth user id; user_id is legacy and often NULL.
+    // Update by id first, then fall back to user_id for legacy rows.
+    let saved = false;
+    const { data: byId, error: profErr } = await admin
+      .from('crew_profiles')
+      .update(profileUpdate)
+      .eq('id', user.id)
+      .select('id');
+    if (profErr) log('profile update warning (id)', profErr.message);
+    if (byId && byId.length > 0) saved = true;
+
+    if (!saved) {
+      const { data: byUserId, error: legacyErr } = await admin
+        .from('crew_profiles')
+        .update(profileUpdate)
+        .eq('user_id', user.id)
+        .select('id');
+      if (legacyErr) log('profile update warning (user_id)', legacyErr.message);
+      if (byUserId && byUserId.length > 0) saved = true;
+    }
+
+    if (!saved) {
+      log('profile update matched no rows', { user: user.id, channel });
+      return json({
+        success: false,
+        error: 'Your code was correct but we could not update your profile. Please contact SeaMinds support.',
+      });
+    }
 
     log('verified', { channel });
     return json({
