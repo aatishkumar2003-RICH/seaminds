@@ -57,6 +57,32 @@ const buildMessage = (v: any) => {
   return lines.join("\n");
 };
 
+const TYPE_LABEL: Record<string, string> = {
+  hiring: "🚢 HIRING",
+  update: "📢 COMPANY UPDATE",
+  fleet: "⚓ FLEET NEWS",
+  training: "🎓 TRAINING",
+  welfare: "🤝 CREW WELFARE",
+};
+
+const buildCompanyMessage = (p: any) => {
+  const lines: string[] = [];
+  lines.push(`${TYPE_LABEL[p.post_type] || "📢 UPDATE"}`);
+  lines.push("");
+  lines.push(`<b>${esc(p.company_name)}</b>${p.verified ? " ✅" : ""}`);
+  lines.push("");
+  lines.push(esc(p.caption || ""));
+  lines.push("");
+  if (p.whatsapp) {
+    const d = String(p.whatsapp).replace(/[^\d]/g, "");
+    if (d) lines.push(`📲 Apply on WhatsApp: https://wa.me/${d}`);
+  }
+  if (p.link_url) lines.push(`🔗 ${esc(p.link_url)}`);
+  lines.push("");
+  lines.push(`🌊 More jobs: ${Deno.env.get("SUPABASE_URL")}/functions/v1/share?type=jobs`);
+  return lines.join("\n");
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -75,6 +101,46 @@ Deno.serve(async (req) => {
   const errors: string[] = [];
 
   try {
+    // Company adverts first — these are the paying side
+    const { data: cposts } = await supabase
+      .from("company_posts")
+      .select("id, company_name, post_type, caption, image_url, whatsapp, link_url, verified")
+      .eq("status", "live")
+      .eq("telegram_posted", false)
+      .order("created_at", { ascending: false })
+      .limit(3);
+
+    for (const p of cposts || []) {
+      let ok = false;
+      if (p.image_url && TG_TOKEN) {
+        // Send as a photo with the caption so the flier is visible
+        try {
+          const res = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendPhoto`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: CHANNEL,
+              photo: p.image_url,
+              caption: buildCompanyMessage(p).slice(0, 1024),
+              parse_mode: "HTML",
+            }),
+          });
+          const data = await res.json();
+          ok = !!data.ok;
+          if (!data.ok) console.error("Telegram photo error:", JSON.stringify(data));
+        } catch (e) {
+          console.error("Telegram photo failed:", e);
+        }
+      }
+      if (!ok) ok = await sendToChannel(buildCompanyMessage(p));
+
+      if (ok) {
+        await supabase.from("company_posts").update({ telegram_posted: true }).eq("id", p.id);
+        posted++;
+      } else errors.push(`company ${p.id}`);
+      await new Promise((r) => setTimeout(r, 1200));
+    }
+
     // Company-posted vacancies first (they are the paying side)
     const { data: posts } = await supabase
       .from("job_postings")
