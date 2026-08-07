@@ -213,6 +213,12 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
     }
 
     setCards(out.filter(Boolean));
+
+    // Count one view per company post shown
+    companyPosts.slice(0, 6).forEach((p: any) => {
+      supabase.rpc("engage_company_post" as any, { p_post_id: p.id, p_action: "view" }).then(() => {}, () => {});
+    });
+
   }, [profileId, rank, nationality]);
 
   useEffect(() => { build().finally(() => setLoading(false)); }, [build]);
