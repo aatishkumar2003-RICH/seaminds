@@ -412,7 +412,10 @@ const ManagerDashboard = () => {
             </div>
           </>
         )}
+
+        {managerUserId && <MyPostsPanel managerId={managerUserId} />}
       </div>
+
     </div>
   );
 };
