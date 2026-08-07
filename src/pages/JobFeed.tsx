@@ -83,7 +83,17 @@ const JobFeed = () => {
           verified: !!r.is_verified, posted: r.fetched_at,
         }));
 
-        setItems([...a, ...b].sort((x, y) => +new Date(y.posted) - +new Date(x.posted)));
+        const c: FeedItem[] = (((cposts as any).data as any[]) || []).map((r) => ({
+          id: `c-${r.id}`, source: "company" as const,
+          rank: r.company_name, vessel: "",
+          company: r.company_name, salary: null,
+          port: null, duration: null, flier: r.image_url,
+          whatsapp: r.whatsapp, applyUrl: r.link_url,
+          verified: !!r.verified, posted: r.created_at,
+          caption: r.caption, isCompanyPost: true,
+        }));
+
+        setItems([...a, ...b, ...c].sort((x, y) => +new Date(y.posted) - +new Date(x.posted)));
       } finally {
         setLoading(false);
       }
