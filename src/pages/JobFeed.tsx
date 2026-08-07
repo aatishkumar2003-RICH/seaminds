@@ -174,70 +174,126 @@ const JobFeed = () => {
         </div>
       </header>
 
+      <section style={{ borderBottom: `1px solid ${BORDER}`, background: "linear-gradient(160deg, rgba(212,175,55,0.10), transparent)" }}>
+        <div style={{ maxWidth: 700, margin: "0 auto", padding: "20px 16px 22px", textAlign: "center" }}>
+          <h2 style={{ color: "#fff", fontSize: 22, fontWeight: 900, lineHeight: 1.25 }}>
+            Your next contract, direct from the company
+          </h2>
+          <p style={{ color: "#cbd5e1", fontSize: 13, marginTop: 8, lineHeight: 1.55 }}>
+            Live maritime vacancies updated every 2 hours. Apply straight to the company on WhatsApp — no agent fees, no middleman.
+          </p>
+          <div style={{ display: "flex", justifyContent: "center", gap: 18, marginTop: 14, flexWrap: "wrap" }}>
+            {[
+              { v: loading ? "—" : String(items.length), l: "live now" },
+              { v: "Free", l: "always, for crew" },
+              { v: "2h", l: "refresh rate" },
+            ].map((s) => (
+              <div key={s.l} style={{ textAlign: "center" }}>
+                <p style={{ color: GOLD, fontSize: 18, fontWeight: 900 }}>{s.v}</p>
+                <p style={{ color: "#94a3b8", fontSize: 10 }}>{s.l}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <main style={{ maxWidth: 700, margin: "0 auto", padding: "16px 16px 60px", display: "flex", flexDirection: "column", gap: 14 }}>
         {loading && <p style={{ color: "#94a3b8", textAlign: "center", padding: 40 }}>Loading vacancies…</p>}
 
         {!loading && shown.length === 0 && (
           <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 40, textAlign: "center", color: "#94a3b8" }}>
-            No vacancies in this category yet. Check back soon.
+            No vacancies in this category right now — try "All" to see everything live.
           </div>
         )}
 
         {shown.map((i, idx) => (
-          <article key={i.id} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 16, overflow: "hidden" }}>
-            {i.flier && (
-              <img src={i.flier} alt={`${i.rank} vacancy flier`} loading="lazy"
-                style={{ width: "100%", display: "block", maxHeight: 460, objectFit: "cover" }} />
-            )}
+          <div key={i.id} style={{ display: "contents" }}>
+            <article style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 16, overflow: "hidden" }}>
+              {i.flier && (
+                <img src={i.flier} alt={`${i.rank} vacancy flier`} loading="lazy"
+                  style={{ width: "100%", display: "block", maxHeight: 460, objectFit: "cover" }} />
+              )}
 
-            <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start" }}>
-                <div style={{ minWidth: 0 }}>
-                  <h2 style={{ color: "#fff", fontSize: 17, fontWeight: 800, lineHeight: 1.2 }}>{i.rank}</h2>
-                  <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 3 }}>
-                    <span style={{ color: GOLD, fontSize: 12, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{i.company}</span>
-                    {i.verified && <BadgeCheck size={13} style={{ color: "#22c55e", flexShrink: 0 }} />}
+              <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start" }}>
+                  <div style={{ minWidth: 0 }}>
+                    <h2 style={{ color: "#fff", fontSize: 17, fontWeight: 800, lineHeight: 1.2 }}>{i.rank}</h2>
+                    <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 3 }}>
+                      <span style={{ color: GOLD, fontSize: 12, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{i.company}</span>
+                      {i.verified && <BadgeCheck size={13} style={{ color: "#22c55e", flexShrink: 0 }} />}
+                    </div>
                   </div>
+                  <span style={{ fontSize: 10, color: "#94a3b8", whiteSpace: "nowrap" }}>{timeAgo(i.posted)}</span>
                 </div>
-                <span style={{ fontSize: 10, color: "#94a3b8", whiteSpace: "nowrap" }}>{timeAgo(i.posted)}</span>
-              </div>
 
-              {i.isCompanyPost ? (
-                <p style={{ fontSize: 13, color: "#e2e8f0", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{i.caption}</p>
-              ) : (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 12, fontSize: 12, color: "#cbd5e1" }}>
-                <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Ship size={13} style={{ color: "#94a3b8" }} />{i.vessel}</span>
-                {i.port && <span style={{ display: "flex", alignItems: "center", gap: 4 }}><MapPin size={13} style={{ color: "#94a3b8" }} />{i.port}</span>}
-                {i.duration && <span style={{ color: "#94a3b8" }}>{i.duration}</span>}
-              </div>
-              )}
+                {i.isCompanyPost ? (
+                  <>
+                    <span style={{
+                      display: "inline-block", alignSelf: "flex-start", borderRadius: 999,
+                      padding: "4px 10px", fontSize: 10, fontWeight: 800,
+                      background: "rgba(212,175,55,0.12)", color: GOLD, border: `1px solid rgba(212,175,55,0.35)`,
+                    }}>
+                      {TYPE_LABEL[i.postType || "update"] || "📢 Update"}
+                    </span>
+                    <p style={{ fontSize: 13, color: "#e2e8f0", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{i.caption}</p>
+                  </>
+                ) : (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 12, fontSize: 12, color: "#cbd5e1" }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Ship size={13} style={{ color: "#94a3b8" }} />{i.vessel}</span>
+                  {i.port && <span style={{ display: "flex", alignItems: "center", gap: 4 }}><MapPin size={13} style={{ color: "#94a3b8" }} />{i.port}</span>}
+                  {i.duration && <span style={{ color: "#94a3b8" }}>{i.duration}</span>}
+                </div>
+                )}
 
-              {i.salary && (
-                <div style={{ color: "#22c55e", fontWeight: 800, fontSize: 15 }}>{i.salary}</div>
-              )}
+                {i.salary && (
+                  <div style={{ color: "#22c55e", fontWeight: 800, fontSize: 15 }}>{i.salary}</div>
+                )}
 
-              <button onClick={() => apply(i)} style={{
-                marginTop: 2, width: "100%", padding: "11px", borderRadius: 11, border: "none", cursor: "pointer",
-                background: GOLD, color: NAVY, fontWeight: 800, fontSize: 13,
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
-              }}>
-                {i.whatsapp ? <><MessageCircle size={15} /> Apply via WhatsApp</> : <><ExternalLink size={15} /> View & Apply</>}
-              </button>
-            </div>
-
-            {(idx + 1) % 6 === 0 && (
-              <div style={{ borderTop: `1px solid ${BORDER}`, padding: 13, textAlign: "center" }}>
-                <p style={{ color: "#cbd5e1", fontSize: 12, marginBottom: 8 }}>
-                  Build your verified CV free and let companies find you.
-                </p>
-                <button onClick={() => navigate("/app")} style={{ background: "transparent", color: GOLD, border: `1px solid ${GOLD}`, borderRadius: 9, padding: "7px 16px", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
-                  Join SeaMinds Free
+                <button onClick={() => apply(i)} style={{
+                  marginTop: 2, width: "100%", padding: "11px", borderRadius: 11, border: "none", cursor: "pointer",
+                  background: GOLD, color: NAVY, fontWeight: 800, fontSize: 13,
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+                }}>
+                  {i.whatsapp ? <><MessageCircle size={15} /> Apply via WhatsApp</> : <><ExternalLink size={15} /> View & Apply</>}
                 </button>
               </div>
+
+              {(idx + 1) % 6 === 0 && (
+                <div style={{ borderTop: `1px solid ${BORDER}`, padding: 13, textAlign: "center" }}>
+                  <p style={{ color: "#cbd5e1", fontSize: 12, marginBottom: 8 }}>
+                    Build your verified CV free and let companies find you.
+                  </p>
+                  <button onClick={() => navigate("/app")} style={{ background: "transparent", color: GOLD, border: `1px solid ${GOLD}`, borderRadius: 9, padding: "7px 16px", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
+                    Join SeaMinds Free
+                  </button>
+                </div>
+              )}
+            </article>
+
+            {(idx + 1) % 5 === 0 && ships[Math.floor(idx / 5) % Math.max(ships.length, 1)] && (
+              <article style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 16, overflow: "hidden" }}>
+                <img
+                  src={ships[Math.floor(idx / 5) % ships.length].photo_url}
+                  alt="Life at sea"
+                  loading="lazy"
+                  style={{ width: "100%", display: "block", height: 190, objectFit: "cover" }}
+                />
+                <div style={{ padding: 12 }}>
+                  <p style={{ color: GOLD, fontSize: 10, fontWeight: 800, letterSpacing: 1 }}>🚢 LIFE AT SEA</p>
+                  <p style={{ color: "#fff", fontSize: 13, marginTop: 3 }}>
+                    {ships[Math.floor(idx / 5) % ships.length].caption}
+                  </p>
+                </div>
+              </article>
             )}
-          </article>
+          </div>
         ))}
+
+        <p style={{ color: "#64748b", fontSize: 11, textAlign: "center", lineHeight: 1.6, padding: "10px 20px" }}>
+          SeaMinds never charges seafarers for jobs. Under MLC 2006 no manning agency may charge you a recruitment fee.
+        </p>
       </main>
+
     </div>
   );
 };
