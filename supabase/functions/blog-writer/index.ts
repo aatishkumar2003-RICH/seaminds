@@ -11,6 +11,14 @@ const supabase = createClient(
   { auth: { persistSession: false } },
 );
 
+const LANGUAGES = [
+  { code: "en", name: "English", note: "Write in clear simple English." },
+  { code: "vi", name: "Vietnamese", note: "Write entirely in Vietnamese (Tiếng Việt), natural and professional." },
+  { code: "tl", name: "Tagalog", note: "Write entirely in Tagalog, natural for Filipino seafarers." },
+  { code: "hi", name: "Hindi", note: "Write entirely in Hindi (Devanagari script), natural for Indian seafarers." },
+  { code: "id", name: "Indonesian", note: "Write entirely in Bahasa Indonesia, natural for Indonesian seafarers." },
+];
+
 const TOPICS = [
   "How to calculate MLC 2006 rest hours correctly",
   "Seaman CV format 2026: what manning companies actually look for",
@@ -27,14 +35,15 @@ const TOPICS = [
   "Medical certificate requirements for seafarers worldwide",
   "How to negotiate salary as a seafarer",
   "Fatigue management on board: your rights under STCW",
-  "Filipino seafarer requirements: documents you need before joining",
-  "INDoS number explained for Indian seafarers",
+  "Documents every seafarer needs before joining a vessel",
   "MARPOL basics every crew member must know",
   "Signing off: the checklist before you leave the vessel",
   "How to stay fit and healthy on board a ship",
-  "Vietnamese seafarers: how to work on international vessels",
   "What is a Continuous Discharge Certificate and why it matters",
+  "How to avoid maritime job scams and fake manning agents",
+  "Working on LNG carriers: what officers need to know",
 ];
+
 
 const slugify = (s: string) =>
   s.toLowerCase().replace(/[^a-z0-9\s-]/g, "").trim().replace(/\s+/g, "-").slice(0, 80);
