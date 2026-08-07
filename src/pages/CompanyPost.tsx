@@ -287,6 +287,32 @@ const CompanyPost = () => {
           </article>
         </div>
 
+        {(() => {
+          const tips: { icon: string; text: string }[] = [];
+          if (!imageUrl) tips.push({ icon: "🖼️", text: "Add your flier — posts with an image get far more attention in the feed and on Telegram." });
+          if (caption.trim().length > 0 && caption.trim().length < 60) tips.push({ icon: "✍️", text: "Add the joining port and dates — seafarers decide on those two details first." });
+          if (!whatsapp.trim()) tips.push({ icon: "📲", text: "Add a WhatsApp number so seafarers can apply in one tap. Without it there is no Apply button." });
+          if (tips.length === 0) return null;
+          return (
+            <div style={{ background: "rgba(212,175,55,0.07)", border: `1px solid rgba(212,175,55,0.3)`, borderRadius: 14, padding: 14 }}>
+              <p style={{ color: GOLD, fontSize: 11, fontWeight: 800, letterSpacing: 0.8, marginBottom: 10 }}>
+                GET MORE APPLICATIONS
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+                {tips.map((t, k) => (
+                  <div key={k} style={{ display: "flex", gap: 9, alignItems: "flex-start" }}>
+                    <span style={{ fontSize: 14, lineHeight: 1.3 }}>{t.icon}</span>
+                    <span style={{ color: "#cbd5e1", fontSize: 11.5, lineHeight: 1.5 }}>{t.text}</span>
+                  </div>
+                ))}
+              </div>
+              <p style={{ color: "#64748b", fontSize: 10.5, marginTop: 10 }}>
+                These are optional — you can publish without them.
+              </p>
+            </div>
+          );
+        })()}
+
         <button onClick={publish} disabled={publishing || !caption.trim()}
           style={{
             width: "100%", borderRadius: 14, padding: "15px 0", border: "none",
@@ -296,6 +322,12 @@ const CompanyPost = () => {
           }}>
           {checkingContent ? "Checking…" : publishing ? "Publishing…" : "Publish Now"}
         </button>
+
+        {!caption.trim() && (
+          <p style={{ color: "#f59e0b", fontSize: 11.5, textAlign: "center", marginTop: -8 }}>
+            Write your message above, or tap "Write it for me", to publish.
+          </p>
+        )}
 
         <p style={{ color: "#64748b", fontSize: 10.5, textAlign: "center", lineHeight: 1.5 }}>
           Posted by your company. SeaMinds does not endorse third-party advertisements.
