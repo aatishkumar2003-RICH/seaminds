@@ -420,6 +420,66 @@ export type Database = {
         }
         Relationships: []
       }
+      company_posts: {
+        Row: {
+          caption: string
+          company_name: string
+          created_at: string
+          flag_reason: string | null
+          flagged: boolean | null
+          id: string
+          image_url: string | null
+          link_url: string | null
+          manager_id: string
+          post_type: string
+          ranks_detected: string[] | null
+          reports: number | null
+          status: string
+          telegram_posted: boolean | null
+          verified: boolean | null
+          views: number | null
+          whatsapp: string | null
+        }
+        Insert: {
+          caption: string
+          company_name: string
+          created_at?: string
+          flag_reason?: string | null
+          flagged?: boolean | null
+          id?: string
+          image_url?: string | null
+          link_url?: string | null
+          manager_id: string
+          post_type?: string
+          ranks_detected?: string[] | null
+          reports?: number | null
+          status?: string
+          telegram_posted?: boolean | null
+          verified?: boolean | null
+          views?: number | null
+          whatsapp?: string | null
+        }
+        Update: {
+          caption?: string
+          company_name?: string
+          created_at?: string
+          flag_reason?: string | null
+          flagged?: boolean | null
+          id?: string
+          image_url?: string | null
+          link_url?: string | null
+          manager_id?: string
+          post_type?: string
+          ranks_detected?: string[] | null
+          reports?: number | null
+          status?: string
+          telegram_posted?: boolean | null
+          verified?: boolean | null
+          views?: number | null
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
       contact_requests: {
         Row: {
           company_name: string
