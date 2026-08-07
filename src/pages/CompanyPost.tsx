@@ -270,7 +270,7 @@ const CompanyPost = () => {
             cursor: publishing || !caption.trim() ? "default" : "pointer",
             opacity: publishing || !caption.trim() ? 0.45 : 1,
           }}>
-          {publishing ? "Publishing…" : "Publish Now"}
+          {checkingContent ? "Checking…" : publishing ? "Publishing…" : "Publish Now"}
         </button>
 
         <p style={{ color: "#64748b", fontSize: 10.5, textAlign: "center", lineHeight: 1.5 }}>
