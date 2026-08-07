@@ -317,6 +317,7 @@ export default function CVDatabaseTab() {
       toast.success(`New CV ID: ${fresh}`);
     } catch (e: any) {
       toast.error(e?.message || "Could not regenerate ID");
+    }
   };
 
   const deleteCrew = async (row: CVRow) => {
