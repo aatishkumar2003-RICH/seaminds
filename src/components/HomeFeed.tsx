@@ -327,6 +327,53 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
                       </button>
                     )}
                   </div>
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      onClick={() => engage(p.id, "interested", i)}
+                      className="flex-1 rounded-xl py-2 text-[12.5px] font-bold flex items-center justify-center gap-1.5"
+                      style={{
+                        background: engaged[p.id]?.interested ? "rgba(212,175,55,0.18)" : "transparent",
+                        color: GOLD,
+                        border: `1px solid ${engaged[p.id]?.interested ? GOLD : "rgba(212,175,55,0.4)"}`,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {engaged[p.id]?.interested ? "⚓ Interested" : "⚓ I'm Interested"}
+                    </button>
+                    <button
+                      onClick={() => engage(p.id, "save", i)}
+                      aria-label="Save this post"
+                      className="rounded-xl px-3.5 py-2 text-[12.5px] font-bold"
+                      style={{
+                        background: "transparent",
+                        color: engaged[p.id]?.saved ? GOLD : "#94a3b8",
+                        border: `1px solid ${engaged[p.id]?.saved ? GOLD : BORDER}`,
+                        cursor: "pointer",
+                      }}
+                    >
+                      🔖
+                    </button>
+                    <button
+                      onClick={() => {
+                        log("company_post", p.id, "share", i);
+                        const text = `${p.company_name}: ${String(p.caption || "").slice(0, 140)}`;
+                        const url = "https://seaminds.life/feed";
+                        if (navigator.share) { navigator.share({ title: "SeaMinds", text, url }).catch(() => {}); }
+                        else { window.open(`https://wa.me/?text=${encodeURIComponent(`${text}\n\n${url}`)}`, "_blank"); }
+                      }}
+                      aria-label="Share this post"
+                      className="rounded-xl px-3.5 py-2 text-[12.5px] font-bold"
+                      style={{ background: "transparent", color: "#94a3b8", border: `1px solid ${BORDER}`, cursor: "pointer" }}
+                    >
+                      ↗
+                    </button>
+                  </div>
+                  {(engaged[p.id]?.count ?? 0) >= 3 && (
+                    <p className="text-[11px]" style={{ color: "#94a3b8" }}>
+                      ⚓ {engaged[p.id]?.count} seafarers interested
+                    </p>
+                  )}
+
                   <div className="flex items-start gap-2 pt-1">
                     <p className="text-[9.5px] leading-snug flex-1" style={{ color: "#64748b" }}>
                       Posted by the company. SeaMinds does not endorse third-party advertisements.
