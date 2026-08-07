@@ -24,6 +24,8 @@ interface FeedItem {
   applyUrl: string | null;
   verified: boolean;
   posted: string;
+  caption?: string;
+  isCompanyPost?: boolean;
 }
 
 const GROUPS: Record<string, string[]> = {
