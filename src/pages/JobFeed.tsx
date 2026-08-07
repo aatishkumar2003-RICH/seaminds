@@ -52,14 +52,18 @@ const JobFeed = () => {
   useEffect(() => {
     (async () => {
       try {
-        const [posts, ext] = await Promise.all([
+        const [posts, ext, cposts] = await Promise.all([
           supabase.from("job_postings" as any)
             .select("id, rank_required, vessel_type, monthly_salary, joining_port, contract_duration, company_name, contact_whatsapp, verified, flier_url, created_at, status")
             .eq("status", "active").order("created_at", { ascending: false }).limit(60),
           supabase.from("external_vacancies" as any)
             .select("id, rank_required, vessel_type, company_name, salary_text, joining_port, contract_duration, contact_whatsapp, apply_url, is_verified, fetched_at")
             .order("fetched_at", { ascending: false }).limit(60),
+          supabase.from("company_posts" as any)
+            .select("id, company_name, post_type, caption, image_url, whatsapp, link_url, verified, created_at")
+            .eq("status", "live").order("created_at", { ascending: false }).limit(30),
         ]);
+
 
         const a: FeedItem[] = ((posts.data as any[]) || []).map((r) => ({
           id: `p-${r.id}`, source: "company",
