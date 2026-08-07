@@ -133,7 +133,7 @@ Return ONLY valid JSON, no markdown fences:
           body: JSON.stringify({
             chat_id: CHANNEL,
             parse_mode: "HTML",
-            text: `⚓ <b>New Article</b>\n\n<b>${parsed.title || topic}</b>\n\n${parsed.excerpt || ""}\n\n#seafarer #maritime #seaminds #crewlife\n\n👉 https://seaminds.life/blog/${slug}`,
+            text: `⚓ <b>New Article</b>\n\n<b>${parsed.title || topic}</b>\n\n${parsed.excerpt || ""}\n\n#seafarer #maritime #seaminds #crewlife\n\n👉 ${Deno.env.get("SUPABASE_URL")}/functions/v1/share?type=blog&slug=${slug}`,
           }),
         });
       } catch { /* telegram is optional */ }
