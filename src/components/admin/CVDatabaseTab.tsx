@@ -187,6 +187,7 @@ export default function CVDatabaseTab() {
   const [selected, setSelected] = useState<CVRow | null>(null);
   const [query, setQuery] = useState("");
   const [vacancies, setVacancies] = useState<any[]>([]);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -318,6 +319,28 @@ export default function CVDatabaseTab() {
       toast.error(e?.message || "Could not regenerate ID");
     }
   };
+
+  const deleteCrew = async (row: CVRow) => {
+    const name = getFullName(row);
+    if (!window.confirm(
+      `Delete ${name}?\n\nTheir CV, documents, chats and profile will be permanently removed.\nTheir email and phone stay in your contact registry.\n\nThis cannot be undone.`
+    )) return;
+    setDeletingId(row.user_id);
+    try {
+      const { data, error } = await supabase.functions.invoke("delete-crew", {
+        body: { crewId: row.user_id },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Delete failed");
+      toast.success(data.contactPreserved ? "Deleted. Contact kept in registry." : "Deleted.");
+      await load();
+    } catch (err: any) {
+      toast.error(err?.message || "Could not delete");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
 
   const openCV = async (path: string) => {
     const { data, error } = await supabase.storage
@@ -668,6 +691,21 @@ export default function CVDatabaseTab() {
                     >
                       Regenerate ID
                     </button>
+
+                    <button
+                      onClick={() => deleteCrew(r)}
+                      disabled={deletingId === r.user_id}
+                      title="Owner only — permanently delete this crew record"
+                      style={{
+                        padding: "6px 10px", borderRadius: 6, cursor: "pointer",
+                        background: "transparent", color: "#ef4444",
+                        border: "1px solid rgba(239,68,68,0.5)", fontWeight: 600, fontSize: 12,
+                        opacity: deletingId === r.user_id ? 0.5 : 1,
+                      }}
+                    >
+                      {deletingId === r.user_id ? "Deleting…" : "Delete"}
+                    </button>
+
                   </div>
 
                 </td>

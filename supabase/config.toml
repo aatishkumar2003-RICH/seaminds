@@ -99,3 +99,7 @@ verify_jwt = false
 
 [functions.post-check]
 verify_jwt = false
+
+[functions.delete-crew]
+verify_jwt = false
+
