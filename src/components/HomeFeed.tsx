@@ -71,13 +71,18 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
     const lang = LANG_BY_NATIONALITY[nationality] || "en";
     const dept = deptOf(rank);
 
-    const [vacRes, postRes, artRes, quizRes, profRes, shipRes, streakRes, scoreRes] = await Promise.all([
+    const [vacRes, postRes, cpostRes, artRes, quizRes, profRes, shipRes, streakRes, scoreRes] = await Promise.all([
       supabase.from("external_vacancies")
         .select("id, rank_required, vessel_type, company_name, salary_text, joining_port, contract_duration, contact_whatsapp, apply_url, is_verified, fetched_at")
         .order("fetched_at", { ascending: false }).limit(40),
       supabase.from("job_postings" as any)
         .select("id, rank_required, vessel_type, company_name, monthly_salary, joining_port, contract_duration, contact_whatsapp, flier_url, verified, created_at")
         .eq("status", "active").order("created_at", { ascending: false }).limit(15),
+      supabase.from("company_posts" as any)
+        .select("id, company_name, post_type, caption, image_url, whatsapp, link_url, verified, created_at")
+        .eq("status", "live")
+        .order("created_at", { ascending: false })
+        .limit(15),
       supabase.from("blog_posts")
         .select("id, title, excerpt, slug, image_url, created_at, language")
         .eq("published", true).eq("language", lang)
