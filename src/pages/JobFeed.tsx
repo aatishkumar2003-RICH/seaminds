@@ -10,6 +10,11 @@ const GOLD = "#D4AF37";
 const CARD = "#112240";
 const BORDER = "#1e3a5f";
 
+const TYPE_LABEL: Record<string, string> = {
+  hiring: "🚢 Hiring", update: "📢 Company Update", fleet: "⚓ Fleet News",
+  training: "🎓 Training", welfare: "🤝 Crew Welfare",
+};
+
 interface FeedItem {
   id: string;
   source: "company" | "market";
@@ -26,6 +31,7 @@ interface FeedItem {
   posted: string;
   caption?: string;
   isCompanyPost?: boolean;
+  postType?: string;
 }
 
 const GROUPS: Record<string, string[]> = {
@@ -34,6 +40,7 @@ const GROUPS: Record<string, string[]> = {
   Cadet: ["cadet", "trainee"],
   Catering: ["cook", "steward", "messman", "chef"],
 };
+
 
 const timeAgo = (iso: string) => {
   const h = Math.floor((Date.now() - new Date(iso).getTime()) / 3600000);
