@@ -202,6 +202,23 @@ const CompanyPost = () => {
             style={{ ...inputStyle, marginTop: 6, resize: "vertical", lineHeight: 1.5 }}
           />
           <p style={{ color: "#64748b", fontSize: 11, textAlign: "right", marginTop: 4 }}>{caption.length}/600</p>
+          <button
+            onClick={writeWithAI}
+            disabled={aiWriting}
+            style={{
+              width: "100%", marginTop: 8, padding: "11px 0", borderRadius: 12,
+              background: "transparent", color: GOLD, border: `1px dashed ${GOLD}`,
+              fontWeight: 700, fontSize: 13, cursor: aiWriting ? "default" : "pointer",
+              opacity: aiWriting ? 0.6 : 1,
+            }}
+          >
+            {aiWriting ? "✨ Writing…" : imageUrl ? "✨ Read my flier and write it for me" : "✨ Write it for me"}
+          </button>
+          {ranks.length > 0 && (
+            <p style={{ color: "#94a3b8", fontSize: 11, marginTop: 8, lineHeight: 1.5 }}>
+              AI found these ranks: <span style={{ color: GOLD }}>{ranks.join(" · ")}</span>
+            </p>
+          )}
         </div>
 
         {/* Type */}
