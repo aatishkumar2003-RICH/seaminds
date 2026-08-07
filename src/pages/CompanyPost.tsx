@@ -31,6 +31,7 @@ const CompanyPost = () => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [checkingContent, setCheckingContent] = useState(false);
   const [toTelegram, setToTelegram] = useState(true);
 
   useEffect(() => {
