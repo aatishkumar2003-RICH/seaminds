@@ -11,6 +11,14 @@ const supabase = createClient(
   { auth: { persistSession: false } },
 );
 
+const LANGUAGES = [
+  { code: "en", name: "English", note: "Write in clear simple English." },
+  { code: "vi", name: "Vietnamese", note: "Write entirely in Vietnamese (Tiếng Việt), natural and professional." },
+  { code: "tl", name: "Tagalog", note: "Write entirely in Tagalog, natural for Filipino seafarers." },
+  { code: "hi", name: "Hindi", note: "Write entirely in Hindi (Devanagari script), natural for Indian seafarers." },
+  { code: "id", name: "Indonesian", note: "Write entirely in Bahasa Indonesia, natural for Indonesian seafarers." },
+];
+
 const TOPICS = [
   "How to calculate MLC 2006 rest hours correctly",
   "Seaman CV format 2026: what manning companies actually look for",
@@ -27,14 +35,15 @@ const TOPICS = [
   "Medical certificate requirements for seafarers worldwide",
   "How to negotiate salary as a seafarer",
   "Fatigue management on board: your rights under STCW",
-  "Filipino seafarer requirements: documents you need before joining",
-  "INDoS number explained for Indian seafarers",
+  "Documents every seafarer needs before joining a vessel",
   "MARPOL basics every crew member must know",
   "Signing off: the checklist before you leave the vessel",
   "How to stay fit and healthy on board a ship",
-  "Vietnamese seafarers: how to work on international vessels",
   "What is a Continuous Discharge Certificate and why it matters",
+  "How to avoid maritime job scams and fake manning agents",
+  "Working on LNG carriers: what officers need to know",
 ];
+
 
 const slugify = (s: string) =>
   s.toLowerCase().replace(/[^a-z0-9\s-]/g, "").trim().replace(/\s+/g, "-").slice(0, 80);
@@ -53,15 +62,26 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Pick the first topic that has not been published yet
+    // Pick the first topic+language pair that has not been published yet
     const { data: existing } = await supabase.from("blog_posts").select("slug");
     const used = new Set((existing || []).map((r: any) => r.slug));
-    const topic = TOPICS.find((t) => !used.has(slugify(t)));
+
+    let topic: string | null = null;
+    let lang = LANGUAGES[0];
+    outer:
+    for (const t of TOPICS) {
+      for (const L of LANGUAGES) {
+        const candidate = L.code === "en" ? slugify(t) : `${slugify(t)}-${L.code}`;
+        if (!used.has(candidate)) { topic = t; lang = L; break outer; }
+      }
+    }
+
     if (!topic) {
       return new Response(JSON.stringify({ success: true, skipped: "all topics used" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const slug = lang.code === "en" ? slugify(topic) : `${slugify(topic)}-${lang.code}`;
 
     // Write the article with GPT-4o-mini
     const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -76,6 +96,8 @@ Deno.serve(async (req) => {
         messages: [{
           role: "user",
           content: `Write a helpful article for working seafarers titled "${topic}".
+
+LANGUAGE: ${lang.note} The title, excerpt and the entire article body must be in ${lang.name}.
 
 Rules:
 - 700-900 words, written for seafarers whose first language may not be English. Use simple, clear sentences.
@@ -107,14 +129,14 @@ Return ONLY valid JSON, no markdown fences:
       }
     } catch { /* image is optional */ }
 
-    const slug = slugify(topic);
+    
     const { error: insErr } = await supabase.from("blog_posts").insert({
       title: parsed.title || topic,
       content: parsed.content,
       excerpt: parsed.excerpt || null,
       slug,
       image_url: imageUrl,
-      language: "en",
+      language: lang.code,
       region: "global",
       published: true,
     });
@@ -133,7 +155,7 @@ Return ONLY valid JSON, no markdown fences:
           body: JSON.stringify({
             chat_id: CHANNEL,
             parse_mode: "HTML",
-            text: `⚓ <b>New Article</b>\n\n<b>${parsed.title || topic}</b>\n\n${parsed.excerpt || ""}\n\n#seafarer #maritime #seaminds #crewlife\n\n👉 ${Deno.env.get("SUPABASE_URL")}/functions/v1/share?type=blog&slug=${slug}`,
+            text: `⚓ <b>New Article</b>\n\n<b>${parsed.title || topic}</b>\n\n${parsed.excerpt || ""}\n\n#seafarer #maritime #seaminds #crewlife${lang.code !== "en" ? ` #${lang.name.toLowerCase()}` : ""}\n\n👉 ${Deno.env.get("SUPABASE_URL")}/functions/v1/share?type=blog&slug=${slug}`,
           }),
         });
       } catch { /* telegram is optional */ }
