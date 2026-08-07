@@ -129,7 +129,7 @@ Return ONLY valid JSON, no markdown fences:
       }
     } catch { /* image is optional */ }
 
-    const slug = slugify(topic);
+    
     const { error: insErr } = await supabase.from("blog_posts").insert({
       title: parsed.title || topic,
       content: parsed.content,
