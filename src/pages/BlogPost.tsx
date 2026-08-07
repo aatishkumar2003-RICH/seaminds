@@ -18,6 +18,54 @@ interface BlogPostData {
   region: string | null;
 }
 
+const LOCALISED: Record<string, Record<string, string>> = {
+  en: {
+    tipTitle: "SeaMinds tracks this for you",
+    tipBody: "SeaMinds reads your certificates from your CV and warns you before they expire. Free for seafarers.",
+    ctaTitle: "Get hired faster",
+    ctaBody: "Build your verified maritime CV, get your competency score, and let manning companies find you. New vacancies added every 2 hours.",
+    ctaButton: "Join Free",
+    ctaJobs: "See Live Jobs",
+    ctaFree: "Free for seafarers. No agent fees. No card needed.",
+  },
+  vi: {
+    tipTitle: "SeaMinds theo dõi giúp bạn",
+    tipBody: "SeaMinds đọc chứng chỉ từ CV của bạn và nhắc bạn trước khi hết hạn. Miễn phí cho thuyền viên.",
+    ctaTitle: "Tìm việc nhanh hơn",
+    ctaBody: "Tạo CV hàng hải đã xác minh, nhận điểm năng lực, và để các công ty tuyển dụng tìm thấy bạn. Việc làm mới mỗi 2 giờ.",
+    ctaButton: "Tham gia miễn phí",
+    ctaJobs: "Xem việc làm",
+    ctaFree: "Miễn phí cho thuyền viên. Không phí môi giới.",
+  },
+  tl: {
+    tipTitle: "Sinusubaybayan ito ng SeaMinds para sa iyo",
+    tipBody: "Binabasa ng SeaMinds ang iyong mga sertipiko mula sa CV at binabalaan ka bago mag-expire. Libre para sa mga marino.",
+    ctaTitle: "Mas mabilis matanggap sa trabaho",
+    ctaBody: "Gumawa ng verified maritime CV, kunin ang iyong competency score, at hayaang mahanap ka ng mga manning company. May bagong bakante kada 2 oras.",
+    ctaButton: "Sumali nang Libre",
+    ctaJobs: "Tingnan ang Trabaho",
+    ctaFree: "Libre para sa mga marino. Walang agent fee.",
+  },
+  hi: {
+    tipTitle: "SeaMinds आपके लिए इसका ध्यान रखता है",
+    tipBody: "SeaMinds आपके CV से प्रमाणपत्र पढ़ता है और समाप्त होने से पहले आपको सूचित करता है। नाविकों के लिए निःशुल्क।",
+    ctaTitle: "तेज़ी से नौकरी पाएं",
+    ctaBody: "अपना सत्यापित समुद्री CV बनाएं, अपना योग्यता स्कोर प्राप्त करें, और कंपनियों को आपको खोजने दें। हर 2 घंटे में नई रिक्तियां।",
+    ctaButton: "निःशुल्क जुड़ें",
+    ctaJobs: "नौकरियां देखें",
+    ctaFree: "नाविकों के लिए निःशुल्क। कोई एजेंट शुल्क नहीं।",
+  },
+  id: {
+    tipTitle: "SeaMinds melacaknya untuk Anda",
+    tipBody: "SeaMinds membaca sertifikat dari CV Anda dan memperingatkan sebelum kedaluwarsa. Gratis untuk pelaut.",
+    ctaTitle: "Dapatkan pekerjaan lebih cepat",
+    ctaBody: "Buat CV maritim terverifikasi, dapatkan skor kompetensi, dan biarkan perusahaan menemukan Anda. Lowongan baru setiap 2 jam.",
+    ctaButton: "Gabung Gratis",
+    ctaJobs: "Lihat Lowongan",
+    ctaFree: "Gratis untuk pelaut. Tanpa biaya agen.",
+  },
+};
+
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
