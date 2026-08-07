@@ -74,6 +74,28 @@ const CompanyPost = () => {
     }
   };
 
+  const writeWithAI = async () => {
+    if (!imageUrl && !caption.trim()) {
+      toast.error("Add your flier, or type a few words first — then AI can write it up.");
+      return;
+    }
+    setAiWriting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("post-assist", {
+        body: { imageUrl, draft: caption.trim(), postType, companyName },
+      });
+      if (error) throw error;
+      if (!data?.success) { toast.error(data?.error || "Could not write it. Please type your message."); return; }
+      setCaption(String(data.caption || "").slice(0, 600));
+      setRanks(Array.isArray(data.ranks) ? data.ranks : []);
+      toast.success("Draft written — edit anything you like.");
+    } catch {
+      toast.error("AI help is unavailable. Please write your message.");
+    } finally {
+      setAiWriting(false);
+    }
+  };
+
   const publish = async () => {
     if (!caption.trim()) { toast.error("Write something to post."); return; }
     setPublishing(true);
