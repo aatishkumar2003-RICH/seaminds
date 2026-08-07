@@ -53,7 +53,7 @@ const buildMessage = (v: any) => {
   }
   if (v.applyUrl) lines.push(`🔗 ${esc(v.applyUrl)}`);
   lines.push("");
-  lines.push(`🌊 More jobs: https://seaminds.life/feed`);
+  lines.push(`🌊 More jobs: ${Deno.env.get("SUPABASE_URL")}/functions/v1/share?type=jobs`);
   return lines.join("\n");
 };
 
