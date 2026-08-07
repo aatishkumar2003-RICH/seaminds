@@ -35,6 +35,7 @@ import JobFeed from "./pages/JobFeed";
 import PostVacancyPage from "./pages/PostVacancyPage";
 import JoinLanding from "./pages/JoinLanding";
 import ResetPassword from "./pages/ResetPassword";
+import CompanyPost from "./pages/CompanyPost";
 import AdminDashboard from "./pages/AdminDashboard";
 import Verify from "./pages/Verify";
 import OAuthConsent from "./pages/OAuthConsent";
@@ -124,7 +125,8 @@ const App = () => (
             <Route path="/manager" element={<ManagerAuth />} />
             <Route path="/manager/dashboard" element={<ManagerDashboard />} />
            <Route path="/manager-search" element={<ManagerSearch />} />
-           <Route path="/post-vacancy" element={<PostVacancyPage />} />
+            <Route path="/post-vacancy" element={<PostVacancyPage />} />
+            <Route path="/company-post" element={<CompanyPost />} />
             <Route path="/terms" element={<TermsOfService />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/pricing" element={<Pricing />} />
