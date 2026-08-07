@@ -162,6 +162,10 @@ const BlogPost = () => {
           };
           return (
             <>
+              <html lang={post.language || "en"} />
+              <meta property="og:locale" content={
+                ({ en: "en_US", vi: "vi_VN", tl: "tl_PH", hi: "hi_IN", id: "id_ID" } as Record<string, string>)[post.language || "en"] || "en_US"
+              } />
               <title>{post.title} — SeaMinds Blog</title>
               <meta name="description" content={desc} />
               <link rel="canonical" href={`https://seaminds.life/blog/${slug}`} />
@@ -288,6 +292,39 @@ const BlogPost = () => {
             if (/^\d+\.\s+/.test(t)) return <li key={i} className="ml-5 list-decimal">{bold(t.replace(/^\d+\.\s+/, ""))}</li>;
             return <p key={i}>{bold(t)}</p>;
           })}
+        </div>
+
+        {/* Mid-article tip */}
+        <div className="rounded-2xl p-4 my-8" style={{ background: "rgba(212,175,55,0.08)", border: "1px solid rgba(212,175,55,0.3)" }}>
+          <p className="text-sm font-bold mb-1.5" style={{ color: "#D4AF37" }}>
+            💡 {LOCALISED[post.language || "en"]?.tipTitle || LOCALISED.en.tipTitle}
+          </p>
+          <p className="text-[13px] leading-relaxed" style={{ color: "#CBD5E1" }}>
+            {LOCALISED[post.language || "en"]?.tipBody || LOCALISED.en.tipBody}
+          </p>
+        </div>
+
+        {/* End-of-article CTA */}
+        <div className="rounded-2xl p-6 my-8 text-center" style={{ background: "#112240", border: "1px solid #1e3a5f" }}>
+          <p className="text-lg font-extrabold mb-2" style={{ color: "#D4AF37" }}>
+            ⚓ {LOCALISED[post.language || "en"]?.ctaTitle || LOCALISED.en.ctaTitle}
+          </p>
+          <p className="text-[13px] leading-relaxed mb-4" style={{ color: "#CBD5E1" }}>
+            {LOCALISED[post.language || "en"]?.ctaBody || LOCALISED.en.ctaBody}
+          </p>
+          <div className="flex flex-col sm:flex-row gap-2 justify-center">
+            <a href="/app" className="rounded-xl px-5 py-3 text-sm font-bold"
+              style={{ background: "#D4AF37", color: "#0D1B2A", textDecoration: "none" }}>
+              {LOCALISED[post.language || "en"]?.ctaButton || LOCALISED.en.ctaButton}
+            </a>
+            <a href="/feed" className="rounded-xl px-5 py-3 text-sm font-bold"
+              style={{ background: "transparent", color: "#D4AF37", border: "1px solid #D4AF37", textDecoration: "none" }}>
+              {LOCALISED[post.language || "en"]?.ctaJobs || LOCALISED.en.ctaJobs}
+            </a>
+          </div>
+          <p className="text-[11px] mt-3" style={{ color: "#64748b" }}>
+            {LOCALISED[post.language || "en"]?.ctaFree || LOCALISED.en.ctaFree}
+          </p>
         </div>
 
         {/* CTA box */}
