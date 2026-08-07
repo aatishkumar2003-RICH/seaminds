@@ -300,9 +300,28 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
                       </button>
                     )}
                   </div>
-                  <p className="text-[9.5px] leading-snug" style={{ color: "#64748b" }}>
-                    Posted by the company. SeaMinds does not endorse third-party advertisements.
-                  </p>
+                  <div className="flex items-start gap-2 pt-1">
+                    <p className="text-[9.5px] leading-snug flex-1" style={{ color: "#64748b" }}>
+                      Posted by the company. SeaMinds does not endorse third-party advertisements.
+                      No company may charge you a fee for a job.
+                    </p>
+                    <button
+                      onClick={async () => {
+                        if (!window.confirm("Report this post to SeaMinds?\n\nUse this if the company asks for payment, the post is not maritime, or it looks like a scam.")) return;
+                        try {
+                          await supabase.rpc("report_company_post" as any, { post_id: p.id, reason: "reported from feed" });
+                          log("company_post", p.id, "report", i);
+                          alert("Thank you. SeaMinds will review this post.");
+                        } catch {
+                          alert("Could not send the report. Please try again.");
+                        }
+                      }}
+                      className="shrink-0 text-[9.5px] underline"
+                      style={{ background: "transparent", border: "none", color: "#64748b", cursor: "pointer", padding: 0 }}
+                    >
+                      Report
+                    </button>
+                  </div>
                 </div>
               </article>
             );
