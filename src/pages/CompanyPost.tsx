@@ -33,6 +33,8 @@ const CompanyPost = () => {
   const [publishing, setPublishing] = useState(false);
   const [checkingContent, setCheckingContent] = useState(false);
   const [toTelegram, setToTelegram] = useState(true);
+  const [aiWriting, setAiWriting] = useState(false);
+  const [ranks, setRanks] = useState<string[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -72,6 +74,28 @@ const CompanyPost = () => {
     }
   };
 
+  const writeWithAI = async () => {
+    if (!imageUrl && !caption.trim()) {
+      toast.error("Add your flier, or type a few words first — then AI can write it up.");
+      return;
+    }
+    setAiWriting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("post-assist", {
+        body: { imageUrl, draft: caption.trim(), postType, companyName },
+      });
+      if (error) throw error;
+      if (!data?.success) { toast.error(data?.error || "Could not write it. Please type your message."); return; }
+      setCaption(String(data.caption || "").slice(0, 600));
+      setRanks(Array.isArray(data.ranks) ? data.ranks : []);
+      toast.success("Draft written — edit anything you like.");
+    } catch {
+      toast.error("AI help is unavailable. Please write your message.");
+    } finally {
+      setAiWriting(false);
+    }
+  };
+
   const publish = async () => {
     if (!caption.trim()) { toast.error("Write something to post."); return; }
     setPublishing(true);
@@ -101,6 +125,7 @@ const CompanyPost = () => {
         link_url: linkUrl.trim() || null,
         verified,
         telegram_posted: !toTelegram,
+        ranks_detected: ranks.length ? ranks : null,
       }).select("id").single();
       if (error) throw error;
 
@@ -178,6 +203,23 @@ const CompanyPost = () => {
             style={{ ...inputStyle, marginTop: 6, resize: "vertical", lineHeight: 1.5 }}
           />
           <p style={{ color: "#64748b", fontSize: 11, textAlign: "right", marginTop: 4 }}>{caption.length}/600</p>
+          <button
+            onClick={writeWithAI}
+            disabled={aiWriting}
+            style={{
+              width: "100%", marginTop: 8, padding: "11px 0", borderRadius: 12,
+              background: "transparent", color: GOLD, border: `1px dashed ${GOLD}`,
+              fontWeight: 700, fontSize: 13, cursor: aiWriting ? "default" : "pointer",
+              opacity: aiWriting ? 0.6 : 1,
+            }}
+          >
+            {aiWriting ? "✨ Writing…" : imageUrl ? "✨ Read my flier and write it for me" : "✨ Write it for me"}
+          </button>
+          {ranks.length > 0 && (
+            <p style={{ color: "#94a3b8", fontSize: 11, marginTop: 8, lineHeight: 1.5 }}>
+              AI found these ranks: <span style={{ color: GOLD }}>{ranks.join(" · ")}</span>
+            </p>
+          )}
         </div>
 
         {/* Type */}
@@ -263,6 +305,32 @@ const CompanyPost = () => {
           </article>
         </div>
 
+        {(() => {
+          const tips: { icon: string; text: string }[] = [];
+          if (!imageUrl) tips.push({ icon: "🖼️", text: "Add your flier — posts with an image get far more attention in the feed and on Telegram." });
+          if (caption.trim().length > 0 && caption.trim().length < 60) tips.push({ icon: "✍️", text: "Add the joining port and dates — seafarers decide on those two details first." });
+          if (!whatsapp.trim()) tips.push({ icon: "📲", text: "Add a WhatsApp number so seafarers can apply in one tap. Without it there is no Apply button." });
+          if (tips.length === 0) return null;
+          return (
+            <div style={{ background: "rgba(212,175,55,0.07)", border: `1px solid rgba(212,175,55,0.3)`, borderRadius: 14, padding: 14 }}>
+              <p style={{ color: GOLD, fontSize: 11, fontWeight: 800, letterSpacing: 0.8, marginBottom: 10 }}>
+                GET MORE APPLICATIONS
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+                {tips.map((t, k) => (
+                  <div key={k} style={{ display: "flex", gap: 9, alignItems: "flex-start" }}>
+                    <span style={{ fontSize: 14, lineHeight: 1.3 }}>{t.icon}</span>
+                    <span style={{ color: "#cbd5e1", fontSize: 11.5, lineHeight: 1.5 }}>{t.text}</span>
+                  </div>
+                ))}
+              </div>
+              <p style={{ color: "#64748b", fontSize: 10.5, marginTop: 10 }}>
+                These are optional — you can publish without them.
+              </p>
+            </div>
+          );
+        })()}
+
         <button onClick={publish} disabled={publishing || !caption.trim()}
           style={{
             width: "100%", borderRadius: 14, padding: "15px 0", border: "none",
@@ -272,6 +340,12 @@ const CompanyPost = () => {
           }}>
           {checkingContent ? "Checking…" : publishing ? "Publishing…" : "Publish Now"}
         </button>
+
+        {!caption.trim() && (
+          <p style={{ color: "#f59e0b", fontSize: 11.5, textAlign: "center", marginTop: -8 }}>
+            Write your message above, or tap "Write it for me", to publish.
+          </p>
+        )}
 
         <p style={{ color: "#64748b", fontSize: 10.5, textAlign: "center", lineHeight: 1.5 }}>
           Posted by your company. SeaMinds does not endorse third-party advertisements.

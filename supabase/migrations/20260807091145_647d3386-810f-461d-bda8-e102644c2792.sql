@@ -1,0 +1,1 @@
+ALTER TABLE public.company_posts ADD COLUMN IF NOT EXISTS ranks_detected text[];
