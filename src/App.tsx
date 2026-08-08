@@ -38,6 +38,7 @@ import ResetPassword from "./pages/ResetPassword";
 import CompanyPost from "./pages/CompanyPost";
 import AdminDashboard from "./pages/AdminDashboard";
 import Verify from "./pages/Verify";
+import Marketing from "./pages/Marketing";
 import OAuthConsent from "./pages/OAuthConsent";
 import CookieConsent from "./components/CookieConsent";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
@@ -136,6 +137,7 @@ const App = () => (
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/marketing" element={<Marketing />} />
             <Route path="/for-companies" element={<ForCompanies />} />
             <Route path="/smc-score" element={<ScrollRedirect hash="smc-score" />} />
             <Route path="/jobs" element={<Navigate to="/feed" replace />} />
