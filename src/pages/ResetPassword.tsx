@@ -12,6 +12,15 @@ const ResetPassword = () => {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    const hash = window.location.hash;
+    if (hash && hash.includes("access_token")) {
+      const params = new URLSearchParams(hash.replace(/^#/, ""));
+      const access_token = params.get("access_token");
+      const refresh_token = params.get("refresh_token");
+      if (access_token && refresh_token) {
+        supabase.auth.setSession({ access_token, refresh_token }).then(() => setReady(true));
+      }
+    }
     // Supabase puts the recovery session in the URL hash on arrival
     supabase.auth.getSession().then(({ data }) => setReady(!!data.session));
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => setReady(!!session));
