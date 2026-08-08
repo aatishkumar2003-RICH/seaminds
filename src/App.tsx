@@ -17,6 +17,23 @@ const ScrollRedirect = ({ hash }: { hash: string }) => {
   }, []);
   return null;
 };
+
+/** Sends Supabase password-recovery links to the reset page wherever they land */
+const RecoveryRedirect = () => {
+  const navigate = useNavigate();
+  useEffect(() => {
+    const hash = window.location.hash || "";
+    const search = window.location.search || "";
+    const isRecovery =
+      hash.includes("type=recovery") ||
+      search.includes("type=recovery") ||
+      (hash.includes("access_token") && hash.includes("recovery"));
+    if (isRecovery && !window.location.pathname.startsWith("/reset-password")) {
+      navigate(`/reset-password${hash}`, { replace: true });
+    }
+  }, [navigate]);
+  return null;
+};
 import HomePage from "./pages/HomePage";
 import ForCompanies from "./pages/ForCompanies";
 import Index from "./pages/Index";
@@ -117,6 +134,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <ThemeColorManager />
+          <RecoveryRedirect />
           <MetaPixelManager />
           <Routes>
             <Route path="/" element={<HomePage />} />

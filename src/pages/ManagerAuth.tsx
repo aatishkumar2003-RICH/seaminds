@@ -84,20 +84,45 @@ const ManagerAuth = () => {
     const key = `login:${email.trim()}`;
     if (await overLimit(key)) { toast.error("Too many attempts. Please wait 10 minutes."); return; }
     setLoading(true);
-    const { data, error } = await supabase.auth.signUp({ email: email.trim(), password });
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/manager/dashboard`,
+        data: {
+          company_name: companyName.trim(),
+          company_type: companyType || "",
+          full_name: fullName.trim(),
+          phone: phone.trim() || "",
+          designation: designation || "",
+        },
+      },
+    });
     if (error) { toast.error(error.message); await bumpRateLimit(key); setLoading(false); return; }
-    if (data.user) {
-      const { error: profileErr } = await supabase.from("manager_profiles").insert({
+
+    trackPixel("CompleteRegistration", { content_name: "company_signup" });
+
+    // A database trigger creates the company profile from the signup metadata.
+    // If we already have a session, make sure it exists straight away too.
+    if (data.session && data.user) {
+      await supabase.from("manager_profiles").upsert({
         user_id: data.user.id,
         company_name: companyName.trim(),
         company_type: companyType || null,
         full_name: fullName.trim(),
         phone: phone.trim() || null,
         designation: designation || null,
-      });
-      if (profileErr) { toast.error("Could not save company details. Please try again."); setLoading(false); return; }
-      trackPixel("CompleteRegistration", { content_name: "company_signup" });
+      }, { onConflict: "user_id" });
     }
+
+    setLoading(false);
+
+    if (!data.session) {
+      toast.success("Account created. Check your email to confirm, then sign in.");
+      setMode("login");
+      return;
+    }
+
     toast.success("Welcome aboard! Your company account is ready.");
     navigate("/manager/dashboard");
   };
