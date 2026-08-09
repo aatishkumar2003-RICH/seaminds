@@ -40,21 +40,110 @@ Deno.serve(async (req) => {
     ? transcript.map((t: any, i: number) => `Q${i+1}: ${t.question}\nAnswer: ${t.answer}\nScore: ${t.score}/10${t.redFlag ? ' [RED FLAG: '+t.redFlagCategory+']' : ''}${t.followUp ? '\nFollow-up: '+t.followUp : ''}`).join('\n\n')
     : 'No transcript available.';
   const prompt = `You are a senior maritime superintendent scoring a seafarer interview.
+
 Candidate: ${firstName}, ${rank}, ${candidateContext?.experience_tier || 'MID'} tier, ${candidateContext?.ship_specialisation || 'GENERAL'} vessel.
-Full interview transcript:
+
+Full interview transcript (each answer was already scored 0-10 by the examiner):
 ${transcriptText}
-Score each dimension 0-10 based on the transcript. Return ONLY valid JSON (no markdown):
-{ "technical": 0-10, "safety": 0-10, "operational": 0-10, "leadership": 0-10, "communication": 0-10, "overall": 0-5 }
-overall = weighted average: technical*0.30 + safety*0.20 + operational*0.20 + leadership*0.15 + communication*0.10 + 0.5 (risk baseline).
-Round overall to 2 decimal places. If no transcript, return mid-range scores.`;
+
+Score FIVE dimensions on a scale of 0.00 to 5.00. NOT out of 10. NOT a percentage.
+
+ANCHORS — use the full range:
+5.00  Exceptional — exceeds what is expected of this rank
+4.00  Strong — comfortably meets the rank standard
+3.00  Adequate — meets the minimum, gaps present
+2.00  Weak — below the standard for this rank
+1.00  Poor — fundamental knowledge missing
+0.00  No usable evidence in the transcript
+
+DIMENSIONS:
+- technical   : rank-specific knowledge (SOLAS, MARPOL, ISM, equipment, cargo). Weight the MCQ scores heavily.
+- judgment    : scenario decisions, prioritisation under pressure, critical steps identified
+- english     : clarity, structure and maritime terminology in the written answers
+- behaviour   : leadership, conflict handling, safety culture, accountability
+- wellness    : fatigue awareness, stress management, fitness for duty
+
+RULES:
+- Judge against THIS RANK, not seafarers generally. A 3rd Officer is not judged as a Master.
+- Two decimal places.
+- Use the full range. If you give every dimension the same number, you are not assessing.
+- Base every score on evidence in the transcript. Do not invent.
+
+Return ONLY valid JSON, no markdown:
+{ "technical": 0.00, "judgment": 0.00, "english": 0.00, "behaviour": 0.00, "wellness": 0.00 }`;
+
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${OPENAI_API_KEY}` },
-    body: JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "user", content: prompt }], max_tokens: 200, temperature: 0.2 }),
+    body: JSON.stringify({ model: "gpt-4o", messages: [{ role: "user", content: prompt }], max_tokens: 300, temperature: 0.2 }),
   });
   const data = await res.json();
-  const text = (data.choices?.[0]?.message?.content || "{}").replace(/```json|```/g,"").trim();
-  let scores;
-  try { scores = JSON.parse(text); } catch { scores = { technical:5, safety:5, operational:5, leadership:5, communication:5, overall:2.50 }; }
+  const text = (data.choices?.[0]?.message?.content || "{}").replace(/```json|```/g, "").trim();
+
+  const clamp = (n: any) => {
+    const v = Number(n);
+    if (!isFinite(v)) return null;
+    return Math.max(0, Math.min(5, Math.round(v * 100) / 100));
+  };
+
+  // Fallback derived from the real transcript, never a flat 5
+  const transcriptAvg = hasTranscript
+    ? transcript.reduce((s: number, t: any) => s + (Number(t.score) || 0), 0) / transcript.length / 2
+    : 2.5;
+
+  let dims: any = {};
+  try {
+    const parsed = JSON.parse(text);
+    dims = {
+      technical: clamp(parsed.technical),
+      judgment: clamp(parsed.judgment),
+      english: clamp(parsed.english),
+      behaviour: clamp(parsed.behaviour),
+      wellness: clamp(parsed.wellness),
+    };
+  } catch {
+    dims = {};
+  }
+
+  // Any missing dimension falls back to the transcript average, not a fixed number
+  const fb = Math.max(0, Math.min(5, Math.round(transcriptAvg * 100) / 100));
+  dims.technical = dims.technical ?? fb;
+  dims.judgment  = dims.judgment  ?? fb;
+  dims.english   = dims.english   ?? fb;
+  dims.behaviour = dims.behaviour ?? fb;
+  dims.wellness  = dims.wellness  ?? fb;
+
+  // Overall is arithmetic, computed here — never an AI opinion. Weights sum to 1.00.
+  const overall = Math.round((
+    dims.technical * 0.30 +
+    dims.judgment  * 0.25 +
+    dims.english   * 0.20 +
+    dims.behaviour * 0.15 +
+    dims.wellness  * 0.10
+  ) * 100) / 100;
+
+  const band =
+    overall >= 4.50 ? "ELITE" :
+    overall >= 4.00 ? "STRONG" :
+    overall >= 3.25 ? "COMPETENT" :
+    overall >= 2.50 ? "DEVELOPING" : "NOT_READY";
+
+  const recommendation =
+    overall >= 4.00 ? "RECOMMENDED" :
+    overall >= 3.25 ? "RECOMMENDED_WITH_NOTE" :
+    overall >= 2.50 ? "DEVELOPMENT_NEEDED" : "NOT_RECOMMENDED_NOW";
+
+  const scores = {
+    technical: dims.technical,
+    judgment: dims.judgment,
+    english: dims.english,
+    behaviour: dims.behaviour,
+    wellness: dims.wellness,
+    overall,
+    band,
+    recommendation,
+    scoring_version: "v1.0",
+  };
+
   return new Response(JSON.stringify({ scores }), { headers: { ...cors, "Content-Type": "application/json" } });
 });
