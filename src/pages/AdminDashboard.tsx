@@ -991,7 +991,7 @@ function ActivityTab() {
 /* ─── Main Dashboard ─── */
 export default function AdminDashboard() {
   const [authed, setAuthed] = useState<boolean | null>(null);
-  const [tab, setTab] = useState<"crew" | "activity" | "activity_full" | "cv_database" | "mobile_verify" | "pricing" | "discount" | "country_pricing" | "sub_admins" | "dpa" | "blog_images" | "agents" | "vacancy_intel" | "company_dir" | "company_posts">("crew");
+  const [tab, setTab] = useState<"content_studio" | "crew" | "activity" | "activity_full" | "cv_database" | "mobile_verify" | "pricing" | "discount" | "country_pricing" | "sub_admins" | "dpa" | "blog_images" | "agents" | "vacancy_intel" | "company_dir" | "company_posts">("crew");
 
   useEffect(() => {
     let active = true;
@@ -1017,6 +1017,7 @@ export default function AdminDashboard() {
 
 
   const tabs = [
+    { id: "content_studio" as const, label: "✨ Content Studio" },
     { id: "crew" as const, label: "Crew Search" },
     { id: "activity" as const, label: "📋 Crew Activity" },
     { id: "activity_full" as const, label: "📋 Activity" },
@@ -1069,6 +1070,7 @@ export default function AdminDashboard() {
         ))}
       </div>
 
+      {tab === "content_studio" && <ContentStudioTab />}
       {tab === "crew" && <CrewSearchTab />}
       {tab === "activity" && <ActivityTab />}
       {tab === "activity_full" && <ActivityFullTab />}
