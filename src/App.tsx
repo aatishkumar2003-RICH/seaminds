@@ -53,6 +53,7 @@ import PostVacancyPage from "./pages/PostVacancyPage";
 import JoinLanding from "./pages/JoinLanding";
 import ResetPassword from "./pages/ResetPassword";
 import CompanyPost from "./pages/CompanyPost";
+import ManagerInterviews from "./pages/ManagerInterviews";
 import AdminDashboard from "./pages/AdminDashboard";
 import Verify from "./pages/Verify";
 import Marketing from "./pages/Marketing";
@@ -143,6 +144,7 @@ const App = () => (
             <Route path="/join" element={<JoinLanding />} />
             <Route path="/manager" element={<ManagerAuth />} />
             <Route path="/manager/dashboard" element={<ManagerDashboard />} />
+            <Route path="/manager/interviews" element={<ManagerInterviews />} />
            <Route path="/manager-search" element={<ManagerSearch />} />
             <Route path="/post-vacancy" element={<PostVacancyPage />} />
             <Route path="/company-post" element={<CompanyPost />} />

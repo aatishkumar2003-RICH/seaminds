@@ -213,6 +213,12 @@ const ManagerDashboard = () => {
             🔍 Search Crew
           </button>
           <button
+            onClick={() => navigate("/manager/interviews")}
+            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-[#D4AF37] text-[#0D1B2A] border border-[#D4AF37] hover:opacity-90 transition-opacity"
+          >
+            🎓 Arrange Interview
+          </button>
+          <button
             onClick={() => navigate("/company-post")}
             className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-[#D4AF37] text-[#0D1B2A] border border-[#D4AF37] hover:opacity-90 transition-opacity"
           >
