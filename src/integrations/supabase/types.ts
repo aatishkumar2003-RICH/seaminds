@@ -1389,9 +1389,12 @@ export type Database = {
           id: string
           medical_fit: boolean | null
           near_miss: boolean | null
+          near_miss_detail: string | null
           psc_detention: boolean | null
+          psc_detention_detail: string | null
           reason_for_leaving: string | null
           safety_violation: boolean | null
+          safety_violation_detail: string | null
         }
         Insert: {
           accident_history?: string | null
@@ -1403,9 +1406,12 @@ export type Database = {
           id?: string
           medical_fit?: boolean | null
           near_miss?: boolean | null
+          near_miss_detail?: string | null
           psc_detention?: boolean | null
+          psc_detention_detail?: string | null
           reason_for_leaving?: string | null
           safety_violation?: boolean | null
+          safety_violation_detail?: string | null
         }
         Update: {
           accident_history?: string | null
@@ -1417,9 +1423,12 @@ export type Database = {
           id?: string
           medical_fit?: boolean | null
           near_miss?: boolean | null
+          near_miss_detail?: string | null
           psc_detention?: boolean | null
+          psc_detention_detail?: string | null
           reason_for_leaving?: string | null
           safety_violation?: boolean | null
+          safety_violation_detail?: string | null
         }
         Relationships: [
           {
@@ -2447,6 +2456,7 @@ export type Database = {
         }
         Returns: Json
       }
+      cv_interview_readiness: { Args: { p_crew_id: string }; Returns: Json }
       engage_company_post: {
         Args: { p_action: string; p_post_id: string }
         Returns: Json
