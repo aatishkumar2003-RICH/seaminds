@@ -499,6 +499,20 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
               >
                 {sectionCard.type === 'scenario' ? 'Describe your actions in order of priority' : 'Your responses are confidential'}
               </motion.p>
+              <button
+                onClick={() => {
+                  const needsAdvance = flatQuestions[qIndex]?.type !== sectionCard.type;
+                  setSectionCard(null);
+                  if (needsAdvance) setQIndex(prev => prev + 1);
+                }}
+                style={{
+                  marginTop: 20, width: "100%", padding: "13px 0", borderRadius: 12,
+                  background: "#D4AF37", color: "#0D1B2A", border: "none",
+                  fontWeight: 800, fontSize: 14, cursor: "pointer",
+                }}
+              >
+                Continue →
+              </button>
             </motion.div>
           </AnimatePresence>
         </div>
