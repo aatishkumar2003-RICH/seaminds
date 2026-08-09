@@ -106,7 +106,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     if (flowStep === 'questions' && flatQuestions.length > 0 && !introShown.current) {
       introShown.current = true;
       setSectionCard({ type: 'mcq', label: '📋 Knowledge Assessment', num: 'Section 1', icon: '📋' });
-      setTimeout(() => setSectionCard(null), 60000);
+      setTimeout(() => setSectionCard(null), 4000);
     }
   }, [flowStep, flatQuestions]);
 
@@ -308,7 +308,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
         setTimeout(() => {
           setSectionCard(null);
           setQIndex(prev => prev + 1);
-        }, 60000);
+        }, 4000);
       } else {
         setQIndex(prev => prev + 1);
       }
