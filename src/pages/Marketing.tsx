@@ -70,6 +70,10 @@ const Marketing = () => {
     </div>
   );
 
+  if (allowed !== true) {
+    return <div style={{ minHeight: "100vh", background: NAVY, display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8" }}>Checking access…</div>;
+  }
+
   return (
     <div style={{ minHeight: "100vh", background: NAVY, paddingBottom: 50 }}>
       <header style={{ borderBottom: `1px solid ${BORDER}`, padding: "16px" }}>
