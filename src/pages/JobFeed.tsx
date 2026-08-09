@@ -4,6 +4,7 @@ import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { Anchor, MapPin, Ship, BadgeCheck, MessageCircle, ExternalLink } from "lucide-react";
 import { trackPixel } from "@/lib/metaPixel";
+import { formatSalaryText } from "@/lib/salary";
 
 const NAVY = "#0D1B2A";
 const GOLD = "#D4AF37";
@@ -245,8 +246,8 @@ const JobFeed = () => {
                 </div>
                 )}
 
-                {i.salary && (
-                  <div style={{ color: "#22c55e", fontWeight: 800, fontSize: 15 }}>{i.salary}</div>
+                {formatSalaryText(i.salary) && (
+                  <div style={{ color: "#22c55e", fontWeight: 800, fontSize: 15 }}>{formatSalaryText(i.salary)}</div>
                 )}
 
                 <button onClick={() => apply(i)} style={{
