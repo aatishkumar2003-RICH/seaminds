@@ -1271,6 +1271,113 @@ export type Database = {
         }
         Relationships: []
       }
+      interview_campaigns: {
+        Row: {
+          closes_at: string | null
+          company_name: string
+          created_at: string
+          difficulty: string | null
+          id: string
+          language: string
+          manager_id: string
+          open_link_token: string | null
+          rank_required: string
+          sections: string[] | null
+          status: string
+          title: string
+          vessel_type: string | null
+        }
+        Insert: {
+          closes_at?: string | null
+          company_name: string
+          created_at?: string
+          difficulty?: string | null
+          id?: string
+          language?: string
+          manager_id: string
+          open_link_token?: string | null
+          rank_required: string
+          sections?: string[] | null
+          status?: string
+          title: string
+          vessel_type?: string | null
+        }
+        Update: {
+          closes_at?: string | null
+          company_name?: string
+          created_at?: string
+          difficulty?: string | null
+          id?: string
+          language?: string
+          manager_id?: string
+          open_link_token?: string | null
+          rank_required?: string
+          sections?: string[] | null
+          status?: string
+          title?: string
+          vessel_type?: string | null
+        }
+        Relationships: []
+      }
+      interview_invites: {
+        Row: {
+          assessment_id: string | null
+          campaign_id: string
+          completed_at: string | null
+          created_at: string
+          crew_profile_id: string | null
+          id: string
+          invited_email: string | null
+          invited_name: string | null
+          invited_whatsapp: string | null
+          manager_note: string | null
+          overall_score: number | null
+          shortlisted: boolean | null
+          status: string
+          token: string
+        }
+        Insert: {
+          assessment_id?: string | null
+          campaign_id: string
+          completed_at?: string | null
+          created_at?: string
+          crew_profile_id?: string | null
+          id?: string
+          invited_email?: string | null
+          invited_name?: string | null
+          invited_whatsapp?: string | null
+          manager_note?: string | null
+          overall_score?: number | null
+          shortlisted?: boolean | null
+          status?: string
+          token: string
+        }
+        Update: {
+          assessment_id?: string | null
+          campaign_id?: string
+          completed_at?: string | null
+          created_at?: string
+          crew_profile_id?: string | null
+          id?: string
+          invited_email?: string | null
+          invited_name?: string | null
+          invited_whatsapp?: string | null
+          manager_note?: string | null
+          overall_score?: number | null
+          shortlisted?: boolean | null
+          status?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interview_invites_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "interview_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       interview_pre_form: {
         Row: {
           accident_history: string | null
@@ -2245,7 +2352,50 @@ export type Database = {
       }
     }
     Functions: {
+      add_interview_invites: {
+        Args: { p_campaign_id: string; p_people: Json }
+        Returns: Json
+      }
       build_daily_notifications: { Args: never; Returns: string }
+      campaign_leaderboard: {
+        Args: { p_campaign_id: string }
+        Returns: {
+          band: string
+          behavioural: number
+          completed_at: string
+          english: number
+          invite_id: string
+          name: string
+          nationality: string
+          overall: number
+          red_flag_count: number
+          shortlisted: boolean
+          status: string
+          technical: number
+          token: string
+          wellness: number
+          whatsapp: string
+        }[]
+      }
+      claim_interview: {
+        Args: { p_assessment_id?: string; p_token: string }
+        Returns: Json
+      }
+      complete_interview: {
+        Args: { p_assessment_id: string; p_invite_id: string }
+        Returns: Json
+      }
+      create_interview_campaign: {
+        Args: {
+          p_closes_at?: string
+          p_language?: string
+          p_rank: string
+          p_sections?: string[]
+          p_title: string
+          p_vessel?: string
+        }
+        Returns: Json
+      }
       engage_company_post: {
         Args: { p_action: string; p_post_id: string }
         Returns: Json
@@ -2268,11 +2418,13 @@ export type Database = {
           whatsapp: string
         }[]
       }
+      get_interview_by_token: { Args: { p_token: string }; Returns: Json }
       increment_discount_uses: {
         Args: { input_code: string }
         Returns: undefined
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      make_invite_token: { Args: never; Returns: string }
       owns_crew_profile: {
         Args: { _crew_profile_id: string }
         Returns: boolean
