@@ -487,14 +487,17 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
                   <a href="https://whatsapp.com/channel/0029Vb8xcAJBFLgOKwwdTJ2V" target="_blank" rel="noopener noreferrer"
                     className="flex-1 rounded-xl py-2.5 text-center text-[12px] font-bold"
                     style={{ background: "#25D366", color: "#fff" }}>
-                    WhatsApp
+                    Follow on WhatsApp
                   </a>
                   <a href="https://t.me/seamindsjobs" target="_blank" rel="noopener noreferrer"
                     className="flex-1 rounded-xl py-2.5 text-center text-[12px] font-bold"
                     style={{ background: "#229ED9", color: "#fff" }}>
-                    Telegram
+                    Join Telegram
                   </a>
                 </div>
+                <p className="text-[10.5px] mt-2 text-center" style={{ color: "#64748b" }}>
+                  Free · every new vacancy sent the moment it lands
+                </p>
               </article>
             );
           }
