@@ -234,13 +234,13 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
         const rankMatches = [
           ...jobPostings.filter(j => j.rank_required.toLowerCase() === role.toLowerCase() || j.rank_required === "Any Rank").map(j => ({
             id: j.id, title: j.rank_required, company: j.company_name, vessel: j.vessel_type,
-            port: j.joining_port, salary: j.monthly_salary ? `$${j.monthly_salary}/mo` : "Negotiable",
+            port: j.joining_port, salary: formatSalaryText(j.monthly_salary, "/mo") || "Negotiable",
             source: "posted" as const, date: j.created_at, whatsapp: j.contact_whatsapp, verified: j.verified,
           })),
           ...externalVacancies.filter(e => e.rank_required && e.rank_required.toLowerCase() === role.toLowerCase()).map(e => ({
             id: e.id, title: e.rank_required || e.title, company: e.company_name || "Unknown",
             vessel: e.vessel_type || "—", port: e.joining_port || "TBD",
-            salary: e.salary_text || "—", source: "ai" as const, date: e.created_at || "",
+            salary: formatSalaryText(e.salary_text, "/mo") || "—", source: "ai" as const, date: e.created_at || "",
             whatsapp: e.contact_whatsapp, verified: false,
           })),
         ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
@@ -469,7 +469,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                   </div>
                   <div className="flex items-center gap-1.5">
                     <DollarSign size={12} className="text-primary/70" />
-                    <span>{jp.monthly_salary ? `$${jp.monthly_salary}/month` : "Negotiable"}</span>
+                    <span>{formatSalaryText(jp.monthly_salary) || "Negotiable"}</span>
                   </div>
                   <p className="text-[10px] text-muted-foreground/60">Posted {postedAgo}</p>
                 </div>
@@ -521,10 +521,12 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                   <MapPin size={12} className="text-primary/70" />
                   <span>{v.joining_port}</span>
                 </div>
-                <div className="flex items-center gap-1.5 col-span-2">
-                  <DollarSign size={12} className="text-primary/70" />
-                  <span>${v.salary_min.toLocaleString()} – ${v.salary_max.toLocaleString()} /mo</span>
-                </div>
+                {formatSalaryRange(v.salary_min, v.salary_max, "/mo") && (
+                  <div className="flex items-center gap-1.5 col-span-2">
+                    <DollarSign size={12} className="text-primary/70" />
+                    <span>{formatSalaryRange(v.salary_min, v.salary_max, "/mo")}</span>
+                  </div>
+                )}
                 {v.min_smc_score && (
                   <div className="flex items-center gap-1.5 col-span-2">
                     <Award size={12} className="text-primary/70" />
@@ -709,10 +711,10 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                       <span>{ext.joining_port}</span>
                     </div>
                   )}
-                  {ext.salary_text && (
+                  {formatSalaryText(ext.salary_text) && (
                     <div className="flex items-center gap-1.5">
                       <DollarSign size={12} className="text-primary/70" />
-                      <span>{ext.salary_text}</span>
+                      <span>{formatSalaryText(ext.salary_text)}</span>
                     </div>
                   )}
                   {ext.contract_duration && (
