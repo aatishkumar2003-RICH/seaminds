@@ -4,8 +4,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { logEvent } from "@/lib/logEvent";
-import DocumentUpload from "./steps/DocumentUpload";
-import DocumentVerification from "./steps/DocumentVerification";
 import ScoreReveal from "./steps/ScoreReveal";
 
 interface AssessmentFlowProps {
@@ -47,7 +45,7 @@ interface FlatQuestion {
 const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assessmentId, vesselType, yearsExperience, onComplete, onExit }: AssessmentFlowProps) => {
   const { accessToken } = useAuth();
   // Core flow state
-  const [flowStep, setFlowStep] = useState<'preform' | 'docUpload' | 'docVerify' | 'questions' | 'score'>('preform');
+  const [flowStep, setFlowStep] = useState<'preform' | 'cvCheck' | 'questions' | 'score'>('preform');
   const [aiQuestions, setAiQuestions] = useState<any>(null);
   const [flatQuestions, setFlatQuestions] = useState<FlatQuestion[]>([]);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
@@ -78,7 +76,23 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Pre-form state
-  const [preForm, setPreForm] = useState<{reasonForLeaving:string,expectedSalary:string,availabilityDate:string,medicalFit:boolean,accidentHistory:string,pscDetention:boolean,nearMiss:boolean,safetyViolation:boolean}>({ reasonForLeaving:'', expectedSalary:'', availabilityDate:'', medicalFit:true, accidentHistory:'', pscDetention:false, nearMiss:false, safetyViolation:false });
+  const [preForm, setPreForm] = useState<{reasonForLeaving:string,expectedSalary:string,availabilityDate:string,medicalFit:boolean,accidentHistory:string,pscDetention:boolean,nearMiss:boolean,safetyViolation:boolean,pscDetentionDetail:string,nearMissDetail:string,safetyViolationDetail:string}>({ reasonForLeaving:'', expectedSalary:'', availabilityDate:'', medicalFit:true, accidentHistory:'', pscDetention:false, nearMiss:false, safetyViolation:false, pscDetentionDetail:'', nearMissDetail:'', safetyViolationDetail:'' });
+
+  const [cvSummary, setCvSummary] = useState<{certs:number; service:number; hasCv:boolean} | null>(null);
+
+  useEffect(() => {
+    if (flowStep !== 'cvCheck') return;
+    (async () => {
+      try {
+        const { data } = await supabase.from('crew_cv_data').select('certificates, sea_service').eq('user_id', profileId).maybeSingle();
+        const certs = Array.isArray((data as any)?.certificates) ? (data as any).certificates.length : 0;
+        const service = Array.isArray((data as any)?.sea_service) ? (data as any).sea_service.length : 0;
+        setCvSummary({ certs, service, hasCv: certs > 0 || service > 0 });
+      } catch {
+        setCvSummary({ certs: 0, service: 0, hasCv: false });
+      }
+    })();
+  }, [flowStep, profileId]);
 
   // Reset MCQ state on question change
   useEffect(() => {
@@ -205,9 +219,12 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
         psc_detention: preForm.pscDetention,
         near_miss: preForm.nearMiss,
         safety_violation: preForm.safetyViolation,
+        psc_detention_detail: preForm.pscDetentionDetail || null,
+        near_miss_detail: preForm.nearMissDetail || null,
+        safety_violation_detail: preForm.safetyViolationDetail || null,
       } as any);
     } catch { /* silent */ }
-    setFlowStep('docUpload');
+    setFlowStep('cvCheck');
   };
 
   const handleAutoSubmit = () => {
@@ -374,48 +391,102 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
               <span className="text-xs font-medium text-muted-foreground">Any accident or incident history? (leave blank if none)</span>
               <textarea value={preForm.accidentHistory} onChange={e => setPreForm(p => ({ ...p, accidentHistory: e.target.value }))} className="w-full rounded-lg px-3 py-2.5 text-sm text-foreground border border-border focus:outline-none focus:border-[#D4AF37] resize-none" style={{ background: '#132238' }} rows={2} placeholder="Describe any incidents..." />
             </label>
-            <label className="flex items-center gap-3 py-1">
-              <input type="checkbox" checked={preForm.pscDetention} onChange={e => setPreForm(p => ({ ...p, pscDetention: e.target.checked }))} className="w-4 h-4 rounded accent-[#D4AF37]" />
-              <span className="text-sm text-foreground">I have been involved in a PSC detention</span>
-            </label>
-            <label className="flex items-center gap-3 py-1">
-              <input type="checkbox" checked={preForm.nearMiss} onChange={e => setPreForm(p => ({ ...p, nearMiss: e.target.checked }))} className="w-4 h-4 rounded accent-[#D4AF37]" />
-              <span className="text-sm text-foreground">I have been involved in a near miss onboard</span>
-            </label>
-            <label className="flex items-center gap-3 py-1">
-              <input type="checkbox" checked={preForm.safetyViolation} onChange={e => setPreForm(p => ({ ...p, safetyViolation: e.target.checked }))} className="w-4 h-4 rounded accent-[#D4AF37]" />
-              <span className="text-sm text-foreground">I have received a safety violation</span>
-            </label>
+              <label className="flex items-center gap-3 py-1">
+                <input type="checkbox" checked={preForm.pscDetention} onChange={e => setPreForm(p => ({ ...p, pscDetention: e.target.checked }))} className="w-4 h-4 rounded accent-[#D4AF37]" />
+                <span className="text-sm text-foreground">I have been involved in a PSC detention</span>
+              </label>
+              {preForm.pscDetention && (
+                <textarea value={preForm.pscDetentionDetail}
+                  onChange={e => setPreForm(p => ({ ...p, pscDetentionDetail: e.target.value }))}
+                  className="w-full rounded-lg px-3 py-2.5 text-sm text-foreground border border-border focus:outline-none focus:border-[#D4AF37] resize-none"
+                  style={{ background: '#132238', marginTop: '-4px' }} rows={2}
+                  placeholder="Which vessel, which port, what was the deficiency, and what changed after?" />
+              )}
+              <label className="flex items-center gap-3 py-1">
+                <input type="checkbox" checked={preForm.nearMiss} onChange={e => setPreForm(p => ({ ...p, nearMiss: e.target.checked }))} className="w-4 h-4 rounded accent-[#D4AF37]" />
+                <span className="text-sm text-foreground">I have been involved in a near miss onboard</span>
+              </label>
+              {preForm.nearMiss && (
+                <textarea value={preForm.nearMissDetail}
+                  onChange={e => setPreForm(p => ({ ...p, nearMissDetail: e.target.value }))}
+                  className="w-full rounded-lg px-3 py-2.5 text-sm text-foreground border border-border focus:outline-none focus:border-[#D4AF37] resize-none"
+                  style={{ background: '#132238', marginTop: '-4px' }} rows={2}
+                  placeholder="What happened, and what was done afterwards?" />
+              )}
+              <label className="flex items-center gap-3 py-1">
+                <input type="checkbox" checked={preForm.safetyViolation} onChange={e => setPreForm(p => ({ ...p, safetyViolation: e.target.checked }))} className="w-4 h-4 rounded accent-[#D4AF37]" />
+                <span className="text-sm text-foreground">I have received a safety violation</span>
+              </label>
+              {preForm.safetyViolation && (
+                <textarea value={preForm.safetyViolationDetail}
+                  onChange={e => setPreForm(p => ({ ...p, safetyViolationDetail: e.target.value }))}
+                  className="w-full rounded-lg px-3 py-2.5 text-sm text-foreground border border-border focus:outline-none focus:border-[#D4AF37] resize-none"
+                  style={{ background: '#132238', marginTop: '-4px' }} rows={2}
+                  placeholder="What was the violation and what was the outcome?" />
+              )}
           </div>
           <button onClick={handlePreFormSubmit} className="w-full py-3 rounded-xl font-bold text-sm transition-all mt-2" style={{ background: '#D4AF37', color: '#0b1929' }}>Begin Assessment</button>
-          <button onClick={() => setFlowStep('docUpload')} className="text-xs text-center py-1 transition-colors" style={{ color: '#888' }}>Skip</button>
+          <button onClick={() => setFlowStep('cvCheck')} className="text-xs text-center py-1 transition-colors" style={{ color: '#888' }}>Skip</button>
         </div>
       </div>
     );
   }
 
-  // ── DOC UPLOAD ──
-  if (flowStep === 'docUpload') {
+  // ── CV CHECK ──
+  if (flowStep === 'cvCheck') {
     return (
-      <div className="flex flex-col h-full">
-        {loadingQuestions && (
-          <div className="px-4 py-2 text-xs text-center animate-pulse" style={{ color: '#D4AF37' }}>
-            Generating your personalised assessment...
+      <div className="flex flex-col h-full overflow-y-auto" style={{ background: '#0b1929' }}>
+        <div className="p-5 flex flex-col gap-4 max-w-lg mx-auto w-full">
+          {loadingQuestions && <p className="text-xs text-center animate-pulse" style={{ color: '#D4AF37' }}>Preparing your assessment…</p>}
+          <div className="text-center mb-1">
+            <p className="text-xs uppercase tracking-[0.2em] font-medium" style={{ color: '#D4AF37' }}>Your SeaMinds CV</p>
+            <p className="text-[11px] text-muted-foreground mt-1">We use the CV and certificates already on your profile</p>
           </div>
-        )}
-        <DocumentUpload assessmentId={assessmentId} profileId={profileId} onNext={() => setFlowStep('docVerify')} onSkipToEnd={() => setFlowStep('questions')} />
+
+          {!cvSummary && <p className="text-sm text-center text-muted-foreground py-6">Checking your profile…</p>}
+
+          {cvSummary?.hasCv && (
+            <>
+              <div className="rounded-xl p-4" style={{ background: '#132238', border: '1px solid #1a2e47' }}>
+                <p className="text-sm font-bold mb-2" style={{ color: '#22c55e' }}>✅ CV found on your profile</p>
+                <p className="text-[13px]" style={{ color: '#cbd5e1' }}>{cvSummary.certs} certificate{cvSummary.certs === 1 ? '' : 's'}</p>
+                <p className="text-[13px]" style={{ color: '#cbd5e1' }}>{cvSummary.service} sea service {cvSummary.service === 1 ? 'entry' : 'entries'}</p>
+              </div>
+              <p className="text-[11px] text-center" style={{ color: '#888' }}>
+                The company reviewing you will see this CV. Make sure it is up to date before you continue.
+              </p>
+              <button onClick={() => setFlowStep('questions')} className="w-full py-3 rounded-xl font-bold text-sm" style={{ background: '#D4AF37', color: '#0b1929' }}>
+                My CV is up to date — Continue
+              </button>
+              <a href="/app" target="_blank" rel="noopener noreferrer" className="text-xs text-center py-1" style={{ color: '#D4AF37' }}>
+                Update my CV first (opens SeaMinds)
+              </a>
+            </>
+          )}
+
+          {cvSummary && !cvSummary.hasCv && (
+            <>
+              <div className="rounded-xl p-4" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.35)' }}>
+                <p className="text-sm font-bold mb-1" style={{ color: '#f59e0b' }}>⚠ No CV on your profile yet</p>
+                <p className="text-[12.5px] leading-relaxed" style={{ color: '#cbd5e1' }}>
+                  Companies decide from your CV and certificates. Build it once in SeaMinds and it is used for
+                  every interview and every job — you never have to upload it again.
+                </p>
+              </div>
+              <a href="/app" target="_blank" rel="noopener noreferrer"
+                className="w-full py-3 rounded-xl font-bold text-sm text-center" style={{ background: '#D4AF37', color: '#0b1929' }}>
+                Build my CV now (opens SeaMinds)
+              </a>
+              <button onClick={() => setFlowStep('questions')} className="text-xs text-center py-2" style={{ color: '#888' }}>
+                Continue without a CV — my result will be weaker
+              </button>
+            </>
+          )}
+        </div>
       </div>
     );
   }
 
-  // ── DOC VERIFY ──
-  if (flowStep === 'docVerify') {
-    return (
-      <div className="flex flex-col h-full">
-        <DocumentVerification firstName={firstName} rank={rank} profileId={profileId} assessmentId={assessmentId} onNext={() => setFlowStep('questions')} onSkipToEnd={() => setFlowStep('questions')} />
-      </div>
-    );
-  }
 
   // ── SCORE REVEAL ──
   if (flowStep === 'score') {
