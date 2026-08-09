@@ -21,7 +21,7 @@ const InterviewInvite = () => {
   const [starting, setStarting] = useState(false);
   const [name, setName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
-  const [step, setStep] = useState<"intro" | "account">("intro");
+  
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nationality, setNationality] = useState("");
@@ -37,19 +37,17 @@ const InterviewInvite = () => {
     })();
   }, [token]);
 
-  const goToAccount = async () => {
+  const createAndStart = async () => {
     if (!name.trim()) { toast.error("Please enter your name."); return; }
     if (!whatsapp.trim()) { toast.error("Please enter your WhatsApp number."); return; }
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) { navigate(`/interview/${token}/exam`); return; }
-    setStep("account");
-  };
-
-  const createAndStart = async () => {
-    if (!email.trim() || !password.trim()) { toast.error("Enter your email and choose a password."); return; }
+    if (!email.trim()) { toast.error("Please enter your email."); return; }
+    if (!password.trim()) { toast.error("Please choose a password."); return; }
     if (password.length < 8) { toast.error("Password must be at least 8 characters."); return; }
     setStarting(true);
     try {
+      const { data: { user: existingUser } } = await supabase.auth.getUser();
+      if (existingUser) { navigate(`/interview/${token}/exam`); return; }
+
       const parts = name.trim().split(" ");
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
@@ -180,63 +178,33 @@ const InterviewInvite = () => {
           </p>
         </div>
 
-        {step === "intro" && (
-          <>
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ color: "#94a3b8", fontSize: 11, textTransform: "uppercase", letterSpacing: 0.6 }}>Your name *</label>
-              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="As on your passport" style={input} />
-            </div>
-            <div style={{ marginBottom: 18 }}>
-              <label style={{ color: "#94a3b8", fontSize: 11, textTransform: "uppercase", letterSpacing: 0.6 }}>WhatsApp number *</label>
-              <input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="+63 917 000 0000" style={input} />
-            </div>
+        <div style={{ marginBottom: 12 }}>
+          <label style={{ color: "#94a3b8", fontSize: 11, textTransform: "uppercase", letterSpacing: 0.6 }}>Your name *</label>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="As on your passport" style={input} />
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <label style={{ color: "#94a3b8", fontSize: 11, textTransform: "uppercase", letterSpacing: 0.6 }}>WhatsApp number *</label>
+          <input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="+63 917 000 0000" style={input} />
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <label style={{ color: "#94a3b8", fontSize: 11, textTransform: "uppercase", letterSpacing: 0.6 }}>Email *</label>
+          <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="your@email.com" style={input} />
+          <p style={{ color: "#64748b", fontSize: 10.5, marginTop: 5 }}>Your interview result and study plan are sent here.</p>
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <label style={{ color: "#94a3b8", fontSize: 11, textTransform: "uppercase", letterSpacing: 0.6 }}>Choose a password *</label>
+          <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="At least 8 characters" style={input} />
+        </div>
+        <div style={{ marginBottom: 18 }}>
+          <label style={{ color: "#94a3b8", fontSize: 11, textTransform: "uppercase", letterSpacing: 0.6 }}>Nationality</label>
+          <input value={nationality} onChange={(e) => setNationality(e.target.value)} placeholder="e.g. Filipino, Indian, Vietnamese" style={input} />
+        </div>
 
-            <button onClick={goToAccount} disabled={starting}
-              style={{ width: "100%", padding: "15px 0", borderRadius: 14, border: "none", background: GOLD, color: NAVY, fontWeight: 900, fontSize: 15.5, cursor: starting ? "default" : "pointer", opacity: starting ? 0.5 : 1 }}>
-              Continue →
-            </button>
-          </>
-        )}
+        <button onClick={createAndStart} disabled={starting}
+          style={{ width: "100%", padding: "15px 0", borderRadius: 14, border: "none", background: GOLD, color: NAVY, fontWeight: 900, fontSize: 15.5, cursor: starting ? "default" : "pointer", opacity: starting ? 0.5 : 1 }}>
+          {starting ? "Creating…" : "Start Interview →"}
+        </button>
 
-        {step === "account" && (
-          <>
-            <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 16, marginBottom: 16 }}>
-              <p style={{ color: GOLD, fontSize: 13, fontWeight: 800, marginBottom: 4 }}>Create your free SeaMinds account</p>
-              <p style={{ color: "#94a3b8", fontSize: 11.5, lineHeight: 1.55 }}>
-                Your score is saved to your profile and works for other companies too. Free, always.
-              </p>
-            </div>
-
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ color: "#94a3b8", fontSize: 11, textTransform: "uppercase", letterSpacing: 0.6 }}>Email *</label>
-              <input value={email} onChange={(e) => setEmail(e.target.value)} type="email"
-                placeholder="your@email.com" style={input} />
-              <p style={{ color: "#64748b", fontSize: 10.5, marginTop: 5 }}>Your result and study plan are sent here.</p>
-            </div>
-
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ color: "#94a3b8", fontSize: 11, textTransform: "uppercase", letterSpacing: 0.6 }}>Choose a password *</label>
-              <input value={password} onChange={(e) => setPassword(e.target.value)} type="password"
-                placeholder="At least 8 characters" style={input} />
-            </div>
-
-            <div style={{ marginBottom: 18 }}>
-              <label style={{ color: "#94a3b8", fontSize: 11, textTransform: "uppercase", letterSpacing: 0.6 }}>Nationality</label>
-              <input value={nationality} onChange={(e) => setNationality(e.target.value)}
-                placeholder="e.g. Filipino, Indian, Vietnamese" style={input} />
-            </div>
-
-            <button onClick={createAndStart} disabled={starting}
-              style={{ width: "100%", padding: "15px 0", borderRadius: 14, border: "none", background: GOLD, color: NAVY, fontWeight: 900, fontSize: 15.5, cursor: starting ? "default" : "pointer", opacity: starting ? 0.5 : 1 }}>
-              {starting ? "Creating…" : "Create account & start interview →"}
-            </button>
-
-            <button onClick={() => setStep("intro")}
-              style={{ width: "100%", marginTop: 10, background: "transparent", border: "none", color: "#64748b", fontSize: 12, cursor: "pointer" }}>
-              ← Back
-            </button>
-          </>
-        )}
 
         <p style={{ color: "#64748b", fontSize: 10.5, textAlign: "center", marginTop: 14, lineHeight: 1.6 }}>
           Answer honestly and on your own. Switching tabs or pasting answers is recorded and shown to the company.
