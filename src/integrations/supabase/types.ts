@@ -607,6 +607,69 @@ export type Database = {
         }
         Relationships: []
       }
+      content_library: {
+        Row: {
+          active: boolean | null
+          attribution: string | null
+          body: string
+          created_at: string | null
+          cta_angle: string | null
+          era: string | null
+          hashtags: string | null
+          hook: string | null
+          id: string
+          image_prompt: string | null
+          incident_date: string | null
+          kind: string
+          lives_lost: string | null
+          question: string | null
+          regulation: string | null
+          tags: string[] | null
+          times_used: number | null
+          title: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          attribution?: string | null
+          body: string
+          created_at?: string | null
+          cta_angle?: string | null
+          era?: string | null
+          hashtags?: string | null
+          hook?: string | null
+          id?: string
+          image_prompt?: string | null
+          incident_date?: string | null
+          kind: string
+          lives_lost?: string | null
+          question?: string | null
+          regulation?: string | null
+          tags?: string[] | null
+          times_used?: number | null
+          title?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          attribution?: string | null
+          body?: string
+          created_at?: string | null
+          cta_angle?: string | null
+          era?: string | null
+          hashtags?: string | null
+          hook?: string | null
+          id?: string
+          image_prompt?: string | null
+          incident_date?: string | null
+          kind?: string
+          lives_lost?: string | null
+          question?: string | null
+          regulation?: string | null
+          tags?: string[] | null
+          times_used?: number | null
+          title?: string | null
+        }
+        Relationships: []
+      }
       country_pricing: {
         Row: {
           active: boolean | null
@@ -935,6 +998,36 @@ export type Database = {
           whatsapp_verified?: boolean
           whatsapp_verified_at?: string | null
           years_at_sea?: string
+        }
+        Relationships: []
+      }
+      cta_library: {
+        Row: {
+          active: boolean | null
+          audience: string
+          id: string
+          intent: string
+          line: string
+          priority: number | null
+          url: string
+        }
+        Insert: {
+          active?: boolean | null
+          audience: string
+          id?: string
+          intent: string
+          line: string
+          priority?: number | null
+          url: string
+        }
+        Update: {
+          active?: boolean | null
+          audience?: string
+          id?: string
+          intent?: string
+          line?: string
+          priority?: number | null
+          url?: string
         }
         Relationships: []
       }
@@ -1968,6 +2061,36 @@ export type Database = {
         }
         Relationships: []
       }
+      rank_standards: {
+        Row: {
+          label: string
+          min_contracts: number
+          min_english: number
+          min_overall: number
+          min_years: number
+          note: string | null
+          rank_group: string
+        }
+        Insert: {
+          label: string
+          min_contracts: number
+          min_english: number
+          min_overall: number
+          min_years: number
+          note?: string | null
+          rank_group: string
+        }
+        Update: {
+          label?: string
+          min_contracts?: number
+          min_english?: number
+          min_overall?: number
+          min_years?: number
+          note?: string | null
+          rank_group?: string
+        }
+        Relationships: []
+      }
       rest_hours_data: {
         Row: {
           crew_profile_id: string | null
@@ -2417,6 +2540,10 @@ export type Database = {
         Returns: Json
       }
       build_daily_notifications: { Args: never; Returns: string }
+      build_post: {
+        Args: { p_audience?: string; p_id?: string; p_kind?: string }
+        Returns: Json
+      }
       campaign_leaderboard: {
         Args: { p_campaign_id: string }
         Returns: {
@@ -2456,7 +2583,10 @@ export type Database = {
         }
         Returns: Json
       }
-      cv_interview_readiness: { Args: { p_crew_id: string }; Returns: Json }
+      cv_interview_readiness: {
+        Args: { p_crew_id: string; p_target_rank?: string }
+        Returns: Json
+      }
       engage_company_post: {
         Args: { p_action: string; p_post_id: string }
         Returns: Json
@@ -2467,6 +2597,10 @@ export type Database = {
           key: string
           value: string
         }[]
+      }
+      get_cta_block: {
+        Args: { p_audience?: string; p_count?: number; p_intents?: string[] }
+        Returns: string
       }
       get_interested_crew: {
         Args: { p_post_id: string }
@@ -2490,11 +2624,27 @@ export type Database = {
         Args: { _crew_profile_id: string }
         Returns: boolean
       }
+      rank_group_of: { Args: { p_rank: string }; Returns: string }
       report_company_post: {
         Args: { post_id: string; reason?: string }
         Returns: boolean
       }
       seaminds_housekeeping: { Args: never; Returns: string }
+      search_maritime_history: {
+        Args: { p_kind?: string; p_limit?: number; p_query?: string }
+        Returns: {
+          attribution: string
+          body: string
+          cta_angle: string
+          id: string
+          incident_date: string
+          kind: string
+          lives_lost: string
+          regulation: string
+          tags: string[]
+          title: string
+        }[]
+      }
       upsert_email_lead: {
         Args: {
           p_crew_profile_id?: string

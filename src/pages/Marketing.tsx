@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -19,6 +20,16 @@ const ANGLES = [
 const DIGEST = "https://luomzexqgcjtcmdlbevo.supabase.co/functions/v1/vacancy-card?mode=digest&secret=sm-agt-7Qk4Xv92Rb1Ld6Zt5Wn3Hy8Pc";
 
 const Marketing = () => {
+  const navigate = useNavigate();
+  const [allowed, setAllowed] = useState<boolean | null>(null);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      const ok = data.user?.id === "492ee966-e015-4440-a415-6ad6275a4a9b";
+      setAllowed(ok);
+      if (!ok) navigate("/admin", { replace: true });
+    });
+  }, [navigate]);
+
   const [angle, setAngle] = useState("jobs");
   const [loading, setLoading] = useState(false);
   const [content, setContent] = useState<any>(null);
@@ -58,6 +69,10 @@ const Marketing = () => {
       {extra && <p style={{ color: "#94a3b8", fontSize: 12, marginTop: 8, lineHeight: 1.5 }}>{extra}</p>}
     </div>
   );
+
+  if (allowed !== true) {
+    return <div style={{ minHeight: "100vh", background: NAVY, display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8" }}>Checking access…</div>;
+  }
 
   return (
     <div style={{ minHeight: "100vh", background: NAVY, paddingBottom: 50 }}>
