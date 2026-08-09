@@ -49,7 +49,7 @@ const InterviewExam = () => {
         if (!assessmentId) {
           const { data: created, error: cErr } = await supabase
             .from("smc_assessments")
-            .insert({ crew_profile_id: user.id, status: "in_progress", current_step: "preform" })
+            .insert({ crew_profile_id: user.id, status: "in_progress", current_step: 1 } as any)
             .select("id")
             .single();
           if (cErr) throw cErr;
