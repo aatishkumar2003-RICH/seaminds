@@ -55,6 +55,7 @@ import ResetPassword from "./pages/ResetPassword";
 import CompanyPost from "./pages/CompanyPost";
 import ManagerInterviews from "./pages/ManagerInterviews";
 import InterviewInvite from "./pages/InterviewInvite";
+import InterviewExam from "./pages/InterviewExam";
 import AdminDashboard from "./pages/AdminDashboard";
 import Verify from "./pages/Verify";
 import Marketing from "./pages/Marketing";
@@ -143,6 +144,7 @@ const App = () => (
             <Route path="/app" element={<Index />} />
             <Route path="/feed" element={<JobFeed />} />
             <Route path="/interview/:token" element={<InterviewInvite />} />
+            <Route path="/interview/:token/exam" element={<InterviewExam />} />
             <Route path="/join" element={<JoinLanding />} />
             <Route path="/manager" element={<ManagerAuth />} />
             <Route path="/manager/dashboard" element={<ManagerDashboard />} />

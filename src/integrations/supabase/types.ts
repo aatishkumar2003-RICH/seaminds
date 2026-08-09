@@ -1438,6 +1438,51 @@ export type Database = {
           },
         ]
       }
+      interview_progress: {
+        Row: {
+          answers: Json | null
+          assessment_id: string | null
+          campaign_id: string | null
+          created_at: string | null
+          crew_id: string
+          id: string
+          invite_id: string | null
+          last_saved_at: string | null
+          question_index: number | null
+          questions: Json | null
+          resumed_count: number | null
+          seconds_left: number | null
+        }
+        Insert: {
+          answers?: Json | null
+          assessment_id?: string | null
+          campaign_id?: string | null
+          created_at?: string | null
+          crew_id: string
+          id?: string
+          invite_id?: string | null
+          last_saved_at?: string | null
+          question_index?: number | null
+          questions?: Json | null
+          resumed_count?: number | null
+          seconds_left?: number | null
+        }
+        Update: {
+          answers?: Json | null
+          assessment_id?: string | null
+          campaign_id?: string | null
+          created_at?: string | null
+          crew_id?: string
+          id?: string
+          invite_id?: string | null
+          last_saved_at?: string | null
+          question_index?: number | null
+          questions?: Json | null
+          resumed_count?: number | null
+          seconds_left?: number | null
+        }
+        Relationships: []
+      }
       job_postings: {
         Row: {
           additional_notes: string | null
