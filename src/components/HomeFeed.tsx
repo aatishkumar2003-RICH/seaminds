@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { MessageCircle, ExternalLink, RefreshCw } from "lucide-react";
 import { trackPixel } from "@/lib/metaPixel";
 import ShareResult from "@/components/ShareResult";
+import { formatSalaryText, formatSalaryRange } from "@/lib/salary";
 
 const GOLD = "#D4AF37";
 const NAVY = "#0D1B2A";
@@ -162,8 +163,9 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
     });
 
     const salaryRows = vacancies
-      .filter((v) => v.salary && String(v.salary).match(/\d/))
-      .slice(0, 5).map((v) => ({ rank: v.rank || "Crew", salary: String(v.salary) }));
+      .map((v) => ({ rank: v.rank || "Crew", salary: formatSalaryText(v.salary) }))
+      .filter((r) => !!r.salary && /\d/.test(r.salary!))
+      .slice(0, 5) as { rank: string; salary: string }[];
 
     const quizzes = ((quizRes.data as any[]) || []).sort(() => Math.random() - 0.5);
     const prof: any = profRes.data || {};
@@ -230,14 +232,27 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
     setRefreshing(false);
   };
 
-  const applyTo = (v: any) => {
+  const applyTo = async (v: any) => {
     log("vacancy", v.id, "apply");
     trackPixel("Contact", { content_name: "job_apply", content_category: v.rank || "crew" });
+    // WhatsApp applications go direct — that is the fastest route for the seafarer
     if (v.whatsapp) {
       const d = String(v.whatsapp).replace(/[^\d]/g, "");
-      if (d) return window.open(`https://wa.me/${d}?text=${encodeURIComponent(`Hello, I am interested in the ${v.rank} position (seen on SeaMinds).`)}`, "_blank");
+      if (d) { window.open(`https://wa.me/${d}?text=${encodeURIComponent(`Hello, I am interested in the ${v.rank} position (seen on SeaMinds).`)}`, "_blank"); return; }
     }
-    if (v.applyUrl) return window.open(v.applyUrl, "_blank");
+    // No direct contact: make sure the CV is ready before sending them to the company
+    try {
+      const { data: readiness } = await supabase.rpc("cv_interview_readiness" as any, { p_crew_id: profileId });
+      const r: any = readiness;
+      if (r && r.ready === false) {
+        const missing = Array.isArray(r.missing) ? r.missing.join("\n• ") : "";
+        if (window.confirm(
+          `Companies choose from your CV.\n\nStill needed:\n• ${missing}\n\nComplete your CV now? It takes a few minutes and works for every job.`
+        )) { onNavigate?.("resume"); return; }
+      }
+    } catch { /* never block the application */ }
+    if (v.applyUrl) window.open(v.applyUrl, "_blank");
+    else onNavigate?.("opportunities");
   };
 
   const answerQuiz = async (q: any, idx: number) => {
@@ -419,7 +434,7 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
                     {v.port && <span>📍 {v.port}</span>}
                     {v.duration && <span>📆 {v.duration}</span>}
                   </div>
-                  {v.salary && <p className="font-extrabold text-sm" style={{ color: "#22c55e" }}>💰 {v.salary}</p>}
+                  {formatSalaryText(v.salary) && <p className="font-extrabold text-sm" style={{ color: "#22c55e" }}>💰 {formatSalaryText(v.salary)}</p>}
                   <button onClick={() => applyTo(v)}
                     className="w-full rounded-xl py-2.5 font-bold text-[13px] flex items-center justify-center gap-2"
                     style={{ background: GOLD, color: NAVY, border: "none", cursor: "pointer" }}>
