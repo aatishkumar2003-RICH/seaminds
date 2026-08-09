@@ -21,6 +21,10 @@ const InterviewInvite = () => {
   const [starting, setStarting] = useState(false);
   const [name, setName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
+  const [step, setStep] = useState<"intro" | "account">("intro");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [nationality, setNationality] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -33,26 +37,50 @@ const InterviewInvite = () => {
     })();
   }, [token]);
 
-  const start = async () => {
+  const goToAccount = async () => {
     if (!name.trim()) { toast.error("Please enter your name."); return; }
-    if (!whatsapp.trim()) { toast.error("Please enter your WhatsApp number so the company can reach you."); return; }
+    if (!whatsapp.trim()) { toast.error("Please enter your WhatsApp number."); return; }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) { navigate(`/interview/${token}/exam`); return; }
+    setStep("account");
+  };
+
+  const createAndStart = async () => {
+    if (!email.trim() || !password.trim()) { toast.error("Enter your email and choose a password."); return; }
+    if (password.length < 8) { toast.error("Password must be at least 8 characters."); return; }
     setStarting(true);
     try {
-      // Remember the invite so the app can attach the result after signing in
-      sessionStorage.setItem("sm_interview_token", token || "");
-      sessionStorage.setItem("sm_interview_name", name.trim());
-      sessionStorage.setItem("sm_interview_whatsapp", whatsapp.trim());
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase.rpc("claim_interview" as any, { p_token: token, p_assessment_id: null });
-        navigate("/app?interview=1");
+      const parts = name.trim().split(" ");
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/interview/${token}/exam`,
+          data: {
+            crew_signup: true,
+            first_name: parts[0],
+            last_name: parts.slice(1).join(" "),
+            whatsapp: whatsapp.trim(),
+            nationality: nationality || "",
+            rank: info?.rank || "",
+          },
+        },
+      });
+      if (error) {
+        if (String(error.message).toLowerCase().includes("already")) {
+          toast.error("That email is already registered. Please sign in first, then reopen this link.");
+        } else {
+          toast.error(error.message);
+        }
         return;
       }
-      // Not signed in — send them through the normal join flow, then into the interview
-      navigate("/app?interview=1");
+      if (!data.session) {
+        toast.success("Account created. Check your email to confirm, then reopen this interview link.");
+        return;
+      }
+      navigate(`/interview/${token}/exam`);
     } catch {
-      toast.error("Could not start. Please try again.");
+      toast.error("Could not create your account. Please try again.");
     } finally {
       setStarting(false);
     }
