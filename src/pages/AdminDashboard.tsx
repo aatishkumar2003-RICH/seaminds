@@ -1073,6 +1073,7 @@ export default function AdminDashboard() {
       </div>
 
       {tab === "content_studio" && <ContentStudioTab />}
+      {tab === "company_approval" && <CompanyApprovalTab />}
       {tab === "crew" && <CrewSearchTab />}
       {tab === "activity" && <ActivityTab />}
       {tab === "activity_full" && <ActivityFullTab />}
