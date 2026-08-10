@@ -26,6 +26,7 @@ import CVDatabaseTab from "@/components/admin/CVDatabaseTab";
 import MobileVerificationTab from "@/components/admin/MobileVerificationTab";
 import ActivityFullTab from "@/components/admin/ActivityTab";
 import ContentStudioTab from "@/components/admin/ContentStudioTab";
+import CompanyApprovalTab from "@/components/admin/CompanyApprovalTab";
 import PasswordInput from "@/components/PasswordInput";
 
 // Admin = the SeaMinds owner account. The browser only checks that this exact
