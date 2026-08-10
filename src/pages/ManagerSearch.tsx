@@ -74,14 +74,18 @@ const ghostBtn: React.CSSProperties = {
 
 const callFn = async (payload: Record<string, unknown>) => {
   const { data, error } = await supabase.functions.invoke("manager-search", { body: payload });
-  if (data?.pending_approval) {
-    const err: any = new Error(data.error || "Awaiting approval");
+  let payloadData: any = data;
+  if (error && (error as any).context?.json) {
+    try { payloadData = await (error as any).context.json(); } catch { /* ignore */ }
+  }
+  if (payloadData?.pending_approval) {
+    const err: any = new Error(payloadData.error || "Awaiting approval");
     err.pendingApproval = true;
     throw err;
   }
   if (error) throw new Error(error.message || "Could not reach the crew directory");
-  if (!data?.success) throw new Error(data?.error || "Request failed");
-  return data;
+  if (!payloadData?.success) throw new Error(payloadData?.error || "Request failed");
+  return payloadData;
 };
 
 const isAuthError = (msg: string) => /sign in|not registered|session/i.test(msg || "");
