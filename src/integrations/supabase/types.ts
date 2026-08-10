@@ -1585,6 +1585,57 @@ export type Database = {
         }
         Relationships: []
       }
+      job_applications: {
+        Row: {
+          apply_method: string
+          available_from: string | null
+          company_name: string | null
+          company_post_id: string | null
+          created_at: string
+          crew_id: string
+          cv_complete: boolean | null
+          id: string
+          manager_note: string | null
+          outcome: string | null
+          rank_applied: string | null
+          vacancy_id: string | null
+          vessel_type: string | null
+          viewed_at: string | null
+        }
+        Insert: {
+          apply_method?: string
+          available_from?: string | null
+          company_name?: string | null
+          company_post_id?: string | null
+          created_at?: string
+          crew_id: string
+          cv_complete?: boolean | null
+          id?: string
+          manager_note?: string | null
+          outcome?: string | null
+          rank_applied?: string | null
+          vacancy_id?: string | null
+          vessel_type?: string | null
+          viewed_at?: string | null
+        }
+        Update: {
+          apply_method?: string
+          available_from?: string | null
+          company_name?: string | null
+          company_post_id?: string | null
+          created_at?: string
+          crew_id?: string
+          cv_complete?: boolean | null
+          id?: string
+          manager_note?: string | null
+          outcome?: string | null
+          rank_applied?: string | null
+          vacancy_id?: string | null
+          vessel_type?: string | null
+          viewed_at?: string | null
+        }
+        Relationships: []
+      }
       job_postings: {
         Row: {
           additional_notes: string | null
@@ -2537,6 +2588,16 @@ export type Database = {
     Functions: {
       add_interview_invites: {
         Args: { p_campaign_id: string; p_people: Json }
+        Returns: Json
+      }
+      apply_to_job: {
+        Args: {
+          p_company?: string
+          p_method?: string
+          p_rank?: string
+          p_vacancy_id: string
+          p_vessel?: string
+        }
         Returns: Json
       }
       build_daily_notifications: { Args: never; Returns: string }

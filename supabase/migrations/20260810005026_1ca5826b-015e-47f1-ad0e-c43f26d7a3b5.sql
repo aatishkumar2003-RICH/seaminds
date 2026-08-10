@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Managers read applications" ON public.job_applications;

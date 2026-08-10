@@ -74,9 +74,18 @@ const ghostBtn: React.CSSProperties = {
 
 const callFn = async (payload: Record<string, unknown>) => {
   const { data, error } = await supabase.functions.invoke("manager-search", { body: payload });
+  let payloadData: any = data;
+  if (error && (error as any).context?.json) {
+    try { payloadData = await (error as any).context.json(); } catch { /* ignore */ }
+  }
+  if (payloadData?.pending_approval) {
+    const err: any = new Error(payloadData.error || "Awaiting approval");
+    err.pendingApproval = true;
+    throw err;
+  }
   if (error) throw new Error(error.message || "Could not reach the crew directory");
-  if (!data?.success) throw new Error(data?.error || "Request failed");
-  return data;
+  if (!payloadData?.success) throw new Error(payloadData?.error || "Request failed");
+  return payloadData;
 };
 
 const isAuthError = (msg: string) => /sign in|not registered|session/i.test(msg || "");
@@ -93,6 +102,7 @@ const ManagerSearch = () => {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [pdfBusy, setPdfBusy] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
 
   const search = async () => {
     setLoading(true);
@@ -102,8 +112,10 @@ const ManagerSearch = () => {
         filters: { rank, nationality, vesselType, availability },
       });
       setResults(data.results || []);
+      setPending(false);
       setSearched(true);
     } catch (e: any) {
+      if (e?.pendingApproval) { setPending(true); setResults([]); setSearched(true); return; }
       const msg = e?.message || "Search failed";
       if (isAuthError(msg)) { navigate("/manager"); return; }
       toast.error(msg);
@@ -145,6 +157,7 @@ const ManagerSearch = () => {
         footer: `SeaMinds Manager Crew Search • ${new Date().toLocaleString()}`,
       });
     } catch (e: any) {
+      if (e?.pendingApproval) { setPending(true); return; }
       const msg = e?.message || "Could not generate CV PDF";
       if (isAuthError(msg)) { navigate("/manager"); return; }
       toast.error(msg);
@@ -185,6 +198,24 @@ const ManagerSearch = () => {
           </button>
         </header>
 
+        {pending ? (
+        <div style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.35)", borderRadius: 14, padding: 20, textAlign: "center", maxWidth: 460, margin: "40px auto" }}>
+          <p style={{ fontSize: 34, marginBottom: 10 }}>🔒</p>
+          <p style={{ color: "#f59e0b", fontSize: 16, fontWeight: 800, marginBottom: 8 }}>Awaiting company approval</p>
+          <p style={{ color: "#cbd5e1", fontSize: 13, lineHeight: 1.6, marginBottom: 14 }}>
+            SeaMinds verifies every company before releasing seafarer contact details and CVs.
+            This protects the crew who trust us with their data.
+          </p>
+          <p style={{ color: "#94a3b8", fontSize: 12, lineHeight: 1.6 }}>
+            You can still post vacancies, create company posts and arrange interviews while you wait.
+          </p>
+          <a href="mailto:info@indossol.com?subject=SeaMinds%20company%20approval"
+            style={{ display: "inline-block", marginTop: 16, background: "#D4AF37", color: "#0D1B2A", borderRadius: 10, padding: "11px 20px", fontWeight: 800, fontSize: 13, textDecoration: "none" }}>
+            Request approval
+          </a>
+        </div>
+        ) : (
+        <>
         {/* Filters */}
         <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 16 }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 12 }}>
@@ -287,6 +318,8 @@ const ManagerSearch = () => {
           <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 32, textAlign: "center", color: "#6b7280" }}>
             No crew match these filters.
           </div>
+        )}
+        </>
         )}
       </div>
     </div>

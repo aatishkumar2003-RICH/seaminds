@@ -26,6 +26,7 @@ import CVDatabaseTab from "@/components/admin/CVDatabaseTab";
 import MobileVerificationTab from "@/components/admin/MobileVerificationTab";
 import ActivityFullTab from "@/components/admin/ActivityTab";
 import ContentStudioTab from "@/components/admin/ContentStudioTab";
+import CompanyApprovalTab from "@/components/admin/CompanyApprovalTab";
 import PasswordInput from "@/components/PasswordInput";
 
 // Admin = the SeaMinds owner account. The browser only checks that this exact
@@ -991,7 +992,7 @@ function ActivityTab() {
 /* ─── Main Dashboard ─── */
 export default function AdminDashboard() {
   const [authed, setAuthed] = useState<boolean | null>(null);
-  const [tab, setTab] = useState<"content_studio" | "crew" | "activity" | "activity_full" | "cv_database" | "mobile_verify" | "pricing" | "discount" | "country_pricing" | "sub_admins" | "dpa" | "blog_images" | "agents" | "vacancy_intel" | "company_dir" | "company_posts">("crew");
+  const [tab, setTab] = useState<"content_studio" | "company_approval" | "crew" | "activity" | "activity_full" | "cv_database" | "mobile_verify" | "pricing" | "discount" | "country_pricing" | "sub_admins" | "dpa" | "blog_images" | "agents" | "vacancy_intel" | "company_dir" | "company_posts">("crew");
 
   useEffect(() => {
     let active = true;
@@ -1018,6 +1019,7 @@ export default function AdminDashboard() {
 
   const tabs = [
     { id: "content_studio" as const, label: "✨ Content Studio" },
+    { id: "company_approval" as const, label: "🔒 Company Approval" },
     { id: "crew" as const, label: "Crew Search" },
     { id: "activity" as const, label: "📋 Crew Activity" },
     { id: "activity_full" as const, label: "📋 Activity" },
@@ -1071,6 +1073,7 @@ export default function AdminDashboard() {
       </div>
 
       {tab === "content_studio" && <ContentStudioTab />}
+      {tab === "company_approval" && <CompanyApprovalTab />}
       {tab === "crew" && <CrewSearchTab />}
       {tab === "activity" && <ActivityTab />}
       {tab === "activity_full" && <ActivityFullTab />}
