@@ -12,10 +12,6 @@ interface CrewRow {
   role: string;
   shipName: string;
   voyageDays: number;
-  mood: string;
-  moodEmoji: string;
-  daysSinceCheckIn: number;
-  isAlert: boolean;
 }
 
 interface SafetyReport {
@@ -27,24 +23,9 @@ interface SafetyReport {
   created_at: string;
 }
 
-type SortKey = "shipName" | "mood" | "daysSinceCheckIn";
+type SortKey = "shipName";
 type DashTab = "crew" | "payments";
 
-const MOOD_MAP: Record<string, { label: string; emoji: string; order: number }> = {
-  good: { label: "Good", emoji: "😊", order: 1 },
-  okay: { label: "Okay", emoji: "😐", order: 2 },
-  struggling: { label: "Struggling", emoji: "😔", order: 3 },
-  angry: { label: "Angry", emoji: "😤", order: 4 },
-};
-
-function extractMood(content: string): string | null {
-  const lower = content.toLowerCase();
-  if (lower.includes("feeling good")) return "good";
-  if (lower.includes("feeling okay")) return "okay";
-  if (lower.includes("feeling struggling")) return "struggling";
-  if (lower.includes("feeling angry")) return "angry";
-  return null;
-}
 
 const ManagerDashboard = () => {
   const navigate = useNavigate();
