@@ -47,12 +47,23 @@ Deno.serve(async (req) => {
 
     const { data: manager } = await admin
       .from("manager_profiles")
-      .select("company_name")
+      .select("company_name, admin_approved, company_verified")
       .eq("user_id", authUser.id)
       .maybeSingle();
     if (!manager) return unauth();
 
-    if (action === "verify") return json({ success: true, company: manager.company_name });
+    // Crew contact details and CVs are only released to approved companies.
+    if (manager.admin_approved !== true) {
+      return json({
+        success: false,
+        pending_approval: true,
+        error: "Your company account is awaiting approval. SeaMinds verifies every company before releasing seafarer details. You will be notified once approved.",
+      }, 403);
+    }
+
+    if (action === "verify") {
+      return json({ success: true, company: manager.company_name, verified: manager.company_verified === true });
+    }
 
     if (action === "cv") {
       if (!userId) return json({ success: false, error: "Missing userId" }, 400);
