@@ -153,22 +153,16 @@ const ManagerDashboard = () => {
     load();
   }, [navigate]);
 
-  const alertCount = crewRows.filter((r) => r.isAlert).length;
-
   const sorted = useMemo(() => {
     const arr = [...crewRows];
     arr.sort((a, b) => {
       let cmp = 0;
       if (sortKey === "shipName") cmp = a.shipName.localeCompare(b.shipName);
-      else if (sortKey === "mood") {
-        const oa = MOOD_MAP[a.mood.toLowerCase()]?.order ?? 99;
-        const ob = MOOD_MAP[b.mood.toLowerCase()]?.order ?? 99;
-        cmp = oa - ob;
-      } else if (sortKey === "daysSinceCheckIn") cmp = a.daysSinceCheckIn - b.daysSinceCheckIn;
       return sortAsc ? cmp : -cmp;
     });
     return arr;
   }, [crewRows, sortKey, sortAsc]);
+
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) setSortAsc(!sortAsc);
