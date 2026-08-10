@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import MyPostsPanel from "@/components/manager/MyPostsPanel";
 import { useNavigate } from "react-router-dom";
-import { Anchor, ArrowUpDown, LogOut, AlertTriangle, FileWarning, CreditCard } from "lucide-react";
+import { Anchor, ArrowUpDown, LogOut, FileWarning, CreditCard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ManagerPaymentHistory from "@/components/smc/ManagerPaymentHistory";
 
@@ -12,10 +12,6 @@ interface CrewRow {
   role: string;
   shipName: string;
   voyageDays: number;
-  mood: string;
-  moodEmoji: string;
-  daysSinceCheckIn: number;
-  isAlert: boolean;
 }
 
 interface SafetyReport {
@@ -27,24 +23,9 @@ interface SafetyReport {
   created_at: string;
 }
 
-type SortKey = "shipName" | "mood" | "daysSinceCheckIn";
+type SortKey = "shipName";
 type DashTab = "crew" | "payments";
 
-const MOOD_MAP: Record<string, { label: string; emoji: string; order: number }> = {
-  good: { label: "Good", emoji: "😊", order: 1 },
-  okay: { label: "Okay", emoji: "😐", order: 2 },
-  struggling: { label: "Struggling", emoji: "😔", order: 3 },
-  angry: { label: "Angry", emoji: "😤", order: 4 },
-};
-
-function extractMood(content: string): string | null {
-  const lower = content.toLowerCase();
-  if (lower.includes("feeling good")) return "good";
-  if (lower.includes("feeling okay")) return "okay";
-  if (lower.includes("feeling struggling")) return "struggling";
-  if (lower.includes("feeling angry")) return "angry";
-  return null;
-}
 
 const ManagerDashboard = () => {
   const navigate = useNavigate();
@@ -79,47 +60,9 @@ const ManagerDashboard = () => {
 
       if (!crew || crew.length === 0) { setLoading(false); return; }
 
-      // Fetch all mood messages for these crew
-      const crewIds = crew.map((c) => c.id);
-      const { data: messages } = await supabase
-        .from("chat_messages")
-        .select("crew_profile_id, content, created_at, role")
-        .in("crew_profile_id", crewIds)
-        .eq("role", "user")
-        .order("created_at", { ascending: false });
-
       const now = Date.now();
-      const oneDayAgo = now - 24 * 60 * 60 * 1000;
 
       const rows: CrewRow[] = crew.map((c) => {
-        const crewMessages = (messages || []).filter((m) => m.crew_profile_id === c.id);
-
-        // Last check-in
-        const lastMsg = crewMessages[0];
-        const daysSinceCheckIn = lastMsg
-          ? Math.floor((now - new Date(lastMsg.created_at).getTime()) / 86400000)
-          : -1;
-
-        // Latest mood
-        let latestMood = "";
-        let latestMoodEmoji = "";
-        for (const m of crewMessages) {
-          const mood = extractMood(m.content);
-          if (mood) {
-            latestMood = MOOD_MAP[mood]?.label || mood;
-            latestMoodEmoji = MOOD_MAP[mood]?.emoji || "";
-            break;
-          }
-        }
-
-        // Alert: struggling/angry in last 24h
-        const isAlert = crewMessages.some((m) => {
-          if (new Date(m.created_at).getTime() < oneDayAgo) return false;
-          const mood = extractMood(m.content);
-          return mood === "struggling" || mood === "angry";
-        });
-
-        // Voyage days
         const voyageDays = c.voyage_start_date
           ? Math.max(1, Math.ceil((now - new Date(c.voyage_start_date).getTime()) / 86400000))
           : 0;
@@ -131,12 +74,9 @@ const ManagerDashboard = () => {
           role: c.role,
           shipName: c.ship_name,
           voyageDays,
-          mood: latestMood,
-          moodEmoji: latestMoodEmoji,
-          daysSinceCheckIn: daysSinceCheckIn < 0 ? 999 : daysSinceCheckIn,
-          isAlert,
         };
       });
+
 
       setCrewRows(rows);
 
@@ -153,22 +93,16 @@ const ManagerDashboard = () => {
     load();
   }, [navigate]);
 
-  const alertCount = crewRows.filter((r) => r.isAlert).length;
-
   const sorted = useMemo(() => {
     const arr = [...crewRows];
     arr.sort((a, b) => {
       let cmp = 0;
       if (sortKey === "shipName") cmp = a.shipName.localeCompare(b.shipName);
-      else if (sortKey === "mood") {
-        const oa = MOOD_MAP[a.mood.toLowerCase()]?.order ?? 99;
-        const ob = MOOD_MAP[b.mood.toLowerCase()]?.order ?? 99;
-        cmp = oa - ob;
-      } else if (sortKey === "daysSinceCheckIn") cmp = a.daysSinceCheckIn - b.daysSinceCheckIn;
       return sortAsc ? cmp : -cmp;
     });
     return arr;
   }, [crewRows, sortKey, sortAsc]);
+
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) setSortAsc(!sortAsc);
@@ -261,18 +195,8 @@ const ManagerDashboard = () => {
           <ManagerPaymentHistory managerUserId={managerUserId} />
         ) : (
           <>
-            {/* Alert Banner */}
-            {alertCount > 0 && (
-              <div className="flex items-center gap-3 bg-amber-500/15 border border-amber-500/30 rounded-xl px-5 py-4">
-                <AlertTriangle size={20} className="text-amber-500 shrink-0" />
-                <p className="text-sm text-amber-200 font-medium">
-                  Welfare attention needed — {alertCount} crew member{alertCount > 1 ? "s" : ""} reporting low mood today.
-                </p>
-              </div>
-            )}
-
             {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="bg-secondary rounded-xl p-4">
                 <p className="text-2xl font-bold text-foreground">{crewRows.length}</p>
                 <p className="text-xs text-muted-foreground mt-1">Total Crew</p>
@@ -280,14 +204,6 @@ const ManagerDashboard = () => {
               <div className="bg-secondary rounded-xl p-4">
                 <p className="text-2xl font-bold text-foreground">{new Set(crewRows.map((r) => r.shipName)).size}</p>
                 <p className="text-xs text-muted-foreground mt-1">Vessels</p>
-              </div>
-              <div className="bg-secondary rounded-xl p-4">
-                <p className="text-2xl font-bold text-foreground">{crewRows.filter((r) => r.mood).length}</p>
-                <p className="text-xs text-muted-foreground mt-1">Mood Reports</p>
-              </div>
-              <div className="bg-secondary rounded-xl p-4">
-                <p className="text-2xl font-bold text-amber-500">{alertCount}</p>
-                <p className="text-xs text-muted-foreground mt-1">Alerts</p>
               </div>
             </div>
 
@@ -303,52 +219,27 @@ const ManagerDashboard = () => {
                         <span className="flex items-center gap-1">Ship <ArrowUpDown size={12} /></span>
                       </th>
                       <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase">Voyage Day</th>
-                      <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase cursor-pointer select-none" onClick={() => handleSort("mood")}>
-                        <span className="flex items-center gap-1">Mood <ArrowUpDown size={12} /></span>
-                      </th>
-                      <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase cursor-pointer select-none" onClick={() => handleSort("daysSinceCheckIn")}>
-                        <span className="flex items-center gap-1">Last Check-in <ArrowUpDown size={12} /></span>
-                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {sorted.map((row) => (
-                      <tr
-                        key={row.id}
-                        className={`border-b border-border/50 transition-colors ${row.isAlert ? "bg-amber-500/10" : "hover:bg-secondary/80"}`}
-                      >
+                      <tr key={row.id} className="border-b border-border/50 transition-colors hover:bg-secondary/80">
                         <td className="px-4 py-3 text-foreground font-medium">
                           {row.firstName} {row.lastName}
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">{row.role}</td>
                         <td className="px-4 py-3 text-muted-foreground">{row.shipName}</td>
                         <td className="px-4 py-3 text-muted-foreground">{row.voyageDays > 0 ? `Day ${row.voyageDays}` : "—"}</td>
-                        <td className="px-4 py-3">
-                          {row.mood ? (
-                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                              row.mood === "Good" ? "bg-emerald-500/15 text-emerald-400" :
-                              row.mood === "Okay" ? "bg-blue-500/15 text-blue-400" :
-                              row.mood === "Struggling" ? "bg-amber-500/15 text-amber-400" :
-                              row.mood === "Angry" ? "bg-red-500/15 text-red-400" : "bg-secondary text-muted-foreground"
-                            }`}>
-                              {row.moodEmoji} {row.mood}
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground text-xs">No data</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground">
-                          {row.daysSinceCheckIn === 999 ? "Never" : row.daysSinceCheckIn === 0 ? "Today" : `${row.daysSinceCheckIn}d ago`}
-                        </td>
                       </tr>
                     ))}
                     {sorted.length === 0 && (
                       <tr>
-                        <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                        <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
                           No crew members from {companyName} have signed up yet.
                         </td>
                       </tr>
                     )}
+
                   </tbody>
                 </table>
               </div>
@@ -409,8 +300,9 @@ const ManagerDashboard = () => {
 
             {/* Privacy note */}
             <p className="text-xs text-muted-foreground text-center py-4">
-              Conversation content is always private and sealed. This dashboard shows mood indicators, check-in data, and anonymous safety reports only.
+              Wellness conversations and mood check-ins are private to each seafarer and are never shown to companies or manning agents. This dashboard shows crew assignments and anonymous safety reports only.
             </p>
+
 
             {/* Admin: Free assessment counter */}
             <div className="bg-secondary/50 rounded-xl border border-border px-4 py-3 flex items-center justify-between">
