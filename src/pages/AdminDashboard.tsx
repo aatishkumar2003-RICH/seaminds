@@ -1019,6 +1019,7 @@ export default function AdminDashboard() {
 
   const tabs = [
     { id: "content_studio" as const, label: "✨ Content Studio" },
+    { id: "company_approval" as const, label: "🔒 Company Approval" },
     { id: "crew" as const, label: "Crew Search" },
     { id: "activity" as const, label: "📋 Crew Activity" },
     { id: "activity_full" as const, label: "📋 Activity" },
