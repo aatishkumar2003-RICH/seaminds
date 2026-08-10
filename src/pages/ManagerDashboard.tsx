@@ -409,8 +409,9 @@ const ManagerDashboard = () => {
 
             {/* Privacy note */}
             <p className="text-xs text-muted-foreground text-center py-4">
-              Conversation content is always private and sealed. This dashboard shows mood indicators, check-in data, and anonymous safety reports only.
+              Wellness conversations and mood check-ins are private to each seafarer and are never shown to companies or manning agents. This dashboard shows crew assignments and anonymous safety reports only.
             </p>
+
 
             {/* Admin: Free assessment counter */}
             <div className="bg-secondary/50 rounded-xl border border-border px-4 py-3 flex items-center justify-between">
