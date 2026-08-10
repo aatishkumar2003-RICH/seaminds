@@ -261,18 +261,8 @@ const ManagerDashboard = () => {
           <ManagerPaymentHistory managerUserId={managerUserId} />
         ) : (
           <>
-            {/* Alert Banner */}
-            {alertCount > 0 && (
-              <div className="flex items-center gap-3 bg-amber-500/15 border border-amber-500/30 rounded-xl px-5 py-4">
-                <AlertTriangle size={20} className="text-amber-500 shrink-0" />
-                <p className="text-sm text-amber-200 font-medium">
-                  Welfare attention needed — {alertCount} crew member{alertCount > 1 ? "s" : ""} reporting low mood today.
-                </p>
-              </div>
-            )}
-
             {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="bg-secondary rounded-xl p-4">
                 <p className="text-2xl font-bold text-foreground">{crewRows.length}</p>
                 <p className="text-xs text-muted-foreground mt-1">Total Crew</p>
@@ -280,14 +270,6 @@ const ManagerDashboard = () => {
               <div className="bg-secondary rounded-xl p-4">
                 <p className="text-2xl font-bold text-foreground">{new Set(crewRows.map((r) => r.shipName)).size}</p>
                 <p className="text-xs text-muted-foreground mt-1">Vessels</p>
-              </div>
-              <div className="bg-secondary rounded-xl p-4">
-                <p className="text-2xl font-bold text-foreground">{crewRows.filter((r) => r.mood).length}</p>
-                <p className="text-xs text-muted-foreground mt-1">Mood Reports</p>
-              </div>
-              <div className="bg-secondary rounded-xl p-4">
-                <p className="text-2xl font-bold text-amber-500">{alertCount}</p>
-                <p className="text-xs text-muted-foreground mt-1">Alerts</p>
               </div>
             </div>
 
@@ -303,52 +285,27 @@ const ManagerDashboard = () => {
                         <span className="flex items-center gap-1">Ship <ArrowUpDown size={12} /></span>
                       </th>
                       <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase">Voyage Day</th>
-                      <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase cursor-pointer select-none" onClick={() => handleSort("mood")}>
-                        <span className="flex items-center gap-1">Mood <ArrowUpDown size={12} /></span>
-                      </th>
-                      <th className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase cursor-pointer select-none" onClick={() => handleSort("daysSinceCheckIn")}>
-                        <span className="flex items-center gap-1">Last Check-in <ArrowUpDown size={12} /></span>
-                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {sorted.map((row) => (
-                      <tr
-                        key={row.id}
-                        className={`border-b border-border/50 transition-colors ${row.isAlert ? "bg-amber-500/10" : "hover:bg-secondary/80"}`}
-                      >
+                      <tr key={row.id} className="border-b border-border/50 transition-colors hover:bg-secondary/80">
                         <td className="px-4 py-3 text-foreground font-medium">
                           {row.firstName} {row.lastName}
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">{row.role}</td>
                         <td className="px-4 py-3 text-muted-foreground">{row.shipName}</td>
                         <td className="px-4 py-3 text-muted-foreground">{row.voyageDays > 0 ? `Day ${row.voyageDays}` : "—"}</td>
-                        <td className="px-4 py-3">
-                          {row.mood ? (
-                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                              row.mood === "Good" ? "bg-emerald-500/15 text-emerald-400" :
-                              row.mood === "Okay" ? "bg-blue-500/15 text-blue-400" :
-                              row.mood === "Struggling" ? "bg-amber-500/15 text-amber-400" :
-                              row.mood === "Angry" ? "bg-red-500/15 text-red-400" : "bg-secondary text-muted-foreground"
-                            }`}>
-                              {row.moodEmoji} {row.mood}
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground text-xs">No data</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground">
-                          {row.daysSinceCheckIn === 999 ? "Never" : row.daysSinceCheckIn === 0 ? "Today" : `${row.daysSinceCheckIn}d ago`}
-                        </td>
                       </tr>
                     ))}
                     {sorted.length === 0 && (
                       <tr>
-                        <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                        <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
                           No crew members from {companyName} have signed up yet.
                         </td>
                       </tr>
                     )}
+
                   </tbody>
                 </table>
               </div>
