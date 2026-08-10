@@ -79,47 +79,9 @@ const ManagerDashboard = () => {
 
       if (!crew || crew.length === 0) { setLoading(false); return; }
 
-      // Fetch all mood messages for these crew
-      const crewIds = crew.map((c) => c.id);
-      const { data: messages } = await supabase
-        .from("chat_messages")
-        .select("crew_profile_id, content, created_at, role")
-        .in("crew_profile_id", crewIds)
-        .eq("role", "user")
-        .order("created_at", { ascending: false });
-
       const now = Date.now();
-      const oneDayAgo = now - 24 * 60 * 60 * 1000;
 
       const rows: CrewRow[] = crew.map((c) => {
-        const crewMessages = (messages || []).filter((m) => m.crew_profile_id === c.id);
-
-        // Last check-in
-        const lastMsg = crewMessages[0];
-        const daysSinceCheckIn = lastMsg
-          ? Math.floor((now - new Date(lastMsg.created_at).getTime()) / 86400000)
-          : -1;
-
-        // Latest mood
-        let latestMood = "";
-        let latestMoodEmoji = "";
-        for (const m of crewMessages) {
-          const mood = extractMood(m.content);
-          if (mood) {
-            latestMood = MOOD_MAP[mood]?.label || mood;
-            latestMoodEmoji = MOOD_MAP[mood]?.emoji || "";
-            break;
-          }
-        }
-
-        // Alert: struggling/angry in last 24h
-        const isAlert = crewMessages.some((m) => {
-          if (new Date(m.created_at).getTime() < oneDayAgo) return false;
-          const mood = extractMood(m.content);
-          return mood === "struggling" || mood === "angry";
-        });
-
-        // Voyage days
         const voyageDays = c.voyage_start_date
           ? Math.max(1, Math.ceil((now - new Date(c.voyage_start_date).getTime()) / 86400000))
           : 0;
@@ -131,12 +93,9 @@ const ManagerDashboard = () => {
           role: c.role,
           shipName: c.ship_name,
           voyageDays,
-          mood: latestMood,
-          moodEmoji: latestMoodEmoji,
-          daysSinceCheckIn: daysSinceCheckIn < 0 ? 999 : daysSinceCheckIn,
-          isAlert,
         };
       });
+
 
       setCrewRows(rows);
 
