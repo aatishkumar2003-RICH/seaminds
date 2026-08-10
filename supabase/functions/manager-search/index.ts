@@ -52,13 +52,14 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (!manager) return unauth();
 
-    // Crew contact details and CVs are only released to approved companies.
+    // Seafarer contact details and CVs are only released to approved companies.
     if (manager.admin_approved !== true) {
       return json({
         success: false,
         pending_approval: true,
-        error: "Your company account is awaiting approval. SeaMinds verifies every company before releasing seafarer details. You will be notified once approved.",
+        error: "Your company account is awaiting approval. SeaMinds verifies every company before releasing seafarer details. You can still post vacancies and arrange interviews meanwhile.",
       }, 403);
+
     }
 
     if (action === "verify") {
