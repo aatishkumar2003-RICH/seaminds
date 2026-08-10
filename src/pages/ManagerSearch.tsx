@@ -319,6 +319,8 @@ const ManagerSearch = () => {
             No crew match these filters.
           </div>
         )}
+        </>
+        )}
       </div>
     </div>
   );
