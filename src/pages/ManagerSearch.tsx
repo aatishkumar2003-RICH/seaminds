@@ -102,6 +102,7 @@ const ManagerSearch = () => {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [pdfBusy, setPdfBusy] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
 
   const search = async () => {
     setLoading(true);
@@ -111,8 +112,10 @@ const ManagerSearch = () => {
         filters: { rank, nationality, vesselType, availability },
       });
       setResults(data.results || []);
+      setPending(false);
       setSearched(true);
     } catch (e: any) {
+      if (e?.pendingApproval) { setPending(true); setResults([]); setSearched(true); return; }
       const msg = e?.message || "Search failed";
       if (isAuthError(msg)) { navigate("/manager"); return; }
       toast.error(msg);
