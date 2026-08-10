@@ -157,6 +157,7 @@ const ManagerSearch = () => {
         footer: `SeaMinds Manager Crew Search • ${new Date().toLocaleString()}`,
       });
     } catch (e: any) {
+      if (e?.pendingApproval) { setPending(true); return; }
       const msg = e?.message || "Could not generate CV PDF";
       if (isAuthError(msg)) { navigate("/manager"); return; }
       toast.error(msg);
