@@ -1663,6 +1663,8 @@ export type Database = {
           created_at: string
           crew_id: string
           cv_complete: boolean | null
+          external_url: string | null
+          had_cv: boolean | null
           id: string
           manager_note: string | null
           outcome: string | null
@@ -1679,6 +1681,8 @@ export type Database = {
           created_at?: string
           crew_id: string
           cv_complete?: boolean | null
+          external_url?: string | null
+          had_cv?: boolean | null
           id?: string
           manager_note?: string | null
           outcome?: string | null
@@ -1695,6 +1699,8 @@ export type Database = {
           created_at?: string
           crew_id?: string
           cv_complete?: boolean | null
+          external_url?: string | null
+          had_cv?: boolean | null
           id?: string
           manager_note?: string | null
           outcome?: string | null
