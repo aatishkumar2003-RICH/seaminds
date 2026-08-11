@@ -221,6 +221,29 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     }
   };
 
+  // External vacancies have no manning-company row, so the application is captured centrally
+  const handleApplyExternal = async (ext: any) => {
+    const { data, error } = await supabase.rpc("submit_application" as any, {
+      p_vacancy_id: null,
+      p_company_post_id: null,
+      p_company_name: ext.company_name || null,
+      p_rank: ext.rank_required || ext.title || null,
+      p_vessel: ext.vessel_type || null,
+      p_external_url: ext.apply_url || ext.company_website || null,
+    });
+    const r: any = data;
+    if (error || !r?.ok) {
+      toast({ title: "Error", description: "Could not send application. Try again.", variant: "destructive" });
+      return;
+    }
+    toast({
+      title: r.duplicate ? "Already applied" : "Application Sent",
+      description: r.duplicate
+        ? "You have already applied to this vacancy."
+        : `Your SeaMinds profile has been sent to ${ext.company_name || "the company"}.`,
+    });
+  };
+
   const wordCount = aboutMe.trim().split(/\s+/).filter(Boolean).length;
 
   if (loading) {
@@ -764,8 +787,8 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                     </a>
                   )}
                   {!ext.apply_url && !ext.contact_whatsapp && !ext.contact_email && !ext.company_website && (
-                    <Button size="sm" variant="outline" className="w-full text-xs h-9" disabled>
-                      No Contact Info
+                    <Button size="sm" className="w-full text-xs h-9" onClick={() => handleApplyExternal(ext)}>
+                      Apply →
                     </Button>
                   )}
                 </div>
