@@ -159,6 +159,7 @@ const InterviewExam = () => {
           assessmentId={ctx.assessmentId}
           vesselType={ctx.vesselType}
           yearsExperience={ctx.yearsExperience}
+          mode="interview"
           onComplete={finish}
         />
       </div>
