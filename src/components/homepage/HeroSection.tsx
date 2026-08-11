@@ -93,6 +93,51 @@ const HeroSection = ({ timeOfDay = "day" }: Props) => {
               </Button>
             </div>
 
+            <div
+              className="mx-auto mb-6 max-w-2xl rounded-2xl px-5 py-4 text-center"
+              style={{
+                border: "1px solid hsl(var(--primary) / 0.35)",
+                background: "hsl(var(--primary) / 0.07)",
+              }}
+            >
+              <p className="text-[10px] uppercase tracking-[0.25em] text-primary font-mono-score mb-1">
+                For Shipping Companies & Manning Agents
+              </p>
+              <h3 className="text-lg md:text-xl font-bold text-foreground mb-1">
+                Interview & Verify Crew with AI
+              </h3>
+              <p className="text-xs md:text-sm text-muted-foreground mb-3">
+                Run structured AI crew interviews — every candidate scored 0.00–5.00 by rank, vessel type and experience. Browse verified CVs. Shortlist in hours, not weeks.
+              </p>
+              <div className="flex flex-wrap gap-2 justify-center mb-3">
+                {["🎓 AI Crew Interviews", "📄 Verified CV Database", "🏆 SMC-Scored Candidates", "📢 Post Vacancies from $19"].map((chip) => (
+                  <span
+                    key={chip}
+                    className="rounded-full px-3 py-1 text-[11px] font-semibold text-primary"
+                    style={{
+                      border: "1px solid hsl(var(--primary) / 0.5)",
+                      background: "hsl(var(--primary) / 0.08)",
+                    }}
+                  >
+                    {chip}
+                  </span>
+                ))}
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                <Button size="sm" onClick={() => navigate("/manager")} className="text-sm px-4 h-9">
+                  Create AI Interview <ChevronRight className="ml-1 w-4 h-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => navigate("/for-companies")}
+                  className="text-sm px-4 h-9"
+                >
+                  See Company Plans
+                </Button>
+              </div>
+            </div>
+
             <div className="flex items-center justify-center gap-2 mb-5 text-[11px] md:text-xs text-muted-foreground">
               <Globe2 className="w-3.5 h-3.5 text-primary/70 shrink-0" />
               <span className="truncate">
