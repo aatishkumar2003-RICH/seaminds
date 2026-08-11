@@ -140,11 +140,10 @@ Return ONLY valid JSON, no markdown:
     judgment: dims.judgment,
     english: dims.english,
     behaviour: dims.behaviour,
-    wellness: dims.wellness,
     overall,
     band,
     recommendation,
-    scoring_version: "v1.0",
+    scoring_version: "v1.1",
   };
 
   return new Response(JSON.stringify({ scores }), { headers: { ...cors, "Content-Type": "application/json" } });
