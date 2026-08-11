@@ -28,6 +28,7 @@ interface Props {
 
 const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
   const [readiness, setReadiness] = useState<any>(null);
+  const [readinessErr, setReadinessErr] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState<null | { duplicate: boolean }>(null);
