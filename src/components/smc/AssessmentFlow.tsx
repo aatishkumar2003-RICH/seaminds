@@ -766,13 +766,21 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
           {/* ── BEHAVIOURAL ── */}
           {currentQ?.type === 'behavioural' && (
             <div className="space-y-4">
-              <p style={{ color: '#888', fontSize: '11px', marginBottom: '8px' }}>💙 Your response is confidential — never shared with your employer.</p>
+              {sealed ? (
+                <p style={{ color: '#888', fontSize: '11px', marginBottom: '8px' }}>
+                  🧭 These are professional questions about how you work. Your answers form part of this company interview.
+                </p>
+              ) : (
+                <p style={{ color: '#888', fontSize: '11px', marginBottom: '8px' }}>
+                  💙 Your response is confidential — never shared with your employer.
+                </p>
+              )}
               <p className="text-sm text-foreground font-medium">{currentQ.question}</p>
               <textarea
                 value={textAnswer}
                 onChange={e => setTextAnswer(e.target.value)}
                 onPaste={handlePaste}
-                placeholder="Share your thoughts openly..."
+                placeholder={sealed ? "Describe what you did and why..." : "Share your thoughts openly..."}
                 className="w-full rounded-xl px-4 py-3 text-sm text-foreground border border-border focus:outline-none focus:border-[#D4AF37] resize-none"
                 style={{ background: '#132238', minHeight: '100px' }}
                 disabled={evaluating}
@@ -822,7 +830,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
           )}
           {(currentQ?.type === 'scenario' || currentQ?.type === 'behavioural') && !pendingFollowUp && (
             <div style={{ display:'flex', alignItems:'center' }}>
-              {currentQ?.type === 'behavioural' && qIndex > 0 && (
+              {currentQ?.type === 'behavioural' && qIndex > 0 && !sealed && (
                 <button onClick={() => setQIndex(s => s - 1)}
                   style={{ background:'transparent', border:'1px solid #2a4060', color:'#888', padding:'6px 12px', borderRadius:'6px', fontSize:'12px', cursor:'pointer', marginRight:'8px' }}>
                   ← Previous
