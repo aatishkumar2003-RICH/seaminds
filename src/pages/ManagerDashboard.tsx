@@ -262,6 +262,147 @@ const ManagerDashboard = () => {
           <ManagerPaymentHistory managerUserId={managerUserId} />
         ) : (
           <>
+            {/* Applicants */}
+            <div className="bg-secondary rounded-xl border border-border p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">👥 Applicants</h2>
+                <button
+                  onClick={loadApplicants}
+                  disabled={applicantsLoading}
+                  className="p-1.5 rounded-lg hover:bg-secondary/80 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                  aria-label="Refresh applicants"
+                >
+                  <RefreshCw size={16} className={applicantsLoading ? "animate-spin" : ""} />
+                </button>
+              </div>
+
+              {applicants.length === 0 ? (
+                <div className="text-center py-6">
+                  <p className="text-sm text-muted-foreground">Applications to your posts will appear here.</p>
+                  <p className="text-xs text-muted-foreground/70 mt-1">Post a vacancy to start receiving applications.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {applicants.map((a) => {
+                    const draft = offerDrafts[a.application_id];
+                    const statusClass = (() => {
+                      switch (a.outcome) {
+                        case "awaiting": return "bg-muted text-muted-foreground";
+                        case "shortlisted": return "bg-[#D4AF37]/15 text-[#D4AF37]";
+                        case "offered": return "bg-blue-500/15 text-blue-400";
+                        case "placed": return "bg-green-500/15 text-green-400";
+                        case "declined":
+                        case "offer_declined": return "bg-secondary text-muted-foreground/70";
+                        case "released": return "bg-muted text-muted-foreground";
+                        default: return "bg-muted text-muted-foreground";
+                      }
+                    })();
+                    const statusLabel = (() => {
+                      switch (a.outcome) {
+                        case "awaiting": return "New";
+                        case "shortlisted": return "⭐ Shortlisted";
+                        case "offered": return "📨 Offered";
+                        case "placed": return "⚓ Placed";
+                        case "declined":
+                        case "offer_declined": return "Declined";
+                        case "released": return "Released";
+                        default: return a.outcome;
+                      }
+                    })();
+                    return (
+                      <div key={a.application_id} className="bg-secondary/50 rounded-xl border border-border/50 p-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                        <div className="space-y-1">
+                          <p className="text-sm font-bold text-foreground">
+                            {a.crew_name} <span className="font-normal text-muted-foreground">· {a.nationality}</span>
+                          </p>
+                          <p className="text-xs text-muted-foreground">{a.rank} · {a.vessel}</p>
+                          {a.available_from && (
+                            <p className="text-xs text-muted-foreground">Available from {new Date(a.available_from).toLocaleDateString()}</p>
+                          )}
+                        </div>
+                        <div className="flex flex-col items-start sm:items-end gap-2 w-full sm:w-auto">
+                          <span className={`text-xs font-medium px-2 py-1 rounded-full ${statusClass}`}>{statusLabel}</span>
+                          {a.outcome === "awaiting" && (
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                onClick={() => handleApplicationAction(a.application_id, "shortlist")}
+                                className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-[#D4AF37] text-[#0D1B2A] border border-[#D4AF37] hover:opacity-90 transition-opacity"
+                              >
+                                ⭐ Shortlist
+                              </button>
+                              <button
+                                onClick={() => handleApplicationAction(a.application_id, "decline")}
+                                className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-secondary text-muted-foreground border border-border hover:bg-secondary/80 transition-colors"
+                              >
+                                Decline
+                              </button>
+                            </div>
+                          )}
+                          {a.outcome === "shortlisted" && (
+                            <>
+                              {!draft?.open ? (
+                                <div className="flex flex-wrap gap-2">
+                                  <button
+                                    onClick={() => openOfferDraft(a.application_id)}
+                                    className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-[#0D1B2A] text-[#D4AF37] border border-[#D4AF37]/40 hover:bg-[#D4AF37]/10 transition-colors"
+                                  >
+                                    📨 Offer joining
+                                  </button>
+                                  <button
+                                    onClick={() => handleApplicationAction(a.application_id, "decline")}
+                                    className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-secondary text-muted-foreground border border-border hover:bg-secondary/80 transition-colors"
+                                  >
+                                    Decline
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="flex flex-col gap-2 w-full sm:w-auto">
+                                  <div className="flex flex-wrap gap-2">
+                                    <input
+                                      type="date"
+                                      value={draft.joiningDate}
+                                      onChange={(e) => setOfferDrafts((prev) => {
+                                        const current = prev[a.application_id] || { joiningDate: "", contractMonths: 9, open: true };
+                                        return { ...prev, [a.application_id]: { ...current, joiningDate: e.target.value } };
+                                      })}
+                                      className="bg-background text-foreground text-xs rounded-lg px-2 py-1.5 border border-border"
+                                    />
+                                    <input
+                                      type="number"
+                                      min={1}
+                                      max={36}
+                                      value={draft.contractMonths}
+                                      onChange={(e) => setOfferDrafts((prev) => {
+                                        const current = prev[a.application_id] || { joiningDate: "", contractMonths: 9, open: true };
+                                        return { ...prev, [a.application_id]: { ...current, contractMonths: parseInt(e.target.value) || 1 } };
+                                      })}
+                                      className="bg-background text-foreground text-xs rounded-lg px-2 py-1.5 border border-border w-24"
+                                    />
+                                  </div>
+                                  <button
+                                    onClick={() => handleApplicationAction(a.application_id, "offer", draft.joiningDate, draft.contractMonths)}
+                                    className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-[#D4AF37] text-[#0D1B2A] border border-[#D4AF37] hover:opacity-90 transition-opacity"
+                                  >
+                                    Confirm offer
+                                  </button>
+                                </div>
+                              )}
+                            </>
+                          )}
+                          {a.outcome === "offered" && (
+                            <p className="text-xs text-muted-foreground italic">Waiting for crew to accept…</p>
+                          )}
+                          {a.outcome === "placed" && (
+                            <p className="text-xs text-green-400">🎉 Placed — congratulations!</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
             {/* Stats */}
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-secondary rounded-xl p-4">
