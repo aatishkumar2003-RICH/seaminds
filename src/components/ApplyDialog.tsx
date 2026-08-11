@@ -196,7 +196,7 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
 
               <button onClick={apply} disabled={saving}
                 style={{ width: "100%", padding: "15px 0", borderRadius: 13, border: "none", background: GOLD, color: NAVY, fontWeight: 900, fontSize: 15, cursor: saving ? "default" : "pointer", opacity: saving ? 0.5 : 1 }}>
-                {saving ? "Applying…" : ready ? "Apply with my SeaMinds CV →" : "Apply now →"}
+                {saving ? "Applying…" : ready ? "Apply with my SeaMinds CV →" : "Apply & Complete CV →"}
               </button>
 
               {ready === false && (
