@@ -85,7 +85,7 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
       if (!r?.ok) {
         setError(r?.error === "not_signed_in"
           ? "Please sign in to apply."
-          : "Could not save your application. Please try again.");
+          : "ERR: " + (r?.error || JSON.stringify(r).slice(0, 180)));
         return;
       }
 
@@ -105,8 +105,9 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
       }
 
       setDone({ duplicate: !!r.duplicate });
-    } catch {
-      setError("Could not save your application. Please try again.");
+    } catch (err: any) {
+      const detail = err?.message || err?.error_description || err?.code || JSON.stringify(err).slice(0, 180);
+      setError("ERR: " + detail);
     } finally {
       setSaving(false);
     }
