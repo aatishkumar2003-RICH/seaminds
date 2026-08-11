@@ -65,6 +65,7 @@ const CertWallet = ({ profileId }: CertWalletProps) => {
   const [certNumber, setCertNumber] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<Cert | null>(null);
   const [scanning, setScanning] = useState(false);
+  const [readiness, setReadiness] = useState<CertReadiness | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
