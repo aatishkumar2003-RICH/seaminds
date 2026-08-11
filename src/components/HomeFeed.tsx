@@ -63,6 +63,9 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
   const [visible, setVisible] = useState(8);
   const [quizState, setQuizState] = useState<Record<string, number>>({});
   const [engaged, setEngaged] = useState<Record<string, { interested: boolean; saved: boolean; count: number }>>({});
+  const [offers, setOffers] = useState<any[]>([]);
+  const [celebratedOffers, setCelebratedOffers] = useState<Set<string>>(new Set());
+  const [declinedOffers, setDeclinedOffers] = useState<Set<string>>(new Set());
 
   const log = useCallback(async (item_type: string, item_id: string, action: string, position?: number) => {
     try {
