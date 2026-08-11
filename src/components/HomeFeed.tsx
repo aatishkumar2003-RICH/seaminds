@@ -231,6 +231,42 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
 
   useEffect(() => { build().finally(() => setLoading(false)); }, [build]);
 
+  useEffect(() => {
+    if (!profileId) return;
+    const loadOffers = async () => {
+      const { data, error } = await supabase
+        .from("job_applications")
+        .select("id, company_name, rank_applied, offered_joining_date, outcome")
+        .eq("crew_id", profileId)
+        .eq("outcome", "offered")
+        .order("offered_at", { ascending: false });
+      if (!error) setOffers((data as any[]) || []);
+    };
+    loadOffers();
+  }, [profileId]);
+
+  const respondToOffer = async (offer: any, accept: boolean) => {
+    if (!accept && !window.confirm("Decline this offer? The company will be notified.")) return;
+    const { data, error } = await supabase.rpc("crew_respond_offer" as any, {
+      p_application_id: offer.id,
+      p_accept: accept,
+    });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    const result = data as { ok?: boolean; error?: string } | null;
+    if (!result?.ok) {
+      toast.error(result?.error || "Failed to respond");
+      return;
+    }
+    if (accept) {
+      setCelebratedOffers((prev) => new Set(prev).add(offer.id));
+    } else {
+      setDeclinedOffers((prev) => new Set(prev).add(offer.id));
+    }
+  };
+
   const refresh = async () => {
     setRefreshing(true);
     setVisible(8);
