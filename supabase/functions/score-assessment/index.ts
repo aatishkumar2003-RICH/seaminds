@@ -115,13 +115,13 @@ Return ONLY valid JSON, no markdown:
   dims.behaviour = dims.behaviour ?? fb;
   
 
-  // Overall is arithmetic, computed here — never an AI opinion. Weights sum to 1.00.
+  // Scoring v1.1 — wellness removed from employment scoring entirely.
+  // Personal wellbeing is private to the seafarer and never influences hiring.
   const overall = Math.round((
     dims.technical * 0.30 +
-    dims.judgment  * 0.25 +
-    dims.english   * 0.20 +
-    dims.behaviour * 0.15 +
-    dims.wellness  * 0.10
+    dims.judgment  * 0.30 +
+    dims.english   * 0.25 +
+    dims.behaviour * 0.15
   ) * 100) / 100;
 
   const band =
