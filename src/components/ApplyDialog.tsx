@@ -28,6 +28,7 @@ interface Props {
 
 const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
   const [readiness, setReadiness] = useState<any>(null);
+  const [readinessErr, setReadinessErr] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState<null | { duplicate: boolean }>(null);
@@ -35,22 +36,29 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
 
   useEffect(() => {
     if (!open) return;
-    if (!profileId) { setReadiness(null); setLoading(false); return; }
-    setLoading(true); setDone(null); setError("");
+    if (!profileId) { setReadiness(null); setReadinessErr(""); setLoading(false); return; }
+    setLoading(true); setDone(null); setError(""); setReadinessErr("");
     (async () => {
+      let errMsg = "";
       try {
         const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 8000));
         const rpcCall = supabase.rpc("cv_interview_readiness" as any, {
           p_crew_id: profileId, p_target_rank: target?.rank || null,
         }).then(({ data, error }) => {
-          if (error || !data) return null;
+          if (error) { errMsg = error.message || "rpc error"; return null; }
+          if (!data) return null;
           return data;
         });
         const result = await Promise.race([rpcCall, timeout]);
+        if (result === null && !errMsg) errMsg = "timeout";
         setReadiness(result);
-      } catch {
+      } catch (err: any) {
+        errMsg = err?.message || "catch";
         setReadiness(null);
-      } finally { setLoading(false); }
+      } finally {
+        setReadinessErr(errMsg);
+        setLoading(false);
+      }
     })();
   }, [open, profileId, target?.rank]);
 
@@ -77,7 +85,7 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
       if (!r?.ok) {
         setError(r?.error === "not_signed_in"
           ? "Please sign in to apply."
-          : "Could not save your application. Please try again.");
+          : "ERR: " + (r?.error || JSON.stringify(r).slice(0, 180)));
         return;
       }
 
@@ -97,8 +105,9 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
       }
 
       setDone({ duplicate: !!r.duplicate });
-    } catch {
-      setError("Could not save your application. Please try again.");
+    } catch (err: any) {
+      const detail = err?.message || err?.error_description || err?.code || JSON.stringify(err).slice(0, 180);
+      setError("ERR: " + detail);
     } finally {
       setSaving(false);
     }
@@ -158,9 +167,14 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
           {!loading && !done && (
             <>
               {unknownReadiness ? (
-                <p style={{ color: "#94a3b8", fontSize: 12.5, marginBottom: 14 }}>
-                  We couldn't check your profile right now — you can still apply.
-                </p>
+                <div style={{ marginBottom: 14 }}>
+                  <p style={{ color: "#94a3b8", fontSize: 12.5 }}>
+                    We couldn't check your profile right now — you can still apply.
+                  </p>
+                  {readinessErr && (
+                    <p style={{ color: "#64748B", fontSize: 10, marginTop: 4 }}>{readinessErr}</p>
+                  )}
+                </div>
               ) : ready ? (
                 <div style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.35)", borderRadius: 12, padding: 13, marginBottom: 14 }}>
                   <p style={{ color: "#22c55e", fontSize: 13, fontWeight: 800, marginBottom: 3 }}>✅ Your profile is ready</p>
