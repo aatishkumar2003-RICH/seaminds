@@ -504,6 +504,7 @@ const Index = () => {
     onReplayTour: () => { setForceTour(true); setDrawerOpen(false); },
     onSignOut: () => { handleSignOut(); setDrawerOpen(false); },
     onOpenChat: () => { setScreen("chat"); setAppState("main"); setDrawerOpen(false); },
+    onBack: () => { if (appState !== "main") setAppState("main"); setScreen("home"); },
   };
 
   // === Early-return states ===
