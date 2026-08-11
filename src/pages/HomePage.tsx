@@ -15,6 +15,8 @@ import HomeFooter from "@/components/homepage/HomeFooter";
 import LiveTicker from "@/components/homepage/LiveTicker";
 import { useTimeOfDay } from "@/hooks/useTimeOfDay";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+
 
 const HomePage = () => {
   const timeOfDay = useTimeOfDay();
