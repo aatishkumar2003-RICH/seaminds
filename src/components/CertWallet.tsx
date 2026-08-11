@@ -16,6 +16,14 @@ interface CertWalletProps {
   profileId: string;
 }
 
+interface CertReadiness {
+  required_total: number;
+  matched: number;
+  expired_matched: number;
+  missing: string[];
+  percent: number;
+}
+
 const SUGGESTED_CERTS = [
   "STCW Basic Safety",
   "Medical Certificate",
