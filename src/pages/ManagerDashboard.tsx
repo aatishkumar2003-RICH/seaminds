@@ -139,7 +139,7 @@ const ManagerDashboard = () => {
       toast.error(error.message);
       return;
     }
-    setApplicants((data as Applicant[]) || []);
+    setApplicants(((data as unknown) as Applicant[]) || []);
   };
 
   const openOfferDraft = (id: string) => {
