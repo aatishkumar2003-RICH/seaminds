@@ -34,16 +34,22 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!open || !profileId) return;
+    if (!open) return;
+    if (!profileId) { setReadiness(null); setLoading(false); return; }
     setLoading(true); setDone(null); setError("");
     (async () => {
       try {
-        const { data } = await supabase.rpc("cv_interview_readiness" as any, {
+        const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 8000));
+        const rpcCall = supabase.rpc("cv_interview_readiness" as any, {
           p_crew_id: profileId, p_target_rank: target?.rank || null,
+        }).then(({ data, error }) => {
+          if (error || !data) return null;
+          return data;
         });
-        setReadiness(data);
+        const result = await Promise.race([rpcCall, timeout]);
+        setReadiness(result);
       } catch {
-        setReadiness({ ready: false, missing: [] });
+        setReadiness(null);
       } finally { setLoading(false); }
     })();
   }, [open, profileId, target?.rank]);
@@ -52,6 +58,7 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
 
   const missing: string[] = Array.isArray(readiness?.missing) ? readiness.missing : [];
   const ready = readiness?.ready === true;
+  const unknownReadiness = readiness === null;
 
   const apply = async () => {
     if (saving) return;                 // guards double-tap
@@ -91,10 +98,10 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center" }}
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
       onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()}
-        style={{ background: NAVY, borderTopLeftRadius: 20, borderTopRightRadius: 20, width: "100%", maxWidth: 480, maxHeight: "88vh", overflowY: "auto", border: `1px solid ${BORDER}` }}>
+        style={{ background: NAVY, borderRadius: 20, width: "100%", maxWidth: 480, maxHeight: "82vh", overflowY: "auto", border: `1px solid ${BORDER}`, paddingBottom: "env(safe-area-inset-bottom)" }}>
 
         <div style={{ display: "flex", alignItems: "center", padding: "16px 18px 10px" }}>
           <div style={{ minWidth: 0 }}>
@@ -110,7 +117,7 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
         </div>
 
         <div style={{ padding: "0 18px 22px" }}>
-          {loading && <p style={{ color: "#94a3b8", fontSize: 13, padding: "24px 0" }}>Checking your profile…</p>}
+          {loading && <p style={{ color: "#94a3b8", fontSize: 13, padding: "32px 0", textAlign: "center" }}>Checking your profile…</p>}
 
           {!loading && done && (
             <div style={{ textAlign: "center", padding: "14px 0" }}>
