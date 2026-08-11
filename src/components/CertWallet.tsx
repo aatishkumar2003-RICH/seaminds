@@ -56,6 +56,41 @@ const CertWallet = ({ profileId }: CertWalletProps) => {
   const [expiryDate, setExpiryDate] = useState("");
   const [certNumber, setCertNumber] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<Cert | null>(null);
+  const [scanning, setScanning] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setScanning(true);
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result).split(",").pop() || "");
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const { data, error } = await supabase.functions.invoke("extract-certificate", {
+        body: { image: base64, mimeType: file.type || "image/jpeg" },
+      });
+      if (error || !data || (data as any).error) throw error || new Error("scan failed");
+      const r = data as { name?: string; certNumber?: string; issueDate?: string; expiryDate?: string };
+      if (r.name) setName(r.name);
+      if (r.certNumber) setCertNumber(r.certNumber);
+      if (r.issueDate) setIssueDate(r.issueDate);
+      if (r.expiryDate) setExpiryDate(r.expiryDate);
+      toast({ title: "Certificate read", description: "Please review the details before saving." });
+    } catch (err) {
+      console.error("CertWallet scan error:", err);
+      toast({
+        title: "Could not read the image — please enter details manually.",
+        variant: "destructive",
+      });
+    }
+    setScanning(false);
+  };
+
   const fetchCerts = useCallback(async () => {
     if (!profileId) { setLoading(false); return; }
     try {
