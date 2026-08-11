@@ -806,29 +806,50 @@ export type Database = {
       }
       crew_documents: {
         Row: {
+          ai_confidence: number | null
           category: string
           created_at: string
           crew_profile_id: string
+          doc_number: string | null
+          doc_type: string | null
+          expiry_date: string | null
+          extraction_status: string
           file_name: string
           id: string
+          issue_date: string | null
+          issuing_authority: string | null
           source: string
           storage_path: string
         }
         Insert: {
+          ai_confidence?: number | null
           category: string
           created_at?: string
           crew_profile_id: string
+          doc_number?: string | null
+          doc_type?: string | null
+          expiry_date?: string | null
+          extraction_status?: string
           file_name: string
           id?: string
+          issue_date?: string | null
+          issuing_authority?: string | null
           source?: string
           storage_path: string
         }
         Update: {
+          ai_confidence?: number | null
           category?: string
           created_at?: string
           crew_profile_id?: string
+          doc_number?: string | null
+          doc_type?: string | null
+          expiry_date?: string | null
+          extraction_status?: string
           file_name?: string
           id?: string
+          issue_date?: string | null
+          issuing_authority?: string | null
           source?: string
           storage_path?: string
         }
@@ -1118,6 +1139,36 @@ export type Database = {
           uses_count?: number | null
           valid_from?: string | null
           valid_until?: string | null
+        }
+        Relationships: []
+      }
+      document_requirements: {
+        Row: {
+          created_at: string
+          doc_type: string
+          id: string
+          is_mandatory: boolean
+          notes: string | null
+          rank: string
+          vessel_type: string | null
+        }
+        Insert: {
+          created_at?: string
+          doc_type: string
+          id?: string
+          is_mandatory?: boolean
+          notes?: string | null
+          rank: string
+          vessel_type?: string | null
+        }
+        Update: {
+          created_at?: string
+          doc_type?: string
+          id?: string
+          is_mandatory?: boolean
+          notes?: string | null
+          rank?: string
+          vessel_type?: string | null
         }
         Relationships: []
       }
