@@ -995,7 +995,11 @@ function MarketingTab() {
   const [logs, setLogs] = useState<any[]>([]);
   const [channels, setChannels] = useState<any[]>([]);
   const [newEmail, setNewEmail] = useState("");
+  const [newAccEmail, setNewAccEmail] = useState("");
+  const [newAccPassword, setNewAccPassword] = useState("");
+  const [creating, setCreating] = useState(false);
   const [busy, setBusy] = useState(false);
+
 
   const loadMembers = useCallback(async () => {
     const { data } = await supabase.from("marketing_team").select("*").order("created_at");
@@ -1031,6 +1035,23 @@ function MarketingTab() {
     setNewEmail("");
   };
 
+  const createAccount = async () => {
+    if (!newAccEmail.includes("@")) { toast.error("Enter a valid email"); return; }
+    if (newAccPassword.length < 8) { toast.error("Password must be at least 8 characters"); return; }
+    setCreating(true);
+    const { data, error } = await supabase.functions.invoke("admin-create-marketing-user", {
+      body: { email: newAccEmail.trim(), password: newAccPassword },
+    });
+    setCreating(false);
+    if (error) { toast.error(error.message); return; }
+    if (data?.error) { toast.error(data.error); return; }
+    toast.success(data?.message || "Account created");
+    setNewAccEmail(""); setNewAccPassword("");
+    loadMembers();
+  };
+
+
+
   const deleteChannel = async (id: string) => {
     const { error } = await supabase.from("marketing_channels").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
@@ -1051,7 +1072,34 @@ function MarketingTab() {
 
       <div style={card}>
         <h3 style={heading}>Team Members</h3>
+
+        <div style={{ border: "1px solid #1e3a5f", borderRadius: 12, padding: 12, marginBottom: 14 }}>
+          <p style={{ color: "#D4AF37", fontSize: 12.5, fontWeight: 800, marginBottom: 8 }}>Create new marketing account</p>
+          <div className="flex gap-2 flex-wrap">
+            <Input
+              value={newAccEmail}
+              onChange={(e) => setNewAccEmail(e.target.value)}
+              placeholder="teammate@seaminds.life"
+              className="max-w-xs"
+            />
+            <Input
+              type="password"
+              value={newAccPassword}
+              onChange={(e) => setNewAccPassword(e.target.value)}
+              placeholder="Password (min 8 chars)"
+              className="max-w-xs"
+            />
+            <Button onClick={createAccount} disabled={creating} style={{ background: "#D4AF37", color: "#0D1B2A" }}>
+              {creating ? "Creating…" : "Create account"}
+            </Button>
+          </div>
+          <p style={{ fontSize: 11, color: "#94A3B8", marginTop: 8 }}>
+            You set the credentials — share them privately with your team member.
+          </p>
+        </div>
+
         <div className="flex gap-2 mb-3 flex-wrap">
+
           <Input
             value={newEmail}
             onChange={(e) => setNewEmail(e.target.value)}
