@@ -150,7 +150,11 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
 
           {!loading && !done && (
             <>
-              {ready ? (
+              {unknownReadiness ? (
+                <p style={{ color: "#94a3b8", fontSize: 12.5, marginBottom: 14 }}>
+                  We couldn't check your profile right now — you can still apply.
+                </p>
+              ) : ready ? (
                 <div style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.35)", borderRadius: 12, padding: 13, marginBottom: 14 }}>
                   <p style={{ color: "#22c55e", fontSize: 13, fontWeight: 800, marginBottom: 3 }}>✅ Your profile is ready</p>
                   <p style={{ color: "#cbd5e1", fontSize: 12, lineHeight: 1.55 }}>
@@ -188,7 +192,7 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
                 {saving ? "Applying…" : ready ? "Apply with my SeaMinds CV →" : "Apply now →"}
               </button>
 
-              {!ready && (
+              {ready === false && (
                 <button onClick={onGoToCv}
                   style={{ width: "100%", marginTop: 9, padding: "12px 0", borderRadius: 12, background: "transparent", color: GOLD, border: `1px solid ${GOLD}`, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
                   Complete my profile first
