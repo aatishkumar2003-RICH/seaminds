@@ -930,6 +930,8 @@ export type Database = {
           onboarding_complete: boolean
           passport_number: string | null
           phone_valid: boolean
+          placed_company: string | null
+          placed_until: string | null
           port_of_joining: string | null
           preferred_vessel_types: string[] | null
           profile_visible: boolean | null
@@ -976,6 +978,8 @@ export type Database = {
           onboarding_complete?: boolean
           passport_number?: string | null
           phone_valid?: boolean
+          placed_company?: string | null
+          placed_until?: string | null
           port_of_joining?: string | null
           preferred_vessel_types?: string[] | null
           profile_visible?: boolean | null
@@ -1022,6 +1026,8 @@ export type Database = {
           onboarding_complete?: boolean
           passport_number?: string | null
           phone_valid?: boolean
+          placed_company?: string | null
+          placed_until?: string | null
           port_of_joining?: string | null
           preferred_vessel_types?: string[] | null
           profile_visible?: boolean | null
@@ -1661,14 +1667,19 @@ export type Database = {
           company_name: string | null
           company_post_id: string | null
           created_at: string
+          crew_accepted_at: string | null
           crew_id: string
           cv_complete: boolean | null
           external_url: string | null
           had_cv: boolean | null
           id: string
           manager_note: string | null
+          offered_at: string | null
+          offered_joining_date: string | null
           outcome: string | null
+          placement_end: string | null
           rank_applied: string | null
+          released_at: string | null
           vacancy_id: string | null
           vessel_type: string | null
           viewed_at: string | null
@@ -1679,14 +1690,19 @@ export type Database = {
           company_name?: string | null
           company_post_id?: string | null
           created_at?: string
+          crew_accepted_at?: string | null
           crew_id: string
           cv_complete?: boolean | null
           external_url?: string | null
           had_cv?: boolean | null
           id?: string
           manager_note?: string | null
+          offered_at?: string | null
+          offered_joining_date?: string | null
           outcome?: string | null
+          placement_end?: string | null
           rank_applied?: string | null
+          released_at?: string | null
           vacancy_id?: string | null
           vessel_type?: string | null
           viewed_at?: string | null
@@ -1697,14 +1713,19 @@ export type Database = {
           company_name?: string | null
           company_post_id?: string | null
           created_at?: string
+          crew_accepted_at?: string | null
           crew_id?: string
           cv_complete?: boolean | null
           external_url?: string | null
           had_cv?: boolean | null
           id?: string
           manager_note?: string | null
+          offered_at?: string | null
+          offered_joining_date?: string | null
           outcome?: string | null
+          placement_end?: string | null
           rank_applied?: string | null
+          released_at?: string | null
           vacancy_id?: string | null
           vessel_type?: string | null
           viewed_at?: string | null
