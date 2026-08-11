@@ -236,13 +236,21 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
 
   const applyTo = (v: any) => {
     log("vacancy", v.id, "apply");
+    if (v.whatsapp) {
+      const d = String(v.whatsapp).replace(/[^\d]/g, "");
+      if (d) {
+        window.open(`https://wa.me/${d}?text=${encodeURIComponent(`Hello, I am interested in the ${v.rank || "advertised"} position (seen on SeaMinds).`)}`, "_blank");
+        return;
+      }
+    }
     setApplyTarget({
       rawId: String(v.id).replace(/^[ep]-/, ""),
       isCompanyPost: false,
-      rank: v.rank, vessel: v.vessel, company: v.company,
-      applyUrl: v.applyUrl, whatsapp: v.whatsapp,
+      rank: v.rank, vessel: v.vessel || v.vessel_type, company: v.company,
+      applyUrl: v.applyUrl || null, whatsapp: null,
     });
   };
+
 
   const answerQuiz = async (q: any, idx: number) => {
     setQuizState((s) => ({ ...s, [q.id]: idx }));
