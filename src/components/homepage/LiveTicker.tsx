@@ -39,13 +39,14 @@ export default function LiveTicker() {
           supabase.rpc('get_public_ticker_stats'),
           supabase.from('job_vacancies').select('rank_required,vessel_type,salary_max,joining_port').order('created_at',{ascending:false}).limit(10),
         ]);
-        if (data) {
+        const tickerData = data as { total_crew?: number; available_crew?: number; total_vacancies?: number; nationalities?: { name: string; count: number }[] } | null;
+        if (tickerData) {
           setStats({
-            totalCrew: data.total_crew || 0,
-            availableCrew: data.available_crew || 0,
-            totalVacancies: data.total_vacancies || 0,
+            totalCrew: tickerData.total_crew || 0,
+            availableCrew: tickerData.available_crew || 0,
+            totalVacancies: tickerData.total_vacancies || 0,
           });
-          setNationalities((data.nationalities || []).map((n: any) => ({
+          setNationalities((tickerData.nationalities || []).map((n) => ({
             flag: FLAGS[n.name] || '🌍',
             name: n.name,
             count: n.count || 0,
