@@ -24,6 +24,19 @@ interface SafetyReport {
   created_at: string;
 }
 
+interface Applicant {
+  application_id: string;
+  applied_at: string;
+  outcome: string;
+  rank: string;
+  vessel: string;
+  crew_name: string;
+  nationality: string;
+  crew_rank: string;
+  available_from: string;
+  offered_joining_date: string;
+}
+
 type SortKey = "shipName";
 type DashTab = "crew" | "payments";
 
