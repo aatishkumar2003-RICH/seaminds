@@ -39,22 +39,26 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
     if (!profileId) { setReadiness(null); setReadinessErr(""); setLoading(false); return; }
     setLoading(true); setDone(null); setError(""); setReadinessErr("");
     (async () => {
+      let errMsg = "";
       try {
         const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 8000));
         const rpcCall = supabase.rpc("cv_interview_readiness" as any, {
           p_crew_id: profileId, p_target_rank: target?.rank || null,
         }).then(({ data, error }) => {
-          if (error) { setReadinessErr(error.message || "rpc error"); return null; }
+          if (error) { errMsg = error.message || "rpc error"; return null; }
           if (!data) return null;
           return data;
         });
         const result = await Promise.race([rpcCall, timeout]);
-        if (result === null && !readinessErr) setReadinessErr("timeout");
+        if (result === null && !errMsg) errMsg = "timeout";
         setReadiness(result);
       } catch (err: any) {
-        setReadinessErr(err?.message || "catch");
+        errMsg = err?.message || "catch";
         setReadiness(null);
-      } finally { setLoading(false); }
+      } finally {
+        setReadinessErr(errMsg);
+        setLoading(false);
+      }
     })();
   }, [open, profileId, target?.rank]);
 
