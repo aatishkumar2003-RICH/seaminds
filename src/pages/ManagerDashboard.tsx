@@ -131,6 +131,52 @@ const ManagerDashboard = () => {
     navigate("/");
   };
 
+  const loadApplicants = async () => {
+    setApplicantsLoading(true);
+    const { data, error } = await supabase.rpc("get_my_applicants");
+    setApplicantsLoading(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setApplicants(data || []);
+  };
+
+  const openOfferDraft = (id: string) => {
+    const d = new Date();
+    d.setDate(d.getDate() + 14);
+    const defaultDate = d.toISOString().split("T")[0];
+    setOfferDrafts((prev) => ({ ...prev, [id]: { joiningDate: defaultDate, contractMonths: 9, open: true } }));
+  };
+
+  const handleApplicationAction = async (
+    applicationId: string,
+    action: "shortlist" | "decline" | "offer",
+    joiningDate?: string,
+    contractMonths?: number
+  ) => {
+    const params: Record<string, unknown> = { p_application_id: applicationId, p_action: action };
+    if (action === "offer") {
+      params.p_joining_date = joiningDate;
+      params.p_contract_months = contractMonths;
+    }
+    const { data, error } = await supabase.rpc("manager_update_application", params);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    if (data && !data.ok) {
+      toast.error(data.error);
+      return;
+    }
+    toast("Done");
+    loadApplicants();
+  };
+
+  useEffect(() => {
+    if (companyName) loadApplicants();
+  }, [companyName]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
