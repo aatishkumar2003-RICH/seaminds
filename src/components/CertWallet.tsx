@@ -181,6 +181,38 @@ const CertWallet = ({ profileId }: CertWalletProps) => {
 
         <div className="space-y-4">
           <div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={handleScan}
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={scanning}
+              className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+              style={{ border: "1.5px solid #D4AF37", color: "#D4AF37", background: "transparent" }}
+            >
+              {scanning ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Reading your certificate…
+                </>
+              ) : (
+                <>
+                  <Camera size={16} />
+                  📷 Scan Certificate (AI)
+                </>
+              )}
+            </button>
+            <p className="text-[10px] text-muted-foreground mt-1.5 text-center">
+              Snap a photo — we'll fill the details for you to review.
+            </p>
+          </div>
+
+          <div>
             <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
               Certificate Name *
             </label>
