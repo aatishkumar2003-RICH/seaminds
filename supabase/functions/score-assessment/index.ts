@@ -60,8 +60,11 @@ DIMENSIONS:
 - technical   : rank-specific knowledge (SOLAS, MARPOL, ISM, equipment, cargo). Weight the MCQ scores heavily.
 - judgment    : scenario decisions, prioritisation under pressure, critical steps identified
 - english     : clarity, structure and maritime terminology in the written answers
-- behaviour   : leadership, conflict handling, safety culture, accountability
-- wellness    : fatigue awareness, stress management, fitness for duty
+- behaviour   : professional behaviour — leadership, conflict handling, safety culture, accountability,
+                willingness to challenge an unsafe instruction
+
+DO NOT assess personal wellbeing, mental health, stress or fatigue. Those are private to the
+seafarer and must never influence an employment score.
 
 RULES:
 - Judge against THIS RANK, not seafarers generally. A 3rd Officer is not judged as a Master.
