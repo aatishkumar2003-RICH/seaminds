@@ -100,7 +100,7 @@ export default function LiveTicker() {
               {icon:'👥',val:crew,label:'Crew',color:'#D4AF37'},
               {icon:'✅',val:avail,label:'Available',color:'#22c55e'},
               {icon:'💼',val:vac,label:'Vacancies',color:'#60a5fa'},
-            ].map(s=>[
+            ].map(s=>(
               <div key={s.label} className="flex items-center gap-1.5 text-xs">
                 <span>{s.icon}</span>
                 <span className="font-bold" style={{color:s.color}}>{s.val.toLocaleString()}</span>
@@ -114,7 +114,7 @@ export default function LiveTicker() {
       {/* Scrolling ticker */}
       <div className="overflow-hidden whitespace-nowrap py-1.5 bg-[#060f1d]/95 backdrop-blur-sm border-b border-primary/10">
         <div className="seaminds-marquee-track">
-          {doubled.map((item,i)=>[
+          {doubled.map((item,i)=>(
             <span key={i} className="inline-block text-[11px] text-muted-foreground mx-4">
               <span className="text-primary/60 mr-1.5">◆</span>
               {item}
