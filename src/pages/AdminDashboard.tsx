@@ -989,6 +989,178 @@ function ActivityTab() {
   );
 }
 
+/* ─── Marketing Oversight ─── */
+function MarketingTab() {
+  const [members, setMembers] = useState<any[]>([]);
+  const [logs, setLogs] = useState<any[]>([]);
+  const [channels, setChannels] = useState<any[]>([]);
+  const [newEmail, setNewEmail] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const loadMembers = useCallback(async () => {
+    const { data } = await supabase.from("marketing_team").select("*").order("created_at");
+    setMembers(data || []);
+  }, []);
+  const loadLogs = useCallback(async () => {
+    const { data } = await supabase
+      .from("marketing_activity_log")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    setLogs(data || []);
+  }, []);
+  const loadChannels = useCallback(async () => {
+    const { data } = await supabase.from("marketing_channels").select("*").order("created_at");
+    setChannels(data || []);
+  }, []);
+
+  useEffect(() => { loadMembers(); loadLogs(); loadChannels(); }, [loadMembers, loadLogs, loadChannels]);
+
+  const manage = async (email: string, activate: boolean) => {
+    setBusy(true);
+    const { data, error } = await supabase.rpc("admin_manage_marketing_member", { p_email: email, p_activate: activate });
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success(String(data ?? "Updated"));
+    loadMembers();
+  };
+
+  const addMember = async () => {
+    if (!newEmail.trim()) { toast.error("Enter an email"); return; }
+    await manage(newEmail.trim(), true);
+    setNewEmail("");
+  };
+
+  const deleteChannel = async (id: string) => {
+    const { error } = await supabase.from("marketing_channels").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Channel removed");
+    loadChannels();
+  };
+
+  const card = { background: "#112240", border: "1px solid #1e3a5f", borderRadius: 14, padding: 16, marginBottom: 16 } as const;
+  const heading = { color: "#D4AF37", fontSize: 14, fontWeight: 800, marginBottom: 12 } as const;
+
+  return (
+    <div>
+      <p style={{ color: "#94A3B8", fontSize: 12, marginBottom: 14 }}>
+        Marketing accounts can only access the Content Studio and channels — never crew data. PIN entry is the faint dot at the top-right of the homepage hero.
+      </p>
+
+      <div style={card}>
+        <h3 style={heading}>Team Members</h3>
+        <div className="flex gap-2 mb-3 flex-wrap">
+          <Input
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
+            placeholder="teammate@seaminds.life"
+            className="max-w-xs"
+          />
+          <Button onClick={addMember} disabled={busy} style={{ background: "#D4AF37", color: "#0D1B2A" }}>
+            Add member
+          </Button>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr style={{ borderBottom: "1px solid #D4AF3744" }}>
+                {["Email", "Active", "Added"].map((h) => (
+                  <th key={h} className="text-left p-2" style={th}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {members.map((m) => (
+                <tr key={m.user_id} style={{ borderBottom: "1px solid #1B2838" }}>
+                  <td className="p-2" style={td}>{m.email}</td>
+                  <td className="p-2">
+                    <Switch checked={!!m.active} onCheckedChange={(v) => manage(m.email, v)} />
+                  </td>
+                  <td className="p-2" style={td}>{m.created_at ? new Date(m.created_at).toLocaleDateString() : "—"}</td>
+                </tr>
+              ))}
+              {members.length === 0 && (
+                <tr><td className="p-2" style={td} colSpan={3}>No marketing team members yet.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style={card}>
+        <div className="flex items-center mb-3">
+          <h3 style={{ ...heading, marginBottom: 0 }}>Activity History</h3>
+          <Button size="sm" variant="outline" className="ml-auto" onClick={loadLogs}>Refresh</Button>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr style={{ borderBottom: "1px solid #D4AF3744" }}>
+                {["When", "Email", "Action", "Details"].map((h) => (
+                  <th key={h} className="text-left p-2" style={th}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {logs.map((l) => {
+                const details = l.details ? JSON.stringify(l.details) : "";
+                return (
+                  <tr key={l.id} style={{ borderBottom: "1px solid #1B2838" }}>
+                    <td className="p-2" style={td}>{new Date(l.created_at).toLocaleString()}</td>
+                    <td className="p-2" style={td}>{l.email || "—"}</td>
+                    <td className="p-2" style={td}>{l.action}</td>
+                    <td className="p-2" style={td}>{details.length > 80 ? `${details.slice(0, 80)}…` : details || "—"}</td>
+                  </tr>
+                );
+              })}
+              {logs.length === 0 && (
+                <tr><td className="p-2" style={td} colSpan={4}>No activity yet.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style={card}>
+        <h3 style={heading}>Channels</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr style={{ borderBottom: "1px solid #D4AF3744" }}>
+                {["Platform", "Label", "URL", ""].map((h, i) => (
+                  <th key={i} className="text-left p-2" style={th}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {channels.map((c) => (
+                <tr key={c.id} style={{ borderBottom: "1px solid #1B2838" }}>
+                  <td className="p-2" style={td}>{c.platform}</td>
+                  <td className="p-2" style={td}>{c.label || "—"}</td>
+                  <td className="p-2">
+                    <a href={c.url} target="_blank" rel="noopener noreferrer" style={{ color: "#D4AF37", fontSize: 13 }}>
+                      {c.url}
+                    </a>
+                  </td>
+                  <td className="p-2">
+                    <Button size="sm" variant="ghost" onClick={() => deleteChannel(c.id)}>
+                      <Trash2 className="w-4 h-4" style={{ color: "#ef4444" }} />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+              {channels.length === 0 && (
+                <tr><td className="p-2" style={td} colSpan={4}>No channels added yet.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 /* ─── Main Dashboard ─── */
 export default function AdminDashboard() {
   const [authed, setAuthed] = useState<boolean | null>(null);
