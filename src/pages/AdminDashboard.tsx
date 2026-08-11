@@ -1039,37 +1039,54 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen p-4 md:p-8" style={{ background: "#0D1B2A" }}>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold" style={{ color: "#D4AF37" }}>SeaMinds Admin</h1>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => {
-              const url = `${window.location.origin}/manager-search`;
-              navigator.clipboard?.writeText(url)
-                .then(() => toast.success(`Manager search link copied: ${url}`))
-                .catch(() => window.prompt("Copy the manager search link:", url));
-            }}
-            style={{ borderColor: "#D4AF37", color: "#D4AF37" }}
-          >
-            🔍 Manager Search
-          </Button>
-          <Button variant="outline" onClick={lock} style={{ borderColor: "#D4AF37", color: "#D4AF37" }}>
-            <Lock className="w-4 h-4 mr-1" /> Lock
-          </Button>
+      <div
+        className="sticky top-0 z-50 -mx-4 md:-mx-8 px-4 md:px-8 pt-2 pb-3"
+        style={{ background: "#0D1B2A", borderBottom: "1px solid rgba(212,175,55,0.25)" }}
+      >
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Back"
+              onClick={() => window.history.back()}
+              style={{ color: "#D4AF37" }}
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </Button>
+            <h1 className="text-2xl font-bold" style={{ color: "#D4AF37" }}>SeaMinds Admin</h1>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                const url = `${window.location.origin}/manager-search`;
+                navigator.clipboard?.writeText(url)
+                  .then(() => toast.success(`Manager search link copied: ${url}`))
+                  .catch(() => window.prompt("Copy the manager search link:", url));
+              }}
+              style={{ borderColor: "#D4AF37", color: "#D4AF37" }}
+            >
+              🔍 Manager Search
+            </Button>
+            <Button variant="outline" onClick={lock} style={{ borderColor: "#D4AF37", color: "#D4AF37" }}>
+              <Lock className="w-4 h-4 mr-1" /> Lock
+            </Button>
+          </div>
         </div>
-      </div>
 
-      <div className="flex gap-2 mb-6 flex-wrap">
-        {tabs.map((t) => (
-          <Button key={t.id} onClick={() => setTab(t.id)}
-            style={tab === t.id
-              ? { background: "#D4AF37", color: "#0D1B2A" }
-              : { background: "transparent", color: "#D4AF37", border: "1px solid #D4AF37" }
-            }>
-            {t.label}
-          </Button>
-        ))}
+        <div className="flex gap-2 overflow-x-auto flex-nowrap md:flex-wrap pb-1 scrollbar-none">
+          {tabs.map((t) => (
+            <Button key={t.id} onClick={() => setTab(t.id)}
+              className="shrink-0 whitespace-nowrap"
+              style={tab === t.id
+                ? { background: "#D4AF37", color: "#0D1B2A" }
+                : { background: "transparent", color: "#D4AF37", border: "1px solid #D4AF37" }
+              }>
+              {t.label}
+            </Button>
+          ))}
+        </div>
       </div>
 
       {tab === "content_studio" && <ContentStudioTab />}
