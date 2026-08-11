@@ -82,7 +82,6 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
       }
 
       trackPixel("Contact", { content_name: "job_apply", content_category: target.rank || "crew" });
-      setDone({ duplicate: !!r.duplicate });
 
       if (target.whatsapp) {
         const d = String(target.whatsapp).replace(/[^\d]/g, "");
@@ -90,6 +89,14 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
       } else if (target.applyUrl) {
         window.open(target.applyUrl, "_blank");
       }
+
+      if (ready !== true) {
+        onClose();
+        onGoToCv();
+        return;
+      }
+
+      setDone({ duplicate: !!r.duplicate });
     } catch {
       setError("Could not save your application. Please try again.");
     } finally {
