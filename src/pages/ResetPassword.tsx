@@ -1,30 +1,34 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { ChevronLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import PasswordInput from "@/components/PasswordInput";
+
+const NAVY = "#0D1B2A";
+const GOLD = "#D4AF37";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
-  const [ready, setReady] = useState(false);
+  const [checking, setChecking] = useState(true);
+  const [hasSession, setHasSession] = useState(false);
+  const [done, setDone] = useState(false);
 
   useEffect(() => {
-    const hash = window.location.hash;
-    if (hash && hash.includes("access_token")) {
-      const params = new URLSearchParams(hash.replace(/^#/, ""));
-      const access_token = params.get("access_token");
-      const refresh_token = params.get("refresh_token");
-      if (access_token && refresh_token) {
-        supabase.auth.setSession({ access_token, refresh_token }).then(() => setReady(true));
-      }
-    }
-    // Supabase puts the recovery session in the URL hash on arrival
-    supabase.auth.getSession().then(({ data }) => setReady(!!data.session));
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => setReady(!!session));
-    return () => sub.subscription.unsubscribe();
+    let active = true;
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      if (!active) return;
+      if (session) { setHasSession(true); setChecking(false); }
+    });
+    supabase.auth.getSession().then(({ data }) => {
+      if (!active) return;
+      setHasSession(!!data.session);
+      setChecking(false);
+    });
+    return () => { active = false; sub.subscription.unsubscribe(); };
   }, []);
 
   const save = async () => {
@@ -34,33 +38,99 @@ const ResetPassword = () => {
     const { error } = await supabase.auth.updateUser({ password });
     setLoading(false);
     if (error) return toast.error(error.message);
-    toast.success("Password updated. You can sign in now.");
-    navigate("/manager");
+    setDone(true);
   };
 
-  const inputClass = "w-full bg-secondary text-foreground text-sm rounded-xl px-4 py-3 placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary";
+  const inputClass =
+    "w-full text-sm rounded-xl px-4 py-3 outline-none";
+  const inputStyle: React.CSSProperties = {
+    background: "rgba(255,255,255,0.05)",
+    border: "1px solid rgba(212,175,55,0.25)",
+    color: "#E2E8F0",
+  };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen max-w-md mx-auto bg-background px-6">
-      <div className="w-full max-w-sm space-y-5">
-        <h1 className="text-xl font-semibold text-foreground text-center">Set a new password</h1>
-        {!ready && (
-          <p className="text-xs text-center text-muted-foreground">
-            Open this page from the reset link in your email.
-          </p>
-        )}
-        <PasswordInput value={password} onChange={setPassword}
-          placeholder="New password" className={inputClass} autoComplete="new-password" />
-        <PasswordInput value={confirm} onChange={setConfirm}
-          placeholder="Confirm new password" className={inputClass} autoComplete="new-password" onEnter={save} />
-        <button onClick={save} disabled={loading || !ready}
-          className="w-full bg-primary text-primary-foreground font-medium text-sm rounded-xl py-3.5 disabled:opacity-30">
-          {loading ? "Saving..." : "Save new password"}
-        </button>
-        <button onClick={() => navigate("/manager")}
-          className="w-full text-xs text-muted-foreground">
-          Back to sign in
-        </button>
+    <div className="min-h-screen px-5 py-6 flex flex-col" style={{ background: NAVY }}>
+      <button
+        onClick={() => navigate("/")}
+        className="flex items-center gap-1 text-sm"
+        style={{ color: GOLD, background: "transparent", border: "none" }}
+      >
+        <ChevronLeft size={18} /> Back
+      </button>
+
+      <div className="flex-1 flex items-center justify-center">
+        <div
+          className="w-full max-w-sm rounded-2xl p-6 space-y-5"
+          style={{ background: "#112240", border: `1px solid rgba(212,175,55,0.3)` }}
+        >
+          <h1 className="text-lg font-bold text-center" style={{ color: GOLD }}>
+            Set a new password
+          </h1>
+
+          {checking ? (
+            <p className="text-xs text-center" style={{ color: "#94A3B8" }}>Checking link…</p>
+          ) : done ? (
+            <div className="space-y-3">
+              <p className="text-sm text-center" style={{ color: "#22c55e" }}>✅ Password updated</p>
+              <button
+                onClick={() => navigate("/app")}
+                className="w-full font-bold text-sm rounded-xl py-3"
+                style={{ background: GOLD, color: NAVY, border: "none" }}
+              >
+                Crew Login
+              </button>
+              <button
+                onClick={() => navigate("/manager")}
+                className="w-full font-medium text-sm rounded-xl py-3"
+                style={{ background: "transparent", color: GOLD, border: `1px solid ${GOLD}` }}
+              >
+                Manager Login
+              </button>
+            </div>
+          ) : !hasSession ? (
+            <div className="space-y-3">
+              <p className="text-xs text-center" style={{ color: "#94A3B8" }}>
+                This reset link is invalid or expired — request a new one.
+              </p>
+              <button
+                onClick={() => navigate("/")}
+                className="w-full font-bold text-sm rounded-xl py-3"
+                style={{ background: GOLD, color: NAVY, border: "none" }}
+              >
+                Go to homepage
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <PasswordInput
+                value={password}
+                onChange={setPassword}
+                placeholder="New password"
+                className={inputClass}
+                style={inputStyle}
+                autoComplete="new-password"
+              />
+              <PasswordInput
+                value={confirm}
+                onChange={setConfirm}
+                placeholder="Confirm password"
+                className={inputClass}
+                style={inputStyle}
+                autoComplete="new-password"
+                onEnter={save}
+              />
+              <button
+                onClick={save}
+                disabled={loading}
+                className="w-full font-bold text-sm rounded-xl py-3 disabled:opacity-40"
+                style={{ background: GOLD, color: NAVY, border: "none" }}
+              >
+                {loading ? "Updating…" : "Update password"}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
