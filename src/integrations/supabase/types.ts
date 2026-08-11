@@ -2819,6 +2819,7 @@ export type Database = {
         }[]
       }
       get_interview_by_token: { Args: { p_token: string }; Returns: Json }
+      get_public_ticker_stats: { Args: never; Returns: Json }
       increment_discount_uses: {
         Args: { input_code: string }
         Returns: undefined
