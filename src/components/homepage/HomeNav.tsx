@@ -69,6 +69,9 @@ const HomeNav = () => {
             <Button size="sm" className="flex-1 bg-foreground text-background hover:bg-foreground/90" onClick={() => { setMobileOpen(false); navigate('/app'); }}>
               Get Your Score
             </Button>
+            <Button size="sm" style={{ background: "#D4AF37", color: "#0D1B2A" }} className="flex-1 hover:opacity-90 font-bold" onClick={() => { setMobileOpen(false); navigate('/manager'); }}>
+              🎓 Create Interview
+            </Button>
             <Button size="sm" variant="outline" className="flex-1 border-white/10 text-foreground hover:bg-white/5" onClick={() => { setMobileOpen(false); navigate('/manager'); }}>
               Company Login
             </Button>
