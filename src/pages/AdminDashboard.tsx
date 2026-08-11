@@ -1035,6 +1035,23 @@ function MarketingTab() {
     setNewEmail("");
   };
 
+  const createAccount = async () => {
+    if (!newAccEmail.includes("@")) { toast.error("Enter a valid email"); return; }
+    if (newAccPassword.length < 8) { toast.error("Password must be at least 8 characters"); return; }
+    setCreating(true);
+    const { data, error } = await supabase.functions.invoke("admin-create-marketing-user", {
+      body: { email: newAccEmail.trim(), password: newAccPassword },
+    });
+    setCreating(false);
+    if (error) { toast.error(error.message); return; }
+    if (data?.error) { toast.error(data.error); return; }
+    toast.success(data?.message || "Account created");
+    setNewAccEmail(""); setNewAccPassword("");
+    loadMembers();
+  };
+
+
+
   const deleteChannel = async (id: string) => {
     const { error } = await supabase.from("marketing_channels").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
