@@ -1839,6 +1839,78 @@ export type Database = {
         }
         Relationships: []
       }
+      market_content: {
+        Row: {
+          active: boolean | null
+          country: string
+          country_code: string
+          crew_share: number | null
+          cta_cv: string | null
+          cta_jobs: string | null
+          cta_nofees: string | null
+          cta_score: string | null
+          flag: string | null
+          hashtags_ig: string | null
+          hashtags_ig_extended: string | null
+          hashtags_li: string | null
+          hashtags_tiktok: string | null
+          hashtags_x: string | null
+          id: string
+          language: string
+          language_logic: string | null
+          language_name: string
+          notes: string | null
+          social_platforms: string | null
+          use_english: boolean | null
+        }
+        Insert: {
+          active?: boolean | null
+          country: string
+          country_code: string
+          crew_share?: number | null
+          cta_cv?: string | null
+          cta_jobs?: string | null
+          cta_nofees?: string | null
+          cta_score?: string | null
+          flag?: string | null
+          hashtags_ig?: string | null
+          hashtags_ig_extended?: string | null
+          hashtags_li?: string | null
+          hashtags_tiktok?: string | null
+          hashtags_x?: string | null
+          id?: string
+          language: string
+          language_logic?: string | null
+          language_name: string
+          notes?: string | null
+          social_platforms?: string | null
+          use_english?: boolean | null
+        }
+        Update: {
+          active?: boolean | null
+          country?: string
+          country_code?: string
+          crew_share?: number | null
+          cta_cv?: string | null
+          cta_jobs?: string | null
+          cta_nofees?: string | null
+          cta_score?: string | null
+          flag?: string | null
+          hashtags_ig?: string | null
+          hashtags_ig_extended?: string | null
+          hashtags_li?: string | null
+          hashtags_tiktok?: string | null
+          hashtags_x?: string | null
+          id?: string
+          language?: string
+          language_logic?: string | null
+          language_name?: string
+          notes?: string | null
+          social_platforms?: string | null
+          use_english?: boolean | null
+        }
+        Relationships: []
+      }
       mobile_verifications: {
         Row: {
           created_at: string
@@ -2648,10 +2720,12 @@ export type Database = {
         Args: { p_crew_id: string; p_target_rank?: string }
         Returns: Json
       }
+      enforce_retention: { Args: never; Returns: string }
       engage_company_post: {
         Args: { p_action: string; p_post_id: string }
         Returns: Json
       }
+      expire_old_vacancies: { Args: never; Returns: string }
       get_admin_settings: {
         Args: { p_keys: string[] }
         Returns: {
