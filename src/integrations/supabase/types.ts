@@ -2802,6 +2802,7 @@ export type Database = {
           value: string
         }[]
       }
+      get_cert_readiness: { Args: never; Returns: Json }
       get_cta_block: {
         Args: { p_audience?: string; p_count?: number; p_intents?: string[] }
         Returns: string
