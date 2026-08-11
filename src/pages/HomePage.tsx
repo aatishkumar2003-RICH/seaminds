@@ -26,6 +26,19 @@ const HomePage = () => {
 
   useEffect(() => { document.title = "Seafarer Jobs, Crew Wellness & Verified Maritime Talent | SeaMinds"; }, []);
 
+  // Password recovery links must land on the reset page
+  useEffect(() => {
+    if ((window.location.hash || "").includes("type=recovery")) {
+      navigate("/reset-password" + window.location.hash, { replace: true });
+      return;
+    }
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") navigate("/reset-password", { replace: true });
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [navigate]);
+
+
   // Safety timeout: if auth doesn't resolve in 5s, show the page anyway
   useEffect(() => {
     if (authReady) return;
