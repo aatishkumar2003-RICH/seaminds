@@ -1980,6 +1980,84 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_activity_log: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          email: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          email?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          email?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      marketing_channels: {
+        Row: {
+          added_by: string | null
+          created_at: string
+          id: string
+          label: string | null
+          platform: string
+          url: string
+        }
+        Insert: {
+          added_by?: string | null
+          created_at?: string
+          id?: string
+          label?: string | null
+          platform: string
+          url: string
+        }
+        Update: {
+          added_by?: string | null
+          created_at?: string
+          id?: string
+          label?: string | null
+          platform?: string
+          url?: string
+        }
+        Relationships: []
+      }
+      marketing_team: {
+        Row: {
+          active: boolean
+          added_by: string | null
+          created_at: string
+          email: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          added_by?: string | null
+          created_at?: string
+          email: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          added_by?: string | null
+          created_at?: string
+          email?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       mobile_verifications: {
         Row: {
           created_at: string
@@ -2731,6 +2809,10 @@ export type Database = {
         Args: { p_campaign_id: string; p_people: Json }
         Returns: Json
       }
+      admin_manage_marketing_member: {
+        Args: { p_activate: boolean; p_email: string }
+        Returns: string
+      }
       apply_to_job: {
         Args: {
           p_company?: string
@@ -2825,6 +2907,11 @@ export type Database = {
         Returns: undefined
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_marketing_member: { Args: never; Returns: boolean }
+      log_marketing_action: {
+        Args: { p_action: string; p_details?: Json }
+        Returns: undefined
+      }
       make_invite_token: { Args: never; Returns: string }
       owns_crew_profile: {
         Args: { _crew_profile_id: string }
@@ -2900,6 +2987,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      verify_marketing_pin: { Args: { p_pin: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
