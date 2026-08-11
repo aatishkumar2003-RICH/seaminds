@@ -44,6 +44,9 @@ const HomeNav = () => {
           <Button size="sm" className="bg-foreground text-background hover:bg-foreground/90" onClick={() => navigate('/app')}>
             Get Your Score
           </Button>
+          <Button size="sm" style={{ background: "#D4AF37", color: "#0D1B2A" }} className="hover:opacity-90 font-bold" onClick={() => navigate('/manager')}>
+            🎓 Create Interview
+          </Button>
           <Button size="sm" variant="outline" className="border-white/10 text-foreground hover:bg-white/5" onClick={() => navigate('/manager')}>
             Company Login
           </Button>
