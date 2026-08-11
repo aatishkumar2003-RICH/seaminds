@@ -1281,6 +1281,7 @@ export default function AdminDashboard() {
       {tab === "vacancy_intel" && <VacancyIntelTab />}
       {tab === "company_dir" && <CompanyDirectoryTab />}
       {tab === "company_posts" && <CompanyPostsTab />}
+      {tab === "marketing" && <MarketingTab />}
     </div>
   );
 }
