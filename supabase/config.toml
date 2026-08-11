@@ -109,3 +109,6 @@ verify_jwt = false
 [functions.social-content]
 verify_jwt = false
 
+[functions.extract-certificate]
+verify_jwt = false
+
