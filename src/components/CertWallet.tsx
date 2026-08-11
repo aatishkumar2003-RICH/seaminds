@@ -16,6 +16,14 @@ interface CertWalletProps {
   profileId: string;
 }
 
+interface CertReadiness {
+  required_total: number;
+  matched: number;
+  expired_matched: number;
+  missing: string[];
+  percent: number;
+}
+
 const SUGGESTED_CERTS = [
   "STCW Basic Safety",
   "Medical Certificate",
@@ -57,6 +65,7 @@ const CertWallet = ({ profileId }: CertWalletProps) => {
   const [certNumber, setCertNumber] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<Cert | null>(null);
   const [scanning, setScanning] = useState(false);
+  const [readiness, setReadiness] = useState<CertReadiness | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -111,6 +120,19 @@ const CertWallet = ({ profileId }: CertWalletProps) => {
   }, [profileId]);
 
   useEffect(() => { fetchCerts(); }, [fetchCerts]);
+
+  useEffect(() => {
+    const fetchReadiness = async () => {
+      try {
+        const { data, error } = await supabase.rpc("get_cert_readiness");
+        if (error || !data || (data as any).error) return;
+        setReadiness((data as unknown) as CertReadiness);
+      } catch (e) {
+        console.error("CertWallet readiness error:", e);
+      }
+    };
+    fetchReadiness();
+  }, []);
 
   const upsertCerts = async (updated: Cert[]) => {
     setCerts(updated);
@@ -301,8 +323,63 @@ const CertWallet = ({ profileId }: CertWalletProps) => {
 
   const sortedCerts = [...certs].sort((a, b) => getDaysRemaining(a.expiryDate) - getDaysRemaining(b.expiryDate));
 
+  const missingText = readiness?.missing?.length
+    ? `Missing: ${readiness.missing.slice(0, 3).join(", ")}${readiness.missing.length > 3 ? ` +${readiness.missing.length - 3} more` : ""}`
+    : null;
+
   return (
     <div className="flex flex-col h-full px-4 py-3 overflow-y-auto">
+
+      {readiness && (
+        <div
+          className="mb-4 rounded-xl"
+          style={{
+            background: "rgba(13,27,42,0.8)",
+            border: "1px solid rgba(212,175,55,0.3)",
+            padding: 14,
+          }}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className="font-bold" style={{ color: "#D4AF37" }}>
+              Sea-Ready Documents
+            </span>
+            <span className="font-bold" style={{ color: "#D4AF37" }}>
+              {readiness.matched} / {readiness.required_total}
+            </span>
+          </div>
+          <div
+            className="w-full rounded-full mb-2"
+            style={{ height: 8, background: "rgba(255,255,255,0.08)" }}
+          >
+            <div
+              className="h-full rounded-full"
+              style={{
+                width: `${Math.min(100, Math.max(0, readiness.percent))}%`,
+                background: "linear-gradient(135deg, #D4AF37, #C5941F)",
+              }}
+            />
+          </div>
+          {readiness.percent === 100 ? (
+            <p style={{ color: "#22c55e", fontSize: 11 }}>
+              ✅ All required documents on file
+            </p>
+          ) : (
+            <>
+              {missingText && (
+                <p style={{ color: "#94A3B8", fontSize: 11 }}>{missingText}</p>
+              )}
+              {readiness.expired_matched > 0 && (
+                <p style={{ color: "#f59e0b", fontSize: 11 }}>
+                  ⚠️ {readiness.expired_matched} required document(s) expired
+                </p>
+              )}
+            </>
+          )}
+          <p className="mt-1.5" style={{ color: "#64748B", fontSize: 9 }}>
+            Self-declared — originals verified by employer.
+          </p>
+        </div>
+      )}
 
       {expiringSoonCount > 0 && (
         <div
