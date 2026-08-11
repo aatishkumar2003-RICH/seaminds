@@ -24,6 +24,8 @@ export default defineConfig(({ mode }) => ({
       manifest: false, // use existing public/manifest.json
       workbox: {
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3 MB
+        skipWaiting: true,
+        clientsClaim: true,
         globPatterns: ["**/*.{js,css,html,ico,png,svg,jpg,jpeg,woff,woff2}"],
         navigateFallbackDenylist: [/^\/~oauth/, /^\/\.lovable\/oauth/],
         runtimeCaching: [
