@@ -113,7 +113,7 @@ Return ONLY valid JSON, no markdown:
   dims.judgment  = dims.judgment  ?? fb;
   dims.english   = dims.english   ?? fb;
   dims.behaviour = dims.behaviour ?? fb;
-  dims.wellness  = dims.wellness  ?? fb;
+  
 
   // Overall is arithmetic, computed here — never an AI opinion. Weights sum to 1.00.
   const overall = Math.round((
