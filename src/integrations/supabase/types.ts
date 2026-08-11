@@ -2894,6 +2894,10 @@ export type Database = {
         }
         Returns: Json
       }
+      crew_respond_offer: {
+        Args: { p_accept: boolean; p_application_id: string }
+        Returns: Json
+      }
       cv_interview_readiness: {
         Args: { p_crew_id: string; p_target_rank?: string }
         Returns: Json
@@ -2928,6 +2932,7 @@ export type Database = {
         }[]
       }
       get_interview_by_token: { Args: { p_token: string }; Returns: Json }
+      get_my_applicants: { Args: never; Returns: Json }
       get_public_ticker_stats: { Args: never; Returns: Json }
       increment_discount_uses: {
         Args: { input_code: string }
@@ -2940,10 +2945,20 @@ export type Database = {
         Returns: undefined
       }
       make_invite_token: { Args: never; Returns: string }
+      manager_update_application: {
+        Args: {
+          p_action: string
+          p_application_id: string
+          p_contract_months?: number
+          p_joining_date?: string
+        }
+        Returns: Json
+      }
       owns_crew_profile: {
         Args: { _crew_profile_id: string }
         Returns: boolean
       }
+      placement_release_scan: { Args: never; Returns: string }
       rank_group_of: { Args: { p_rank: string }; Returns: string }
       report_company_post: {
         Args: { post_id: string; reason?: string }
