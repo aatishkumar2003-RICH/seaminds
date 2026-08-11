@@ -1040,6 +1040,8 @@ function MarketingTab() {
 
   const card = { background: "#112240", border: "1px solid #1e3a5f", borderRadius: 14, padding: 16, marginBottom: 16 } as const;
   const heading = { color: "#D4AF37", fontSize: 14, fontWeight: 800, marginBottom: 12 } as const;
+  const th = { color: "#D4AF37" };
+  const td: React.CSSProperties = { color: "#E0E0E0" };
 
   return (
     <div>
