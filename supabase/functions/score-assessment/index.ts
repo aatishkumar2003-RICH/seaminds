@@ -102,7 +102,6 @@ Return ONLY valid JSON, no markdown:
       judgment: clamp(parsed.judgment),
       english: clamp(parsed.english),
       behaviour: clamp(parsed.behaviour),
-      wellness: clamp(parsed.wellness),
     };
   } catch {
     dims = {};
