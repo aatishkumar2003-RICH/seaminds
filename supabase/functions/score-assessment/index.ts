@@ -73,7 +73,7 @@ RULES:
 - Base every score on evidence in the transcript. Do not invent.
 
 Return ONLY valid JSON, no markdown:
-{ "technical": 0.00, "judgment": 0.00, "english": 0.00, "behaviour": 0.00, "wellness": 0.00 }`;
+{ "technical": 0.00, "judgment": 0.00, "english": 0.00, "behaviour": 0.00 }`;
 
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
