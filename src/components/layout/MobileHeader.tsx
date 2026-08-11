@@ -11,22 +11,32 @@ interface MobileHeaderProps {
   nationality: string;
   appState?: AppState;
   headerRight?: React.ReactNode;
+  onBack?: () => void;
 }
 
 
 const MobileHeader: React.FC<MobileHeaderProps> = ({
-  onMenuOpen, showBackToNews, screen, onNavigateToNews, firstName, nationality, appState, headerRight,
+  onMenuOpen, showBackToNews, screen, onNavigateToNews, firstName, nationality, appState, headerRight, onBack,
 }) => {
   if (appState === "landing") return null;
 
   const flag = NATIONALITY_FLAGS[nationality] || "🌊";
 
+  const showBackArrow = (showBackToNews && screen !== "news") || (screen !== "home" && !!onBack);
+  const handleBackClick = () => {
+    if (showBackToNews && screen !== "news") {
+      onNavigateToNews();
+    } else if (screen !== "home" && onBack) {
+      onBack();
+    }
+  };
+
   return (
     <div className="flex shrink-0 items-center justify-between border-b border-border/50 bg-background px-4 py-2 lg:hidden">
       <div className="flex items-center gap-2">
         <button onClick={onMenuOpen} className="p-1 text-xl font-bold text-foreground">☰</button>
-        {showBackToNews && screen !== "news" && (
-          <button onClick={onNavigateToNews} className="p-1 text-lg text-muted-foreground">←</button>
+        {showBackArrow && (
+          <button onClick={handleBackClick} className="p-1 text-lg text-muted-foreground">←</button>
         )}
       </div>
       <div className="flex items-center gap-2">

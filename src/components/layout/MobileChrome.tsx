@@ -35,6 +35,7 @@ interface MobileChromeProps {
   onReplayTour: () => void;
   onSignOut: () => void;
   onOpenChat: () => void;
+  onBack?: () => void;
 }
 
 const MobileChrome: React.FC<MobileChromeProps> = (props) => {
@@ -76,6 +77,7 @@ const MobileChrome: React.FC<MobileChromeProps> = (props) => {
         nationality={props.nationality}
         appState={props.appState}
         headerRight={props.headerRight}
+        onBack={props.onBack}
       />
 
     </>
