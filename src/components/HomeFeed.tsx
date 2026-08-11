@@ -5,6 +5,7 @@ import { MessageCircle, ExternalLink, RefreshCw } from "lucide-react";
 import { trackPixel } from "@/lib/metaPixel";
 import ShareResult from "@/components/ShareResult";
 import { formatSalaryText, formatSalaryRange } from "@/lib/salary";
+import { toast } from "sonner";
 
 const GOLD = "#D4AF37";
 const NAVY = "#0D1B2A";
