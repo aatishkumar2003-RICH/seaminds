@@ -121,6 +121,19 @@ const CertWallet = ({ profileId }: CertWalletProps) => {
 
   useEffect(() => { fetchCerts(); }, [fetchCerts]);
 
+  useEffect(() => {
+    const fetchReadiness = async () => {
+      try {
+        const { data, error } = await supabase.rpc("get_cert_readiness");
+        if (error || !data || (data as any).error) return;
+        setReadiness(data as CertReadiness);
+      } catch (e) {
+        console.error("CertWallet readiness error:", e);
+      }
+    };
+    fetchReadiness();
+  }, []);
+
   const upsertCerts = async (updated: Cert[]) => {
     setCerts(updated);
     try {
