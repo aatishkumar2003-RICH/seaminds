@@ -2,6 +2,8 @@ import { useNavigate } from "react-router-dom";
 import { ChevronRight, ShieldCheck, Globe2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { type TimeOfDay, getGreeting } from "@/hooks/useTimeOfDay";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Props {
   timeOfDay?: TimeOfDay;
@@ -11,9 +13,28 @@ const HeroSection = ({ timeOfDay = "day" }: Props) => {
   const navigate = useNavigate();
   const greeting = getGreeting(timeOfDay);
 
+  const teamEntry = async () => {
+    const value = window.prompt("Enter PIN");
+    if (!value) return;
+    const { data } = await supabase.rpc("verify_marketing_pin", { p_pin: value.trim() });
+    if (data === true) navigate("/marketing");
+    else toast.error("Incorrect PIN");
+  };
+
   return (
     <section className="relative pt-14 pb-10 sm:pt-20 sm:pb-14 md:pt-32 md:pb-20 overflow-hidden">
+      <button
+        type="button"
+        aria-label="team"
+        onClick={teamEntry}
+        style={{
+          position: "absolute", top: 8, right: 8, width: 22, height: 22,
+          borderRadius: 999, background: "hsl(var(--primary) / 0.10)",
+          border: "none", cursor: "pointer", padding: 0,
+        }}
+      />
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
+
         <div className="max-w-3xl mx-auto">
           <div className="text-center">
             <p className="text-[10px] sm:text-xs uppercase tracking-[0.25em] sm:tracking-[0.3em] text-primary mb-2 sm:mb-4 font-mono-score">
