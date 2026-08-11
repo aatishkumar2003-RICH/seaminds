@@ -17,6 +17,7 @@ interface AssessmentFlowProps {
   yearsExperience?: number;
   onComplete: () => void;
   onExit?: () => void;
+  mode?: 'interview' | 'learn';
 }
 
 interface FlatQuestion {
@@ -42,7 +43,8 @@ interface FlatQuestion {
   prompt_text?: string;
 }
 
-const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assessmentId, vesselType, yearsExperience, onComplete, onExit }: AssessmentFlowProps) => {
+const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assessmentId, vesselType, yearsExperience, onComplete, onExit, mode = 'learn' }: AssessmentFlowProps) => {
+  const sealed = mode === 'interview';
   const { accessToken } = useAuth();
   // Core flow state
   const [flowStep, setFlowStep] = useState<'preform' | 'cvCheck' | 'questions' | 'score'>('preform');
@@ -318,7 +320,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
       const currQ = flatQuestions[qIndex];
       // Show section title card when switching sections
       if (nextQ && currQ && nextQ.type !== currQ.type) {
-        const label = nextQ.type === 'scenario' ? '🚨 Situational Judgment' : '💬 Personal Wellbeing';
+        const label = nextQ.type === 'scenario' ? '🚨 Situational Judgment' : (sealed ? '🧭 Professional Behaviour' : '💬 Personal Wellbeing');
         const num = nextQ.type === 'scenario' ? 'Section 2' : 'Section 3';
         const icon = nextQ.type === 'scenario' ? '🚨' : '💬';
         setSectionCard({ type: nextQ.type, label, num, icon });
@@ -355,7 +357,8 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
 
   const currentQ = flatQuestions[qIndex];
   const totalQuestions = flatQuestions.length;
-  const sectionLabel = currentQ?.type === 'mcq' ? '📋 Knowledge Assessment' : currentQ?.type === 'scenario' ? '🚨 Situational Judgment' : '💬 Personal Wellbeing';
+  const behaviourLabel = sealed ? '🧭 Professional Behaviour' : '💬 Personal Wellbeing';
+  const sectionLabel = currentQ?.type === 'mcq' ? '📋 Knowledge Assessment' : currentQ?.type === 'scenario' ? '🚨 Situational Judgment' : behaviourLabel;
   const sectionNum = currentQ?.type === 'mcq' ? 'Section 1' : currentQ?.type === 'scenario' ? 'Section 2' : 'Section 3';
 
   // Timer max for progress bar
@@ -568,7 +571,11 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
                 transition={{ delay: 0.9, duration: 0.4 }}
                 className="text-xs text-muted-foreground"
               >
-                {sectionCard.type === 'scenario' ? 'Describe your actions in order of priority' : 'Your responses are confidential'}
+                {sectionCard.type === 'scenario'
+                  ? 'Describe your actions in order of priority'
+                  : sealed
+                    ? 'Job-relevant questions. Your answers form part of this interview.'
+                    : 'Your responses are confidential'}
               </motion.p>
               <button
                 onClick={() => {
@@ -653,8 +660,8 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
                 {(currentQ.options || []).map((opt, i) => {
                   const letter = String.fromCharCode(65 + i);
                   const isSelected = selectedOption === i;
-                  const isCorrectOpt = mcqSubmitted && i === currentQ.correct_index;
-                  const isWrongSelected = mcqSubmitted && isSelected && !mcqCorrect;
+                  const isCorrectOpt = !sealed && mcqSubmitted && i === currentQ.correct_index;
+                  const isWrongSelected = !sealed && mcqSubmitted && isSelected && !mcqCorrect;
                   return (
                     <motion.button
                       key={i}
@@ -679,7 +686,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
               </div>
 
               {/* MCQ result banner */}
-              {mcqSubmitted && (
+              {mcqSubmitted && !sealed && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -697,6 +704,12 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
                     <p style={{ fontSize: '12px', color: '#aaa', marginTop: '4px' }}>{currentQ.explanation}</p>
                   )}
                 </motion.div>
+              )}
+
+              {mcqSubmitted && sealed && (
+                <div className="rounded-xl px-4 py-3" style={{ background: 'rgba(212,175,55,0.06)', border: '1px solid rgba(212,175,55,0.2)' }}>
+                  <p className="text-sm" style={{ color: '#cbd5e1' }}>Answer recorded.</p>
+                </div>
               )}
 
               {/* Follow-up question after MCQ */}
