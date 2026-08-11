@@ -126,7 +126,7 @@ const CertWallet = ({ profileId }: CertWalletProps) => {
       try {
         const { data, error } = await supabase.rpc("get_cert_readiness");
         if (error || !data || (data as any).error) return;
-        setReadiness(data as CertReadiness);
+        setReadiness((data as unknown) as CertReadiness);
       } catch (e) {
         console.error("CertWallet readiness error:", e);
       }
