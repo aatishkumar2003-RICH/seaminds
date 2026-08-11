@@ -1209,6 +1209,7 @@ export default function AdminDashboard() {
     { id: "vacancy_intel" as const, label: "📊 Vacancy Intel" },
     { id: "company_dir" as const, label: "🏢 Companies" },
     { id: "company_posts" as const, label: "Company Posts" },
+    { id: "marketing" as const, label: "📣 Marketing" },
   ];
 
   return (
