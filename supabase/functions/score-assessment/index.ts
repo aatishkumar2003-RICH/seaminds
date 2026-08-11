@@ -60,8 +60,11 @@ DIMENSIONS:
 - technical   : rank-specific knowledge (SOLAS, MARPOL, ISM, equipment, cargo). Weight the MCQ scores heavily.
 - judgment    : scenario decisions, prioritisation under pressure, critical steps identified
 - english     : clarity, structure and maritime terminology in the written answers
-- behaviour   : leadership, conflict handling, safety culture, accountability
-- wellness    : fatigue awareness, stress management, fitness for duty
+- behaviour   : professional behaviour — leadership, conflict handling, safety culture, accountability,
+                willingness to challenge an unsafe instruction
+
+DO NOT assess personal wellbeing, mental health, stress or fatigue. Those are private to the
+seafarer and must never influence an employment score.
 
 RULES:
 - Judge against THIS RANK, not seafarers generally. A 3rd Officer is not judged as a Master.
@@ -70,7 +73,7 @@ RULES:
 - Base every score on evidence in the transcript. Do not invent.
 
 Return ONLY valid JSON, no markdown:
-{ "technical": 0.00, "judgment": 0.00, "english": 0.00, "behaviour": 0.00, "wellness": 0.00 }`;
+{ "technical": 0.00, "judgment": 0.00, "english": 0.00, "behaviour": 0.00 }`;
 
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -99,7 +102,6 @@ Return ONLY valid JSON, no markdown:
       judgment: clamp(parsed.judgment),
       english: clamp(parsed.english),
       behaviour: clamp(parsed.behaviour),
-      wellness: clamp(parsed.wellness),
     };
   } catch {
     dims = {};
@@ -111,15 +113,15 @@ Return ONLY valid JSON, no markdown:
   dims.judgment  = dims.judgment  ?? fb;
   dims.english   = dims.english   ?? fb;
   dims.behaviour = dims.behaviour ?? fb;
-  dims.wellness  = dims.wellness  ?? fb;
+  
 
-  // Overall is arithmetic, computed here — never an AI opinion. Weights sum to 1.00.
+  // Scoring v1.1 — wellness removed from employment scoring entirely.
+  // Personal wellbeing is private to the seafarer and never influences hiring.
   const overall = Math.round((
     dims.technical * 0.30 +
-    dims.judgment  * 0.25 +
-    dims.english   * 0.20 +
-    dims.behaviour * 0.15 +
-    dims.wellness  * 0.10
+    dims.judgment  * 0.30 +
+    dims.english   * 0.25 +
+    dims.behaviour * 0.15
   ) * 100) / 100;
 
   const band =
@@ -138,11 +140,10 @@ Return ONLY valid JSON, no markdown:
     judgment: dims.judgment,
     english: dims.english,
     behaviour: dims.behaviour,
-    wellness: dims.wellness,
     overall,
     band,
     recommendation,
-    scoring_version: "v1.0",
+    scoring_version: "v1.1",
   };
 
   return new Response(JSON.stringify({ scores }), { headers: { ...cors, "Content-Type": "application/json" } });
