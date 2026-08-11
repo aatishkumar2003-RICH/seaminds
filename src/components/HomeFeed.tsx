@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import ApplyDialog, { ApplyTarget } from "@/components/ApplyDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { MessageCircle, ExternalLink, RefreshCw } from "lucide-react";
 import { trackPixel } from "@/lib/metaPixel";
@@ -55,6 +56,7 @@ type Card =
 
 const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props) => {
   const [cards, setCards] = useState<Card[]>([]);
+  const [applyTarget, setApplyTarget] = useState<ApplyTarget | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [visible, setVisible] = useState(8);
@@ -232,27 +234,14 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
     setRefreshing(false);
   };
 
-  const applyTo = async (v: any) => {
+  const applyTo = (v: any) => {
     log("vacancy", v.id, "apply");
-    trackPixel("Contact", { content_name: "job_apply", content_category: v.rank || "crew" });
-    // WhatsApp applications go direct — that is the fastest route for the seafarer
-    if (v.whatsapp) {
-      const d = String(v.whatsapp).replace(/[^\d]/g, "");
-      if (d) { window.open(`https://wa.me/${d}?text=${encodeURIComponent(`Hello, I am interested in the ${v.rank} position (seen on SeaMinds).`)}`, "_blank"); return; }
-    }
-    // No direct contact: make sure the CV is ready before sending them to the company
-    try {
-      const { data: readiness } = await supabase.rpc("cv_interview_readiness" as any, { p_crew_id: profileId });
-      const r: any = readiness;
-      if (r && r.ready === false) {
-        const missing = Array.isArray(r.missing) ? r.missing.join("\n• ") : "";
-        if (window.confirm(
-          `Companies choose from your CV.\n\nStill needed:\n• ${missing}\n\nComplete your CV now? It takes a few minutes and works for every job.`
-        )) { onNavigate?.("resume"); return; }
-      }
-    } catch { /* never block the application */ }
-    if (v.applyUrl) window.open(v.applyUrl, "_blank");
-    else onNavigate?.("opportunities");
+    setApplyTarget({
+      rawId: String(v.id).replace(/^[ep]-/, ""),
+      isCompanyPost: false,
+      rank: v.rank, vessel: v.vessel, company: v.company,
+      applyUrl: v.applyUrl, whatsapp: v.whatsapp,
+    });
   };
 
   const answerQuiz = async (q: any, idx: number) => {
@@ -321,11 +310,12 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
                   <div className="flex gap-2">
                     {p.whatsapp && (
                       <button
-                        onClick={() => {
-                          log("company_post", p.id, "apply", i);
-                          const d = String(p.whatsapp).replace(/[^\d]/g, "");
-                          if (d) window.open(`https://wa.me/${d}?text=${encodeURIComponent(`Hello ${p.company_name}, I saw your post on SeaMinds and would like to apply.`)}`, "_blank");
-                        }}
+                        onClick={() => setApplyTarget({
+                          rawId: p.id, isCompanyPost: true,
+                          rank: p.post_type === 'hiring' ? (p.company_name || 'Position') : (p.company_name || 'Position'),
+                          vessel: undefined, company: p.company_name,
+                          applyUrl: p.link_url, whatsapp: p.whatsapp,
+                        })}
                         className="flex-1 rounded-xl py-2.5 font-bold text-[13px] flex items-center justify-center gap-2"
                         style={{ background: GOLD, color: NAVY, border: "none", cursor: "pointer" }}
                       >
@@ -438,7 +428,7 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
                   <button onClick={() => applyTo(v)}
                     className="w-full rounded-xl py-2.5 font-bold text-[13px] flex items-center justify-center gap-2"
                     style={{ background: GOLD, color: NAVY, border: "none", cursor: "pointer" }}>
-                    {v.whatsapp ? <><MessageCircle size={14} /> Apply on WhatsApp</> : <><ExternalLink size={14} /> View & Apply</>}
+                    {v.whatsapp ? <><MessageCircle size={14} /> Apply on WhatsApp</> : <>Apply →</>}
                   </button>
                 </div>
               </article>
@@ -609,6 +599,14 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
           </button>
         )}
       </div>
+
+      <ApplyDialog
+        open={!!applyTarget}
+        onClose={() => setApplyTarget(null)}
+        profileId={profileId}
+        target={applyTarget}
+        onGoToCv={() => { setApplyTarget(null); onNavigate?.("resume"); }}
+      />
     </div>
   );
 };
