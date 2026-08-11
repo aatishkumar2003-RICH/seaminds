@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ChevronLeft } from "lucide-react";
 import { generateCvPdf } from "@/lib/cvPdf";
 
 const NAVY = "#0D1B2A";
@@ -184,11 +185,19 @@ const ManagerSearch = () => {
     <div style={{ minHeight: "100vh", background: NAVY, padding: "24px 16px" }}>
       <div style={{ maxWidth: 1180, margin: "0 auto", display: "flex", flexDirection: "column", gap: 18 }}>
         <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-          <div>
-            <h1 style={{ color: GOLD, fontSize: 22, fontWeight: 700 }}>Crew Search</h1>
-            <p style={{ color: "#9CA3AF", fontSize: 13 }}>
-              {searched ? `${results.length} crew · ${availableCount} available now` : "Search verified SeaMinds crew"}
-            </p>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <button
+              onClick={() => { if (window.history.length > 1) navigate(-1); else navigate("/manager/dashboard"); }}
+              style={{ background: "transparent", border: "none", color: GOLD, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, fontSize: 13, padding: 0 }}
+            >
+              <ChevronLeft size={16} /> Back
+            </button>
+            <div>
+              <h1 style={{ color: GOLD, fontSize: 22, fontWeight: 700 }}>Crew Search</h1>
+              <p style={{ color: "#9CA3AF", fontSize: 13 }}>
+                {searched ? `${results.length} crew · ${availableCount} available now` : "Search verified SeaMinds crew"}
+              </p>
+            </div>
           </div>
           <button
             onClick={async () => { await supabase.auth.signOut(); navigate("/manager"); }}
