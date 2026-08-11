@@ -139,7 +139,7 @@ const ManagerDashboard = () => {
       toast.error(error.message);
       return;
     }
-    setApplicants(data || []);
+    setApplicants((data as Applicant[]) || []);
   };
 
   const openOfferDraft = (id: string) => {
@@ -155,7 +155,10 @@ const ManagerDashboard = () => {
     joiningDate?: string,
     contractMonths?: number
   ) => {
-    const params: Record<string, unknown> = { p_application_id: applicationId, p_action: action };
+    const params: { p_application_id: string; p_action: string; p_joining_date?: string; p_contract_months?: number } = {
+      p_application_id: applicationId,
+      p_action: action,
+    };
     if (action === "offer") {
       params.p_joining_date = joiningDate;
       params.p_contract_months = contractMonths;
@@ -165,8 +168,9 @@ const ManagerDashboard = () => {
       toast.error(error.message);
       return;
     }
-    if (data && !data.ok) {
-      toast.error(data.error);
+    const result = data as { ok?: boolean; error?: string } | null;
+    if (result && !result.ok) {
+      toast.error(result.error || "Update failed");
       return;
     }
     toast("Done");
