@@ -89,9 +89,8 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
       if (target.whatsapp) {
         const d = String(target.whatsapp).replace(/[^\d]/g, "");
         if (d) window.open(`https://wa.me/${d}?text=${encodeURIComponent(`Hello, I am interested in the ${target.rank || "advertised"} position (seen on SeaMinds).`)}`, "_blank");
-      } else if (target.applyUrl) {
-        window.open(target.applyUrl, "_blank");
       }
+
 
       if (ready !== true) {
         onClose();
