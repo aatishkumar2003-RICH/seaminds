@@ -60,7 +60,23 @@ const ManagerAuth = () => {
     if (await overLimit(key)) { toast.error("Too many attempts. Please wait 10 minutes."); return; }
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-    if (error) { toast.error(error.message); await bumpRateLimit(key); setLoading(false); return; }
+    if (error) {
+      if (/not confirmed/i.test(error.message)) {
+        toast.error("Your email isn't confirmed yet.", {
+          description: "Check your inbox and spam folder.",
+          action: {
+            label: "Resend email",
+            onClick: async () => {
+              await supabase.auth.resend({ type: "signup", email: email.trim() });
+              toast.success("Confirmation email resent — check spam too.");
+            },
+          },
+        });
+      } else {
+        toast.error(error.message);
+      }
+      await bumpRateLimit(key); setLoading(false); return;
+    }
     navigate("/manager/dashboard");
   };
 
@@ -226,6 +242,8 @@ const ManagerAuth = () => {
             Free for manning companies during launch — no credit card. By registering you agree to use crew data for genuine recruitment only.
           </p>
         )}
+
+        <a href="mailto:info@indossol.com?subject=Manager portal login help" className="block text-center text-[11px] text-muted-foreground hover:text-primary">Trouble signing in? Contact SeaMinds support</a>
       </div>
 
     </div>
