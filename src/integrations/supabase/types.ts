@@ -3026,6 +3026,7 @@ export type Database = {
         Args: { p_assessment_id?: string; p_token: string }
         Returns: Json
       }
+      claim_referral: { Args: { p_code: string }; Returns: Json }
       complete_interview: {
         Args: { p_assessment_id: string; p_invite_id: string }
         Returns: Json
@@ -3090,6 +3091,7 @@ export type Database = {
       get_interview_by_token: { Args: { p_token: string }; Returns: Json }
       get_my_applicants: { Args: never; Returns: Json }
       get_my_fleet: { Args: never; Returns: Json }
+      get_my_referral_stats: { Args: never; Returns: Json }
       get_public_ticker_stats: { Args: never; Returns: Json }
       get_social_pulse: { Args: never; Returns: Json }
       get_voyage_state: { Args: never; Returns: Json }
