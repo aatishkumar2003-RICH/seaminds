@@ -116,7 +116,7 @@ Deno.serve(async (req) => {
           action: "cv_view",
         });
       } catch (_e) { /* logging must never block the CV */ }
-      return json({ success: true, cv: cv ? { ...cv, medical: parseMaybeJson(cv.medical) } : null, profile });
+      return json({ success: true, cv: cv ? { ...cv, medical: parseMaybeJson(cv.medical) } : null, profile: maskProfileContacts(profile) });
     }
 
 
