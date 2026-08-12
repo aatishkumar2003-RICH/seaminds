@@ -2933,6 +2933,10 @@ export type Database = {
         }
         Returns: Json
       }
+      crew_respond_fleet_link: {
+        Args: { p_accept: boolean; p_link_id: string }
+        Returns: Json
+      }
       crew_respond_offer: {
         Args: { p_accept: boolean; p_application_id: string }
         Returns: Json
@@ -2947,6 +2951,7 @@ export type Database = {
         Returns: Json
       }
       expire_old_vacancies: { Args: never; Returns: string }
+      fleet_add_crew: { Args: { p_crew_email: string }; Returns: Json }
       get_admin_settings: {
         Args: { p_keys: string[] }
         Returns: {
@@ -2972,6 +2977,7 @@ export type Database = {
       }
       get_interview_by_token: { Args: { p_token: string }; Returns: Json }
       get_my_applicants: { Args: never; Returns: Json }
+      get_my_fleet: { Args: never; Returns: Json }
       get_public_ticker_stats: { Args: never; Returns: Json }
       increment_discount_uses: {
         Args: { input_code: string }
