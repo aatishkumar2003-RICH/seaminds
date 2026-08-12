@@ -318,6 +318,10 @@ const ManagerSearch = () => {
           </div>
         </div>
 
+        <p style={{ color: "#94A3B8", fontSize: 12, lineHeight: 1.6, marginTop: -8 }}>
+          Contacts are protected. Each reveal uses 1 credit (30 free monthly). Interviewing &amp; offering via SeaMinds never needs credits.
+        </p>
+
         {/* Results */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 14 }}>
           {results.map((r) => (
