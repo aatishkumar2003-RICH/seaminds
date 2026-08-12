@@ -403,6 +403,85 @@ const ManagerDashboard = () => {
               )}
             </div>
 
+            {/* My Fleet */}
+            <div className="bg-secondary rounded-xl border border-border p-4 space-y-4">
+              <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">🚢 My Fleet</h2>
+
+              {fleet?.error === "fleet_subscription_required" ? (
+                <div className="bg-secondary/50 rounded-xl border border-[#D4AF37]/30 p-4 space-y-2">
+                  <h3 className="text-base font-bold text-[#D4AF37]">Fleet Compliance Dashboard</h3>
+                  <p className="text-sm text-muted-foreground">
+                    See your crew's MLC rest hours, certificate expiry warnings and CVs in one audit-ready view. Contact SeaMinds to activate your fleet subscription.
+                  </p>
+                  <button
+                    onClick={() => window.open("mailto:info@indossol.com?subject=Fleet subscription")}
+                    className="text-xs font-medium px-3 py-2 rounded-lg bg-transparent text-[#D4AF37] border border-[#D4AF37] hover:bg-[#D4AF37]/10 transition-colors"
+                  >
+                    Contact us
+                  </button>
+                </div>
+              ) : fleet?.ok ? (
+                <div className="space-y-3">
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      type="email"
+                      value={fleetEmail}
+                      onChange={(e) => setFleetEmail(e.target.value)}
+                      placeholder="crew@email.com"
+                      className="flex-1 bg-background text-foreground text-sm rounded-lg px-3 py-2 border border-border"
+                    />
+                    <button
+                      onClick={addFleetCrew}
+                      disabled={fleetAdding || !fleetEmail.trim()}
+                      className="text-sm font-bold px-4 py-2 rounded-xl bg-[#D4AF37] text-[#0D1B2A] border border-[#D4AF37] hover:opacity-90 transition-opacity disabled:opacity-50"
+                    >
+                      Add crew
+                    </button>
+                  </div>
+
+                  {(fleet.crew || []).length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-4 text-center">
+                      No linked crew yet — add your crew by email above, or crew placed through SeaMinds link automatically.
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {(fleet.crew || []).map((c) => (
+                        <div key={c.link_id} className="bg-secondary/50 rounded-xl border border-border/50 p-4 space-y-2">
+                          <p className="text-sm font-bold text-foreground">
+                            {c.name} <span className="font-normal text-muted-foreground">· {c.rank}{c.nationality ? ` · ${c.nationality}` : ""}</span>
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            <span className="text-xs font-medium px-2 py-1 rounded-full bg-muted text-muted-foreground">📜 {c.certs_total || 0} certs</span>
+                            {(c.certs_expiring_90d || 0) > 0 ? (
+                              <span className="text-xs font-medium px-2 py-1 rounded-full bg-amber-500/15 text-amber-400">⚠️ {c.certs_expiring_90d} expiring ≤90d</span>
+                            ) : (
+                              <span className="text-xs font-medium px-2 py-1 rounded-full bg-green-500/15 text-green-400">✓ Certs OK</span>
+                            )}
+                          </div>
+                          {c.rest_hours_updated ? (
+                            <p className="text-xs text-green-400">⏱ Rest hours updated {new Date(c.rest_hours_updated).toLocaleDateString()}</p>
+                          ) : (
+                            <p className="text-xs text-muted-foreground">⏱ No rest-hour records yet</p>
+                          )}
+                          {c.contract_end && (
+                            <p className="text-xs text-muted-foreground">Contract ends {new Date(c.contract_end).toLocaleDateString()}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <p className="text-xs text-muted-foreground/70">
+                    You see rest hours, certificates and CV data of linked crew only — wellness data is never shared.
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Loading fleet…</p>
+              )}
+            </div>
+
+
+
             {/* Stats */}
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-secondary rounded-xl p-4">
