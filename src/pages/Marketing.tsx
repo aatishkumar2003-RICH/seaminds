@@ -159,6 +159,24 @@ const Marketing = () => {
               style={{ width: "100%", padding: "12px 0", borderRadius: 12, border: "none", background: GOLD, color: NAVY, fontWeight: 900, fontSize: 14, cursor: signingIn ? "default" : "pointer", opacity: signingIn ? 0.5 : 1 }}>
               {signingIn ? "Signing in…" : "Sign in"}
             </button>
+            <button
+              onClick={async () => {
+                if (!email.trim()) { toast.error("Enter your email first"); return; }
+                const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: window.location.origin + "/reset-password" });
+                if (error) { toast.error(error.message); return; }
+                toast.success("Reset link sent — check inbox and spam.");
+              }}
+              style={{ background: "none", border: "none", color: "#94a3b8", fontSize: 11.5, cursor: "pointer", padding: 0 }}>
+              Forgot password?
+            </button>
+            <button onClick={() => navigate("/")}
+              style={{ background: "none", border: "none", color: "#94a3b8", fontSize: 11.5, cursor: "pointer", padding: 0 }}>
+              ← Back to SeaMinds
+            </button>
+            <a href="mailto:info@indossol.com?subject=Marketing portal login help"
+              style={{ color: "#94a3b8", fontSize: 11, textAlign: "center", textDecoration: "none" }}>
+              Trouble signing in? Contact SeaMinds support
+            </a>
           </div>
         </div>
       </div>
