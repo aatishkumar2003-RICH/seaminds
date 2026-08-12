@@ -89,9 +89,8 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
       if (target.whatsapp) {
         const d = String(target.whatsapp).replace(/[^\d]/g, "");
         if (d) window.open(`https://wa.me/${d}?text=${encodeURIComponent(`Hello, I am interested in the ${target.rank || "advertised"} position (seen on SeaMinds).`)}`, "_blank");
-      } else if (target.applyUrl) {
-        window.open(target.applyUrl, "_blank");
       }
+
 
       if (ready !== true) {
         onClose();
@@ -140,16 +139,10 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
                   ? "You have already applied to this vacancy. The company can see your SeaMinds profile."
                   : `${target.company || "The company"} can see your SeaMinds profile and CV. Keep your availability date up to date so they can reach you.`}
               </p>
-              {target.applyUrl ? (
-                <button onClick={() => window.open(target.applyUrl!, "_blank")}
-                  style={{ marginTop: 14, width: "100%", padding: "12px 0", borderRadius: 12, background: "transparent", color: GOLD, border: `1px solid ${GOLD}`, fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
-                  Also apply on company website ↗
-                </button>
-              ) : (
-                <p style={{ color: "#94a3b8", fontSize: 12, marginTop: 12, lineHeight: 1.55 }}>
-                  The SeaMinds team will forward your application to the company.
-                </p>
-              )}
+              <p style={{ color: "#94a3b8", fontSize: 12, marginTop: 12, lineHeight: 1.55 }}>
+                The SeaMinds team will forward your application to the company.
+              </p>
+
               <button onClick={onClose}
                 style={{ marginTop: 12, width: "100%", padding: "13px 0", borderRadius: 12, border: "none", background: GOLD, color: NAVY, fontWeight: 800, fontSize: 14, cursor: "pointer" }}>
                 See more jobs
