@@ -1210,6 +1210,155 @@ function MarketingTab() {
   );
 }
 
+/* ─── Applications ─── */
+function ApplicationsTab() {
+  const [apps, setApps] = useState<any[]>([]);
+  const [crewMap, setCrewMap] = useState<Record<string, any>>({});
+  const [loading, setLoading] = useState(false);
+  const [offerFor, setOfferFor] = useState<string | null>(null);
+  const [joinDate, setJoinDate] = useState("");
+  const [months, setMonths] = useState("9");
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const [{ data: a }, { data: c }] = await Promise.all([
+      supabase.from("job_applications").select("*").order("created_at", { ascending: false }).limit(200),
+      supabase.from("crew_profiles").select("id, first_name, last_name, nationality, role"),
+    ]);
+    setApps(a || []);
+    const map: Record<string, any> = {};
+    (c || []).forEach((p: any) => { map[p.id] = p; });
+    setCrewMap(map);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const badge = (outcome: string | null) => {
+    const o = outcome || "awaiting";
+    const map: Record<string, { bg: string; color: string; text: string }> = {
+      awaiting: { bg: "rgba(148,163,184,0.15)", color: "#94A3B8", text: "New" },
+      shortlisted: { bg: "rgba(212,175,55,0.15)", color: "#D4AF37", text: "⭐ Shortlisted" },
+      offered: { bg: "rgba(59,130,246,0.15)", color: "#60a5fa", text: "📨 Offered" },
+      placed: { bg: "rgba(34,197,94,0.15)", color: "#22c55e", text: "⚓ Placed" },
+      declined: { bg: "rgba(100,116,139,0.15)", color: "#64748B", text: "Declined" },
+      offer_declined: { bg: "rgba(100,116,139,0.15)", color: "#64748B", text: "Declined" },
+      released: { bg: "rgba(148,163,184,0.12)", color: "#94A3B8", text: "Released" },
+    };
+    const s = map[o] || map.awaiting;
+    return (
+      <span style={{ background: s.bg, color: s.color, borderRadius: 999, padding: "4px 10px", fontSize: 11.5, fontWeight: 800, whiteSpace: "nowrap" }}>
+        {s.text}
+      </span>
+    );
+  };
+
+  const act = async (id: string, action: string, extra?: Record<string, any>) => {
+    setBusy(id);
+    const { data, error } = await supabase.rpc("manager_update_application" as any, {
+      p_application_id: id, p_action: action, ...(extra || {}),
+    });
+    setBusy(null);
+    if (error) { toast.error(error.message); return; }
+    const r: any = data;
+    if (r?.ok === false) { toast.error(r.error || "Could not update"); return; }
+    toast.success("Done");
+    setOfferFor(null);
+    load();
+  };
+
+  const openOffer = (id: string) => {
+    const d = new Date();
+    d.setDate(d.getDate() + 14);
+    setJoinDate(d.toISOString().slice(0, 10));
+    setMonths("9");
+    setOfferFor(id);
+  };
+
+  const btn = (bg: string, color: string): React.CSSProperties => ({
+    background: bg, color, border: bg === "transparent" ? "1px solid rgba(212,175,55,0.4)" : "none",
+    borderRadius: 10, padding: "7px 13px", fontSize: 12, fontWeight: 800, cursor: "pointer",
+  });
+
+  const placed = apps.filter((a) => a.outcome === "placed").length;
+  const awaiting = apps.filter((a) => !a.outcome || a.outcome === "awaiting").length;
+
+  return (
+    <div style={{ padding: 16 }}>
+      <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>
+        <h2 style={{ color: "#D4AF37", fontSize: 16, fontWeight: 900 }}>📨 Applications</h2>
+        <button onClick={load} style={{ ...btn("transparent", "#D4AF37"), marginLeft: "auto" }}>
+          {loading ? "Refreshing…" : "↻ Refresh"}
+        </button>
+      </div>
+
+      <p style={{ color: "#94A3B8", fontSize: 12.5, marginBottom: 14 }}>
+        {apps.length} applications · {placed} placed · {awaiting} awaiting
+      </p>
+
+      {apps.length === 0 && !loading && (
+        <p style={{ color: "#64748B", fontSize: 12.5 }}>No applications yet.</p>
+      )}
+
+      {apps.map((a) => {
+        const crew = crewMap[a.crew_id];
+        const name = crew ? `${crew.first_name || ""} ${crew.last_name || ""}`.trim() : "Unknown crew";
+        const outcome = a.outcome || "awaiting";
+        return (
+          <div key={a.id} style={{ background: "#112240", border: "1px solid rgba(212,175,55,0.3)", borderRadius: 14, padding: 13, marginBottom: 10 }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+              <div style={{ minWidth: 0 }}>
+                <p style={{ color: "#e2e8f0", fontSize: 13.5, fontWeight: 800 }}>
+                  {name}{crew?.nationality ? ` · ${crew.nationality}` : ""}
+                </p>
+                <p style={{ color: "#94A3B8", fontSize: 12, marginTop: 3 }}>
+                  {[a.rank_applied, a.vessel_type, a.company_name].filter(Boolean).join(" · ") || "—"}
+                </p>
+                <p style={{ color: "#64748B", fontSize: 11, marginTop: 3 }}>
+                  {a.created_at ? new Date(a.created_at).toLocaleDateString() : ""}
+                </p>
+              </div>
+              <div style={{ marginLeft: "auto" }}>{badge(outcome)}</div>
+            </div>
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 10 }}>
+              {outcome === "awaiting" && (
+                <>
+                  <button disabled={busy === a.id} onClick={() => act(a.id, "shortlist")} style={btn("#D4AF37", "#0D1B2A")}>⭐ Shortlist</button>
+                  <button disabled={busy === a.id} onClick={() => act(a.id, "decline")} style={btn("transparent", "#94A3B8")}>Decline</button>
+                </>
+              )}
+              {outcome === "shortlisted" && (
+                <>
+                  <button disabled={busy === a.id} onClick={() => openOffer(a.id)} style={btn("#D4AF37", "#0D1B2A")}>📨 Offer joining</button>
+                  <button disabled={busy === a.id} onClick={() => act(a.id, "decline")} style={btn("transparent", "#94A3B8")}>Decline</button>
+                </>
+              )}
+              {outcome === "offered" && <p style={{ color: "#94A3B8", fontSize: 12 }}>Waiting for crew to accept…</p>}
+              {outcome === "placed" && <p style={{ color: "#22c55e", fontSize: 12, fontWeight: 800 }}>🎉 Placed</p>}
+            </div>
+
+            {offerFor === a.id && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 10, alignItems: "center" }}>
+                <input type="date" value={joinDate} onChange={(e) => setJoinDate(e.target.value)}
+                  style={{ background: "#0D1B2A", border: "1px solid rgba(212,175,55,0.3)", color: "#e2e8f0", borderRadius: 10, padding: "8px 10px", fontSize: 12 }} />
+                <input type="number" min={1} value={months} onChange={(e) => setMonths(e.target.value)}
+                  style={{ width: 90, background: "#0D1B2A", border: "1px solid rgba(212,175,55,0.3)", color: "#e2e8f0", borderRadius: 10, padding: "8px 10px", fontSize: 12 }} />
+                <span style={{ color: "#94A3B8", fontSize: 11.5 }}>months</span>
+                <button disabled={busy === a.id}
+                  onClick={() => act(a.id, "offer", { p_joining_date: joinDate, p_contract_months: Number(months) || 9 })}
+                  style={btn("#D4AF37", "#0D1B2A")}>Confirm offer</button>
+                <button onClick={() => setOfferFor(null)} style={btn("transparent", "#94A3B8")}>Cancel</button>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 
 /* ─── Main Dashboard ─── */
 export default function AdminDashboard() {
