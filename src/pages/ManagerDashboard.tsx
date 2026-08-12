@@ -197,8 +197,25 @@ const ManagerDashboard = () => {
     loadApplicants();
   };
 
+  const loadFleet = async () => {
+    const { data } = await supabase.rpc("get_my_fleet" as any);
+    setFleet((data as unknown as FleetResult) || null);
+  };
+
+  const addFleetCrew = async () => {
+    setFleetAdding(true);
+    const { data, error } = await supabase.rpc("fleet_add_crew" as any, { p_crew_email: fleetEmail.trim() });
+    setFleetAdding(false);
+    if (error) { toast.error(error.message); return; }
+    const result = data as { ok?: boolean; error?: string } | null;
+    if (!result?.ok) { toast.error(result?.error || "Could not add crew"); return; }
+    toast.success("Invite sent — waiting for crew confirmation");
+    setFleetEmail("");
+    loadFleet();
+  };
+
   useEffect(() => {
-    if (companyName) loadApplicants();
+    if (companyName) { loadApplicants(); loadFleet(); }
   }, [companyName]);
 
   if (loading) {
