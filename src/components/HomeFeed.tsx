@@ -66,6 +66,7 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
   const [offers, setOffers] = useState<any[]>([]);
   const [celebratedOffers, setCelebratedOffers] = useState<Set<string>>(new Set());
   const [declinedOffers, setDeclinedOffers] = useState<Set<string>>(new Set());
+  const [fleetInvites, setFleetInvites] = useState<any[]>([]);
 
   const log = useCallback(async (item_type: string, item_id: string, action: string, position?: number) => {
     try {
