@@ -359,6 +359,28 @@ const ManagerSearch = () => {
                 {!r.has_cv && <span style={{ fontSize: 11, color: "#f59e0b" }}>No CV built yet</span>}
               </div>
 
+              {(() => {
+                const crewId = r.crewId || r.user_id;
+                const rev = revealed[crewId];
+                return (
+                  <div style={{ background: "rgba(212,175,55,0.06)", border: `1px solid rgba(212,175,55,0.25)`, borderRadius: 10, padding: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+                    <div style={{ fontSize: 12, color: "#e5e7eb", fontFamily: "monospace" }}>
+                      <div>📧 {rev ? (rev.email || "—") : (r.email || "•••••")}</div>
+                      <div>📱 {rev ? (rev.whatsapp || "—") : (r.whatsapp_number || "•••••")}</div>
+                    </div>
+                    {!rev && (
+                      <button
+                        onClick={() => revealContact(r)}
+                        disabled={revealBusy === crewId}
+                        style={{ ...goldBtn, padding: "8px 10px", opacity: revealBusy === crewId ? 0.6 : 1 }}
+                      >
+                        {revealBusy === crewId ? "Revealing…" : "🔓 Reveal contact — 1 credit"}
+                      </button>
+                    )}
+                  </div>
+                );
+              })()}
+
               <div style={{ display: "flex", gap: 8, marginTop: "auto" }}>
                 <button onClick={() => contactWhatsApp(r)} style={{ ...goldBtn, flex: 1, padding: "8px 10px" }}>
                   Contact via WhatsApp
