@@ -242,6 +242,8 @@ const ManagerAuth = () => {
             Free for manning companies during launch — no credit card. By registering you agree to use crew data for genuine recruitment only.
           </p>
         )}
+
+        <a href="mailto:info@indossol.com?subject=Manager portal login help" className="block text-center text-[11px] text-muted-foreground hover:text-primary">Trouble signing in? Contact SeaMinds support</a>
       </div>
 
     </div>
