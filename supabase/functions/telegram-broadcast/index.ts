@@ -54,6 +54,8 @@ const buildMessage = (v: any) => {
   if (v.applyUrl) lines.push(`🔗 ${esc(v.applyUrl)}`);
   lines.push("");
   lines.push(`🌊 More jobs: ${Deno.env.get("SUPABASE_URL")}/functions/v1/share?type=jobs`);
+  lines.push("");
+  lines.push("🏢 Is this your company's vacancy? Your applicants are waiting on SeaMinds — claim your free company account: https://seaminds.life/for-companies");
   return lines.join("\n");
 };
 
