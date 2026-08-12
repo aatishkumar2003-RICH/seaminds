@@ -29,6 +29,35 @@ const parseMaybeJson = (value: unknown) => {
   }
 };
 
+// ---- contact masking (contacts are released only via reveal_contact credits) ----
+const maskEmail = (value: unknown): string | null => {
+  if (typeof value !== "string" || !value.includes("@")) return null;
+  const [local, domain] = value.split("@");
+  if (!local || !domain) return null;
+  return `${local[0]}•••••@${domain}`;
+};
+
+const maskPhone = (value: unknown): string | null => {
+  if (typeof value !== "string" || !value.trim()) return null;
+  const plus = value.trim().startsWith("+");
+  const digits = value.replace(/[^\d]/g, "");
+  if (digits.length < 4) return "••• •••";
+  const cc = digits.slice(0, Math.min(3, Math.max(1, digits.length - 3)));
+  const last = digits.slice(-3);
+  return `${plus ? "+" : ""}${cc} ••• ••• ${last}`;
+};
+
+const maskProfileContacts = (profile: any) => {
+  if (!profile || typeof profile !== "object") return profile;
+  return {
+    ...profile,
+    email: maskEmail(profile.email),
+    whatsapp_number: maskPhone(profile.whatsapp_number),
+    manning_agent_phone: maskPhone(profile.manning_agent_phone),
+  };
+};
+
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -87,7 +116,7 @@ Deno.serve(async (req) => {
           action: "cv_view",
         });
       } catch (_e) { /* logging must never block the CV */ }
-      return json({ success: true, cv: cv ? { ...cv, medical: parseMaybeJson(cv.medical) } : null, profile });
+      return json({ success: true, cv: cv ? { ...cv, medical: parseMaybeJson(cv.medical) } : null, profile: maskProfileContacts(profile) });
     }
 
 
@@ -133,12 +162,14 @@ Deno.serve(async (req) => {
       const latest = (seaService as any[]).find((s) => s?.vesselName || s?.vessel_name);
       return {
         user_id: p.id,
+        crewId: p.id,
         cv_uid: cv?.medical?.cv_uid || personal.cvUid || p.crew_unique_id || null,
         name: [p.first_name, p.last_name].filter(Boolean).join(" ") || personal.name || "Unnamed crew",
         rank: p.rank || personal.rank || personal.applyingFor || p.role || "—",
         nationality: p.nationality || personal.nationality || "—",
         vessel_type: p.vessel_type || latest?.vesselType || latest?.vessel_type || (p.preferred_vessel_types || [])[0] || "—",
-        whatsapp_number: p.whatsapp_number || personal.phone || personal.whatsapp || null,
+        whatsapp_number: maskPhone(p.whatsapp_number || personal.phone || personal.whatsapp || null),
+        email: maskEmail(p.email || personal.email || null),
         is_available: !!p.is_available,
         available_from: p.available_from || personal.availableFrom || null,
         years_at_sea: p.years_at_sea || null,

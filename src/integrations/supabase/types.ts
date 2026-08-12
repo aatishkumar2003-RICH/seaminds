@@ -3135,11 +3135,13 @@ export type Database = {
       }
       get_interview_by_token: { Args: { p_token: string }; Returns: Json }
       get_my_applicants: { Args: never; Returns: Json }
+      get_my_credit_balance: { Args: never; Returns: Json }
       get_my_fleet: { Args: never; Returns: Json }
       get_my_referral_stats: { Args: never; Returns: Json }
       get_public_ticker_stats: { Args: never; Returns: Json }
       get_social_pulse: { Args: never; Returns: Json }
       get_voyage_state: { Args: never; Returns: Json }
+      grant_monthly_credits: { Args: never; Returns: string }
       has_entitlement: {
         Args: { p_holder: string; p_product: string }
         Returns: boolean
@@ -3181,6 +3183,7 @@ export type Database = {
         Args: { p_rank: string; p_vessel: string; p_years_in_rank: number }
         Returns: Json
       }
+      reveal_contact: { Args: { p_crew_id: string }; Returns: Json }
       seaminds_housekeeping: { Args: never; Returns: string }
       search_maritime_history: {
         Args: { p_kind?: string; p_limit?: number; p_query?: string }

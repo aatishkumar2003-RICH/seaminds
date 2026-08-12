@@ -36,12 +36,14 @@ const NATIONALITIES = [
 
 interface CrewResult {
   user_id: string;
+  crewId?: string;
   cv_uid: string | null;
   name: string;
   rank: string;
   nationality: string;
   vessel_type: string;
   whatsapp_number: string | null;
+  email?: string | null;
   is_available: boolean;
   available_from: string | null;
   years_at_sea: string | null;
@@ -51,6 +53,9 @@ interface CrewResult {
   smc_band: string | null;
   has_cv: boolean;
 }
+
+const REFILL_MAILTO = "mailto:info@indossol.com?subject=Credit refill request";
+
 
 const input: React.CSSProperties = {
   width: "100%", padding: "10px 12px", borderRadius: 8,
@@ -104,6 +109,15 @@ const ManagerSearch = () => {
   const [searched, setSearched] = useState(false);
   const [pdfBusy, setPdfBusy] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [balance, setBalance] = useState<number | null>(null);
+  const [revealBusy, setRevealBusy] = useState<string | null>(null);
+  const [revealed, setRevealed] = useState<Record<string, { email: string | null; whatsapp: string | null }>>({});
+
+  const loadBalance = async () => {
+    const { data } = await supabase.rpc("get_my_credit_balance" as any);
+    const bal = (data as any)?.balance;
+    if (typeof bal === "number") setBalance(bal);
+  };
 
   const search = async () => {
     setLoading(true);
@@ -125,6 +139,30 @@ const ManagerSearch = () => {
     }
   };
 
+  const revealContact = async (row: CrewResult) => {
+    const crewId = row.crewId || row.user_id;
+    setRevealBusy(crewId);
+    try {
+      const { data, error } = await supabase.rpc("reveal_contact" as any, { p_crew_id: crewId });
+      if (error) { toast.error(error.message); return; }
+      const res: any = data;
+      if (res?.ok) {
+        setRevealed((prev) => ({ ...prev, [crewId]: { email: res.email ?? null, whatsapp: res.whatsapp ?? null } }));
+        if (typeof res.balance === "number") setBalance(res.balance);
+        toast(res.charged ? "Contact revealed — 1 credit used" : "Already revealed — free");
+      } else if (res?.error === "no_credits") {
+        toast.error("Out of credits", {
+          description: "Monthly free credits refresh on the 1st — or request a refill.",
+          action: { label: "Refill", onClick: () => window.open(REFILL_MAILTO) },
+        });
+      } else {
+        toast.error(res?.error || "Could not reveal contact");
+      }
+    } finally {
+      setRevealBusy(null);
+    }
+  };
+
   useEffect(() => {
     let active = true;
     (async () => {
@@ -132,11 +170,13 @@ const ManagerSearch = () => {
       if (!active) return;
       if (!data?.user) { navigate("/manager"); return; }
       setReady(true);
+      loadBalance();
       search();
     })();
     return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
   const viewFullCv = async (row: CrewResult) => {
     setPdfBusy(row.user_id);
@@ -169,7 +209,10 @@ const ManagerSearch = () => {
 
 
   const contactWhatsApp = (row: CrewResult) => {
-    const digits = (row.whatsapp_number || "").replace(/[^\d]/g, "");
+    const crewId = row.crewId || row.user_id;
+    const revealedWa = revealed[crewId]?.whatsapp;
+    if (!revealedWa) return toast.error("Reveal the contact first (1 credit)");
+    const digits = revealedWa.replace(/[^\d]/g, "");
     if (!digits) return toast.error("No WhatsApp number on file");
     const msg = encodeURIComponent(
       `Hello ${row.name}, we found your SeaMinds profile (${row.cv_uid || "CV"}) and would like to discuss a ${row.rank} opportunity.`,
@@ -198,6 +241,14 @@ const ManagerSearch = () => {
                 {searched ? `${results.length} crew · ${availableCount} available now` : "Search verified SeaMinds crew"}
               </p>
             </div>
+            {balance !== null && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ background: "rgba(212,175,55,0.15)", border: `1px solid ${GOLD}`, color: GOLD, borderRadius: 999, padding: "5px 12px", fontSize: 12, fontWeight: 800, whiteSpace: "nowrap" }}>
+                  💳 {balance} credits
+                </span>
+                <a href={REFILL_MAILTO} style={{ color: "#94A3B8", fontSize: 11, textDecoration: "underline" }}>Refill</a>
+              </div>
+            )}
           </div>
           <button
             onClick={async () => { await supabase.auth.signOut(); navigate("/manager"); }}
@@ -270,6 +321,10 @@ const ManagerSearch = () => {
           </div>
         </div>
 
+        <p style={{ color: "#94A3B8", fontSize: 12, lineHeight: 1.6, marginTop: -8 }}>
+          Contacts are protected. Each reveal uses 1 credit (30 free monthly). Interviewing &amp; offering via SeaMinds never needs credits.
+        </p>
+
         {/* Results */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 14 }}>
           {results.map((r) => (
@@ -306,6 +361,28 @@ const ManagerSearch = () => {
                 {r.whatsapp_verified && <span style={{ fontSize: 11, color: "#10b981" }}>🟢 WhatsApp verified</span>}
                 {!r.has_cv && <span style={{ fontSize: 11, color: "#f59e0b" }}>No CV built yet</span>}
               </div>
+
+              {(() => {
+                const crewId = r.crewId || r.user_id;
+                const rev = revealed[crewId];
+                return (
+                  <div style={{ background: "rgba(212,175,55,0.06)", border: `1px solid rgba(212,175,55,0.25)`, borderRadius: 10, padding: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+                    <div style={{ fontSize: 12, color: "#e5e7eb", fontFamily: "monospace" }}>
+                      <div>📧 {rev ? (rev.email || "—") : (r.email || "•••••")}</div>
+                      <div>📱 {rev ? (rev.whatsapp || "—") : (r.whatsapp_number || "•••••")}</div>
+                    </div>
+                    {!rev && (
+                      <button
+                        onClick={() => revealContact(r)}
+                        disabled={revealBusy === crewId}
+                        style={{ ...goldBtn, padding: "8px 10px", opacity: revealBusy === crewId ? 0.6 : 1 }}
+                      >
+                        {revealBusy === crewId ? "Revealing…" : "🔓 Reveal contact — 1 credit"}
+                      </button>
+                    )}
+                  </div>
+                );
+              })()}
 
               <div style={{ display: "flex", gap: 8, marginTop: "auto" }}>
                 <button onClick={() => contactWhatsApp(r)} style={{ ...goldBtn, flex: 1, padding: "8px 10px" }}>
