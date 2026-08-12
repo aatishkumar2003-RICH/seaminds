@@ -37,6 +37,23 @@ interface Applicant {
   offered_joining_date: string;
 }
 
+interface FleetCrew {
+  link_id: string;
+  name: string;
+  rank: string;
+  nationality: string;
+  certs_total: number;
+  certs_expiring_90d: number;
+  rest_hours_updated: string | null;
+  contract_end: string | null;
+}
+
+interface FleetResult {
+  ok?: boolean;
+  error?: string;
+  crew?: FleetCrew[];
+}
+
 type SortKey = "shipName";
 type DashTab = "crew" | "payments";
 
