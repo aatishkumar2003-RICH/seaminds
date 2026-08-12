@@ -245,6 +245,40 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
     loadOffers();
   }, [profileId]);
 
+  useEffect(() => {
+    if (!profileId) return;
+    const loadInvites = async () => {
+      const { data, error } = await supabase
+        .from("company_fleet_links" as any)
+        .select("id, manager_id, status")
+        .eq("crew_id", profileId)
+        .eq("status", "pending");
+      if (error || !data?.length) { setFleetInvites([]); return; }
+      const rows = data as any[];
+      const managerIds = Array.from(new Set(rows.map((r) => r.manager_id)));
+      const { data: mgrs } = await supabase
+        .from("manager_profiles")
+        .select("id, company_name")
+        .in("id", managerIds);
+      const nameById: Record<string, string> = {};
+      ((mgrs as any[]) || []).forEach((m) => { nameById[m.id] = m.company_name; });
+      setFleetInvites(rows.map((r) => ({ ...r, company_name: nameById[r.manager_id] || "A company" })));
+    };
+    loadInvites();
+  }, [profileId]);
+
+  const respondToFleetLink = async (invite: any, accept: boolean) => {
+    const { data, error } = await supabase.rpc("crew_respond_fleet_link" as any, {
+      p_link_id: invite.id,
+      p_accept: accept,
+    });
+    if (error) { toast.error(error.message); return; }
+    const result = data as { ok?: boolean; error?: string } | null;
+    if (!result?.ok) { toast.error(result?.error || "Failed to respond"); return; }
+    setFleetInvites((prev) => prev.filter((i) => i.id !== invite.id));
+    toast.success(accept ? `Linked with ${invite.company_name}` : "Declined");
+  };
+
   const respondToOffer = async (offer: any, accept: boolean) => {
     if (!accept && !window.confirm("Decline this offer? The company will be notified.")) return;
     const { data, error } = await supabase.rpc("crew_respond_offer" as any, {
