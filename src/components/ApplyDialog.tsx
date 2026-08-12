@@ -85,7 +85,7 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
       if (!r?.ok) {
         setError(r?.error === "not_signed_in"
           ? "Please sign in to apply."
-          : "ERR: " + (r?.error || JSON.stringify(r).slice(0, 180)));
+          : "Could not save your application. Please try again.");
         return;
       }
 
