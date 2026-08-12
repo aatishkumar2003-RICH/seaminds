@@ -28,7 +28,6 @@ interface Props {
 
 const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
   const [readiness, setReadiness] = useState<any>(null);
-  const [readinessErr, setReadinessErr] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState<null | { duplicate: boolean }>(null);
@@ -36,27 +35,23 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
 
   useEffect(() => {
     if (!open) return;
-    if (!profileId) { setReadiness(null); setReadinessErr(""); setLoading(false); return; }
-    setLoading(true); setDone(null); setError(""); setReadinessErr("");
+    if (!profileId) { setReadiness(null); setLoading(false); return; }
+    setLoading(true); setDone(null); setError("");
     (async () => {
-      let errMsg = "";
       try {
         const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 8000));
         const rpcCall = supabase.rpc("cv_interview_readiness" as any, {
           p_crew_id: profileId, p_target_rank: target?.rank || null,
         }).then(({ data, error }) => {
-          if (error) { errMsg = error.message || "rpc error"; return null; }
+          if (error) return null;
           if (!data) return null;
           return data;
         });
         const result = await Promise.race([rpcCall, timeout]);
-        if (result === null && !errMsg) errMsg = "timeout";
         setReadiness(result);
-      } catch (err: any) {
-        errMsg = err?.message || "catch";
+      } catch {
         setReadiness(null);
       } finally {
-        setReadinessErr(errMsg);
         setLoading(false);
       }
     })();
