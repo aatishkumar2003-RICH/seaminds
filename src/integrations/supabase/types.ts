@@ -1639,6 +1639,48 @@ export type Database = {
           },
         ]
       }
+      interview_matrix: {
+        Row: {
+          created_at: string
+          department: string
+          experience_tier: string
+          id: string
+          notes: string | null
+          rank_group: string
+          scenario_weight: number
+          senior_mode: boolean
+          technical_weight: number
+          topics: Json
+          vessel_type: string | null
+        }
+        Insert: {
+          created_at?: string
+          department: string
+          experience_tier: string
+          id?: string
+          notes?: string | null
+          rank_group: string
+          scenario_weight?: number
+          senior_mode?: boolean
+          technical_weight?: number
+          topics?: Json
+          vessel_type?: string | null
+        }
+        Update: {
+          created_at?: string
+          department?: string
+          experience_tier?: string
+          id?: string
+          notes?: string | null
+          rank_group?: string
+          scenario_weight?: number
+          senior_mode?: boolean
+          technical_weight?: number
+          topics?: Json
+          vessel_type?: string | null
+        }
+        Relationships: []
+      }
       interview_pre_form: {
         Row: {
           accident_history: string | null
