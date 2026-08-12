@@ -337,6 +337,24 @@ export type Database = {
           },
         ]
       }
+      cached_stats: {
+        Row: {
+          key: string
+          updated_at: string | null
+          value: Json | null
+        }
+        Insert: {
+          key: string
+          updated_at?: string | null
+          value?: Json | null
+        }
+        Update: {
+          key?: string
+          updated_at?: string | null
+          value?: Json | null
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           content: string
@@ -1316,6 +1334,48 @@ export type Database = {
           verified_at?: string | null
           vessel_type?: string | null
           whatsapp_number?: string | null
+        }
+        Relationships: []
+      }
+      entitlements: {
+        Row: {
+          amount_cents: number | null
+          created_at: string
+          currency: string | null
+          external_ref: string | null
+          holder_id: string
+          id: string
+          product: string
+          source: string
+          status: string
+          updated_at: string
+          valid_until: string | null
+        }
+        Insert: {
+          amount_cents?: number | null
+          created_at?: string
+          currency?: string | null
+          external_ref?: string | null
+          holder_id: string
+          id?: string
+          product: string
+          source?: string
+          status?: string
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Update: {
+          amount_cents?: number | null
+          created_at?: string
+          currency?: string | null
+          external_ref?: string | null
+          holder_id?: string
+          id?: string
+          product?: string
+          source?: string
+          status?: string
+          updated_at?: string
+          valid_until?: string | null
         }
         Relationships: []
       }
@@ -2952,6 +3012,10 @@ export type Database = {
       }
       expire_old_vacancies: { Args: never; Returns: string }
       fleet_add_crew: { Args: { p_crew_email: string }; Returns: Json }
+      fleet_gate_open: {
+        Args: { p_mp: Database["public"]["Tables"]["manager_profiles"]["Row"] }
+        Returns: boolean
+      }
       get_admin_settings: {
         Args: { p_keys: string[] }
         Returns: {
@@ -2979,6 +3043,10 @@ export type Database = {
       get_my_applicants: { Args: never; Returns: Json }
       get_my_fleet: { Args: never; Returns: Json }
       get_public_ticker_stats: { Args: never; Returns: Json }
+      has_entitlement: {
+        Args: { p_holder: string; p_product: string }
+        Returns: boolean
+      }
       increment_discount_uses: {
         Args: { input_code: string }
         Returns: undefined
@@ -2999,12 +3067,14 @@ export type Database = {
         }
         Returns: Json
       }
+      outreach_digest_scan: { Args: never; Returns: string }
       owns_crew_profile: {
         Args: { _crew_profile_id: string }
         Returns: boolean
       }
       placement_release_scan: { Args: never; Returns: string }
       rank_group_of: { Args: { p_rank: string }; Returns: string }
+      refresh_ticker_stats: { Args: never; Returns: undefined }
       report_company_post: {
         Args: { post_id: string; reason?: string }
         Returns: boolean
