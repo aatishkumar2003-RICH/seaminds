@@ -54,6 +54,9 @@ const ManagerDashboard = () => {
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [applicantsLoading, setApplicantsLoading] = useState(false);
   const [offerDrafts, setOfferDrafts] = useState<Record<string, { joiningDate: string; contractMonths: number; open: boolean }>>({});
+  const [fleet, setFleet] = useState<FleetResult | null>(null);
+  const [fleetEmail, setFleetEmail] = useState("");
+  const [fleetAdding, setFleetAdding] = useState(false);
   useEffect(() => {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser();
