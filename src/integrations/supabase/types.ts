@@ -3067,6 +3067,7 @@ export type Database = {
         }
         Returns: Json
       }
+      marketing_pack_daily: { Args: never; Returns: string }
       outreach_digest_scan: { Args: never; Returns: string }
       owns_crew_profile: {
         Args: { _crew_profile_id: string }
