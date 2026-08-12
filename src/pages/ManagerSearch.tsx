@@ -36,12 +36,14 @@ const NATIONALITIES = [
 
 interface CrewResult {
   user_id: string;
+  crewId?: string;
   cv_uid: string | null;
   name: string;
   rank: string;
   nationality: string;
   vessel_type: string;
   whatsapp_number: string | null;
+  email?: string | null;
   is_available: boolean;
   available_from: string | null;
   years_at_sea: string | null;
@@ -51,6 +53,9 @@ interface CrewResult {
   smc_band: string | null;
   has_cv: boolean;
 }
+
+const REFILL_MAILTO = "mailto:info@indossol.com?subject=Credit refill request";
+
 
 const input: React.CSSProperties = {
   width: "100%", padding: "10px 12px", borderRadius: 8,
