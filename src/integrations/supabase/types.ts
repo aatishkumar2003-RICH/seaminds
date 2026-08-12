@@ -3085,6 +3085,8 @@ export type Database = {
       get_my_applicants: { Args: never; Returns: Json }
       get_my_fleet: { Args: never; Returns: Json }
       get_public_ticker_stats: { Args: never; Returns: Json }
+      get_social_pulse: { Args: never; Returns: Json }
+      get_voyage_state: { Args: never; Returns: Json }
       has_entitlement: {
         Args: { p_holder: string; p_product: string }
         Returns: boolean
@@ -3121,6 +3123,10 @@ export type Database = {
       report_company_post: {
         Args: { post_id: string; reason?: string }
         Returns: boolean
+      }
+      resolve_interview_spec: {
+        Args: { p_rank: string; p_vessel: string; p_years_in_rank: number }
+        Returns: Json
       }
       seaminds_housekeeping: { Args: never; Returns: string }
       search_maritime_history: {
