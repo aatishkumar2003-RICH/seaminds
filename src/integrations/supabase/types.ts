@@ -438,6 +438,39 @@ export type Database = {
         }
         Relationships: []
       }
+      company_fleet_links: {
+        Row: {
+          created_at: string
+          crew_id: string
+          expires_at: string | null
+          id: string
+          linked_at: string | null
+          manager_id: string
+          source: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          crew_id: string
+          expires_at?: string | null
+          id?: string
+          linked_at?: string | null
+          manager_id: string
+          source?: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          crew_id?: string
+          expires_at?: string | null
+          id?: string
+          linked_at?: string | null
+          manager_id?: string
+          source?: string
+          status?: string
+        }
+        Relationships: []
+      }
       company_posts: {
         Row: {
           caption: string
@@ -1900,6 +1933,8 @@ export type Database = {
           country: string | null
           created_at: string
           designation: string | null
+          fleet_active: boolean
+          fleet_until: string | null
           full_name: string | null
           id: string
           phone: string | null
@@ -1914,6 +1949,8 @@ export type Database = {
           country?: string | null
           created_at?: string
           designation?: string | null
+          fleet_active?: boolean
+          fleet_until?: string | null
           full_name?: string | null
           id?: string
           phone?: string | null
@@ -1928,6 +1965,8 @@ export type Database = {
           country?: string | null
           created_at?: string
           designation?: string | null
+          fleet_active?: boolean
+          fleet_until?: string | null
           full_name?: string | null
           id?: string
           phone?: string | null
