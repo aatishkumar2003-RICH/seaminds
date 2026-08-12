@@ -430,7 +430,7 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
 
 
       <div className="px-4 space-y-3">
-        {shown.map((c, i) => {
+        {shown.flatMap((c, i) => { const el = ((): JSX.Element => {
           if (c.kind === "company") {
             const p = c.data;
             const TYPE_LABEL: Record<string, string> = {
