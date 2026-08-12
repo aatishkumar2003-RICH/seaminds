@@ -238,6 +238,14 @@ const ManagerSearch = () => {
                 {searched ? `${results.length} crew · ${availableCount} available now` : "Search verified SeaMinds crew"}
               </p>
             </div>
+            {balance !== null && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ background: "rgba(212,175,55,0.15)", border: `1px solid ${GOLD}`, color: GOLD, borderRadius: 999, padding: "5px 12px", fontSize: 12, fontWeight: 800, whiteSpace: "nowrap" }}>
+                  💳 {balance} credits
+                </span>
+                <a href={REFILL_MAILTO} style={{ color: "#94A3B8", fontSize: 11, textDecoration: "underline" }}>Refill</a>
+              </div>
+            )}
           </div>
           <button
             onClick={async () => { await supabase.auth.signOut(); navigate("/manager"); }}
