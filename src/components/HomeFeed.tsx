@@ -67,6 +67,23 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
   const [celebratedOffers, setCelebratedOffers] = useState<Set<string>>(new Set());
   const [declinedOffers, setDeclinedOffers] = useState<Set<string>>(new Set());
   const [fleetInvites, setFleetInvites] = useState<any[]>([]);
+  const [refStats, setRefStats] = useState<{ link: string; shipmates_aboard: number } | null>(null);
+
+  useEffect(() => {
+    if (!profileId) return;
+    let cancelled = false;
+    (async () => {
+      const code = localStorage.getItem("sm_ref");
+      if (code) {
+        try { await supabase.rpc("claim_referral" as any, { p_code: code }); } catch { /* ignore */ }
+        localStorage.removeItem("sm_ref");
+      }
+      const { data } = await supabase.rpc("get_my_referral_stats" as any);
+      const s = data as any;
+      if (!cancelled && s?.link) setRefStats({ link: s.link, shipmates_aboard: s.shipmates_aboard || 0 });
+    })();
+    return () => { cancelled = true; };
+  }, [profileId]);
 
   const log = useCallback(async (item_type: string, item_id: string, action: string, position?: number) => {
     try {
@@ -430,7 +447,7 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
 
 
       <div className="px-4 space-y-3">
-        {shown.map((c, i) => {
+        {shown.flatMap((c, i) => { const el = ((): JSX.Element => {
           if (c.kind === "company") {
             const p = c.data;
             const TYPE_LABEL: Record<string, string> = {
@@ -736,6 +753,34 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
               </div>
             </article>
           );
+        })();
+          if (i !== 3 || !refStats?.link) return [el];
+          return [
+            <div key="referral-card" className="rounded-2xl" style={{ background: CARD, border: `1px solid ${GOLD}`, padding: 14 }}>
+              <p className="text-[14px] font-extrabold" style={{ color: GOLD }}>🤝 Invite a shipmate</p>
+              <p className="mt-1 text-[12.5px] leading-relaxed" style={{ color: "#94A3B8" }}>
+                {refStats.shipmates_aboard > 0
+                  ? `⚓ ${refStats.shipmates_aboard} shipmate(s) came aboard through you — keep the crew growing!`
+                  : "Good ships run on good crews. Share SeaMinds with your shipmates — free jobs, AI CV, no agent fees."}
+              </p>
+              <button
+                onClick={() => {
+                  const payload = {
+                    title: "SeaMinds",
+                    text: "Join me on SeaMinds — free maritime jobs, AI CV builder, no agent fees ⚓",
+                    url: refStats.link,
+                  };
+                  if (navigator.share) { navigator.share(payload).catch(() => {}); }
+                  else { navigator.clipboard.writeText(refStats.link); toast("Link copied!"); }
+                }}
+                className="mt-3 rounded-xl px-4 py-2 text-[12.5px] font-bold"
+                style={{ background: GOLD, color: NAVY, border: "none", cursor: "pointer" }}
+              >
+                Share my link
+              </button>
+            </div>,
+            el,
+          ];
         })}
 
         {visible < cards.length && (

@@ -26,6 +26,12 @@ const HomePage = () => {
 
   useEffect(() => { document.title = "Seafarer Jobs, Crew Wellness & Verified Maritime Talent | SeaMinds"; }, []);
 
+  // Capture referral code from share links (seaminds.life/?ref=CODE)
+  useEffect(() => {
+    const ref = new URLSearchParams(window.location.search).get("ref");
+    if (ref && ref.length >= 6) localStorage.setItem("sm_ref", ref);
+  }, []);
+
   // Password recovery links must land on the reset page
   useEffect(() => {
     if ((window.location.hash || "").includes("type=recovery")) {
