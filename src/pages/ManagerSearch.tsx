@@ -209,7 +209,10 @@ const ManagerSearch = () => {
 
 
   const contactWhatsApp = (row: CrewResult) => {
-    const digits = (row.whatsapp_number || "").replace(/[^\d]/g, "");
+    const crewId = row.crewId || row.user_id;
+    const revealedWa = revealed[crewId]?.whatsapp;
+    if (!revealedWa) return toast.error("Reveal the contact first (1 credit)");
+    const digits = revealedWa.replace(/[^\d]/g, "");
     if (!digits) return toast.error("No WhatsApp number on file");
     const msg = encodeURIComponent(
       `Hello ${row.name}, we found your SeaMinds profile (${row.cv_uid || "CV"}) and would like to discuss a ${row.rank} opportunity.`,
