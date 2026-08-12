@@ -109,6 +109,15 @@ const ManagerSearch = () => {
   const [searched, setSearched] = useState(false);
   const [pdfBusy, setPdfBusy] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [balance, setBalance] = useState<number | null>(null);
+  const [revealBusy, setRevealBusy] = useState<string | null>(null);
+  const [revealed, setRevealed] = useState<Record<string, { email: string | null; whatsapp: string | null }>>({});
+
+  const loadBalance = async () => {
+    const { data } = await supabase.rpc("get_my_credit_balance" as any);
+    const bal = (data as any)?.balance;
+    if (typeof bal === "number") setBalance(bal);
+  };
 
   const search = async () => {
     setLoading(true);
@@ -130,6 +139,30 @@ const ManagerSearch = () => {
     }
   };
 
+  const revealContact = async (row: CrewResult) => {
+    const crewId = row.crewId || row.user_id;
+    setRevealBusy(crewId);
+    try {
+      const { data, error } = await supabase.rpc("reveal_contact" as any, { p_crew_id: crewId });
+      if (error) { toast.error(error.message); return; }
+      const res: any = data;
+      if (res?.ok) {
+        setRevealed((prev) => ({ ...prev, [crewId]: { email: res.email ?? null, whatsapp: res.whatsapp ?? null } }));
+        if (typeof res.balance === "number") setBalance(res.balance);
+        toast(res.charged ? "Contact revealed — 1 credit used" : "Already revealed — free");
+      } else if (res?.error === "no_credits") {
+        toast.error("Out of credits", {
+          description: "Monthly free credits refresh on the 1st — or request a refill.",
+          action: { label: "Refill", onClick: () => window.open(REFILL_MAILTO) },
+        });
+      } else {
+        toast.error(res?.error || "Could not reveal contact");
+      }
+    } finally {
+      setRevealBusy(null);
+    }
+  };
+
   useEffect(() => {
     let active = true;
     (async () => {
@@ -137,11 +170,13 @@ const ManagerSearch = () => {
       if (!active) return;
       if (!data?.user) { navigate("/manager"); return; }
       setReady(true);
+      loadBalance();
       search();
     })();
     return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
   const viewFullCv = async (row: CrewResult) => {
     setPdfBusy(row.user_id);
