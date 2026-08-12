@@ -29,6 +29,35 @@ const parseMaybeJson = (value: unknown) => {
   }
 };
 
+// ---- contact masking (contacts are released only via reveal_contact credits) ----
+const maskEmail = (value: unknown): string | null => {
+  if (typeof value !== "string" || !value.includes("@")) return null;
+  const [local, domain] = value.split("@");
+  if (!local || !domain) return null;
+  return `${local[0]}•••••@${domain}`;
+};
+
+const maskPhone = (value: unknown): string | null => {
+  if (typeof value !== "string" || !value.trim()) return null;
+  const plus = value.trim().startsWith("+");
+  const digits = value.replace(/[^\d]/g, "");
+  if (digits.length < 4) return "••• •••";
+  const cc = digits.slice(0, Math.min(3, Math.max(1, digits.length - 3)));
+  const last = digits.slice(-3);
+  return `${plus ? "+" : ""}${cc} ••• ••• ${last}`;
+};
+
+const maskProfileContacts = (profile: any) => {
+  if (!profile || typeof profile !== "object") return profile;
+  return {
+    ...profile,
+    email: maskEmail(profile.email),
+    whatsapp_number: maskPhone(profile.whatsapp_number),
+    manning_agent_phone: maskPhone(profile.manning_agent_phone),
+  };
+};
+
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
