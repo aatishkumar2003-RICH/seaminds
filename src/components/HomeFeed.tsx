@@ -400,6 +400,35 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
         </div>
       ))}
 
+      {fleetInvites.map((inv) => (
+        <div key={inv.id} className="mx-4 mb-3 rounded-2xl p-4" style={{ background: CARD, border: `1px solid ${GOLD}` }}>
+          <p className="text-[15px] font-extrabold" style={{ color: GOLD }}>
+            🏢 {inv.company_name} wants to link you as their crew
+          </p>
+          <p className="mt-1.5 text-[12px] leading-relaxed" style={{ color: "#94a3b8" }}>
+            They will see your rest hours, certificates and CV as your employer — never your wellness chats or mood check-ins.
+          </p>
+          <div className="flex gap-2 mt-3">
+            <button
+              onClick={() => respondToFleetLink(inv, true)}
+              className="flex-1 rounded-xl py-2.5 font-bold text-[13px]"
+              style={{ background: GOLD, color: NAVY, border: "none", cursor: "pointer" }}
+            >
+              ✓ Confirm
+            </button>
+            <button
+              onClick={() => respondToFleetLink(inv, false)}
+              className="flex-1 rounded-xl py-2.5 font-bold text-[13px]"
+              style={{ background: "transparent", color: GOLD, border: `1px solid ${GOLD}`, cursor: "pointer" }}
+            >
+              Decline
+            </button>
+          </div>
+        </div>
+      ))}
+
+
+
       <div className="px-4 space-y-3">
         {shown.map((c, i) => {
           if (c.kind === "company") {
