@@ -987,6 +987,8 @@ export type Database = {
           preferred_vessel_types: string[] | null
           profile_visible: boolean | null
           rank: string | null
+          referral_claimed_at: string | null
+          referred_by: string | null
           role: string
           ship_name: string
           user_id: string | null
@@ -1035,6 +1037,8 @@ export type Database = {
           preferred_vessel_types?: string[] | null
           profile_visible?: boolean | null
           rank?: string | null
+          referral_claimed_at?: string | null
+          referred_by?: string | null
           role: string
           ship_name: string
           user_id?: string | null
@@ -1083,6 +1087,8 @@ export type Database = {
           preferred_vessel_types?: string[] | null
           profile_visible?: boolean | null
           rank?: string | null
+          referral_claimed_at?: string | null
+          referred_by?: string | null
           role?: string
           ship_name?: string
           user_id?: string | null
