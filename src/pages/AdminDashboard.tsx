@@ -1480,6 +1480,7 @@ export default function AdminDashboard() {
       {tab === "company_dir" && <CompanyDirectoryTab />}
       {tab === "company_posts" && <CompanyPostsTab />}
       {tab === "marketing" && <MarketingTab />}
+      {tab === "applications" && <ApplicationsTab />}
     </div>
   );
 }
