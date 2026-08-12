@@ -29,6 +29,7 @@ const inputStyle: React.CSSProperties = {
 type Channel = { id: string; platform: string; label: string; url: string };
 
 const Marketing = () => {
+  const navigate = useNavigate();
   const [checking, setChecking] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [member, setMember] = useState<boolean | null>(null);
