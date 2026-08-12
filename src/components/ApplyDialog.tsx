@@ -105,9 +105,8 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
       }
 
       setDone({ duplicate: !!r.duplicate });
-    } catch (err: any) {
-      const detail = err?.message || err?.error_description || err?.code || JSON.stringify(err).slice(0, 180);
-      setError("ERR: " + detail);
+    } catch {
+      setError("Could not save your application. Please try again.");
     } finally {
       setSaving(false);
     }
