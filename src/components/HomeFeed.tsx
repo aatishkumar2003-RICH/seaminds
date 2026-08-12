@@ -67,6 +67,23 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
   const [celebratedOffers, setCelebratedOffers] = useState<Set<string>>(new Set());
   const [declinedOffers, setDeclinedOffers] = useState<Set<string>>(new Set());
   const [fleetInvites, setFleetInvites] = useState<any[]>([]);
+  const [refStats, setRefStats] = useState<{ link: string; shipmates_aboard: number } | null>(null);
+
+  useEffect(() => {
+    if (!profileId) return;
+    let cancelled = false;
+    (async () => {
+      const code = localStorage.getItem("sm_ref");
+      if (code) {
+        try { await supabase.rpc("claim_referral" as any, { p_code: code }); } catch { /* ignore */ }
+        localStorage.removeItem("sm_ref");
+      }
+      const { data } = await supabase.rpc("get_my_referral_stats" as any);
+      const s = data as any;
+      if (!cancelled && s?.link) setRefStats({ link: s.link, shipmates_aboard: s.shipmates_aboard || 0 });
+    })();
+    return () => { cancelled = true; };
+  }, [profileId]);
 
   const log = useCallback(async (item_type: string, item_id: string, action: string, position?: number) => {
     try {
