@@ -162,12 +162,14 @@ Deno.serve(async (req) => {
       const latest = (seaService as any[]).find((s) => s?.vesselName || s?.vessel_name);
       return {
         user_id: p.id,
+        crewId: p.id,
         cv_uid: cv?.medical?.cv_uid || personal.cvUid || p.crew_unique_id || null,
         name: [p.first_name, p.last_name].filter(Boolean).join(" ") || personal.name || "Unnamed crew",
         rank: p.rank || personal.rank || personal.applyingFor || p.role || "—",
         nationality: p.nationality || personal.nationality || "—",
         vessel_type: p.vessel_type || latest?.vesselType || latest?.vessel_type || (p.preferred_vessel_types || [])[0] || "—",
-        whatsapp_number: p.whatsapp_number || personal.phone || personal.whatsapp || null,
+        whatsapp_number: maskPhone(p.whatsapp_number || personal.phone || personal.whatsapp || null),
+        email: maskEmail(p.email || personal.email || null),
         is_available: !!p.is_available,
         available_from: p.available_from || personal.availableFrom || null,
         years_at_sea: p.years_at_sea || null,
