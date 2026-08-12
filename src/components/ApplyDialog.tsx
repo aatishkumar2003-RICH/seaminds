@@ -171,9 +171,6 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
                   <p style={{ color: "#94a3b8", fontSize: 12.5 }}>
                     We couldn't check your profile right now — you can still apply.
                   </p>
-                  {readinessErr && (
-                    <p style={{ color: "#64748B", fontSize: 10, marginTop: 4 }}>{readinessErr}</p>
-                  )}
                 </div>
               ) : ready ? (
                 <div style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.35)", borderRadius: 12, padding: 13, marginBottom: 14 }}>
