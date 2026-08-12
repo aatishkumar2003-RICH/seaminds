@@ -610,6 +610,27 @@ export type Database = {
           },
         ]
       }
+      contact_reveals: {
+        Row: {
+          created_at: string
+          crew_id: string
+          id: string
+          manager_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          crew_id: string
+          id?: string
+          manager_user_id: string
+        }
+        Update: {
+          created_at?: string
+          crew_id?: string
+          id?: string
+          manager_user_id?: string
+        }
+        Relationships: []
+      }
       contact_submissions: {
         Row: {
           created_at: string
@@ -781,6 +802,30 @@ export type Database = {
           price_self_assessment?: number | null
           updated_at?: string | null
           updated_by?: string | null
+        }
+        Relationships: []
+      }
+      credit_ledger: {
+        Row: {
+          created_at: string
+          delta: number
+          id: string
+          manager_user_id: string
+          reason: string
+        }
+        Insert: {
+          created_at?: string
+          delta: number
+          id?: string
+          manager_user_id: string
+          reason: string
+        }
+        Update: {
+          created_at?: string
+          delta?: number
+          id?: string
+          manager_user_id?: string
+          reason?: string
         }
         Relationships: []
       }
