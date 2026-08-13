@@ -173,16 +173,31 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
 
 
   if (phase === "loading") {
+    if (scoringFailed) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full gap-4 px-6 text-center">
+          <Shield size={40} className="text-primary" />
+          <p className="text-base font-semibold text-foreground">Scoring is still in progress</p>
+          <p className="text-xs text-muted-foreground">Your answers are safely recorded. Your SMC score will appear on your profile shortly.</p>
+          <button onClick={onComplete}
+            style={{ background:'#D4AF37', color:'#0D1B2A', border:'none', padding:'10px 24px', borderRadius:'8px', fontWeight:'bold', cursor:'pointer' }}>
+            Back to my profile
+          </button>
+        </div>
+      );
+    }
     return (
       <div className="flex flex-col items-center justify-center h-full gap-6">
         <div className="w-20 h-20 rounded-2xl bg-primary/15 flex items-center justify-center animate-pulse">
           <Shield size={40} className="text-primary" />
         </div>
-        <p className="text-lg font-semibold text-foreground">Calculating your SMC Score...</p>
+        <p className="text-lg font-semibold text-foreground">Scoring in progress…</p>
+        <p className="text-xs text-muted-foreground">This takes a few seconds — please stay on this screen.</p>
         <Loader2 size={24} className="text-primary animate-spin" />
       </div>
     );
   }
+
 
   if (phase === "counting") {
     return (
