@@ -3152,6 +3152,7 @@ export type Database = {
         Args: { p_activate: boolean; p_email: string }
         Returns: string
       }
+      ai_spend_sentinel: { Args: never; Returns: string }
       apply_to_job: {
         Args: {
           p_company?: string

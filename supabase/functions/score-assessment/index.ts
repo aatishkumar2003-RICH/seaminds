@@ -1,19 +1,21 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };
+import { authGate, aiPaused, aiPausedResponse, meterAi } from "../_shared/aiGuard.ts";
+const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-worker-secret" };
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
-  const authHeader = req.headers.get('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: cors });
-  }
-
-  // ── Rate limiting ──
   const clientIP = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || req.headers.get('x-real-ip') || 'unknown';
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
   const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const { createClient } = await import('jsr:@supabase/supabase-js@2');
   const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, { auth: { persistSession: false } });
+
+  // ── Auth gate: worker secret OR real signed-in user ──
+  const gate = await authGate(req, adminClient, cors);
+  if (!gate.ok) return gate.response;
+
+  // ── Rate limiting ──
+
   const rateLimitKey = `score-assessment:${clientIP}`;
   const windowMs = 10 * 60 * 1000;
   const maxAttempts = 5;
@@ -33,7 +35,10 @@ Deno.serve(async (req) => {
     await adminClient.from('auth_rate_limits').insert({ ip_address: rateLimitKey, attempt_count: 1, window_start: new Date().toISOString(), last_attempt: new Date().toISOString() });
   }
 
+  if (await aiPaused(adminClient)) return aiPausedResponse(cors);
+
   const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+
   const { rank, firstName, transcript, candidateContext, assessmentId, redFlags } = await req.json();
 
   const hasTranscript = Array.isArray(transcript) && transcript.length > 0;
@@ -76,12 +81,15 @@ RULES:
 Return ONLY valid JSON, no markdown:
 { "technical": 0.00, "judgment": 0.00, "english": 0.00, "behaviour": 0.00 }`;
 
+  const _t0 = Date.now();
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${OPENAI_API_KEY}` },
     body: JSON.stringify({ model: "gpt-4o", messages: [{ role: "user", content: prompt }], max_tokens: 300, temperature: 0.2 }),
   });
   const data = await res.json();
+  await meterAi(adminClient, { userId: gate.userId, feature: "score-assessment", model: "gpt-4o", usage: data?.usage, success: res.ok, latencyMs: Date.now() - _t0 });
+
   const text = (data.choices?.[0]?.message?.content || "{}").replace(/```json|```/g, "").trim();
 
   const clamp = (n: any) => {

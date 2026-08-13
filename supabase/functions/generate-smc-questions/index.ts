@@ -1,17 +1,15 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { authGate, aiPaused, aiPausedResponse, meterAi } from "../_shared/aiGuard.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-worker-secret, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  const authHeader = req.headers.get('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-  }
+  const authHeader = req.headers.get('Authorization') || '';
 
   // ── Rate limiting ──
   const clientIP = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || req.headers.get('x-real-ip') || 'unknown';
@@ -19,7 +17,13 @@ Deno.serve(async (req) => {
   const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const { createClient } = await import('jsr:@supabase/supabase-js@2');
   const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+  // ── Auth gate: worker secret OR real signed-in user ──
+  const gate = await authGate(req, adminClient, corsHeaders);
+  if (!gate.ok) return gate.response;
+
   const rateLimitKey = `generate-smc:${clientIP}`;
+
   const windowMs = 10 * 60 * 1000;
   const maxAttempts = 10;
   const { data: rl } = await adminClient.from('auth_rate_limits').select('*').eq('ip_address', rateLimitKey).maybeSingle();
@@ -296,6 +300,9 @@ Return ONLY valid JSON (no markdown, no explanation) in this EXACT structure:
 
   const systemPrompt = `You are a senior maritime examiner and Flag State surveyor with 25 years experience. You examine officers and ratings for CoC (Certificate of Competency) and endorsements. Generate STRICTLY accurate questions based on SOLAS 2024, MARPOL 2024, MLC 2006, STCW 2010 Manila Amendments, ISPS Code, and ISM Code. Every correct answer must be definitively correct according to the referenced convention. Wrong answers must be plausible but clearly incorrect to anyone with proper knowledge. Questions must differentiate between competent and incompetent seafarers. Do NOT generate questions that can be answered by guessing or common sense alone. Return ONLY valid JSON, no markdown backticks, no explanation.`;
 
+  if (await aiPaused(adminClient)) return aiPausedResponse(corsHeaders);
+
+  const _t0 = Date.now();
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${OPENAI_API_KEY}` },
@@ -311,6 +318,8 @@ Return ONLY valid JSON (no markdown, no explanation) in this EXACT structure:
   });
 
   const data = await response.json();
+  await meterAi(adminClient, { userId: gate.userId, feature: "generate-smc-questions", model: "gpt-4o-mini", usage: data?.usage, success: response.ok, latencyMs: Date.now() - _t0 });
+
   const text = data.choices?.[0]?.message?.content || "{}";
   const clean = text.replace(/```json|```/g, "").trim();
 
