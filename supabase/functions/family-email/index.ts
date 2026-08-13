@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,11 +11,47 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // --- require a real signed-in user (publishable key alone must not pass) ---
+  const authHeader = req.headers.get("Authorization") || "";
+  const jwt = authHeader.replace(/^Bearer\s+/i, "").trim();
+  const SB_URL = Deno.env.get("SUPABASE_URL")!;
+  const SB_ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
+  let authedUser: { id: string } | null = null;
+  if (jwt) {
+    const anonClient = createClient(SB_URL, SB_ANON, {
+      global: { headers: { Authorization: `Bearer ${jwt}` } },
+      auth: { persistSession: false },
+    });
+    const { data: u } = await anonClient.auth.getUser();
+    authedUser = u?.user ?? null;
+  }
+  if (!authedUser) {
+    return new Response(JSON.stringify({ error: "Please sign in to continue." }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
   if (!RESEND_API_KEY) {
     return new Response(JSON.stringify({ error: "RESEND_API_KEY not configured" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+  }
+
+  // --- per-user rate limit: max 5 sends per 24h ---
+  const service = createClient(SB_URL, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const { count: sentCount } = await service
+    .from("app_events")
+    .select("*", { count: "exact", head: true })
+    .eq("event_type", "family_email_sent")
+    .eq("user_id", authedUser.id)
+    .gte("created_at", since);
+  if ((sentCount ?? 0) >= 5) {
+    return new Response(JSON.stringify({
+      error: "rate_limited",
+      message: "You have sent 5 family emails in the last 24 hours. Please try again tomorrow.",
+    }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 
   try {
@@ -87,6 +124,15 @@ Deno.serve(async (req) => {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    try {
+      await service.from("app_events").insert({
+        event_type: "family_email_sent",
+        severity: "info",
+        message: "Family welfare email sent",
+        user_id: authedUser.id,
+      });
+    } catch (_e) { /* logging must never block the send */ }
 
     return new Response(JSON.stringify({ success: true, id: data.id }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },

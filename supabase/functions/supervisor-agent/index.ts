@@ -16,15 +16,14 @@ Deno.serve(async (req) => {
 
   // Only the scheduler (cron-job.org) or the admin app may trigger this agent.
   const AGENT_SECRET = Deno.env.get("AGENT_SECRET");
-  if (AGENT_SECRET) {
-    const provided = req.headers.get("x-agent-secret") || new URL(req.url).searchParams.get("secret");
-    if (provided !== AGENT_SECRET) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...cors, "Content-Type": "application/json" },
-      });
-    }
+  const provided = req.headers.get("x-agent-secret") || new URL(req.url).searchParams.get("secret");
+  if (!AGENT_SECRET || provided !== AGENT_SECRET) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+      headers: { ...cors, "Content-Type": "application/json" },
+    });
   }
+
 
   try {
     // Gather stats
