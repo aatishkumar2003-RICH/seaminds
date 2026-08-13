@@ -142,6 +142,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/app" element={<Index />} />
+            <Route path="/quick-profile" element={<QuickProfile />} />
             <Route path="/feed" element={<JobFeed />} />
             <Route path="/interview/:token" element={<InterviewInvite />} />
             <Route path="/interview/:token/exam" element={<InterviewExam />} />
