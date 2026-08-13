@@ -38,6 +38,22 @@ Deno.serve(async (req) => {
     });
   }
 
+  // --- per-user rate limit: max 5 sends per 24h ---
+  const service = createClient(SB_URL, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const { count: sentCount } = await service
+    .from("app_events")
+    .select("*", { count: "exact", head: true })
+    .eq("event_type", "family_email_sent")
+    .eq("user_id", authedUser.id)
+    .gte("created_at", since);
+  if ((sentCount ?? 0) >= 5) {
+    return new Response(JSON.stringify({
+      error: "rate_limited",
+      message: "You have sent 5 family emails in the last 24 hours. Please try again tomorrow.",
+    }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
+
   try {
     const { to, familyName, crewName, shipName, voyageDay, mood, moodEmoji, daysUntilSignOff, personalMessage } = await req.json();
 
@@ -108,6 +124,15 @@ Deno.serve(async (req) => {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    try {
+      await service.from("app_events").insert({
+        event_type: "family_email_sent",
+        severity: "info",
+        message: "Family welfare email sent",
+        user_id: authedUser.id,
+      });
+    } catch (_e) { /* logging must never block the send */ }
 
     return new Response(JSON.stringify({ success: true, id: data.id }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
