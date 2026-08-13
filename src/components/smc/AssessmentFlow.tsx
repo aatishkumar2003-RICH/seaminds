@@ -376,6 +376,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
       });
       const entry = { question, answer, score: data?.score || 0, redFlag: data?.red_flag || false, redFlagCategory: data?.red_flag_category || null, followUp: data?.follow_up_question || null };
       setTranscript(prev => [...prev, entry]);
+      void persistAnswer({ question, answer, question_type: currentQ.type, is_followup: false, ai_score: entry.score, red_flag: entry.redFlag, red_flag_category: entry.redFlagCategory });
       if (data?.red_flag && data?.red_flag_evidence) {
         setRedFlags(prev => [...prev, { category: data.red_flag_category, evidence: data.red_flag_evidence, question, answer }]);
       }
