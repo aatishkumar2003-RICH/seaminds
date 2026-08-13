@@ -81,12 +81,15 @@ RULES:
 Return ONLY valid JSON, no markdown:
 { "technical": 0.00, "judgment": 0.00, "english": 0.00, "behaviour": 0.00 }`;
 
+  const _t0 = Date.now();
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${OPENAI_API_KEY}` },
     body: JSON.stringify({ model: "gpt-4o", messages: [{ role: "user", content: prompt }], max_tokens: 300, temperature: 0.2 }),
   });
   const data = await res.json();
+  await meterAi(adminClient, { userId: gate.userId, feature: "score-assessment", model: "gpt-4o", usage: data?.usage, success: res.ok, latencyMs: Date.now() - _t0 });
+
   const text = (data.choices?.[0]?.message?.content || "{}").replace(/```json|```/g, "").trim();
 
   const clamp = (n: any) => {
