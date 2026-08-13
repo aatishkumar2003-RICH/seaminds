@@ -408,6 +408,10 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
         setQIndex(prev => prev + 1);
       }
     } else {
+    } else {
+      // Durable scoring: queue first, ScoreReveal still runs the fast direct path
+      supabase.rpc('enqueue_scoring' as any, { p_assessment_id: assessmentId })
+        .then(({ error }: any) => { if (error) console.log('enqueue_scoring failed (non-blocking):', error.message); });
       setFlowStep('score');
     }
   };
