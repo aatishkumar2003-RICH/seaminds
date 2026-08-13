@@ -139,6 +139,72 @@ Deno.serve(async (req) => {
     GENERAL: "Use standard SOLAS, ISM, MLC, MARPOL questions relevant to the rank.",
   };
 
+  // ── AI INTERVIEW V2 — RESOLVE INTERVIEW SPEC (never blocks) ──
+  let spec: any = null;
+  try {
+    let yearsInRank: number | null = null;
+    let contractsInRank: number | null = null;
+    let cvClaims: string[] = [];
+
+    try {
+      const token = authHeader.replace('Bearer ', '');
+      const { data: userData } = await adminClient.auth.getUser(token);
+      const uid = userData?.user?.id;
+      if (uid) {
+        const { data: cv } = await adminClient
+          .from('crew_cv_data')
+          .select('sea_service')
+          .eq('user_id', uid)
+          .maybeSingle();
+        const service = Array.isArray((cv as any)?.sea_service) ? (cv as any).sea_service : [];
+        const matching = service.filter((s: any) =>
+          (s?.rank || s?.position || '').toString().toLowerCase().includes(rank.toLowerCase().slice(0, 12))
+        );
+        if (matching.length) {
+          contractsInRank = matching.length;
+          const months = matching.reduce((sum: number, s: any) => {
+            const m = Number(s?.months ?? s?.duration_months ?? s?.duration ?? 0);
+            return sum + (isFinite(m) ? m : 0);
+          }, 0);
+          yearsInRank = months > 0 ? Math.round((months / 12) * 10) / 10 : null;
+          cvClaims = matching
+            .slice(0, 5)
+            .map((s: any) => [s?.rank || s?.position, s?.vessel_type, s?.vessel_name].filter(Boolean).join(' — '))
+            .filter((s: string) => s.length > 2);
+        }
+      }
+    } catch (_e) { /* CV lookup optional */ }
+
+    const { data: specData } = await adminClient.rpc('resolve_interview_spec_v2', {
+      p_rank: rank,
+      p_years_in_rank: yearsInRank ?? 2,
+      p_contracts_in_rank: contractsInRank ?? 3,
+      p_vessel: vesselType,
+      p_specialist: null,
+      p_cv_claims: cvClaims,
+      p_vacancy_topics: [],
+    });
+    spec = specData || null;
+  } catch (_e) {
+    spec = null;
+  }
+
+  const list = (v: any) => (Array.isArray(v) ? v : []);
+  const specBlock = spec ? `
+── INTERVIEW SPEC V2 (authoritative — build questions from this) ──
+Department: ${spec.department} · Rank group: ${spec.rank_group} · Seniority: ${spec.seniority} · Vessel family: ${spec.vessel_family}
+Base topics: ${list(spec.base_topics).join('; ') || 'n/a'}
+Seniority topics: ${list(spec.seniority_topics).join('; ') || 'n/a'}
+Vessel topics: ${list(spec.vessel_topics).join('; ') || 'n/a'}
+Specialist topics: ${list(spec.specialist_topics).join('; ') || 'n/a'}
+Split of judgement vs hard-knowledge emphasis: scenario weight ${spec.scenario_weight}% / technical weight ${spec.technical_weight}%.
+Scenario ambiguity level: ${spec.ambiguity_level}. ${String(spec.seniority) === 'VETERAN' ? 'Scenarios must be layered command situations with incomplete information, conflicting priorities and commercial pressure — but technical questions must STILL verify hard regulatory evidence.' : ''}
+CV claims to verify (one targeted question each): ${list(spec.cv_claims_to_verify).join('; ') || 'none'}
+Vacancy requirements (one targeted question each): ${list(spec.vacancy_requirements).join('; ') || 'none'}
+Note: ${spec.generation_note || ''}
+Apply this spec while keeping the exact question counts, difficulty scale and JSON output structure specified below.
+` : '';
+
   // ── DETERMINE WHAT GPT NEEDS TO GENERATE ──
   const needGptMCQ = !bankHasEnough || bankMCQ.length < mcqCount;
 
