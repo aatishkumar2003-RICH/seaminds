@@ -34,16 +34,27 @@ Deno.serve(async (req) => {
   }
 
   const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-  const { rank, firstName, transcript, scores, redFlags, candidateContext } = await req.json();
+  const { rank, firstName, transcript, scores, redFlags, candidateContext, assessmentId } = await req.json();
   const transcriptText = Array.isArray(transcript) && transcript.length > 0
     ? transcript.map((t: any, i: number) => `Q${i+1}: ${t.question}\nAnswer: ${t.answer}\nScore: ${t.score}/10`).join('\n\n')
     : 'No transcript available.';
   const redFlagText = Array.isArray(redFlags) && redFlags.length > 0
     ? redFlags.map((f: any) => `[${f.category}] "${f.evidence}"`).join('\n')
     : 'None detected.';
+  const n = (v: any) => (typeof v === 'number' && isFinite(v) ? v.toFixed(2) : 'n/a');
   const prompt = `You are a senior maritime superintendent writing a professional crew evaluation report.
 Candidate: ${firstName}, Rank: ${rank}, Tier: ${candidateContext?.experience_tier || 'MID'}, Vessel: ${candidateContext?.ship_specialisation || 'GENERAL'}.
-Scores: Technical ${scores?.technical}/10, Safety ${scores?.safety}/10, Operational ${scores?.operational}/10, Leadership ${scores?.leadership}/10, Communication ${scores?.communication}/10.
+
+Scores are on a 0.00–5.00 scale (5.00 = exceptional, 3.00 = adequate, below 2.50 = below standard for the rank).
+Weighting: Technical 30%, Judgment 30%, Maritime English 25%, Professional Behaviour 15%.
+- Technical: ${n(scores?.technical)}/5.00
+- Judgment: ${n(scores?.judgment)}/5.00
+- Maritime English: ${n(scores?.english)}/5.00
+- Professional Behaviour: ${n(scores?.behaviour)}/5.00
+- Overall: ${n(scores?.overall)}/5.00 (band: ${scores?.band || 'n/a'})
+
+Personal wellbeing, mental health and fatigue are private to the seafarer and must NEVER be assessed or mentioned as employment criteria.
+
 Red flags detected: ${redFlagText}
 Interview transcript:
 ${transcriptText}
@@ -58,5 +69,10 @@ Write a professional evaluation. Return ONLY valid JSON (no markdown):
   const text = (data.choices?.[0]?.message?.content || "{}").replace(/```json|```/g,"").trim();
   let report;
   try { report = JSON.parse(text); } catch { report = { findings: ["Assessment completed."], remarks: "Report generation encountered an issue. Please review the scores above.", improvement_areas: [], training_recommendations: [], recommendation: "SUITABLE_WITH_TRAINING" }; }
+  if (assessmentId) {
+    const { error: repErr } = await adminClient.from("smc_assessments").update({ report }).eq("id", assessmentId);
+    if (repErr) console.error("report write failed", repErr.message);
+  }
   return new Response(JSON.stringify({ report }), { headers: { ...cors, "Content-Type": "application/json" } });
 });
+
