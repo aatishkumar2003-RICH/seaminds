@@ -97,6 +97,24 @@ Deno.serve(async (req) => {
 
     if (action === "cv") {
       if (!userId) return json({ success: false, error: "Missing userId" }, 400);
+
+      // Full CV is behind the contact-reveal credit wall (admin bypasses).
+      const ADMIN_UID = "492ee966-e015-4440-a415-6ad6275a4a9b";
+      if (authUser.id !== ADMIN_UID) {
+        const { data: reveal } = await admin
+          .from("contact_reveals")
+          .select("id")
+          .eq("manager_user_id", authUser.id)
+          .eq("crew_id", userId)
+          .maybeSingle();
+        if (!reveal) {
+          return json({
+            success: false,
+            error: "reveal_required",
+            message: "Reveal this seafarer's contact first (1 credit) to open the full CV.",
+          }, 402);
+        }
+      }
       const { data: cv } = await admin
         .from("crew_cv_data")
         .select("*")

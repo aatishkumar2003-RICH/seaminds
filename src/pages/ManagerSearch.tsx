@@ -89,6 +89,11 @@ const callFn = async (payload: Record<string, unknown>) => {
     err.pendingApproval = true;
     throw err;
   }
+  if (payloadData?.error === "reveal_required") {
+    const err: any = new Error(payloadData.message || "Reveal this seafarer's contact first (1 credit) to open the full CV.");
+    err.revealRequired = true;
+    throw err;
+  }
   if (error) throw new Error(error.message || "Could not reach the crew directory");
   if (!payloadData?.success) throw new Error(payloadData?.error || "Request failed");
   return payloadData;
@@ -199,6 +204,12 @@ const ManagerSearch = () => {
       });
     } catch (e: any) {
       if (e?.pendingApproval) { setPending(true); return; }
+      if (e?.revealRequired) {
+        toast.error("Reveal required", {
+          description: "Tap 'Reveal contact' (1 credit) on this seafarer to open the full CV.",
+        });
+        return;
+      }
       const msg = e?.message || "Could not generate CV PDF";
       if (isAuthError(msg)) { navigate("/manager"); return; }
       toast.error(msg);
