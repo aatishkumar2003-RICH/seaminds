@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -39,6 +40,26 @@ Be technically precise. Read every visible number and code. If unclear, say so h
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  // --- require a real signed-in user (publishable key alone must not pass) ---
+  const authHeader = req.headers.get("Authorization") || "";
+  const jwt = authHeader.replace(/^Bearer\s+/i, "").trim();
+  const SB_URL = Deno.env.get("SUPABASE_URL")!;
+  const SB_ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
+  let authedUser: { id: string } | null = null;
+  if (jwt) {
+    const anonClient = createClient(SB_URL, SB_ANON, {
+      global: { headers: { Authorization: `Bearer ${jwt}` } },
+      auth: { persistSession: false },
+    });
+    const { data: u } = await anonClient.auth.getUser();
+    authedUser = u?.user ?? null;
+  }
+  if (!authedUser) {
+    return new Response(JSON.stringify({ error: "Please sign in to continue." }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   try {
     const { image_base64, mime_type } = await req.json();

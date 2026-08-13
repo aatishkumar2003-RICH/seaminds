@@ -209,6 +209,26 @@ Maintain the same warm tone, maritime knowledge, and MLC 2006 expertise regardle
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
+  // --- require a real signed-in user (publishable key alone must not pass) ---
+  const authHeader = req.headers.get("Authorization") || "";
+  const jwt = authHeader.replace(/^Bearer\s+/i, "").trim();
+  const SB_URL = Deno.env.get("SUPABASE_URL")!;
+  const SB_ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
+  let authedUser: { id: string } | null = null;
+  if (jwt) {
+    const anonClient = createClient(SB_URL, SB_ANON, {
+      global: { headers: { Authorization: `Bearer ${jwt}` } },
+      auth: { persistSession: false },
+    });
+    const { data: u } = await anonClient.auth.getUser();
+    authedUser = u?.user ?? null;
+  }
+  if (!authedUser) {
+    return new Response(JSON.stringify({ error: "Please sign in to continue." }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
     const { messages, profileId } = await req.json();
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
