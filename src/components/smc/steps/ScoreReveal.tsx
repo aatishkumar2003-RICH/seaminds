@@ -224,11 +224,11 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
           overallScore: finalScore,
           subScores: [
             { name: "🔧 Technical Competence", score: scores.technical },
-            { name: "🛡️ Safety Awareness", score: scores.safety },
-            { name: "⚙️ Operational Knowledge", score: scores.operational },
-            { name: "👨‍✈️ Leadership & Teamwork", score: scores.leadership },
-            { name: "🗣️ Communication Ability", score: scores.communication },
+            { name: "🧭 Judgment & Decision-Making", score: scores.judgment },
+            { name: "🗣️ Maritime English", score: scores.english },
+            { name: "👨‍✈️ Professional Behaviour", score: scores.behaviour },
           ],
+
           crewName: fullName || "Complete your profile",
           rank,
           vesselType: "Tanker",
