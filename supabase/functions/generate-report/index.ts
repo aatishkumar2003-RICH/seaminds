@@ -62,12 +62,15 @@ Interview transcript:
 ${transcriptText}
 Write a professional evaluation. Return ONLY valid JSON (no markdown):
 { "findings": ["4-6 specific observations referencing actual answers — concrete not generic"], "remarks": "3 paragraphs: (1) overall competency vs rank, (2) strongest competencies with evidence, (3) concerns and recommendation. Superintendent tone. No bullet points.", "improvement_areas": [{"area": "string", "severity": "Critical|Moderate|Minor", "detail": "string"}], "training_recommendations": ["specific named STCW courses or training modules"], "recommendation": "SUITABLE|SUITABLE_WITH_TRAINING|HIGH_RISK|NOT_RECOMMENDED" }`;
+  const _t0 = Date.now();
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${OPENAI_API_KEY}` },
     body: JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "user", content: prompt }], max_tokens: 1500, temperature: 0.4 }),
   });
   const data = await res.json();
+  await meterAi(adminClient, { userId: gate.userId, feature: "generate-report", model: "gpt-4o-mini", usage: data?.usage, success: res.ok, latencyMs: Date.now() - _t0 });
+
   const text = (data.choices?.[0]?.message?.content || "{}").replace(/```json|```/g,"").trim();
   let report;
   try { report = JSON.parse(text); } catch { report = { findings: ["Assessment completed."], remarks: "Report generation encountered an issue. Please review the scores above.", improvement_areas: [], training_recommendations: [], recommendation: "SUITABLE_WITH_TRAINING" }; }
