@@ -1,20 +1,22 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };
+import { authGate, meterAi } from "../_shared/aiGuard.ts";
+const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-worker-secret" };
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
-  const authHeader = req.headers.get('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: cors });
-  }
-
-  // ── Rate limiting ──
   const clientIP = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || req.headers.get('x-real-ip') || 'unknown';
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
   const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const { createClient } = await import('jsr:@supabase/supabase-js@2');
   const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+  // ── Auth gate: worker secret OR real signed-in user ──
+  const gate = await authGate(req, adminClient, cors);
+  if (!gate.ok) return gate.response;
+
+  // ── Rate limiting ──
   const rateLimitKey = `generate-report:${clientIP}`;
+
   const windowMs = 10 * 60 * 1000;
   const maxAttempts = 5;
   const { data: rl } = await adminClient.from('auth_rate_limits').select('*').eq('ip_address', rateLimitKey).maybeSingle();
