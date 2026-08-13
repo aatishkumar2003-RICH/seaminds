@@ -241,6 +241,7 @@ Ship Specialisation: ${ship_specialisation}
 Classification: ${isOfficer ? 'OFFICER' : 'RATING'}
 
 VESSEL SPECIALISATION CONTEXT: ${shipContext[ship_specialisation] || shipContext.GENERAL}
+${specBlock}
 
 ${mcqSection}
 
