@@ -1583,6 +1583,51 @@ export type Database = {
         }
         Relationships: []
       }
+      interview_answers: {
+        Row: {
+          ai_score: number | null
+          answer: string
+          assessment_id: string
+          created_at: string
+          id: string
+          is_followup: boolean
+          matrix_version: string | null
+          question: string
+          question_type: string | null
+          red_flag: boolean | null
+          red_flag_category: string | null
+          seq: number
+        }
+        Insert: {
+          ai_score?: number | null
+          answer: string
+          assessment_id: string
+          created_at?: string
+          id?: string
+          is_followup?: boolean
+          matrix_version?: string | null
+          question: string
+          question_type?: string | null
+          red_flag?: boolean | null
+          red_flag_category?: string | null
+          seq: number
+        }
+        Update: {
+          ai_score?: number | null
+          answer?: string
+          assessment_id?: string
+          created_at?: string
+          id?: string
+          is_followup?: boolean
+          matrix_version?: string | null
+          question?: string
+          question_type?: string | null
+          red_flag?: boolean | null
+          red_flag_category?: string | null
+          seq?: number
+        }
+        Relationships: []
+      }
       interview_campaigns: {
         Row: {
           closes_at: string | null
@@ -2635,6 +2680,42 @@ export type Database = {
           id?: string
           manning_agency?: string | null
           ship_name?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      scoring_jobs: {
+        Row: {
+          assessment_id: string
+          attempts: number
+          completed_at: string | null
+          created_at: string
+          id: string
+          last_error: string | null
+          next_attempt_at: string
+          payload: Json
+          status: string
+        }
+        Insert: {
+          assessment_id: string
+          attempts?: number
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          next_attempt_at?: string
+          payload: Json
+          status?: string
+        }
+        Update: {
+          assessment_id?: string
+          attempts?: number
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          next_attempt_at?: string
+          payload?: Json
           status?: string
         }
         Relationships: []
