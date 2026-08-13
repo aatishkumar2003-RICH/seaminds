@@ -462,6 +462,8 @@ const ManagerSearch = () => {
                 {!r.has_cv && <span style={{ fontSize: 11, color: "#f59e0b" }}>No CV built yet</span>}
               </div>
 
+              <QuickProfileLine crewId={r.crewId || r.user_id} rank={r.rank} />
+
               {(() => {
                 const crewId = r.crewId || r.user_id;
                 const rev = revealed[crewId];
