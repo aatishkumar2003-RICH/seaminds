@@ -348,12 +348,44 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     advanceQuestion();
   };
 
-  const handleFollowUpSubmit = () => {
+  const handleFollowUpSubmit = async () => {
     if (!followUpInput.trim()) return;
+    const fuQuestion = pendingFollowUp || 'Follow-up question';
+    const fuAnswer = followUpInput.trim();
+    const currentQ = flatQuestions[qIndex];
     setPendingFollowUp(null);
     setFollowUpInput("");
+    setEvaluating(true);
+    try {
+      const { data } = await supabase.functions.invoke('evaluate-answer', {
+        body: {
+          question: fuQuestion,
+          answer: fuAnswer,
+          question_type: currentQ?.type === 'mcq' ? 'behavioural' : (currentQ?.type || 'behavioural'),
+          key_steps: currentQ?.key_steps,
+          critical_step: currentQ?.critical_step,
+          rank,
+          experience_tier: aiQuestions?.candidate_context?.experience_tier || 'MID',
+          department: aiQuestions?.candidate_context?.department || 'DECK',
+        },
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      setTranscript(prev => [...prev, {
+        question: `[Follow-up] ${fuQuestion}`,
+        answer: fuAnswer,
+        score: data?.score || 0,
+        redFlag: data?.red_flag || false,
+        redFlagCategory: data?.red_flag_category || null,
+        followUp: null,
+      }]);
+      if (data?.red_flag && data?.red_flag_evidence) {
+        setRedFlags(prev => [...prev, { category: data.red_flag_category, evidence: data.red_flag_evidence, question: fuQuestion, answer: fuAnswer }]);
+      }
+    } catch { /* never block the exam */ }
+    finally { setEvaluating(false); }
     advanceQuestion();
   };
+
 
   const currentQ = flatQuestions[qIndex];
   const totalQuestions = flatQuestions.length;
