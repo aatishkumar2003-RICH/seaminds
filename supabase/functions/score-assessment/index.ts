@@ -34,7 +34,8 @@ Deno.serve(async (req) => {
   }
 
   const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-  const { rank, firstName, transcript, candidateContext } = await req.json();
+  const { rank, firstName, transcript, candidateContext, assessmentId, redFlags } = await req.json();
+
   const hasTranscript = Array.isArray(transcript) && transcript.length > 0;
   const transcriptText = hasTranscript
     ? transcript.map((t: any, i: number) => `Q${i+1}: ${t.question}\nAnswer: ${t.answer}\nScore: ${t.score}/10${t.redFlag ? ' [RED FLAG: '+t.redFlagCategory+']' : ''}${t.followUp ? '\nFollow-up: '+t.followUp : ''}`).join('\n\n')
