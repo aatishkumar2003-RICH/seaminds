@@ -35,7 +35,10 @@ Deno.serve(async (req) => {
     await adminClient.from('auth_rate_limits').insert({ ip_address: rateLimitKey, attempt_count: 1, window_start: new Date().toISOString(), last_attempt: new Date().toISOString() });
   }
 
+  if (await aiPaused(adminClient)) return aiPausedResponse(cors);
+
   const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+
   const { rank, firstName, transcript, candidateContext, assessmentId, redFlags } = await req.json();
 
   const hasTranscript = Array.isArray(transcript) && transcript.length > 0;
