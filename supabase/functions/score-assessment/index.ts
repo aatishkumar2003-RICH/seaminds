@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
   const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const { createClient } = await import('jsr:@supabase/supabase-js@2');
-  const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+  const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, { auth: { persistSession: false } });
   const rateLimitKey = `score-assessment:${clientIP}`;
   const windowMs = 10 * 60 * 1000;
   const maxAttempts = 5;
@@ -149,6 +149,8 @@ Return ONLY valid JSON, no markdown:
 
   // ── Canonical write: only the service role may write scores (tamper trigger) ──
   let certificateId: string | null = null;
+  let writeOk = true;
+  let writeError: string | null = null;
   if (assessmentId) {
     const abbrevMap: Record<string, string> = {
       "Master": "MA", "Chief Officer": "CO", "2nd Officer": "2O", "3rd Officer": "3O",
@@ -157,7 +159,7 @@ Return ONLY valid JSON, no markdown:
     };
     const abbrev = abbrevMap[rank] || "CR";
     certificateId = `SMC-${String(Math.round(overall * 100)).padStart(3, "0")}-${abbrev}-${new Date().getFullYear()}`;
-    const { error: writeErr } = await adminClient.from("smc_assessments").update({
+    const { data: written, error: writeErr } = await adminClient.from("smc_assessments").update({
       technical_score: dims.technical,
       judgment_score: dims.judgment,
       english_score: dims.english,
@@ -176,10 +178,22 @@ Return ONLY valid JSON, no markdown:
       red_flags: Array.isArray(redFlags) ? redFlags : [],
       status: "completed",
       completed_at: new Date().toISOString(),
-    }).eq("id", assessmentId);
-    if (writeErr) console.error("score write failed", writeErr.message);
+    }).eq("id", assessmentId).select("id");
+    if (writeErr) {
+      writeOk = false;
+      writeError = writeErr.message;
+      console.error("score write failed", writeErr.message);
+    } else if (!written || written.length === 0) {
+      writeOk = false;
+      writeError = "Assessment row not found or not updated (0 rows affected)";
+      console.error("score write affected 0 rows for", assessmentId);
+    }
   }
 
-  return new Response(JSON.stringify({ scores: { ...scores, certificate_id: certificateId } }), { headers: { ...cors, "Content-Type": "application/json" } });
+  return new Response(JSON.stringify({
+    scores: { ...scores, certificate_id: certificateId },
+    write_ok: writeOk,
+    ...(writeOk ? {} : { write_error: writeError }),
+  }), { headers: { ...cors, "Content-Type": "application/json" } });
 });
 
