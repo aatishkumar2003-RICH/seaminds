@@ -56,6 +56,95 @@ interface CrewResult {
 
 const REFILL_MAILTO = "mailto:info@indossol.com?subject=Credit refill request";
 
+const FAMILY_LABELS: Record<string, string> = {
+  OIL_TANKER: "Oil Tanker", CHEM_TANKER: "Chemical Tanker", LPG: "LPG", LNG: "LNG",
+  BULK: "Bulk Carrier", CONTAINER: "Container", GENERAL_CARGO: "General Cargo",
+  RORO_PAX: "RoRo/Pax", PSV_OSV: "PSV/OSV", AHTS: "AHTS", OTHER: "Other",
+};
+
+const CLAIM_LABELS: Record<string, string> = {
+  sire_experience: "SIRE", rightship_experience: "RightShip", psc_experience: "PSC",
+  ecdis_experience: "ECDIS", ecdis_types: "ECDIS types", dp_qualification: "DP",
+  mooring_experience: "Mooring", watchkeeping_lookout: "Watchkeeping", helmsman: "Helmsman",
+  cargo_ops_watch: "Cargo watch", tanker_deck_ops: "Tanker deck ops",
+  lashing_securing: "Lashing", anchor_handling_deck: "Anchor handling",
+  propulsion_experience: "Propulsion", cargo_pumping_systems: "Cargo pumps",
+  hv_certified: "HV certified", ums_experience: "UMS", welding_machining: "Welding",
+  tanker_engine_room: "Tanker E/R", dp_vessel_experience: "DP vessel",
+  hazardous_area_ex: "Ex equipment", automation_systems: "Automation",
+  crew_size_cooked: "Crew size", multicultural_menus: "Multicultural menus",
+  haccp_trained: "HACCP", provisioning_budget: "Provisioning",
+};
+
+function QuickProfileLine({ crewId, rank }: { crewId: string; rank: string }) {
+  const [bands, setBands] = useState<any>(null);
+  const [claims, setClaims] = useState<any[]>([]);
+  const [vessels, setVessels] = useState<any[]>([]);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const [p, c, v] = await Promise.all([
+          supabase.from("crew_profiles")
+            .select("years_in_rank_band, contracts_in_rank_band, total_sea_service_band")
+            .eq("id", crewId).maybeSingle(),
+          supabase.from("crew_claims" as any).select("claim_key, value, status").eq("crew_id", crewId),
+          supabase.from("crew_vessel_experience" as any).select("vessel_family, sea_time_band").eq("crew_id", crewId),
+        ]);
+        if (!alive) return;
+        setBands(p.data || null);
+        setClaims(Array.isArray(c.data) ? (c.data as any[]) : []);
+        setVessels(Array.isArray(v.data) ? (v.data as any[]) : []);
+      } catch { /* silently hidden */ }
+    })();
+    return () => { alive = false; };
+  }, [crewId]);
+
+  const skip = new Set(["no", "none", "0", ""]);
+  const badges = claims
+    .filter((c) => !skip.has(String(c?.value ?? "").trim().toLowerCase()))
+    .slice(0, 5);
+  const line1Parts = [
+    rank,
+    bands?.total_sea_service_band ? `${bands.total_sea_service_band} yrs sea` : null,
+    bands?.years_in_rank_band ? `${bands.years_in_rank_band} yrs in rank` : null,
+    bands?.contracts_in_rank_band ? `${bands.contracts_in_rank_band} contracts` : null,
+  ].filter(Boolean);
+
+  const hasBands = !!(bands?.total_sea_service_band || bands?.years_in_rank_band || bands?.contracts_in_rank_band);
+  if (!hasBands && !badges.length && !vessels.length) return null;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6, borderTop: "1px solid rgba(212,175,55,0.15)", paddingTop: 8 }}>
+      {hasBands && (
+        <div style={{ fontSize: 11.5, color: "#cbd5e1" }}>{line1Parts.join(" · ")}</div>
+      )}
+      {!!badges.length && (
+        <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+          {badges.map((c) => {
+            const st = String(c.status || "CLAIMED");
+            const color = st === "ASSESSED" ? GOLD : st === "VERIFIED" ? "#22c55e" : "#94A3B8";
+            const tag = st === "ASSESSED" ? "✓ Assessed" : st === "VERIFIED" ? "✔ Verified" : "Claimed";
+            const label = CLAIM_LABELS[c.claim_key] || String(c.claim_key).replace(/_/g, " ");
+            return (
+              <span key={c.claim_key} style={{
+                fontSize: 10.5, color, border: `1px solid ${color}55`, borderRadius: 999,
+                padding: "2px 7px", whiteSpace: "nowrap",
+              }}>{label} — {tag}</span>
+            );
+          })}
+        </div>
+      )}
+      {!!vessels.length && (
+        <div style={{ fontSize: 11, color: "#94A3B8" }}>
+          {vessels.map((v) => `${FAMILY_LABELS[v.vessel_family] || v.vessel_family} ${v.sea_time_band}y`).join(" · ")}
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 const input: React.CSSProperties = {
   width: "100%", padding: "10px 12px", borderRadius: 8,
@@ -372,6 +461,8 @@ const ManagerSearch = () => {
                 {r.whatsapp_verified && <span style={{ fontSize: 11, color: "#10b981" }}>🟢 WhatsApp verified</span>}
                 {!r.has_cv && <span style={{ fontSize: 11, color: "#f59e0b" }}>No CV built yet</span>}
               </div>
+
+              <QuickProfileLine crewId={r.crewId || r.user_id} rank={r.rank} />
 
               {(() => {
                 const crewId = r.crewId || r.user_id;

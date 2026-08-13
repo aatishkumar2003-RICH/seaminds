@@ -196,6 +196,23 @@ Return ONLY valid JSON, no markdown:
       writeError = "Assessment row not found or not updated (0 rows affected)";
       console.error("score write affected 0 rows for", assessmentId);
     }
+    if (writeOk) {
+      try {
+        const { data: arow } = await adminClient
+          .from("smc_assessments")
+          .select("crew_profile_id")
+          .eq("id", assessmentId)
+          .maybeSingle();
+        const crewId = (arow as any)?.crew_profile_id;
+        if (crewId) {
+          await adminClient
+            .from("crew_claims")
+            .update({ status: "ASSESSED", assessed_at: new Date().toISOString() })
+            .eq("crew_id", crewId)
+            .eq("status", "CLAIMED");
+        }
+      } catch (_e) { /* claim promotion never blocks scoring */ }
+    }
   }
 
   return new Response(JSON.stringify({
