@@ -19,139 +19,139 @@ interface Props {
 
 interface Scores {
   technical: number;
-  safety: number;
-  operational: number;
-  leadership: number;
-  communication: number;
+  judgment: number;
+  english: number;
+  behaviour: number;
   overall: number;
-}
-
-function getRankAbbrev(rank: string): string {
-  const map: Record<string, string> = {
-    Master: "MA",
-    "Chief Officer": "CO",
-    "2nd Officer": "2O",
-    "3rd Officer": "3O",
-    "Chief Engineer": "CE",
-    "Second Engineer": "2E",
-    "3rd Engineer": "3E",
-    AB: "AB",
-    Bosun: "BO",
-    Cook: "CK",
-    Motorman: "MM",
-    Electrician: "EL",
-  };
-  return map[rank] || "CR";
+  band: string;
 }
 
 function getScoreBand(score: number): string {
   if (score >= 4.5) return "ELITE";
-  if (score >= 4.0) return "EXPERT";
-  if (score >= 3.5) return "COMPETENT+";
-  if (score >= 3.0) return "COMPETENT";
-  if (score >= 2.0) return "DEVELOPING";
-  return "FOUNDATION";
+  if (score >= 4.0) return "STRONG";
+  if (score >= 3.25) return "COMPETENT";
+  if (score >= 2.5) return "DEVELOPING";
+  return "NOT_READY";
 }
 
 const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBack, transcript, redFlags, candidateContext }: Props) => {
   const [phase, setPhase] = useState<"loading" | "counting" | "done">("loading");
   const [displayScore, setDisplayScore] = useState(0);
   const [scores, setScores] = useState<Scores | null>(null);
+  const [certId, setCertId] = useState<string>("");
   const [report, setReport] = useState<any>(null);
   const [reportLoading, setReportLoading] = useState(false);
+  const [scoringFailed, setScoringFailed] = useState(false);
   const { accessToken } = useAuth();
 
   useEffect(() => {
+    let cancelled = false;
+
+    const readRow = async () => {
+      const { data } = await supabase
+        .from("smc_assessments")
+        .select("overall_score, score_band, certificate_id, dimension_scores, report")
+        .eq("id", assessmentId)
+        .maybeSingle();
+      if (!data || data.overall_score === null || data.overall_score === undefined) return null;
+      const d = (data.dimension_scores || {}) as any;
+      const overall = Number(data.overall_score);
+      return {
+        scores: {
+          technical: Number(d.technical ?? 0),
+          judgment: Number(d.judgment ?? 0),
+          english: Number(d.maritime_english ?? d.english ?? 0),
+          behaviour: Number(d.professional_behaviour ?? d.behavioural ?? 0),
+          overall,
+          band: data.score_band || getScoreBand(overall),
+        } as Scores,
+        certId: data.certificate_id || "",
+        report: data.report || null,
+      };
+    };
+
     const run = async () => {
       const authHeaders = { Authorization: `Bearer ${accessToken}` };
 
-      const { data, error } = await supabase.functions.invoke("score-assessment", {
-        body: { rank, firstName, transcript: transcript || [], candidateContext: candidateContext || {} },
+      // Server owns scoring — it writes the protected fields with the service role.
+      await supabase.functions.invoke("score-assessment", {
+        body: {
+          assessmentId,
+          rank,
+          firstName,
+          transcript: transcript || [],
+          redFlags: redFlags || [],
+          candidateContext: candidateContext || {},
+        },
         headers: authHeaders,
-      });
-      if (error || !data?.scores) {
-        const fallback: Scores = {
-          technical: 5, safety: 5, operational: 5, leadership: 5, communication: 5, overall: 2.50,
-        };
-        setScores(fallback);
-      } else {
-        setScores(data.scores);
-      }
-      setTimeout(() => setPhase("counting"), 500);
+      }).catch(() => null);
 
-      // Generate report
-      setReportLoading(true);
-      supabase.functions.invoke('generate-report', {
-        body: { rank, firstName, transcript: transcript || [], scores: data?.scores || {}, redFlags: redFlags || [], candidateContext: candidateContext || {} },
-        headers: authHeaders,
-      }).then(({ data: rd }) => {
-        if (rd?.report) {
-          setReport(rd.report);
-          supabase.from("smc_assessments").update({
-            report: rd.report,
-            recommendation: rd.report.recommendation || null,
-          } as any).eq("id", assessmentId).then(() => {});
-        }
-        setReportLoading(false);
-      });
+      // Read back what the server stored, polling up to ~60s
+      let stored = null;
+      for (let i = 0; i < 20 && !cancelled; i++) {
+        stored = await readRow();
+        if (stored) break;
+        await new Promise(r => setTimeout(r, 3000));
+      }
+      if (cancelled) return;
+
+      if (!stored) {
+        setScoringFailed(true);
+        return;
+      }
+
+      setScores(stored.scores);
+      setCertId(stored.certId);
+      if (stored.report) setReport(stored.report);
+      setTimeout(() => { if (!cancelled) setPhase("counting"); }, 500);
+
+      if (!stored.report) {
+        setReportLoading(true);
+        supabase.functions.invoke('generate-report', {
+          body: {
+            assessmentId,
+            rank,
+            firstName,
+            transcript: transcript || [],
+            scores: stored.scores,
+            redFlags: redFlags || [],
+            candidateContext: candidateContext || {},
+          },
+          headers: authHeaders,
+        }).then(({ data: rd }) => {
+          if (!cancelled && rd?.report) setReport(rd.report);
+          if (!cancelled) setReportLoading(false);
+        }).catch(() => { if (!cancelled) setReportLoading(false); });
+      }
     };
     run();
+    return () => { cancelled = true; };
   }, []);
 
   const overall = scores?.overall ?? 0;
   const finalScore = Math.round(overall * 100) / 100;
-
-  const year = new Date().getFullYear();
-  const certId = `SMC-${String(Math.round(finalScore * 100)).padStart(3, "0")}-${getRankAbbrev(rank)}-${year}`;
-  const band = getScoreBand(finalScore);
+  const band = scores?.band || getScoreBand(finalScore);
 
   useEffect(() => {
     if (phase !== "counting" || !scores) return;
     const duration = 2000;
     const steps = 60;
     const increment = finalScore / steps;
-    let current = 0;
     let step = 0;
     const interval = setInterval(() => {
       step++;
-      current = Math.min(step * increment, finalScore);
-      setDisplayScore(Math.round(current * 100) / 100);
+      setDisplayScore(Math.round(Math.min(step * increment, finalScore) * 100) / 100);
       if (step >= steps) {
         clearInterval(interval);
         setDisplayScore(finalScore);
         setPhase("done");
         trackEvent("smc_assessment_complete", { score: finalScore, band, rank });
-        try {
-          supabase
-            .from("smc_assessments")
-            .update({
-              overall_score: finalScore,
-              experience_score: scores.operational,
-              score_band: band,
-              certificate_id: certId,
-              status: "completed",
-              completed_at: new Date().toISOString(),
-              red_flags: redFlags || [],
-              report: report || null,
-              recommendation: report?.recommendation || null,
-              dimension_scores: {
-                technical: scores.technical,
-                safety: scores.safety,
-                operational: scores.operational,
-                leadership: scores.leadership,
-                communication: scores.communication,
-              },
-            } as any)
-            .eq("id", assessmentId)
-            .then(() => {});
-        } catch (err) {
-          console.log("DB write error (non-blocking):", err);
-        }
       }
     }, duration / steps);
 
     return () => clearInterval(interval);
-  }, [phase, scores, finalScore, assessmentId, band, certId]);
+  }, [phase, scores, finalScore, band, rank]);
+
 
   const handleDownloadCertificate = async () => {
     try {
@@ -173,16 +173,31 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
 
 
   if (phase === "loading") {
+    if (scoringFailed) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full gap-4 px-6 text-center">
+          <Shield size={40} className="text-primary" />
+          <p className="text-base font-semibold text-foreground">Scoring is still in progress</p>
+          <p className="text-xs text-muted-foreground">Your answers are safely recorded. Your SMC score will appear on your profile shortly.</p>
+          <button onClick={onComplete}
+            style={{ background:'#D4AF37', color:'#0D1B2A', border:'none', padding:'10px 24px', borderRadius:'8px', fontWeight:'bold', cursor:'pointer' }}>
+            Back to my profile
+          </button>
+        </div>
+      );
+    }
     return (
       <div className="flex flex-col items-center justify-center h-full gap-6">
         <div className="w-20 h-20 rounded-2xl bg-primary/15 flex items-center justify-center animate-pulse">
           <Shield size={40} className="text-primary" />
         </div>
-        <p className="text-lg font-semibold text-foreground">Calculating your SMC Score...</p>
+        <p className="text-lg font-semibold text-foreground">Scoring in progress…</p>
+        <p className="text-xs text-muted-foreground">This takes a few seconds — please stay on this screen.</p>
         <Loader2 size={24} className="text-primary animate-spin" />
       </div>
     );
   }
+
 
   if (phase === "counting") {
     return (
@@ -224,11 +239,11 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
           overallScore: finalScore,
           subScores: [
             { name: "🔧 Technical Competence", score: scores.technical },
-            { name: "🛡️ Safety Awareness", score: scores.safety },
-            { name: "⚙️ Operational Knowledge", score: scores.operational },
-            { name: "👨‍✈️ Leadership & Teamwork", score: scores.leadership },
-            { name: "🗣️ Communication Ability", score: scores.communication },
+            { name: "🧭 Judgment & Decision-Making", score: scores.judgment },
+            { name: "🗣️ Maritime English", score: scores.english },
+            { name: "👨‍✈️ Professional Behaviour", score: scores.behaviour },
           ],
+
           crewName: fullName || "Complete your profile",
           rank,
           vesselType: "Tanker",

@@ -34,7 +34,8 @@ Deno.serve(async (req) => {
   }
 
   const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-  const { rank, firstName, transcript, candidateContext } = await req.json();
+  const { rank, firstName, transcript, candidateContext, assessmentId, redFlags } = await req.json();
+
   const hasTranscript = Array.isArray(transcript) && transcript.length > 0;
   const transcriptText = hasTranscript
     ? transcript.map((t: any, i: number) => `Q${i+1}: ${t.question}\nAnswer: ${t.answer}\nScore: ${t.score}/10${t.redFlag ? ' [RED FLAG: '+t.redFlagCategory+']' : ''}${t.followUp ? '\nFollow-up: '+t.followUp : ''}`).join('\n\n')
@@ -146,5 +147,39 @@ Return ONLY valid JSON, no markdown:
     scoring_version: "v1.1",
   };
 
-  return new Response(JSON.stringify({ scores }), { headers: { ...cors, "Content-Type": "application/json" } });
+  // ── Canonical write: only the service role may write scores (tamper trigger) ──
+  let certificateId: string | null = null;
+  if (assessmentId) {
+    const abbrevMap: Record<string, string> = {
+      "Master": "MA", "Chief Officer": "CO", "2nd Officer": "2O", "3rd Officer": "3O",
+      "Chief Engineer": "CE", "Second Engineer": "2E", "3rd Engineer": "3E",
+      "AB": "AB", "Bosun": "BO", "Cook": "CK", "Motorman": "MM", "Electrician": "EL",
+    };
+    const abbrev = abbrevMap[rank] || "CR";
+    certificateId = `SMC-${String(Math.round(overall * 100)).padStart(3, "0")}-${abbrev}-${new Date().getFullYear()}`;
+    const { error: writeErr } = await adminClient.from("smc_assessments").update({
+      technical_score: dims.technical,
+      judgment_score: dims.judgment,
+      english_score: dims.english,
+      behavioural_score: dims.behaviour,
+      overall_score: overall,
+      score_band: band,
+      recommendation,
+      scoring_version: "v1.1",
+      certificate_id: certificateId,
+      dimension_scores: {
+        technical: dims.technical,
+        judgment: dims.judgment,
+        maritime_english: dims.english,
+        professional_behaviour: dims.behaviour,
+      },
+      red_flags: Array.isArray(redFlags) ? redFlags : [],
+      status: "completed",
+      completed_at: new Date().toISOString(),
+    }).eq("id", assessmentId);
+    if (writeErr) console.error("score write failed", writeErr.message);
+  }
+
+  return new Response(JSON.stringify({ scores: { ...scores, certificate_id: certificateId } }), { headers: { ...cors, "Content-Type": "application/json" } });
 });
+
