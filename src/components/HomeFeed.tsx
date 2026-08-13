@@ -68,6 +68,21 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
   const [declinedOffers, setDeclinedOffers] = useState<Set<string>>(new Set());
   const [fleetInvites, setFleetInvites] = useState<any[]>([]);
   const [refStats, setRefStats] = useState<{ link: string; shipmates_aboard: number } | null>(null);
+  const [needsQuickProfile, setNeedsQuickProfile] = useState(false);
+
+  useEffect(() => {
+    if (!profileId) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("crew_profiles")
+        .select("quick_profile_completed_at" as any)
+        .eq("id", profileId)
+        .maybeSingle();
+      if (!cancelled && !error) setNeedsQuickProfile(!(data as any)?.quick_profile_completed_at);
+    })();
+    return () => { cancelled = true; };
+  }, [profileId]);
 
   useEffect(() => {
     if (!profileId) return;
