@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { ArrowLeft, Loader2, CheckCircle, XCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { logEvent } from "@/lib/logEvent";
@@ -81,6 +82,79 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   const [preForm, setPreForm] = useState<{reasonForLeaving:string,expectedSalary:string,availabilityDate:string,medicalFit:boolean,accidentHistory:string,pscDetention:boolean,nearMiss:boolean,safetyViolation:boolean,pscDetentionDetail:string,nearMissDetail:string,safetyViolationDetail:string}>({ reasonForLeaving:'', expectedSalary:'', availabilityDate:'', medicalFit:true, accidentHistory:'', pscDetention:false, nearMiss:false, safetyViolation:false, pscDetentionDetail:'', nearMissDetail:'', safetyViolationDetail:'' });
 
   const [cvSummary, setCvSummary] = useState<{certs:number; service:number; hasCv:boolean} | null>(null);
+
+  // ── Resilience: persistence + resume ──
+  const seqRef = useRef(0);
+  const resumeIndexRef = useRef<number | null>(null);
+  const resumeApplied = useRef(false);
+
+  const persistAnswer = async (row: {
+    question: string; answer: string; question_type: string; is_followup: boolean;
+    ai_score: number | null; red_flag: boolean; red_flag_category: string | null;
+  }) => {
+    const seq = seqRef.current++;
+    try {
+      const { error } = await supabase.from('interview_answers' as any).upsert({
+        assessment_id: assessmentId,
+        seq,
+        question: row.question,
+        question_type: row.question_type,
+        is_followup: row.is_followup,
+        answer: row.answer,
+        ai_score: row.ai_score,
+        red_flag: row.red_flag,
+        red_flag_category: row.red_flag_category,
+      } as any, { onConflict: 'assessment_id,seq' });
+      if (error) console.log('interview_answers persist failed (non-blocking):', error.message);
+    } catch (e) {
+      console.log('interview_answers persist failed (non-blocking):', e);
+    }
+  };
+
+  // Load any previously saved answers for this assessment
+  useEffect(() => {
+    if (!assessmentId) return;
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('interview_answers' as any)
+          .select('*')
+          .eq('assessment_id', assessmentId)
+          .order('seq');
+        const rows = (data as any[]) || [];
+        if (!rows.length) return;
+        seqRef.current = Math.max(...rows.map(r => Number(r.seq) || 0)) + 1;
+        setTranscript(rows.map(r => ({
+          question: r.is_followup ? `[Follow-up] ${r.question}` : r.question,
+          answer: r.answer,
+          score: Number(r.ai_score) || 0,
+          redFlag: !!r.red_flag,
+          redFlagCategory: r.red_flag_category || null,
+          followUp: null,
+        })));
+        resumeIndexRef.current = rows.filter(r => !r.is_followup).length;
+        setFlowStep('questions');
+        toast('Resumed — your previous answers are safe ⚓');
+      } catch (e) {
+        console.log('resume load failed (non-blocking):', e);
+      }
+    })();
+  }, [assessmentId]);
+
+  // Apply resume position once questions are loaded
+  useEffect(() => {
+    if (resumeApplied.current) return;
+    if (resumeIndexRef.current === null || !flatQuestions.length) return;
+    resumeApplied.current = true;
+    const idx = Math.min(resumeIndexRef.current, flatQuestions.length - 1);
+    if (resumeIndexRef.current >= flatQuestions.length) {
+      setFlowStep('score');
+    } else if (idx > 0) {
+      setQIndex(idx);
+    }
+  }, [flatQuestions]);
+
+
 
   useEffect(() => {
     if (flowStep !== 'cvCheck') return;
@@ -271,6 +345,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
       });
       const entry = { question: currentQ.question, answer: selected.toString(), score: data?.score || 0, redFlag: data?.red_flag || false, redFlagCategory: data?.red_flag_category || null, followUp: data?.follow_up_question || null };
       setTranscript(prev => [...prev, entry]);
+      void persistAnswer({ question: currentQ.question, answer: selected.toString(), question_type: 'mcq', is_followup: false, ai_score: entry.score, red_flag: entry.redFlag, red_flag_category: entry.redFlagCategory });
       if (data?.red_flag && data?.red_flag_evidence) {
         setRedFlags(prev => [...prev, { category: data.red_flag_category, evidence: data.red_flag_evidence, question: currentQ.question, answer: selected.toString() }]);
       }
@@ -301,6 +376,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
       });
       const entry = { question, answer, score: data?.score || 0, redFlag: data?.red_flag || false, redFlagCategory: data?.red_flag_category || null, followUp: data?.follow_up_question || null };
       setTranscript(prev => [...prev, entry]);
+      void persistAnswer({ question, answer, question_type: currentQ.type, is_followup: false, ai_score: entry.score, red_flag: entry.redFlag, red_flag_category: entry.redFlagCategory });
       if (data?.red_flag && data?.red_flag_evidence) {
         setRedFlags(prev => [...prev, { category: data.red_flag_category, evidence: data.red_flag_evidence, question, answer }]);
       }
@@ -332,6 +408,9 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
         setQIndex(prev => prev + 1);
       }
     } else {
+      // Durable scoring: queue first, ScoreReveal still runs the fast direct path
+      supabase.rpc('enqueue_scoring' as any, { p_assessment_id: assessmentId })
+        .then(({ error }: any) => { if (error) console.log('enqueue_scoring failed (non-blocking):', error.message); });
       setFlowStep('score');
     }
   };
@@ -378,6 +457,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
         redFlagCategory: data?.red_flag_category || null,
         followUp: null,
       }]);
+      void persistAnswer({ question: fuQuestion, answer: fuAnswer, question_type: currentQ?.type || 'behavioural', is_followup: true, ai_score: data?.score || 0, red_flag: data?.red_flag || false, red_flag_category: data?.red_flag_category || null });
       if (data?.red_flag && data?.red_flag_evidence) {
         setRedFlags(prev => [...prev, { category: data.red_flag_category, evidence: data.red_flag_evidence, question: fuQuestion, answer: fuAnswer }]);
       }

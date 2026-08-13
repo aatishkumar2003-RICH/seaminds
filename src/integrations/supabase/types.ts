@@ -3185,6 +3185,7 @@ export type Database = {
         Args: { p_action: string; p_post_id: string }
         Returns: Json
       }
+      enqueue_scoring: { Args: { p_assessment_id: string }; Returns: Json }
       expire_old_vacancies: { Args: never; Returns: string }
       fleet_add_crew: { Args: { p_crew_email: string }; Returns: Json }
       fleet_gate_open: {
@@ -3254,6 +3255,7 @@ export type Database = {
         Returns: boolean
       }
       placement_release_scan: { Args: never; Returns: string }
+      process_scoring_jobs: { Args: never; Returns: string }
       rank_group_of: { Args: { p_rank: string }; Returns: string }
       refresh_ticker_stats: { Args: never; Returns: undefined }
       report_company_post: {
