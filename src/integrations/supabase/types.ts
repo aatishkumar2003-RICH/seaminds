@@ -909,6 +909,42 @@ export type Database = {
           },
         ]
       }
+      crew_claims: {
+        Row: {
+          assessed_at: string | null
+          claim_key: string
+          created_at: string
+          crew_id: string
+          id: string
+          status: string
+          updated_at: string
+          value: string
+          verified_at: string | null
+        }
+        Insert: {
+          assessed_at?: string | null
+          claim_key: string
+          created_at?: string
+          crew_id: string
+          id?: string
+          status?: string
+          updated_at?: string
+          value: string
+          verified_at?: string | null
+        }
+        Update: {
+          assessed_at?: string | null
+          claim_key?: string
+          created_at?: string
+          crew_id?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          value?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       crew_cv_data: {
         Row: {
           certificates: Json | null
@@ -1038,6 +1074,7 @@ export type Database = {
         Row: {
           available_from: string | null
           cdc_applied: boolean
+          contracts_in_rank_band: string | null
           created_at: string
           crew_unique_id: string | null
           cv_data: string | null
@@ -1070,11 +1107,13 @@ export type Database = {
           port_of_joining: string | null
           preferred_vessel_types: string[] | null
           profile_visible: boolean | null
+          quick_profile_completed_at: string | null
           rank: string | null
           referral_claimed_at: string | null
           referred_by: string | null
           role: string
           ship_name: string
+          total_sea_service_band: string | null
           user_id: string | null
           vessel_imo: string | null
           vessel_type: string | null
@@ -1084,10 +1123,12 @@ export type Database = {
           whatsapp_verified: boolean
           whatsapp_verified_at: string | null
           years_at_sea: string
+          years_in_rank_band: string | null
         }
         Insert: {
           available_from?: string | null
           cdc_applied?: boolean
+          contracts_in_rank_band?: string | null
           created_at?: string
           crew_unique_id?: string | null
           cv_data?: string | null
@@ -1120,11 +1161,13 @@ export type Database = {
           port_of_joining?: string | null
           preferred_vessel_types?: string[] | null
           profile_visible?: boolean | null
+          quick_profile_completed_at?: string | null
           rank?: string | null
           referral_claimed_at?: string | null
           referred_by?: string | null
           role: string
           ship_name: string
+          total_sea_service_band?: string | null
           user_id?: string | null
           vessel_imo?: string | null
           vessel_type?: string | null
@@ -1134,10 +1177,12 @@ export type Database = {
           whatsapp_verified?: boolean
           whatsapp_verified_at?: string | null
           years_at_sea?: string
+          years_in_rank_band?: string | null
         }
         Update: {
           available_from?: string | null
           cdc_applied?: boolean
+          contracts_in_rank_band?: string | null
           created_at?: string
           crew_unique_id?: string | null
           cv_data?: string | null
@@ -1170,11 +1215,13 @@ export type Database = {
           port_of_joining?: string | null
           preferred_vessel_types?: string[] | null
           profile_visible?: boolean | null
+          quick_profile_completed_at?: string | null
           rank?: string | null
           referral_claimed_at?: string | null
           referred_by?: string | null
           role?: string
           ship_name?: string
+          total_sea_service_band?: string | null
           user_id?: string | null
           vessel_imo?: string | null
           vessel_type?: string | null
@@ -1184,6 +1231,31 @@ export type Database = {
           whatsapp_verified?: boolean
           whatsapp_verified_at?: string | null
           years_at_sea?: string
+          years_in_rank_band?: string | null
+        }
+        Relationships: []
+      }
+      crew_vessel_experience: {
+        Row: {
+          created_at: string
+          crew_id: string
+          id: string
+          sea_time_band: string
+          vessel_family: string
+        }
+        Insert: {
+          created_at?: string
+          crew_id: string
+          id?: string
+          sea_time_band: string
+          vessel_family: string
+        }
+        Update: {
+          created_at?: string
+          crew_id?: string
+          id?: string
+          sea_time_band?: string
+          vessel_family?: string
         }
         Relationships: []
       }
