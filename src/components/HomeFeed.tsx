@@ -382,6 +382,23 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
         </button>
       </div>
 
+      {needsQuickProfile && (
+        <div className="mx-4 mb-3 rounded-2xl p-4" style={{ background: CARD, border: `1px solid ${GOLD}` }}>
+          <p className="text-sm font-bold" style={{ color: GOLD }}>⚓ Complete your 2-minute Sea Profile</p>
+          <p className="text-[12px] mt-1 mb-3" style={{ color: "#94a3b8" }}>
+            All taps, no typing — unlock job applications and your SMC assessment.
+          </p>
+          <button
+            onClick={() => (window.location.href = "/quick-profile")}
+            className="rounded-xl px-4 py-2 text-sm font-extrabold"
+            style={{ background: GOLD, color: NAVY, border: "none", cursor: "pointer" }}
+          >
+            Start →
+          </button>
+        </div>
+      )}
+
+
       {offers.filter((o) => !declinedOffers.has(o.id)).map((o) => (
         <div key={o.id} className="mx-4 mb-3 rounded-2xl p-4 shadow-lg" style={{ background: "linear-gradient(135deg, #D4AF37 0%, #C5941F 100%)", color: NAVY }}>
           {celebratedOffers.has(o.id) ? (

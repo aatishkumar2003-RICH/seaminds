@@ -37,6 +37,7 @@ const RecoveryRedirect = () => {
 import HomePage from "./pages/HomePage";
 import ForCompanies from "./pages/ForCompanies";
 import Index from "./pages/Index";
+import QuickProfile from "./pages/QuickProfile";
 import ManagerAuth from "./pages/ManagerAuth";
 import ManagerDashboard from "./pages/ManagerDashboard";
 import ManagerSearch from "./pages/ManagerSearch";
