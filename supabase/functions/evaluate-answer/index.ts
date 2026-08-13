@@ -95,7 +95,10 @@ RED FLAG (set red_flag: true) if answer indicates: thoughts of self-harm, severe
 YELLOW (red_flag_category: 'WELLNESS_CONCERN') if: mild stress, family worry, moderate fatigue.
 `;
 
+  if (await aiPaused(adminClient)) return aiPausedResponse(corsHeaders);
+
   const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+  const _t0 = Date.now();
   const completion = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_API_KEY}` },
@@ -111,6 +114,8 @@ YELLOW (red_flag_category: 'WELLNESS_CONCERN') if: mild stress, family worry, mo
   });
 
   const result = await completion.json();
+  await meterAi(adminClient, { userId: gate.userId, feature: "evaluate-answer", model: "gpt-4o-mini", usage: result?.usage, success: completion.ok, latencyMs: Date.now() - _t0 });
+
   const text = (result.choices?.[0]?.message?.content || '{}').replace(/```json|```/g, '').trim();
   try {
     const parsed = JSON.parse(text);
