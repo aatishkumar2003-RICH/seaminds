@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
+import { aiPaused, aiPausedResponse, meterAi } from "../_shared/aiGuard.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -61,11 +62,40 @@ Deno.serve(async (req) => {
     });
   }
 
+  const adminClient = createClient(SB_URL, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
+    auth: { persistSession: false },
+  });
+
+  // --- kill switch ---
+  if (await aiPaused(adminClient)) return aiPausedResponse(corsHeaders);
+
+  // --- daily rate limit (10/day) ---
+  try {
+    const startOfDay = new Date();
+    startOfDay.setUTCHours(0, 0, 0, 0);
+    const { count } = await adminClient
+      .from("ai_usage")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", authedUser.id)
+      .eq("feature", "diagnose-equipment")
+      .gte("created_at", startOfDay.toISOString());
+    if ((count ?? 0) >= 10) {
+      return new Response(
+        JSON.stringify({
+          error: "daily_limit",
+          message: "Daily photo-diagnosis limit reached (10/day). Resets at midnight UTC.",
+        }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+  } catch (_e) { /* never block on limit lookup failure */ }
+
   try {
     const { image_base64, mime_type } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
+    const _t0 = Date.now();
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -91,6 +121,15 @@ Deno.serve(async (req) => {
         ],
         stream: true,
       }),
+    });
+
+    await meterAi(adminClient, {
+      userId: authedUser.id,
+      feature: "diagnose-equipment",
+      model: "google/gemini-2.5-pro",
+      usage: null,
+      success: response.ok,
+      latencyMs: Date.now() - _t0,
     });
 
     if (!response.ok) {
