@@ -454,6 +454,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
         redFlagCategory: data?.red_flag_category || null,
         followUp: null,
       }]);
+      void persistAnswer({ question: fuQuestion, answer: fuAnswer, question_type: currentQ?.type || 'behavioural', is_followup: true, ai_score: data?.score || 0, red_flag: data?.red_flag || false, red_flag_category: data?.red_flag_category || null });
       if (data?.red_flag && data?.red_flag_evidence) {
         setRedFlags(prev => [...prev, { category: data.red_flag_category, evidence: data.red_flag_evidence, question: fuQuestion, answer: fuAnswer }]);
       }
