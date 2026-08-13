@@ -290,6 +290,7 @@ Deno.serve(async (req) => {
       }
     }
 
+    const _t0 = Date.now();
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -304,6 +305,15 @@ Deno.serve(async (req) => {
         ],
         stream: true,
       }),
+    });
+
+    await meterAi(adminClient, {
+      userId: authedUser.id,
+      feature: "chat",
+      model: "gpt-4o-mini",
+      usage: null,
+      success: response.ok,
+      latencyMs: Date.now() - _t0,
     });
 
     if (!response.ok) {
