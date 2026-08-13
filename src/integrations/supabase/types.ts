@@ -3183,6 +3183,18 @@ export type Database = {
         Args: { p_rank: string; p_vessel: string; p_years_in_rank: number }
         Returns: Json
       }
+      resolve_interview_spec_v2: {
+        Args: {
+          p_contracts_in_rank: number
+          p_cv_claims?: Json
+          p_rank: string
+          p_specialist?: string
+          p_vacancy_topics?: Json
+          p_vessel: string
+          p_years_in_rank: number
+        }
+        Returns: Json
+      }
       reveal_contact: { Args: { p_crew_id: string }; Returns: Json }
       seaminds_housekeeping: { Args: never; Returns: string }
       search_maritime_history: {
