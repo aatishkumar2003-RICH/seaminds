@@ -3269,6 +3269,10 @@ export type Database = {
         Args: { p_assessment_id: string; p_invite_id: string }
         Returns: Json
       }
+      count_matching_vacancies: {
+        Args: { p_families?: string[]; p_rank?: string }
+        Returns: number
+      }
       create_interview_campaign: {
         Args: {
           p_closes_at?: string
