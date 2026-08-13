@@ -83,6 +83,79 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
 
   const [cvSummary, setCvSummary] = useState<{certs:number; service:number; hasCv:boolean} | null>(null);
 
+  // ── Resilience: persistence + resume ──
+  const seqRef = useRef(0);
+  const resumeIndexRef = useRef<number | null>(null);
+  const resumeApplied = useRef(false);
+
+  const persistAnswer = async (row: {
+    question: string; answer: string; question_type: string; is_followup: boolean;
+    ai_score: number | null; red_flag: boolean; red_flag_category: string | null;
+  }) => {
+    const seq = seqRef.current++;
+    try {
+      const { error } = await supabase.from('interview_answers' as any).upsert({
+        assessment_id: assessmentId,
+        seq,
+        question: row.question,
+        question_type: row.question_type,
+        is_followup: row.is_followup,
+        answer: row.answer,
+        ai_score: row.ai_score,
+        red_flag: row.red_flag,
+        red_flag_category: row.red_flag_category,
+      } as any, { onConflict: 'assessment_id,seq' });
+      if (error) console.log('interview_answers persist failed (non-blocking):', error.message);
+    } catch (e) {
+      console.log('interview_answers persist failed (non-blocking):', e);
+    }
+  };
+
+  // Load any previously saved answers for this assessment
+  useEffect(() => {
+    if (!assessmentId) return;
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('interview_answers' as any)
+          .select('*')
+          .eq('assessment_id', assessmentId)
+          .order('seq');
+        const rows = (data as any[]) || [];
+        if (!rows.length) return;
+        seqRef.current = Math.max(...rows.map(r => Number(r.seq) || 0)) + 1;
+        setTranscript(rows.map(r => ({
+          question: r.is_followup ? `[Follow-up] ${r.question}` : r.question,
+          answer: r.answer,
+          score: Number(r.ai_score) || 0,
+          redFlag: !!r.red_flag,
+          redFlagCategory: r.red_flag_category || null,
+          followUp: null,
+        })));
+        resumeIndexRef.current = rows.filter(r => !r.is_followup).length;
+        setFlowStep('questions');
+        toast('Resumed — your previous answers are safe ⚓');
+      } catch (e) {
+        console.log('resume load failed (non-blocking):', e);
+      }
+    })();
+  }, [assessmentId]);
+
+  // Apply resume position once questions are loaded
+  useEffect(() => {
+    if (resumeApplied.current) return;
+    if (resumeIndexRef.current === null || !flatQuestions.length) return;
+    resumeApplied.current = true;
+    const idx = Math.min(resumeIndexRef.current, flatQuestions.length - 1);
+    if (resumeIndexRef.current >= flatQuestions.length) {
+      setFlowStep('score');
+    } else if (idx > 0) {
+      setQIndex(idx);
+    }
+  }, [flatQuestions]);
+
+
+
   useEffect(() => {
     if (flowStep !== 'cvCheck') return;
     (async () => {
