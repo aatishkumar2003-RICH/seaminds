@@ -176,6 +176,55 @@ Deno.serve(async (req) => {
             .map((s: any) => [s?.rank || s?.position, s?.vessel_type, s?.vessel_name].filter(Boolean).join(' — '))
             .filter((s: string) => s.length > 2);
         }
+
+        // Quick-profile self-declared claims (FACT/CLAIM/VERIFIED loop)
+        try {
+          const { data: qc } = await adminClient
+            .from('crew_claims')
+            .select('claim_key, value')
+            .eq('crew_id', uid)
+            .eq('status', 'CLAIMED');
+          const skip = new Set(['no', 'none', '0', '']);
+          const pretty = (k: string, v: string): string => {
+            const vals = v.split(',').map((x) => x.trim()).filter(Boolean);
+            const joined = vals.length > 1
+              ? `${vals.slice(0, -1).join(', ')} and ${vals[vals.length - 1]}`
+              : (vals[0] || v);
+            switch (k) {
+              case 'sire_experience': return `Claims SIRE inspection experience (${v})`;
+              case 'rightship_experience': return 'Claims RightShip inspection experience';
+              case 'psc_experience': return `Claims Port State Control inspection experience (${v})`;
+              case 'ecdis_experience': return 'Claims ECDIS operational experience';
+              case 'ecdis_types': return `Claims ECDIS experience on ${joined}`;
+              case 'dp_qualification': return `Claims DP qualification: ${v}`;
+              case 'mooring_experience': return 'Claims mooring operations experience';
+              case 'watchkeeping_lookout': return 'Claims bridge watchkeeping/lookout duty experience';
+              case 'helmsman': return 'Claims helmsman experience';
+              case 'cargo_ops_watch': return 'Claims cargo operations watchkeeping experience';
+              case 'tanker_deck_ops': return 'Claims tanker deck cargo operations experience';
+              case 'lashing_securing': return 'Claims lashing and cargo securing experience';
+              case 'anchor_handling_deck': return 'Claims anchor handling deck experience';
+              case 'propulsion_experience': return `Claims propulsion experience: ${joined}`;
+              case 'cargo_pumping_systems': return `Claims ${joined} cargo pump experience`;
+              case 'hv_certified': return 'Claims High Voltage certification';
+              case 'ums_experience': return 'Claims UMS (unmanned machinery space) experience';
+              case 'welding_machining': return 'Claims welding and machining experience';
+              case 'tanker_engine_room': return 'Claims tanker engine room experience';
+              case 'dp_vessel_experience': return 'Claims DP vessel experience';
+              case 'hazardous_area_ex': return 'Claims hazardous area / Ex equipment experience';
+              case 'automation_systems': return `Claims automation systems experience: ${joined}`;
+              case 'crew_size_cooked': return `Claims catering for crew size ${v}`;
+              case 'multicultural_menus': return 'Claims multicultural menu planning experience';
+              case 'haccp_trained': return 'Claims HACCP training';
+              case 'provisioning_budget': return 'Claims provisioning and budget control experience';
+              default: return `Claims ${k.replace(/_/g, ' ')}: ${v}`;
+            }
+          };
+          const extra = (qc || [])
+            .filter((c: any) => !skip.has(String(c?.value ?? '').trim().toLowerCase()))
+            .map((c: any) => pretty(String(c.claim_key), String(c.value)));
+          cvClaims = [...cvClaims, ...extra].slice(0, 8);
+        } catch (_e) { /* quick-profile claims optional */ }
       }
     } catch (_e) { /* CV lookup optional */ }
 
