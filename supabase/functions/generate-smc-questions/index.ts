@@ -300,6 +300,9 @@ Return ONLY valid JSON (no markdown, no explanation) in this EXACT structure:
 
   const systemPrompt = `You are a senior maritime examiner and Flag State surveyor with 25 years experience. You examine officers and ratings for CoC (Certificate of Competency) and endorsements. Generate STRICTLY accurate questions based on SOLAS 2024, MARPOL 2024, MLC 2006, STCW 2010 Manila Amendments, ISPS Code, and ISM Code. Every correct answer must be definitively correct according to the referenced convention. Wrong answers must be plausible but clearly incorrect to anyone with proper knowledge. Questions must differentiate between competent and incompetent seafarers. Do NOT generate questions that can be answered by guessing or common sense alone. Return ONLY valid JSON, no markdown backticks, no explanation.`;
 
+  if (await aiPaused(adminClient)) return aiPausedResponse(corsHeaders);
+
+  const _t0 = Date.now();
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${OPENAI_API_KEY}` },
@@ -315,6 +318,8 @@ Return ONLY valid JSON (no markdown, no explanation) in this EXACT structure:
   });
 
   const data = await response.json();
+  await meterAi(adminClient, { userId: gate.userId, feature: "generate-smc-questions", model: "gpt-4o-mini", usage: data?.usage, success: response.ok, latencyMs: Date.now() - _t0 });
+
   const text = data.choices?.[0]?.message?.content || "{}";
   const clean = text.replace(/```json|```/g, "").trim();
 
