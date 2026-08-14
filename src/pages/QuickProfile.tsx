@@ -119,6 +119,9 @@ const QuickProfile = () => {
   const hasOffshore = selectedFamilies.some((f) => OFFSHORE.includes(f));
   const dept = deptOf(rank);
   const rating = isRating(rank);
+  const isCadetRank = /cadet|trainee|deck boy/i.test(rank || "");
+  const isStartingOut = isCadetRank || (yearsBand === "0–1" && contractsBand === "0");
+
 
   /* ---------- load ---------- */
   useEffect(() => {
