@@ -401,7 +401,7 @@ const Bridge = ({ profileId }: BridgeProps) => {
             <ArrowLeft size={18} />
           </button>
           <div>
-            <h2 className="text-sm font-bold" style={{ color: "#D4AF37" }}>EQUIPMENT DIAGNOSIS</h2>
+            <h2 className="text-sm font-bold" style={{ color: "#D4AF37" }}>POSSIBLE CAUSES &amp; SUGGESTED CHECKS</h2>
             <p className="text-[10px] text-muted-foreground">AI Photo Analysis</p>
           </div>
           <button
