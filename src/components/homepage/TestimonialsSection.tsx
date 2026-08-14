@@ -133,7 +133,24 @@ const TestimonialsSection = () => {
           ))}
         </div>
 
+        {/* Category labels */}
+        <div className="flex flex-wrap justify-center gap-2 mb-4">
+          {["Career", "Privacy", "Family", "Recruitment"].map((c) => (
+            <span
+              key={c}
+              className="rounded-full px-3 py-1 text-[11px] font-semibold text-primary"
+              style={{
+                border: "1px solid hsl(var(--primary) / 0.4)",
+                background: "hsl(var(--primary) / 0.08)",
+              }}
+            >
+              {c}
+            </span>
+          ))}
+        </div>
+
         {/* Continuous CSS ticker - Row 1 */}
+
         <div className="overflow-hidden mb-3 ticker-container">
           <div className="ticker-track">
             <div className="flex gap-4 ticker-row-1">
