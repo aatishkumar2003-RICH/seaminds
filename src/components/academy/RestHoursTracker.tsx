@@ -150,7 +150,7 @@ const RestHoursTracker = ({ onBack }: RestHoursTrackerProps) => {
             />
           </div>
           <p className={`text-xs ${todayCompliant ? "text-emerald-400" : "text-red-400"}`}>
-            {todayCompliant ? "✅ Compliant" : `⚠️ ${(10 - todayHours).toFixed(1)}h more rest needed`}
+            {todayCompliant ? "✅ Compliant" : `⚠️ Potential non-compliance — review this record (${(10 - todayHours).toFixed(1)}h short)`}
           </p>
         </div>
 
@@ -172,7 +172,7 @@ const RestHoursTracker = ({ onBack }: RestHoursTrackerProps) => {
             />
           </div>
           <p className={`text-xs ${weekCompliant ? "text-emerald-400" : "text-red-400"}`}>
-            {weekCompliant ? "✅ Compliant" : `⚠️ ${(77 - weekTotal).toFixed(1)}h more rest needed this week`}
+            {weekCompliant ? "✅ Compliant" : `⚠️ Potential non-compliance — review this record (${(77 - weekTotal).toFixed(1)}h short)`}
           </p>
         </div>
 

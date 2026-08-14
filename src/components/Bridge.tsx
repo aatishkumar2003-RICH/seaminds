@@ -401,7 +401,7 @@ const Bridge = ({ profileId }: BridgeProps) => {
             <ArrowLeft size={18} />
           </button>
           <div>
-            <h2 className="text-sm font-bold" style={{ color: "#D4AF37" }}>EQUIPMENT DIAGNOSIS</h2>
+            <h2 className="text-sm font-bold" style={{ color: "#D4AF37" }}>POSSIBLE CAUSES &amp; SUGGESTED CHECKS</h2>
             <p className="text-[10px] text-muted-foreground">AI Photo Analysis</p>
           </div>
           <button
@@ -434,6 +434,12 @@ const Bridge = ({ profileId }: BridgeProps) => {
               <div className="prose prose-sm prose-invert max-w-none [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm [&_strong]:text-[#D4AF37]">
                 <ReactMarkdown>{diagnosisResult}</ReactMarkdown>
               </div>
+              <p className="text-[10px] text-muted-foreground mt-3 leading-relaxed">
+                AI assessment for guidance only — verify against OEM manuals and your PMS before acting.
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-1 leading-relaxed">
+                General maritime guidance — always follow your vessel's PMS, SMS and manufacturer manuals, which override anything shown here.
+              </p>
             </div>
           )}
           {/* YouTube section */}
@@ -456,10 +462,10 @@ const Bridge = ({ profileId }: BridgeProps) => {
               ))}
             </div>
           )}
-          {/* Official References */}
+          {/* Further Resources */}
           {diagnosisResult && !diagnosisLoading && (
             <div style={{ marginTop: 20 }}>
-              <h3 style={{ color: "#D4AF37", fontSize: 14, fontWeight: 700, marginBottom: 12 }}>📋 Official References</h3>
+              <h3 style={{ color: "#D4AF37", fontSize: 14, fontWeight: 700, marginBottom: 12 }}>📋 Further Resources</h3>
               {[
                 { name: "IMO Official Site", url: "https://www.imo.org" },
                 { name: "gCaptain Maritime News", url: "https://gcaptain.com" },
@@ -592,10 +598,10 @@ const Bridge = ({ profileId }: BridgeProps) => {
               </div>
             );
           })()}
-          {/* Official References */}
+          {/* Further Resources */}
           {messages.length >= 2 && messages[messages.length - 1]?.role === "assistant" && !isLoading && (
             <div style={{ marginTop: 20 }}>
-              <h3 style={{ color: "#D4AF37", fontSize: 14, fontWeight: 700, marginBottom: 12 }}>📋 Official References</h3>
+              <h3 style={{ color: "#D4AF37", fontSize: 14, fontWeight: 700, marginBottom: 12 }}>📋 Further Resources</h3>
               {[
                 { name: "IMO Official Site", url: "https://www.imo.org" },
                 { name: "gCaptain Maritime News", url: "https://gcaptain.com" },
@@ -621,6 +627,9 @@ const Bridge = ({ profileId }: BridgeProps) => {
           {messages.length >= 2 && messages[messages.length - 1]?.role === "assistant" && !isLoading && (
             <SaveToPocket messages={messages} onSaved={(item) => savePocket([...pocketItems, item])} />
           )}
+          <p className="text-[10px] text-muted-foreground leading-relaxed pt-1">
+            General maritime guidance — always follow your vessel's PMS, SMS and manufacturer manuals, which override anything shown here.
+          </p>
           <div ref={chatEndRef} />
         </div>
 
