@@ -20,7 +20,6 @@ import OceanBackground from "@/components/homepage/OceanBackground";
 import SOSButton from "@/components/SOSButton";
 import HomeFeed from "@/components/HomeFeed";
 import NotificationBell from "@/components/NotificationBell";
-import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import CvViewsCard from "@/components/CvViewsCard";
 import BottomNav from "@/components/layout/BottomNav";
 
@@ -846,7 +845,6 @@ const Index = () => {
             userNationality={nationality || undefined}
           />
         </Suspense>
-        <PWAInstallPrompt />
 
         {showNotifPrompt && (
           <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
