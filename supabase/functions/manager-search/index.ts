@@ -150,8 +150,41 @@ Deno.serve(async (req) => {
 
     if (filters.rank) query = query.or(`rank.ilike.%${filters.rank}%,role.ilike.%${filters.rank}%`);
     if (filters.nationality) query = query.ilike("nationality", `%${filters.nationality}%`);
-    if (filters.vesselType) query = query.ilike("vessel_type", `%${filters.vesselType}%`);
-    if (filters.availability === "available") query = query.eq("is_available", true);
+
+    if (filters.vesselType) {
+      const term = String(filters.vesselType).trim();
+      const t = term.toLowerCase();
+      // Map the manager's wording onto the quick-profile vessel_family vocabulary
+      const families: string[] = [];
+      if (t.includes("lng")) families.push("LNG");
+      if (t.includes("lpg") || t.includes("gas")) families.push("LPG");
+      if (t.includes("tanker") || t.includes("oil") || t.includes("chemical")) families.push("TANKER");
+      if (t.includes("bulk")) families.push("BULK");
+      if (t.includes("container")) families.push("CONTAINER");
+      if (t.includes("offshore") || t.includes("osv") || t.includes("psv")) families.push("PSV_OSV");
+      if (t.includes("ahts")) families.push("AHTS");
+      if (t.includes("ro-ro") || t.includes("roro")) families.push("RORO");
+      const patterns = families.length ? families.map((f) => `%${f}%`) : [`%${term.replace(/[\s/-]+/g, "_")}%`, `%${term}%`];
+
+      const expIds = new Set<string>();
+      for (const pat of patterns) {
+        const { data: exp } = await admin
+          .from("crew_vessel_experience")
+          .select("crew_id")
+          .ilike("vessel_family", pat)
+          .limit(2000);
+        (exp || []).forEach((e: any) => e?.crew_id && expIds.add(e.crew_id));
+      }
+
+      const orParts = [`vessel_type.ilike.%${term}%`];
+      if (expIds.size) orParts.push(`id.in.(${[...expIds].join(",")})`);
+      query = query.or(orParts.join(","));
+    }
+
+    // Availability defaults to available-only unless the manager asks for "all"
+    if (filters.availability === undefined || filters.availability === null || filters.availability === "" || filters.availability === "available") {
+      query = query.eq("is_available", true);
+    }
 
     query = query
       .order("is_available", { ascending: false })
