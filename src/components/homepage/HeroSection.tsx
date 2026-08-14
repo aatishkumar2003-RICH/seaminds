@@ -48,8 +48,12 @@ const HeroSection = ({ timeOfDay = "day" }: Props) => {
               One Platform. Everything a Seafarer Needs.
             </h1>
 
-            <p className="text-lg md:text-xl text-primary gold-glow mb-3 font-semibold">
+            <p className="text-lg md:text-xl text-primary gold-glow mb-2 font-semibold">
               Wellness · Career · Community · Certification
+            </p>
+
+            <p className="text-[11px] md:text-xs text-primary/60 mb-3 tracking-wide">
+              ⚡ Powered by leading US AI technology
             </p>
 
             <p className="text-muted-foreground text-sm md:text-base max-w-xl mx-auto mb-6">
