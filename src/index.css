@@ -363,10 +363,23 @@ button, a, [role="button"] { touch-action: manipulation; cursor: pointer; }
 
 .sm-cta-conic {
   position: relative;
-  padding: 0;
+  overflow: hidden;
+  padding: 1px;
   color: #D4AF37;
-  background: conic-gradient(from 0deg, rgba(212,175,55,0.85), rgba(212,175,55,0.05), rgba(212,175,55,0.85));
+  background: #112240;
+  isolation: isolate;
+}
+.sm-cta-conic::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 300%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  background: conic-gradient(from 0deg, rgba(212,175,55,0.9), rgba(212,175,55,0.05), rgba(212,175,55,0.9));
   animation: sm-spin 6s linear infinite;
+  z-index: -1;
 }
 .sm-cta-conic-inner {
   display: flex;
@@ -374,14 +387,11 @@ button, a, [role="button"] { touch-action: manipulation; cursor: pointer; }
   justify-content: center;
   width: 100%;
   height: 100%;
-  margin: 1px;
   padding: 0 1.5rem;
   background: #112240;
-  animation: sm-spin-rev 6s linear infinite;
 }
 
-@keyframes sm-spin { to { transform: rotate(360deg); } }
-@keyframes sm-spin-rev { to { transform: rotate(-360deg); } }
+@keyframes sm-spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
 
 .sm-pulse-dot { animation: sm-dot 1.6s ease-in-out infinite; }
 @keyframes sm-dot {
@@ -392,8 +402,7 @@ button, a, [role="button"] { touch-action: manipulation; cursor: pointer; }
 @media (prefers-reduced-motion: reduce) {
   .sm-hero-glow,
   .sm-cta-gold,
-  .sm-cta-conic,
-  .sm-cta-conic-inner,
+  .sm-cta-conic::before,
   .sm-pulse-dot {
     animation: none !important;
   }

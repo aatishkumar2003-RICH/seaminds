@@ -13,6 +13,8 @@ import SMCShowcase from "@/components/homepage/SMCShowcase";
 import FinalCTA from "@/components/homepage/FinalCTA";
 import HomeFooter from "@/components/homepage/HomeFooter";
 import LiveTicker from "@/components/homepage/LiveTicker";
+import QuickProfileShowcase from "@/components/homepage/QuickProfileShowcase";
+import HiringNow from "@/components/homepage/HiringNow";
 import { useTimeOfDay } from "@/hooks/useTimeOfDay";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -142,6 +144,8 @@ const HomePage = () => {
         <LiveTicker />
         <HomeNav />
         <HeroSection timeOfDay={timeOfDay} />
+        <QuickProfileShowcase />
+        <HiringNow />
         <AppPreviewSection />
         <HowItWorksSection />
         <BentoGrid />
