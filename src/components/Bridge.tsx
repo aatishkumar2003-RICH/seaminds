@@ -462,10 +462,10 @@ const Bridge = ({ profileId }: BridgeProps) => {
               ))}
             </div>
           )}
-          {/* Official References */}
+          {/* Further Resources */}
           {diagnosisResult && !diagnosisLoading && (
             <div style={{ marginTop: 20 }}>
-              <h3 style={{ color: "#D4AF37", fontSize: 14, fontWeight: 700, marginBottom: 12 }}>📋 Official References</h3>
+              <h3 style={{ color: "#D4AF37", fontSize: 14, fontWeight: 700, marginBottom: 12 }}>📋 Further Resources</h3>
               {[
                 { name: "IMO Official Site", url: "https://www.imo.org" },
                 { name: "gCaptain Maritime News", url: "https://gcaptain.com" },
@@ -598,10 +598,10 @@ const Bridge = ({ profileId }: BridgeProps) => {
               </div>
             );
           })()}
-          {/* Official References */}
+          {/* Further Resources */}
           {messages.length >= 2 && messages[messages.length - 1]?.role === "assistant" && !isLoading && (
             <div style={{ marginTop: 20 }}>
-              <h3 style={{ color: "#D4AF37", fontSize: 14, fontWeight: 700, marginBottom: 12 }}>📋 Official References</h3>
+              <h3 style={{ color: "#D4AF37", fontSize: 14, fontWeight: 700, marginBottom: 12 }}>📋 Further Resources</h3>
               {[
                 { name: "IMO Official Site", url: "https://www.imo.org" },
                 { name: "gCaptain Maritime News", url: "https://gcaptain.com" },
