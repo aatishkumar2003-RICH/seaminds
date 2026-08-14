@@ -116,7 +116,8 @@ async function processWithAI(rawItems: any[]): Promise<any[]> {
 - joining_port: string or null
 - joining_date: string or null
 - contract_duration: string or null
-- contact_email: string or null (extract ANY email found in the text, including in URLs like mailto:, or company domain emails inferred from company website)
+- contact_email: string or null (ONLY an email literally present in the text, including mailto: URLs. NEVER infer, guess or construct an email from a company name or website — if none is present, use null)
+- source_posted_at: string or null (the posting date shown by the source in YYYY-MM-DD form. Convert relative dates like "2 days ago" using today's date ${new Date().toISOString().slice(0,10)}. NEVER guess — if no posting date is shown, use null)
 - contact_whatsapp: string or null (extract phone numbers, WhatsApp links, wa.me links, any +countrycode numbers)
 - apply_url: string or null (IMPORTANT: always include this if available — it is the fallback when no direct contact exists)
 - company_website: string or null (extract company website URL if mentioned)
@@ -176,6 +177,17 @@ async function enrichWithCompanyContact(companyName: string | null): Promise<{em
   return { email: null, whatsapp: null, website: null };
 }
 
+function computeDedupKey(item: any, source: string): string {
+  const raw = [
+    item.company_name || '',
+    item.rank_required || '',
+    item.vessel_type || '',
+    item.joining_date || item.source_posted_at || '',
+    item.apply_url || source || '',
+  ].join('|');
+  return raw.toLowerCase().replace(/\s+/g, '');
+}
+
 async function saveVacancies(items: any[], source: string) {
   if (!items.length) return 0;
   let saved = 0;
@@ -189,6 +201,14 @@ async function saveVacancies(items: any[], source: string) {
       if (enriched.whatsapp && !item.contact_whatsapp) item.contact_whatsapp = enriched.whatsapp;
       if (enriched.website && !item.apply_url) item.apply_url = `https://${enriched.website}`;
     }
+    const dedupKey = computeDedupKey(item, source);
+    const { data: dupe } = await supabase
+      .from('external_vacancies')
+      .select('id')
+      .eq('dedup_key', dedupKey)
+      .maybeSingle();
+    if (dupe) continue; // already have this vacancy — skip silently
+
     const { error } = await supabase.from('external_vacancies').upsert({
       source,
       external_id: item.external_id || `${source}-${Date.now()}-${Math.random()}`,
@@ -212,10 +232,14 @@ async function saveVacancies(items: any[], source: string) {
       is_scam_flagged: false,
       scam_flags: [],
       fetched_at: new Date().toISOString(),
-      expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      source_posted_at: /^\d{4}-\d{2}-\d{2}$/.test(item.source_posted_at || '') ? item.source_posted_at : null,
+      dedup_key: dedupKey,
+      // expires_at is owned by the database freshness trigger (14 days from source posting date)
       raw_data: item,
     }, { onConflict: 'source,external_id', ignoreDuplicates: true });
+    // A unique-index violation just means another run already saved this vacancy.
     if (!error) saved++;
+    else if ((error as any).code !== '23505') console.error('vacancy save failed', error.message);
   }
   return saved;
 }

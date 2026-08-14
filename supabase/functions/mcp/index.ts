@@ -64,7 +64,7 @@ var search_jobs_default = defineTool2({
     if (!ctx.isAuthenticated()) return notAuthenticated;
     let q = supabaseForUser(ctx).from("external_vacancies").select(
       "id, title, rank_required, vessel_type, company_name, salary_text, salary_min, salary_max, joining_port, joining_date, contract_duration, apply_url, contact_email, contact_whatsapp, quality_score, fetched_at"
-    ).eq("is_scam_flagged", false).order("fetched_at", { ascending: false }).limit(limit ?? 10);
+    ).eq("is_scam_flagged", false).gt("expires_at", (/* @__PURE__ */ new Date()).toISOString()).order("fetched_at", { ascending: false }).limit(limit ?? 10);
     if (rank) q = q.ilike("rank_required", `%${rank}%`);
     if (vessel_type) q = q.ilike("vessel_type", `%${vessel_type}%`);
     if (query) q = q.or(`title.ilike.%${query}%,description.ilike.%${query}%`);

@@ -204,21 +204,25 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
   };
 
   const handleApply = async (vacancy: Vacancy) => {
-    const { error } = await supabase.from("contact_requests").insert({
-      vacancy_id: vacancy.id,
-      crew_profile_id: profileId,
-      manager_profile_id: vacancy.manager_profile_id,
-      company_name: vacancy.company_name,
-      vessel_type: vacancy.vessel_type,
-      rank_required: vacancy.rank_required,
-      status: "applied",
+    const { data, error } = await supabase.rpc("submit_application" as any, {
+      p_vacancy_id: vacancy.id,
+      p_company_post_id: null,
+      p_company_name: vacancy.company_name || null,
+      p_rank: vacancy.rank_required || null,
+      p_vessel: vacancy.vessel_type || null,
+      p_external_url: null,
     });
-
-    if (error) {
+    const r: any = data;
+    if (error || !r?.ok) {
       toast({ title: "Error", description: "Could not send application. Try again.", variant: "destructive" });
-    } else {
-      toast({ title: "Application Sent", description: `Your profile has been sent to ${vacancy.company_name}.` });
+      return;
     }
+    toast({
+      title: r.duplicate ? "Already applied" : "Application Sent",
+      description: r.duplicate
+        ? "You have already applied to this vacancy."
+        : `Your profile has been sent to ${vacancy.company_name}.`,
+    });
   };
 
   // External vacancies have no manning-company row, so the application is captured centrally

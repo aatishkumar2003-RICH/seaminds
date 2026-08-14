@@ -45,12 +45,14 @@ Deno.serve(async (req) => {
 
     // Auto-fix: remove expired vacancies
     const actions: string[] = [];
+    // History is data: only purge rows more than 60 days past expiry.
+    const purgeBefore = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString();
     const { count: expired } = await supabase
       .from('external_vacancies').select('*', { count: 'exact', head: true })
-      .lt('expires_at', new Date().toISOString());
+      .lt('expires_at', purgeBefore);
     if (expired && expired > 0) {
-      await supabase.from('external_vacancies').delete().lt('expires_at', new Date().toISOString());
-      actions.push(`✅ Removed ${expired} expired vacancies`);
+      await supabase.from('external_vacancies').delete().lt('expires_at', purgeBefore);
+      actions.push(`✅ Removed ${expired} vacancies expired over 60 days ago`);
     }
 
     // Auto-fix: remove no-contact jobs older than 30 days
