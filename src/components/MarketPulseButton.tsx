@@ -130,7 +130,7 @@ export default function MarketPulseButton({
         .map(([name, count]) => ({ flag: FLAGS[name] || '🌍', name, count, pct: totalCrew ? Math.round(count / totalCrew * 100) : 0 }));
 
       // All vacancies merged
-      const allVac = [...(allVacRes.data || []), ...(extVacRes.data || [])];
+      const allVac = [...(extVacRes.data || [])];
       const totalVacancies = allVac.length;
 
       // By vessel
