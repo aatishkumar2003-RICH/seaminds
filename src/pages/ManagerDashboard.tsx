@@ -103,12 +103,16 @@ const ManagerDashboard = () => {
 
       const { data: profile } = await supabase
         .from("manager_profiles")
-        .select("company_name")
+        .select("company_name, dpa_name, emergency_phone, emergency_email")
         .eq("user_id", user.id)
         .single();
 
       if (!profile) { navigate("/manager"); return; }
       setCompanyName(profile.company_name);
+      setDpaName(profile.dpa_name || "");
+      setEmergencyPhone(profile.emergency_phone || "");
+      setEmergencyEmail(profile.emergency_email || "");
+
 
       // Fetch crew from this company
       const { data: crew } = await supabase
