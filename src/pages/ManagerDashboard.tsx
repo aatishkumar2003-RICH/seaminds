@@ -74,6 +74,27 @@ const ManagerDashboard = () => {
   const [fleet, setFleet] = useState<FleetResult | null>(null);
   const [fleetEmail, setFleetEmail] = useState("");
   const [fleetAdding, setFleetAdding] = useState(false);
+  const [dpaName, setDpaName] = useState("");
+  const [emergencyPhone, setEmergencyPhone] = useState("");
+  const [emergencyEmail, setEmergencyEmail] = useState("");
+  const [savingEmergency, setSavingEmergency] = useState(false);
+
+  const saveEmergencyContact = async () => {
+    setSavingEmergency(true);
+    const { error } = await supabase
+      .from("manager_profiles")
+      .update({
+        dpa_name: dpaName.trim() || null,
+        emergency_phone: emergencyPhone.trim() || null,
+        emergency_email: emergencyEmail.trim() || null,
+        emergency_updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", managerUserId);
+    setSavingEmergency(false);
+    if (error) { toast.error("Could not save emergency contact"); return; }
+    toast.success("Emergency contact saved");
+  };
+
   useEffect(() => {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -82,12 +103,16 @@ const ManagerDashboard = () => {
 
       const { data: profile } = await supabase
         .from("manager_profiles")
-        .select("company_name")
+        .select("company_name, dpa_name, emergency_phone, emergency_email")
         .eq("user_id", user.id)
         .single();
 
       if (!profile) { navigate("/manager"); return; }
       setCompanyName(profile.company_name);
+      setDpaName(profile.dpa_name || "");
+      setEmergencyPhone(profile.emergency_phone || "");
+      setEmergencyEmail(profile.emergency_email || "");
+
 
       // Fetch crew from this company
       const { data: crew } = await supabase
@@ -516,6 +541,45 @@ const ManagerDashboard = () => {
                 <p className="text-sm text-muted-foreground">Loading fleet…</p>
               )}
             </div>
+
+            {/* Emergency / DPA contact */}
+            <div className="bg-secondary rounded-xl border border-border p-4 space-y-3">
+              <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">🆘 Emergency / DPA contact</h2>
+              <div className="grid gap-2 sm:grid-cols-3">
+                <input
+                  value={dpaName}
+                  onChange={(e) => setDpaName(e.target.value)}
+                  placeholder="DPA / contact person name"
+                  className="bg-background text-foreground text-sm rounded-lg px-3 py-2 border border-border"
+                />
+                <input
+                  type="tel"
+                  value={emergencyPhone}
+                  onChange={(e) => setEmergencyPhone(e.target.value)}
+                  placeholder="Emergency phone"
+                  className="bg-background text-foreground text-sm rounded-lg px-3 py-2 border border-border"
+                />
+                <input
+                  type="email"
+                  value={emergencyEmail}
+                  onChange={(e) => setEmergencyEmail(e.target.value)}
+                  placeholder="Emergency email"
+                  className="bg-background text-foreground text-sm rounded-lg px-3 py-2 border border-border"
+                />
+              </div>
+              <button
+                onClick={saveEmergencyContact}
+                disabled={savingEmergency}
+                className="text-sm font-bold px-4 py-2 rounded-xl bg-[#D4AF37] text-[#0D1B2A] border border-[#D4AF37] hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {savingEmergency ? "Saving…" : "Save"}
+              </button>
+              <p className="text-xs text-muted-foreground/70">
+                Shown to YOUR linked crew in their SOS screen — per ISM practice, crew must always be able to reach their company.
+              </p>
+            </div>
+
+
 
 
 

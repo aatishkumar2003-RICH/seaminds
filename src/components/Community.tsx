@@ -423,13 +423,17 @@ const SafetyReportSection = ({ shipName, manningAgency }: { shipName: string; ma
   const handleSubmit = async () => {
     if (!canSubmit) return;
     setSubmitting(true);
-    await supabase.from("safety_reports").insert({
+    const { error } = await supabase.from("safety_reports").insert({
       ship_name: shipName,
       manning_agency: manningAgency || null,
       category,
       description: description.trim(),
     });
     setSubmitting(false);
+    if (error) {
+      toast.error("Could not submit your report — please try again.");
+      return;
+    }
     setSubmitted(true);
   };
 
@@ -441,8 +445,9 @@ const SafetyReportSection = ({ shipName, manningAgency }: { shipName: string; ma
           <p className="text-sm font-semibold text-foreground">Report Received</p>
         </div>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Your report has been received. Your identity is completely protected. The welfare officer will review this within 24 hours. You cannot be identified or penalised for submitting this report under MLC 2006 Article III.
+          Report received by SeaMinds. Your name is not included in this form's submission — avoid entering identifying details if you wish to remain anonymous. For immediate danger or statutory onboard reporting, follow your vessel and company emergency and complaint procedures (MLC Reg. 5.1.5).
         </p>
+
         <button
           onClick={() => { setSubmitted(false); setShowForm(false); setCategory(""); setDescription(""); }}
           className="text-xs text-primary font-medium"
