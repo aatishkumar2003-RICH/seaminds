@@ -188,6 +188,7 @@ const QuickProfile = () => {
   const setFamily = async (key: string, band: string) => {
     if (!uid) return;
     setFamilies((s) => ({ ...s, [key]: band }));
+    setPendingFamilies((s) => s.filter((k) => k !== key));
     try {
       await supabase.from("crew_vessel_experience" as any)
         .upsert({ crew_id: uid, vessel_family: key, sea_time_band: band } as any, { onConflict: "crew_id,vessel_family" });
@@ -196,15 +197,23 @@ const QuickProfile = () => {
 
   const toggleFamily = async (key: string) => {
     if (!uid) return;
-    if (families[key] !== undefined) {
-      setFamilies((s) => { const n = { ...s }; delete n[key]; return n; });
-      try {
-        await supabase.from("crew_vessel_experience" as any).delete().eq("crew_id", uid).eq("vessel_family", key);
-      } catch { /* silent */ }
+    const saved = families[key] !== undefined;
+    const pending = pendingFamilies.includes(key);
+    if (saved || pending) {
+      // deselect: drop pending selection and delete any saved row
+      setPendingFamilies((s) => s.filter((k) => k !== key));
+      if (saved) {
+        setFamilies((s) => { const n = { ...s }; delete n[key]; return n; });
+        try {
+          await supabase.from("crew_vessel_experience" as any).delete().eq("crew_id", uid).eq("vessel_family", key);
+        } catch { /* silent */ }
+      }
     } else {
-      setFamily(key, FAMILY_TIME[0]);
+      // selection alone only reveals the sea-time chips — no save yet
+      setPendingFamilies((s) => [...s, key]);
     }
   };
+
 
   const setClaim = async (key: string, value: string) => {
     if (!uid) return;
