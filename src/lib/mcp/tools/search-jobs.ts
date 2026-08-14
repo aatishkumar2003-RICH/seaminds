@@ -20,7 +20,7 @@ export default defineTool({
       .select(
         "id, title, rank_required, vessel_type, company_name, salary_text, salary_min, salary_max, joining_port, joining_date, contract_duration, apply_url, contact_email, contact_whatsapp, quality_score, fetched_at"
       )
-      .eq("is_scam_flagged", false)
+      .eq("is_scam_flagged", false).gt("expires_at", new Date().toISOString())
       .order("fetched_at", { ascending: false })
       .limit(limit ?? 10);
 
