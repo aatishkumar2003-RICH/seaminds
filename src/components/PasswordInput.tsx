@@ -30,6 +30,8 @@ const PasswordInput = ({ value, onChange, placeholder = "•••••••�
         type="button"
         onClick={() => setShow((s) => !s)}
         aria-label={show ? "Hide password" : "Show password"}
+        onMouseEnter={(e) => (e.currentTarget.style.color = "#D4AF37")}
+        onMouseLeave={(e) => (e.currentTarget.style.color = "#94a3b8")}
         style={{
           position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)",
           background: "transparent", border: "none", cursor: "pointer",

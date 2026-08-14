@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Eye, EyeOff } from "lucide-react";
 
 const GOLD = "#D4AF37";
 const NAVY = "#0D1B2A";
@@ -24,6 +25,7 @@ const InterviewInvite = () => {
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [nationality, setNationality] = useState("");
 
   useEffect(() => {
@@ -193,7 +195,19 @@ const InterviewInvite = () => {
         </div>
         <div style={{ marginBottom: 12 }}>
           <label style={{ color: "#94a3b8", fontSize: 11, textTransform: "uppercase", letterSpacing: 0.6 }}>Choose a password *</label>
-          <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="At least 8 characters" style={input} />
+          <div style={{ position: "relative" }}>
+            <input value={password} onChange={(e) => setPassword(e.target.value)} type={showPassword ? "text" : "password"} placeholder="At least 8 characters" style={{ ...input, paddingRight: 44 }} />
+            <button
+              type="button"
+              onClick={() => setShowPassword((s) => !s)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#D4AF37")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "#94a3b8")}
+              style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", background: "transparent", border: "none", cursor: "pointer", padding: 8, display: "flex", color: "#94a3b8" }}
+            >
+              {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+            </button>
+          </div>
         </div>
         <div style={{ marginBottom: 18 }}>
           <label style={{ color: "#94a3b8", fontSize: 11, textTransform: "uppercase", letterSpacing: 0.6 }}>Nationality</label>
