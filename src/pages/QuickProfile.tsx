@@ -135,7 +135,7 @@ const QuickProfile = () => {
 
       const [{ data: prof }, { data: fam }, { data: cl }] = await Promise.all([
         supabase.from("crew_profiles")
-          .select("first_name, rank, role, is_available, years_in_rank_band, contracts_in_rank_band, total_sea_service_band" as any)
+          .select("first_name, rank, role, is_available, available_from, years_in_rank_band, contracts_in_rank_band, total_sea_service_band" as any)
           .eq("id", user.id).maybeSingle(),
         supabase.from("crew_vessel_experience" as any).select("vessel_family, sea_time_band").eq("crew_id", user.id),
         supabase.from("crew_claims" as any).select("claim_key, value").eq("crew_id", user.id),
