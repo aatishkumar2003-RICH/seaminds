@@ -1555,6 +1555,7 @@ export type Database = {
           expires_at: string | null
           external_id: string
           fetched_at: string | null
+          first_seen_at: string
           id: string
           is_scam_flagged: boolean | null
           is_verified: boolean | null
@@ -1586,6 +1587,7 @@ export type Database = {
           expires_at?: string | null
           external_id: string
           fetched_at?: string | null
+          first_seen_at?: string
           id?: string
           is_scam_flagged?: boolean | null
           is_verified?: boolean | null
@@ -1617,6 +1619,7 @@ export type Database = {
           expires_at?: string | null
           external_id?: string
           fetched_at?: string | null
+          first_seen_at?: string
           id?: string
           is_scam_flagged?: boolean | null
           is_verified?: boolean | null
@@ -2923,6 +2926,7 @@ export type Database = {
           id: string
           judgment_score: number | null
           overall_score: number | null
+          probed_claims: Json | null
           recommendation: string | null
           red_flags: Json | null
           report: Json | null
@@ -2946,6 +2950,7 @@ export type Database = {
           id?: string
           judgment_score?: number | null
           overall_score?: number | null
+          probed_claims?: Json | null
           recommendation?: string | null
           red_flags?: Json | null
           report?: Json | null
@@ -2969,6 +2974,7 @@ export type Database = {
           id?: string
           judgment_score?: number | null
           overall_score?: number | null
+          probed_claims?: Json | null
           recommendation?: string | null
           red_flags?: Json | null
           report?: Json | null
