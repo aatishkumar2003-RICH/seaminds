@@ -19,7 +19,9 @@ const RANKS = [
 ];
 
 const YEARS_BANDS = ["0–1", "2–4", "5–8", "9–14", "15+"];
-const CONTRACT_BANDS = ["1–2", "3–5", "6–10", "10+"];
+const CONTRACT_BANDS = ["0", "1–2", "3–5", "6–10", "10+"];
+const CONTRACT_LABEL = (b: string) => (b === "0" ? "0 — first contract" : b);
+
 const SEA_BANDS = ["<2", "2–5", "6–10", "11–15", "15+"];
 const FAMILY_TIME = ["<1", "1–3", "3–5", "5+ yr"];
 
@@ -98,9 +100,13 @@ const QuickProfile = () => {
   const [contractsBand, setContractsBand] = useState("");
   const [seaBand, setSeaBand] = useState("");
   const [available, setAvailable] = useState(false);
+  const [availableFrom, setAvailableFrom] = useState("");
 
   // step 2
-  const [families, setFamilies] = useState<Record<string, string>>({}); // family -> band
+  const [families, setFamilies] = useState<Record<string, string>>({}); // family -> band (saved rows)
+  const [pendingFamilies, setPendingFamilies] = useState<string[]>([]); // selected, awaiting sea time
+  const [cadetSkipped, setCadetSkipped] = useState(false);
+
 
   // step 3
   const [claims, setClaims] = useState<Record<string, string>>({});
@@ -113,6 +119,9 @@ const QuickProfile = () => {
   const hasOffshore = selectedFamilies.some((f) => OFFSHORE.includes(f));
   const dept = deptOf(rank);
   const rating = isRating(rank);
+  const isCadetRank = /cadet|trainee|deck boy/i.test(rank || "");
+  const isStartingOut = isCadetRank || (yearsBand === "0–1" && contractsBand === "0");
+
 
   /* ---------- load ---------- */
   useEffect(() => {
@@ -126,7 +135,7 @@ const QuickProfile = () => {
 
       const [{ data: prof }, { data: fam }, { data: cl }] = await Promise.all([
         supabase.from("crew_profiles")
-          .select("first_name, rank, role, is_available, years_in_rank_band, contracts_in_rank_band, total_sea_service_band" as any)
+          .select("first_name, rank, role, is_available, available_from, years_in_rank_band, contracts_in_rank_band, total_sea_service_band" as any)
           .eq("id", user.id).maybeSingle(),
         supabase.from("crew_vessel_experience" as any).select("vessel_family, sea_time_band").eq("crew_id", user.id),
         supabase.from("crew_claims" as any).select("claim_key, value").eq("crew_id", user.id),
@@ -140,6 +149,8 @@ const QuickProfile = () => {
       setContractsBand(p.contracts_in_rank_band || "");
       setSeaBand(p.total_sea_service_band || "");
       setAvailable(!!p.is_available);
+      setAvailableFrom(p.available_from ? String(p.available_from).slice(0, 10) : "");
+
       const fmap: Record<string, string> = {};
       ((fam as any[]) || []).forEach((f) => { fmap[f.vessel_family] = f.sea_time_band; });
       setFamilies(fmap);
@@ -177,6 +188,7 @@ const QuickProfile = () => {
   const setFamily = async (key: string, band: string) => {
     if (!uid) return;
     setFamilies((s) => ({ ...s, [key]: band }));
+    setPendingFamilies((s) => s.filter((k) => k !== key));
     try {
       await supabase.from("crew_vessel_experience" as any)
         .upsert({ crew_id: uid, vessel_family: key, sea_time_band: band } as any, { onConflict: "crew_id,vessel_family" });
@@ -185,15 +197,23 @@ const QuickProfile = () => {
 
   const toggleFamily = async (key: string) => {
     if (!uid) return;
-    if (families[key] !== undefined) {
-      setFamilies((s) => { const n = { ...s }; delete n[key]; return n; });
-      try {
-        await supabase.from("crew_vessel_experience" as any).delete().eq("crew_id", uid).eq("vessel_family", key);
-      } catch { /* silent */ }
+    const saved = families[key] !== undefined;
+    const pending = pendingFamilies.includes(key);
+    if (saved || pending) {
+      // deselect: drop pending selection and delete any saved row
+      setPendingFamilies((s) => s.filter((k) => k !== key));
+      if (saved) {
+        setFamilies((s) => { const n = { ...s }; delete n[key]; return n; });
+        try {
+          await supabase.from("crew_vessel_experience" as any).delete().eq("crew_id", uid).eq("vessel_family", key);
+        } catch { /* silent */ }
+      }
     } else {
-      setFamily(key, FAMILY_TIME[0]);
+      // selection alone only reveals the sea-time chips — no save yet
+      setPendingFamilies((s) => [...s, key]);
     }
   };
+
 
   const setClaim = async (key: string, value: string) => {
     if (!uid) return;
@@ -294,7 +314,7 @@ const QuickProfile = () => {
   };
 
   const step1Done = !!rank && !!yearsBand && !!contractsBand && !!seaBand;
-  const step2Done = selectedFamilies.length > 0;
+  const step2Done = selectedFamilies.length > 0 || cadetSkipped;
 
   if (!ready) return <div style={{ minHeight: "100vh", background: NAVY }} />;
 
@@ -361,11 +381,15 @@ const QuickProfile = () => {
             <Q title="Contracts completed in this rank">
               <Row>
                 {CONTRACT_BANDS.map((b) => (
-                  <Chip key={b} label={b} on={contractsBand === b}
+                  <Chip key={b} label={CONTRACT_LABEL(b)} on={contractsBand === b}
                     onClick={() => { setContractsBand(b); saveProfile({ contracts_in_rank_band: b }); }} />
                 ))}
               </Row>
             </Q>
+
+            {isStartingOut && (
+              <p style={{ color: GOLD, fontSize: 13, fontWeight: 700 }}>⚓ Starting your sea career — welcome aboard!</p>
+            )}
 
             <Q title="Total sea service (years)">
               <Row>
@@ -381,6 +405,17 @@ const QuickProfile = () => {
                 <Chip label={available ? "Yes — available" : "Not available"} on={available}
                   onClick={() => { const v = !available; setAvailable(v); saveProfile({ is_available: v }); }} />
               </Row>
+              {available && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <label style={{ color: "#94A3B8", fontSize: 12 }}>Available from</label>
+                  <input
+                    type="date"
+                    value={availableFrom}
+                    onChange={(e) => { setAvailableFrom(e.target.value); saveProfile({ available_from: e.target.value || null }); }}
+                    style={{ width: "100%", padding: "11px 12px", borderRadius: 10, background: NAVY, color: "#fff", border: `1px solid ${BORDER}`, fontSize: 14 }}
+                  />
+                </div>
+              )}
             </Q>
 
             <button
@@ -394,26 +429,44 @@ const QuickProfile = () => {
           <>
             <p style={{ color: "#94A3B8", fontSize: 12 }}>Which vessels have you sailed on? Tap to select, then tap your sea time.</p>
             {FAMILIES.map((f) => {
-              const on = families[f.key] !== undefined;
+              const saved = families[f.key] !== undefined;
+              const pending = pendingFamilies.includes(f.key);
+              const on = saved || pending;
               return (
                 <div key={f.key} style={{ background: CARD, border: `1px solid ${on ? GOLD : BORDER}`, borderRadius: 14, padding: 12, display: "flex", flexDirection: "column", gap: 10 }}>
                   <Chip label={f.label} on={on} onClick={() => toggleFamily(f.key)} />
                   {on && (
-                    <Row>
-                      {FAMILY_TIME.map((t) => (
-                        <Chip key={t} label={t} on={families[f.key] === t} onClick={() => setFamily(f.key, t)} />
-                      ))}
-                    </Row>
+                    <>
+                      {pending && <p style={{ color: GOLD, fontSize: 12 }}>Choose sea time</p>}
+                      <Row>
+                        {FAMILY_TIME.map((t) => (
+                          <Chip key={t} label={t} on={families[f.key] === t} onClick={() => setFamily(f.key, t)} />
+                        ))}
+                      </Row>
+                    </>
                   )}
                 </div>
               );
             })}
             <button
               style={{ ...goldBtn, opacity: step2Done ? 1 : 0.5 }}
-              onClick={() => { if (!step2Done) return toast("Select at least one vessel type"); setStep(3); }}
+              onClick={() => {
+                if (!step2Done) return toast("Select at least one vessel type");
+                setPendingFamilies([]);
+                setStep(3);
+              }}
             >
               Continue →
             </button>
+            {isStartingOut && (
+              <button
+                onClick={() => { setPendingFamilies([]); setCadetSkipped(true); setStep(3); }}
+                style={{ background: "transparent", border: "none", color: GOLD, cursor: "pointer", fontSize: 13, fontWeight: 700, padding: 4 }}
+              >
+                No sea service yet — skip
+              </button>
+            )}
+
             <button onClick={() => setStep(1)} style={{ ...goldBtn, background: "transparent", color: GOLD, border: `1px solid ${GOLD}` }}>Back</button>
           </>
         ) : (
