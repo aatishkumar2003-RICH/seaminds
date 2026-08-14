@@ -503,11 +503,13 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                 {jp.additional_notes && (
                   <p className="text-[11px] text-muted-foreground italic">{jp.additional_notes}</p>
                 )}
-                <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="block">
-                  <Button size="sm" className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold text-sm h-10">
-                    Apply via WhatsApp
-                  </Button>
-                </a>
+                <Button
+                  size="sm"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold text-sm h-10"
+                  onClick={() => openJobPosting(jp, whatsappUrl)}
+                >
+                  Apply via WhatsApp
+                </Button>
               </div>
             );
           })
