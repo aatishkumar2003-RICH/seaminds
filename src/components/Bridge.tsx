@@ -434,6 +434,12 @@ const Bridge = ({ profileId }: BridgeProps) => {
               <div className="prose prose-sm prose-invert max-w-none [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm [&_strong]:text-[#D4AF37]">
                 <ReactMarkdown>{diagnosisResult}</ReactMarkdown>
               </div>
+              <p className="text-[10px] text-muted-foreground mt-3 leading-relaxed">
+                AI assessment for guidance only — verify against OEM manuals and your PMS before acting.
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-1 leading-relaxed">
+                General maritime guidance — always follow your vessel's PMS, SMS and manufacturer manuals, which override anything shown here.
+              </p>
             </div>
           )}
           {/* YouTube section */}
