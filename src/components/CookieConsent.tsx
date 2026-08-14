@@ -19,6 +19,7 @@ const CookieConsent = () => {
 
   const handleAccept = () => {
     setConsent("accepted");
+    void initMetaPixel();
     setVisible(false);
   };
 
