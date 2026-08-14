@@ -145,15 +145,19 @@ Deno.serve(async (req) => {
 
   // ── AI INTERVIEW V2 — RESOLVE INTERVIEW SPEC (never blocks) ──
   let spec: any = null;
+  let probedClaimKeys: string[] = [];
+  let probeUid: string | null = null;
   try {
     let yearsInRank: number | null = null;
     let contractsInRank: number | null = null;
     let cvClaims: string[] = [];
+    let vesselForSpec: string = vesselType;
 
     try {
       const token = authHeader.replace('Bearer ', '');
       const { data: userData } = await adminClient.auth.getUser(token);
       const uid = userData?.user?.id;
+      probeUid = uid || null;
       if (uid) {
         const { data: cv } = await adminClient
           .from('crew_cv_data')
@@ -175,6 +179,41 @@ Deno.serve(async (req) => {
             .slice(0, 5)
             .map((s: any) => [s?.rank || s?.position, s?.vessel_type, s?.vessel_name].filter(Boolean).join(' — '))
             .filter((s: string) => s.length > 2);
+        }
+
+        // Quick-profile calibration fallback when the CV has no usable sea service
+        if (yearsInRank === null || contractsInRank === null) {
+          try {
+            const { data: qp } = await adminClient
+              .from('crew_profiles')
+              .select('years_in_rank_band, contracts_in_rank_band')
+              .eq('id', uid)
+              .maybeSingle();
+            const yearsMid: Record<string, number> = { '0-1': 1, '2-4': 3, '5-8': 6, '9-14': 11, '15+': 16 };
+            const contractsMid: Record<string, number> = { '1-2': 2, '3-5': 4, '6-10': 8, '10+': 12 };
+            const norm = (v: any) => String(v ?? '').trim().replace(/[–—]/g, '-').replace(/\s+/g, '');
+            const yb = norm((qp as any)?.years_in_rank_band);
+            const cb = norm((qp as any)?.contracts_in_rank_band);
+            if (yearsInRank === null && yearsMid[yb] !== undefined) yearsInRank = yearsMid[yb];
+            if (contractsInRank === null && contractsMid[cb] !== undefined) contractsInRank = contractsMid[cb];
+          } catch (_e) { /* band fallback optional */ }
+        }
+
+        // Vessel context fallback: strongest quick-profile vessel family
+        if (!vesselForSpec) {
+          try {
+            const { data: exp } = await adminClient
+              .from('crew_vessel_experience')
+              .select('vessel_family, sea_time_band')
+              .eq('crew_id', uid);
+            const bandRank: Record<string, number> = { '0-6m': 1, '6-12m': 2, '1-3y': 3, '3-5y': 4, '5y+': 5, '5+': 5 };
+            const best = (exp || [])
+              .slice()
+              .sort((a: any, b: any) =>
+                (bandRank[String(b?.sea_time_band ?? '').trim()] || 0) - (bandRank[String(a?.sea_time_band ?? '').trim()] || 0)
+              )[0];
+            if (best?.vessel_family) vesselForSpec = String(best.vessel_family);
+          } catch (_e) { /* vessel fallback optional */ }
         }
 
         // Quick-profile self-declared claims (FACT/CLAIM/VERIFIED loop)
@@ -220,10 +259,13 @@ Deno.serve(async (req) => {
               default: return `Claims ${k.replace(/_/g, ' ')}: ${v}`;
             }
           };
-          const extra = (qc || [])
-            .filter((c: any) => !skip.has(String(c?.value ?? '').trim().toLowerCase()))
-            .map((c: any) => pretty(String(c.claim_key), String(c.value)));
+          const usable = (qc || []).filter((c: any) => !skip.has(String(c?.value ?? '').trim().toLowerCase()));
+          const extra = usable.map((c: any) => pretty(String(c.claim_key), String(c.value)));
+          const before = cvClaims.length;
           cvClaims = [...cvClaims, ...extra].slice(0, 8);
+          // Only claims that survived the 8-item cap were actually put in front of the interviewer
+          const included = Math.max(0, cvClaims.length - before);
+          probedClaimKeys = usable.slice(0, included).map((c: any) => String(c.claim_key));
         } catch (_e) { /* quick-profile claims optional */ }
       }
     } catch (_e) { /* CV lookup optional */ }
@@ -232,7 +274,7 @@ Deno.serve(async (req) => {
       p_rank: rank,
       p_years_in_rank: yearsInRank ?? 2,
       p_contracts_in_rank: contractsInRank ?? 3,
-      p_vessel: vesselType,
+      p_vessel: vesselForSpec,
       p_specialist: null,
       p_cv_claims: cvClaims,
       p_vacancy_topics: [],
@@ -241,6 +283,27 @@ Deno.serve(async (req) => {
   } catch (_e) {
     spec = null;
   }
+
+  // Record which quick-profile claims this interview targets — never blocks generation
+  const recordProbedClaims = async () => {
+    try {
+      if (!probedClaimKeys.length) return;
+      const bodyAssessmentId = sanitize((_assessmentId as string) || '', 60);
+      let targetId: string | null = bodyAssessmentId || null;
+      if (!targetId && probeUid) {
+        const { data: a } = await adminClient
+          .from('smc_assessments')
+          .select('id')
+          .eq('crew_profile_id', probeUid)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        targetId = (a as any)?.id || null;
+      }
+      if (!targetId) return;
+      await adminClient.from('smc_assessments').update({ probed_claims: probedClaimKeys }).eq('id', targetId);
+    } catch (_e) { /* probed-claims tracking never blocks generation */ }
+  };
 
   const list = (v: any) => (Array.isArray(v) ? v : []);
   const specBlock = spec ? `
