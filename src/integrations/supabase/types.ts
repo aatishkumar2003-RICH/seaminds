@@ -2251,6 +2251,10 @@ export type Database = {
           country: string | null
           created_at: string
           designation: string | null
+          dpa_name: string | null
+          emergency_email: string | null
+          emergency_phone: string | null
+          emergency_updated_at: string | null
           fleet_active: boolean
           fleet_until: string | null
           full_name: string | null
@@ -2267,6 +2271,10 @@ export type Database = {
           country?: string | null
           created_at?: string
           designation?: string | null
+          dpa_name?: string | null
+          emergency_email?: string | null
+          emergency_phone?: string | null
+          emergency_updated_at?: string | null
           fleet_active?: boolean
           fleet_until?: string | null
           full_name?: string | null
@@ -2283,6 +2291,10 @@ export type Database = {
           country?: string | null
           created_at?: string
           designation?: string | null
+          dpa_name?: string | null
+          emergency_email?: string | null
+          emergency_phone?: string | null
+          emergency_updated_at?: string | null
           fleet_active?: boolean
           fleet_until?: string | null
           full_name?: string | null
