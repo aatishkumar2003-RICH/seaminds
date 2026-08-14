@@ -28,20 +28,6 @@ interface FindWorkProps {
   shipName: string;
 }
 
-interface Vacancy {
-  id: string;
-  vessel_type: string;
-  vessel_name: string;
-  rank_required: string;
-  contract_duration: string;
-  start_date: string;
-  joining_port: string;
-  salary_min: number;
-  salary_max: number;
-  company_name: string;
-  manager_profile_id: string;
-  min_smc_score: number | null;
-}
 
 interface JobPosting {
   id: string;
@@ -124,7 +110,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
   const [preferredVessel, setPreferredVessel] = useState("Any Type");
   const [aboutMe, setAboutMe] = useState("");
   const [visible, setVisible] = useState(false);
-  const [vacancies, setVacancies] = useState<Vacancy[]>([]);
+  
   const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -148,11 +134,10 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const [availRes, vacRes, postingsRes, extRes, smcRes] = await Promise.all([
+    const [availRes, postingsRes, extRes, smcRes] = await Promise.all([
       supabase.from("crew_availability").select("*").eq("crew_profile_id", profileId).maybeSingle(),
-      supabase.from("job_vacancies").select("*").eq("active", true).order("created_at", { ascending: false }),
-      supabase.from("job_postings").select("*").gte("created_at", thirtyDaysAgo.toISOString()).order("created_at", { ascending: false }),
-      supabase.from("external_vacancies").select("*").eq("is_scam_flagged", false).gte("quality_score", 30).order("created_at", { ascending: false }).limit(50),
+      supabase.from("job_postings").select("*").eq("status", "active").gte("created_at", thirtyDaysAgo.toISOString()).order("created_at", { ascending: false }),
+      supabase.from("external_vacancies").select("*").eq("is_scam_flagged", false).gte("quality_score", 30).gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false }).limit(50),
       supabase.from("smc_assessments").select("overall_score").eq("crew_profile_id", profileId).eq("status", "completed").order("completed_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
 
@@ -164,7 +149,6 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     }
 
     if (smcRes.data?.overall_score != null) setSmcScore(Number(smcRes.data.overall_score));
-    if (vacRes.data) setVacancies(vacRes.data);
     if (postingsRes.data) setJobPostings(postingsRes.data);
     if (extRes.data) setExternalVacancies(extRes.data);
 
@@ -203,27 +187,30 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     saveAvailability(checked);
   };
 
-  const handleApply = async (vacancy: Vacancy) => {
-    const { data, error } = await supabase.rpc("submit_application" as any, {
-      p_vacancy_id: vacancy.id,
-      p_company_post_id: null,
-      p_company_name: vacancy.company_name || null,
-      p_rank: vacancy.rank_required || null,
-      p_vessel: vacancy.vessel_type || null,
-      p_external_url: null,
-    });
-    const r: any = data;
-    if (error || !r?.ok) {
-      toast({ title: "Error", description: "Could not send application. Try again.", variant: "destructive" });
-      return;
-    }
-    toast({
-      title: r.duplicate ? "Already applied" : "Application Sent",
-      description: r.duplicate
-        ? "You have already applied to this vacancy."
-        : `Your profile has been sent to ${vacancy.company_name}.`,
-    });
+  // Best-effort outbound recording: never block the handoff on failure
+  const recordOutbound = async (args: { companyPostId?: string | null; company?: string | null; rank?: string | null; vessel?: string | null; url: string }) => {
+    try {
+      await supabase.rpc("submit_application" as any, {
+        p_vacancy_id: null,
+        p_company_post_id: args.companyPostId || null,
+        p_company_name: args.company || null,
+        p_rank: args.rank || null,
+        p_vessel: args.vessel || null,
+        p_external_url: args.url,
+      });
+    } catch { /* duplicates and failures never block the open */ }
   };
+
+  const openExternalVacancy = async (ext: any, url: string, target: "_blank" | "_self" = "_blank") => {
+    await recordOutbound({ company: ext.company_name, rank: ext.rank_required || ext.title, vessel: ext.vessel_type, url });
+    window.open(url, target, target === "_blank" ? "noopener,noreferrer" : undefined);
+  };
+
+  const openJobPosting = async (jp: any, url: string) => {
+    await recordOutbound({ company: jp.company_name, rank: jp.rank_required, vessel: jp.vessel_type, url });
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
 
   // External vacancies have no manning-company row, so the application is captured centrally
   const handleApplyExternal = async (ext: any) => {
@@ -503,11 +490,13 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                 {jp.additional_notes && (
                   <p className="text-[11px] text-muted-foreground italic">{jp.additional_notes}</p>
                 )}
-                <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="block">
-                  <Button size="sm" className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold text-sm h-10">
-                    Apply via WhatsApp
-                  </Button>
-                </a>
+                <Button
+                  size="sm"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold text-sm h-10"
+                  onClick={() => openJobPosting(jp, whatsappUrl)}
+                >
+                  Apply via WhatsApp
+                </Button>
               </div>
             );
           })
@@ -516,72 +505,6 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
         );
       })()}
 
-      {/* Manager Job Vacancies (legacy) */}
-      {vacancies.length > 0 && (
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide px-1">Direct from Companies</h3>
-          {vacancies.map((v) => (
-            <div key={v.id} className="rounded-xl bg-card border border-border p-4 space-y-3">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h4 className="font-semibold text-foreground">{v.rank_required}</h4>
-                  <p className="text-xs text-muted-foreground mt-0.5">{v.company_name}</p>
-                </div>
-                <span className="text-[10px] uppercase tracking-wider font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
-                  {v.vessel_type}
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
-                <div className="flex items-center gap-1.5">
-                  <Ship size={12} className="text-primary/70" />
-                  <span>{v.vessel_name}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Clock size={12} className="text-primary/70" />
-                  <span>{v.contract_duration}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <CalendarIcon size={12} className="text-primary/70" />
-                  <span>{v.start_date ? format(new Date(v.start_date), "MMM yyyy") : "TBD"}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <MapPin size={12} className="text-primary/70" />
-                  <span>{v.joining_port}</span>
-                </div>
-                {formatSalaryRange(v.salary_min, v.salary_max, "/mo") && (
-                  <div className="flex items-center gap-1.5 col-span-2">
-                    <DollarSign size={12} className="text-primary/70" />
-                    <span>{formatSalaryRange(v.salary_min, v.salary_max, "/mo")}</span>
-                  </div>
-                )}
-                {v.min_smc_score && (
-                  <div className="flex items-center gap-1.5 col-span-2">
-                    <Award size={12} className="text-primary/70" />
-                    <span>Min SMC Score: {v.min_smc_score.toFixed(2)}</span>
-                  </div>
-                )}
-              </div>
-              {(() => {
-                const meetsScore = !v.min_smc_score || (smcScore ?? 0) >= v.min_smc_score;
-                if (meetsScore) {
-                  return <Button size="sm" className="w-full" onClick={() => handleApply(v)}>Apply Now</Button>;
-                }
-                return (
-                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 space-y-1">
-                    <div className="flex items-center gap-1.5">
-                      <AlertTriangle size={12} className="text-amber-400" />
-                      <span className="text-xs font-medium text-amber-300">Score Required: {v.min_smc_score?.toFixed(2)}</span>
-                    </div>
-                    <p className="text-[11px] text-muted-foreground">
-                      Your Score: <span className="text-foreground font-medium">{smcScore !== null ? smcScore.toFixed(2) : "Not assessed"}</span> — Visit Academy to Improve
-                    </p>
-                  </div>
-                );
-              })()}
-            </div>
-          ))}
-        </div>
-      )}
 
       {/* AI-Collected External Vacancies */}
       {externalVacancies.length > 0 && (() => {
@@ -763,32 +686,37 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
 
                 <div className="flex gap-2">
                   {ext.apply_url && (
-                    <a href={ext.apply_url} target="_blank" rel="noopener noreferrer" className="flex-1">
-                      <Button size="sm" className="w-full text-xs h-9 gap-1.5">
-                        <ExternalLink size={12} /> Apply
-                      </Button>
-                    </a>
+                    <Button size="sm" className="flex-1 text-xs h-9 gap-1.5" onClick={() => openExternalVacancy(ext, ext.apply_url!)}>
+                      <ExternalLink size={12} /> Apply
+                    </Button>
                   )}
                   {ext.contact_whatsapp && (
-                    <a href={`https://wa.me/${ext.contact_whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi, I'm interested in the ${ext.rank_required || ext.title} position. My name is ${firstName} ${lastName}, ${role}.`)}`} target="_blank" rel="noopener noreferrer" className={ext.apply_url ? "" : "flex-1"}>
-                      <Button size="sm" variant={ext.apply_url ? "outline" : "default"} className={cn("text-xs h-9 gap-1.5", !ext.apply_url && "w-full bg-green-600 hover:bg-green-700 text-white")}>
-                        <MessageCircle size={12} /> WhatsApp
-                      </Button>
-                    </a>
+                    <Button
+                      size="sm"
+                      variant={ext.apply_url ? "outline" : "default"}
+                      className={cn("text-xs h-9 gap-1.5", !ext.apply_url && "flex-1 bg-green-600 hover:bg-green-700 text-white")}
+                      onClick={() => openExternalVacancy(ext, `https://wa.me/${ext.contact_whatsapp!.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi, I'm interested in the ${ext.rank_required || ext.title} position. My name is ${firstName} ${lastName}, ${role}.`)}`)}
+                    >
+                      <MessageCircle size={12} /> WhatsApp
+                    </Button>
                   )}
                   {ext.contact_email && !ext.apply_url && !ext.contact_whatsapp && (
-                    <a href={`mailto:${ext.contact_email}?subject=${encodeURIComponent(`Application: ${ext.title}`)}&body=${encodeURIComponent(`Dear Hiring Manager,\n\nI am interested in the ${ext.rank_required || ext.title} position.\n\nName: ${firstName} ${lastName}\nRank: ${role}\nNationality: ${nationality}\n\nBest regards`)}`} className="flex-1">
-                      <Button size="sm" className="w-full text-xs h-9 gap-1.5">
-                        <Mail size={12} /> Email
-                      </Button>
-                    </a>
+                    <Button
+                      size="sm"
+                      className="flex-1 text-xs h-9 gap-1.5"
+                      onClick={() => openExternalVacancy(ext, `mailto:${ext.contact_email}?subject=${encodeURIComponent(`Application: ${ext.title}`)}&body=${encodeURIComponent(`Dear Hiring Manager,\n\nI am interested in the ${ext.rank_required || ext.title} position.\n\nName: ${firstName} ${lastName}\nRank: ${role}\nNationality: ${nationality}\n\nBest regards`)}`, "_self")}
+                    >
+                      <Mail size={12} /> Email
+                    </Button>
                   )}
                   {!ext.apply_url && !ext.contact_whatsapp && !ext.contact_email && ext.company_website && (
-                    <a href={ext.company_website.startsWith('http') ? ext.company_website : `https://${ext.company_website}`} target="_blank" rel="noopener noreferrer" className="flex-1">
-                      <Button size="sm" className="w-full text-xs h-9 gap-1.5">
-                        <Globe size={12} /> Visit Website
-                      </Button>
-                    </a>
+                    <Button
+                      size="sm"
+                      className="flex-1 text-xs h-9 gap-1.5"
+                      onClick={() => openExternalVacancy(ext, ext.company_website!.startsWith('http') ? ext.company_website! : `https://${ext.company_website}`)}
+                    >
+                      <Globe size={12} /> Visit Website
+                    </Button>
                   )}
                   {!ext.apply_url && !ext.contact_whatsapp && !ext.contact_email && !ext.company_website && (
                     <Button size="sm" className="w-full text-xs h-9" onClick={() => handleApplyExternal(ext)}>

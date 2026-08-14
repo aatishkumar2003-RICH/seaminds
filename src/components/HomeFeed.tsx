@@ -135,6 +135,7 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
     const [vacRes, postRes, cpostRes, artRes, quizRes, profRes, shipRes, streakRes, scoreRes] = await Promise.all([
       supabase.from("external_vacancies")
         .select("id, rank_required, vessel_type, company_name, salary_text, joining_port, contract_duration, contact_whatsapp, apply_url, is_verified, fetched_at")
+        .gt("expires_at", new Date().toISOString())
         .order("fetched_at", { ascending: false }).limit(40),
       supabase.from("job_postings" as any)
         .select("id, rank_required, vessel_type, company_name, monthly_salary, joining_port, contract_duration, contact_whatsapp, flier_url, verified, created_at")
@@ -341,12 +342,24 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
     setRefreshing(false);
   };
 
-  const applyTo = (v: any) => {
+  const applyTo = async (v: any) => {
     log("vacancy", v.id, "apply");
     if (v.whatsapp) {
       const d = String(v.whatsapp).replace(/[^\d]/g, "");
       if (d) {
-        window.open(`https://wa.me/${d}?text=${encodeURIComponent(`Hello, I am interested in the ${v.rank || "advertised"} position (seen on SeaMinds).`)}`, "_blank");
+        const url = `https://wa.me/${d}?text=${encodeURIComponent(`Hello, I am interested in the ${v.rank || "advertised"} position (seen on SeaMinds).`)}`;
+        // Record the outbound handoff first — best effort, never blocks the open
+        try {
+          await supabase.rpc("submit_application" as any, {
+            p_vacancy_id: null,
+            p_company_post_id: null,
+            p_company_name: v.company || null,
+            p_rank: v.rank || null,
+            p_vessel: v.vessel || v.vessel_type || null,
+            p_external_url: url,
+          });
+        } catch { /* duplicates mean it is already recorded */ }
+        window.open(url, "_blank", "noopener,noreferrer");
         return;
       }
     }

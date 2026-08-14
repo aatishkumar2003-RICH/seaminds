@@ -198,9 +198,10 @@ const Index = () => {
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
       const [intRes, extRes] = await Promise.all([
         supabase.from("job_postings").select("rank_required, vessel_type, joining_port, status")
-          .neq("status", "pending_payment").gte("created_at", sevenDaysAgo).order("created_at", { ascending: false }).limit(3),
+          .eq("status", "active").gte("created_at", sevenDaysAgo).order("created_at", { ascending: false }).limit(3),
         supabase.from("external_vacancies").select("rank_required, vessel_type, joining_port")
           .eq("is_scam_flagged", false).gte("quality_score", 30).gte("created_at", sevenDaysAgo)
+          .gt("expires_at", new Date().toISOString())
           .order("created_at", { ascending: false }).limit(10),
       ]);
 

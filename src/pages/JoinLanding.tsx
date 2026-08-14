@@ -20,7 +20,7 @@ const JoinLanding = () => {
     (async () => {
       try {
         const [{ count: jobCount }, { data: nats }] = await Promise.all([
-          supabase.from("external_vacancies").select("*", { count: "exact", head: true }),
+          supabase.from("external_vacancies").select("*", { count: "exact", head: true }).gt("expires_at", new Date().toISOString()),
           supabase.from("crew_profiles").select("nationality").not("nationality", "is", null),
         ]);
         setJobs(jobCount ?? null);

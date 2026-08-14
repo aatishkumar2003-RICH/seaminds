@@ -67,6 +67,7 @@ const JobFeed = () => {
             .eq("status", "active").order("created_at", { ascending: false }).limit(60),
           supabase.from("external_vacancies" as any)
             .select("id, rank_required, vessel_type, company_name, salary_text, joining_port, contract_duration, contact_whatsapp, apply_url, is_verified, fetched_at")
+            .gt("expires_at", new Date().toISOString())
             .order("fetched_at", { ascending: false }).limit(60),
           supabase.from("company_posts" as any)
             .select("id, company_name, post_type, caption, image_url, whatsapp, link_url, verified, created_at")
@@ -119,13 +120,34 @@ const JobFeed = () => {
     return items.filter((i) => keys.some((k) => (i.rank || "").toLowerCase().includes(k)));
   }, [items, filter]);
 
-  const apply = (i: FeedItem) => {
+  // Record the outbound handoff before opening — best effort, never blocks
+  const recordOutbound = async (i: FeedItem, url: string) => {
+    try {
+      await supabase.rpc("submit_application" as any, {
+        p_vacancy_id: null,
+        p_company_post_id: i.isCompanyPost ? String(i.id).replace(/^c-/, "") : null,
+        p_company_name: i.company || null,
+        p_rank: i.rank || null,
+        p_vessel: i.vessel || null,
+        p_external_url: url,
+      });
+    } catch { /* duplicates / signed-out visitors never block the open */ }
+  };
+
+  const apply = async (i: FeedItem) => {
     trackPixel("Contact", { content_name: "job_apply_public" });
     if (i.whatsapp) {
       const d = i.whatsapp.replace(/[^\d]/g, "");
-      if (d) return window.open(`https://wa.me/${d}?text=${encodeURIComponent(`Hello, I am interested in the ${i.rank} position (seen on SeaMinds).`)}`, "_blank");
+      if (d) {
+        const url = `https://wa.me/${d}?text=${encodeURIComponent(`Hello, I am interested in the ${i.rank} position (seen on SeaMinds).`)}`;
+        await recordOutbound(i, url);
+        return window.open(url, "_blank", "noopener,noreferrer");
+      }
     }
-    if (i.applyUrl) return window.open(i.applyUrl, "_blank");
+    if (i.applyUrl) {
+      await recordOutbound(i, i.applyUrl);
+      return window.open(i.applyUrl, "_blank", "noopener,noreferrer");
+    }
     navigate("/app");
   };
 

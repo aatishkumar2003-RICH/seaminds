@@ -37,7 +37,7 @@ export default function LiveTicker() {
       try {
         const [{ data }, j] = await Promise.all([
           supabase.rpc('get_public_ticker_stats'),
-          supabase.from('job_vacancies').select('rank_required,vessel_type,salary_max,joining_port').order('created_at',{ascending:false}).limit(10),
+          supabase.from('external_vacancies').select('rank_required,vessel_type,salary_max,joining_port').gt('expires_at', new Date().toISOString()).order('created_at',{ascending:false}).limit(10),
         ]);
         const tickerData = data as { total_crew?: number; available_crew?: number; total_vacancies?: number; nationalities?: { name: string; count: number }[] } | null;
         if (tickerData) {
