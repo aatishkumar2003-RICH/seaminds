@@ -36,7 +36,8 @@ const HeroSection = ({ timeOfDay = "day" }: Props) => {
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
 
         <div className="max-w-3xl mx-auto">
-          <div className="text-center">
+          <div className="relative text-center">
+            <div className="sm-hero-glow" aria-hidden="true" />
             <p className="text-[10px] sm:text-xs uppercase tracking-[0.25em] sm:tracking-[0.3em] text-primary mb-2 sm:mb-4 font-mono-score">
               AI-Powered Maritime Platform
             </p>
@@ -44,23 +45,42 @@ const HeroSection = ({ timeOfDay = "day" }: Props) => {
               {greeting}
             </p>
 
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-3">
-              One Platform. Everything a Seafarer Needs.
+            <h1 className="sm-hero-gradient text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-3">
+              Better Careers at Sea. Better Crew for Shipping.
             </h1>
 
-            <p className="text-lg md:text-xl text-primary gold-glow mb-2 font-semibold">
-              Wellness · Career · Community · Certification
+            <p className="text-muted-foreground text-sm md:text-base max-w-2xl mx-auto mb-3">
+              SeaMinds connects seafarers and maritime companies through a 2-minute Sea
+              Profile, fresh jobs, and structured competency assessment.
             </p>
 
-            <p className="text-[11px] md:text-xs text-primary/60 mb-3 tracking-wide">
+            <p className="text-[11px] md:text-xs text-primary/60 mb-6 tracking-wide">
               ⚡ Powered by leading US AI technology
             </p>
 
-            <p className="text-muted-foreground text-sm md:text-base max-w-xl mx-auto mb-6">
-              Where decades of maritime expertise meet world-class digital
-              architecture — because the people at sea should shape what the
-              people at sea use.
+            <div className="flex flex-col sm:flex-row gap-3 justify-center items-stretch sm:items-center mb-3">
+              <button
+                type="button"
+                onClick={() => navigate("/app")}
+                className="sm-cta-gold rounded-xl px-7 h-14 text-base font-bold"
+              >
+                ⚓ I'm Crew — Join Free
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/for-companies")}
+                className="sm-cta-conic rounded-xl px-7 h-14 text-base font-bold"
+              >
+                <span className="sm-cta-conic-inner rounded-[10px]">
+                  🏢 I Hire Crew — Request Access
+                </span>
+              </button>
+            </div>
+
+            <p className="text-xs md:text-sm text-primary/70 mb-6">
+              No long CV form to get started · Professional profile in about 2 minutes
             </p>
+
 
             <div
               className="mx-auto mb-7 max-w-lg rounded-2xl px-4 py-3 flex items-start gap-3 text-left"

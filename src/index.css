@@ -321,3 +321,89 @@ button, a, [role="button"] { touch-action: manipulation; cursor: pointer; }
     }
   }
 }
+
+/* ── Homepage conversion rebuild (part 1) ───────────────────────── */
+.sm-hero-gradient {
+  background: linear-gradient(100deg, #ffffff 0%, #f5e7bd 45%, #D4AF37 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.sm-hero-glow {
+  position: absolute;
+  left: 50%;
+  top: 35%;
+  width: min(680px, 110%);
+  height: 320px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: -1;
+  background: radial-gradient(circle, rgba(212,175,55,0.20) 0%, rgba(212,175,55,0.07) 45%, transparent 70%);
+  animation: sm-breathe 8s ease-in-out infinite;
+}
+
+@keyframes sm-breathe {
+  0%, 100% { opacity: 0.55; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.12); }
+}
+
+.sm-cta-gold {
+  color: #0D1B2A;
+  background: linear-gradient(135deg, #D4AF37 0%, #C5941F 100%);
+  animation: sm-cta-pulse 3s ease-in-out infinite;
+  transition: transform 0.2s ease;
+}
+.sm-cta-gold:hover { transform: translateY(-1px); }
+
+@keyframes sm-cta-pulse {
+  0%, 100% { box-shadow: 0 0 0 rgba(212,175,55,0.0), 0 8px 24px rgba(212,175,55,0.18); }
+  50% { box-shadow: 0 0 28px rgba(212,175,55,0.45), 0 8px 30px rgba(212,175,55,0.30); }
+}
+
+.sm-cta-conic {
+  position: relative;
+  overflow: hidden;
+  padding: 1px;
+  color: #D4AF37;
+  background: #112240;
+  isolation: isolate;
+}
+.sm-cta-conic::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 300%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  background: conic-gradient(from 0deg, rgba(212,175,55,0.9), rgba(212,175,55,0.05), rgba(212,175,55,0.9));
+  animation: sm-spin 6s linear infinite;
+  z-index: -1;
+}
+.sm-cta-conic-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 0 1.5rem;
+  background: #112240;
+}
+
+@keyframes sm-spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+
+.sm-pulse-dot { animation: sm-dot 1.6s ease-in-out infinite; }
+@keyframes sm-dot {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34,197,94,0.5); }
+  50% { opacity: 0.6; box-shadow: 0 0 0 6px rgba(34,197,94,0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sm-hero-glow,
+  .sm-cta-gold,
+  .sm-cta-conic::before,
+  .sm-pulse-dot {
+    animation: none !important;
+  }
+}
