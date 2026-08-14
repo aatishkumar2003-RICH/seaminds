@@ -100,9 +100,13 @@ const QuickProfile = () => {
   const [contractsBand, setContractsBand] = useState("");
   const [seaBand, setSeaBand] = useState("");
   const [available, setAvailable] = useState(false);
+  const [availableFrom, setAvailableFrom] = useState("");
 
   // step 2
-  const [families, setFamilies] = useState<Record<string, string>>({}); // family -> band
+  const [families, setFamilies] = useState<Record<string, string>>({}); // family -> band (saved rows)
+  const [pendingFamilies, setPendingFamilies] = useState<string[]>([]); // selected, awaiting sea time
+  const [cadetSkipped, setCadetSkipped] = useState(false);
+
 
   // step 3
   const [claims, setClaims] = useState<Record<string, string>>({});
