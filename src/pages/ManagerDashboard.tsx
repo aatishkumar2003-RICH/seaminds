@@ -517,6 +517,45 @@ const ManagerDashboard = () => {
               )}
             </div>
 
+            {/* Emergency / DPA contact */}
+            <div className="bg-secondary rounded-xl border border-border p-4 space-y-3">
+              <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">🆘 Emergency / DPA contact</h2>
+              <div className="grid gap-2 sm:grid-cols-3">
+                <input
+                  value={dpaName}
+                  onChange={(e) => setDpaName(e.target.value)}
+                  placeholder="DPA / contact person name"
+                  className="bg-background text-foreground text-sm rounded-lg px-3 py-2 border border-border"
+                />
+                <input
+                  type="tel"
+                  value={emergencyPhone}
+                  onChange={(e) => setEmergencyPhone(e.target.value)}
+                  placeholder="Emergency phone"
+                  className="bg-background text-foreground text-sm rounded-lg px-3 py-2 border border-border"
+                />
+                <input
+                  type="email"
+                  value={emergencyEmail}
+                  onChange={(e) => setEmergencyEmail(e.target.value)}
+                  placeholder="Emergency email"
+                  className="bg-background text-foreground text-sm rounded-lg px-3 py-2 border border-border"
+                />
+              </div>
+              <button
+                onClick={saveEmergencyContact}
+                disabled={savingEmergency}
+                className="text-sm font-bold px-4 py-2 rounded-xl bg-[#D4AF37] text-[#0D1B2A] border border-[#D4AF37] hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {savingEmergency ? "Saving…" : "Save"}
+              </button>
+              <p className="text-xs text-muted-foreground/70">
+                Shown to YOUR linked crew in their SOS screen — per ISM practice, crew must always be able to reach their company.
+              </p>
+            </div>
+
+
+
 
 
             {/* Stats */}
