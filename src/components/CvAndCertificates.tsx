@@ -28,7 +28,7 @@ const CvAndCertificates = ({ profileId }: Props) => {
 
       const [profRes, cvRes] = await Promise.all([
         supabase.from("crew_profiles").select("quick_profile_completed_at").eq("id", uid).maybeSingle(),
-        supabase.from("crew_cv_data").select("sea_service, education").eq("id", uid).maybeSingle(),
+        supabase.from("crew_cv_data").select("sea_service, education").eq("user_id", uid).maybeSingle(),
       ]);
       if (!active) return;
 
