@@ -42,7 +42,7 @@ const tiers = [
       "Priority job matching",
       "Family connection portal",
       "Cert Wallet & document storage",
-      "SOS emergency support 24/7",
+      "SOS emergency contacts (company DPA + ISWAN)",
     ],
     cta: "Get Your Score",
     popular: true,
@@ -60,7 +60,7 @@ const tiers = [
       "Crew competency verification",
       "PSC inspection readiness",
       "MLC 2006 compliance reports",
-      "Priority support",
+      "In-app support",
     ],
     cta: "Get Your Score",
     popular: false,
@@ -82,7 +82,7 @@ const faqs = [
   },
   {
     q: "What is an SMC Score?",
-    a: "SeaMinds Certified Score — an AI-verified competency rating from 0.00 to 5.00 that travels with you across every employer.",
+    a: "SeaMinds Certified Score — an AI-assessed competency rating from 0.00 to 5.00 that travels with you across every employer.",
   },
 ];
 
@@ -111,10 +111,10 @@ const Pricing = () => {
     <div className="min-h-screen text-foreground" style={{ background: "linear-gradient(180deg, hsl(210 50% 8%) 0%, hsl(210 40% 12%) 50%, hsl(210 50% 8%) 100%)" }}>
       <Helmet>
         <title>SeaMinds Pricing — Plans for Seafarers & Companies</title>
-        <meta name="description" content="Simple, transparent pricing for seafarers and shipping companies. Free forever tier, Pro at $9/month, and Company plans." />
+        <meta name="description" content="Free forever for seafarers, with an affordable Pro plan. Companies can request founding access during launch." />
         <link rel="canonical" href="https://seaminds.life/pricing" />
         <meta property="og:title" content="SeaMinds Pricing — Plans for Seafarers & Companies" />
-        <meta property="og:description" content="Simple, transparent pricing for seafarers and shipping companies." />
+        <meta property="og:description" content="Free forever for seafarers. Founding company access open during launch." />
         <meta property="og:url" content="https://seaminds.life/pricing" />
         <meta property="og:image" content="https://seaminds.life/og-image.png" />
         <script type="application/ld+json">{JSON.stringify({
@@ -141,7 +141,7 @@ const Pricing = () => {
 
         {/* Pricing Cards */}
         <div className="max-w-5xl mx-auto grid sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
-          {tiers.map((t) => {
+          {tiers.filter((t) => t.name !== "Company").map((t) => {
             const Icon = t.icon;
             return (
               <Card
@@ -203,6 +203,22 @@ const Pricing = () => {
               </Card>
             );
           })}
+        </div>
+
+        {/* Founding Company Access */}
+        <div className="max-w-lg mx-auto mb-20">
+          <div className="rounded-2xl p-8 text-center" style={{ background: "hsl(210 40% 12%)", border: "1px solid rgba(212,175,55,0.3)" }}>
+            <h2 className="text-2xl font-bold mb-3" style={{ color: "#D4AF37" }}>Founding Company Access</h2>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-6">
+              SeaMinds is onboarding a limited group of founding companies during launch — full platform access, free,
+              with direct founder support. Pricing will be announced after the founding period.
+            </p>
+            <a href="mailto:info@indossol.com?subject=Founding Company Access">
+              <Button className="w-full font-bold border-0" style={{ background: "linear-gradient(90deg, #D4AF37, #C5941F)", color: "#0D1B2A" }}>
+                Request Access
+              </Button>
+            </a>
+          </div>
         </div>
 
         {/* FAQ */}
