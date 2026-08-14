@@ -28,15 +28,18 @@ const CvAndCertificates = ({ profileId }: Props) => {
 
       const [profRes, cvRes] = await Promise.all([
         supabase.from("crew_profiles").select("quick_profile_completed_at").eq("id", uid).maybeSingle(),
-        supabase.from("crew_cv_data").select("cv_json").eq("crew_profile_id", uid).maybeSingle(),
+        supabase.from("crew_cv_data").select("sea_service, education").eq("id", uid).maybeSingle(),
       ]);
       if (!active) return;
 
       if (!profRes.data?.quick_profile_completed_at) { setBanner("A"); return; }
 
-      const cv: any = cvRes.data?.cv_json ?? null;
-      const seaService = Array.isArray(cv?.seaService) ? cv.seaService : Array.isArray(cv?.sea_service) ? cv.sea_service : [];
-      const hasContent = seaService.length > 0 || !!(cv?.personal?.fullName || cv?.personal?.full_name || cv?.summary);
+      const row: any = cvRes.data ?? null;
+      const sea = row?.sea_service;
+      const edu = row?.education;
+      const hasContent =
+        (Array.isArray(sea) ? sea.length > 0 : !!sea && typeof sea === "object" && Object.keys(sea).length > 0) ||
+        (Array.isArray(edu) ? edu.length > 0 : !!edu && typeof edu === "object" && Object.keys(edu).length > 0);
       setBanner(hasContent ? null : "B");
     })();
     return () => { active = false; };
