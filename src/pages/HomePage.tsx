@@ -15,6 +15,10 @@ import HomeFooter from "@/components/homepage/HomeFooter";
 import LiveTicker from "@/components/homepage/LiveTicker";
 import QuickProfileShowcase from "@/components/homepage/QuickProfileShowcase";
 import HiringNow from "@/components/homepage/HiringNow";
+import ManagerWorkflow from "@/components/homepage/ManagerWorkflow";
+import SMCProof from "@/components/homepage/SMCProof";
+import PrivacyPromise from "@/components/homepage/PrivacyPromise";
+import SOSNetwork from "@/components/homepage/SOSNetwork";
 import { useTimeOfDay } from "@/hooks/useTimeOfDay";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -146,14 +150,19 @@ const HomePage = () => {
         <HeroSection timeOfDay={timeOfDay} />
         <QuickProfileShowcase />
         <HiringNow />
+        <ManagerWorkflow />
+        <SMCProof />
+        <PrivacyPromise />
         <AppPreviewSection />
         <HowItWorksSection />
         <BentoGrid />
-          <CompaniesB2BSection />
-          <SMCShowcase />
-          <TestimonialsSection />
-          <FinalCTA />
+        <CompaniesB2BSection />
+        <SMCShowcase />
+        <TestimonialsSection />
+        <SOSNetwork />
+        <FinalCTA />
         <HomeFooter />
+
       </div>
     </div>
   );
