@@ -12,7 +12,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Lock, Search, Trash2, CalendarIcon, ChevronLeft } from "lucide-react";
+import { Lock, Search, Trash2, CalendarIcon, ChevronLeft, Eye, EyeOff } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
