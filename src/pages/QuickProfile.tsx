@@ -314,7 +314,7 @@ const QuickProfile = () => {
   };
 
   const step1Done = !!rank && !!yearsBand && !!contractsBand && !!seaBand;
-  const step2Done = selectedFamilies.length > 0;
+  const step2Done = selectedFamilies.length > 0 || cadetSkipped;
 
   if (!ready) return <div style={{ minHeight: "100vh", background: NAVY }} />;
 
