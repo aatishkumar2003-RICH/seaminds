@@ -44,7 +44,7 @@ const sections = [
     title: "5. Data Sharing",
     body: `We do not sell your personal data. We may share limited information only in these cases:
 
-• With employers — only your SMC Score, professional qualifications and availability status, and only when you explicitly opt in via the "Visible to Employers" toggle.
+• With employers — only your SMC Score, professional qualifications, certificates, CV and rest-hours records, and only where the company holds an active subscription AND you have consented to the company link or applied to them. Wellness chats and mood check-ins are never included.
 • Service providers — trusted third-party processors (hosting, payment, AI) who are contractually bound to protect your data.
 • Legal obligations — when required by law, regulation or valid legal process.`,
   },
@@ -55,7 +55,8 @@ const sections = [
 • Encryption in transit (TLS) and at rest.
 • Row-level security ensuring users can only access their own data.
 • Regular security reviews and access controls.
-• Minimal data retention — CV documents are processed and immediately discarded; only structured data is stored.`,
+• Minimal data retention — CV documents are processed and immediately discarded; only structured data is stored.
+• Retention period — your data is retained while your account is active and is deleted when you request account deletion at info@indossol.com.`,
   },
   {
     title: "7. Your Rights",
@@ -71,7 +72,11 @@ To exercise any of these rights, contact us at the address below.`,
   },
   {
     title: "8. Cookies & Analytics",
-    body: `We use essential cookies required for the platform to function. We may use anonymised analytics to understand usage patterns. We do not use advertising cookies or trackers.`,
+    body: `We use essential cookies required for the platform to function, and analytics to understand usage patterns.
+
+• Meta Pixel — used for analytics and advertising measurement, and it is loaded ONLY after you accept cookies on our consent banner.
+• If you decline cookies, or make no choice, the Meta Pixel and analytics scripts are not loaded and no advertising data is sent.
+• You can change your mind at any time by clearing your browser storage for SeaMinds, which brings the consent banner back.`,
   },
   {
     title: "9. Children's Privacy",

@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { getConsent } from "@/lib/analytics";
 
 declare global { interface Window { fbq?: any; _fbq?: any; } }
 
@@ -7,6 +8,8 @@ let initialised = false;
 /** Loads the Meta Pixel using the ID stored in admin_settings (key: meta_pixel_id). */
 export const initMetaPixel = async () => {
   if (initialised || typeof window === "undefined") return;
+  // Privacy: the pixel loads ONLY after explicit cookie consent.
+  if (getConsent() !== "accepted") return;
   try {
     const { data } = await supabase
       .from("admin_settings")
@@ -36,7 +39,7 @@ export const initMetaPixel = async () => {
 /** Fire a Meta standard or custom event. Safe to call even if the pixel is not configured. */
 export const trackPixel = (event: string, params?: Record<string, any>) => {
   try {
-    if (typeof window !== "undefined" && window.fbq) window.fbq("track", event, params || {});
+    if (typeof window !== "undefined" && initialised && window.fbq) window.fbq("track", event, params || {});
   } catch { /* ignore */ }
 };
 

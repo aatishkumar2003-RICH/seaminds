@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { getConsent, setConsent } from "@/lib/analytics";
+import { initMetaPixel } from "@/lib/metaPixel";
+
 import { Cookie, X } from "lucide-react";
 
 const CookieConsent = () => {
@@ -17,6 +19,7 @@ const CookieConsent = () => {
 
   const handleAccept = () => {
     setConsent("accepted");
+    void initMetaPixel();
     setVisible(false);
   };
 

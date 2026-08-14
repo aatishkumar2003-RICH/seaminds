@@ -12,21 +12,21 @@ import { toast } from "sonner";
 
 const stats = [
   { value: "1.89M", label: "Seafarers worldwide" },
-  { value: "70%", label: "Faster vetting" },
-  { value: "35+", label: "Nationalities covered" },
+  { value: "0.00–5.00", label: "SMC score range" },
+  { value: "MLC 2006", label: "Rest-hours standard" },
   { value: "5.00", label: "Max SMC Score" },
 ];
 
 const benefits = [
   {
     icon: ShieldCheck,
-    title: "AI-Verified Competency Scores",
+    title: "AI-Assessed Competency Scores",
     desc: "Every candidate comes with a SeaMinds Command Score — covering technical knowledge, communication, behaviour, and sea experience. No guesswork.",
   },
   {
     icon: BarChart3,
     title: "Reduce Port State Control Risk",
-    desc: "Hire crew with verified STCW knowledge. One avoided PSC deficiency saves more than the annual platform cost.",
+    desc: "Assess STCW knowledge before you hire, with structured SIRE 2.0 preparation built into the crew Academy.",
   },
   {
     icon: Clock,
@@ -57,7 +57,7 @@ const planFeatures = [
   "Fleet wellness dashboard",
   "Certificate expiry tracking",
   "Crew availability matching",
-  "Priority support & onboarding",
+  "In-app support & onboarding",
   "Custom branding options",
 ];
 
@@ -117,10 +117,10 @@ const ForCompanies = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Helmet>
-        <title>SeaMinds for Companies — Hire Verified Maritime Crew</title>
+        <title>SeaMinds for Companies — Hire Assessed Maritime Crew</title>
         <meta
           name="description"
-          content="AI-verified competency scores, MLC compliance dashboards, and fleet wellness tools. Reduce PSC risk and hire better crew with SeaMinds."
+          content="AI-assessed competency scores, MLC compliance dashboards, and fleet wellness tools. Reduce PSC risk and hire better crew with SeaMinds."
         />
         <link rel="canonical" href="https://seaminds.life/for-companies" />
       </Helmet>
@@ -140,7 +140,7 @@ const ForCompanies = () => {
             <span className="text-primary">Lower Cost.</span>
           </h1>
           <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto mb-10">
-            The SMC Score gives shipping companies a verified data layer for every hire. AI-assessed competency, MLC compliance, and fleet wellness — in one platform.
+            The SMC Score gives shipping companies a structured data layer for every hire. AI-assessed competency, MLC compliance, and fleet wellness — in one platform.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center mb-12">
             <Button size="lg" onClick={() => document.getElementById("demo-form")?.scrollIntoView({ behavior: "smooth" })} className="text-sm px-6 h-11">
@@ -198,12 +198,12 @@ const ForCompanies = () => {
             <div>
               <p className="text-xs uppercase tracking-[0.25em] text-primary mb-3 font-mono-score">The SMC Score</p>
               <h2 className="text-2xl md:text-3xl font-bold mb-4">
-                Verified Competency,
+                Assessed Competency,
                 <br />
                 Not Just a CV.
               </h2>
               <p className="text-muted-foreground text-sm leading-relaxed mb-6">
-                The SeaMinds Command Score is an AI-verified rating from 0.00 to 5.00 that assesses technical knowledge, communication ability, behavioural profile, and sea experience integrity. Every score is backed by verifiable data.
+                The SeaMinds Command Score is an AI-assessed rating from 0.00 to 5.00 that assesses technical knowledge, communication ability, behavioural profile, and sea experience integrity. Every score is backed by the candidate’s assessment record.
               </p>
               <Button variant="outline" size="sm" onClick={() => navigate("/pricing")}>
                 View Pricing <ChevronRight className="ml-1 w-3.5 h-3.5" />
@@ -246,24 +246,19 @@ const ForCompanies = () => {
         </div>
       </section>
 
-      {/* Pricing */}
+      {/* Founding Company Access */}
       <section className="py-16 md:py-24">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl md:text-3xl font-bold mb-3">Simple, Transparent Pricing</h2>
-            <p className="text-muted-foreground text-sm">No hidden fees. Cancel anytime.</p>
-          </div>
           <div
-            className="rounded-2xl p-8 md:p-10 max-w-lg mx-auto"
+            className="rounded-2xl p-8 md:p-10 max-w-lg mx-auto text-center"
             style={{ background: "hsl(var(--secondary))", border: "1px solid hsl(var(--primary) / 0.3)" }}
           >
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Company Plan</p>
-            <p className="text-3xl md:text-4xl font-bold text-primary mb-1 font-mono-score">
-              {jobPrice === 0 ? "Free" : "$" + jobPrice}
-              <span className="text-base font-normal text-muted-foreground ml-2">/ vessel / month</span>
+            <h2 className="text-2xl md:text-3xl font-bold mb-3" style={{ color: "#D4AF37" }}>Founding Company Access</h2>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-6">
+              SeaMinds is onboarding a limited group of founding companies during launch — full platform access, free,
+              with direct founder support. Pricing will be announced after the founding period.
             </p>
-            <p className="text-xs text-muted-foreground mb-8">Minimum 1 vessel. Cancel anytime.</p>
-            <ul className="space-y-3 mb-8">
+            <ul className="space-y-3 mb-8 text-left">
               {planFeatures.map((f) => (
                 <li key={f} className="flex items-center gap-2.5 text-sm text-foreground">
                   <Check className="w-4 h-4 text-primary shrink-0" />
@@ -271,13 +266,15 @@ const ForCompanies = () => {
                 </li>
               ))}
             </ul>
-            <Button
-              size="lg"
-              className="w-full"
-              onClick={() => document.getElementById("demo-form")?.scrollIntoView({ behavior: "smooth" })}
-            >
-              Request Demo
-            </Button>
+            <a href="mailto:info@indossol.com?subject=Founding Company Access" className="block">
+              <Button
+                size="lg"
+                className="w-full font-bold border-0"
+                style={{ background: "linear-gradient(90deg, #D4AF37, #C5941F)", color: "#0D1B2A" }}
+              >
+                Request Access
+              </Button>
+            </a>
           </div>
         </div>
       </section>
