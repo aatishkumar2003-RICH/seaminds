@@ -62,7 +62,7 @@ import Verify from "./pages/Verify";
 import Marketing from "./pages/Marketing";
 import OAuthConsent from "./pages/OAuthConsent";
 import CookieConsent from "./components/CookieConsent";
-import PWAInstallPrompt from "./components/PWAInstallPrompt";
+import InstallPrompt from "./components/InstallPrompt";
 import { AuthProvider } from "./contexts/AuthContext";
 import { initMetaPixel, captureAdSource, trackPixel } from "@/lib/metaPixel";
 
