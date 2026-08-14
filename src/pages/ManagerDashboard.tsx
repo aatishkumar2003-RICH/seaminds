@@ -74,6 +74,27 @@ const ManagerDashboard = () => {
   const [fleet, setFleet] = useState<FleetResult | null>(null);
   const [fleetEmail, setFleetEmail] = useState("");
   const [fleetAdding, setFleetAdding] = useState(false);
+  const [dpaName, setDpaName] = useState("");
+  const [emergencyPhone, setEmergencyPhone] = useState("");
+  const [emergencyEmail, setEmergencyEmail] = useState("");
+  const [savingEmergency, setSavingEmergency] = useState(false);
+
+  const saveEmergencyContact = async () => {
+    setSavingEmergency(true);
+    const { error } = await supabase
+      .from("manager_profiles")
+      .update({
+        dpa_name: dpaName.trim() || null,
+        emergency_phone: emergencyPhone.trim() || null,
+        emergency_email: emergencyEmail.trim() || null,
+        emergency_updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", managerUserId);
+    setSavingEmergency(false);
+    if (error) { toast.error("Could not save emergency contact"); return; }
+    toast.success("Emergency contact saved");
+  };
+
   useEffect(() => {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser();
