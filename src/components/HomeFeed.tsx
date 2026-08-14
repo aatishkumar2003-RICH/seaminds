@@ -135,6 +135,7 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
     const [vacRes, postRes, cpostRes, artRes, quizRes, profRes, shipRes, streakRes, scoreRes] = await Promise.all([
       supabase.from("external_vacancies")
         .select("id, rank_required, vessel_type, company_name, salary_text, joining_port, contract_duration, contact_whatsapp, apply_url, is_verified, fetched_at")
+        .gt("expires_at", new Date().toISOString())
         .order("fetched_at", { ascending: false }).limit(40),
       supabase.from("job_postings" as any)
         .select("id, rank_required, vessel_type, company_name, monthly_salary, joining_port, contract_duration, contact_whatsapp, flier_url, verified, created_at")
