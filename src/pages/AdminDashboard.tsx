@@ -997,6 +997,7 @@ function MarketingTab() {
   const [newEmail, setNewEmail] = useState("");
   const [newAccEmail, setNewAccEmail] = useState("");
   const [newAccPassword, setNewAccPassword] = useState("");
+  const [showNewAccPassword, setShowNewAccPassword] = useState(false);
   const [creating, setCreating] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -1082,13 +1083,23 @@ function MarketingTab() {
               placeholder="teammate@seaminds.life"
               className="max-w-xs"
             />
-            <Input
-              type="password"
-              value={newAccPassword}
-              onChange={(e) => setNewAccPassword(e.target.value)}
-              placeholder="Password (min 8 chars)"
-              className="max-w-xs"
-            />
+            <div className="relative max-w-xs">
+              <Input
+                type={showNewAccPassword ? "text" : "password"}
+                value={newAccPassword}
+                onChange={(e) => setNewAccPassword(e.target.value)}
+                placeholder="Password (min 8 chars)"
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowNewAccPassword((s) => !s)}
+                aria-label={showNewAccPassword ? "Hide password" : "Show password"}
+                className="absolute right-1 top-1/2 -translate-y-1/2 p-2 bg-transparent border-0 cursor-pointer text-muted-foreground hover:text-[#D4AF37]"
+              >
+                {showNewAccPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
             <Button onClick={createAccount} disabled={creating} style={{ background: "#D4AF37", color: "#0D1B2A" }}>
               {creating ? "Creating…" : "Create account"}
             </Button>
