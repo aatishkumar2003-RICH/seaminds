@@ -95,24 +95,24 @@ export default function MarketPulseButton({
       const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
       const lastMonth = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
+      const nowIso = new Date().toISOString();
       const [crewRes, availRes, natRes, newTodayRes,
-             allVacRes, extVacRes, new24hRes, myVacRes,
+             extVacRes, new24hRes, myVacRes,
              myCompRes, topJobsRes, lastMonthVacRes] = await Promise.all([
         supabase.from('crew_profiles').select('*', { count: 'exact', head: true }),
         supabase.from('crew_profiles').select('*', { count: 'exact', head: true }).eq('is_available', true),
         supabase.from('crew_profiles').select('nationality').not('nationality', 'is', null),
         supabase.from('crew_profiles').select('*', { count: 'exact', head: true }).gte('created_at', yesterday),
-        supabase.from('job_vacancies').select('rank_required, vessel_type, salary_min, salary_max, joining_port, company_name'),
-        supabase.from('external_vacancies').select('rank_required, vessel_type, salary_min, salary_max, joining_port, company_name').gte('quality_score', 40),
-        supabase.from('external_vacancies').select('*', { count: 'exact', head: true }).gte('fetched_at', yesterday),
+        supabase.from('external_vacancies').select('rank_required, vessel_type, salary_min, salary_max, joining_port, company_name').gte('quality_score', 40).gt('expires_at', nowIso),
+        supabase.from('external_vacancies').select('*', { count: 'exact', head: true }).gte('fetched_at', yesterday).gt('expires_at', nowIso),
         // My rank vacancies
-        userRank ? supabase.from('job_vacancies').select('salary_max, joining_port').ilike('rank_required', `%${userRank.split(' ')[0]}%`)
-          : supabase.from('job_vacancies').select('salary_max, joining_port').limit(0),
+        userRank ? supabase.from('external_vacancies').select('salary_max, joining_port').gt('expires_at', nowIso).ilike('rank_required', `%${userRank.split(' ')[0]}%`)
+          : supabase.from('external_vacancies').select('salary_max, joining_port').limit(0),
         // My competition (same rank crew)
         userRank ? supabase.from('crew_profiles').select('*', { count: 'exact', head: true }).ilike('role', `%${userRank.split(' ')[0]}%`)
           : supabase.from('crew_profiles').select('*', { count: 'exact', head: true }).limit(0),
         // Top paying jobs
-        supabase.from('external_vacancies').select('rank_required, vessel_type, salary_max, company_name, joining_port, company_website').not('salary_max', 'is', null).order('salary_max', { ascending: false }).limit(5),
+        supabase.from('external_vacancies').select('rank_required, vessel_type, salary_max, company_name, joining_port, company_website').not('salary_max', 'is', null).gt('expires_at', nowIso).order('salary_max', { ascending: false }).limit(5),
         // Last month vacancies for trend
         supabase.from('external_vacancies').select('*', { count: 'exact', head: true }).gte('fetched_at', lastMonth).lt('fetched_at', yesterday),
       ]);
