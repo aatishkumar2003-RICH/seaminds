@@ -46,8 +46,8 @@ const useCountUp = (end: number, duration = 2000) => {
 };
 
 const features = [
-  { icon: MessageCircle, title: "AI Wellness", desc: "Private 24/7 conversations, never shared." },
-  { icon: Shield, title: "SMC Score", desc: "AI-verified competency. Salary bidding." },
+  { icon: MessageCircle, title: "AI Wellness", desc: "Private in-app conversations, never shared." },
+  { icon: Shield, title: "SMC Score", desc: "AI-assessed competency. Salary bidding." },
   { icon: BookOpen, title: "Academy", desc: "PSC prep, vetting, STCW updates." },
   { icon: Briefcase, title: "Jobs", desc: "Verified listings with SMC requirements." },
   { icon: Heart, title: "Family", desc: "Keep your family connected at sea." },

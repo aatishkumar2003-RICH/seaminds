@@ -14,9 +14,9 @@ const CompaniesSection = () => {
   }, []);
 
   const benefits = [
-    { icon: ShieldCheck, title: "Verify Before You Hire", desc: "Access AI-verified competency scores before the interview. Reduce vetting time by 70%." },
-    { icon: BarChart3, title: "Reduce PSC Risk", desc: "Hire crew with verified technical knowledge scores. One avoided deficiency saves more than the assessment cost." },
-    { icon: Package, title: "Bulk Assessment Packages", desc: `Assess your entire crew pool. From ${companyPrice === 0 ? 'Free' : '$' + companyPrice} for 10 assessments.` },
+    { icon: ShieldCheck, title: "Assess Before You Hire", desc: "Access AI-assessed competency scores before the interview." },
+    { icon: BarChart3, title: "Reduce PSC Risk", desc: "Hire crew with assessed technical knowledge scores and structured SIRE 2.0 preparation." },
+    { icon: Package, title: "Founding Company Access", desc: "Full platform access, free, for a limited group of founding companies during launch." },
   ];
 
   return (
@@ -26,7 +26,7 @@ const CompaniesSection = () => {
           Better Crew. Less Risk. Lower Cost.
         </h2>
         <p className="mb-14 max-w-xl mx-auto" style={{ color: "hsl(220 20% 40%)" }}>
-          The SMC Score gives shipping companies a verified data layer for every hire.
+          The SMC Score gives shipping companies a structured data layer for every hire.
         </p>
 
         <div className="grid md:grid-cols-3 gap-6 mb-12">

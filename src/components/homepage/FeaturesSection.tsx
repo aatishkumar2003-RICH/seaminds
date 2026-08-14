@@ -2,8 +2,8 @@ import { useNavigate } from "react-router-dom";
 import { MessageCircle, Shield, BookOpen, Briefcase, Heart, Users } from "lucide-react";
 
 const features = [
-  { icon: MessageCircle, title: "AI Wellness Companion", desc: "Private confidential conversations 24/7, never shared with your company." },
-  { icon: Shield, title: "SMC Certified Score", desc: "World's first portable AI-verified crew competency score. Salary bidding marketplace." },
+  { icon: MessageCircle, title: "AI Wellness Companion", desc: "Private confidential in-app conversations, never shared with your company." },
+  { icon: Shield, title: "SMC Certified Score", desc: "Portable AI-assessed crew competency score. Salary bidding marketplace." },
   { icon: BookOpen, title: "Maritime Academy", desc: "PSC inspection prep, vetting knowledge, STCW updates." },
   { icon: Briefcase, title: "Jobs Board", desc: "Verified job listings with minimum SMC Score requirements." },
   { icon: Heart, title: "Family Connection", desc: "Keep your family informed and connected during voyages." },

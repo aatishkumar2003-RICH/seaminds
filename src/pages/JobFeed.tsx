@@ -284,7 +284,7 @@ const JobFeed = () => {
               {(idx + 1) % 6 === 0 && (
                 <div style={{ borderTop: `1px solid ${BORDER}`, padding: 13, textAlign: "center" }}>
                   <p style={{ color: "#cbd5e1", fontSize: 12, marginBottom: 8 }}>
-                    Build your verified CV free and let companies find you.
+                    Build your CV free and let companies find you.
                   </p>
                   <button onClick={() => navigate("/app")} style={{ background: "transparent", color: GOLD, border: `1px solid ${GOLD}`, borderRadius: 9, padding: "7px 16px", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
                     Join SeaMinds Free

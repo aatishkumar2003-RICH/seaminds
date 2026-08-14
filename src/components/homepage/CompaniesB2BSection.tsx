@@ -83,7 +83,7 @@ const CompaniesB2BSection = () => {
           </div>
 
           <p className="text-xs text-muted-foreground text-center mt-4">
-            Trusted by crew from Fleet Management Ltd, Anglo-Eastern, Synergy Marine and 35+ nationalities
+            Built with seafarers sailing across all major fleets and nationalities
           </p>
         </div>
       </div>

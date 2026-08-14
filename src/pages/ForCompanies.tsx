@@ -117,7 +117,7 @@ const ForCompanies = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Helmet>
-        <title>SeaMinds for Companies — Hire Verified Maritime Crew</title>
+        <title>SeaMinds for Companies — Hire Assessed Maritime Crew</title>
         <meta
           name="description"
           content="AI-assessed competency scores, MLC compliance dashboards, and fleet wellness tools. Reduce PSC risk and hire better crew with SeaMinds."
@@ -198,7 +198,7 @@ const ForCompanies = () => {
             <div>
               <p className="text-xs uppercase tracking-[0.25em] text-primary mb-3 font-mono-score">The SMC Score</p>
               <h2 className="text-2xl md:text-3xl font-bold mb-4">
-                Verified Competency,
+                Assessed Competency,
                 <br />
                 Not Just a CV.
               </h2>
