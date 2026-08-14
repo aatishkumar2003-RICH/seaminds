@@ -200,16 +200,22 @@ Return ONLY valid JSON, no markdown:
       try {
         const { data: arow } = await adminClient
           .from("smc_assessments")
-          .select("crew_profile_id")
+          .select("crew_profile_id, probed_claims")
           .eq("id", assessmentId)
           .maybeSingle();
         const crewId = (arow as any)?.crew_profile_id;
-        if (crewId) {
+        const probedRaw = (arow as any)?.probed_claims;
+        const probed: string[] = Array.isArray(probedRaw)
+          ? probedRaw.map((k: any) => String(k)).filter(Boolean)
+          : [];
+        // Only claims the interview actually probed get promoted to ASSESSED
+        if (crewId && probed.length) {
           await adminClient
             .from("crew_claims")
             .update({ status: "ASSESSED", assessed_at: new Date().toISOString() })
             .eq("crew_id", crewId)
-            .eq("status", "CLAIMED");
+            .eq("status", "CLAIMED")
+            .in("claim_key", probed);
         }
       } catch (_e) { /* claim promotion never blocks scoring */ }
     }
