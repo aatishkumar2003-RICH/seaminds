@@ -64,6 +64,8 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({}));
     const { action = "search", filters = {}, userId } = body ?? {};
+    const page = Math.max(0, Number(body?.page) || 0);
+    const pageSize = Math.min(50, Math.max(1, Number(body?.pageSize) || 50));
 
     const authHeader = req.headers.get("Authorization") || "";
     const token = authHeader.replace(/^Bearer\s+/i, "").trim();
@@ -142,16 +144,21 @@ Deno.serve(async (req) => {
     let query = admin
       .from("crew_profiles")
       .select(
-        "id, first_name, last_name, rank, role, nationality, vessel_type, preferred_vessel_types, whatsapp_number, email, is_available, available_from, crew_unique_id, email_verified, whatsapp_verified, years_at_sea, created_at",
-      )
-      .limit(200);
+        "id, first_name, last_name, rank, role, nationality, vessel_type, preferred_vessel_types, whatsapp_number, email, is_available, available_from, crew_unique_id, email_verified, whatsapp_verified, years_at_sea, created_at, years_in_rank_band, contracts_in_rank_band, total_sea_service_band, quick_profile_completed_at",
+        { count: "exact" },
+      );
 
     if (filters.rank) query = query.or(`rank.ilike.%${filters.rank}%,role.ilike.%${filters.rank}%`);
     if (filters.nationality) query = query.ilike("nationality", `%${filters.nationality}%`);
     if (filters.vesselType) query = query.ilike("vessel_type", `%${filters.vesselType}%`);
     if (filters.availability === "available") query = query.eq("is_available", true);
 
-    const { data: profiles, error } = await query;
+    query = query
+      .order("is_available", { ascending: false })
+      .order("created_at", { ascending: false })
+      .range(page * pageSize, page * pageSize + pageSize - 1);
+
+    const { data: profiles, error, count: total } = await query;
     if (error) throw error;
 
     const ids = (profiles || []).map((p: any) => p.id);
@@ -196,10 +203,14 @@ Deno.serve(async (req) => {
         smc_score: smcByUser[p.id]?.overall_score ?? null,
         smc_band: smcByUser[p.id]?.score_band ?? null,
         has_cv: !!cv,
+        years_in_rank_band: p.years_in_rank_band ?? null,
+        contracts_in_rank_band: p.contracts_in_rank_band ?? null,
+        total_sea_service_band: p.total_sea_service_band ?? null,
+        quick_profile_done: !!p.quick_profile_completed_at,
       };
     });
 
-    return json({ success: true, count: results.length, results });
+    return json({ success: true, count: results.length, total: total ?? results.length, results });
   } catch (e) {
     console.error("manager-search error:", e);
     return json({ success: false, error: (e as Error).message || "Search failed" }, 500);

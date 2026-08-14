@@ -52,6 +52,10 @@ interface CrewResult {
   smc_score: number | null;
   smc_band: string | null;
   has_cv: boolean;
+  years_in_rank_band?: string | null;
+  contracts_in_rank_band?: string | null;
+  total_sea_service_band?: string | null;
+  quick_profile_done?: boolean;
 }
 
 const REFILL_MAILTO = "mailto:info@indossol.com?subject=Credit refill request";
@@ -76,8 +80,11 @@ const CLAIM_LABELS: Record<string, string> = {
   haccp_trained: "HACCP", provisioning_budget: "Provisioning",
 };
 
-function QuickProfileLine({ crewId, rank }: { crewId: string; rank: string }) {
-  const [bands, setBands] = useState<any>(null);
+function QuickProfileLine({ crewId, rank, bands }: {
+  crewId: string;
+  rank: string;
+  bands: { years_in_rank_band?: string | null; contracts_in_rank_band?: string | null; total_sea_service_band?: string | null };
+}) {
   const [claims, setClaims] = useState<any[]>([]);
   const [vessels, setVessels] = useState<any[]>([]);
 
@@ -85,15 +92,11 @@ function QuickProfileLine({ crewId, rank }: { crewId: string; rank: string }) {
     let alive = true;
     (async () => {
       try {
-        const [p, c, v] = await Promise.all([
-          supabase.from("crew_profiles")
-            .select("years_in_rank_band, contracts_in_rank_band, total_sea_service_band")
-            .eq("id", crewId).maybeSingle(),
+        const [c, v] = await Promise.all([
           supabase.from("crew_claims" as any).select("claim_key, value, status").eq("crew_id", crewId),
           supabase.from("crew_vessel_experience" as any).select("vessel_family, sea_time_band").eq("crew_id", crewId),
         ]);
         if (!alive) return;
-        setBands(p.data || null);
         setClaims(Array.isArray(c.data) ? (c.data as any[]) : []);
         setVessels(Array.isArray(v.data) ? (v.data as any[]) : []);
       } catch { /* silently hidden */ }
@@ -201,6 +204,9 @@ const ManagerSearch = () => {
   const [results, setResults] = useState<CrewResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [pdfBusy, setPdfBusy] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [balance, setBalance] = useState<number | null>(null);
@@ -219,8 +225,12 @@ const ManagerSearch = () => {
       const data = await callFn({
         action: "search",
         filters: { rank, nationality, vesselType, availability },
+        page: 0,
+        pageSize: 50,
       });
       setResults(data.results || []);
+      setTotal(data.total ?? (data.results || []).length);
+      setPage(0);
       setPending(false);
       setSearched(true);
     } catch (e: any) {
@@ -230,6 +240,26 @@ const ManagerSearch = () => {
       toast.error(msg);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadMore = async () => {
+    const next = page + 1;
+    setLoadingMore(true);
+    try {
+      const data = await callFn({
+        action: "search",
+        filters: { rank, nationality, vesselType, availability },
+        page: next,
+        pageSize: 50,
+      });
+      setResults((prev) => [...prev, ...((data.results || []) as CrewResult[])]);
+      setTotal(data.total ?? total);
+      setPage(next);
+    } catch (e: any) {
+      toast.error(e?.message || "Could not load more");
+    } finally {
+      setLoadingMore(false);
     }
   };
 
@@ -462,7 +492,15 @@ const ManagerSearch = () => {
                 {!r.has_cv && <span style={{ fontSize: 11, color: "#f59e0b" }}>No CV built yet</span>}
               </div>
 
-              <QuickProfileLine crewId={r.crewId || r.user_id} rank={r.rank} />
+              <QuickProfileLine
+                crewId={r.crewId || r.user_id}
+                rank={r.rank}
+                bands={{
+                  years_in_rank_band: r.years_in_rank_band,
+                  contracts_in_rank_band: r.contracts_in_rank_band,
+                  total_sea_service_band: r.total_sea_service_band,
+                }}
+              />
 
               {(() => {
                 const crewId = r.crewId || r.user_id;
@@ -501,6 +539,14 @@ const ManagerSearch = () => {
             </article>
           ))}
         </div>
+
+        {total > results.length && results.length > 0 && (
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <button onClick={loadMore} disabled={loadingMore} style={{ ...ghostBtn, opacity: loadingMore ? 0.6 : 1 }}>
+              {loadingMore ? "Loading…" : `Load more (${results.length}/${total})`}
+            </button>
+          </div>
+        )}
 
         {!loading && searched && results.length === 0 && (
           <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 32, textAlign: "center", color: "#6b7280" }}>
