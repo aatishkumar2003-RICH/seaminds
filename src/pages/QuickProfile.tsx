@@ -19,7 +19,9 @@ const RANKS = [
 ];
 
 const YEARS_BANDS = ["0–1", "2–4", "5–8", "9–14", "15+"];
-const CONTRACT_BANDS = ["1–2", "3–5", "6–10", "10+"];
+const CONTRACT_BANDS = ["0", "1–2", "3–5", "6–10", "10+"];
+const CONTRACT_LABEL = (b: string) => (b === "0" ? "0 — first contract" : b);
+
 const SEA_BANDS = ["<2", "2–5", "6–10", "11–15", "15+"];
 const FAMILY_TIME = ["<1", "1–3", "3–5", "5+ yr"];
 
