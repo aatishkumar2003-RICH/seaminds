@@ -381,11 +381,15 @@ const QuickProfile = () => {
             <Q title="Contracts completed in this rank">
               <Row>
                 {CONTRACT_BANDS.map((b) => (
-                  <Chip key={b} label={b} on={contractsBand === b}
+                  <Chip key={b} label={CONTRACT_LABEL(b)} on={contractsBand === b}
                     onClick={() => { setContractsBand(b); saveProfile({ contracts_in_rank_band: b }); }} />
                 ))}
               </Row>
             </Q>
+
+            {isStartingOut && (
+              <p style={{ color: GOLD, fontSize: 13, fontWeight: 700 }}>⚓ Starting your sea career — welcome aboard!</p>
+            )}
 
             <Q title="Total sea service (years)">
               <Row>
@@ -401,6 +405,17 @@ const QuickProfile = () => {
                 <Chip label={available ? "Yes — available" : "Not available"} on={available}
                   onClick={() => { const v = !available; setAvailable(v); saveProfile({ is_available: v }); }} />
               </Row>
+              {available && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <label style={{ color: "#94A3B8", fontSize: 12 }}>Available from</label>
+                  <input
+                    type="date"
+                    value={availableFrom}
+                    onChange={(e) => { setAvailableFrom(e.target.value); saveProfile({ available_from: e.target.value || null }); }}
+                    style={{ width: "100%", padding: "11px 12px", borderRadius: 10, background: NAVY, color: "#fff", border: `1px solid ${BORDER}`, fontSize: 14 }}
+                  />
+                </div>
+              )}
             </Q>
 
             <button
@@ -414,26 +429,44 @@ const QuickProfile = () => {
           <>
             <p style={{ color: "#94A3B8", fontSize: 12 }}>Which vessels have you sailed on? Tap to select, then tap your sea time.</p>
             {FAMILIES.map((f) => {
-              const on = families[f.key] !== undefined;
+              const saved = families[f.key] !== undefined;
+              const pending = pendingFamilies.includes(f.key);
+              const on = saved || pending;
               return (
                 <div key={f.key} style={{ background: CARD, border: `1px solid ${on ? GOLD : BORDER}`, borderRadius: 14, padding: 12, display: "flex", flexDirection: "column", gap: 10 }}>
                   <Chip label={f.label} on={on} onClick={() => toggleFamily(f.key)} />
                   {on && (
-                    <Row>
-                      {FAMILY_TIME.map((t) => (
-                        <Chip key={t} label={t} on={families[f.key] === t} onClick={() => setFamily(f.key, t)} />
-                      ))}
-                    </Row>
+                    <>
+                      {pending && <p style={{ color: GOLD, fontSize: 12 }}>Choose sea time</p>}
+                      <Row>
+                        {FAMILY_TIME.map((t) => (
+                          <Chip key={t} label={t} on={families[f.key] === t} onClick={() => setFamily(f.key, t)} />
+                        ))}
+                      </Row>
+                    </>
                   )}
                 </div>
               );
             })}
             <button
               style={{ ...goldBtn, opacity: step2Done ? 1 : 0.5 }}
-              onClick={() => { if (!step2Done) return toast("Select at least one vessel type"); setStep(3); }}
+              onClick={() => {
+                if (!step2Done) return toast("Select at least one vessel type");
+                setPendingFamilies([]);
+                setStep(3);
+              }}
             >
               Continue →
             </button>
+            {isStartingOut && (
+              <button
+                onClick={() => { setPendingFamilies([]); setCadetSkipped(true); setStep(3); }}
+                style={{ background: "transparent", border: "none", color: GOLD, cursor: "pointer", fontSize: 13, fontWeight: 700, padding: 4 }}
+              >
+                No sea service yet — skip
+              </button>
+            )}
+
             <button onClick={() => setStep(1)} style={{ ...goldBtn, background: "transparent", color: GOLD, border: `1px solid ${GOLD}` }}>Back</button>
           </>
         ) : (
