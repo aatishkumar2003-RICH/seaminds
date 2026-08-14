@@ -1550,6 +1550,7 @@ export type Database = {
           contact_whatsapp: string | null
           contract_duration: string | null
           created_at: string | null
+          dedup_key: string | null
           description: string | null
           expires_at: string | null
           external_id: string
@@ -1567,6 +1568,7 @@ export type Database = {
           salary_text: string | null
           scam_flags: Json | null
           source: string
+          source_posted_at: string | null
           telegram_posted: boolean | null
           title: string
           vessel_type: string | null
@@ -1579,6 +1581,7 @@ export type Database = {
           contact_whatsapp?: string | null
           contract_duration?: string | null
           created_at?: string | null
+          dedup_key?: string | null
           description?: string | null
           expires_at?: string | null
           external_id: string
@@ -1596,6 +1599,7 @@ export type Database = {
           salary_text?: string | null
           scam_flags?: Json | null
           source: string
+          source_posted_at?: string | null
           telegram_posted?: boolean | null
           title: string
           vessel_type?: string | null
@@ -1608,6 +1612,7 @@ export type Database = {
           contact_whatsapp?: string | null
           contract_duration?: string | null
           created_at?: string | null
+          dedup_key?: string | null
           description?: string | null
           expires_at?: string | null
           external_id?: string
@@ -1625,6 +1630,7 @@ export type Database = {
           salary_text?: string | null
           scam_flags?: Json | null
           source?: string
+          source_posted_at?: string | null
           telegram_posted?: boolean | null
           title?: string
           vessel_type?: string | null
