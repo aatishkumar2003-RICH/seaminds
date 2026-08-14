@@ -763,32 +763,37 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
 
                 <div className="flex gap-2">
                   {ext.apply_url && (
-                    <a href={ext.apply_url} target="_blank" rel="noopener noreferrer" className="flex-1">
-                      <Button size="sm" className="w-full text-xs h-9 gap-1.5">
-                        <ExternalLink size={12} /> Apply
-                      </Button>
-                    </a>
+                    <Button size="sm" className="flex-1 text-xs h-9 gap-1.5" onClick={() => openExternalVacancy(ext, ext.apply_url!)}>
+                      <ExternalLink size={12} /> Apply
+                    </Button>
                   )}
                   {ext.contact_whatsapp && (
-                    <a href={`https://wa.me/${ext.contact_whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi, I'm interested in the ${ext.rank_required || ext.title} position. My name is ${firstName} ${lastName}, ${role}.`)}`} target="_blank" rel="noopener noreferrer" className={ext.apply_url ? "" : "flex-1"}>
-                      <Button size="sm" variant={ext.apply_url ? "outline" : "default"} className={cn("text-xs h-9 gap-1.5", !ext.apply_url && "w-full bg-green-600 hover:bg-green-700 text-white")}>
-                        <MessageCircle size={12} /> WhatsApp
-                      </Button>
-                    </a>
+                    <Button
+                      size="sm"
+                      variant={ext.apply_url ? "outline" : "default"}
+                      className={cn("text-xs h-9 gap-1.5", !ext.apply_url && "flex-1 bg-green-600 hover:bg-green-700 text-white")}
+                      onClick={() => openExternalVacancy(ext, `https://wa.me/${ext.contact_whatsapp!.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi, I'm interested in the ${ext.rank_required || ext.title} position. My name is ${firstName} ${lastName}, ${role}.`)}`)}
+                    >
+                      <MessageCircle size={12} /> WhatsApp
+                    </Button>
                   )}
                   {ext.contact_email && !ext.apply_url && !ext.contact_whatsapp && (
-                    <a href={`mailto:${ext.contact_email}?subject=${encodeURIComponent(`Application: ${ext.title}`)}&body=${encodeURIComponent(`Dear Hiring Manager,\n\nI am interested in the ${ext.rank_required || ext.title} position.\n\nName: ${firstName} ${lastName}\nRank: ${role}\nNationality: ${nationality}\n\nBest regards`)}`} className="flex-1">
-                      <Button size="sm" className="w-full text-xs h-9 gap-1.5">
-                        <Mail size={12} /> Email
-                      </Button>
-                    </a>
+                    <Button
+                      size="sm"
+                      className="flex-1 text-xs h-9 gap-1.5"
+                      onClick={() => openExternalVacancy(ext, `mailto:${ext.contact_email}?subject=${encodeURIComponent(`Application: ${ext.title}`)}&body=${encodeURIComponent(`Dear Hiring Manager,\n\nI am interested in the ${ext.rank_required || ext.title} position.\n\nName: ${firstName} ${lastName}\nRank: ${role}\nNationality: ${nationality}\n\nBest regards`)}`, "_self")}
+                    >
+                      <Mail size={12} /> Email
+                    </Button>
                   )}
                   {!ext.apply_url && !ext.contact_whatsapp && !ext.contact_email && ext.company_website && (
-                    <a href={ext.company_website.startsWith('http') ? ext.company_website : `https://${ext.company_website}`} target="_blank" rel="noopener noreferrer" className="flex-1">
-                      <Button size="sm" className="w-full text-xs h-9 gap-1.5">
-                        <Globe size={12} /> Visit Website
-                      </Button>
-                    </a>
+                    <Button
+                      size="sm"
+                      className="flex-1 text-xs h-9 gap-1.5"
+                      onClick={() => openExternalVacancy(ext, ext.company_website!.startsWith('http') ? ext.company_website! : `https://${ext.company_website}`)}
+                    >
+                      <Globe size={12} /> Visit Website
+                    </Button>
                   )}
                   {!ext.apply_url && !ext.contact_whatsapp && !ext.contact_email && !ext.company_website && (
                     <Button size="sm" className="w-full text-xs h-9" onClick={() => handleApplyExternal(ext)}>
