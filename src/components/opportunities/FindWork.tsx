@@ -28,20 +28,6 @@ interface FindWorkProps {
   shipName: string;
 }
 
-interface Vacancy {
-  id: string;
-  vessel_type: string;
-  vessel_name: string;
-  rank_required: string;
-  contract_duration: string;
-  start_date: string;
-  joining_port: string;
-  salary_min: number;
-  salary_max: number;
-  company_name: string;
-  manager_profile_id: string;
-  min_smc_score: number | null;
-}
 
 interface JobPosting {
   id: string;
