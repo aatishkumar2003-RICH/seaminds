@@ -203,27 +203,30 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     saveAvailability(checked);
   };
 
-  const handleApply = async (vacancy: Vacancy) => {
-    const { data, error } = await supabase.rpc("submit_application" as any, {
-      p_vacancy_id: vacancy.id,
-      p_company_post_id: null,
-      p_company_name: vacancy.company_name || null,
-      p_rank: vacancy.rank_required || null,
-      p_vessel: vacancy.vessel_type || null,
-      p_external_url: null,
-    });
-    const r: any = data;
-    if (error || !r?.ok) {
-      toast({ title: "Error", description: "Could not send application. Try again.", variant: "destructive" });
-      return;
-    }
-    toast({
-      title: r.duplicate ? "Already applied" : "Application Sent",
-      description: r.duplicate
-        ? "You have already applied to this vacancy."
-        : `Your profile has been sent to ${vacancy.company_name}.`,
-    });
+  // Best-effort outbound recording: never block the handoff on failure
+  const recordOutbound = async (args: { companyPostId?: string | null; company?: string | null; rank?: string | null; vessel?: string | null; url: string }) => {
+    try {
+      await supabase.rpc("submit_application" as any, {
+        p_vacancy_id: null,
+        p_company_post_id: args.companyPostId || null,
+        p_company_name: args.company || null,
+        p_rank: args.rank || null,
+        p_vessel: args.vessel || null,
+        p_external_url: args.url,
+      });
+    } catch { /* duplicates and failures never block the open */ }
   };
+
+  const openExternalVacancy = async (ext: any, url: string, target: "_blank" | "_self" = "_blank") => {
+    await recordOutbound({ company: ext.company_name, rank: ext.rank_required || ext.title, vessel: ext.vessel_type, url });
+    window.open(url, target, target === "_blank" ? "noopener,noreferrer" : undefined);
+  };
+
+  const openJobPosting = async (jp: any, url: string) => {
+    await recordOutbound({ company: jp.company_name, rank: jp.rank_required, vessel: jp.vessel_type, url });
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
 
   // External vacancies have no manning-company row, so the application is captured centrally
   const handleApplyExternal = async (ext: any) => {
