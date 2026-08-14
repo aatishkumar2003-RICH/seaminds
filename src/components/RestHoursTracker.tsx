@@ -266,7 +266,7 @@ const RestHoursTracker = ({ onNavigate, profileId }: RestHoursTrackerProps) => {
           }}
         >
           <p className="text-sm font-bold mb-1" style={{ color: "#fca5a5" }}>
-            ⚠️ MLC REST VIOLATION DETECTED
+            ⚠️ Potential non-compliance — review this record
           </p>
           <p className="text-xs mb-3" style={{ color: "#fca5a5" }}>
             {violationText}

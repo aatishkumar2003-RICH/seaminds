@@ -127,7 +127,7 @@ const VesselRating = ({ onBack }: VesselRatingProps) => {
           <ArrowLeft size={14} /> Back to Community
         </button>
         <h1 className="text-xl font-bold" style={{ color: "#D4AF37" }}>⭐ Rate Your Vessel</h1>
-        <p className="text-xs text-muted-foreground mt-1">Anonymous. Moderated. Your voice matters.</p>
+        <p className="text-xs text-muted-foreground mt-1">Community ratings — unmoderated opinions of individual seafarers.</p>
       </div>
 
       <div className="flex-1 overflow-y-auto px-5 py-6 space-y-6">
@@ -192,7 +192,7 @@ const VesselRating = ({ onBack }: VesselRatingProps) => {
             </button>
 
             <p className="text-[10px] text-muted-foreground leading-relaxed text-center">
-              Your name and profile are never attached to this review. Reviews are moderated.
+              Your name and profile are never attached to this review. Community ratings — unmoderated opinions of individual seafarers.
             </p>
           </div>
         ) : (
