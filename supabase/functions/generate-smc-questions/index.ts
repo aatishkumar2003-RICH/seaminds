@@ -467,5 +467,7 @@ Return ONLY valid JSON (no markdown, no explanation) in this EXACT structure:
   // Ensure candidate_context is always present
   questions.candidate_context = { rank, vessel_type: vesselType, experience_tier, ship_specialisation, is_officer: isOfficer, mcq_count: mcqCount, total_questions: totalQuestions };
 
+  await recordProbedClaims();
+
   return new Response(JSON.stringify(questions), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 });
