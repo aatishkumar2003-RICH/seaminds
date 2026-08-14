@@ -148,11 +148,10 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const [availRes, vacRes, postingsRes, extRes, smcRes] = await Promise.all([
+    const [availRes, postingsRes, extRes, smcRes] = await Promise.all([
       supabase.from("crew_availability").select("*").eq("crew_profile_id", profileId).maybeSingle(),
-      supabase.from("job_vacancies").select("*").eq("active", true).order("created_at", { ascending: false }),
-      supabase.from("job_postings").select("*").gte("created_at", thirtyDaysAgo.toISOString()).order("created_at", { ascending: false }),
-      supabase.from("external_vacancies").select("*").eq("is_scam_flagged", false).gte("quality_score", 30).order("created_at", { ascending: false }).limit(50),
+      supabase.from("job_postings").select("*").eq("status", "active").gte("created_at", thirtyDaysAgo.toISOString()).order("created_at", { ascending: false }),
+      supabase.from("external_vacancies").select("*").eq("is_scam_flagged", false).gte("quality_score", 30).gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false }).limit(50),
       supabase.from("smc_assessments").select("overall_score").eq("crew_profile_id", profileId).eq("status", "completed").order("completed_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
 
@@ -164,7 +163,6 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     }
 
     if (smcRes.data?.overall_score != null) setSmcScore(Number(smcRes.data.overall_score));
-    if (vacRes.data) setVacancies(vacRes.data);
     if (postingsRes.data) setJobPostings(postingsRes.data);
     if (extRes.data) setExternalVacancies(extRes.data);
 
