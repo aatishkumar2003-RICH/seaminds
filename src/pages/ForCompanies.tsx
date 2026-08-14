@@ -203,7 +203,7 @@ const ForCompanies = () => {
                 Not Just a CV.
               </h2>
               <p className="text-muted-foreground text-sm leading-relaxed mb-6">
-                The SeaMinds Command Score is an AI-assessed rating from 0.00 to 5.00 that assesses technical knowledge, communication ability, behavioural profile, and sea experience integrity. Every score is backed by the candidate’s assessment record.
+                The SeaMinds Command Score is an AI-assessed rating from 0.00 to 5.00 that assesses technical knowledge, communication ability, behavioural profile, and sea experience integrity. Every score is backed by the candidate’s assessment record. SeaMinds runs on leading US AI technology — the same model families used by Fortune 500 enterprises — applied to maritime competency and crewing.
               </p>
               <Button variant="outline" size="sm" onClick={() => navigate("/pricing")}>
                 View Pricing <ChevronRight className="ml-1 w-3.5 h-3.5" />
