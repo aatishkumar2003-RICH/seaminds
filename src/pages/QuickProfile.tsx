@@ -149,6 +149,8 @@ const QuickProfile = () => {
       setContractsBand(p.contracts_in_rank_band || "");
       setSeaBand(p.total_sea_service_band || "");
       setAvailable(!!p.is_available);
+      setAvailableFrom(p.available_from ? String(p.available_from).slice(0, 10) : "");
+
       const fmap: Record<string, string> = {};
       ((fam as any[]) || []).forEach((f) => { fmap[f.vessel_family] = f.sea_time_band; });
       setFamilies(fmap);
