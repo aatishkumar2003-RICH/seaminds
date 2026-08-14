@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
   }
 
   const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-  const { rank: _rank, vesselType: _vesselType, yearsExperience: _yearsExperience, department: _department } = await req.json();
+  const { rank: _rank, vesselType: _vesselType, yearsExperience: _yearsExperience, department: _department, assessmentId: _assessmentId } = await req.json();
   const sanitize = (str: string, maxLen: number) => (str || '').toString().substring(0, maxLen).trim();
   const rank = sanitize(_rank, 100);
   const vesselType = sanitize(_vesselType, 100);
