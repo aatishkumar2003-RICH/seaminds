@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Eye, EyeOff } from "lucide-react";
 
 const GOLD = "#D4AF37";
 const NAVY = "#0D1B2A";
@@ -24,6 +25,7 @@ const InterviewInvite = () => {
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [nationality, setNationality] = useState("");
 
   useEffect(() => {
