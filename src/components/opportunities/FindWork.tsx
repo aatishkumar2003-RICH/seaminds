@@ -124,7 +124,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
   const [preferredVessel, setPreferredVessel] = useState("Any Type");
   const [aboutMe, setAboutMe] = useState("");
   const [visible, setVisible] = useState(false);
-  const [vacancies, setVacancies] = useState<Vacancy[]>([]);
+  
   const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
