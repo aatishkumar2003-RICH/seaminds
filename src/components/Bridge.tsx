@@ -627,6 +627,9 @@ const Bridge = ({ profileId }: BridgeProps) => {
           {messages.length >= 2 && messages[messages.length - 1]?.role === "assistant" && !isLoading && (
             <SaveToPocket messages={messages} onSaved={(item) => savePocket([...pocketItems, item])} />
           )}
+          <p className="text-[10px] text-muted-foreground leading-relaxed pt-1">
+            General maritime guidance — always follow your vessel's PMS, SMS and manufacturer manuals, which override anything shown here.
+          </p>
           <div ref={chatEndRef} />
         </div>
 
