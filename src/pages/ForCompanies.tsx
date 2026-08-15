@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import HomeNav from "@/components/homepage/HomeNav";
 import HomeFooter from "@/components/homepage/HomeFooter";
+import ManagerWorkflow from "@/components/homepage/ManagerWorkflow";
+import EvidenceSection from "@/components/companies/EvidenceSection";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
