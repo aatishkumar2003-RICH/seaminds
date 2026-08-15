@@ -16,7 +16,7 @@ const CARDS = [
 ];
 
 const EvidenceSection = () => {
-  const { ref, inView } = useInView<HTMLDivElement>();
+  const [ref, inView] = useInView<HTMLDivElement>();
 
   return (
     <section className="py-14 md:py-20">
