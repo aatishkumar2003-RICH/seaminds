@@ -61,7 +61,7 @@ const HeroSection = ({ timeOfDay = "day" }: Props) => {
             <div className="flex flex-col sm:flex-row gap-3 justify-center items-stretch sm:items-center mb-3">
               <button
                 type="button"
-                onClick={() => navigate("/app")}
+                onClick={() => navigate("/join")}
                 className="sm-cta-gold rounded-xl px-7 h-14 text-base font-bold"
               >
                 ⚓ I'm Crew — Join Free
@@ -125,7 +125,7 @@ const HeroSection = ({ timeOfDay = "day" }: Props) => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
-              <Button size="lg" onClick={() => navigate("/app")} className="text-sm px-6 h-11">
+              <Button size="lg" onClick={() => navigate("/join")} className="text-sm px-6 h-11">
                 I Am Crew — Join Free <ChevronRight className="ml-1 w-4 h-4" />
               </Button>
               <Button

@@ -64,7 +64,7 @@ const JoinLanding = () => {
           </p>
 
           <button
-            onClick={() => go("/app")}
+            onClick={() => go("/join")}
             className="w-full rounded-2xl py-4 font-extrabold text-base mb-3"
             style={{ background: GOLD, color: NAVY, border: "none", cursor: "pointer" }}
           >
@@ -127,7 +127,7 @@ const JoinLanding = () => {
             English · Tiếng Việt · Tagalog · Bahasa · हिन्दी · Русский
           </p>
           <button
-            onClick={() => go("/app")}
+            onClick={() => go("/join")}
             className="w-full rounded-2xl py-4 font-extrabold text-base"
             style={{ background: GOLD, color: NAVY, border: "none", cursor: "pointer" }}
           >
