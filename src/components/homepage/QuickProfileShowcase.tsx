@@ -43,7 +43,7 @@ const QuickProfileShowcase = () => {
           <Button
             size="lg"
             className="h-12 px-6 text-sm font-bold rounded-xl"
-            onClick={() => navigate(user ? "/quick-profile" : "/app")}
+            onClick={() => navigate(user ? "/quick-profile" : "/join")}
           >
             Create your Sea Profile ⚓
           </Button>

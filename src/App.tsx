@@ -60,6 +60,7 @@ import BlogPost from "./pages/BlogPost";
 import JobFeed from "./pages/JobFeed";
 import PostVacancyPage from "./pages/PostVacancyPage";
 import JoinLanding from "./pages/JoinLanding";
+import Join from "./pages/Join";
 import ResetPassword from "./pages/ResetPassword";
 import CompanyPost from "./pages/CompanyPost";
 import ManagerInterviews from "./pages/ManagerInterviews";
@@ -155,7 +156,8 @@ const App = () => (
             <Route path="/feed" element={<JobFeed />} />
             <Route path="/interview/:token" element={<InterviewInvite />} />
             <Route path="/interview/:token/exam" element={<InterviewExam />} />
-            <Route path="/join" element={<JoinLanding />} />
+            <Route path="/join" element={<Join />} />
+            <Route path="/join-free" element={<JoinLanding />} />
             <Route path="/manager" element={<ManagerAuth />} />
             <Route path="/manager/dashboard" element={<ManagerDashboard />} />
             <Route path="/manager/interviews" element={<ManagerInterviews />} />
