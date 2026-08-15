@@ -128,29 +128,39 @@ const ForCompanies = () => {
       <HomeNav />
 
       {/* Hero */}
-      <section className="relative pt-28 pb-16 md:pt-36 md:pb-24 overflow-hidden">
+      <section className="relative pt-28 pb-14 md:pt-36 md:pb-20 overflow-hidden">
         <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "radial-gradient(circle at 1px 1px, hsl(var(--primary)) 1px, transparent 0)", backgroundSize: "32px 32px" }} />
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 text-center">
+          <div className="sm-hero-glow" aria-hidden="true" />
           <p className="text-xs uppercase tracking-[0.3em] text-primary mb-4 font-mono-score">
-            For Shipping Companies
+            For Shipping &amp; Manning Companies
           </p>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight mb-4">
-            Better Crew. Less Risk.
-            <br />
-            <span className="text-primary">Lower Cost.</span>
+          <h1 className="sm-hero-gradient text-3xl sm:text-4xl md:text-5xl font-bold leading-tight mb-4">
+            Interview Every Candidate Before You Interview Anyone.
           </h1>
-          <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto mb-10">
-            The SMC Score gives shipping companies a structured data layer for every hire. AI-assessed competency, MLC compliance, and fleet wellness — in one platform.
+          <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto mb-8">
+            SeaMinds gives manning and shipping companies structured Sea Profiles, AI competency
+            interviews, and evidence-based shortlists — from one dashboard.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center mb-12">
-            <Button size="lg" onClick={() => document.getElementById("demo-form")?.scrollIntoView({ behavior: "smooth" })} className="text-sm px-6 h-11">
-              Request a Demo <ChevronRight className="ml-1 w-4 h-4" />
-            </Button>
-            <Button size="lg" variant="outline" onClick={() => navigate("/manager")} className="text-sm px-6 h-11">
-              Manager Login
-            </Button>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <a
+              href="mailto:info@indossol.com?subject=Founding%20Company%20Access"
+              className="sm-cta-gold inline-flex items-center justify-center h-12 px-6 rounded-xl text-sm font-bold"
+            >
+              Request Founding Company Access
+            </a>
+            <button
+              onClick={() => navigate("/manager")}
+              className="inline-flex items-center justify-center h-12 px-6 rounded-xl text-sm font-bold"
+              style={{ background: "transparent", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.5)" }}
+            >
+              Company Login
+            </button>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <p className="text-xs mt-4" style={{ color: "rgba(212,175,55,0.75)" }}>
+            Founding companies: full access, free during launch, direct founder support.
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12">
             {stats.map((s) => (
               <div key={s.label}>
                 <p className="text-2xl md:text-3xl font-bold text-primary font-mono-score">{s.value}</p>
@@ -160,6 +170,10 @@ const ForCompanies = () => {
           </div>
         </div>
       </section>
+
+      <ManagerWorkflow />
+      <EvidenceSection />
+
 
       {/* Benefits Grid */}
       <section className="py-16 md:py-24">
