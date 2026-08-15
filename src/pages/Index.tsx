@@ -190,6 +190,30 @@ const Index = () => {
     fetchSmc();
   }, [appState, profileId]);
 
+  // Activation seam: send brand-new crew straight into the Quick Sea Profile (once per session)
+  useEffect(() => {
+    if (appState !== "main" || !profileId) return;
+    if (sessionStorage.getItem("sm_qp_redirected")) return;
+    let active = true;
+    (async () => {
+      const [profRes, cvRes] = await Promise.all([
+        supabase.from("crew_profiles").select("quick_profile_completed_at").eq("id", profileId).maybeSingle(),
+        supabase.from("crew_cv_data").select("sea_service, education").eq("user_id", profileId).maybeSingle(),
+      ]);
+      if (!active) return;
+      if (profRes.data?.quick_profile_completed_at) return;
+      const row: any = cvRes.data ?? null;
+      const has = (v: any) =>
+        Array.isArray(v) ? v.length > 0 : !!v && typeof v === "object" && Object.keys(v).length > 0;
+      if (has(row?.sea_service) || has(row?.education)) return;
+      sessionStorage.setItem("sm_qp_redirected", "1");
+      navigate("/quick-profile");
+    })();
+    return () => { active = false; };
+  }, [appState, profileId, navigate]);
+
+
+
   // Job matching (internal + external)
   useEffect(() => {
     if (appState !== "main" || !role || sessionStorage.getItem("seamind_job_match_shown")) return;
