@@ -23,13 +23,31 @@ const ResetPassword = () => {
       if (!active) return;
       if (session) { setHasSession(true); setChecking(false); }
     });
-    supabase.auth.getSession().then(({ data }) => {
+
+    (async () => {
+      const { data } = await supabase.auth.getSession();
       if (!active) return;
-      setHasSession(!!data.session);
+      if (data.session) { setHasSession(true); setChecking(false); return; }
+
+      // PKCE style link: ?code=...
+      const code = new URLSearchParams(window.location.search).get("code");
+      if (code) {
+        const { data: ex } = await supabase.auth.exchangeCodeForSession(code);
+        if (!active) return;
+        if (ex?.session) {
+          setHasSession(true);
+          setChecking(false);
+          window.history.replaceState({}, "", "/reset-password");
+          return;
+        }
+      }
+      setHasSession(false);
       setChecking(false);
-    });
+    })();
+
     return () => { active = false; sub.subscription.unsubscribe(); };
   }, []);
+
 
   const save = async () => {
     if (password.length < 8) return toast.error("Password must be at least 8 characters.");

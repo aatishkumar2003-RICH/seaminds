@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -21,19 +21,27 @@ const ScrollRedirect = ({ hash }: { hash: string }) => {
 /** Sends Supabase password-recovery links to the reset page wherever they land */
 const RecoveryRedirect = () => {
   const navigate = useNavigate();
-  useEffect(() => {
+  const location = useLocation();
+
+  useLayoutEffect(() => {
     const hash = window.location.hash || "";
     const search = window.location.search || "";
+    const params = new URLSearchParams(search);
     const isRecovery =
       hash.includes("type=recovery") ||
-      search.includes("type=recovery") ||
-      (hash.includes("access_token") && hash.includes("recovery"));
+      params.get("type") === "recovery" ||
+      (!!params.get("code") && (hash.includes("type=recovery") || params.get("type") === "recovery")) ||
+      (hash.includes("error_code") && hash.includes("otp_expired")) ||
+      params.get("error_code") === "otp_expired";
+
     if (isRecovery && !window.location.pathname.startsWith("/reset-password")) {
-      navigate(`/reset-password${hash}`, { replace: true });
+      navigate(`/reset-password${search}${hash}`, { replace: true });
     }
-  }, [navigate]);
+  }, [location.pathname, location.search, location.hash, navigate]);
+
   return null;
 };
+
 import HomePage from "./pages/HomePage";
 import ForCompanies from "./pages/ForCompanies";
 import Index from "./pages/Index";
