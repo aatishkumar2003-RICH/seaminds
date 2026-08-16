@@ -14,7 +14,6 @@ interface VoyageReportProps {
 }
 
 const VOYAGE_REPORT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/voyage-report`;
-const FAMILY_EMAIL_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/family-email`;
 
 const MOOD_COLORS: Record<string, string> = {
   Good: "bg-emerald-500",
@@ -173,24 +172,21 @@ const VoyageReport = ({ profileId, firstName, role, shipName, voyageStartDate, n
         <p style="color: #e2e8f0; font-size: 14px; line-height: 1.7; font-style: italic;">"${aiMessage}"</p>
       `;
 
-      const res = await fetch(FAMILY_EMAIL_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({
+      const { error: fnError } = await supabase.functions.invoke("family-email", {
+        body: {
           to: family.family_email,
           familyName: family.family_name,
           crewName: firstName,
           shipName,
           voyageDay: totalDays,
           personalMessage: `🎉 VOYAGE COMPLETE!\n\n${firstName} has completed ${totalDays} days at sea on ${shipName}.\n\nCheck-ins: ${totalCheckins}\nLongest streak: ${longestStreak} days\n${maxMood ? `Most frequent mood: ${maxMood[0]}` : ""}\n\n"${aiMessage}"`,
-        }),
+        },
       });
 
-      if (res.ok) {
+      if (!fnError) {
         toast.success(`Voyage summary sent to ${family.family_name}`);
+      } else if ((fnError as any)?.context?.status === 401) {
+        toast.error("Please sign in again to continue.");
       } else {
         toast.error("Failed to send to family");
       }

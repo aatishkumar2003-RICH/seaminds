@@ -2757,6 +2757,24 @@ export type Database = {
         }
         Relationships: []
       }
+      rank_taxonomy: {
+        Row: {
+          department: string
+          rank_group: string
+          rank_pattern: string
+        }
+        Insert: {
+          department: string
+          rank_group: string
+          rank_pattern: string
+        }
+        Update: {
+          department?: string
+          rank_group?: string
+          rank_pattern?: string
+        }
+        Relationships: []
+      }
       rest_hours_data: {
         Row: {
           crew_profile_id: string | null
@@ -3259,6 +3277,7 @@ export type Database = {
         }
         Returns: Json
       }
+      band_years_midpoint: { Args: { p_band: string }; Returns: number }
       build_daily_notifications: { Args: never; Returns: string }
       build_post: {
         Args: { p_audience?: string; p_id?: string; p_kind?: string }
@@ -3293,6 +3312,7 @@ export type Database = {
         Args: { p_assessment_id: string; p_invite_id: string }
         Returns: Json
       }
+      contracts_midpoint: { Args: { p_band: string }; Returns: number }
       count_matching_vacancies: {
         Args: { p_families?: string[]; p_rank?: string }
         Returns: number
@@ -3419,6 +3439,7 @@ export type Database = {
         }
         Returns: Json
       }
+      resolve_rank: { Args: { p_rank: string }; Returns: Json }
       reveal_contact: { Args: { p_crew_id: string }; Returns: Json }
       seaminds_housekeeping: { Args: never; Returns: string }
       search_maritime_history: {
@@ -3485,6 +3506,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      verify_certificate: { Args: { p_id: string }; Returns: Json }
       verify_marketing_pin: { Args: { p_pin: string }; Returns: boolean }
     }
     Enums: {

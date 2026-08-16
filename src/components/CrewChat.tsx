@@ -3,6 +3,7 @@ import { trackEvent } from "@/lib/analytics";
 import { Send } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { authedFunctionHeaders, handleAuthError } from "@/lib/authFetch";
 import { useWellnessStreak } from "@/hooks/useWellnessStreak";
 
 import GoDeepCard from "@/components/GoDeepCard";
@@ -79,10 +80,7 @@ const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: Cre
           const existingMessages = cleaned.map((m) => ({ role: m.role, content: m.content }));
           const resp = await fetch(CHAT_URL, {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            },
+            headers: await authedFunctionHeaders(),
             body: JSON.stringify({
               messages: [
                 ...existingMessages,
@@ -211,10 +209,7 @@ const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: Cre
     try {
       const resp = await fetch(CHAT_URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
+        headers: await authedFunctionHeaders(),
         body: JSON.stringify({
           messages: updatedMessages.map((m) => ({ role: m.role, content: m.content })),
           profileId,
@@ -222,6 +217,7 @@ const CrewChat = ({ profileId, firstName, role, shipName, voyageStartDate }: Cre
       });
 
       if (!resp.ok) {
+        if (handleAuthError(resp.status)) throw new Error("Please sign in again");
         const err = await resp.json().catch(() => ({}));
         throw new Error(err.error || `Request failed (${resp.status})`);
       }

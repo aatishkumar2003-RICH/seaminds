@@ -1,4 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.49.1";
+import { aiPaused, aiPausedResponse, meterAi } from "../_shared/aiGuard.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -29,6 +31,56 @@ Always answer in the language the user writes in.`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  const SB_URL = Deno.env.get("SUPABASE_URL")!;
+  const jsonHeaders = { ...corsHeaders, "Content-Type": "application/json" };
+
+  // --- auth gate: a real signed-in user is required ---
+  const authHeader = req.headers.get("Authorization") || "";
+  let authedUserId: string | null = null;
+  if (authHeader.startsWith("Bearer ")) {
+    const userClient = createClient(SB_URL, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: authHeader } },
+      auth: { persistSession: false },
+    });
+    const { data: u } = await userClient.auth.getUser();
+    authedUserId = u?.user?.id ?? null;
+  }
+  if (!authedUserId) {
+    return new Response(JSON.stringify({ error: "auth_required", message: "Please sign in to continue." }), {
+      status: 401, headers: jsonHeaders,
+    });
+  }
+
+  const adminClient = createClient(SB_URL, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
+    auth: { persistSession: false },
+  });
+
+  // --- kill switch ---
+  if (await aiPaused(adminClient)) return aiPausedResponse(corsHeaders);
+
+  // --- daily rate limit (100/day) ---
+  try {
+    const startOfDay = new Date();
+    startOfDay.setUTCHours(0, 0, 0, 0);
+    const { count } = await adminClient
+      .from("ai_usage")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", authedUserId)
+      .eq("feature", "bridge-chat")
+      .gte("created_at", startOfDay.toISOString());
+    if ((count ?? 0) >= 100) {
+      return new Response(
+        JSON.stringify({
+          error: "daily_limit",
+          message: "You've reached today's Bridge question limit. Resets at midnight UTC ⚓",
+        }),
+        { status: 429, headers: jsonHeaders },
+      );
+    }
+  } catch (_e) { /* never block on limit lookup failure */ }
+
+  const startedAt = Date.now();
 
   try {
     const { messages } = await req.json();
@@ -64,10 +116,13 @@ Deno.serve(async (req) => {
       }
       const t = await response.text();
       console.error("Bridge AI error:", response.status, t);
+      await meterAi(adminClient, { userId: authedUserId, feature: "bridge-chat", model: "gpt-4o-mini", usage: null, success: false, latencyMs: Date.now() - startedAt });
       return new Response(JSON.stringify({ error: "AI error" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    await meterAi(adminClient, { userId: authedUserId, feature: "bridge-chat", model: "gpt-4o-mini", usage: null, success: true, latencyMs: Date.now() - startedAt });
 
     return new Response(response.body, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },

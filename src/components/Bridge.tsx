@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
 import PhotoAnnotator from "./bridge/PhotoAnnotator";
 import GoDeepCard from "./GoDeepCard";
+import { authedFunctionHeaders, handleAuthError } from "@/lib/authFetch";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -117,14 +118,12 @@ async function streamBridgeChat({
 }) {
   const resp = await fetch(BRIDGE_CHAT_URL, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-    },
+    headers: await authedFunctionHeaders(),
     body: JSON.stringify({ messages }),
   });
 
   if (!resp.ok) {
+    if (handleAuthError(resp.status)) { onError("Please sign in again to use the Bridge."); return; }
     const body = await resp.json().catch(() => ({}));
     onError(body.error || "Failed to get response");
     return;
@@ -312,14 +311,16 @@ const Bridge = ({ profileId }: BridgeProps) => {
     try {
       const resp = await fetch(DIAGNOSE_URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
+        headers: await authedFunctionHeaders(),
         body: JSON.stringify({ image_base64: base64, mime_type: mimeType }),
       });
 
       if (!resp.ok || !resp.body) {
+        if (handleAuthError(resp.status)) {
+          setDiagnosisResult("⚠️ Please sign in again to use photo diagnosis.");
+          setDiagnosisLoading(false);
+          return;
+        }
         const body = await resp.json().catch(() => ({}));
         setDiagnosisResult(`⚠️ ${body.error || "Failed to analyze image"}`);
         setDiagnosisLoading(false);
