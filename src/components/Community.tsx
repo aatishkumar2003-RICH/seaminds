@@ -181,7 +181,6 @@ const Community = ({ shipName, manningAgency, profileId, firstName, voyageStartD
 
 
 /* Family Connection Sub-component */
-const FAMILY_EMAIL_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/family-email`;
 
 const FamilyConnectionSection = ({ profileId, firstName, shipName, voyageStartDate }: {
   profileId: string; firstName: string; shipName: string; voyageStartDate: string;
@@ -258,24 +257,21 @@ const FamilyConnectionSection = ({ profileId, firstName, shipName, voyageStartDa
     if (!personalMessage.trim() || !familyEmail) return;
     setSending(true);
     try {
-      const res = await fetch(FAMILY_EMAIL_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({
+      const { error: fnError } = await supabase.functions.invoke("family-email", {
+        body: {
           to: familyEmail,
           familyName,
           crewName: firstName,
           shipName,
           voyageDay: voyageDays,
           personalMessage: personalMessage.trim(),
-        }),
+        },
       });
-      if (res.ok) {
+      if (!fnError) {
         toast.success(`Message sent to ${familyName}`);
         setPersonalMessage("");
+      } else if ((fnError as any)?.context?.status === 401) {
+        toast.error("Please sign in again to continue.");
       } else {
         toast.error("Failed to send message");
       }
