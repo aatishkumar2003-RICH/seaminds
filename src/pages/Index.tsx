@@ -1,5 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { Anchor, LogOut, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,12 +49,41 @@ const NameEntry = lazy(() => import("@/components/NameEntry"));
 
 const PROFILE_KEY = "seamind_profile_id";
 
+/** URL ?tab= value → internal screen key (aliases included) */
+const TAB_TO_SCREEN: Record<string, Screen> = {
+  home: "home",
+  chat: "chat", wellness: "chat",
+  dashboard: "dashboard",
+  opportunities: "opportunities", jobs: "opportunities",
+  news: "news",
+  academy: "academy", learn: "academy",
+  bridge: "bridge",
+  community: "community",
+  smc: "smc", score: "smc",
+  resume: "resume", cv: "resume",
+  certs: "certs", certificates: "certs",
+  resthours: "resthours",
+  vesselrating: "vesselrating",
+};
+
+/** internal screen key → canonical URL ?tab= value */
+const SCREEN_TO_TAB: Record<Screen, string> = {
+  home: "home", chat: "chat", dashboard: "dashboard", opportunities: "jobs",
+  news: "news", academy: "academy", bridge: "bridge", community: "community",
+  smc: "smc", resume: "cv", certs: "certs", resthours: "resthours",
+  vesselrating: "vesselrating",
+};
+
 const Index = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const timeOfDay = useTimeOfDay();
   const voyageStatus = useVoyageMode();
   const [appState, setAppState] = useState<AppState>("loading");
-  const [screen, setScreen] = useState<Screen>("home");
+  const [screen, setScreen] = useState<Screen>(() => {
+    const t = new URLSearchParams(window.location.search).get("tab");
+    return (t && TAB_TO_SCREEN[t.toLowerCase()]) || "home";
+  });
   const [tourActiveScreen, setTourActiveScreen] = useState<Screen | null>(null);
   const [prevScreen, setPrevScreen] = useState<Screen | null>(null);
   const [profileId, setProfileId] = useState("");
