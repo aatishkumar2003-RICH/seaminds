@@ -353,8 +353,8 @@ const QuickProfile = () => {
             <p style={{ color: "#94A3B8", fontSize: 12, lineHeight: 1.6 }}>
               Add your CV and certificates anytime to strengthen your profile and help companies evaluate you faster.
             </p>
-            <button style={goldBtn} onClick={() => navigate("/app")}>See my matching jobs →</button>
-            <button style={goldBtn} onClick={() => navigate("/app")}>Take the SMC Assessment →</button>
+            <button style={goldBtn} onClick={() => navigate("/app?tab=jobs")}>See my matching jobs →</button>
+            <button style={goldBtn} onClick={() => navigate("/app?tab=smc")}>Take the SMC Assessment →</button>
           </div>
         ) : step === 1 ? (
           <>

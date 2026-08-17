@@ -368,7 +368,7 @@ const Index = () => {
     if (!authReady || !authUser) return;
     if (localStorage.getItem('seamind_profile_id')) return;
     const fullName = authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'Seafarer';
-    setFirstName(fullName.split(' ')[0]); setAppState('main'); setScreen('home');
+    setFirstName(fullName.split(' ')[0]); setAppState('main');
   }, [authUser, authReady]);
 
   const handleNameSubmit = async (profile: {
