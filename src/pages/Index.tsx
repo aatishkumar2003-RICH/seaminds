@@ -142,6 +142,24 @@ const Index = () => {
     if (contentRef.current) contentRef.current.scrollTop = 0;
   }, [screen]);
 
+  // URL → tab (deep links, back/forward, reloads)
+  useEffect(() => {
+    const t = searchParams.get("tab");
+    if (!t) return;
+    const target = TAB_TO_SCREEN[t.toLowerCase()];
+    if (target && target !== screen) setScreen(target);
+  }, [searchParams]);
+
+  // tab → URL (tapping a tab keeps the URL in sync)
+  useEffect(() => {
+    if (appState !== "main") return;
+    const want = SCREEN_TO_TAB[screen];
+    if (searchParams.get("tab") === want) return;
+    const next = new URLSearchParams(searchParams);
+    next.set("tab", want);
+    setSearchParams(next, { replace: true });
+  }, [screen, appState]);
+
   // Edge swipe to open drawer
   useEffect(() => {
     const handleTouchStart = (e: TouchEvent) => {
