@@ -148,7 +148,7 @@ const JobFeed = () => {
       await recordOutbound(i, i.applyUrl);
       return window.open(i.applyUrl, "_blank", "noopener,noreferrer");
     }
-    navigate("/app");
+    navigate("/app?tab=jobs");
   };
 
   return (

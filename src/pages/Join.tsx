@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { ChevronLeft, ShieldCheck, Anchor, Globe } from "lucide-react";
 import { toast } from "sonner";
@@ -25,6 +25,9 @@ const inputStyle: React.CSSProperties = {
 
 const Join = () => {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const nextParam = params.get("next");
+  const dest = nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : "/app";
   const [tab, setTab] = useState<"create" | "signin">("create");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,15 +37,15 @@ const Join = () => {
   useEffect(() => {
     let active = true;
     supabase.auth.getSession().then(({ data }) => {
-      if (active && data.session) navigate("/app", { replace: true });
+      if (active && data.session) navigate(dest, { replace: true });
     });
     return () => { active = false; };
-  }, [navigate]);
+  }, [navigate, dest]);
 
   const google = async () => {
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/app` },
+      options: { redirectTo: `${window.location.origin}${dest}` },
     });
   };
 
@@ -55,14 +58,14 @@ const Join = () => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: `${window.location.origin}/app` },
+      options: { emailRedirectTo: `${window.location.origin}${dest}` },
     });
     setBusy(false);
     if (error) {
       toast.error(error.message.includes("already") ? "This email already has an account — sign in instead." : error.message);
       return;
     }
-    if (data.session) navigate("/app");
+    if (data.session) navigate(dest);
     else setConfirmSent(true);
   };
 
@@ -75,7 +78,7 @@ const Join = () => {
       toast.error("Wrong email or password");
       return;
     }
-    navigate("/app");
+    navigate(dest);
   };
 
   const forgot = async () => {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { Anchor, LogOut, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,12 +49,41 @@ const NameEntry = lazy(() => import("@/components/NameEntry"));
 
 const PROFILE_KEY = "seamind_profile_id";
 
+/** URL ?tab= value → internal screen key (aliases included) */
+const TAB_TO_SCREEN: Record<string, Screen> = {
+  home: "home",
+  chat: "chat", wellness: "chat",
+  dashboard: "dashboard",
+  opportunities: "opportunities", jobs: "opportunities",
+  news: "news",
+  academy: "academy", learn: "academy",
+  bridge: "bridge",
+  community: "community",
+  smc: "smc", score: "smc",
+  resume: "resume", cv: "resume",
+  certs: "certs", certificates: "certs",
+  resthours: "resthours",
+  vesselrating: "vesselrating",
+};
+
+/** internal screen key → canonical URL ?tab= value */
+const SCREEN_TO_TAB: Record<Screen, string> = {
+  home: "home", chat: "chat", dashboard: "dashboard", opportunities: "jobs",
+  news: "news", academy: "academy", bridge: "bridge", community: "community",
+  smc: "smc", resume: "cv", certs: "certs", resthours: "resthours",
+  vesselrating: "vesselrating",
+};
+
 const Index = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const timeOfDay = useTimeOfDay();
   const voyageStatus = useVoyageMode();
   const [appState, setAppState] = useState<AppState>("loading");
-  const [screen, setScreen] = useState<Screen>("home");
+  const [screen, setScreen] = useState<Screen>(() => {
+    const t = new URLSearchParams(window.location.search).get("tab");
+    return (t && TAB_TO_SCREEN[t.toLowerCase()]) || "home";
+  });
   const [tourActiveScreen, setTourActiveScreen] = useState<Screen | null>(null);
   const [prevScreen, setPrevScreen] = useState<Screen | null>(null);
   const [profileId, setProfileId] = useState("");
@@ -112,6 +141,24 @@ const Index = () => {
   useEffect(() => {
     if (contentRef.current) contentRef.current.scrollTop = 0;
   }, [screen]);
+
+  // URL → tab (deep links, back/forward, reloads)
+  useEffect(() => {
+    const t = searchParams.get("tab");
+    if (!t) return;
+    const target = TAB_TO_SCREEN[t.toLowerCase()];
+    if (target && target !== screen) setScreen(target);
+  }, [searchParams]);
+
+  // tab → URL (tapping a tab keeps the URL in sync)
+  useEffect(() => {
+    if (appState !== "main") return;
+    const want = SCREEN_TO_TAB[screen];
+    if (searchParams.get("tab") === want) return;
+    const next = new URLSearchParams(searchParams);
+    next.set("tab", want);
+    setSearchParams(next, { replace: true });
+  }, [screen, appState]);
 
   // Edge swipe to open drawer
   useEffect(() => {
@@ -298,7 +345,16 @@ const Index = () => {
         clearTimeout(fallbackTimer);
         if (authUser) {
           const fullName = authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'Seafarer';
-          setFirstName(fullName.split(' ')[0]); setAppState('main'); setScreen('home');
+          setFirstName(fullName.split(' ')[0]); setAppState('main');
+          return;
+        }
+        // Front door: no session → send to /join, preserving the intended destination.
+        // Never intercept auth callbacks (hash tokens / PKCE code).
+        const hash = window.location.hash || '';
+        const isAuthCallback = hash.includes('access_token') || hash.includes('type=') || new URLSearchParams(window.location.search).has('code');
+        if (!isAuthCallback) {
+          const dest = `${window.location.pathname}${window.location.search}`;
+          navigate(`/join?next=${encodeURIComponent(dest)}`, { replace: true });
           return;
         }
         setAppState('landing');
@@ -312,7 +368,7 @@ const Index = () => {
     if (!authReady || !authUser) return;
     if (localStorage.getItem('seamind_profile_id')) return;
     const fullName = authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'Seafarer';
-    setFirstName(fullName.split(' ')[0]); setAppState('main'); setScreen('home');
+    setFirstName(fullName.split(' ')[0]); setAppState('main');
   }, [authUser, authReady]);
 
   const handleNameSubmit = async (profile: {
