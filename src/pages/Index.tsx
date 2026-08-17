@@ -345,7 +345,16 @@ const Index = () => {
         clearTimeout(fallbackTimer);
         if (authUser) {
           const fullName = authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'Seafarer';
-          setFirstName(fullName.split(' ')[0]); setAppState('main'); setScreen('home');
+          setFirstName(fullName.split(' ')[0]); setAppState('main');
+          return;
+        }
+        // Front door: no session → send to /join, preserving the intended destination.
+        // Never intercept auth callbacks (hash tokens / PKCE code).
+        const hash = window.location.hash || '';
+        const isAuthCallback = hash.includes('access_token') || hash.includes('type=') || new URLSearchParams(window.location.search).has('code');
+        if (!isAuthCallback) {
+          const dest = `${window.location.pathname}${window.location.search}`;
+          navigate(`/join?next=${encodeURIComponent(dest)}`, { replace: true });
           return;
         }
         setAppState('landing');
