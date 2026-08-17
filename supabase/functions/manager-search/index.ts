@@ -209,7 +209,8 @@ Deno.serve(async (req) => {
       (cvs || []).forEach((c: any) => (cvByUser[c.user_id] = { ...c, medical: parseMaybeJson(c.medical) }));
       (smcs || []).forEach((s: any) => {
         const prev = smcByUser[s.crew_profile_id];
-        if (!prev || (s.overall_score || 0) > (prev.overall_score || 0)) smcByUser[s.crew_profile_id] = s;
+        const t = (x: any) => new Date(x?.completed_at || 0).getTime();
+        if (!prev || t(s) > t(prev)) smcByUser[s.crew_profile_id] = s;
       });
     }
 
