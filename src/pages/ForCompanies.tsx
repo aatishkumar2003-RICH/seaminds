@@ -235,11 +235,10 @@ const ForCompanies = () => {
               </div>
               <div className="space-y-3">
                 {[
-                  { label: "Technical Competence", score: 4.5 },
-                  { label: "Experience Integrity", score: 4.2 },
-                  { label: "Communication Ability", score: 3.9 },
-                  { label: "Behavioural Profile", score: 4.3 },
-                  { label: "Wellness Readiness", score: 4.6 },
+                  { label: "Technical", score: 4.5 },
+                  { label: "Judgment", score: 4.2 },
+                  { label: "Maritime English", score: 3.9 },
+                  { label: "Professional Behaviour", score: 4.3 },
                 ].map((d) => (
                   <div key={d.label} className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">{d.label}</span>

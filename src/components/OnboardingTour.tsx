@@ -46,7 +46,7 @@ const TOUR_STEPS: TourStep[] = [
   {
     icon: "⏱",
     label: "Rest Hours",
-    title: "STCW Rest Hours Log",
+    title: "Rest Hours Record",
     description: "Log work and rest hours with automatic MLC 2006 compliance checking. Never fail a PSC inspection on rest hours again.",
     accent: "199 89% 48%",
     screen: "resthours",

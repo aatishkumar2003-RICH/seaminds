@@ -4,11 +4,10 @@ import { Button } from "@/components/ui/button";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 
 const subScores = [
-  { label: "Technical Competence", score: 4.5 },
-  { label: "Experience Integrity", score: 4.2 },
-  { label: "Communication Ability", score: 3.9 },
-  { label: "Behavioural Profile", score: 4.3 },
-  { label: "Wellness Consistency", score: 4.1 },
+  { label: "Technical", score: 4.5 },
+  { label: "Judgment", score: 4.2 },
+  { label: "Maritime English", score: 3.9 },
+  { label: "Professional Behaviour", score: 4.3 },
 ];
 
 const bullets = [

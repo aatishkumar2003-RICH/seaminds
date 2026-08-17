@@ -87,8 +87,8 @@ const RestHoursTracker = ({ onBack }: RestHoursTrackerProps) => {
           <ArrowLeft size={20} className="text-muted-foreground" />
         </button>
         <div>
-          <h1 className="text-lg font-semibold text-foreground">My Rest Hours Log</h1>
-          <p className="text-xs text-muted-foreground">STCW Compliance Tracker</p>
+          <h1 className="text-lg font-semibold text-foreground">Rest Hours Record</h1>
+          <p className="text-xs text-muted-foreground">Personal record & potential non-compliance check</p>
         </div>
       </div>
 

@@ -249,10 +249,10 @@ const RestHoursTracker = ({ onNavigate, profileId }: RestHoursTrackerProps) => {
       {/* Header */}
       <div className="mb-5">
         <h1 className="text-xl font-bold" style={{ color: "#D4AF37" }}>
-          ⏱ Rest Hours Tracker
+          ⏱ Rest Hours Record
         </h1>
         <p className="text-xs text-muted-foreground mt-0.5">
-          MLC 2006 — Your Legal Protection
+          Personal record & potential non-compliance check
         </p>
       </div>
 
