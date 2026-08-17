@@ -27,7 +27,7 @@ const Join = () => {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const nextParam = params.get("next");
-  const dest = nextParam && nextParam.startsWith("/") ? nextParam : "/app";
+  const dest = nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : "/app";
   const [tab, setTab] = useState<"create" | "signin">("create");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
