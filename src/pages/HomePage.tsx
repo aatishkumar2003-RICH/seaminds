@@ -147,7 +147,9 @@ const HomePage = () => {
       <div className="relative z-10">
         <LiveTicker />
         <HomeNav />
+        <ExchangeHero />
         <HeroSection timeOfDay={timeOfDay} />
+
         <QuickProfileShowcase />
         <HiringNow />
         <ManagerWorkflow />
