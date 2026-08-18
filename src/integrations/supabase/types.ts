@@ -3376,6 +3376,7 @@ export type Database = {
         }[]
       }
       get_interview_by_token: { Args: { p_token: string }; Returns: Json }
+      get_market_indices: { Args: never; Returns: Json }
       get_my_applicants: { Args: never; Returns: Json }
       get_my_credit_balance: { Args: never; Returns: Json }
       get_my_fleet: { Args: never; Returns: Json }
@@ -3383,6 +3384,7 @@ export type Database = {
       get_my_sos_contacts: { Args: never; Returns: Json }
       get_public_ticker_stats: { Args: never; Returns: Json }
       get_social_pulse: { Args: never; Returns: Json }
+      get_trade_log: { Args: { p_limit?: number }; Returns: Json }
       get_voyage_state: { Args: never; Returns: Json }
       grant_monthly_credits: { Args: never; Returns: string }
       has_entitlement: {
