@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import HomeNav from "@/components/homepage/HomeNav";
-import HeroSection from "@/components/homepage/HeroSection";
+import ExchangeHero from "@/components/homepage/ExchangeHero";
 import OceanBackground from "@/components/homepage/OceanBackground";
 import AppPreviewSection from "@/components/homepage/AppPreviewSection";
 import HowItWorksSection from "@/components/homepage/HowItWorksSection";
@@ -148,7 +148,6 @@ const HomePage = () => {
         <LiveTicker />
         <HomeNav />
         <ExchangeHero />
-        <HeroSection timeOfDay={timeOfDay} />
 
         <QuickProfileShowcase />
         <HiringNow />
