@@ -4,6 +4,7 @@ import App from "./App.tsx";
 import "./index.css";
 import { installGlobalAuthErrorHandler } from "./lib/authErrorHandler";
 import { initAnalytics } from "./lib/analytics";
+import { I18nProvider } from "./i18n";
 
 // Catch infinite auth token refresh loops before they freeze the app
 installGlobalAuthErrorHandler();
