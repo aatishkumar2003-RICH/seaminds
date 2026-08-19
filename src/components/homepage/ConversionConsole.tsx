@@ -240,9 +240,55 @@ const ConversionConsole = () => {
                 </div>
               )}
             </div>
+
+            <button
+              type="button"
+              aria-label="Open menu"
+              onClick={() => { setMenuOpen(true); setLangOpen(false); setMarketOpen(false); }}
+              className="rounded-lg p-2"
+              style={{ border: "1px solid rgba(255,255,255,0.12)", color: GOLD }}
+            >
+              <Menu className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </header>
+
+      {/* Slide-in menu drawer */}
+      {menuOpen && (
+        <div className="fixed inset-0 z-[70]" style={{ background: "rgba(0,0,0,0.6)" }} onClick={() => setMenuOpen(false)}>
+          <nav
+            aria-label="Site menu"
+            className="absolute right-0 top-0 h-full w-72 max-w-[85vw] overflow-y-auto p-4"
+            style={{ background: PANEL, borderLeft: `1px solid ${BORDER}` }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-sm font-bold text-foreground">Menu</span>
+              <button type="button" aria-label={t("close")} onClick={() => setMenuOpen(false)}><X className="w-5 h-5 text-muted-foreground" /></button>
+            </div>
+            <ul className="space-y-1">
+              {MENU_LINKS.map((l) => (
+                <li key={l.label}>
+                  <a
+                    href={l.to}
+                    onClick={(e) => {
+                      if (l.external) return;
+                      e.preventDefault();
+                      setMenuOpen(false);
+                      navigate(l.to);
+                    }}
+                    className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-white/5"
+                  >
+                    {l.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
+      )}
+
 
       {/* 2. QUICK DOCK */}
       <div className="border-b" style={{ borderColor: "rgba(212,175,55,0.15)" }}>
