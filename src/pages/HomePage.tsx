@@ -1,24 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import HomeNav from "@/components/homepage/HomeNav";
-import ExchangeHero from "@/components/homepage/ExchangeHero";
+import ConversionConsole from "@/components/homepage/ConversionConsole";
 import OceanBackground from "@/components/homepage/OceanBackground";
-import AppPreviewSection from "@/components/homepage/AppPreviewSection";
-import HowItWorksSection from "@/components/homepage/HowItWorksSection";
-import BentoGrid from "@/components/homepage/BentoGrid";
-import CompaniesB2BSection from "@/components/homepage/CompaniesB2BSection";
 import TestimonialsSection from "@/components/homepage/TestimonialsSection";
-import SMCShowcase from "@/components/homepage/SMCShowcase";
-import FinalCTA from "@/components/homepage/FinalCTA";
 import HomeFooter from "@/components/homepage/HomeFooter";
-import LiveTicker from "@/components/homepage/LiveTicker";
-import QuickProfileShowcase from "@/components/homepage/QuickProfileShowcase";
-import HiringNow from "@/components/homepage/HiringNow";
-import ManagerWorkflow from "@/components/homepage/ManagerWorkflow";
-import SMCProof from "@/components/homepage/SMCProof";
-import PrivacyPromise from "@/components/homepage/PrivacyPromise";
-import SOSNetwork from "@/components/homepage/SOSNetwork";
+
 import { useTimeOfDay } from "@/hooks/useTimeOfDay";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
