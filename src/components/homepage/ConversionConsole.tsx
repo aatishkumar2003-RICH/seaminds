@@ -136,6 +136,30 @@ const ConversionConsole = () => {
     return counted.slice(0, 4);
   }, [market]);
 
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return vacancies.filter((v) => {
+      if (myMarket && !inMarket(v, myMarket)) return false;
+      if (!q) return true;
+      return `${v.rank_required || ""} ${v.title || ""} ${v.vessel_type || ""} ${v.joining_port || ""}`.toLowerCase().includes(q);
+    });
+  }, [vacancies, query, myMarket]);
+
+  const suggestion = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return null;
+    if (/cv|resume|profile/.test(q)) return { label: "Build my Sea Profile →", to: "/quick-profile" };
+    if (/interview|ai|smc|score/.test(q)) return { label: "AI Interview & SMC Score →", to: "/app?tab=smc" };
+    return null;
+  }, [query]);
+
+  const toggleMarket = (m: string) => {
+    const next = myMarket === m ? "" : m;
+    setMyMarket(next);
+    if (next) localStorage.setItem("sm_my_market", next);
+    else localStorage.removeItem("sm_my_market");
+  };
+
   const langLabel = LANGS.find((l) => l.code === lang)?.label || "English";
   const total = market?.total ?? null;
 
