@@ -18,6 +18,22 @@ const RANKS = [
   "Trainee Officer (Deck)", "Trainee Officer (Engine)", "Trainee OS", "Trainee Cook",
 ];
 
+/** short rank labels used on /profile-start → full QuickProfile rank labels */
+const PRESTART_RANK_MAP: Record<string, string> = {
+  Master: "Captain / Master",
+  "C/O": "Chief Officer",
+  "2/O": "2nd Officer",
+  "3/O": "3rd Officer",
+  "C/E": "Chief Engineer",
+  "2/E": "2nd Engineer",
+  "3/E": "3rd Engineer",
+  "4/E": "4th Engineer",
+  ETO: "ETO / EEO",
+  Bosun: "Bosun",
+  AB: "AB Seaman",
+  Cook: "Cook",
+};
+
 const YEARS_BANDS = ["0–1", "2–4", "5–8", "9–14", "15+"];
 const CONTRACT_BANDS = ["0", "1–2", "3–5", "6–10", "10+"];
 const CONTRACT_LABEL = (b: string) => (b === "0" ? "0 — first contract" : b);
