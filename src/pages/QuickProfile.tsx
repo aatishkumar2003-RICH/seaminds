@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useT } from "@/i18n";
 
 const NAVY = "#0D1B2A";
 const CARD = "#112240";
@@ -36,7 +37,6 @@ const PRESTART_RANK_MAP: Record<string, string> = {
 
 const YEARS_BANDS = ["0–1", "2–4", "5–8", "9–14", "15+"];
 const CONTRACT_BANDS = ["0", "1–2", "3–5", "6–10", "10+"];
-const CONTRACT_LABEL = (b: string) => (b === "0" ? "0 — first contract" : b);
 
 const SEA_BANDS = ["<2", "2–5", "6–10", "11–15", "15+"];
 const FAMILY_TIME = ["<1", "1–3", "3–5", "5+ yr"];
@@ -104,6 +104,7 @@ const goldBtn: React.CSSProperties = {
 
 const QuickProfile = () => {
   const navigate = useNavigate();
+  const { t } = useT();
   const [uid, setUid] = useState<string | null>(null);
   const [firstName, setFirstName] = useState("");
   const [ready, setReady] = useState(false);
@@ -275,7 +276,7 @@ const QuickProfile = () => {
     <Q key={key} title={title}>
       <Row>
         {["Yes", "No"].map((v) => (
-          <Chip key={v} label={v} on={claims[key] === v} onClick={() => setClaim(key, v)} />
+          <Chip key={v} label={v === "Yes" ? t("yes") : t("no")} on={claims[key] === v} onClick={() => setClaim(key, v)} />
         ))}
       </Row>
     </Q>
@@ -360,12 +361,12 @@ const QuickProfile = () => {
           onClick={() => navigate(-1)}
           style={{ background: "transparent", border: "none", color: GOLD, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, fontSize: 13, padding: 0, alignSelf: "flex-start" }}
         >
-          <ChevronLeft size={18} /> Back
+          <ChevronLeft size={18} /> {t("back")}
         </button>
 
         <div>
-          <h1 style={{ color: GOLD, fontSize: 21, fontWeight: 800 }}>Quick Sea Profile</h1>
-          <p style={{ color: "#94A3B8", fontSize: 12 }}>All taps, no typing — about 2 minutes.</p>
+          <h1 style={{ color: GOLD, fontSize: 21, fontWeight: 800 }}>{t("qpTitle")}</h1>
+          <p style={{ color: "#94A3B8", fontSize: 12 }}>{t("qpSubtitle")}</p>
         </div>
 
         {/* voyage progress */}
@@ -375,34 +376,34 @@ const QuickProfile = () => {
         </div>
 
         {matches > 0 && !done && (
-          <p style={{ color: GOLD, fontSize: 13, fontWeight: 700 }}>⚓ {matches} live vacancies match your profile</p>
+          <p style={{ color: GOLD, fontSize: 13, fontWeight: 700 }}>⚓ {matches} {t("qpMatches")}</p>
         )}
 
         {done ? (
           <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 20, textAlign: "center", display: "flex", flexDirection: "column", gap: 12 }}>
             <p style={{ fontSize: 40 }}>⚓</p>
-            <p style={{ color: GOLD, fontSize: 19, fontWeight: 800 }}>Your Sea Profile is ready, {firstName}!</p>
-            <p style={{ color: "#e5e7eb", fontSize: 13 }}>You can now apply for jobs and take your SeaMinds assessment.</p>
+            <p style={{ color: GOLD, fontSize: 19, fontWeight: 800 }}>{t("qpDoneTitle")}, {firstName}!</p>
+            <p style={{ color: "#e5e7eb", fontSize: 13 }}>{t("qpDoneBody")}</p>
             <p style={{ color: "#94A3B8", fontSize: 12, lineHeight: 1.6 }}>
-              Add your CV and certificates anytime to strengthen your profile and help companies evaluate you faster.
+              {t("qpDoneNote")}
             </p>
-            <button style={goldBtn} onClick={() => navigate("/app?tab=jobs")}>See my matching jobs →</button>
-            <button style={goldBtn} onClick={() => navigate("/app?tab=smc")}>Take the SMC Assessment →</button>
+            <button style={goldBtn} onClick={() => navigate("/app?tab=jobs")}>{t("qpDoneJobs")}</button>
+            <button style={goldBtn} onClick={() => navigate("/app?tab=smc")}>{t("qpDoneSmc")}</button>
           </div>
         ) : step === 1 ? (
           <>
-            <Q title="Your rank">
+            <Q title={t("qpQRank")}>
               <select
                 value={rank}
                 onChange={(e) => { setRank(e.target.value); saveProfile({ rank: e.target.value }); }}
                 style={{ width: "100%", padding: "11px 12px", borderRadius: 10, background: NAVY, color: "#fff", border: `1px solid ${BORDER}`, fontSize: 14 }}
               >
-                <option value="">Select your rank</option>
+                <option value="">{t("qpSelectRank")}</option>
                 {RANKS.map((r) => <option key={r} value={r}>{r}</option>)}
               </select>
             </Q>
 
-            <Q title="Years in this rank">
+            <Q title={t("qpQYears")}>
               <Row>
                 {YEARS_BANDS.map((b) => (
                   <Chip key={b} label={b} on={yearsBand === b}
@@ -411,20 +412,20 @@ const QuickProfile = () => {
               </Row>
             </Q>
 
-            <Q title="Contracts completed in this rank">
+            <Q title={t("qpQContracts")}>
               <Row>
                 {CONTRACT_BANDS.map((b) => (
-                  <Chip key={b} label={CONTRACT_LABEL(b)} on={contractsBand === b}
+                  <Chip key={b} label={b === "0" ? t("qpFirstContract") : b} on={contractsBand === b}
                     onClick={() => { setContractsBand(b); saveProfile({ contracts_in_rank_band: b }); }} />
                 ))}
               </Row>
             </Q>
 
             {isStartingOut && (
-              <p style={{ color: GOLD, fontSize: 13, fontWeight: 700 }}>⚓ Starting your sea career — welcome aboard!</p>
+              <p style={{ color: GOLD, fontSize: 13, fontWeight: 700 }}>{t("qpStartingOut")}</p>
             )}
 
-            <Q title="Total sea service (years)">
+            <Q title={t("qpQSeaService")}>
               <Row>
                 {SEA_BANDS.map((b) => (
                   <Chip key={b} label={b} on={seaBand === b}
@@ -433,14 +434,14 @@ const QuickProfile = () => {
               </Row>
             </Q>
 
-            <Q title="Available for work now?">
+            <Q title={t("qpQAvailable")}>
               <Row>
-                <Chip label={available ? "Yes — available" : "Not available"} on={available}
+                <Chip label={available ? t("qpAvailableYes") : t("qpAvailableNo")} on={available}
                   onClick={() => { const v = !available; setAvailable(v); saveProfile({ is_available: v }); }} />
               </Row>
               {available && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  <label style={{ color: "#94A3B8", fontSize: 12 }}>Available from</label>
+                  <label style={{ color: "#94A3B8", fontSize: 12 }}>{t("qpAvailableFrom")}</label>
                   <input
                     type="date"
                     value={availableFrom}
@@ -453,14 +454,14 @@ const QuickProfile = () => {
 
             <button
               style={{ ...goldBtn, opacity: step1Done ? 1 : 0.5 }}
-              onClick={() => { if (!step1Done) return toast("Tap all four answers to continue"); setStep(2); }}
+              onClick={() => { if (!step1Done) return toast(t("qpNeedFour")); setStep(2); }}
             >
-              Continue →
+              {t("qpContinue")}
             </button>
           </>
         ) : step === 2 ? (
           <>
-            <p style={{ color: "#94A3B8", fontSize: 12 }}>Which vessels have you sailed on? Tap to select, then tap your sea time.</p>
+            <p style={{ color: "#94A3B8", fontSize: 12 }}>{t("qpStep2Help")}</p>
             {FAMILIES.map((f) => {
               const saved = families[f.key] !== undefined;
               const pending = pendingFamilies.includes(f.key);
@@ -470,7 +471,7 @@ const QuickProfile = () => {
                   <Chip label={f.label} on={on} onClick={() => toggleFamily(f.key)} />
                   {on && (
                     <>
-                      {pending && <p style={{ color: GOLD, fontSize: 12 }}>Choose sea time</p>}
+                      {pending && <p style={{ color: GOLD, fontSize: 12 }}>{t("qpChooseSeaTime")}</p>}
                       <Row>
                         {FAMILY_TIME.map((t) => (
                           <Chip key={t} label={t} on={families[f.key] === t} onClick={() => setFamily(f.key, t)} />
@@ -484,30 +485,30 @@ const QuickProfile = () => {
             <button
               style={{ ...goldBtn, opacity: step2Done ? 1 : 0.5 }}
               onClick={() => {
-                if (!step2Done) return toast("Select at least one vessel type");
+                if (!step2Done) return toast(t("qpNeedVessel"));
                 setPendingFamilies([]);
                 setStep(3);
               }}
             >
-              Continue →
+              {t("qpContinue")}
             </button>
             {isStartingOut && (
               <button
                 onClick={() => { setPendingFamilies([]); setCadetSkipped(true); setStep(3); }}
                 style={{ background: "transparent", border: "none", color: GOLD, cursor: "pointer", fontSize: 13, fontWeight: 700, padding: 4 }}
               >
-                No sea service yet — skip
+                {t("qpSkipNoService")}
               </button>
             )}
 
-            <button onClick={() => setStep(1)} style={{ ...goldBtn, background: "transparent", color: GOLD, border: `1px solid ${GOLD}` }}>Back</button>
+            <button onClick={() => setStep(1)} style={{ ...goldBtn, background: "transparent", color: GOLD, border: `1px solid ${GOLD}` }}>{t("back")}</button>
           </>
         ) : (
           <>
-            <p style={{ color: "#94A3B8", fontSize: 12 }}>A few questions for your rank — all taps.</p>
+            <p style={{ color: "#94A3B8", fontSize: 12 }}>{t("qpStep3Help")}</p>
             {step3Questions()}
-            <button style={goldBtn} onClick={finish}>Finish my Sea Profile ⚓</button>
-            <button onClick={() => setStep(2)} style={{ ...goldBtn, background: "transparent", color: GOLD, border: `1px solid ${GOLD}` }}>Back</button>
+            <button style={goldBtn} onClick={finish}>{t("qpFinish")}</button>
+            <button onClick={() => setStep(2)} style={{ ...goldBtn, background: "transparent", color: GOLD, border: `1px solid ${GOLD}` }}>{t("back")}</button>
           </>
         )}
       </div>

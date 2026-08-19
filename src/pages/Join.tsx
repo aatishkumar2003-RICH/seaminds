@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import PasswordInput from "@/components/PasswordInput";
 import seamindsLogo from "@/assets/seaminds-logo.png";
+import { useT } from "@/i18n";
 
 const GOLD = "#D4AF37";
 const NAVY = "#0D1B2A";
@@ -26,6 +27,7 @@ const inputStyle: React.CSSProperties = {
 const Join = () => {
   const navigate = useNavigate();
   const [params] = useSearchParams();
+  const { t } = useT();
   const nextParam = params.get("next");
   const dest = nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : "/app";
   const [tab, setTab] = useState<"create" | "signin">("create");
@@ -51,7 +53,7 @@ const Join = () => {
 
   const createAccount = async () => {
     if (!email || password.length < 8) {
-      toast.error("Enter your email and a password of at least 8 characters");
+      toast.error(t("joinErrEmailPassword"));
       return;
     }
     setBusy(true);
@@ -62,7 +64,7 @@ const Join = () => {
     });
     setBusy(false);
     if (error) {
-      toast.error(error.message.includes("already") ? "This email already has an account — sign in instead." : error.message);
+      toast.error(error.message.includes("already") ? t("joinErrExists") : error.message);
       return;
     }
     if (data.session) navigate(dest);
@@ -75,20 +77,20 @@ const Join = () => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setBusy(false);
     if (error) {
-      toast.error("Wrong email or password");
+      toast.error(t("joinErrWrong"));
       return;
     }
     navigate(dest);
   };
 
   const forgot = async () => {
-    const target = email || window.prompt("Enter your email to reset your password") || "";
+    const target = email || window.prompt(t("joinResetPrompt")) || "";
     if (!target) return;
     const { error } = await supabase.auth.resetPasswordForEmail(target, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     if (error) toast.error(error.message);
-    else toast.success("Reset link sent — check your email");
+    else toast.success(t("joinResetSent"));
   };
 
   return (
@@ -101,7 +103,7 @@ const Join = () => {
 
       <button
         onClick={() => navigate("/")}
-        aria-label="Back to home"
+        aria-label={t("joinBackHome")}
         style={{ position: "absolute", top: 14, left: 14, background: "transparent", border: "none", color: GOLD, cursor: "pointer", padding: 6 }}
       >
         <ChevronLeft size={26} />
@@ -115,17 +117,17 @@ const Join = () => {
           >
             <img src={seamindsLogo} alt="SeaMinds logo" className="w-11 h-11" />
           </div>
-          <h1 className="text-2xl font-extrabold text-white mb-2">Join SeaMinds</h1>
+          <h1 className="text-2xl font-extrabold text-white mb-2">{t("joinTitle")}</h1>
           <p className="text-sm" style={{ color: "#94A3B8" }}>
-            Free for seafarers — 2-minute Sea Profile, jobs, SMC assessment.
+            {t("joinSubtitle")}
           </p>
         </div>
 
         <div className="mt-6 space-y-2.5">
           {[
-            { icon: <ShieldCheck size={16} style={{ color: GOLD }} />, text: "Confidential conversations — never shared with your company" },
-            { icon: <Anchor size={16} style={{ color: GOLD }} />, text: "Built by a Master Mariner" },
-            { icon: <Globe size={16} style={{ color: GOLD }} />, text: "Works wherever your voyage takes you" },
+            { icon: <ShieldCheck size={16} style={{ color: GOLD }} />, text: t("joinBullet1") },
+            { icon: <Anchor size={16} style={{ color: GOLD }} />, text: t("joinBullet2") },
+            { icon: <Globe size={16} style={{ color: GOLD }} />, text: t("joinBullet3") },
           ].map((b) => (
             <div key={b.text} className="flex gap-2.5 items-start rounded-xl px-3.5 py-2.5" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
               <span className="shrink-0 mt-0.5">{b.icon}</span>
@@ -139,45 +141,45 @@ const Join = () => {
           className="mt-6 w-full rounded-xl py-3.5 font-bold text-sm"
           style={{ background: "#fff", color: "#1f2937", border: "none", cursor: "pointer" }}
         >
-          Continue with Google
+          {t("joinGoogle")}
         </button>
 
         <div className="flex items-center gap-3 my-5">
           <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.1)" }} />
-          <span className="text-[11px]" style={{ color: "#64748b" }}>or</span>
+          <span className="text-[11px]" style={{ color: "#64748b" }}>{t("joinOr")}</span>
           <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.1)" }} />
         </div>
 
         {confirmSent ? (
           <div className="rounded-2xl p-5 text-center" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
-            <p className="text-sm font-bold text-white mb-2">✓ Account created!</p>
+            <p className="text-sm font-bold text-white mb-2">{t("joinCreated")}</p>
             <p className="text-xs mb-4" style={{ color: "#94A3B8" }}>
-              Check your email to confirm, then sign in.
+              {t("joinCheckEmail")}
             </p>
             <button
               onClick={() => { setConfirmSent(false); setTab("signin"); setPassword(""); }}
               className="w-full rounded-xl py-3 font-bold text-sm"
               style={{ background: GOLD, color: NAVY, border: "none", cursor: "pointer" }}
             >
-              Sign in
+              {t("joinTabSignin")}
             </button>
           </div>
         ) : (
           <>
             <div className="flex rounded-xl p-1 mb-4" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
-              {(["create", "signin"] as const).map((t) => (
+              {(["create", "signin"] as const).map((tk) => (
                 <button
-                  key={t}
-                  onClick={() => setTab(t)}
+                  key={tk}
+                  onClick={() => setTab(tk)}
                   className="flex-1 rounded-lg py-2 text-xs font-bold"
                   style={{
-                    background: tab === t ? GOLD : "transparent",
-                    color: tab === t ? NAVY : "#94A3B8",
+                    background: tab === tk ? GOLD : "transparent",
+                    color: tab === tk ? NAVY : "#94A3B8",
                     border: "none",
                     cursor: "pointer",
                   }}
                 >
-                  {t === "create" ? "Create account" : "Sign in"}
+                  {tk === "create" ? t("joinTabCreate") : t("joinTabSignin")}
                 </button>
               ))}
             </div>
@@ -200,7 +202,7 @@ const Join = () => {
                 onEnter={tab === "create" ? createAccount : signIn}
               />
               {tab === "create" && (
-                <p className="text-[11px]" style={{ color: "#64748b" }}>Minimum 8 characters.</p>
+                <p className="text-[11px]" style={{ color: "#64748b" }}>{t("joinPasswordHint")}</p>
               )}
 
               <button
@@ -209,7 +211,7 @@ const Join = () => {
                 className="w-full rounded-xl py-3.5 font-extrabold text-sm"
                 style={{ background: GOLD, color: NAVY, border: "none", cursor: "pointer", opacity: busy ? 0.6 : 1 }}
               >
-                {tab === "create" ? "Create free account ⚓" : "Sign in"}
+                {tab === "create" ? t("joinCreateBtn") : t("joinTabSignin")}
               </button>
 
               {tab === "signin" && (
@@ -218,7 +220,7 @@ const Join = () => {
                   className="w-full text-[11px] underline"
                   style={{ background: "transparent", border: "none", color: "#94A3B8", cursor: "pointer" }}
                 >
-                  Forgot password?
+                  {t("joinForgot")}
                 </button>
               )}
             </div>
@@ -226,13 +228,13 @@ const Join = () => {
         )}
 
         <div className="mt-8 text-center">
-          <p className="text-[11px]" style={{ color: "#64748b" }}>Free for crew members</p>
+          <p className="text-[11px]" style={{ color: "#64748b" }}>{t("joinFreeForCrew")}</p>
           <button
             onClick={() => navigate("/manager")}
             className="mt-2 text-[11px] font-semibold underline"
             style={{ background: "transparent", border: "none", color: GOLD, cursor: "pointer" }}
           >
-            Manager Login
+            {t("joinManagerLogin")}
           </button>
         </div>
       </main>
