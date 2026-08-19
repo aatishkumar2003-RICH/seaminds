@@ -1,24 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import HomeNav from "@/components/homepage/HomeNav";
-import ExchangeHero from "@/components/homepage/ExchangeHero";
+import ConversionConsole from "@/components/homepage/ConversionConsole";
 import OceanBackground from "@/components/homepage/OceanBackground";
-import AppPreviewSection from "@/components/homepage/AppPreviewSection";
-import HowItWorksSection from "@/components/homepage/HowItWorksSection";
-import BentoGrid from "@/components/homepage/BentoGrid";
-import CompaniesB2BSection from "@/components/homepage/CompaniesB2BSection";
 import TestimonialsSection from "@/components/homepage/TestimonialsSection";
-import SMCShowcase from "@/components/homepage/SMCShowcase";
-import FinalCTA from "@/components/homepage/FinalCTA";
 import HomeFooter from "@/components/homepage/HomeFooter";
-import LiveTicker from "@/components/homepage/LiveTicker";
-import QuickProfileShowcase from "@/components/homepage/QuickProfileShowcase";
-import HiringNow from "@/components/homepage/HiringNow";
-import ManagerWorkflow from "@/components/homepage/ManagerWorkflow";
-import SMCProof from "@/components/homepage/SMCProof";
-import PrivacyPromise from "@/components/homepage/PrivacyPromise";
-import SOSNetwork from "@/components/homepage/SOSNetwork";
+
 import { useTimeOfDay } from "@/hooks/useTimeOfDay";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -124,7 +111,7 @@ const HomePage = () => {
   }
 
   return (
-    <div className="min-h-screen animated-gradient-bg text-foreground relative pt-28">
+    <div className="min-h-screen animated-gradient-bg text-foreground relative">
       <Helmet>
         <title>Seafarer Jobs, Crew Wellness & Maritime Talent | SeaMinds</title>
         <meta name="description" content="SeaMinds is the digital platform for seafarers and manning companies — maritime jobs and vacancies, AI crew wellness support, MLC 2006 rest hours tracking, certificate wallet, seafarer CV builder and the SMC competency score. Free for seafarers worldwide." />
@@ -145,28 +132,25 @@ const HomePage = () => {
       </Helmet>
       <OceanBackground timeOfDay={timeOfDay} />
       <div className="relative z-10">
-        <LiveTicker />
-        <HomeNav />
-        <ExchangeHero />
+        <ConversionConsole />
 
-        <QuickProfileShowcase />
-        <HiringNow />
-        <ManagerWorkflow />
-        <SMCProof />
-        <PrivacyPromise />
-        <AppPreviewSection />
-        <HowItWorksSection />
-        <BentoGrid />
-        <CompaniesB2BSection />
-        <SMCShowcase />
+        {/* Legacy sections collapsed to one link row */}
+        <nav aria-label="More" className="max-w-6xl mx-auto px-4 py-4 flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs font-semibold border-y" style={{ borderColor: "rgba(212,175,55,0.15)" }}>
+          <button type="button" onClick={() => navigate("/for-companies")} className="text-muted-foreground hover:text-foreground">For Companies</button>
+          <span className="text-muted-foreground/40">·</span>
+          <button type="button" onClick={() => navigate("/smc-score")} className="text-muted-foreground hover:text-foreground">How SMC works</button>
+          <span className="text-muted-foreground/40">·</span>
+          <button type="button" onClick={() => navigate("/privacy")} className="text-muted-foreground hover:text-foreground">Privacy</button>
+          <span className="text-muted-foreground/40">·</span>
+          <button type="button" onClick={() => navigate("/contact")} className="text-muted-foreground hover:text-foreground">About</button>
+        </nav>
+
         <TestimonialsSection />
-        <SOSNetwork />
-        <FinalCTA />
         <HomeFooter />
-
       </div>
     </div>
   );
 };
 
 export default HomePage;
+

@@ -46,6 +46,7 @@ import HomePage from "./pages/HomePage";
 import ForCompanies from "./pages/ForCompanies";
 import Index from "./pages/Index";
 import QuickProfile from "./pages/QuickProfile";
+import ProfileStart from "./pages/ProfileStart";
 import ManagerAuth from "./pages/ManagerAuth";
 import ManagerDashboard from "./pages/ManagerDashboard";
 import ManagerSearch from "./pages/ManagerSearch";
@@ -153,6 +154,7 @@ const App = () => (
             <Route path="/" element={<HomePage />} />
             <Route path="/app" element={<Index />} />
             <Route path="/quick-profile" element={<QuickProfile />} />
+            <Route path="/profile-start" element={<ProfileStart />} />
             <Route path="/feed" element={<JobFeed />} />
             <Route path="/interview/:token" element={<InterviewInvite />} />
             <Route path="/interview/:token/exam" element={<InterviewExam />} />
