@@ -482,7 +482,7 @@ const ConversionConsole = () => {
               </span>
             </button>
           ))}
-          {vacancies.length === 0 && (
+          {filtered.length === 0 && (
             <p className="text-xs text-muted-foreground py-6 text-center">{t("loadingVacancies")}</p>
           )}
           <button
