@@ -134,6 +134,8 @@ const HomePage = () => {
       <OceanBackground timeOfDay={timeOfDay} />
       <div className="relative z-10">
         <ConversionConsole />
+        <HomeBento />
+
 
         {/* Legacy sections collapsed to one link row */}
         <nav aria-label="More" className="max-w-6xl mx-auto px-4 py-4 flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs font-semibold border-y" style={{ borderColor: "rgba(212,175,55,0.15)" }}>
