@@ -167,14 +167,14 @@ const Join = () => {
         ) : (
           <>
             <div className="flex rounded-xl p-1 mb-4" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
-              {(["create", "signin"] as const).map((t) => (
+              {(["create", "signin"] as const).map((tk) => (
                 <button
-                  key={t}
-                  onClick={() => setTab(t)}
+                  key={tk}
+                  onClick={() => setTab(tk)}
                   className="flex-1 rounded-lg py-2 text-xs font-bold"
                   style={{
-                    background: tab === t ? GOLD : "transparent",
-                    color: tab === t ? NAVY : "#94A3B8",
+                    background: tab === tk ? GOLD : "transparent",
+                    color: tab === tk ? NAVY : "#94A3B8",
                     border: "none",
                     cursor: "pointer",
                   }}
