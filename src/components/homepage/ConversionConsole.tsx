@@ -176,7 +176,10 @@ const ConversionConsole = () => {
       <style>{`
         @keyframes sm-pulse-cta { 0%,100% { box-shadow: 0 0 0 0 rgba(212,175,55,.45) } 50% { box-shadow: 0 0 0 12px rgba(212,175,55,0) } }
         .sm-cta-pulse { animation: sm-pulse-cta 2.4s ease-out infinite; }
-        @media (prefers-reduced-motion: reduce) { .sm-cta-pulse, .sm-dot { animation: none !important; } }
+        @keyframes sm-tape { from { transform: translateX(0) } to { transform: translateX(-50%) } }
+        .sm-tape-track { animation: sm-tape 40s linear infinite; }
+        .sm-tape:hover .sm-tape-track { animation-play-state: paused; }
+        @media (prefers-reduced-motion: reduce) { .sm-cta-pulse, .sm-dot, .sm-tape-track { animation: none !important; } }
       `}</style>
 
       {/* 1. HEADER */}
@@ -188,6 +191,12 @@ const ConversionConsole = () => {
           </button>
 
           <div className="flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-2 mr-1 text-[11px] font-semibold">
+              <button type="button" onClick={() => navigate("/for-companies")} className="text-muted-foreground hover:text-foreground">Find Crew</button>
+              <span className="text-muted-foreground/40">·</span>
+              <button type="button" onClick={() => navigate("/manager")} className="text-muted-foreground hover:text-foreground">Manager Login</button>
+            </div>
+
             <div className="relative">
               <button
                 type="button"
