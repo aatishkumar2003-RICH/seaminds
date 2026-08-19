@@ -50,6 +50,34 @@ const relTime = (d?: string | null) => {
 };
 const idxOf = (m: Market | null, name: string) => (m?.indices || []).find((i) => i.name === name);
 
+const MARKETS = ["DECK", "ENGINE", "ETO", "RATINGS", "OFFSHORE"] as const;
+const MARKET_KEYWORDS: Record<string, RegExp> = {
+  DECK: /master|captain|chief officer|c\/o|2\/o|3\/o|second officer|third officer|deck/i,
+  ENGINE: /engineer|c\/e|2\/e|3\/e|4\/e|motorman|oiler|engine/i,
+  ETO: /eto|electr/i,
+  RATINGS: /bosun|able seaman|\bab\b|\bos\b|ordinary seaman|cook|steward|fitter|wiper|rating/i,
+  OFFSHORE: /offshore|osv|ahts|psv|dp|rig|platform/i,
+};
+const inMarket = (v: Vacancy, m: string) => {
+  const hay = `${v.rank_required || ""} ${v.title || ""} ${v.vessel_type || ""}`;
+  return MARKET_KEYWORDS[m]?.test(hay) ?? true;
+};
+
+const MENU_LINKS: { label: string; to: string; external?: boolean }[] = [
+  { label: "For Seafarers", to: "/join" },
+  { label: "Find Crew — For Companies", to: "/for-companies" },
+  { label: "Post Vacancy", to: "/manager" },
+  { label: "Create AI Interview", to: "/for-companies" },
+  { label: "Manager Login", to: "/manager" },
+  { label: "SMC Score", to: "/app?tab=smc" },
+  { label: "Jobs", to: "/app?tab=jobs" },
+  { label: "Blog", to: "/blog" },
+  { label: "Pricing", to: "/pricing" },
+  { label: "Colleges", to: "/colleges" },
+  { label: "Privacy", to: "/privacy" },
+  { label: "Contact", to: "mailto:info@indossol.com", external: true },
+];
+
 const ConversionConsole = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -59,7 +87,11 @@ const ConversionConsole = () => {
   const [profileActive, setProfileActive] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [marketOpen, setMarketOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [myMarket, setMyMarket] = useState<string>(() => localStorage.getItem("sm_my_market") || "");
   const [sheet, setSheet] = useState<Vacancy | null>(null);
+
 
   useEffect(() => {
     let alive = true;
