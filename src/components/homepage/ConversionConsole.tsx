@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 import { Globe, ChevronDown, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import seamindsLogo from "@/assets/seaminds-logo.png";
+import { useT, LANGS, type LangCode } from "@/i18n";
 
 const GOLD = "#D4AF37";
 const GREEN = "#22c55e";
@@ -35,14 +35,6 @@ type Vacancy = {
   first_seen_at: string | null;
 };
 
-const LANGS = [
-  { code: "en", label: "English" },
-  { code: "id", label: "Bahasa Indonesia" },
-  { code: "fil", label: "Filipino" },
-  { code: "hi", label: "हिन्दी" },
-  { code: "vi", label: "Tiếng Việt" },
-];
-
 const isNew = (v: Vacancy) => {
   const d = v.first_seen_at || v.fetched_at;
   return !!d && Date.now() - new Date(d).getTime() < 24 * 3600 * 1000;
@@ -60,12 +52,12 @@ const idxOf = (m: Market | null, name: string) => (m?.indices || []).find((i) =>
 const ConversionConsole = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t, lang, setLang } = useT();
   const [market, setMarket] = useState<Market | null>(null);
   const [vacancies, setVacancies] = useState<Vacancy[]>([]);
   const [profileActive, setProfileActive] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [marketOpen, setMarketOpen] = useState(false);
-  const [lang, setLang] = useState(() => localStorage.getItem("sm_lang") || "en");
   const [sheet, setSheet] = useState<Vacancy | null>(null);
 
   useEffect(() => {
@@ -101,11 +93,9 @@ const ConversionConsole = () => {
     return () => { alive = false; };
   }, [user]);
 
-  const pickLang = (code: string, label: string) => {
+  const pickLang = (code: LangCode) => {
     setLang(code);
-    localStorage.setItem("sm_lang", code);
     setLangOpen(false);
-    if (code !== "en") toast(`${label}: coming soon in your language — translations arriving this week`);
   };
 
   const topRanks = useMemo(() => {
@@ -113,15 +103,15 @@ const ConversionConsole = () => {
     return counted.slice(0, 4);
   }, [market]);
 
-  const langLabel = LANGS.find((l) => l.code === lang)?.code.toUpperCase() || "EN";
+  const langLabel = LANGS.find((l) => l.code === lang)?.label || "English";
   const total = market?.total ?? null;
 
   const dock = [
-    { key: "jobs", label: "JOBS", value: total === null ? "…" : String(total), to: "/app?tab=jobs" },
-    { key: "profile", label: "SEA PROFILE", value: profileActive ? "✓" : "START", to: "/quick-profile" },
-    { key: "ai", label: "AI", value: "TRY", to: "/app?tab=smc" },
-    { key: "feed", label: "FEED", value: "OPEN", to: "/app?tab=home" },
-    { key: "market", label: "MARKET", value: "LIVE", to: "/app?tab=news" },
+    { key: "jobs", label: t("dockJobs"), value: total === null ? "…" : String(total), to: "/app?tab=jobs" },
+    { key: "profile", label: t("dockProfile"), value: profileActive ? "✓" : t("dockStart"), to: "/quick-profile" },
+    { key: "ai", label: t("dockAi"), value: t("dockTry"), to: "/app?tab=smc" },
+    { key: "feed", label: t("dockFeed"), value: t("dockOpen"), to: "/app?tab=home" },
+    { key: "market", label: t("dockMarket"), value: t("dockLive"), to: "/app?tab=news" },
   ];
 
   return (
@@ -156,7 +146,7 @@ const ConversionConsole = () => {
                     <button
                       key={l.code}
                       type="button"
-                      onClick={() => pickLang(l.code, l.label)}
+                      onClick={() => pickLang(l.code)}
                       className="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-white/5"
                       style={{ color: l.code === lang ? GOLD : "#E2E8F0" }}
                     >
@@ -174,13 +164,13 @@ const ConversionConsole = () => {
                 className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold"
                 style={{ border: "1px solid rgba(255,255,255,0.12)", color: "#94A3B8" }}
               >
-                🌍 Worldwide <ChevronDown className="w-3 h-3" />
+                🌍 {t("worldwide")} <ChevronDown className="w-3 h-3" />
               </button>
               {marketOpen && (
                 <div className="absolute right-0 mt-2 w-60 rounded-xl p-2 z-50" style={{ background: PANEL, border: `1px solid ${BORDER}` }}>
-                  <p className="px-2 py-1.5 text-xs font-semibold" style={{ color: GOLD }}>Worldwide ✓</p>
-                  <p className="px-2 py-1.5 text-xs text-muted-foreground">Indonesia · Philippines · India · Vietnam — opening soon</p>
-                  <p className="px-2 pb-1 text-[10px] text-muted-foreground/70">Counts arrive as we verify each market</p>
+                  <p className="px-2 py-1.5 text-xs font-semibold" style={{ color: GOLD }}>{t("worldwide")} ✓</p>
+                  <p className="px-2 py-1.5 text-xs text-muted-foreground">{t("marketsSoon")}</p>
+                  <p className="px-2 pb-1 text-[10px] text-muted-foreground/70">{t("marketsNote")}</p>
                 </div>
               )}
             </div>
@@ -216,10 +206,10 @@ const ConversionConsole = () => {
         <div className="max-w-6xl mx-auto px-4 py-2.5 flex flex-wrap items-center gap-x-3 gap-y-1" style={{ minHeight: 60 }}>
           <span className="flex items-center gap-1.5 text-[11px] font-bold tracking-wider" style={{ color: GREEN }}>
             <span className="sm-dot w-2 h-2 rounded-full animate-pulse" style={{ background: GREEN }} />
-            SMX LIVE
+            SMX {t("live")}
           </span>
           <span className="font-mono text-[11px]" style={{ color: GOLD }}>
-            {market ? `${market.total} JOBS · +${market.new_24h} TODAY` : "LOADING…"}
+            {market ? `${market.total} ${t("jobsWord")} · +${market.new_24h} ${t("today")}` : t("loading")}
           </span>
           <span className="font-mono text-[11px] text-muted-foreground">
             {market
@@ -235,13 +225,13 @@ const ConversionConsole = () => {
 
       {/* 4. CONVERSION HERO */}
       <div className="max-w-3xl mx-auto px-4 pt-6 pb-4 text-center">
-        <p className="text-[11px] tracking-widest text-muted-foreground mb-2">LOOKING FOR YOUR NEXT SHIP?</p>
+        <p className="text-[11px] tracking-widest text-muted-foreground mb-2">{t("heroKicker")}</p>
         <h1 className="sm-hero-gradient text-2xl sm:text-3xl md:text-4xl font-bold leading-tight mb-3">
-          CREATE ONE SEA PROFILE. GET MATCHED.
+          {t("heroTitle")}
         </h1>
 
         <div className="inline-flex items-center rounded-xl overflow-hidden mb-1" style={{ border: `1px solid ${BORDER}` }}>
-          {["PROFILE", "MATCH", "APPLY", "INTERVIEW"].map((s, i) => (
+          {[t("stepProfile"), t("stepMatch"), t("stepApply"), t("stepInterview")].map((s, i) => (
             <span
               key={s}
               className="px-2.5 py-1.5 text-[10px] font-bold tracking-wide"
@@ -251,7 +241,7 @@ const ConversionConsole = () => {
             </span>
           ))}
         </div>
-        <p className="text-[10px] mb-4" style={{ color: GOLD }}>↘ recruiters find you</p>
+        <p className="text-[10px] mb-4" style={{ color: GOLD }}>{t("recruitersFindYou")}</p>
 
         <button
           type="button"
@@ -259,11 +249,11 @@ const ConversionConsole = () => {
           className="sm-cta-pulse w-full sm:w-auto rounded-xl px-7 h-12 font-bold"
           style={{ background: GOLD, color: NAVY }}
         >
-          START FREE — ACTIVATE SEA PROFILE
+          {t("heroCta")}
         </button>
         <div className="mt-3">
           <button type="button" onClick={() => navigate("/app?tab=jobs")} className="text-xs font-semibold" style={{ color: GOLD }}>
-            Already registered? SEE MY JOBS →
+            {t("alreadyRegistered")}
           </button>
         </div>
       </div>
@@ -271,7 +261,7 @@ const ConversionConsole = () => {
       {/* 5. MATCHING NOW */}
       {topRanks.length > 0 && (
         <div className="max-w-6xl mx-auto px-4 pb-4">
-          <p className="text-[11px] font-bold tracking-wider text-foreground mb-2">🔥 MATCHING NOW</p>
+          <p className="text-[11px] font-bold tracking-wider text-foreground mb-2">{t("matchingNow")}</p>
           <div className="flex flex-wrap gap-2">
             {topRanks.map((r) => (
               <button
@@ -301,15 +291,15 @@ const ConversionConsole = () => {
             >
               {isNew(v) && <span className="rounded px-1.5 py-0.5 text-[9px] font-bold shrink-0" style={{ background: GOLD, color: NAVY }}>NEW</span>}
               {isUrgent(v) && <span className="shrink-0 text-[11px]">🔥</span>}
-              <span className="font-bold text-foreground text-sm truncate">{v.rank_required || v.title || "Seafarer"}</span>
-              <span className="text-xs truncate" style={{ color: GOLD }}>{v.vessel_type || "Various"}</span>
+              <span className="font-bold text-foreground text-sm truncate">{v.rank_required || v.title || t("seafarer")}</span>
+              <span className="text-xs truncate" style={{ color: GOLD }}>{v.vessel_type || t("various")}</span>
               <span className="ml-auto font-mono text-[10px] text-muted-foreground truncate shrink-0">
-                {(v.joining_port || "Worldwide").slice(0, 14)} · {relTime(v.first_seen_at || v.fetched_at)}
+                {(v.joining_port || t("worldwide")).slice(0, 14)} · {relTime(v.first_seen_at || v.fetched_at)}
               </span>
             </button>
           ))}
           {vacancies.length === 0 && (
-            <p className="text-xs text-muted-foreground py-6 text-center">Loading live vacancies…</p>
+            <p className="text-xs text-muted-foreground py-6 text-center">{t("loadingVacancies")}</p>
           )}
           <button
             type="button"
@@ -317,7 +307,7 @@ const ConversionConsole = () => {
             className="w-full py-2.5 text-[11px] font-bold"
             style={{ color: GOLD }}
           >
-            ALL {market?.total ?? 0} →
+            {t("allJobs")} {market?.total ?? 0} →
           </button>
         </div>
       </div>
@@ -331,22 +321,22 @@ const ConversionConsole = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-3 mb-2">
-              <p className="font-bold text-foreground">{sheet.title || sheet.rank_required || "Vacancy"}</p>
-              <button type="button" aria-label="Close" onClick={() => setSheet(null)}><X className="w-5 h-5 text-muted-foreground" /></button>
+              <p className="font-bold text-foreground">{sheet.title || sheet.rank_required || t("vacancy")}</p>
+              <button type="button" aria-label={t("close")} onClick={() => setSheet(null)}><X className="w-5 h-5 text-muted-foreground" /></button>
             </div>
-            <p className="text-xs mb-1" style={{ color: GOLD }}>{sheet.rank_required || "—"} · {sheet.vessel_type || "Various vessels"}</p>
+            <p className="text-xs mb-1" style={{ color: GOLD }}>{sheet.rank_required || "—"} · {sheet.vessel_type || t("variousVessels")}</p>
             <p className="font-mono text-[11px] text-muted-foreground mb-1">
-              Joining: {sheet.joining_port || "Worldwide"} · {relTime(sheet.first_seen_at || sheet.fetched_at)}
+              {t("joining")}: {sheet.joining_port || t("worldwide")} · {relTime(sheet.first_seen_at || sheet.fetched_at)}
             </p>
             {(sheet.salary_min || sheet.salary_text) && (
               <p className="font-mono text-[11px] mb-1" style={{ color: GREEN }}>
-                {sheet.salary_text || `from $${Number(sheet.salary_min).toLocaleString()}`}
+                {sheet.salary_text || `${t("salaryFrom")} $${Number(sheet.salary_min).toLocaleString()}`}
               </p>
             )}
-            <p className="text-[9px] font-mono tracking-wider text-muted-foreground mb-3">{sheet.source ? "EXTERNAL SOURCE" : "DIRECT"}</p>
+            <p className="text-[9px] font-mono tracking-wider text-muted-foreground mb-3">{sheet.source ? t("externalSource") : t("direct")}</p>
 
             <p className="text-xs font-semibold mb-3" style={{ color: profileActive ? GREEN : "#94A3B8" }}>
-              YOUR SEA PROFILE: {profileActive ? "✓ Active" : "Not active yet"}
+              {t("yourSeaProfile")}: {profileActive ? t("profileActive") : t("profileNotActive")}
             </p>
 
             <button
@@ -355,13 +345,13 @@ const ConversionConsole = () => {
               className="w-full rounded-xl h-12 font-bold mb-3"
               style={{ background: GOLD, color: NAVY }}
             >
-              {user ? "APPLY WITH SEA PROFILE →" : "ACTIVATE PROFILE & APPLY"}
+              {user ? t("applyWithProfile") : t("activateAndApply")}
             </button>
 
             <ul className="space-y-1 text-[11px] text-muted-foreground">
-              <li>✓ Reuse for future applications</li>
-              <li>✓ Get matched with relevant jobs</li>
-              <li>✓ Control professional visibility</li>
+              <li>✓ {t("benefitReuse")}</li>
+              <li>✓ {t("benefitMatched")}</li>
+              <li>✓ {t("benefitVisibility")}</li>
             </ul>
           </div>
         </div>
