@@ -57,8 +57,10 @@ const HomeFooter = () => {
     {
       title: "Resources",
       links: [
+        { label: "Jobs", action: () => navigate("/app?tab=jobs") },
+        { label: "Blog", action: () => navigate("/blog") },
         { label: "Maritime News", action: () => navigate("/blog") },
-        { label: "Safety Reports", action: () => navigate("/app") },
+        { label: "Manager Login", action: () => navigate("/manager") },
         { label: "MLC 2006", action: () => navigate("/app") },
         { label: "Contact", action: () => navigate("/contact") },
       ],
