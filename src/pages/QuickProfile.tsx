@@ -157,7 +157,24 @@ const QuickProfile = () => {
       const cmap: Record<string, string> = {};
       ((cl as any[]) || []).forEach((c) => { cmap[c.claim_key] = c.value; });
       setClaims(cmap);
+
+      // Pre-select from the public /profile-start quick start, when nothing saved yet
+      try {
+        const raw = localStorage.getItem("sm_prestart");
+        if (raw) {
+          const pre = JSON.parse(raw) as { rank?: string; families?: string[] };
+          if (!p.rank && !p.role && pre.rank) {
+            const match = RANKS.find((r) => r.toLowerCase().includes(String(pre.rank).toLowerCase()))
+              || PRESTART_RANK_MAP[String(pre.rank)];
+            if (match) { setRank(match); }
+          }
+          const fams = (pre.families || []).filter((k) => FAMILIES.some((f) => f.key === k) && fmap[k] === undefined);
+          if (fams.length) setPendingFamilies(fams);
+        }
+      } catch { /* ignore */ }
+
       setReady(true);
+
     })();
     return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
