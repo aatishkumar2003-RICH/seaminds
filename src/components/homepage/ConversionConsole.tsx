@@ -337,10 +337,13 @@ const ConversionConsole = () => {
 
       {/* 4. CONVERSION HERO */}
       <div className="max-w-3xl mx-auto px-4 pt-6 pb-4 text-center">
-        <p className="text-[11px] tracking-widest text-muted-foreground mb-2">{t("heroKicker")}</p>
-        <h1 className="sm-hero-gradient text-2xl sm:text-3xl md:text-4xl font-bold leading-tight mb-3">
-          {t("heroTitle")}
+        <h1 className="text-[10px] sm:text-[11px] uppercase tracking-[0.18em] text-muted-foreground mb-2">
+          Seafarer Jobs &amp; Maritime Vacancies — Crew Recruitment &amp; AI Competency Platform
         </h1>
+        <p className="text-[11px] tracking-widest text-muted-foreground mb-2">{t("heroKicker")}</p>
+        <h2 className="sm-hero-gradient text-2xl sm:text-3xl md:text-4xl font-bold leading-tight mb-3">
+          {t("heroTitle")}
+        </h2>
 
         <div className="inline-flex items-center rounded-xl overflow-hidden mb-1" style={{ border: `1px solid ${BORDER}` }}>
           {[t("stepProfile"), t("stepMatch"), t("stepApply"), t("stepInterview")].map((s, i) => (
@@ -363,41 +366,110 @@ const ConversionConsole = () => {
         >
           {t("heroCta")}
         </button>
-        <div className="mt-3">
+        <div className="mt-3 flex flex-col items-center gap-2">
           <button type="button" onClick={() => navigate("/app?tab=jobs")} className="text-xs font-semibold" style={{ color: GOLD }}>
             {t("alreadyRegistered")}
           </button>
+          <button
+            type="button"
+            onClick={() => navigate("/for-companies")}
+            className="rounded-lg px-3 py-1.5 text-[11px] font-semibold"
+            style={{ border: `1px solid ${BORDER}`, color: GOLD }}
+          >
+            Companies: FIND CREW →
+          </button>
+        </div>
+
+        {/* Universal search */}
+        <div className="mt-4">
+          <div className="flex items-center gap-2 rounded-xl px-3 h-11" style={{ background: `${PANEL}CC`, border: `1px solid ${BORDER}` }}>
+            <Search className="w-4 h-4 shrink-0" style={{ color: GOLD }} />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search rank, vessel type or location…"
+              aria-label="Search rank, vessel type or location"
+              className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
+            />
+            {query && (
+              <button type="button" aria-label={t("close")} onClick={() => setQuery("")}><X className="w-4 h-4 text-muted-foreground" /></button>
+            )}
+          </div>
+          {suggestion && (
+            <button
+              type="button"
+              onClick={() => navigate(suggestion.to)}
+              className="mt-2 rounded-full px-3 py-1.5 text-[11px] font-semibold"
+              style={{ border: `1px solid ${BORDER}`, background: "rgba(212,175,55,0.08)", color: GOLD }}
+            >
+              {suggestion.label}
+            </button>
+          )}
         </div>
       </div>
 
-      {/* 5. MATCHING NOW */}
-      {topRanks.length > 0 && (
-        <div className="max-w-6xl mx-auto px-4 pb-4">
-          <p className="text-[11px] font-bold tracking-wider text-foreground mb-2">{t("matchingNow")}</p>
-          <div className="flex flex-wrap gap-2">
-            {topRanks.map((r) => (
-              <button
-                key={r.rank}
-                type="button"
-                onClick={() => navigate(`/profile-start?rank=${encodeURIComponent(r.rank)}`)}
-                className="rounded-full px-3 py-1.5 text-[11px] font-semibold"
-                style={{ border: `1px solid ${BORDER}`, background: "rgba(212,175,55,0.08)", color: GOLD }}
-              >
-                {r.rank} <span className="font-mono">{r.count}</span>
-              </button>
-            ))}
-          </div>
+      {/* 5. MATCHING NOW + My Market */}
+      <div className="max-w-6xl mx-auto px-4 pb-4">
+        <p className="text-[11px] font-bold tracking-wider text-foreground mb-2">
+          {t("matchingNow")}{myMarket ? <span style={{ color: GOLD }}> · {myMarket} ⚓</span> : null}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {topRanks.map((r) => (
+            <button
+              key={r.rank}
+              type="button"
+              onClick={() => navigate(`/profile-start?rank=${encodeURIComponent(r.rank)}`)}
+              className="rounded-full px-3 py-1.5 text-[11px] font-semibold"
+              style={{ border: `1px solid ${BORDER}`, background: "rgba(212,175,55,0.08)", color: GOLD }}
+            >
+              {r.rank} <span className="font-mono">{r.count}</span>
+            </button>
+          ))}
+          {MARKETS.map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => toggleMarket(m)}
+              className="rounded-full px-3 py-1.5 text-[11px] font-semibold"
+              style={{
+                border: `1px solid ${myMarket === m ? GOLD : "rgba(255,255,255,0.12)"}`,
+                background: myMarket === m ? GOLD : "transparent",
+                color: myMarket === m ? NAVY : "#94A3B8",
+              }}
+            >
+              {m}
+            </button>
+          ))}
         </div>
-      )}
+      </div>
 
-      {/* 7. LIVE JOBS */}
+      {/* 6+7. VACANCY TICKER + LIVE JOBS */}
       <div className="max-w-6xl mx-auto px-4 pb-8">
+        {filtered.length > 0 && (
+          <div
+            className="sm-tape mb-2 overflow-hidden rounded-xl"
+            style={{ height: 36, background: "rgba(6,15,29,0.9)", border: `1px solid ${BORDER}` }}
+          >
+            <div className="sm-tape-track flex w-max items-center gap-6 px-3" style={{ height: 34 }}>
+              {[...filtered, ...filtered].map((v, i) => (
+                <span key={`${v.id}-${i}`} className="whitespace-nowrap font-mono text-[11px] text-muted-foreground">
+                  <span className="font-bold text-foreground">{v.rank_required || v.title || t("seafarer")}</span>
+                  {" · "}
+                  <span style={{ color: GOLD }}>{v.vessel_type || t("various")}</span>
+                  {" · "}
+                  {v.joining_port || t("worldwide")}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="rounded-2xl overflow-hidden" style={{ background: `${PANEL}CC`, border: `1px solid ${BORDER}` }}>
-          {vacancies.slice(0, 3).map((v) => (
+          {filtered.slice(0, 3).map((v) => (
             <button
               key={v.id}
               type="button"
               onClick={() => setSheet(v)}
+
               className="w-full text-left px-3 border-b last:border-b-0 flex items-center gap-2"
               style={{ minHeight: 54, borderColor: "rgba(212,175,55,0.12)" }}
             >
