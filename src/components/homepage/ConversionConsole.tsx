@@ -103,7 +103,7 @@ const ConversionConsole = () => {
           .select("id,title,rank_required,vessel_type,joining_port,salary_min,salary_text,description,source,fetched_at,first_seen_at")
           .gt("expires_at", new Date().toISOString())
           .order("fetched_at", { ascending: false })
-          .limit(10),
+          .limit(25),
       ]);
       if (!alive) return;
       if (m) setMarket(m as unknown as Market);
