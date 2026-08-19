@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
+import { useT } from "@/i18n";
 
 const NAVY = "#0D1B2A";
 const PANEL = "#112240";
@@ -55,7 +56,12 @@ const VESSEL_FAMILY: Record<string, string> = {
   "RoRo/Pax": "RORO_PAX",
 };
 
-const AVAILABILITY = ["Now", "7 days", "30 days", "Later"];
+const AVAILABILITY = [
+  { key: "Now", tk: "psAvailNow" },
+  { key: "7 days", tk: "psAvail7" },
+  { key: "30 days", tk: "psAvail30" },
+  { key: "Later", tk: "psAvailLater" },
+] as const;
 
 const orFilter = (col: string, terms: string[]) => terms.map((t) => `${col}.ilike.%${t}%`).join(",");
 
@@ -78,6 +84,7 @@ const Chip = ({ on, label, onClick }: { on: boolean; label: string; onClick: () 
 const ProfileStart = () => {
   const navigate = useNavigate();
   const [params] = useSearchParams();
+  const { t } = useT();
 
   const [step, setStep] = useState(1);
   const [rank, setRank] = useState("");
@@ -140,20 +147,20 @@ const ProfileStart = () => {
       </Helmet>
 
       <header className="flex items-center gap-2 px-4 h-14 border-b" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
-        <button type="button" aria-label="Back" onClick={() => (step > 1 && step < 4 ? setStep(step - 1) : navigate("/"))}>
+        <button type="button" aria-label={t("back")} onClick={() => (step > 1 && step < 4 ? setStep(step - 1) : navigate("/"))}>
           <ChevronLeft className="w-6 h-6" style={{ color: GOLD }} />
         </button>
-        <span className="text-sm font-bold text-foreground">Sea Profile — quick start</span>
+        <span className="text-sm font-bold text-foreground">{t("psTitle")}</span>
       </header>
 
       <main className="max-w-xl mx-auto px-4 py-6">
         {step < 4 && (
-          <p className="font-mono text-[11px] text-muted-foreground mb-4">STEP {step} OF 3</p>
+          <p className="font-mono text-[11px] text-muted-foreground mb-4">{t("psStep")} {step} {t("psOf")} 3</p>
         )}
 
         {step === 1 && (
           <>
-            <h1 className="text-xl font-bold text-foreground mb-4">What is your rank?</h1>
+            <h1 className="text-xl font-bold text-foreground mb-4">{t("psQ1")}</h1>
             <div className="flex flex-wrap gap-2">
               {RANKS.map((r) => (
                 <Chip key={r} on={rank === r} label={r} onClick={() => { setRank(r); setStep(2); }} />
@@ -164,7 +171,7 @@ const ProfileStart = () => {
 
         {step === 2 && (
           <>
-            <h1 className="text-xl font-bold text-foreground mb-4">Which vessels have you sailed on?</h1>
+            <h1 className="text-xl font-bold text-foreground mb-4">{t("psQ2")}</h1>
             <div className="flex flex-wrap gap-2 mb-6">
               {VESSELS.map((v) => (
                 <Chip key={v} on={vessels.includes(v)} label={v} onClick={() => toggleVessel(v)} />
@@ -176,17 +183,17 @@ const ProfileStart = () => {
               className="w-full rounded-xl h-12 font-bold"
               style={{ background: GOLD, color: NAVY }}
             >
-              CONTINUE →
+              {t("continue")}
             </button>
           </>
         )}
 
         {step === 3 && (
           <>
-            <h1 className="text-xl font-bold text-foreground mb-4">When are you available?</h1>
+            <h1 className="text-xl font-bold text-foreground mb-4">{t("psQ3")}</h1>
             <div className="flex flex-wrap gap-2">
               {AVAILABILITY.map((a) => (
-                <Chip key={a} on={availability === a} label={a} onClick={() => finish(a)} />
+                <Chip key={a.key} on={availability === a.key} label={t(a.tk)} onClick={() => finish(a.key)} />
               ))}
             </div>
           </>
@@ -194,19 +201,19 @@ const ProfileStart = () => {
 
         {step === 4 && (
           <div className="rounded-2xl p-5" style={{ background: PANEL, border: `1px solid ${BORDER}` }}>
-            <h1 className="text-xl font-bold mb-3" style={{ color: GOLD }}>GOOD NEWS — YOUR MARKET IS ACTIVE ⚓</h1>
+            <h1 className="text-xl font-bold mb-3" style={{ color: GOLD }}>{t("psRewardTitle")}</h1>
 
-            {loading && <p className="text-xs text-muted-foreground mb-4">Checking live vacancies…</p>}
+            {loading && <p className="text-xs text-muted-foreground mb-4">{t("psChecking")}</p>}
 
             {!loading && counts && (
               anyLive ? (
                 <div className="space-y-1.5 mb-5 font-mono text-sm">
-                  {rank && <p className="text-foreground">{counts.rank} live vacancies for <span style={{ color: GOLD }}>{rank}</span></p>}
-                  {vessels.length > 0 && <p className="text-foreground">{counts.vessel} on your vessel types</p>}
-                  <p style={{ color: GREEN }}>+{counts.new24} added in the last 24h</p>
+                  {rank && <p className="text-foreground">{counts.rank} {t("psLiveFor")} <span style={{ color: GOLD }}>{rank}</span></p>}
+                  {vessels.length > 0 && <p className="text-foreground">{counts.vessel} {t("psOnVessels")}</p>}
+                  <p style={{ color: GREEN }}>+{counts.new24} {t("psAddedIn24h")}</p>
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground mb-5">Your market is quieter today — new vacancies arrive daily</p>
+                <p className="text-sm text-muted-foreground mb-5">{t("psQuiet")}</p>
               )
             )}
 
@@ -216,7 +223,7 @@ const ProfileStart = () => {
               className="w-full rounded-xl h-12 font-bold mb-3"
               style={{ background: GOLD, color: NAVY }}
             >
-              ACTIVATE MY SEA PROFILE →
+              {t("psActivate")}
             </button>
             <button
               type="button"
@@ -224,7 +231,7 @@ const ProfileStart = () => {
               className="w-full rounded-xl h-12 font-bold"
               style={{ border: `1px solid ${GOLD}`, color: GOLD, background: "transparent" }}
             >
-              SEE MY JOBS →
+              {t("psSeeJobs")}
             </button>
           </div>
         )}
