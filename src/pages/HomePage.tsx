@@ -5,6 +5,7 @@ import ConversionConsole from "@/components/homepage/ConversionConsole";
 import OceanBackground from "@/components/homepage/OceanBackground";
 import TestimonialsSection from "@/components/homepage/TestimonialsSection";
 import HomeFooter from "@/components/homepage/HomeFooter";
+import HomeBento from "@/components/homepage/HomeBento";
 
 import { useTimeOfDay } from "@/hooks/useTimeOfDay";
 import { useAuth } from "@/contexts/AuthContext";
