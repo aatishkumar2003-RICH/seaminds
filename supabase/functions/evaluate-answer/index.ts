@@ -36,7 +36,32 @@ Deno.serve(async (req) => {
   }
 
   const body = await req.json();
-  const { question, answer, question_type, correct_index, correct_letter, explanation, key_steps, critical_step, rank, experience_tier, department } = body;
+  const { question, answer, question_type, correct_index, correct_letter, explanation, key_steps, critical_step, rank, experience_tier, department, mode, assessmentId } = body;
+
+  // ── PRIVACY MODE: company interviews never emit wellbeing red flags ──
+  let interviewMode: 'self' | 'company' = mode === 'company' ? 'company' : 'self';
+  if (mode !== 'company' && mode !== 'self' && assessmentId) {
+    const { data: arow } = await adminClient
+      .from('smc_assessments').select('interview_mode').eq('id', assessmentId).maybeSingle();
+    if ((arow as any)?.interview_mode === 'company') interviewMode = 'company';
+    else {
+      const { data: prog } = await adminClient
+        .from('interview_progress').select('campaign_id').eq('assessment_id', assessmentId).maybeSingle();
+      if ((prog as any)?.campaign_id) interviewMode = 'company';
+    }
+  }
+  const isCompanyMode = interviewMode === 'company';
+  const WELLNESS_CATEGORIES = ['WELLNESS_CONCERN','WELLNESS','MENTAL_HEALTH','FATIGUE','STRESS','FAMILY','MOOD','WELLBEING','PERSONAL','BURNOUT','SELF_HARM'];
+  const scrubWellness = (obj: any) => {
+    if (!isCompanyMode || !obj) return obj;
+    const cat = String(obj.red_flag_category || '').toUpperCase();
+    if (cat && WELLNESS_CATEGORIES.some(w => cat.includes(w))) {
+      obj.red_flag = false;
+      obj.red_flag_category = null;
+      obj.red_flag_evidence = null;
+    }
+    return obj;
+  };
 
   const sanitize = (str: string, maxLen: number) => (str || '').toString().substring(0, maxLen).trim();
   const cleanAnswer = sanitize(answer, 2000);
@@ -95,6 +120,14 @@ RED FLAG (set red_flag: true) if answer indicates: thoughts of self-harm, severe
 YELLOW (red_flag_category: 'WELLNESS_CONCERN') if: mild stress, family worry, moderate fatigue.
 `;
 
+  const companyRestriction = isCompanyMode ? `
+
+PRIVACY RESTRICTION — MANDATORY (company-commissioned professional employment assessment):
+Do NOT assess or comment on stress, mental health, family, personal life, fatigue, sleep, mood, wellbeing, coping or emotions.
+Red flags are limited to these professional categories ONLY: SAFETY_VIOLATION, INTEGRITY, COMPETENCY_GAP, COMMUNICATION, PROFESSIONALISM.
+NEVER return WELLNESS_CONCERN or any wellbeing/mental-health category.
+` : '';
+
   if (await aiPaused(adminClient)) return aiPausedResponse(corsHeaders);
 
   const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
@@ -107,7 +140,7 @@ YELLOW (red_flag_category: 'WELLNESS_CONCERN') if: mild stress, family worry, mo
       max_tokens: 300,
       temperature: 0.3,
       messages: [
-        { role: 'system', content: scenarioPrompt },
+        { role: 'system', content: scenarioPrompt + companyRestriction },
         { role: 'user', content: 'Return ONLY valid JSON: { "score": number 0-10, "strength_level": "STRONG|ADEQUATE|WEAK", "red_flag": boolean, "red_flag_category": string|null, "red_flag_evidence": string|null, "follow_up_question": string|null }' }
       ]
     })
@@ -118,7 +151,7 @@ YELLOW (red_flag_category: 'WELLNESS_CONCERN') if: mild stress, family worry, mo
 
   const text = (result.choices?.[0]?.message?.content || '{}').replace(/```json|```/g, '').trim();
   try {
-    const parsed = JSON.parse(text);
+    const parsed = scrubWellness(JSON.parse(text));
     return new Response(JSON.stringify(parsed), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch {
     return new Response(JSON.stringify({ score: 0, strength_level: 'WEAK', red_flag: false, red_flag_category: null, red_flag_evidence: null, follow_up_question: null }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });

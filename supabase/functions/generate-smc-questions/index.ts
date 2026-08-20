@@ -43,12 +43,37 @@ Deno.serve(async (req) => {
   }
 
   const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-  const { rank: _rank, vesselType: _vesselType, yearsExperience: _yearsExperience, department: _department, assessmentId: _assessmentId } = await req.json();
+  const { rank: _rank, vesselType: _vesselType, yearsExperience: _yearsExperience, department: _department, assessmentId: _assessmentId, mode: _mode } = await req.json();
   const sanitize = (str: string, maxLen: number) => (str || '').toString().substring(0, maxLen).trim();
   const rank = sanitize(_rank, 100);
   const vesselType = sanitize(_vesselType, 100);
   const department = sanitize(_department, 100);
   const yearsExperience = Math.min(Math.max(Number(_yearsExperience) || 0, 0), 60);
+
+  // ── PRIVACY MODE: company-commissioned interviews never touch wellness topics ──
+  let interviewMode: 'self' | 'company' = _mode === 'company' ? 'company' : (_mode === 'self' ? 'self' : 'self');
+  if (_mode !== 'company' && _mode !== 'self' && _assessmentId) {
+    // Default inferred from the assessment's link to a campaign / interview invite
+    const { data: prog } = await adminClient
+      .from('interview_progress')
+      .select('campaign_id')
+      .eq('assessment_id', _assessmentId)
+      .maybeSingle();
+    if (prog?.campaign_id) interviewMode = 'company';
+    else {
+      const { data: inv } = await adminClient
+        .from('interview_invites')
+        .select('id')
+        .eq('assessment_id', _assessmentId)
+        .maybeSingle();
+      if (inv?.id) interviewMode = 'company';
+    }
+  }
+  const isCompanyMode = interviewMode === 'company';
+  if (_assessmentId) {
+    await adminClient.from('smc_assessments').update({ interview_mode: interviewMode }).eq('id', _assessmentId);
+  }
+
 
   // ── CLASSIFY CANDIDATE ──
   const yrs = Number(yearsExperience) || 0;
@@ -369,9 +394,15 @@ Generate exactly ${scenarioCount} scenario-based questions. Each scenario must i
 - One critical step that MUST be present
 - Time limit of 180 seconds
 
-SECTION 3 — BEHAVIOURAL QUESTIONS
-Generate exactly ${behaviouralCount} behavioural/wellness questions covering categories:
-stress, leadership, family, conflict, fatigue, safety_culture, mental_health
+SECTION 3 — ${isCompanyMode ? 'PROFESSIONAL BEHAVIOUR QUESTIONS' : 'BEHAVIOURAL QUESTIONS'}
+${isCompanyMode
+? `Generate exactly ${behaviouralCount} PROFESSIONAL BEHAVIOUR questions covering ONLY these categories:
+leadership, communication, accountability, safety_culture, challenge_and_response, conflict_handling, decision_making, teamwork
+
+PRIVACY RESTRICTION — MANDATORY:
+NEVER generate questions about stress, mental health, family, personal life, fatigue, sleep, mood, wellbeing, coping, or emotions. This is a professional employment assessment.`
+: `Generate exactly ${behaviouralCount} behavioural/wellness questions covering categories:
+stress, leadership, family, conflict, fatigue, safety_culture, mental_health`}
 
 Return ONLY valid JSON (no markdown, no explanation) in this EXACT structure:
 {
@@ -401,16 +432,16 @@ Return ONLY valid JSON (no markdown, no explanation) in this EXACT structure:
   "behavioural": [
     {
       "id": "beh_1",
-      "category": "stress|leadership|family|conflict|fatigue|safety_culture|mental_health",
+      "category": "${isCompanyMode ? 'leadership|communication|accountability|safety_culture|challenge_and_response|conflict_handling|decision_making|teamwork' : 'stress|leadership|family|conflict|fatigue|safety_culture|mental_health'}",
       "question": "Question text",
-      "wellness_indicator": true,
-      "confidential": true,
-      "prompt_text": "Your response is confidential and will never be shared with your employer."
+      "wellness_indicator": ${isCompanyMode ? 'false' : 'true'},
+      "confidential": ${isCompanyMode ? 'false' : 'true'},
+      "prompt_text": "${isCompanyMode ? 'This is a professional competency question assessed for the hiring company.' : 'Your response is confidential and will never be shared with your employer.'}"
     }
   ]
 }`;
 
-  const systemPrompt = `You are a senior maritime examiner and Flag State surveyor with 25 years experience. You examine officers and ratings for CoC (Certificate of Competency) and endorsements. Generate STRICTLY accurate questions based on SOLAS 2024, MARPOL 2024, MLC 2006, STCW 2010 Manila Amendments, ISPS Code, and ISM Code. Every correct answer must be definitively correct according to the referenced convention. Wrong answers must be plausible but clearly incorrect to anyone with proper knowledge. Questions must differentiate between competent and incompetent seafarers. Do NOT generate questions that can be answered by guessing or common sense alone. Return ONLY valid JSON, no markdown backticks, no explanation.`;
+  const systemPrompt = `You are a senior maritime examiner and Flag State surveyor with 25 years experience. You examine officers and ratings for CoC (Certificate of Competency) and endorsements. Generate STRICTLY accurate questions based on SOLAS 2024, MARPOL 2024, MLC 2006, STCW 2010 Manila Amendments, ISPS Code, and ISM Code. Every correct answer must be definitively correct according to the referenced convention. Wrong answers must be plausible but clearly incorrect to anyone with proper knowledge. Questions must differentiate between competent and incompetent seafarers. Do NOT generate questions that can be answered by guessing or common sense alone. Return ONLY valid JSON, no markdown backticks, no explanation.${isCompanyMode ? ' PRIVACY RESTRICTION — MANDATORY: this is a company-commissioned professional employment assessment. NEVER generate questions about stress, mental health, family, personal life, fatigue, sleep, mood, wellbeing, coping, or emotions.' : ''}`;
 
   if (await aiPaused(adminClient)) return aiPausedResponse(corsHeaders);
 
@@ -465,7 +496,7 @@ Return ONLY valid JSON (no markdown, no explanation) in this EXACT structure:
   }
 
   // Ensure candidate_context is always present
-  questions.candidate_context = { rank, vessel_type: vesselType, experience_tier, ship_specialisation, is_officer: isOfficer, mcq_count: mcqCount, total_questions: totalQuestions };
+  questions.candidate_context = { rank, vessel_type: vesselType, experience_tier, ship_specialisation, is_officer: isOfficer, mcq_count: mcqCount, total_questions: totalQuestions, interview_mode: interviewMode };
 
   await recordProbedClaims();
 

@@ -2954,6 +2954,7 @@ export type Database = {
           english_score: number | null
           experience_score: number | null
           id: string
+          interview_mode: string | null
           judgment_score: number | null
           overall_score: number | null
           probed_claims: Json | null
@@ -2978,6 +2979,7 @@ export type Database = {
           english_score?: number | null
           experience_score?: number | null
           id?: string
+          interview_mode?: string | null
           judgment_score?: number | null
           overall_score?: number | null
           probed_claims?: Json | null
@@ -3002,6 +3004,7 @@ export type Database = {
           english_score?: number | null
           experience_score?: number | null
           id?: string
+          interview_mode?: string | null
           judgment_score?: number | null
           overall_score?: number | null
           probed_claims?: Json | null

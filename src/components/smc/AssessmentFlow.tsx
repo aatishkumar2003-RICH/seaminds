@@ -46,6 +46,8 @@ interface FlatQuestion {
 
 const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assessmentId, vesselType, yearsExperience, onComplete, onExit, mode = 'learn' }: AssessmentFlowProps) => {
   const sealed = mode === 'interview';
+  // Company-commissioned interview vs the crew's own SMC assessment
+  const interviewMode: 'company' | 'self' = mode === 'interview' ? 'company' : 'self';
   const { accessToken } = useAuth();
   // Core flow state
   const [flowStep, setFlowStep] = useState<'preform' | 'cvCheck' | 'questions' | 'score'>('preform');
@@ -255,7 +257,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
       try {
         const token = accessToken;
         const invokePromise = supabase.functions.invoke('generate-smc-questions', {
-          body: { rank, vesselType: vesselType || 'General Cargo', yearsExperience: yearsExperience || 5, department: 'Deck' },
+          body: { rank, vesselType: vesselType || 'General Cargo', yearsExperience: yearsExperience || 5, department: 'Deck', assessmentId, mode: interviewMode },
           headers: { Authorization: `Bearer ${token}` },
         });
         const abortPromise = new Promise<never>((_, reject) => {
@@ -340,6 +342,8 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
           rank,
           experience_tier: aiQuestions?.candidate_context?.experience_tier || 'MID',
           department: aiQuestions?.candidate_context?.department || 'DECK',
+          mode: interviewMode,
+          assessmentId,
         },
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -371,6 +375,8 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
           rank,
           experience_tier: aiQuestions?.candidate_context?.experience_tier || 'MID',
           department: aiQuestions?.candidate_context?.department || 'DECK',
+          mode: interviewMode,
+          assessmentId,
         },
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -446,6 +452,8 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
           rank,
           experience_tier: aiQuestions?.candidate_context?.experience_tier || 'MID',
           department: aiQuestions?.candidate_context?.department || 'DECK',
+          mode: interviewMode,
+          assessmentId,
         },
         headers: { Authorization: `Bearer ${accessToken}` },
       });
