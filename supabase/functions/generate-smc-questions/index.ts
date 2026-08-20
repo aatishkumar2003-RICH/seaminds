@@ -432,11 +432,11 @@ Return ONLY valid JSON (no markdown, no explanation) in this EXACT structure:
   "behavioural": [
     {
       "id": "beh_1",
-      "category": "stress|leadership|family|conflict|fatigue|safety_culture|mental_health",
+      "category": "${isCompanyMode ? 'leadership|communication|accountability|safety_culture|challenge_and_response|conflict_handling|decision_making|teamwork' : 'stress|leadership|family|conflict|fatigue|safety_culture|mental_health'}",
       "question": "Question text",
-      "wellness_indicator": true,
-      "confidential": true,
-      "prompt_text": "Your response is confidential and will never be shared with your employer."
+      "wellness_indicator": ${isCompanyMode ? 'false' : 'true'},
+      "confidential": ${isCompanyMode ? 'false' : 'true'},
+      "prompt_text": "${isCompanyMode ? 'This is a professional competency question assessed for the hiring company.' : 'Your response is confidential and will never be shared with your employer.'}"
     }
   ]
 }`;
