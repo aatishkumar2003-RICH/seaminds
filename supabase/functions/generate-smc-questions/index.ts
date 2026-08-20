@@ -394,9 +394,15 @@ Generate exactly ${scenarioCount} scenario-based questions. Each scenario must i
 - One critical step that MUST be present
 - Time limit of 180 seconds
 
-SECTION 3 — BEHAVIOURAL QUESTIONS
-Generate exactly ${behaviouralCount} behavioural/wellness questions covering categories:
-stress, leadership, family, conflict, fatigue, safety_culture, mental_health
+SECTION 3 — ${isCompanyMode ? 'PROFESSIONAL BEHAVIOUR QUESTIONS' : 'BEHAVIOURAL QUESTIONS'}
+${isCompanyMode
+? `Generate exactly ${behaviouralCount} PROFESSIONAL BEHAVIOUR questions covering ONLY these categories:
+leadership, communication, accountability, safety_culture, challenge_and_response, conflict_handling, decision_making, teamwork
+
+PRIVACY RESTRICTION — MANDATORY:
+NEVER generate questions about stress, mental health, family, personal life, fatigue, sleep, mood, wellbeing, coping, or emotions. This is a professional employment assessment.`
+: `Generate exactly ${behaviouralCount} behavioural/wellness questions covering categories:
+stress, leadership, family, conflict, fatigue, safety_culture, mental_health`}
 
 Return ONLY valid JSON (no markdown, no explanation) in this EXACT structure:
 {
