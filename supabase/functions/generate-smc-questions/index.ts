@@ -43,12 +43,37 @@ Deno.serve(async (req) => {
   }
 
   const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-  const { rank: _rank, vesselType: _vesselType, yearsExperience: _yearsExperience, department: _department, assessmentId: _assessmentId } = await req.json();
+  const { rank: _rank, vesselType: _vesselType, yearsExperience: _yearsExperience, department: _department, assessmentId: _assessmentId, mode: _mode } = await req.json();
   const sanitize = (str: string, maxLen: number) => (str || '').toString().substring(0, maxLen).trim();
   const rank = sanitize(_rank, 100);
   const vesselType = sanitize(_vesselType, 100);
   const department = sanitize(_department, 100);
   const yearsExperience = Math.min(Math.max(Number(_yearsExperience) || 0, 0), 60);
+
+  // ── PRIVACY MODE: company-commissioned interviews never touch wellness topics ──
+  let interviewMode: 'self' | 'company' = _mode === 'company' ? 'company' : (_mode === 'self' ? 'self' : 'self');
+  if (_mode !== 'company' && _mode !== 'self' && _assessmentId) {
+    // Default inferred from the assessment's link to a campaign / interview invite
+    const { data: prog } = await adminClient
+      .from('interview_progress')
+      .select('campaign_id')
+      .eq('assessment_id', _assessmentId)
+      .maybeSingle();
+    if (prog?.campaign_id) interviewMode = 'company';
+    else {
+      const { data: inv } = await adminClient
+        .from('interview_invites')
+        .select('id')
+        .eq('assessment_id', _assessmentId)
+        .maybeSingle();
+      if (inv?.id) interviewMode = 'company';
+    }
+  }
+  const isCompanyMode = interviewMode === 'company';
+  if (_assessmentId) {
+    await adminClient.from('smc_assessments').update({ interview_mode: interviewMode }).eq('id', _assessmentId);
+  }
+
 
   // ── CLASSIFY CANDIDATE ──
   const yrs = Number(yearsExperience) || 0;
