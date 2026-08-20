@@ -183,8 +183,18 @@ const ConversionConsole = () => {
       `}</style>
 
       {/* 1. HEADER */}
-      <header className="sticky top-0 z-40 border-b" style={{ height: 86, borderColor: "rgba(255,255,255,0.06)", background: NAVY }}>
+      <header className="sticky top-0 z-40 border-b relative" style={{ height: 86, borderColor: "rgba(255,255,255,0.06)", background: NAVY }}>
+        <button
+          type="button"
+          aria-label="Team access"
+          onClick={() => navigate("/marketing")}
+          className="absolute top-1 right-1 z-50 rounded-full transition-colors"
+          style={{ width: 8, height: 8, background: "rgba(255,255,255,0.12)" }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(212,175,55,0.6)"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.12)"; }}
+        />
         <div className="max-w-6xl mx-auto h-full px-4 flex items-center justify-between">
+
           <button type="button" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="flex items-center gap-2">
             <img src={seamindsLogo} alt="SeaMinds" className="w-9 h-9" />
             <span className="text-lg font-bold text-foreground">SeaMinds</span>

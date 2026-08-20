@@ -109,9 +109,10 @@ const HomeFooter = () => {
           </p>
           <button
             onClick={() => { setShowPin(true); setPin(""); setError(""); }}
-            className="text-xs text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors"
+            aria-label="Site information"
+            className="text-[10px] text-muted-foreground/20 hover:text-muted-foreground/50 transition-colors"
           >
-            Admin
+            © 2026
           </button>
         </div>
       </div>
