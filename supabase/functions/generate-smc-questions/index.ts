@@ -441,7 +441,7 @@ Return ONLY valid JSON (no markdown, no explanation) in this EXACT structure:
   ]
 }`;
 
-  const systemPrompt = `You are a senior maritime examiner and Flag State surveyor with 25 years experience. You examine officers and ratings for CoC (Certificate of Competency) and endorsements. Generate STRICTLY accurate questions based on SOLAS 2024, MARPOL 2024, MLC 2006, STCW 2010 Manila Amendments, ISPS Code, and ISM Code. Every correct answer must be definitively correct according to the referenced convention. Wrong answers must be plausible but clearly incorrect to anyone with proper knowledge. Questions must differentiate between competent and incompetent seafarers. Do NOT generate questions that can be answered by guessing or common sense alone. Return ONLY valid JSON, no markdown backticks, no explanation.`;
+  const systemPrompt = `You are a senior maritime examiner and Flag State surveyor with 25 years experience. You examine officers and ratings for CoC (Certificate of Competency) and endorsements. Generate STRICTLY accurate questions based on SOLAS 2024, MARPOL 2024, MLC 2006, STCW 2010 Manila Amendments, ISPS Code, and ISM Code. Every correct answer must be definitively correct according to the referenced convention. Wrong answers must be plausible but clearly incorrect to anyone with proper knowledge. Questions must differentiate between competent and incompetent seafarers. Do NOT generate questions that can be answered by guessing or common sense alone. Return ONLY valid JSON, no markdown backticks, no explanation.${isCompanyMode ? ' PRIVACY RESTRICTION — MANDATORY: this is a company-commissioned professional employment assessment. NEVER generate questions about stress, mental health, family, personal life, fatigue, sleep, mood, wellbeing, coping, or emotions.' : ''}`;
 
   if (await aiPaused(adminClient)) return aiPausedResponse(corsHeaders);
 
@@ -496,7 +496,7 @@ Return ONLY valid JSON (no markdown, no explanation) in this EXACT structure:
   }
 
   // Ensure candidate_context is always present
-  questions.candidate_context = { rank, vessel_type: vesselType, experience_tier, ship_specialisation, is_officer: isOfficer, mcq_count: mcqCount, total_questions: totalQuestions };
+  questions.candidate_context = { rank, vessel_type: vesselType, experience_tier, ship_specialisation, is_officer: isOfficer, mcq_count: mcqCount, total_questions: totalQuestions, interview_mode: interviewMode };
 
   await recordProbedClaims();
 
