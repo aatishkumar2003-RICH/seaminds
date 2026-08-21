@@ -257,7 +257,13 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
       try {
         const token = accessToken;
         const invokePromise = supabase.functions.invoke('generate-smc-questions', {
-          body: { rank, vesselType: vesselType || 'General Cargo', yearsExperience: yearsExperience || 5, department: 'Deck', assessmentId, mode: interviewMode },
+          body: {
+            rank,
+            assessmentId,
+            mode: interviewMode,
+            ...(vesselType ? { vesselType } : {}),
+            ...(yearsExperience ? { yearsExperience } : {}),
+          },
           headers: { Authorization: `Bearer ${token}` },
         });
         const abortPromise = new Promise<never>((_, reject) => {
