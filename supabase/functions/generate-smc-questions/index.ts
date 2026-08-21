@@ -338,7 +338,7 @@ Deno.serve(async (req) => {
           .from('smc_assessments')
           .select('id')
           .eq('crew_profile_id', probeUid)
-          .order('created_at', { ascending: false })
+          .order('started_at', { ascending: false })
           .limit(1)
           .maybeSingle();
         targetId = (a as any)?.id || null;
