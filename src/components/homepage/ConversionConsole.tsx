@@ -91,6 +91,23 @@ const ConversionConsole = () => {
   const [query, setQuery] = useState("");
   const [myMarket, setMyMarket] = useState<string>(() => localStorage.getItem("sm_my_market") || "");
   const [sheet, setSheet] = useState<Vacancy | null>(null);
+  const [wire, setWire] = useState<{ kind: string; text: string; ts: string }[]>([]);
+  const reducedMotion = useMemo(
+    () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches,
+    []
+  );
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const { data, error } = await supabase.rpc("get_trade_log" as never, { p_limit: 14 } as never);
+      if (!alive || error || !Array.isArray(data)) return;
+      setWire(data as { kind: string; text: string; ts: string }[]);
+    })();
+    return () => { alive = false; };
+  }, []);
+
+
 
 
   useEffect(() => {
