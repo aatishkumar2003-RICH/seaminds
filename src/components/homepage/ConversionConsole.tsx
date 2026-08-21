@@ -523,6 +523,48 @@ const ConversionConsole = () => {
         </div>
       </div>
 
+      {/* Newswire ribbon */}
+      {wire.length > 0 && (
+        <div
+          className="w-full overflow-hidden flex items-center gap-3 px-3"
+          style={{ height: 34, background: NAVY, borderTop: "1px solid rgba(212,175,55,0.2)" }}
+        >
+          <span className="flex items-center gap-1.5 shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: GREEN }} />
+            <span className="font-mono text-[9px] font-bold tracking-widest" style={{ color: GOLD }}>SEAMINDS LIVE</span>
+          </span>
+          {reducedMotion ? (
+            <span className="text-[10px] text-muted-foreground truncate">
+              {wire.slice(0, 3).map((w, i) => (
+                <span key={i}>
+                  {i > 0 && <span style={{ color: GOLD }} className="mx-2">·</span>}
+                  {WIRE_ICON[w.kind] || "◆"} {w.text} <span className="opacity-60">{relTime(w.ts)}</span>
+                </span>
+              ))}
+            </span>
+          ) : (
+            <div className="flex-1 overflow-hidden whitespace-nowrap">
+              <style>{`
+                @keyframes sm-wire { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+                .sm-wire-track { display: inline-block; white-space: nowrap; animation: sm-wire 45s linear infinite; }
+                .sm-wire-track:hover, .sm-wire-track:active { animation-play-state: paused; }
+              `}</style>
+              <div className="sm-wire-track">
+                {[...wire, ...wire].map((w, i) => (
+                  <span key={i} className="inline-block text-[10px] text-muted-foreground">
+                    <span style={{ color: GOLD }} className="mx-2">·</span>
+                    {WIRE_ICON[w.kind] || "◆"} {w.text}{" "}
+                    <span className="opacity-60">{relTime(w.ts)}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+
+
       {/* Quick sheet */}
       {sheet && (
         <div className="fixed inset-0 z-[60] flex items-end" style={{ background: "rgba(0,0,0,0.6)" }} onClick={() => setSheet(null)}>
