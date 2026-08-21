@@ -74,6 +74,147 @@ Deno.serve(async (req) => {
     await adminClient.from('smc_assessments').update({ interview_mode: interviewMode }).eq('id', _assessmentId);
   }
 
+  // ── RESOLVE CANDIDATE CONTEXT SERVER-SIDE (canonical DB helpers only) ──
+  let yearsInRank: number | null = null;
+  let contractsInRank: number | null = null;
+  let cvClaims: string[] = [];
+  let probedClaimKeys: string[] = [];
+  let probeUid: string | null = null;
+
+  try {
+    const { data: rr } = await adminClient.rpc('resolve_rank', { p_rank: rank });
+    const resolved: any = rr || null;
+    if (resolved?.department) department = String(resolved.department);
+  } catch (_e) { /* rank resolution optional */ }
+
+  try {
+    const token = authHeader.replace('Bearer ', '');
+    const { data: userData } = await adminClient.auth.getUser(token);
+    const uid = userData?.user?.id;
+    probeUid = uid || null;
+    if (uid) {
+      const { data: cv } = await adminClient
+        .from('crew_cv_data')
+        .select('sea_service')
+        .eq('user_id', uid)
+        .maybeSingle();
+      const service = Array.isArray((cv as any)?.sea_service) ? (cv as any).sea_service : [];
+      const matching = service.filter((s: any) =>
+        (s?.rank || s?.position || '').toString().toLowerCase().includes(rank.toLowerCase().slice(0, 12))
+      );
+      if (matching.length) {
+        contractsInRank = matching.length;
+        const months = matching.reduce((sum: number, s: any) => {
+          const m = Number(s?.months ?? s?.duration_months ?? s?.duration ?? 0);
+          return sum + (isFinite(m) ? m : 0);
+        }, 0);
+        yearsInRank = months > 0 ? Math.round((months / 12) * 10) / 10 : null;
+        cvClaims = matching
+          .slice(0, 5)
+          .map((s: any) => [s?.rank || s?.position, s?.vessel_type, s?.vessel_name].filter(Boolean).join(' — '))
+          .filter((s: string) => s.length > 2);
+      }
+
+      // Quick-profile calibration fallback — canonical band helpers
+      if (yearsInRank === null || contractsInRank === null) {
+        try {
+          const { data: qp } = await adminClient
+            .from('crew_profiles')
+            .select('years_in_rank_band, contracts_in_rank_band')
+            .eq('id', uid)
+            .maybeSingle();
+          if (yearsInRank === null && (qp as any)?.years_in_rank_band) {
+            const { data: ym } = await adminClient.rpc('band_years_midpoint', { p_band: (qp as any).years_in_rank_band });
+            const n = Number(ym);
+            if (isFinite(n)) yearsInRank = n;
+          }
+          if (contractsInRank === null && (qp as any)?.contracts_in_rank_band) {
+            const { data: cm } = await adminClient.rpc('contracts_midpoint', { p_band: (qp as any).contracts_in_rank_band });
+            const n = Number(cm);
+            if (isFinite(n)) contractsInRank = n;
+          }
+        } catch (_e) { /* band fallback optional */ }
+      }
+
+      // Vessel context fallback: strongest quick-profile vessel family
+      if (!vesselType) {
+        try {
+          const { data: exp } = await adminClient
+            .from('crew_vessel_experience')
+            .select('vessel_family, sea_time_band')
+            .eq('crew_id', uid);
+          let bestFamily: string | null = null;
+          let bestScore = -1;
+          for (const row of (exp || []) as any[]) {
+            let score = 0;
+            try {
+              const { data: bm } = await adminClient.rpc('band_years_midpoint', { p_band: row?.sea_time_band });
+              const n = Number(bm);
+              if (isFinite(n)) score = n;
+            } catch (_e) { /* band scoring optional */ }
+            if (row?.vessel_family && score > bestScore) { bestScore = score; bestFamily = String(row.vessel_family); }
+          }
+          if (bestFamily) vesselType = bestFamily;
+        } catch (_e) { /* vessel fallback optional */ }
+      }
+
+      // Quick-profile self-declared claims (FACT/CLAIM/VERIFIED loop)
+      try {
+        const { data: qc } = await adminClient
+          .from('crew_claims')
+          .select('claim_key, value')
+          .eq('crew_id', uid)
+          .eq('status', 'CLAIMED');
+        const skip = new Set(['no', 'none', '0', '']);
+        const pretty = (k: string, v: string): string => {
+          const vals = v.split(',').map((x) => x.trim()).filter(Boolean);
+          const joined = vals.length > 1
+            ? `${vals.slice(0, -1).join(', ')} and ${vals[vals.length - 1]}`
+            : (vals[0] || v);
+          switch (k) {
+            case 'sire_experience': return `Claims SIRE inspection experience (${v})`;
+            case 'rightship_experience': return 'Claims RightShip inspection experience';
+            case 'psc_experience': return `Claims Port State Control inspection experience (${v})`;
+            case 'ecdis_experience': return 'Claims ECDIS operational experience';
+            case 'ecdis_types': return `Claims ECDIS experience on ${joined}`;
+            case 'dp_qualification': return `Claims DP qualification: ${v}`;
+            case 'mooring_experience': return 'Claims mooring operations experience';
+            case 'watchkeeping_lookout': return 'Claims bridge watchkeeping/lookout duty experience';
+            case 'helmsman': return 'Claims helmsman experience';
+            case 'cargo_ops_watch': return 'Claims cargo operations watchkeeping experience';
+            case 'tanker_deck_ops': return 'Claims tanker deck cargo operations experience';
+            case 'lashing_securing': return 'Claims lashing and cargo securing experience';
+            case 'anchor_handling_deck': return 'Claims anchor handling deck experience';
+            case 'propulsion_experience': return `Claims propulsion experience: ${joined}`;
+            case 'cargo_pumping_systems': return `Claims ${joined} cargo pump experience`;
+            case 'hv_certified': return 'Claims High Voltage certification';
+            case 'ums_experience': return 'Claims UMS (unmanned machinery space) experience';
+            case 'welding_machining': return 'Claims welding and machining experience';
+            case 'tanker_engine_room': return 'Claims tanker engine room experience';
+            case 'dp_vessel_experience': return 'Claims DP vessel experience';
+            case 'hazardous_area_ex': return 'Claims hazardous area / Ex equipment experience';
+            case 'automation_systems': return `Claims automation systems experience: ${joined}`;
+            case 'crew_size_cooked': return `Claims catering for crew size ${v}`;
+            case 'multicultural_menus': return 'Claims multicultural menu planning experience';
+            case 'haccp_trained': return 'Claims HACCP training';
+            case 'provisioning_budget': return 'Claims provisioning and budget control experience';
+            default: return `Claims ${k.replace(/_/g, ' ')}: ${v}`;
+          }
+        };
+        const usable = (qc || []).filter((c: any) => !skip.has(String(c?.value ?? '').trim().toLowerCase()));
+        const extra = usable.map((c: any) => pretty(String(c.claim_key), String(c.value)));
+        const before = cvClaims.length;
+        cvClaims = [...cvClaims, ...extra].slice(0, 8);
+        const included = Math.max(0, cvClaims.length - before);
+        probedClaimKeys = usable.slice(0, included).map((c: any) => String(c.claim_key));
+      } catch (_e) { /* quick-profile claims optional */ }
+    }
+  } catch (_e) { /* candidate context lookup optional */ }
+
+  // Years actually used for tiering: request value, else resolved sea service / bands
+  if (!yearsExperience && yearsInRank !== null) {
+    yearsExperience = Math.min(Math.max(yearsInRank, 0), 60);
+  }
 
   // ── CLASSIFY CANDIDATE ──
   const yrs = Number(yearsExperience) || 0;
