@@ -345,6 +345,7 @@ Deno.serve(async (req) => {
       }
       if (!targetId) return;
       await adminClient.from('smc_assessments').update({ probed_claims: probedClaimKeys }).eq('id', targetId);
+      console.log(`probed_claims written: ${probedClaimKeys.length} claim_keys for assessment ${targetId}`);
     } catch (_e) { /* probed-claims tracking never blocks generation */ }
   };
 
