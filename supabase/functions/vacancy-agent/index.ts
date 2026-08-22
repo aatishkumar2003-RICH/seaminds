@@ -79,7 +79,7 @@ async function fetchRSS(url: string): Promise<any[]> {
       const pubDate = content.match(/<pubDate[^>]*>(.*?)<\/pubDate>/)?.[1]?.trim() || '';
       if (title) items.push({ title, description: desc, link, pubDate, source: url });
     }
-    return items.slice(0, 10);
+    return noteSource('RSS', items.slice(0, 10));
   } catch (err) { return noteError('RSS', err); }
 }
 
