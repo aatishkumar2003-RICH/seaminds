@@ -9,6 +9,7 @@ const SERPAPI_KEY = Deno.env.get('SERPAPI_KEY')!;
 
 const TELEGRAM_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN')!;
 
+// Fallback registry — used only if the vacancy_sources table is unreachable or empty.
 const MARITIME_QUERIES = [
   'Captain Chief Engineer seafarer job vacancy India',
   'Chief Officer 2nd Engineer merchant navy India hiring',
@@ -37,6 +38,58 @@ const RSS_FEEDS = [
 
 const TELEGRAM_CHANNELS = ['offshorevacancies', 'seafarersvacancies', 'marinemanjobs', 'craborabota', 'seabordjobs', 'marinejobbangladesh'];
 
+type RegistrySource = { id: string; kind: string; value: string };
+
+// Loads the data-driven source registry; never throws, always yields usable lists.
+async function loadSourceRegistry(): Promise<{
+  queries: { value: string; id: string | null }[];
+  feeds: { value: string; id: string | null }[];
+  channels: { value: string; id: string | null }[];
+}> {
+  const fb = {
+    queries: MARITIME_QUERIES.map(v => ({ value: v, id: null })),
+    feeds: RSS_FEEDS.map(v => ({ value: v, id: null })),
+    channels: TELEGRAM_CHANNELS.map(v => ({ value: v, id: null })),
+  };
+  try {
+    const { data, error } = await supabase.from('vacancy_sources').select('*').eq('active', true);
+    if (error || !data || !data.length) return fb;
+    const rows = data as RegistrySource[];
+    const pick = (kind: string) => rows.filter(r => r.kind === kind).map(r => ({ value: r.value, id: r.id }));
+    const queries = pick('serp_query');
+    const feeds = pick('rss');
+    const channels = pick('telegram_channel');
+    return {
+      queries: queries.length ? queries : fb.queries,
+      feeds: feeds.length ? feeds : fb.feeds,
+      channels: channels.length ? channels : fb.channels,
+    };
+  } catch (_e) {
+    return fb;
+  }
+}
+
+// Best-effort health tracking on the registry row.
+async function markSourceResult(id: string | null, count: number | null, err?: unknown) {
+  if (!id) return;
+  try {
+    if (err === undefined) {
+      await supabase.from('vacancy_sources')
+        .update({ last_run_at: new Date().toISOString(), last_items: count ?? 0, last_error: null, consecutive_failures: 0 })
+        .eq('id', id);
+    } else {
+      const { data } = await supabase.from('vacancy_sources').select('consecutive_failures').eq('id', id).maybeSingle();
+      await supabase.from('vacancy_sources')
+        .update({
+          last_run_at: new Date().toISOString(),
+          last_error: String(err).substring(0, 300),
+          consecutive_failures: ((data as any)?.consecutive_failures ?? 0) + 1,
+        })
+        .eq('id', id);
+    }
+  } catch (_e) { /* registry problems never stop a run */ }
+}
+
 let runStats: { sources: { source: string; items: number }[]; errors: string[] } = { sources: [], errors: [] };
 function noteSource(source: string, items: any[]): any[] {
   runStats.sources.push({ source, items: items.length });
@@ -46,6 +99,7 @@ function noteError(source: string, err: unknown): any[] {
   runStats.errors.push(`${source}: ${String(err).substring(0, 100)}`);
   return [];
 }
+
 
 async function fetchGoogleJobs(query: string): Promise<any[]> {
   try {
@@ -675,12 +729,16 @@ Deno.serve(async (req) => {
     ? Number(groupParam)
     : Math.floor(Date.now() / (3 * 60 * 60 * 1000)) % GROUP_COUNT;
 
+  const registry = await loadSourceRegistry();
+
   try {
     if (group === 0) {
     // 1. Google Jobs via SerpAPI
     const googleRaw: any[] = [];
-    for (const query of MARITIME_QUERIES) {
-      const results = await fetchGoogleJobs(query);
+    for (const q of registry.queries) {
+      const before = runStats.errors.length;
+      const results = await fetchGoogleJobs(q.value);
+      await markSourceResult(q.id, results.length, runStats.errors.length > before ? runStats.errors[runStats.errors.length - 1] : undefined);
       googleRaw.push(...results.map(j => ({
         title: j.title, company: j.company_name, location: j.location,
         description: j.description, via: j.via, extensions: j.detected_extensions,
@@ -696,8 +754,10 @@ Deno.serve(async (req) => {
     if (group === 1) {
     // 2. RSS Feeds
     const rssRaw: any[] = [];
-    for (const feed of RSS_FEEDS) {
-      const items = await fetchRSS(feed);
+    for (const feed of registry.feeds) {
+      const before = runStats.errors.length;
+      const items = await fetchRSS(feed.value);
+      await markSourceResult(feed.id, items.length, runStats.errors.length > before ? runStats.errors[runStats.errors.length - 1] : undefined);
       rssRaw.push(...items);
     }
     const rssJobItems = rssRaw.filter(i =>
@@ -712,8 +772,10 @@ Deno.serve(async (req) => {
     if (group === 2) {
     // 3. Telegram
     const telegramRaw: any[] = [];
-    for (const ch of TELEGRAM_CHANNELS) {
-      const msgs = await fetchTelegramChannel(ch);
+    for (const ch of registry.channels) {
+      const before = runStats.errors.length;
+      const msgs = await fetchTelegramChannel(ch.value);
+      await markSourceResult(ch.id, msgs.length, runStats.errors.length > before ? runStats.errors[runStats.errors.length - 1] : undefined);
       telegramRaw.push(...msgs);
     }
     if (telegramRaw.length) {
@@ -721,6 +783,7 @@ Deno.serve(async (req) => {
       stats.telegram = await saveVacancies(processed, 'telegram');
     }
     }
+
 
     if (group === 3) {
     // 4. India + Philippines focused scraping

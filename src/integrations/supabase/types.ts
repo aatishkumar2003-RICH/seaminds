@@ -3092,6 +3092,51 @@ export type Database = {
         }
         Relationships: []
       }
+      vacancy_sources: {
+        Row: {
+          active: boolean
+          consecutive_failures: number
+          created_at: string
+          id: string
+          kind: string
+          label: string | null
+          language: string | null
+          last_error: string | null
+          last_items: number | null
+          last_run_at: string | null
+          region: string | null
+          value: string
+        }
+        Insert: {
+          active?: boolean
+          consecutive_failures?: number
+          created_at?: string
+          id?: string
+          kind: string
+          label?: string | null
+          language?: string | null
+          last_error?: string | null
+          last_items?: number | null
+          last_run_at?: string | null
+          region?: string | null
+          value: string
+        }
+        Update: {
+          active?: boolean
+          consecutive_failures?: number
+          created_at?: string
+          id?: string
+          kind?: string
+          label?: string | null
+          language?: string | null
+          last_error?: string | null
+          last_items?: number | null
+          last_run_at?: string | null
+          region?: string | null
+          value?: string
+        }
+        Relationships: []
+      }
       vessel_ratings: {
         Row: {
           accommodation: number
