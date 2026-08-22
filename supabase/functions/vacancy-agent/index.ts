@@ -861,7 +861,55 @@ Deno.serve(async (req) => {
     }
     }
 
-    stats.saved += stats.google + stats.rss + stats.telegram;
+    if (group === 5) {
+    // 6. Generic career pages / job boards from the registry
+    const targets = await loadCareerTargets();
+    const careerStructured: any[] = [];
+    const careerRawText: any[] = [];
+    for (const t of targets) {
+      if (isBlockedUrl(t.url)) {
+        runStats.sources.push({ source: `career:skipped:${t.url.substring(0, 60)}`, items: 0 });
+        await markSourceResult(t.id, 0, 'skipped: domain prohibits crawling');
+        continue;
+      }
+      const res = await crawlTarget(t.url, t.method || 'auto');
+      runStats.sources.push({ source: `career:${res.method_used}:${t.url.substring(0, 60)}`, items: res.items.length });
+      if (res.method_used === 'failed' || res.items.length === 0) {
+        await markSourceResult(t.id, res.items.length, res.note || 'no items');
+      } else {
+        await markSourceResult(t.id, res.items.length);
+      }
+      if (res.method_used === 'html') {
+        careerRawText.push(...res.items);
+      } else {
+        for (const j of res.items) {
+          if (!j.title) continue;
+          careerStructured.push({
+            title: j.title,
+            rank_required: j.title,
+            company_name: j.org || null,
+            joining_port: j.location || null,
+            apply_url: j.url || t.url,
+            description: j.description || null,
+            contract_duration: j.employmentType || null,
+            source_posted_at: /^\d{4}-\d{2}-\d{2}$/.test(j.datePosted || '') ? j.datePosted : null,
+            quality_score: 55,
+          });
+        }
+      }
+      await new Promise(r => setTimeout(r, 400));
+    }
+    if (careerStructured.length) {
+      stats.career_pages += await saveVacancies(careerStructured, 'career_page');
+    }
+    if (careerRawText.length) {
+      const processed = await processWithAI(careerRawText);
+      stats.career_pages += await saveVacancies(processed, 'career_page');
+    }
+    }
+
+    stats.saved += stats.google + stats.rss + stats.telegram + stats.career_pages;
+
 
     // Email notifications to available crew with matching ranks
     let emailsSent = 0;
