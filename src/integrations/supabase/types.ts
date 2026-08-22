@@ -3104,7 +3104,10 @@ export type Database = {
           last_error: string | null
           last_items: number | null
           last_run_at: string | null
+          method: string
+          notes: string | null
           region: string | null
+          url: string | null
           value: string
         }
         Insert: {
@@ -3118,7 +3121,10 @@ export type Database = {
           last_error?: string | null
           last_items?: number | null
           last_run_at?: string | null
+          method?: string
+          notes?: string | null
           region?: string | null
+          url?: string | null
           value: string
         }
         Update: {
@@ -3132,7 +3138,10 @@ export type Database = {
           last_error?: string | null
           last_items?: number | null
           last_run_at?: string | null
+          method?: string
+          notes?: string | null
           region?: string | null
+          url?: string | null
           value?: string
         }
         Relationships: []
