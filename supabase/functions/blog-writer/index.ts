@@ -340,15 +340,18 @@ Deno.serve(async (req) => {
         max_tokens: 1800,
         messages: [{
           role: "user",
-          content: `Write a helpful article for working seafarers titled "${topic}".
+          content: `Write a warm, clear, factual article about this SeaMinds feature for seafarers and maritime companies.
+
+Topic: "${topic}"
 
 LANGUAGE: ${lang.note} The title, excerpt and the entire article body must be in ${lang.name}.
 
 Rules:
 - 700-900 words, written for seafarers whose first language may not be English. Use simple, clear sentences.
-- Practical and specific. Reference real regulations (MLC 2006, STCW, SOLAS, MARPOL) where relevant and accurate.
+- Describe ONLY what the feature actually does as stated in the topic — never invent statistics, user counts, success rates, partnerships or capabilities.
+- Include practical step-by-step usage where natural.
+- Keep maritime rank names, vessel types and certificate terms (STCW, SMC, CoC, DP) in English in every language.
 - Structure with 4-6 short section headings using markdown ##.
-- No fluff, no marketing, no invented statistics. If you are unsure of a fact, describe the general rule instead of inventing numbers.
 - End with a short practical checklist of 3-5 bullet points.
 
 Return ONLY valid JSON, no markdown fences:
