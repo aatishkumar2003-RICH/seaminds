@@ -114,41 +114,10 @@ const ManagerDashboard = () => {
       setEmergencyEmail(profile.emergency_email || "");
 
 
-      // Fetch crew from this company
-      const { data: crew } = await supabase
-        .from("crew_profiles")
-        .select("id, first_name, last_name, role, ship_name, voyage_start_date")
-        .eq("manning_agency", profile.company_name);
-
-      if (!crew || crew.length === 0) { setLoading(false); return; }
-
-      const now = Date.now();
-
-      const rows: CrewRow[] = crew.map((c) => {
-        const voyageDays = c.voyage_start_date
-          ? Math.max(1, Math.ceil((now - new Date(c.voyage_start_date).getTime()) / 86400000))
-          : 0;
-
-        return {
-          id: c.id,
-          firstName: c.first_name,
-          lastName: c.last_name || "",
-          role: c.role,
-          shipName: c.ship_name,
-          voyageDays,
-        };
-      });
-
-
-      setCrewRows(rows);
-
-      // Fetch safety reports for this company
-      const { data: reports } = await supabase
-        .from("safety_reports")
-        .select("*")
-        .eq("manning_agency", profile.company_name)
-        .order("created_at", { ascending: false });
-      setSafetyReports(reports || []);
+      // Safety reports come through the approved-manager RPC (RLS-safe)
+      const { data: safety } = await supabase.rpc("get_my_safety_reports" as any);
+      const safetyResult = safety as unknown as { ok?: boolean; reports?: SafetyReport[] } | null;
+      setSafetyReports(safetyResult?.ok ? (safetyResult.reports || []) : []);
 
       setLoading(false);
     };
