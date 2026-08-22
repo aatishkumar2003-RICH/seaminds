@@ -38,9 +38,12 @@ const RSS_FEEDS = [
 
 const TELEGRAM_CHANNELS = ['offshorevacancies', 'seafarersvacancies', 'marinemanjobs', 'craborabota', 'seabordjobs', 'marinejobbangladesh'];
 
-type RegistrySource = { id: string; kind: string; value: string };
+type RegistrySource = { id: string; kind: string; value: string; url?: string | null; method?: string | null };
 
-// Loads the data-driven source registry; never throws, always yields usable lists.
+export type CareerTarget = { id: string; url: string; method: string; label?: string | null };
+
+// Loads the data-driven source registry; never throws.
+// Hardcoded arrays are used ONLY when the registry query errors — never when it legitimately returns zero active rows.
 async function loadSourceRegistry(): Promise<{
   queries: { value: string; id: string | null }[];
   feeds: { value: string; id: string | null }[];
@@ -53,21 +56,38 @@ async function loadSourceRegistry(): Promise<{
   };
   try {
     const { data, error } = await supabase.from('vacancy_sources').select('*').eq('active', true);
-    if (error || !data || !data.length) return fb;
+    if (error || !data) return fb;
     const rows = data as RegistrySource[];
     const pick = (kind: string) => rows.filter(r => r.kind === kind).map(r => ({ value: r.value, id: r.id }));
-    const queries = pick('serp_query');
-    const feeds = pick('rss');
-    const channels = pick('telegram_channel');
     return {
-      queries: queries.length ? queries : fb.queries,
-      feeds: feeds.length ? feeds : fb.feeds,
-      channels: channels.length ? channels : fb.channels,
+      queries: pick('serp_query'),
+      feeds: pick('rss'),
+      channels: pick('telegram_channel'),
     };
   } catch (_e) {
     return fb;
   }
 }
+
+// Career-page targets rotate: oldest (or never) run first, 12 per run.
+async function loadCareerTargets(): Promise<CareerTarget[]> {
+  try {
+    const { data, error } = await supabase
+      .from('vacancy_sources')
+      .select('id, value, url, method, label')
+      .eq('kind', 'career_page')
+      .eq('active', true)
+      .order('last_run_at', { ascending: true, nullsFirst: true })
+      .limit(12);
+    if (error || !data) return [];
+    return (data as any[])
+      .map(r => ({ id: r.id, url: (r.url || r.value || '').trim(), method: r.method || 'auto', label: r.label }))
+      .filter(r => /^https?:\/\//i.test(r.url));
+  } catch (_e) {
+    return [];
+  }
+}
+
 
 // Best-effort health tracking on the registry row.
 async function markSourceResult(id: string | null, count: number | null, err?: unknown) {
