@@ -748,12 +748,15 @@ Deno.serve(async (req) => {
 
   const startTime = Date.now();
   runStats = { sources: [], errors: [] };
-  const stats = { google: 0, rss: 0, telegram: 0, saved: 0, errors: runStats.errors, sources: runStats.sources };
-  const GROUP_COUNT = 5;
+  const stats = { google: 0, rss: 0, telegram: 0, career_pages: 0, saved: 0, errors: runStats.errors, sources: runStats.sources };
+  const GROUP_COUNT = 6;
   const groupParam = new URL(req.url).searchParams.get('group');
-  const group = groupParam !== null && groupParam !== ''
-    ? Number(groupParam)
+  const parsedGroup = groupParam !== null && groupParam !== '' ? Number(groupParam) : NaN;
+  // An explicit ?group= always wins; otherwise rotate every 3 hours.
+  const group = Number.isFinite(parsedGroup)
+    ? ((Math.trunc(parsedGroup) % GROUP_COUNT) + GROUP_COUNT) % GROUP_COUNT
     : Math.floor(Date.now() / (3 * 60 * 60 * 1000)) % GROUP_COUNT;
+
 
   const registry = await loadSourceRegistry();
 
