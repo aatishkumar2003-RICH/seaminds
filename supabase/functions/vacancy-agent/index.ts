@@ -37,12 +37,22 @@ const RSS_FEEDS = [
 
 const TELEGRAM_CHANNELS = ['offshorevacancies', 'seafarersvacancies', 'marinemanjobs', 'craborabota', 'seabordjobs', 'marinejobbangladesh'];
 
+let runStats: { sources: { source: string; items: number }[]; errors: string[] } = { sources: [], errors: [] };
+function noteSource(source: string, items: any[]): any[] {
+  runStats.sources.push({ source, items: items.length });
+  return items;
+}
+function noteError(source: string, err: unknown): any[] {
+  runStats.errors.push(`${source}: ${String(err).substring(0, 100)}`);
+  return [];
+}
+
 async function fetchGoogleJobs(query: string): Promise<any[]> {
   try {
     const url = `https://serpapi.com/search.json?engine=google_jobs&q=${encodeURIComponent(query)}&api_key=${SERPAPI_KEY}&num=10`;
     const res = await fetch(url);
     const data = await res.json();
-    return (data.jobs_results || []).slice(0, 5).map((j: any) => ({
+    return noteSource('GoogleJobs', (data.jobs_results || []).slice(0, 10).map((j: any) => ({
       title: j.title,
       company: j.company_name,
       location: j.location,
@@ -51,8 +61,8 @@ async function fetchGoogleJobs(query: string): Promise<any[]> {
       contact_email: j.apply_options?.find((o: any) => 
         o.link?.includes('mailto:'))?.link?.replace('mailto:','') || null,
       source_name: j.via || null,
-    }));
-  } catch { return []; }
+    })));
+  } catch (err) { return noteError('GoogleJobs', err); }
 }
 
 async function fetchRSS(url: string): Promise<any[]> {
@@ -69,8 +79,8 @@ async function fetchRSS(url: string): Promise<any[]> {
       const pubDate = content.match(/<pubDate[^>]*>(.*?)<\/pubDate>/)?.[1]?.trim() || '';
       if (title) items.push({ title, description: desc, link, pubDate, source: url });
     }
-    return items.slice(0, 10);
-  } catch { return []; }
+    return noteSource('RSS', items.slice(0, 10));
+  } catch (err) { return noteError('RSS', err); }
 }
 
 async function fetchTelegramChannel(channel: string): Promise<any[]> {
@@ -101,11 +111,11 @@ async function fetchTelegramChannel(channel: string): Promise<any[]> {
         });
       }
     }
-    return items.slice(0, 15);
-  } catch { return []; }
+    return noteSource('TelegramChannel', items.slice(0, 40));
+  } catch (err) { return noteError('TelegramChannel', err); }
 }
 
-async function processWithAI(rawItems: any[]): Promise<any[]> {
+async function processBatch(rawItems: any[]): Promise<any[]> {
   if (!rawItems.length) return [];
   const prompt = `You are a maritime job data extractor. Extract structured vacancy data from these raw job postings. For each item, output a JSON object with these exact fields:
 - rank_required: string (e.g. "Captain", "Chief Engineer", "2nd Officer", "AB", "Cook" — use standard maritime ranks only)
@@ -131,10 +141,12 @@ IMPORTANT RULE: If apply_url is provided in the input, you MUST include it in ou
 - description: string (max 200 chars summary)
 - external_id: string (generate unique hash from title+company+port)
 
+MULTI-RANK RULE: If a single posting advertises multiple ranks (e.g. "Top 4", "Master & Chief Engineer", a list of positions), output ONE object PER RANK, each with the shared company/vessel/port/contact details. "Top 4" means Master, Chief Officer, Chief Engineer, 2nd Engineer.
+
 Return ONLY a valid JSON array. No markdown, no explanation. If an item is not a job vacancy at all, skip it.
 
 Raw items:
-${JSON.stringify(rawItems.slice(0, 20), null, 1)}`;
+${JSON.stringify(rawItems, null, 1)}`;
 
   try {
     const res = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -152,9 +164,21 @@ ${JSON.stringify(rawItems.slice(0, 20), null, 1)}`;
     const data = await res.json();
     const text = data.choices?.[0]?.message?.content || '[]';
     return JSON.parse(text.replace(/```json|```/g, '').trim());
-  } catch {
+  } catch (err) {
+    runStats.errors.push(`AI extraction: ${String(err).substring(0, 100)}`);
     return [];
   }
+}
+
+// Every raw item reaches extraction: chunk into batches of 20, one model call per batch.
+async function processWithAI(rawItems: any[]): Promise<any[]> {
+  if (!rawItems.length) return [];
+  const out: any[] = [];
+  for (let i = 0; i < rawItems.length; i += 20) {
+    const batch = await processBatch(rawItems.slice(i, i + 20));
+    if (Array.isArray(batch)) out.push(...batch);
+  }
+  return out;
 }
 
 async function enrichWithCompanyContact(companyName: string | null): Promise<{email: string|null, whatsapp: string|null, website: string|null}> {
@@ -279,8 +303,8 @@ async function scrapeSeadonna(): Promise<any[]> {
         items.push({ title, contact_email: email, contact_whatsapp: phone, apply_url: link, company_website: website, nationality_fit: ['Indian'], source_url: 'seadonna.com' });
       }
     }
-    return items.slice(0, 20);
-  } catch { return []; }
+    return noteSource('Seadonna', items.slice(0, 40));
+  } catch (err) { return noteError('Seadonna', err); }
 }
 
 // INDIA — Wasailor
@@ -302,8 +326,8 @@ async function scrapeWasailor(): Promise<any[]> {
         items.push({ title, contact_whatsapp: whatsapp, contact_email: email, company_website: website, nationality_fit: ['Indian'], source_url: 'wasailor.com' });
       }
     }
-    return items.slice(0, 20);
-  } catch { return []; }
+    return noteSource('Wasailor', items.slice(0, 40));
+  } catch (err) { return noteError('Wasailor', err); }
 }
 
 // INDIA — SeaJob.net
@@ -324,8 +348,8 @@ async function scrapeSeaJobNet(): Promise<any[]> {
         items.push({ title: cells[0], vessel_type: cells[1] || null, contact_email: email, company_website: website, nationality_fit: ['Indian'], source_url: 'seajob.net' });
       }
     }
-    return items.slice(0, 20);
-  } catch { return []; }
+    return noteSource('SeaJobNet', items.slice(0, 40));
+  } catch (err) { return noteError('SeaJobNet', err); }
 }
 
 // PHILIPPINES — PinoySeaman
@@ -348,8 +372,8 @@ async function scrapePinoySeaman(): Promise<any[]> {
         items.push({ title, company_name: company, contact_email: email, apply_url: link, company_website: website, nationality_fit: ['Filipino'], source_url: 'pinoyseaman.ph' });
       }
     }
-    return items.slice(0, 20);
-  } catch { return []; }
+    return noteSource('PinoySeaman', items.slice(0, 40));
+  } catch (err) { return noteError('PinoySeaman', err); }
 }
 
 // PHILIPPINES — SeamanJobSite
@@ -371,8 +395,8 @@ async function scrapeSeamanJobSite(): Promise<any[]> {
         items.push({ title, company_name: company, apply_url: link, company_website: website, nationality_fit: ['Filipino'], source_url: 'seamanjobsite.workabroad.ph' });
       }
     }
-    return items.slice(0, 20);
-  } catch { return []; }
+    return noteSource('SeamanJobSite', items.slice(0, 40));
+  } catch (err) { return noteError('SeamanJobSite', err); }
 }
 
 // PHILIPPINES — POEA/DMW Official Job Orders (Government database)
@@ -390,8 +414,8 @@ async function scrapePOEA(): Promise<any[]> {
         items.push({ title: cells[0], company_name: cells[1] || null, joining_port: 'Manila', nationality_fit: ['Filipino'], source_url: 'dmw.gov.ph', quality_score: 90 });
       }
     }
-    return items.slice(0, 20);
-  } catch { return []; }
+    return noteSource('POEA', items.slice(0, 40));
+  } catch (err) { return noteError('POEA', err); }
 }
 
 // INDONESIA — Pelaut.com (Indonesian seafarer portal)
@@ -413,8 +437,8 @@ async function scrapePelaut(): Promise<any[]> {
         items.push({ title, company_name: company, apply_url: link, company_website: website, nationality_fit: ['Indonesian'], source_url: 'pelaut.com' });
       }
     }
-    return items.slice(0, 20);
-  } catch { return []; }
+    return noteSource('Pelaut', items.slice(0, 40));
+  } catch (err) { return noteError('Pelaut', err); }
 }
 
 // INDONESIA — Kapal.co.id
@@ -437,8 +461,8 @@ async function scrapeKapal(): Promise<any[]> {
         items.push({ title, contact_email: email, contact_whatsapp: phone, apply_url: link, company_website: website, nationality_fit: ['Indonesian'], source_url: 'kapal.co.id' });
       }
     }
-    return items.slice(0, 20);
-  } catch { return []; }
+    return noteSource('Kapal', items.slice(0, 40));
+  } catch (err) { return noteError('Kapal', err); }
 }
 
 // UKRAINE — CrewBoard (Ukrainian manning portal)
@@ -460,8 +484,8 @@ async function scrapeCrewBoard(): Promise<any[]> {
         items.push({ title: cells[0], vessel_type: cells[1] || null, company_name: cells[2] || null, contact_email: email, apply_url: link, company_website: website, nationality_fit: ['Ukrainian'], source_url: 'crewboard.net' });
       }
     }
-    return items.slice(0, 20);
-  } catch { return []; }
+    return noteSource('CrewBoard', items.slice(0, 40));
+  } catch (err) { return noteError('CrewBoard', err); }
 }
 
 // UKRAINE — MarineTraffic Jobs / Moryak.info
@@ -485,8 +509,8 @@ async function scrapeMoryak(): Promise<any[]> {
         items.push({ title, company_name: company, contact_email: email, apply_url: link, company_website: website, nationality_fit: ['Ukrainian'], source_url: 'moryak.info' });
       }
     }
-    return items.slice(0, 20);
-  } catch { return []; }
+    return noteSource('Moryak', items.slice(0, 40));
+  } catch (err) { return noteError('Moryak', err); }
 }
 
 // BANGLADESH — MarineJob BD
@@ -509,8 +533,8 @@ async function scrapeMarineJobBD(): Promise<any[]> {
         items.push({ title, contact_email: email, contact_whatsapp: phone, apply_url: link, company_website: website, nationality_fit: ['Bangladeshi'], source_url: 'marinejobbd.com' });
       }
     }
-    return items.slice(0, 20);
-  } catch { return []; }
+    return noteSource('MarineJobBD', items.slice(0, 40));
+  } catch (err) { return noteError('MarineJobBD', err); }
 }
 
 // MYANMAR — Myanmar Seafarer Portal
@@ -532,8 +556,8 @@ async function scrapeMyanmar(): Promise<any[]> {
         items.push({ title, company_name: company, apply_url: link, company_website: website, nationality_fit: ['Myanmar'], source_url: 'myanmarseafarers.org' });
       }
     }
-    return items.slice(0, 20);
-  } catch { return []; }
+    return noteSource('Myanmar', items.slice(0, 40));
+  } catch (err) { return noteError('Myanmar', err); }
 }
 
 // GLOBAL — CrewLink Maritime
@@ -555,8 +579,8 @@ async function scrapeCrewLink(): Promise<any[]> {
         items.push({ title, company_name: company, apply_url: link, company_website: website, nationality_fit: [], source_url: 'crewlink.com' });
       }
     }
-    return items.slice(0, 20);
-  } catch { return []; }
+    return noteSource('CrewLink', items.slice(0, 40));
+  } catch (err) { return noteError('CrewLink', err); }
 }
 
 // MarineInsight Jobs — always has email
@@ -576,8 +600,8 @@ async function scrapeMarineInsightJobs(): Promise<any[]> {
       const link = c.match(/href="([^"]*jobs\.marineinsight[^"]*)"/)?.[1] || null;
       if (title) items.push({ title, company_name: company, contact_email: email, apply_url: link, source_url: 'jobs.marineinsight.com' });
     }
-    return items.slice(0, 15);
-  } catch { return []; }
+    return noteSource('MarineInsightJobs', items.slice(0, 40));
+  } catch (err) { return noteError('MarineInsightJobs', err); }
 }
 
 // GLOAP.net — Russian/global, always has email
@@ -599,8 +623,8 @@ async function scrapeGloap(): Promise<any[]> {
         items.push({ title, contact_email: email, contact_whatsapp: phone, salary_text: salary, source_url: 'gloap.net' });
       }
     }
-    return items.slice(0, 15);
-  } catch { return []; }
+    return noteSource('Gloap', items.slice(0, 40));
+  } catch (err) { return noteError('Gloap', err); }
 }
 
 // OceanCrew.org — always has apply email
@@ -620,8 +644,8 @@ async function scrapeOceanCrew(): Promise<any[]> {
       const company = c.match(/class="[^"]*employer[^"]*"[^>]*>([^<]{3,60})</)?.[1]?.trim() || null;
       if (title) items.push({ title, company_name: company, contact_email: email, apply_url: link, source_url: 'oceancrew.org' });
     }
-    return items.slice(0, 15);
-  } catch { return []; }
+    return noteSource('OceanCrew', items.slice(0, 40));
+  } catch (err) { return noteError('OceanCrew', err); }
 }
 
 Deno.serve(async (req) => {
@@ -643,16 +667,19 @@ Deno.serve(async (req) => {
 
 
   const startTime = Date.now();
-  const stats = { google: 0, rss: 0, telegram: 0, saved: 0, errors: [] as string[] };
+  runStats = { sources: [], errors: [] };
+  const stats = { google: 0, rss: 0, telegram: 0, saved: 0, errors: runStats.errors, sources: runStats.sources };
   const GROUP_COUNT = 5;
-  const group = Number(new URL(req.url).searchParams.get('group') ??
-                (Math.floor(Date.now() / (2 * 60 * 60 * 1000)) % GROUP_COUNT));
+  const groupParam = new URL(req.url).searchParams.get('group');
+  const group = groupParam !== null && groupParam !== ''
+    ? Number(groupParam)
+    : Math.floor(Date.now() / (3 * 60 * 60 * 1000)) % GROUP_COUNT;
 
   try {
     if (group === 0) {
     // 1. Google Jobs via SerpAPI
     const googleRaw: any[] = [];
-    for (const query of MARITIME_QUERIES.slice(0, 8)) {
+    for (const query of MARITIME_QUERIES) {
       const results = await fetchGoogleJobs(query);
       googleRaw.push(...results.map(j => ({
         title: j.title, company: j.company_name, location: j.location,
@@ -800,7 +827,7 @@ Deno.serve(async (req) => {
       ${jobListHtml}
     </table>
     ${matchingJobs.length > 5 ? `<p style="color:#6b7280;font-size:13px">+ ${matchingJobs.length - 5} more positions</p>` : ''}
-    <a href="https://seaminds.lovable.app" style="display:inline-block;background:#D4AF37;color:#0a1628;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin:16px 0">View All Jobs →</a>
+    <a href="https://seaminds.life" style="display:inline-block;background:#D4AF37;color:#0a1628;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin:16px 0">View All Jobs →</a>
     <p style="color:#9ca3af;font-size:12px;margin-top:20px">You're receiving this because you're marked as available on SeaMinds.</p>
   </div>
 </div>`;
