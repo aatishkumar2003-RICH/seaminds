@@ -667,16 +667,19 @@ Deno.serve(async (req) => {
 
 
   const startTime = Date.now();
-  const stats = { google: 0, rss: 0, telegram: 0, saved: 0, errors: [] as string[] };
+  runStats = { sources: [], errors: [] };
+  const stats = { google: 0, rss: 0, telegram: 0, saved: 0, errors: runStats.errors, sources: runStats.sources };
   const GROUP_COUNT = 5;
-  const group = Number(new URL(req.url).searchParams.get('group') ??
-                (Math.floor(Date.now() / (2 * 60 * 60 * 1000)) % GROUP_COUNT));
+  const groupParam = new URL(req.url).searchParams.get('group');
+  const group = groupParam !== null && groupParam !== ''
+    ? Number(groupParam)
+    : Math.floor(Date.now() / (3 * 60 * 60 * 1000)) % GROUP_COUNT;
 
   try {
     if (group === 0) {
     // 1. Google Jobs via SerpAPI
     const googleRaw: any[] = [];
-    for (const query of MARITIME_QUERIES.slice(0, 8)) {
+    for (const query of MARITIME_QUERIES) {
       const results = await fetchGoogleJobs(query);
       googleRaw.push(...results.map(j => ({
         title: j.title, company: j.company_name, location: j.location,
