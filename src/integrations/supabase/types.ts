@@ -3384,6 +3384,7 @@ export type Database = {
       get_my_credit_balance: { Args: never; Returns: Json }
       get_my_fleet: { Args: never; Returns: Json }
       get_my_referral_stats: { Args: never; Returns: Json }
+      get_my_safety_reports: { Args: never; Returns: Json }
       get_my_sos_contacts: { Args: never; Returns: Json }
       get_public_ticker_stats: { Args: never; Returns: Json }
       get_social_pulse: { Args: never; Returns: Json }
@@ -3412,6 +3413,10 @@ export type Database = {
           p_contract_months?: number
           p_joining_date?: string
         }
+        Returns: Json
+      }
+      manager_update_safety_status: {
+        Args: { p_id: string; p_status: string }
         Returns: Json
       }
       marketing_pack_daily: { Args: never; Returns: string }
