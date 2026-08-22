@@ -1,4 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { crawlTarget, isBlockedUrl } from '../_shared/crawlTargets.ts';
+
 
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL')!,
@@ -38,9 +40,12 @@ const RSS_FEEDS = [
 
 const TELEGRAM_CHANNELS = ['offshorevacancies', 'seafarersvacancies', 'marinemanjobs', 'craborabota', 'seabordjobs', 'marinejobbangladesh'];
 
-type RegistrySource = { id: string; kind: string; value: string };
+type RegistrySource = { id: string; kind: string; value: string; url?: string | null; method?: string | null };
 
-// Loads the data-driven source registry; never throws, always yields usable lists.
+export type CareerTarget = { id: string; url: string; method: string; label?: string | null };
+
+// Loads the data-driven source registry; never throws.
+// Hardcoded arrays are used ONLY when the registry query errors — never when it legitimately returns zero active rows.
 async function loadSourceRegistry(): Promise<{
   queries: { value: string; id: string | null }[];
   feeds: { value: string; id: string | null }[];
@@ -53,21 +58,38 @@ async function loadSourceRegistry(): Promise<{
   };
   try {
     const { data, error } = await supabase.from('vacancy_sources').select('*').eq('active', true);
-    if (error || !data || !data.length) return fb;
+    if (error || !data) return fb;
     const rows = data as RegistrySource[];
     const pick = (kind: string) => rows.filter(r => r.kind === kind).map(r => ({ value: r.value, id: r.id }));
-    const queries = pick('serp_query');
-    const feeds = pick('rss');
-    const channels = pick('telegram_channel');
     return {
-      queries: queries.length ? queries : fb.queries,
-      feeds: feeds.length ? feeds : fb.feeds,
-      channels: channels.length ? channels : fb.channels,
+      queries: pick('serp_query'),
+      feeds: pick('rss'),
+      channels: pick('telegram_channel'),
     };
   } catch (_e) {
     return fb;
   }
 }
+
+// Career-page targets rotate: oldest (or never) run first, 12 per run.
+async function loadCareerTargets(): Promise<CareerTarget[]> {
+  try {
+    const { data, error } = await supabase
+      .from('vacancy_sources')
+      .select('id, value, url, method, label')
+      .eq('kind', 'career_page')
+      .eq('active', true)
+      .order('last_run_at', { ascending: true, nullsFirst: true })
+      .limit(12);
+    if (error || !data) return [];
+    return (data as any[])
+      .map(r => ({ id: r.id, url: (r.url || r.value || '').trim(), method: r.method || 'auto', label: r.label }))
+      .filter(r => /^https?:\/\//i.test(r.url));
+  } catch (_e) {
+    return [];
+  }
+}
+
 
 // Best-effort health tracking on the registry row.
 async function markSourceResult(id: string | null, count: number | null, err?: unknown) {
@@ -79,14 +101,18 @@ async function markSourceResult(id: string | null, count: number | null, err?: u
         .eq('id', id);
     } else {
       const { data } = await supabase.from('vacancy_sources').select('consecutive_failures').eq('id', id).maybeSingle();
+      const failures = ((data as any)?.consecutive_failures ?? 0) + 1;
       await supabase.from('vacancy_sources')
         .update({
           last_run_at: new Date().toISOString(),
+          last_items: count ?? 0,
           last_error: String(err).substring(0, 300),
-          consecutive_failures: ((data as any)?.consecutive_failures ?? 0) + 1,
+          consecutive_failures: failures,
+          ...(failures >= 8 ? { active: false } : {}),
         })
         .eq('id', id);
     }
+
   } catch (_e) { /* registry problems never stop a run */ }
 }
 
@@ -722,12 +748,15 @@ Deno.serve(async (req) => {
 
   const startTime = Date.now();
   runStats = { sources: [], errors: [] };
-  const stats = { google: 0, rss: 0, telegram: 0, saved: 0, errors: runStats.errors, sources: runStats.sources };
-  const GROUP_COUNT = 5;
+  const stats = { google: 0, rss: 0, telegram: 0, career_pages: 0, saved: 0, errors: runStats.errors, sources: runStats.sources };
+  const GROUP_COUNT = 6;
   const groupParam = new URL(req.url).searchParams.get('group');
-  const group = groupParam !== null && groupParam !== ''
-    ? Number(groupParam)
+  const parsedGroup = groupParam !== null && groupParam !== '' ? Number(groupParam) : NaN;
+  // An explicit ?group= always wins; otherwise rotate every 3 hours.
+  const group = Number.isFinite(parsedGroup)
+    ? ((Math.trunc(parsedGroup) % GROUP_COUNT) + GROUP_COUNT) % GROUP_COUNT
     : Math.floor(Date.now() / (3 * 60 * 60 * 1000)) % GROUP_COUNT;
+
 
   const registry = await loadSourceRegistry();
 
@@ -832,7 +861,55 @@ Deno.serve(async (req) => {
     }
     }
 
-    stats.saved += stats.google + stats.rss + stats.telegram;
+    if (group === 5) {
+    // 6. Generic career pages / job boards from the registry
+    const targets = await loadCareerTargets();
+    const careerStructured: any[] = [];
+    const careerRawText: any[] = [];
+    for (const t of targets) {
+      if (isBlockedUrl(t.url)) {
+        runStats.sources.push({ source: `career:skipped:${t.url.substring(0, 60)}`, items: 0 });
+        await markSourceResult(t.id, 0, 'skipped: domain prohibits crawling');
+        continue;
+      }
+      const res = await crawlTarget(t.url, t.method || 'auto');
+      runStats.sources.push({ source: `career:${res.method_used}:${t.url.substring(0, 60)}`, items: res.items.length });
+      if (res.method_used === 'failed' || res.items.length === 0) {
+        await markSourceResult(t.id, res.items.length, res.note || 'no items');
+      } else {
+        await markSourceResult(t.id, res.items.length);
+      }
+      if (res.method_used === 'html') {
+        careerRawText.push(...res.items);
+      } else {
+        for (const j of res.items) {
+          if (!j.title) continue;
+          careerStructured.push({
+            title: j.title,
+            rank_required: j.title,
+            company_name: j.org || null,
+            joining_port: j.location || null,
+            apply_url: j.url || t.url,
+            description: j.description || null,
+            contract_duration: j.employmentType || null,
+            source_posted_at: /^\d{4}-\d{2}-\d{2}$/.test(j.datePosted || '') ? j.datePosted : null,
+            quality_score: 55,
+          });
+        }
+      }
+      await new Promise(r => setTimeout(r, 400));
+    }
+    if (careerStructured.length) {
+      stats.career_pages += await saveVacancies(careerStructured, 'career_page');
+    }
+    if (careerRawText.length) {
+      const processed = await processWithAI(careerRawText);
+      stats.career_pages += await saveVacancies(processed, 'career_page');
+    }
+    }
+
+    stats.saved += stats.google + stats.rss + stats.telegram + stats.career_pages;
+
 
     // Email notifications to available crew with matching ranks
     let emailsSent = 0;
