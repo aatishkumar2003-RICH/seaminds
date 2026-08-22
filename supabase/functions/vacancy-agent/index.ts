@@ -37,12 +37,22 @@ const RSS_FEEDS = [
 
 const TELEGRAM_CHANNELS = ['offshorevacancies', 'seafarersvacancies', 'marinemanjobs', 'craborabota', 'seabordjobs', 'marinejobbangladesh'];
 
+let runStats: { sources: { source: string; items: number }[]; errors: string[] } = { sources: [], errors: [] };
+function noteSource(source: string, items: any[]): any[] {
+  runStats.sources.push({ source, items: items.length });
+  return items;
+}
+function noteError(source: string, err: unknown): any[] {
+  runStats.errors.push(`${source}: ${String(err).substring(0, 100)}`);
+  return [];
+}
+
 async function fetchGoogleJobs(query: string): Promise<any[]> {
   try {
     const url = `https://serpapi.com/search.json?engine=google_jobs&q=${encodeURIComponent(query)}&api_key=${SERPAPI_KEY}&num=10`;
     const res = await fetch(url);
     const data = await res.json();
-    return (data.jobs_results || []).slice(0, 5).map((j: any) => ({
+    return noteSource('GoogleJobs', (data.jobs_results || []).slice(0, 10).map((j: any) => ({
       title: j.title,
       company: j.company_name,
       location: j.location,
@@ -51,8 +61,8 @@ async function fetchGoogleJobs(query: string): Promise<any[]> {
       contact_email: j.apply_options?.find((o: any) => 
         o.link?.includes('mailto:'))?.link?.replace('mailto:','') || null,
       source_name: j.via || null,
-    }));
-  } catch { return []; }
+    })));
+  } catch (err) { return noteError('GoogleJobs', err); }
 }
 
 async function fetchRSS(url: string): Promise<any[]> {
@@ -70,7 +80,7 @@ async function fetchRSS(url: string): Promise<any[]> {
       if (title) items.push({ title, description: desc, link, pubDate, source: url });
     }
     return items.slice(0, 10);
-  } catch { return []; }
+  } catch (err) { return noteError('RSS', err); }
 }
 
 async function fetchTelegramChannel(channel: string): Promise<any[]> {
@@ -101,8 +111,8 @@ async function fetchTelegramChannel(channel: string): Promise<any[]> {
         });
       }
     }
-    return items.slice(0, 15);
-  } catch { return []; }
+    return noteSource('TelegramChannel', items.slice(0, 40));
+  } catch (err) { return noteError('TelegramChannel', err); }
 }
 
 async function processWithAI(rawItems: any[]): Promise<any[]> {
@@ -279,8 +289,8 @@ async function scrapeSeadonna(): Promise<any[]> {
         items.push({ title, contact_email: email, contact_whatsapp: phone, apply_url: link, company_website: website, nationality_fit: ['Indian'], source_url: 'seadonna.com' });
       }
     }
-    return items.slice(0, 20);
-  } catch { return []; }
+    return noteSource('Seadonna', items.slice(0, 40));
+  } catch (err) { return noteError('Seadonna', err); }
 }
 
 // INDIA — Wasailor
@@ -302,8 +312,8 @@ async function scrapeWasailor(): Promise<any[]> {
         items.push({ title, contact_whatsapp: whatsapp, contact_email: email, company_website: website, nationality_fit: ['Indian'], source_url: 'wasailor.com' });
       }
     }
-    return items.slice(0, 20);
-  } catch { return []; }
+    return noteSource('Wasailor', items.slice(0, 40));
+  } catch (err) { return noteError('Wasailor', err); }
 }
 
 // INDIA — SeaJob.net
@@ -324,8 +334,8 @@ async function scrapeSeaJobNet(): Promise<any[]> {
         items.push({ title: cells[0], vessel_type: cells[1] || null, contact_email: email, company_website: website, nationality_fit: ['Indian'], source_url: 'seajob.net' });
       }
     }
-    return items.slice(0, 20);
-  } catch { return []; }
+    return noteSource('SeaJobNet', items.slice(0, 40));
+  } catch (err) { return noteError('SeaJobNet', err); }
 }
 
 // PHILIPPINES — PinoySeaman
@@ -348,8 +358,8 @@ async function scrapePinoySeaman(): Promise<any[]> {
         items.push({ title, company_name: company, contact_email: email, apply_url: link, company_website: website, nationality_fit: ['Filipino'], source_url: 'pinoyseaman.ph' });
       }
     }
-    return items.slice(0, 20);
-  } catch { return []; }
+    return noteSource('PinoySeaman', items.slice(0, 40));
+  } catch (err) { return noteError('PinoySeaman', err); }
 }
 
 // PHILIPPINES — SeamanJobSite
@@ -371,8 +381,8 @@ async function scrapeSeamanJobSite(): Promise<any[]> {
         items.push({ title, company_name: company, apply_url: link, company_website: website, nationality_fit: ['Filipino'], source_url: 'seamanjobsite.workabroad.ph' });
       }
     }
-    return items.slice(0, 20);
-  } catch { return []; }
+    return noteSource('SeamanJobSite', items.slice(0, 40));
+  } catch (err) { return noteError('SeamanJobSite', err); }
 }
 
 // PHILIPPINES — POEA/DMW Official Job Orders (Government database)
@@ -390,8 +400,8 @@ async function scrapePOEA(): Promise<any[]> {
         items.push({ title: cells[0], company_name: cells[1] || null, joining_port: 'Manila', nationality_fit: ['Filipino'], source_url: 'dmw.gov.ph', quality_score: 90 });
       }
     }
-    return items.slice(0, 20);
-  } catch { return []; }
+    return noteSource('POEA', items.slice(0, 40));
+  } catch (err) { return noteError('POEA', err); }
 }
 
 // INDONESIA — Pelaut.com (Indonesian seafarer portal)
@@ -413,8 +423,8 @@ async function scrapePelaut(): Promise<any[]> {
         items.push({ title, company_name: company, apply_url: link, company_website: website, nationality_fit: ['Indonesian'], source_url: 'pelaut.com' });
       }
     }
-    return items.slice(0, 20);
-  } catch { return []; }
+    return noteSource('Pelaut', items.slice(0, 40));
+  } catch (err) { return noteError('Pelaut', err); }
 }
 
 // INDONESIA — Kapal.co.id
@@ -437,8 +447,8 @@ async function scrapeKapal(): Promise<any[]> {
         items.push({ title, contact_email: email, contact_whatsapp: phone, apply_url: link, company_website: website, nationality_fit: ['Indonesian'], source_url: 'kapal.co.id' });
       }
     }
-    return items.slice(0, 20);
-  } catch { return []; }
+    return noteSource('Kapal', items.slice(0, 40));
+  } catch (err) { return noteError('Kapal', err); }
 }
 
 // UKRAINE — CrewBoard (Ukrainian manning portal)
@@ -460,8 +470,8 @@ async function scrapeCrewBoard(): Promise<any[]> {
         items.push({ title: cells[0], vessel_type: cells[1] || null, company_name: cells[2] || null, contact_email: email, apply_url: link, company_website: website, nationality_fit: ['Ukrainian'], source_url: 'crewboard.net' });
       }
     }
-    return items.slice(0, 20);
-  } catch { return []; }
+    return noteSource('CrewBoard', items.slice(0, 40));
+  } catch (err) { return noteError('CrewBoard', err); }
 }
 
 // UKRAINE — MarineTraffic Jobs / Moryak.info
@@ -485,8 +495,8 @@ async function scrapeMoryak(): Promise<any[]> {
         items.push({ title, company_name: company, contact_email: email, apply_url: link, company_website: website, nationality_fit: ['Ukrainian'], source_url: 'moryak.info' });
       }
     }
-    return items.slice(0, 20);
-  } catch { return []; }
+    return noteSource('Moryak', items.slice(0, 40));
+  } catch (err) { return noteError('Moryak', err); }
 }
 
 // BANGLADESH — MarineJob BD
@@ -509,8 +519,8 @@ async function scrapeMarineJobBD(): Promise<any[]> {
         items.push({ title, contact_email: email, contact_whatsapp: phone, apply_url: link, company_website: website, nationality_fit: ['Bangladeshi'], source_url: 'marinejobbd.com' });
       }
     }
-    return items.slice(0, 20);
-  } catch { return []; }
+    return noteSource('MarineJobBD', items.slice(0, 40));
+  } catch (err) { return noteError('MarineJobBD', err); }
 }
 
 // MYANMAR — Myanmar Seafarer Portal
@@ -532,8 +542,8 @@ async function scrapeMyanmar(): Promise<any[]> {
         items.push({ title, company_name: company, apply_url: link, company_website: website, nationality_fit: ['Myanmar'], source_url: 'myanmarseafarers.org' });
       }
     }
-    return items.slice(0, 20);
-  } catch { return []; }
+    return noteSource('Myanmar', items.slice(0, 40));
+  } catch (err) { return noteError('Myanmar', err); }
 }
 
 // GLOBAL — CrewLink Maritime
@@ -555,8 +565,8 @@ async function scrapeCrewLink(): Promise<any[]> {
         items.push({ title, company_name: company, apply_url: link, company_website: website, nationality_fit: [], source_url: 'crewlink.com' });
       }
     }
-    return items.slice(0, 20);
-  } catch { return []; }
+    return noteSource('CrewLink', items.slice(0, 40));
+  } catch (err) { return noteError('CrewLink', err); }
 }
 
 // MarineInsight Jobs — always has email
@@ -576,8 +586,8 @@ async function scrapeMarineInsightJobs(): Promise<any[]> {
       const link = c.match(/href="([^"]*jobs\.marineinsight[^"]*)"/)?.[1] || null;
       if (title) items.push({ title, company_name: company, contact_email: email, apply_url: link, source_url: 'jobs.marineinsight.com' });
     }
-    return items.slice(0, 15);
-  } catch { return []; }
+    return noteSource('MarineInsightJobs', items.slice(0, 40));
+  } catch (err) { return noteError('MarineInsightJobs', err); }
 }
 
 // GLOAP.net — Russian/global, always has email
@@ -599,8 +609,8 @@ async function scrapeGloap(): Promise<any[]> {
         items.push({ title, contact_email: email, contact_whatsapp: phone, salary_text: salary, source_url: 'gloap.net' });
       }
     }
-    return items.slice(0, 15);
-  } catch { return []; }
+    return noteSource('Gloap', items.slice(0, 40));
+  } catch (err) { return noteError('Gloap', err); }
 }
 
 // OceanCrew.org — always has apply email
@@ -620,8 +630,8 @@ async function scrapeOceanCrew(): Promise<any[]> {
       const company = c.match(/class="[^"]*employer[^"]*"[^>]*>([^<]{3,60})</)?.[1]?.trim() || null;
       if (title) items.push({ title, company_name: company, contact_email: email, apply_url: link, source_url: 'oceancrew.org' });
     }
-    return items.slice(0, 15);
-  } catch { return []; }
+    return noteSource('OceanCrew', items.slice(0, 40));
+  } catch (err) { return noteError('OceanCrew', err); }
 }
 
 Deno.serve(async (req) => {
