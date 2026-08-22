@@ -213,6 +213,22 @@ const ManagerDashboard = () => {
     if (companyName) { loadApplicants(); loadFleet(); }
   }, [companyName]);
 
+  // Crew overview is built from the linked fleet (crew_profiles is not readable by managers)
+  useEffect(() => {
+    const crew = fleet?.ok ? (fleet.crew || []) : [];
+    setCrewRows(
+      crew.map((c) => ({
+        id: c.link_id,
+        firstName: c.name,
+        lastName: "",
+        role: c.rank,
+        shipName: c.contract_end ? "On contract" : "—",
+        voyageDays: 0,
+      }))
+    );
+  }, [fleet]);
+
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
