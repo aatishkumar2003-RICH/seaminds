@@ -1,4 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { crawlTarget, isBlockedUrl } from '../_shared/crawlTargets.ts';
+
 
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL')!,
