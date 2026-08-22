@@ -62,6 +62,7 @@ const ManagerDashboard = () => {
   const navigate = useNavigate();
   const [companyName, setCompanyName] = useState("");
   const [crewRows, setCrewRows] = useState<CrewRow[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [sortKey, setSortKey] = useState<SortKey>("shipName");
   const [sortAsc, setSortAsc] = useState(true);
