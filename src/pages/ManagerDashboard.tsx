@@ -653,7 +653,9 @@ const ManagerDashboard = () => {
                                 value={report.status}
                                 onChange={async (e) => {
                                   const newStatus = e.target.value;
-                                  await supabase.from("safety_reports").update({ status: newStatus }).eq("id", report.id);
+                                  const { data, error } = await supabase.rpc("manager_update_safety_status" as any, { p_id: report.id, p_status: newStatus });
+                                  const res = data as unknown as { ok?: boolean } | null;
+                                  if (error || !res?.ok) { toast.error("Could not update this report"); return; }
                                   setSafetyReports((prev) => prev.map((r) => r.id === report.id ? { ...r, status: newStatus } : r));
                                 }}
                                 className="bg-secondary text-foreground text-xs rounded-lg px-2 py-1 border border-border"
