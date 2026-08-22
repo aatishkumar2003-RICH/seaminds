@@ -141,10 +141,12 @@ IMPORTANT RULE: If apply_url is provided in the input, you MUST include it in ou
 - description: string (max 200 chars summary)
 - external_id: string (generate unique hash from title+company+port)
 
+MULTI-RANK RULE: If a single posting advertises multiple ranks (e.g. "Top 4", "Master & Chief Engineer", a list of positions), output ONE object PER RANK, each with the shared company/vessel/port/contact details. "Top 4" means Master, Chief Officer, Chief Engineer, 2nd Engineer.
+
 Return ONLY a valid JSON array. No markdown, no explanation. If an item is not a job vacancy at all, skip it.
 
 Raw items:
-${JSON.stringify(rawItems.slice(0, 20), null, 1)}`;
+${JSON.stringify(rawItems, null, 1)}`;
 
   try {
     const res = await fetch('https://api.openai.com/v1/chat/completions', {
