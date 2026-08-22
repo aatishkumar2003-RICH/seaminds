@@ -99,14 +99,18 @@ async function markSourceResult(id: string | null, count: number | null, err?: u
         .eq('id', id);
     } else {
       const { data } = await supabase.from('vacancy_sources').select('consecutive_failures').eq('id', id).maybeSingle();
+      const failures = ((data as any)?.consecutive_failures ?? 0) + 1;
       await supabase.from('vacancy_sources')
         .update({
           last_run_at: new Date().toISOString(),
+          last_items: count ?? 0,
           last_error: String(err).substring(0, 300),
-          consecutive_failures: ((data as any)?.consecutive_failures ?? 0) + 1,
+          consecutive_failures: failures,
+          ...(failures >= 8 ? { active: false } : {}),
         })
         .eq('id', id);
     }
+
   } catch (_e) { /* registry problems never stop a run */ }
 }
 
