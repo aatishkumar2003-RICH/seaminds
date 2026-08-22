@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TrendingUp, ExternalLink } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SubScore {
   name: string;
@@ -17,59 +18,35 @@ interface SMCScoreData {
   certificateId: string;
 }
 
-const DEMO_DATA: SMCScoreData = {
-  overallScore: 4.21,
-  subScores: [
-    { name: "🔧 Technical Competence", score: 4.42 },
-    { name: "📄 Experience Integrity", score: 4.31 },
-    { name: "🗣️ Communication Ability", score: 3.89 },
-    { name: "🧠 Behavioural Profile", score: 4.05 },
-    { name: "💚 Wellness Consistency", score: 4.20 },
-  ],
-  crewName: "Rajan Kumar",
-  rank: "Chief Officer",
-  vesselType: "Tanker",
-  assessmentDate: "2026-02-22",
-  expiryDate: "2028-02-22",
-  certificateId: "SMC-421-CO-2026",
-};
-
-function getScoreBand(score: number) {
-  if (score >= 4.50) return { stars: "⭐⭐⭐⭐⭐", label: "ELITE", color: "#D4AF37" };
-  if (score >= 4.00) return { stars: "⭐⭐⭐⭐", label: "EXPERT", color: "#C0C0C0" };
-  if (score >= 3.50) return { stars: "⭐⭐⭐", label: "COMPETENT+", color: "#34D399" };
-  if (score >= 3.00) return { stars: "⭐⭐⭐", label: "COMPETENT", color: "#34D399" };
-  if (score >= 2.00) return { stars: "⭐⭐", label: "DEVELOPING", color: "#FBBF24" };
-  return { stars: "⭐", label: "FOUNDATION", color: "#94A3B8" };
+interface CertRecord extends SMCScoreData {
+  band: string;
 }
 
-function getBandInterpretation(label: string): string {
-  const map: Record<string, string> = {
-    ELITE: "Top 5% of assessed seafarers globally — qualifies for premium salary bidding",
-    EXPERT: "Top 20% of assessed seafarers globally — qualifies for premium salary bidding",
-    "COMPETENT+": "Above average competency — eligible for enhanced contract opportunities",
-    COMPETENT: "Meets industry standard — eligible for standard contract opportunities",
-    DEVELOPING: "Building competency — recommended Academy training to improve score",
-    FOUNDATION: "Early career — complete Academy modules to build your score",
+function bandVisual(label: string) {
+  const map: Record<string, { stars: string; color: string }> = {
+    ELITE: { stars: "⭐⭐⭐⭐⭐", color: "#D4AF37" },
+    EXPERT: { stars: "⭐⭐⭐⭐", color: "#C0C0C0" },
+    "COMPETENT+": { stars: "⭐⭐⭐", color: "#34D399" },
+    COMPETENT: { stars: "⭐⭐⭐", color: "#34D399" },
+    DEVELOPING: { stars: "⭐⭐", color: "#FBBF24" },
+    FOUNDATION: { stars: "⭐", color: "#94A3B8" },
   };
-  return map[label] || "";
+  return map[(label || "").toUpperCase()] || { stars: "", color: "#94A3B8" };
 }
 
 function getBarColor(score: number) {
-  if (score >= 4.50) return "bg-primary";
-  if (score >= 4.00) return "bg-slate-300";
-  if (score >= 3.50) return "bg-emerald-400";
-  if (score >= 3.00) return "bg-emerald-400";
-  if (score >= 2.00) return "bg-amber-400";
+  if (score >= 4.5) return "bg-primary";
+  if (score >= 4.0) return "bg-slate-300";
+  if (score >= 3.0) return "bg-emerald-400";
+  if (score >= 2.0) return "bg-amber-400";
   return "bg-muted-foreground";
 }
 
 const ACADEMY_MAP: Record<string, string[]> = {
   "🔧 Technical Competence": ["SIRE 2.0 Preparation", "PSC Inspection Readiness", "Vessel Type Specifics"],
-  "📄 Experience Integrity": ["Voyage Documentation", "Sea Service Records", "Certification Updates"],
-  "🗣️ Communication Ability": ["Bridge Communication", "ISM Code Procedures", "Emergency Response Drills"],
-  "🧠 Behavioural Profile": ["Human Factors Assessment", "Fatigue Management", "Team Leadership"],
-  "💚 Wellness Consistency": ["Rest Hours Compliance", "Mental Health Awareness", "Physical Fitness"],
+  "🧭 Judgment & Decision-Making": ["Bridge Resource Management", "Emergency Response Drills", "Risk Assessment"],
+  "🗣️ Maritime English": ["Bridge Communication", "SMCP Phrases", "Report Writing"],
+  "👨‍✈️ Professional Behaviour": ["Human Factors Assessment", "Fatigue Management", "Team Leadership"],
 };
 
 interface SMCScoreCertificateProps {
@@ -77,28 +54,101 @@ interface SMCScoreCertificateProps {
   onImproveScore?: () => void;
 }
 
-const SMCScoreCertificate = ({ data = DEMO_DATA, onImproveScore }: SMCScoreCertificateProps) => {
+const SMCScoreCertificate = ({ data: hint, onImproveScore }: SMCScoreCertificateProps) => {
   const [showImprove, setShowImprove] = useState(false);
+  const [cert, setCert] = useState<CertRecord | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const band = getScoreBand(data.overallScore);
-  const lowestSub = [...data.subScores].sort((a, b) => a.score - b.score)[0];
-  const improvementTopics = ACADEMY_MAP[lowestSub.name] || [];
-  const nameIsPlaceholder = !data.crewName || data.crewName === "Complete your profile";
-  const displayName = nameIsPlaceholder ? "—" : data.crewName;
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        let q = supabase
+          .from("smc_assessments")
+          .select("id, crew_profile_id, overall_score, technical_score, judgment_score, english_score, behavioural_score, score_band, certificate_id, completed_at, status, report")
+          .eq("status", "completed")
+          .not("completed_at", "is", null)
+          .order("completed_at", { ascending: false })
+          .limit(1);
+
+        if (hint?.certificateId) {
+          q = q.eq("certificate_id", hint.certificateId);
+        } else {
+          const { data: auth } = await supabase.auth.getUser();
+          if (!auth?.user) { if (alive) { setCert(null); setLoading(false); } return; }
+          q = q.eq("crew_profile_id", auth.user.id);
+        }
+
+        const { data: rows } = await q;
+        const a: any = rows?.[0];
+        if (!a || !a.completed_at || a.overall_score == null) {
+          if (alive) { setCert(null); setLoading(false); }
+          return;
+        }
+
+        const [{ data: profile }, { data: vessels }] = await Promise.all([
+          supabase.from("crew_profiles").select("first_name, last_name, rank").eq("id", a.crew_profile_id).maybeSingle(),
+          supabase.from("crew_vessel_experience").select("vessel_family, sea_time_band").eq("crew_id", a.crew_profile_id),
+        ]);
+
+        let vesselType = (a.report?.vessel_type as string) || "";
+        if (vessels && vessels.length > 0) {
+          const ranked = await Promise.all(
+            vessels.map(async (v: any) => {
+              const { data: mid } = await supabase.rpc("band_years_midpoint" as never, { p_band: v.sea_time_band } as never);
+              return { family: v.vessel_family as string, years: Number(mid) || 0 };
+            })
+          );
+          ranked.sort((x, y) => y.years - x.years);
+          if (ranked[0]?.family) vesselType = ranked[0].family;
+        }
+
+        const completed = new Date(a.completed_at);
+        const expiry = new Date(a.completed_at);
+        expiry.setFullYear(expiry.getFullYear() + 2);
+
+        const subScores: SubScore[] = [
+          { name: "🔧 Technical Competence", score: Number(a.technical_score) || 0 },
+          { name: "🧭 Judgment & Decision-Making", score: Number(a.judgment_score) || 0 },
+          { name: "🗣️ Maritime English", score: Number(a.english_score) || 0 },
+          { name: "👨‍✈️ Professional Behaviour", score: Number(a.behavioural_score) || 0 },
+        ];
+
+        const name = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ");
+
+        if (!alive) return;
+        setCert({
+          overallScore: Number(a.overall_score),
+          subScores,
+          crewName: name,
+          rank: profile?.rank || "",
+          vesselType,
+          assessmentDate: completed.toISOString(),
+          expiryDate: expiry.toISOString(),
+          certificateId: a.certificate_id || a.id,
+          band: a.score_band || "",
+        });
+        setLoading(false);
+      } catch {
+        if (alive) { setCert(null); setLoading(false); }
+      }
+    })();
+    return () => { alive = false; };
+  }, [hint?.certificateId]);
 
   const captureAsImage = async (): Promise<string> => {
-    const { default: html2canvas } = await import('html2canvas');
-    const el = document.getElementById('smc-certificate');
-    if (!el) throw new Error('Certificate element not found');
-    const canvas = await html2canvas(el, { scale: 3, useCORS: true, backgroundColor: '#0D1B2A' });
-    return canvas.toDataURL('image/png');
+    const { default: html2canvas } = await import("html2canvas");
+    const el = document.getElementById("smc-certificate");
+    if (!el) throw new Error("Certificate element not found");
+    const canvas = await html2canvas(el, { scale: 3, useCORS: true, backgroundColor: "#0D1B2A" });
+    return canvas.toDataURL("image/png");
   };
 
   const handleDownloadPNG = async () => {
     try {
       const dataUrl = await captureAsImage();
-      const link = document.createElement('a');
-      link.download = `SeaMinds-Certificate-${data.certificateId}.png`;
+      const link = document.createElement("a");
+      link.download = `SeaMinds-Certificate-${cert?.certificateId}.png`;
       link.href = dataUrl;
       link.click();
     } catch (e) { console.error(e); }
@@ -107,25 +157,50 @@ const SMCScoreCertificate = ({ data = DEMO_DATA, onImproveScore }: SMCScoreCerti
   const handleDownloadPDF = async () => {
     try {
       const dataUrl = await captureAsImage();
-      const { jsPDF } = await import('jspdf');
-      const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: [1200, 800] });
-      pdf.addImage(dataUrl, 'PNG', 0, 0, 1200, 800);
-      pdf.save(`SeaMinds-Certificate-${data.certificateId}.pdf`);
+      const { jsPDF } = await import("jspdf");
+      const pdf = new jsPDF({ orientation: "landscape", unit: "px", format: [1200, 800] });
+      pdf.addImage(dataUrl, "PNG", 0, 0, 1200, 800);
+      pdf.save(`SeaMinds-Certificate-${cert?.certificateId}.pdf`);
     } catch (e) { console.error(e); }
   };
 
   const handleShare = async () => {
+    if (!cert) return;
     try {
       const dataUrl = await captureAsImage();
       const blob = await (await fetch(dataUrl)).blob();
-      const file = new File([blob], `SeaMinds-Certificate-${data.certificateId}.png`, { type: 'image/png' });
-      if (navigator.share && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: 'My SeaMinds Certified Score', text: `I scored ${data.overallScore} on my SeaMinds Competency Assessment as ${data.rank}.` });
+      const file = new File([blob], `SeaMinds-Certificate-${cert.certificateId}.png`, { type: "image/png" });
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: "My SeaMinds Certified Score", text: `I scored ${cert.overallScore.toFixed(2)} on my SeaMinds Competency Assessment as ${cert.rank}.` });
       } else {
         handleDownloadPNG();
       }
     } catch (e) { console.error(e); }
   };
+
+  if (loading) {
+    return (
+      <div className="p-6 text-center text-sm text-muted-foreground">Loading certificate…</div>
+    );
+  }
+
+  if (!cert) {
+    return (
+      <div className="p-6 text-center">
+        <div className="text-3xl mb-2">⚓</div>
+        <p className="text-sm font-semibold text-foreground">No completed assessment yet</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Your certificate appears here once you complete the SMC assessment.
+        </p>
+      </div>
+    );
+  }
+
+  const band = bandVisual(cert.band);
+  const lowestSub = [...cert.subScores].sort((a, b) => a.score - b.score)[0];
+  const improvementTopics = ACADEMY_MAP[lowestSub?.name] || [];
+  const verifyUrl = `https://seaminds.life/verify/${cert.certificateId}`;
+  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=0&data=${encodeURIComponent(verifyUrl)}`;
 
   if (showImprove) {
     return (
@@ -171,7 +246,7 @@ const SMCScoreCertificate = ({ data = DEMO_DATA, onImproveScore }: SMCScoreCerti
     );
   }
 
-  const subScoreLabels = ["Technical Competence", "Experience Integrity", "Communication Ability", "Behavioural Profile", "Wellness Consistency"];
+  const subScoreLabels = ["Technical Competence", "Judgment & Decision-Making", "Maritime English", "Professional Behaviour"];
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
@@ -227,10 +302,10 @@ const SMCScoreCertificate = ({ data = DEMO_DATA, onImproveScore }: SMCScoreCerti
               {/* Candidate name */}
               <div style={{ textAlign: 'center', marginBottom: '8px' }}>
                 <div style={{ fontFamily: 'Georgia, serif', fontSize: '28px', color: '#D4AF37', letterSpacing: '2px', fontWeight: 700 }}>
-                  {displayName}
+                  {cert.crewName || "—"}
                 </div>
                 <div style={{ fontSize: '12px', color: '#cbd5e1', marginTop: '4px' }}>
-                  {data.rank} • {data.vesselType}
+                  {[cert.rank, cert.vesselType].filter(Boolean).join(" • ")}
                 </div>
               </div>
 
@@ -238,26 +313,28 @@ const SMCScoreCertificate = ({ data = DEMO_DATA, onImproveScore }: SMCScoreCerti
               <div style={{ textAlign: 'center', margin: '12px 0' }}>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '12px' }}>
                   <span style={{ fontSize: '72px', fontWeight: 700, color: '#D4AF37', lineHeight: 1, letterSpacing: '-3px', textShadow: '0 0 30px rgba(212,175,55,0.3)' }}>
-                    {data.overallScore.toFixed(2)}
+                    {cert.overallScore.toFixed(2)}
                   </span>
-                  <span style={{
-                    background: band.color,
-                    color: '#0D1B2A',
-                    padding: '4px 12px',
-                    borderRadius: '6px',
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    letterSpacing: '0.1em',
-                  }}>
-                    {band.label}
-                  </span>
+                  {cert.band && (
+                    <span style={{
+                      background: band.color,
+                      color: '#0D1B2A',
+                      padding: '4px 12px',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      letterSpacing: '0.1em',
+                    }}>
+                      {cert.band}
+                    </span>
+                  )}
                 </div>
                 <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '4px' }}>{band.stars}</div>
               </div>
 
               {/* Sub-scores */}
               <div style={{ marginTop: '8px' }}>
-                {data.subScores.map((sub, i) => (
+                {cert.subScores.map((sub, i) => (
                   <div key={i} style={{ marginBottom: '6px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', marginBottom: '2px' }}>
                       <span style={{ color: '#94a3b8' }}>{subScoreLabels[i] || sub.name}</span>
@@ -273,22 +350,12 @@ const SMCScoreCertificate = ({ data = DEMO_DATA, onImproveScore }: SMCScoreCerti
 
             {/* Right column */}
             <div style={{ width: '240px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', borderLeft: '1px solid rgba(212,175,55,0.2)', paddingLeft: '30px' }}>
-              {/* AI Verification Seal */}
+              {/* QR verification */}
               <div style={{
-                width: '120px', height: '120px', borderRadius: '50%',
-                border: '2px dotted #D4AF37',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                marginBottom: '20px',
+                background: '#ffffff', padding: '8px', borderRadius: '8px', marginBottom: '14px',
+                border: '1px solid rgba(212,175,55,0.4)',
               }}>
-                <div style={{
-                  width: '96px', height: '96px', borderRadius: '50%',
-                  background: 'linear-gradient(135deg, rgba(212,175,55,0.15), rgba(212,175,55,0.05))',
-                  border: '1.5px solid #D4AF37',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <div style={{ fontSize: '28px' }}>🛡️</div>
-                  <div style={{ fontSize: '8px', fontWeight: 700, color: '#D4AF37', letterSpacing: '0.15em', marginTop: '2px' }}>AI VERIFIED</div>
-                </div>
+                <img src={qrSrc} crossOrigin="anonymous" alt={`Verify certificate ${cert.certificateId}`} style={{ width: '96px', height: '96px', display: 'block' }} />
               </div>
 
               {/* Certificate ID box */}
@@ -298,19 +365,19 @@ const SMCScoreCertificate = ({ data = DEMO_DATA, onImproveScore }: SMCScoreCerti
                 background: 'rgba(212,175,55,0.05)',
               }}>
                 <div style={{ fontSize: '8px', color: '#94a3b8', letterSpacing: '0.1em', marginBottom: '4px', textTransform: 'uppercase' as const }}>Certificate ID</div>
-                <div style={{ fontSize: '11px', fontFamily: 'monospace', color: '#D4AF37', fontWeight: 700 }}>{data.certificateId}</div>
+                <div style={{ fontSize: '11px', fontFamily: 'monospace', color: '#D4AF37', fontWeight: 700 }}>{cert.certificateId}</div>
                 <div style={{ fontSize: '8px', color: '#64748b', marginTop: '6px' }}>Verify at seaminds.life/verify</div>
               </div>
 
               {/* Details */}
               <div style={{ width: '100%', fontSize: '10px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <span style={{ color: '#64748b' }}>Assessed</span>
-                  <span style={{ color: '#cbd5e1' }}>{new Date(data.assessmentDate).toLocaleDateString()}</span>
+                  <span style={{ color: '#64748b' }}>Assessed on</span>
+                  <span style={{ color: '#cbd5e1' }}>{new Date(cert.assessmentDate).toLocaleDateString('en-GB')}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <span style={{ color: '#64748b' }}>Expires</span>
-                  <span style={{ color: '#cbd5e1' }}>{new Date(data.expiryDate).toLocaleDateString()}</span>
+                  <span style={{ color: '#64748b' }}>Valid until</span>
+                  <span style={{ color: '#cbd5e1' }}>{new Date(cert.expiryDate).toLocaleDateString('en-GB')}</span>
                 </div>
               </div>
 
@@ -335,7 +402,7 @@ const SMCScoreCertificate = ({ data = DEMO_DATA, onImproveScore }: SMCScoreCerti
         </div>
 
         {/* Name warning */}
-        {nameIsPlaceholder && (
+        {!cert.crewName && (
           <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-center">
             <p className="text-xs text-amber-400">Complete your profile to personalise this certificate</p>
           </div>
