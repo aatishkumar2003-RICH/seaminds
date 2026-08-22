@@ -729,12 +729,16 @@ Deno.serve(async (req) => {
     ? Number(groupParam)
     : Math.floor(Date.now() / (3 * 60 * 60 * 1000)) % GROUP_COUNT;
 
+  const registry = await loadSourceRegistry();
+
   try {
     if (group === 0) {
     // 1. Google Jobs via SerpAPI
     const googleRaw: any[] = [];
-    for (const query of MARITIME_QUERIES) {
-      const results = await fetchGoogleJobs(query);
+    for (const q of registry.queries) {
+      const before = runStats.errors.length;
+      const results = await fetchGoogleJobs(q.value);
+      await markSourceResult(q.id, results.length, runStats.errors.length > before ? runStats.errors[runStats.errors.length - 1] : undefined);
       googleRaw.push(...results.map(j => ({
         title: j.title, company: j.company_name, location: j.location,
         description: j.description, via: j.via, extensions: j.detected_extensions,
@@ -750,8 +754,10 @@ Deno.serve(async (req) => {
     if (group === 1) {
     // 2. RSS Feeds
     const rssRaw: any[] = [];
-    for (const feed of RSS_FEEDS) {
-      const items = await fetchRSS(feed);
+    for (const feed of registry.feeds) {
+      const before = runStats.errors.length;
+      const items = await fetchRSS(feed.value);
+      await markSourceResult(feed.id, items.length, runStats.errors.length > before ? runStats.errors[runStats.errors.length - 1] : undefined);
       rssRaw.push(...items);
     }
     const rssJobItems = rssRaw.filter(i =>
@@ -766,8 +772,10 @@ Deno.serve(async (req) => {
     if (group === 2) {
     // 3. Telegram
     const telegramRaw: any[] = [];
-    for (const ch of TELEGRAM_CHANNELS) {
-      const msgs = await fetchTelegramChannel(ch);
+    for (const ch of registry.channels) {
+      const before = runStats.errors.length;
+      const msgs = await fetchTelegramChannel(ch.value);
+      await markSourceResult(ch.id, msgs.length, runStats.errors.length > before ? runStats.errors[runStats.errors.length - 1] : undefined);
       telegramRaw.push(...msgs);
     }
     if (telegramRaw.length) {
@@ -775,6 +783,7 @@ Deno.serve(async (req) => {
       stats.telegram = await saveVacancies(processed, 'telegram');
     }
     }
+
 
     if (group === 3) {
     // 4. India + Philippines focused scraping
