@@ -164,9 +164,21 @@ ${JSON.stringify(rawItems, null, 1)}`;
     const data = await res.json();
     const text = data.choices?.[0]?.message?.content || '[]';
     return JSON.parse(text.replace(/```json|```/g, '').trim());
-  } catch {
+  } catch (err) {
+    runStats.errors.push(`AI extraction: ${String(err).substring(0, 100)}`);
     return [];
   }
+}
+
+// Every raw item reaches extraction: chunk into batches of 20, one model call per batch.
+async function processWithAI(rawItems: any[]): Promise<any[]> {
+  if (!rawItems.length) return [];
+  const out: any[] = [];
+  for (let i = 0; i < rawItems.length; i += 20) {
+    const batch = await processBatch(rawItems.slice(i, i + 20));
+    if (Array.isArray(batch)) out.push(...batch);
+  }
+  return out;
 }
 
 async function enrichWithCompanyContact(companyName: string | null): Promise<{email: string|null, whatsapp: string|null, website: string|null}> {
