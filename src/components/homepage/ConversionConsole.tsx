@@ -12,6 +12,8 @@ const GREEN = "#22c55e";
 const NAVY = "#0D1B2A";
 const PANEL = "#112240";
 const BORDER = "rgba(212,175,55,0.3)";
+const WIRE_ICON: Record<string, string> = { application: "⚓", join: "👤", score: "★" };
+
 
 type Index = { name: string; total: number; new_24h: number; direction: string; status: string };
 type Market = {
