@@ -115,7 +115,7 @@ async function fetchTelegramChannel(channel: string): Promise<any[]> {
   } catch (err) { return noteError('TelegramChannel', err); }
 }
 
-async function processWithAI(rawItems: any[]): Promise<any[]> {
+async function processBatch(rawItems: any[]): Promise<any[]> {
   if (!rawItems.length) return [];
   const prompt = `You are a maritime job data extractor. Extract structured vacancy data from these raw job postings. For each item, output a JSON object with these exact fields:
 - rank_required: string (e.g. "Captain", "Chief Engineer", "2nd Officer", "AB", "Cook" — use standard maritime ranks only)
