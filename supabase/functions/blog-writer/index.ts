@@ -364,6 +364,16 @@ Return ONLY valid JSON, no markdown fences:
     const raw = aiData.choices?.[0]?.message?.content || "";
     const parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
 
+    const footerRow = `
+<div style="border-top:1px solid rgba(212,175,55,0.3);margin-top:24px;padding-top:14px;color:#94A3B8;font-size:14px">
+  <a href="https://seaminds.life/feed" style="color:#D4AF37;text-decoration:none">Browse all live vacancies</a> ·
+  <a href="https://seaminds.life/join" style="color:#D4AF37;text-decoration:none">Create your free Sea Profile</a> ·
+  <a href="https://seaminds.life/for-companies" style="color:#D4AF37;text-decoration:none">Hire crew with AI interviews</a> ·
+  <a href="https://seaminds.life/manager" style="color:#D4AF37;text-decoration:none">Post a vacancy</a> ·
+  <a href="https://seaminds.life" style="color:#D4AF37;text-decoration:none">SeaMinds Maritime Exchange</a>
+</div>`.trim();
+    parsed.content = (parsed.content || "") + "\n\n" + footerRow;
+
     // Fetch a maritime image (optional)
     let imageUrl: string | null = null;
     try {
