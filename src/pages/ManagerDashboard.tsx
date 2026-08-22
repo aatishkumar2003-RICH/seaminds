@@ -609,7 +609,7 @@ const ManagerDashboard = () => {
                     {sorted.length === 0 && (
                       <tr>
                         <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
-                          No crew members from {companyName} have signed up yet.
+                          No linked crew yet — add crew in My Fleet above.
                         </td>
                       </tr>
                     )}
