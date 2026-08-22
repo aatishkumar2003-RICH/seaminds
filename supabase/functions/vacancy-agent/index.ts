@@ -827,7 +827,7 @@ Deno.serve(async (req) => {
       ${jobListHtml}
     </table>
     ${matchingJobs.length > 5 ? `<p style="color:#6b7280;font-size:13px">+ ${matchingJobs.length - 5} more positions</p>` : ''}
-    <a href="https://seaminds.lovable.app" style="display:inline-block;background:#D4AF37;color:#0a1628;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin:16px 0">View All Jobs →</a>
+    <a href="https://seaminds.life" style="display:inline-block;background:#D4AF37;color:#0a1628;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin:16px 0">View All Jobs →</a>
     <p style="color:#9ca3af;font-size:12px;margin-top:20px">You're receiving this because you're marked as available on SeaMinds.</p>
   </div>
 </div>`;
