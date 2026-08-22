@@ -62,6 +62,7 @@ const ManagerDashboard = () => {
   const navigate = useNavigate();
   const [companyName, setCompanyName] = useState("");
   const [crewRows, setCrewRows] = useState<CrewRow[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [sortKey, setSortKey] = useState<SortKey>("shipName");
   const [sortAsc, setSortAsc] = useState(true);
@@ -114,41 +115,10 @@ const ManagerDashboard = () => {
       setEmergencyEmail(profile.emergency_email || "");
 
 
-      // Fetch crew from this company
-      const { data: crew } = await supabase
-        .from("crew_profiles")
-        .select("id, first_name, last_name, role, ship_name, voyage_start_date")
-        .eq("manning_agency", profile.company_name);
-
-      if (!crew || crew.length === 0) { setLoading(false); return; }
-
-      const now = Date.now();
-
-      const rows: CrewRow[] = crew.map((c) => {
-        const voyageDays = c.voyage_start_date
-          ? Math.max(1, Math.ceil((now - new Date(c.voyage_start_date).getTime()) / 86400000))
-          : 0;
-
-        return {
-          id: c.id,
-          firstName: c.first_name,
-          lastName: c.last_name || "",
-          role: c.role,
-          shipName: c.ship_name,
-          voyageDays,
-        };
-      });
-
-
-      setCrewRows(rows);
-
-      // Fetch safety reports for this company
-      const { data: reports } = await supabase
-        .from("safety_reports")
-        .select("*")
-        .eq("manning_agency", profile.company_name)
-        .order("created_at", { ascending: false });
-      setSafetyReports(reports || []);
+      // Safety reports come through the approved-manager RPC (RLS-safe)
+      const { data: safety } = await supabase.rpc("get_my_safety_reports" as any);
+      const safetyResult = safety as unknown as { ok?: boolean; reports?: SafetyReport[] } | null;
+      setSafetyReports(safetyResult?.ok ? (safetyResult.reports || []) : []);
 
       setLoading(false);
     };
@@ -242,6 +212,22 @@ const ManagerDashboard = () => {
   useEffect(() => {
     if (companyName) { loadApplicants(); loadFleet(); }
   }, [companyName]);
+
+  // Crew overview is built from the linked fleet (crew_profiles is not readable by managers)
+  useEffect(() => {
+    const crew = fleet?.ok ? (fleet.crew || []) : [];
+    setCrewRows(
+      crew.map((c) => ({
+        id: c.link_id,
+        firstName: c.name,
+        lastName: "",
+        role: c.rank,
+        shipName: c.contract_end ? "On contract" : "—",
+        voyageDays: 0,
+      }))
+    );
+  }, [fleet]);
+
 
   if (loading) {
     return (
@@ -623,7 +609,7 @@ const ManagerDashboard = () => {
                     {sorted.length === 0 && (
                       <tr>
                         <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
-                          No crew members from {companyName} have signed up yet.
+                          No linked crew yet — add crew in My Fleet above.
                         </td>
                       </tr>
                     )}
@@ -667,7 +653,9 @@ const ManagerDashboard = () => {
                                 value={report.status}
                                 onChange={async (e) => {
                                   const newStatus = e.target.value;
-                                  await supabase.from("safety_reports").update({ status: newStatus }).eq("id", report.id);
+                                  const { data, error } = await supabase.rpc("manager_update_safety_status" as any, { p_id: report.id, p_status: newStatus });
+                                  const res = data as unknown as { ok?: boolean } | null;
+                                  if (error || !res?.ok) { toast.error("Could not update this report"); return; }
                                   setSafetyReports((prev) => prev.map((r) => r.id === report.id ? { ...r, status: newStatus } : r));
                                 }}
                                 className="bg-secondary text-foreground text-xs rounded-lg px-2 py-1 border border-border"
