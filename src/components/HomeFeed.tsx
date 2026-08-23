@@ -181,10 +181,10 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
 
     const vacancies: any[] = [
       ...(((postRes.data as any[]) || []).map((p) => ({
-        id: `p-${p.id}`, rank: p.rank_required, vessel: p.vessel_type, company: p.company_name,
+        id: `p-${p.id}`, postingId: p.id, rank: p.rank_required, vessel: p.vessel_type, company: p.company_name,
         salary: p.monthly_salary, port: p.joining_port, duration: p.contract_duration,
-        flier: p.flier_url, whatsapp: p.contact_whatsapp, applyUrl: null,
-        verified: !!p.verified, posted: p.created_at, own: true,
+        notes: p.additional_notes, flier: p.flier_url, whatsapp: p.contact_whatsapp, applyUrl: null,
+        verified: !!p.verified, posted: p.created_at, own: true, direct: true,
       }))),
       ...(((vacRes.data as any[]) || []).map((v) => ({
         id: `e-${v.id}`, rank: v.rank_required, vessel: v.vessel_type, company: v.company_name,
