@@ -69,6 +69,8 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
   const [fleetInvites, setFleetInvites] = useState<any[]>([]);
   const [refStats, setRefStats] = useState<{ link: string; shipmates_aboard: number } | null>(null);
   const [needsQuickProfile, setNeedsQuickProfile] = useState(false);
+  const [directApplied, setDirectApplied] = useState<Record<string, "ok" | "dup">>({});
+  const [directBusy, setDirectBusy] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!profileId) return;
@@ -138,8 +140,8 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
         .gt("expires_at", new Date().toISOString())
         .order("fetched_at", { ascending: false }).limit(40),
       supabase.from("job_postings" as any)
-        .select("id, rank_required, vessel_type, company_name, monthly_salary, joining_port, contract_duration, contact_whatsapp, flier_url, verified, created_at")
-        .eq("status", "active").order("created_at", { ascending: false }).limit(15),
+        .select("id, rank_required, vessel_type, company_name, monthly_salary, joining_port, contract_duration, contact_whatsapp, additional_notes, flier_url, verified, created_at")
+        .eq("status", "active").order("created_at", { ascending: false }).limit(20),
       supabase.from("company_posts" as any)
         .select("id, company_name, post_type, caption, image_url, whatsapp, link_url, verified, created_at")
         .eq("status", "live")
@@ -181,10 +183,10 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
 
     const vacancies: any[] = [
       ...(((postRes.data as any[]) || []).map((p) => ({
-        id: `p-${p.id}`, rank: p.rank_required, vessel: p.vessel_type, company: p.company_name,
+        id: `p-${p.id}`, postingId: p.id, rank: p.rank_required, vessel: p.vessel_type, company: p.company_name,
         salary: p.monthly_salary, port: p.joining_port, duration: p.contract_duration,
-        flier: p.flier_url, whatsapp: p.contact_whatsapp, applyUrl: null,
-        verified: !!p.verified, posted: p.created_at, own: true,
+        notes: p.additional_notes, flier: p.flier_url, whatsapp: p.contact_whatsapp, applyUrl: null,
+        verified: !!p.verified, posted: p.created_at, own: true, direct: true,
       }))),
       ...(((vacRes.data as any[]) || []).map((v) => ({
         id: `e-${v.id}`, rank: v.rank_required, vessel: v.vessel_type, company: v.company_name,
@@ -370,6 +372,38 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
       applyUrl: v.applyUrl || null, whatsapp: null,
     });
   };
+
+  const applyDirect = async (v: any) => {
+    if (directApplied[v.postingId]) return;
+    setDirectBusy((s) => ({ ...s, [v.postingId]: true }));
+    try {
+      const { data, error } = await supabase.rpc("submit_application" as any, {
+        p_vacancy_id: null,
+        p_company_post_id: null,
+        p_company_name: v.company || null,
+        p_rank: v.rank || null,
+        p_vessel: v.vessel || null,
+        p_external_url: null,
+      });
+      const r: any = data;
+      if (error || !r?.ok) { toast.error("Could not send application. Try again."); return; }
+      if (r.duplicate) {
+        setDirectApplied((s) => ({ ...s, [v.postingId]: "dup" }));
+        return;
+      }
+      if (r.application_id) {
+        await supabase.from("job_applications")
+          .update({ job_posting_id: v.postingId } as any)
+          .eq("id", r.application_id);
+      }
+      setDirectApplied((s) => ({ ...s, [v.postingId]: "ok" }));
+      log("vacancy", v.id, "apply");
+    } finally {
+      setDirectBusy((s) => ({ ...s, [v.postingId]: false }));
+    }
+  };
+
+
 
 
   const answerQuiz = async (q: any, idx: number) => {
@@ -621,6 +655,12 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
               <article key={c.id} className="rounded-2xl overflow-hidden" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
                 {v.flier && <img src={v.flier} alt={v.rank} loading="lazy" className="w-full object-cover" style={{ maxHeight: 380 }} />}
                 <div className="p-4 space-y-2.5">
+                  {v.direct && (
+                    <span className="inline-block rounded-full px-2.5 py-1 text-[9.5px] font-extrabold tracking-wider"
+                      style={{ background: "rgba(212,175,55,0.12)", color: GOLD, border: `1px solid rgba(212,175,55,0.35)` }}>
+                      DIRECT — POSTED ON SEAMINDS
+                    </span>
+                  )}
                   <div className="flex justify-between items-start gap-2">
                     <div className="min-w-0">
                       <h2 className="text-base font-extrabold text-white leading-tight">{v.rank || "Crew"}</h2>
@@ -634,11 +674,33 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
                     {v.duration && <span>📆 {v.duration}</span>}
                   </div>
                   {formatSalaryText(v.salary) && <p className="font-extrabold text-sm" style={{ color: "#22c55e" }}>💰 {formatSalaryText(v.salary)}</p>}
-                  <button onClick={() => applyTo(v)}
-                    className="w-full rounded-xl py-2.5 font-bold text-[13px] flex items-center justify-center gap-2"
-                    style={{ background: GOLD, color: NAVY, border: "none", cursor: "pointer" }}>
-                    {v.whatsapp ? <><MessageCircle size={14} /> Apply on WhatsApp</> : <>Apply →</>}
-                  </button>
+                  {v.direct && v.notes && (
+                    <p className="text-[11px] leading-relaxed" style={{ color: "#94a3b8" }}>{v.notes}</p>
+                  )}
+                  {v.direct ? (
+                    <button
+                      onClick={() => applyDirect(v)}
+                      disabled={!!directApplied[v.postingId] || !!directBusy[v.postingId]}
+                      className="w-full rounded-xl py-2.5 font-bold text-[13px] flex items-center justify-center gap-2"
+                      style={{
+                        background: directApplied[v.postingId] ? "rgba(34,197,94,0.15)" : GOLD,
+                        color: directApplied[v.postingId] ? "#22c55e" : NAVY,
+                        border: directApplied[v.postingId] ? "1px solid #22c55e" : "none",
+                        cursor: directApplied[v.postingId] ? "default" : "pointer",
+                      }}>
+                      {directApplied[v.postingId] === "dup"
+                        ? "Already applied ✓"
+                        : directApplied[v.postingId] === "ok"
+                          ? "Applied ✓ — your Sea Profile has been sent"
+                          : directBusy[v.postingId] ? "Sending…" : "APPLY WITH SEA PROFILE →"}
+                    </button>
+                  ) : (
+                    <button onClick={() => applyTo(v)}
+                      className="w-full rounded-xl py-2.5 font-bold text-[13px] flex items-center justify-center gap-2"
+                      style={{ background: GOLD, color: NAVY, border: "none", cursor: "pointer" }}>
+                      {v.whatsapp ? <><MessageCircle size={14} /> Apply on WhatsApp</> : <>Apply →</>}
+                    </button>
+                  )}
                 </div>
               </article>
             );

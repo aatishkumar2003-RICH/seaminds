@@ -112,6 +112,8 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
   const [visible, setVisible] = useState(false);
   
   const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
+  const [directApplied, setDirectApplied] = useState<Record<string, "ok" | "dup">>({});
+  const [directBusy, setDirectBusy] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [countryFilter, setCountryFilter] = useState<string>('all');
@@ -136,7 +138,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
 
     const [availRes, postingsRes, extRes, smcRes] = await Promise.all([
       supabase.from("crew_availability").select("*").eq("crew_profile_id", profileId).maybeSingle(),
-      supabase.from("job_postings").select("*").eq("status", "active").gte("created_at", thirtyDaysAgo.toISOString()).order("created_at", { ascending: false }),
+      supabase.from("job_postings").select("id, rank_required, vessel_type, joining_port, contract_duration, monthly_salary, contact_whatsapp, company_name, additional_notes, verified, created_at").eq("status", "active").order("created_at", { ascending: false }).limit(20),
       supabase.from("external_vacancies").select("*").eq("is_scam_flagged", false).gte("quality_score", 30).gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false }).limit(50),
       supabase.from("smc_assessments").select("overall_score").eq("crew_profile_id", profileId).eq("status", "completed").order("completed_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
@@ -210,6 +212,35 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     await recordOutbound({ company: jp.company_name, rank: jp.rank_required, vessel: jp.vessel_type, url });
     window.open(url, "_blank", "noopener,noreferrer");
   };
+
+  const applyDirect = async (jp: any) => {
+    if (directApplied[jp.id]) return;
+    setDirectBusy((s) => ({ ...s, [jp.id]: true }));
+    try {
+      const { data, error } = await supabase.rpc("submit_application" as any, {
+        p_vacancy_id: null,
+        p_company_post_id: null,
+        p_company_name: jp.company_name || null,
+        p_rank: jp.rank_required || null,
+        p_vessel: jp.vessel_type || null,
+        p_external_url: null,
+      });
+      const r: any = data;
+      if (error || !r?.ok) {
+        toast({ title: "Error", description: "Could not send application. Try again.", variant: "destructive" });
+        return;
+      }
+      if (r.duplicate) { setDirectApplied((s) => ({ ...s, [jp.id]: "dup" })); return; }
+      if (r.application_id) {
+        await supabase.from("job_applications").update({ job_posting_id: jp.id } as any).eq("id", r.application_id);
+      }
+      setDirectApplied((s) => ({ ...s, [jp.id]: "ok" }));
+    } finally {
+      setDirectBusy((s) => ({ ...s, [jp.id]: false }));
+    }
+  };
+
+
 
 
   // External vacancies have no manning-company row, so the application is captured centrally
@@ -448,7 +479,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
           </div>
         ) : (
           filteredPostings.map((jp) => {
-            const whatsappNumber = jp.contact_whatsapp.replace(/[^0-9]/g, "");
+            const whatsappNumber = (jp.contact_whatsapp || "").replace(/[^0-9]/g, "");
             const whatsappText = encodeURIComponent(
               `Hi, I am interested in the ${jp.rank_required} position. My name is ${firstName} ${lastName}, ${role}, ${nationality}, ${yearsAtSea} experience.`
             );
@@ -462,6 +493,10 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                 style={{ border: "1.5px solid #1a3a5c" }}
               >
                 <div>
+                  <span className="inline-block rounded-full px-2 py-0.5 mb-1.5 text-[9.5px] font-extrabold tracking-wider"
+                    style={{ background: "rgba(212,175,55,0.12)", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.35)" }}>
+                    DIRECT — POSTED ON SEAMINDS
+                  </span>
                   <h4 style={{ color: "#D4AF37", fontSize: "18px", fontWeight: "bold" }}>{jp.rank_required}</h4>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <p className="text-sm text-foreground">{jp.company_name}</p>
@@ -492,11 +527,31 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                 )}
                 <Button
                   size="sm"
-                  className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold text-sm h-10"
-                  onClick={() => openJobPosting(jp, whatsappUrl)}
+                  disabled={!!directApplied[jp.id] || !!directBusy[jp.id]}
+                  className="w-full font-semibold text-sm h-10"
+                  style={{
+                    background: directApplied[jp.id] ? "rgba(34,197,94,0.15)" : "#D4AF37",
+                    color: directApplied[jp.id] ? "#22c55e" : "#0D1B2A",
+                    border: directApplied[jp.id] ? "1px solid #22c55e" : "none",
+                  }}
+                  onClick={() => applyDirect(jp)}
                 >
-                  Apply via WhatsApp
+                  {directApplied[jp.id] === "dup"
+                    ? "Already applied ✓"
+                    : directApplied[jp.id] === "ok"
+                      ? "Applied ✓ — your Sea Profile has been sent"
+                      : directBusy[jp.id] ? "Sending…" : "APPLY WITH SEA PROFILE →"}
                 </Button>
+                {jp.contact_whatsapp && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full text-xs h-9 gap-1.5"
+                    onClick={() => openJobPosting(jp, whatsappUrl)}
+                  >
+                    <MessageCircle size={12} /> Apply via WhatsApp
+                  </Button>
+                )}
               </div>
             );
           })
