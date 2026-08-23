@@ -479,7 +479,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
           </div>
         ) : (
           filteredPostings.map((jp) => {
-            const whatsappNumber = jp.contact_whatsapp.replace(/[^0-9]/g, "");
+            const whatsappNumber = (jp.contact_whatsapp || "").replace(/[^0-9]/g, "");
             const whatsappText = encodeURIComponent(
               `Hi, I am interested in the ${jp.rank_required} position. My name is ${firstName} ${lastName}, ${role}, ${nationality}, ${yearsAtSea} experience.`
             );
