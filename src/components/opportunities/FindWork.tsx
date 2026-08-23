@@ -493,6 +493,10 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                 style={{ border: "1.5px solid #1a3a5c" }}
               >
                 <div>
+                  <span className="inline-block rounded-full px-2 py-0.5 mb-1.5 text-[9.5px] font-extrabold tracking-wider"
+                    style={{ background: "rgba(212,175,55,0.12)", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.35)" }}>
+                    DIRECT — POSTED ON SEAMINDS
+                  </span>
                   <h4 style={{ color: "#D4AF37", fontSize: "18px", fontWeight: "bold" }}>{jp.rank_required}</h4>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <p className="text-sm text-foreground">{jp.company_name}</p>
