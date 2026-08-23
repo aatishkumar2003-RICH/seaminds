@@ -371,6 +371,38 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
     });
   };
 
+  const applyDirect = async (v: any) => {
+    if (directApplied[v.postingId]) return;
+    setDirectBusy((s) => ({ ...s, [v.postingId]: true }));
+    try {
+      const { data, error } = await supabase.rpc("submit_application" as any, {
+        p_vacancy_id: null,
+        p_company_post_id: null,
+        p_company_name: v.company || null,
+        p_rank: v.rank || null,
+        p_vessel: v.vessel || null,
+        p_external_url: null,
+      });
+      const r: any = data;
+      if (error || !r?.ok) { toast.error("Could not send application. Try again."); return; }
+      if (r.duplicate) {
+        setDirectApplied((s) => ({ ...s, [v.postingId]: "dup" }));
+        return;
+      }
+      if (r.application_id) {
+        await supabase.from("job_applications")
+          .update({ job_posting_id: v.postingId } as any)
+          .eq("id", r.application_id);
+      }
+      setDirectApplied((s) => ({ ...s, [v.postingId]: "ok" }));
+      log("vacancy", v.id, "apply");
+    } finally {
+      setDirectBusy((s) => ({ ...s, [v.postingId]: false }));
+    }
+  };
+
+
+
 
   const answerQuiz = async (q: any, idx: number) => {
     setQuizState((s) => ({ ...s, [q.id]: idx }));
