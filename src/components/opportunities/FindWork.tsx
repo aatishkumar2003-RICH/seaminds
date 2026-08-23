@@ -527,11 +527,31 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                 )}
                 <Button
                   size="sm"
-                  className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold text-sm h-10"
-                  onClick={() => openJobPosting(jp, whatsappUrl)}
+                  disabled={!!directApplied[jp.id] || !!directBusy[jp.id]}
+                  className="w-full font-semibold text-sm h-10"
+                  style={{
+                    background: directApplied[jp.id] ? "rgba(34,197,94,0.15)" : "#D4AF37",
+                    color: directApplied[jp.id] ? "#22c55e" : "#0D1B2A",
+                    border: directApplied[jp.id] ? "1px solid #22c55e" : "none",
+                  }}
+                  onClick={() => applyDirect(jp)}
                 >
-                  Apply via WhatsApp
+                  {directApplied[jp.id] === "dup"
+                    ? "Already applied ✓"
+                    : directApplied[jp.id] === "ok"
+                      ? "Applied ✓ — your Sea Profile has been sent"
+                      : directBusy[jp.id] ? "Sending…" : "APPLY WITH SEA PROFILE →"}
                 </Button>
+                {jp.contact_whatsapp && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full text-xs h-9 gap-1.5"
+                    onClick={() => openJobPosting(jp, whatsappUrl)}
+                  >
+                    <MessageCircle size={12} /> Apply via WhatsApp
+                  </Button>
+                )}
               </div>
             );
           })
