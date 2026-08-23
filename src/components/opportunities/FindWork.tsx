@@ -213,6 +213,35 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
+  const applyDirect = async (jp: any) => {
+    if (directApplied[jp.id]) return;
+    setDirectBusy((s) => ({ ...s, [jp.id]: true }));
+    try {
+      const { data, error } = await supabase.rpc("submit_application" as any, {
+        p_vacancy_id: null,
+        p_company_post_id: null,
+        p_company_name: jp.company_name || null,
+        p_rank: jp.rank_required || null,
+        p_vessel: jp.vessel_type || null,
+        p_external_url: null,
+      });
+      const r: any = data;
+      if (error || !r?.ok) {
+        toast({ title: "Error", description: "Could not send application. Try again.", variant: "destructive" });
+        return;
+      }
+      if (r.duplicate) { setDirectApplied((s) => ({ ...s, [jp.id]: "dup" })); return; }
+      if (r.application_id) {
+        await supabase.from("job_applications").update({ job_posting_id: jp.id } as any).eq("id", r.application_id);
+      }
+      setDirectApplied((s) => ({ ...s, [jp.id]: "ok" }));
+    } finally {
+      setDirectBusy((s) => ({ ...s, [jp.id]: false }));
+    }
+  };
+
+
+
 
   // External vacancies have no manning-company row, so the application is captured centrally
   const handleApplyExternal = async (ext: any) => {
