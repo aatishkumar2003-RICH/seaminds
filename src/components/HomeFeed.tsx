@@ -655,6 +655,12 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
               <article key={c.id} className="rounded-2xl overflow-hidden" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
                 {v.flier && <img src={v.flier} alt={v.rank} loading="lazy" className="w-full object-cover" style={{ maxHeight: 380 }} />}
                 <div className="p-4 space-y-2.5">
+                  {v.direct && (
+                    <span className="inline-block rounded-full px-2.5 py-1 text-[9.5px] font-extrabold tracking-wider"
+                      style={{ background: "rgba(212,175,55,0.12)", color: GOLD, border: `1px solid rgba(212,175,55,0.35)` }}>
+                      DIRECT — POSTED ON SEAMINDS
+                    </span>
+                  )}
                   <div className="flex justify-between items-start gap-2">
                     <div className="min-w-0">
                       <h2 className="text-base font-extrabold text-white leading-tight">{v.rank || "Crew"}</h2>
@@ -668,11 +674,33 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
                     {v.duration && <span>📆 {v.duration}</span>}
                   </div>
                   {formatSalaryText(v.salary) && <p className="font-extrabold text-sm" style={{ color: "#22c55e" }}>💰 {formatSalaryText(v.salary)}</p>}
-                  <button onClick={() => applyTo(v)}
-                    className="w-full rounded-xl py-2.5 font-bold text-[13px] flex items-center justify-center gap-2"
-                    style={{ background: GOLD, color: NAVY, border: "none", cursor: "pointer" }}>
-                    {v.whatsapp ? <><MessageCircle size={14} /> Apply on WhatsApp</> : <>Apply →</>}
-                  </button>
+                  {v.direct && v.notes && (
+                    <p className="text-[11px] leading-relaxed" style={{ color: "#94a3b8" }}>{v.notes}</p>
+                  )}
+                  {v.direct ? (
+                    <button
+                      onClick={() => applyDirect(v)}
+                      disabled={!!directApplied[v.postingId] || !!directBusy[v.postingId]}
+                      className="w-full rounded-xl py-2.5 font-bold text-[13px] flex items-center justify-center gap-2"
+                      style={{
+                        background: directApplied[v.postingId] ? "rgba(34,197,94,0.15)" : GOLD,
+                        color: directApplied[v.postingId] ? "#22c55e" : NAVY,
+                        border: directApplied[v.postingId] ? "1px solid #22c55e" : "none",
+                        cursor: directApplied[v.postingId] ? "default" : "pointer",
+                      }}>
+                      {directApplied[v.postingId] === "dup"
+                        ? "Already applied ✓"
+                        : directApplied[v.postingId] === "ok"
+                          ? "Applied ✓ — your Sea Profile has been sent"
+                          : directBusy[v.postingId] ? "Sending…" : "APPLY WITH SEA PROFILE →"}
+                    </button>
+                  ) : (
+                    <button onClick={() => applyTo(v)}
+                      className="w-full rounded-xl py-2.5 font-bold text-[13px] flex items-center justify-center gap-2"
+                      style={{ background: GOLD, color: NAVY, border: "none", cursor: "pointer" }}>
+                      {v.whatsapp ? <><MessageCircle size={14} /> Apply on WhatsApp</> : <>Apply →</>}
+                    </button>
+                  )}
                 </div>
               </article>
             );
