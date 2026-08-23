@@ -838,6 +838,12 @@ const ManagerDashboard = () => {
                               onChange={(e) => updatePreview(i, key, e.target.value)}
                               className="w-full bg-background text-foreground text-xs rounded-lg border border-border px-2 py-1.5 outline-none focus:border-[#D4AF37]/60"
                             />
+                            {key === "monthly_salary" && !v.monthly_salary && (
+                              <p className="text-[11px] italic text-muted-foreground/70 leading-tight">
+                                This line will be published if you leave salary blank.<br />
+                                Salary as per international market standards, commensurate with rank and experience. Allowances and terms as per prevailing international market conditions.
+                              </p>
+                            )}
                           </label>
                         ))}
                       </div>
