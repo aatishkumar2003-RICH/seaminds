@@ -80,6 +80,82 @@ const ManagerDashboard = () => {
   const [emergencyEmail, setEmergencyEmail] = useState("");
   const [savingEmergency, setSavingEmergency] = useState(false);
 
+  // --- Paste-to-Post ---
+  const [pasteText, setPasteText] = useState("");
+  const [extracting, setExtracting] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [previews, setPreviews] = useState<ParsedVacancy[]>([]);
+  const [risk, setRisk] = useState<{ level: string; flags: string[] } | null>(null);
+
+  const extractVacancies = async () => {
+    const text = pasteText.trim();
+    if (!text) { toast.error("Paste an advert first"); return; }
+    setExtracting(true);
+    const { data, error } = await supabase.functions.invoke("parse-vacancy-text", { body: { text: text.slice(0, 8000) } });
+    setExtracting(false);
+    if (error) {
+      const status = (error as unknown as { context?: { status?: number } })?.context?.status;
+      if (status === 403) toast.error("Your company account is pending approval");
+      else if (status === 429) toast.error("Daily limit reached — try again tomorrow");
+      else if (status === 401) toast.error("Please sign in again to continue");
+      else toast.error("Could not read that advert");
+      return;
+    }
+    const res = data as { ok?: boolean; error?: string; vacancies?: ParsedVacancy[]; risk?: { level: string; flags: string[] } };
+    if (!res?.ok) {
+      if (res?.error === "not_approved") toast.error("Your company account is pending approval");
+      else if (res?.error === "daily_limit") toast.error("Daily limit reached — try again tomorrow");
+      else toast.error("Could not read that advert");
+      return;
+    }
+    const list = (res.vacancies || []).map((v) => ({
+      rank_required: v.rank_required || "",
+      vessel_type: v.vessel_type || "",
+      contract_duration: v.contract_duration || "",
+      monthly_salary: v.monthly_salary || "",
+      joining_port: v.joining_port || "",
+      joining_date: v.joining_date || "",
+      contact_whatsapp: v.contact_whatsapp || "",
+      contact_email: v.contact_email || "",
+      additional_notes: v.additional_notes || "",
+    }));
+    setPreviews(list);
+    setRisk(res.risk || null);
+    if (list.length === 0) toast("No vacancies found in that text");
+  };
+
+  const updatePreview = (i: number, key: keyof ParsedVacancy, value: string) => {
+    setPreviews((prev) => prev.map((p, idx) => (idx === i ? { ...p, [key]: value } : p)));
+  };
+
+  const publishPreviews = async () => {
+    if (previews.length === 0) return;
+    setPublishing(true);
+    const rows = previews.map((v) => ({
+      rank_required: v.rank_required || "Not specified",
+      vessel_type: v.vessel_type || "Not specified",
+      contract_duration: v.contract_duration || "Not specified",
+      monthly_salary: v.monthly_salary || null,
+      joining_port: v.joining_port || "Not specified",
+      contact_whatsapp: v.contact_whatsapp || "",
+      additional_notes: [v.additional_notes, v.joining_date ? `Joining date: ${v.joining_date}` : "", v.contact_email ? `Email: ${v.contact_email}` : ""].filter(Boolean).join(" · ") || null,
+      company_name: companyName,
+      status: "active",
+      plan: "founding",
+      verified: false,
+    }));
+    const { error } = await supabase.from("job_postings").insert(rows);
+    setPublishing(false);
+    if (error) { toast.error(error.message || "Could not publish vacancies"); return; }
+    toast.success(`${rows.length} vacancies published ⚓`);
+    setPasteText("");
+    setPreviews([]);
+    setRisk(null);
+    loadApplicants();
+  };
+
+
+
   const saveEmergencyContact = async () => {
     setSavingEmergency(true);
     const { error } = await supabase
