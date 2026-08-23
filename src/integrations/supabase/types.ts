@@ -2093,6 +2093,7 @@ export type Database = {
           flier_url: string | null
           id: string
           joining_port: string
+          manager_id: string | null
           monthly_salary: string | null
           plan: string
           rank_required: string
@@ -2110,6 +2111,7 @@ export type Database = {
           flier_url?: string | null
           id?: string
           joining_port: string
+          manager_id?: string | null
           monthly_salary?: string | null
           plan?: string
           rank_required: string
@@ -2127,6 +2129,7 @@ export type Database = {
           flier_url?: string | null
           id?: string
           joining_port?: string
+          manager_id?: string | null
           monthly_salary?: string | null
           plan?: string
           rank_required?: string
