@@ -54,6 +54,18 @@ interface FleetResult {
   crew?: FleetCrew[];
 }
 
+interface ParsedVacancy {
+  rank_required: string;
+  vessel_type: string;
+  contract_duration: string;
+  monthly_salary: string;
+  joining_port: string;
+  joining_date: string;
+  contact_whatsapp: string;
+  contact_email: string;
+  additional_notes: string;
+}
+
 type SortKey = "shipName";
 type DashTab = "crew" | "payments";
 
@@ -79,6 +91,82 @@ const ManagerDashboard = () => {
   const [emergencyPhone, setEmergencyPhone] = useState("");
   const [emergencyEmail, setEmergencyEmail] = useState("");
   const [savingEmergency, setSavingEmergency] = useState(false);
+
+  // --- Paste-to-Post ---
+  const [pasteText, setPasteText] = useState("");
+  const [extracting, setExtracting] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [previews, setPreviews] = useState<ParsedVacancy[]>([]);
+  const [risk, setRisk] = useState<{ level: string; flags: string[] } | null>(null);
+
+  const extractVacancies = async () => {
+    const text = pasteText.trim();
+    if (!text) { toast.error("Paste an advert first"); return; }
+    setExtracting(true);
+    const { data, error } = await supabase.functions.invoke("parse-vacancy-text", { body: { text: text.slice(0, 8000) } });
+    setExtracting(false);
+    if (error) {
+      const status = (error as unknown as { context?: { status?: number } })?.context?.status;
+      if (status === 403) toast.error("Your company account is pending approval");
+      else if (status === 429) toast.error("Daily limit reached — try again tomorrow");
+      else if (status === 401) toast.error("Please sign in again to continue");
+      else toast.error("Could not read that advert");
+      return;
+    }
+    const res = data as { ok?: boolean; error?: string; vacancies?: ParsedVacancy[]; risk?: { level: string; flags: string[] } };
+    if (!res?.ok) {
+      if (res?.error === "not_approved") toast.error("Your company account is pending approval");
+      else if (res?.error === "daily_limit") toast.error("Daily limit reached — try again tomorrow");
+      else toast.error("Could not read that advert");
+      return;
+    }
+    const list = (res.vacancies || []).map((v) => ({
+      rank_required: v.rank_required || "",
+      vessel_type: v.vessel_type || "",
+      contract_duration: v.contract_duration || "",
+      monthly_salary: v.monthly_salary || "",
+      joining_port: v.joining_port || "",
+      joining_date: v.joining_date || "",
+      contact_whatsapp: v.contact_whatsapp || "",
+      contact_email: v.contact_email || "",
+      additional_notes: v.additional_notes || "",
+    }));
+    setPreviews(list);
+    setRisk(res.risk || null);
+    if (list.length === 0) toast("No vacancies found in that text");
+  };
+
+  const updatePreview = (i: number, key: keyof ParsedVacancy, value: string) => {
+    setPreviews((prev) => prev.map((p, idx) => (idx === i ? { ...p, [key]: value } : p)));
+  };
+
+  const publishPreviews = async () => {
+    if (previews.length === 0) return;
+    setPublishing(true);
+    const rows = previews.map((v) => ({
+      rank_required: v.rank_required || "Not specified",
+      vessel_type: v.vessel_type || "Not specified",
+      contract_duration: v.contract_duration || "Not specified",
+      monthly_salary: v.monthly_salary || null,
+      joining_port: v.joining_port || "Not specified",
+      contact_whatsapp: v.contact_whatsapp || "",
+      additional_notes: [v.additional_notes, v.joining_date ? `Joining date: ${v.joining_date}` : "", v.contact_email ? `Email: ${v.contact_email}` : ""].filter(Boolean).join(" · ") || null,
+      company_name: companyName,
+      status: "active",
+      plan: "founding",
+      verified: false,
+    }));
+    const { error } = await supabase.from("job_postings").insert(rows);
+    setPublishing(false);
+    if (error) { toast.error(error.message || "Could not publish vacancies"); return; }
+    toast.success(`${rows.length} vacancies published ⚓`);
+    setPasteText("");
+    setPreviews([]);
+    setRisk(null);
+    loadApplicants();
+  };
+
+
 
   const saveEmergencyContact = async () => {
     setSavingEmergency(true);
@@ -673,6 +761,97 @@ const ManagerDashboard = () => {
                 </div>
               </div>
             )}
+
+            {/* Paste-to-Post */}
+            <div className="bg-secondary rounded-xl border border-border p-4 space-y-3">
+              <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">⚡ Paste-to-Post — post a vacancy in 30 seconds</h2>
+              <textarea
+                value={pasteText}
+                onChange={(e) => setPasteText(e.target.value)}
+                rows={5}
+                maxLength={8000}
+                placeholder="Paste your WhatsApp vacancy advert here — exactly as you send it to your groups."
+                className="w-full bg-background text-foreground text-sm rounded-xl border border-border p-3 outline-none focus:border-[#D4AF37]/60"
+              />
+              <p className="text-xs text-muted-foreground">AI reads it and creates your vacancies. You review before publishing.</p>
+              <button
+                onClick={extractVacancies}
+                disabled={extracting}
+                className="text-xs font-bold px-4 py-2 rounded-xl bg-[#D4AF37] text-[#0D1B2A] border border-[#D4AF37] hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {extracting ? "Reading advert…" : "Extract vacancies"}
+              </button>
+
+              {risk && (risk.level === "medium" || risk.level === "high") && (
+                <div
+                  className={`rounded-xl border p-3 text-xs ${
+                    risk.level === "high"
+                      ? "border-red-500/50 bg-red-500/10 text-red-300"
+                      : "border-amber-500/50 bg-amber-500/10 text-amber-300"
+                  }`}
+                >
+                  <p className="font-semibold">Please check this advert before publishing.</p>
+                  {risk.flags.length > 0 && (
+                    <ul className="list-disc list-inside mt-1 space-y-0.5">
+                      {risk.flags.map((f, i) => <li key={i}>{f}</li>)}
+                    </ul>
+                  )}
+                </div>
+              )}
+
+              {previews.length > 0 && (
+                <div className="space-y-3">
+                  {previews.map((v, i) => (
+                    <div key={i} className="bg-secondary/50 rounded-xl border border-border/50 p-3 space-y-2 relative">
+                      <button
+                        onClick={() => setPreviews((prev) => prev.filter((_, idx) => idx !== i))}
+                        aria-label="Discard vacancy"
+                        className="absolute top-2 right-2 text-muted-foreground hover:text-foreground text-sm"
+                      >
+                        ×
+                      </button>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pr-6">
+                        {([
+                          ["rank_required", "Rank"],
+                          ["vessel_type", "Vessel type"],
+                          ["joining_port", "Joining port"],
+                          ["joining_date", "Joining date"],
+                          ["contract_duration", "Contract"],
+                          ["monthly_salary", "Salary"],
+                          ["contact_whatsapp", "WhatsApp"],
+                        ] as [keyof ParsedVacancy, string][]).map(([key, label]) => (
+                          <label key={key} className="text-xs text-muted-foreground space-y-1">
+                            {label}
+                            <input
+                              value={v[key]}
+                              onChange={(e) => updatePreview(i, key, e.target.value)}
+                              className="w-full bg-background text-foreground text-xs rounded-lg border border-border px-2 py-1.5 outline-none focus:border-[#D4AF37]/60"
+                            />
+                          </label>
+                        ))}
+                      </div>
+                      <label className="text-xs text-muted-foreground space-y-1 block">
+                        Notes
+                        <textarea
+                          value={v.additional_notes}
+                          onChange={(e) => updatePreview(i, "additional_notes", e.target.value)}
+                          rows={2}
+                          className="w-full bg-background text-foreground text-xs rounded-lg border border-border px-2 py-1.5 outline-none focus:border-[#D4AF37]/60"
+                        />
+                      </label>
+                    </div>
+                  ))}
+                  <button
+                    onClick={publishPreviews}
+                    disabled={publishing}
+                    className="text-xs font-bold px-4 py-2 rounded-xl bg-[#D4AF37] text-[#0D1B2A] border border-[#D4AF37] hover:opacity-90 transition-opacity disabled:opacity-50"
+                  >
+                    {publishing ? "Publishing…" : "Publish all vacancies"}
+                  </button>
+                </div>
+              )}
+            </div>
+
 
             {/* Privacy note */}
             <p className="text-xs text-muted-foreground text-center py-4">

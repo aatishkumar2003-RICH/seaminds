@@ -115,4 +115,7 @@ verify_jwt = false
 [functions.admin-create-marketing-user]
 verify_jwt = true
 
+[functions.parse-vacancy-text]
+verify_jwt = false
+
 
