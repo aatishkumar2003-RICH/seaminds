@@ -54,6 +54,18 @@ interface FleetResult {
   crew?: FleetCrew[];
 }
 
+interface ParsedVacancy {
+  rank_required: string;
+  vessel_type: string;
+  contract_duration: string;
+  monthly_salary: string;
+  joining_port: string;
+  joining_date: string;
+  contact_whatsapp: string;
+  contact_email: string;
+  additional_notes: string;
+}
+
 type SortKey = "shipName";
 type DashTab = "crew" | "payments";
 
