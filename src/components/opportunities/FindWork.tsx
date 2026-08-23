@@ -112,6 +112,8 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
   const [visible, setVisible] = useState(false);
   
   const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
+  const [directApplied, setDirectApplied] = useState<Record<string, "ok" | "dup">>({});
+  const [directBusy, setDirectBusy] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [countryFilter, setCountryFilter] = useState<string>('all');
