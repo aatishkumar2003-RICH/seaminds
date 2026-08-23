@@ -143,19 +143,30 @@ const ManagerDashboard = () => {
   const publishPreviews = async () => {
     if (previews.length === 0) return;
     setPublishing(true);
-    const rows = previews.map((v) => ({
-      rank_required: v.rank_required || "Not specified",
-      vessel_type: v.vessel_type || "Not specified",
-      contract_duration: v.contract_duration || "Not specified",
-      monthly_salary: v.monthly_salary || null,
-      joining_port: v.joining_port || "Not specified",
-      contact_whatsapp: v.contact_whatsapp || "",
-      additional_notes: [v.additional_notes, v.joining_date ? `Joining date: ${v.joining_date}` : "", v.contact_email ? `Email: ${v.contact_email}` : ""].filter(Boolean).join(" · ") || null,
-      company_name: companyName,
-      status: "active",
-      plan: "founding",
-      verified: false,
-    }));
+    const salaryFallback = "Salary as per international market standards, commensurate with rank and experience. Allowances and terms as per prevailing international market conditions.";
+    const rows = previews.map((v) => {
+      const hasSalary = (v.monthly_salary ?? "").trim().length > 0;
+      const additionalNotes = [
+        v.additional_notes,
+        v.joining_date ? `Joining date: ${v.joining_date}` : "",
+        v.contact_email ? `Email: ${v.contact_email}` : "",
+        !hasSalary ? salaryFallback : "",
+      ].filter(Boolean).join("\n") || null;
+      return {
+        rank_required: v.rank_required || "Not specified",
+        vessel_type: v.vessel_type || "Not specified",
+        contract_duration: v.contract_duration || "Not specified",
+        monthly_salary: v.monthly_salary || null,
+        joining_port: v.joining_port || "Not specified",
+        contact_whatsapp: v.contact_whatsapp || "",
+        additional_notes: additionalNotes,
+        company_name: companyName,
+        status: "active",
+        plan: "founding",
+        verified: false,
+        manager_id: managerUserId,
+      };
+    });
     const { error } = await supabase.from("job_postings").insert(rows);
     setPublishing(false);
     if (error) { toast.error(error.message || "Could not publish vacancies"); return; }
