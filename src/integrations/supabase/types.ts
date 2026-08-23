@@ -2024,6 +2024,7 @@ export type Database = {
           external_url: string | null
           had_cv: boolean | null
           id: string
+          job_posting_id: string | null
           manager_note: string | null
           offered_at: string | null
           offered_joining_date: string | null
@@ -2047,6 +2048,7 @@ export type Database = {
           external_url?: string | null
           had_cv?: boolean | null
           id?: string
+          job_posting_id?: string | null
           manager_note?: string | null
           offered_at?: string | null
           offered_joining_date?: string | null
@@ -2070,6 +2072,7 @@ export type Database = {
           external_url?: string | null
           had_cv?: boolean | null
           id?: string
+          job_posting_id?: string | null
           manager_note?: string | null
           offered_at?: string | null
           offered_joining_date?: string | null
