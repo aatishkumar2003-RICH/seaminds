@@ -136,7 +136,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
 
     const [availRes, postingsRes, extRes, smcRes] = await Promise.all([
       supabase.from("crew_availability").select("*").eq("crew_profile_id", profileId).maybeSingle(),
-      supabase.from("job_postings").select("*").eq("status", "active").gte("created_at", thirtyDaysAgo.toISOString()).order("created_at", { ascending: false }),
+      supabase.from("job_postings").select("id, rank_required, vessel_type, joining_port, contract_duration, monthly_salary, contact_whatsapp, company_name, additional_notes, verified, created_at").eq("status", "active").order("created_at", { ascending: false }).limit(20),
       supabase.from("external_vacancies").select("*").eq("is_scam_flagged", false).gte("quality_score", 30).gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false }).limit(50),
       supabase.from("smc_assessments").select("overall_score").eq("crew_profile_id", profileId).eq("status", "completed").order("completed_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
