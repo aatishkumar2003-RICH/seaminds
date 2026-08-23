@@ -69,6 +69,8 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
   const [fleetInvites, setFleetInvites] = useState<any[]>([]);
   const [refStats, setRefStats] = useState<{ link: string; shipmates_aboard: number } | null>(null);
   const [needsQuickProfile, setNeedsQuickProfile] = useState(false);
+  const [directApplied, setDirectApplied] = useState<Record<string, "ok" | "dup">>({});
+  const [directBusy, setDirectBusy] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!profileId) return;
