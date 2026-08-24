@@ -121,6 +121,9 @@ const ConversionConsole = () => {
   const [myMarket, setMyMarket] = useState<string>(() => localStorage.getItem("sm_my_market") || "");
   const [sheet, setSheet] = useState<Vacancy | null>(null);
   const [wire, setWire] = useState<{ kind: string; text: string; ts: string }[]>([]);
+  const [applied, setApplied] = useState<Record<string, "ok" | "dup">>({});
+  const [applyBusy, setApplyBusy] = useState(false);
+  const [newCrew, setNewCrew] = useState(0);
   const reducedMotion = useMemo(
     () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches,
     []
@@ -136,27 +139,64 @@ const ConversionConsole = () => {
     return () => { alive = false; };
   }, []);
 
-
-
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const since = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
+      const { count } = await supabase
+        .from("crew_profiles")
+        .select("id", { count: "exact", head: true })
+        .gt("created_at", since);
+      if (alive) setNewCrew(count || 0);
+    })();
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => {
     let alive = true;
     (async () => {
-      const [{ data: m }, { data: v }] = await Promise.all([
+      const nowIso = new Date().toISOString();
+      const [{ data: m }, { data: v }, { data: p }] = await Promise.all([
         supabase.rpc("get_market_indices" as never),
         supabase
           .from("external_vacancies")
-          .select("id,title,rank_required,vessel_type,joining_port,salary_min,salary_text,description,source,fetched_at,first_seen_at")
-          .gt("expires_at", new Date().toISOString())
+          .select("id,title,rank_required,vessel_type,joining_port,salary_min,salary_text,description,source,fetched_at,first_seen_at,expires_at")
+          .gt("expires_at", nowIso)
           .order("fetched_at", { ascending: false })
           .limit(25),
+        supabase
+          .from("job_postings")
+          .select("id,rank_required,vessel_type,joining_port,contract_duration,monthly_salary,company_name,additional_notes,created_at")
+          .eq("status", "active")
+          .order("created_at", { ascending: false })
+          .limit(10),
       ]);
       if (!alive) return;
       if (m) setMarket(m as unknown as Market);
-      setVacancies((v as Vacancy[]) || []);
+
+      const ext: Vacancy[] = ((v as Vacancy[]) || []).map((x) => ({ ...x, kind: "external" as const }));
+      const direct: Vacancy[] = ((p as Record<string, string | null>[]) || []).map((x) => ({
+        id: String(x.id),
+        title: x.rank_required,
+        rank_required: x.rank_required,
+        vessel_type: x.vessel_type,
+        joining_port: x.joining_port,
+        salary_min: null,
+        salary_text: x.monthly_salary || null,
+        description: x.additional_notes || null,
+        source: null,
+        fetched_at: x.created_at,
+        first_seen_at: x.created_at,
+        kind: "direct" as const,
+        company_name: x.company_name,
+        contract_duration: x.contract_duration,
+      }));
+      const ts = (r: Vacancy) => new Date(r.first_seen_at || r.fetched_at || 0).getTime();
+      setVacancies([...direct, ...ext].sort((a, b) => ts(b) - ts(a)));
     })();
     return () => { alive = false; };
   }, []);
+
 
   useEffect(() => {
     if (!user) { setProfileActive(false); return; }
