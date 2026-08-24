@@ -513,7 +513,7 @@ const ConversionConsole = () => {
             SMX {t("live")}
           </span>
           <span className="font-mono text-[11px]" style={{ color: GOLD }}>
-            {market ? `${market.total} ${t("jobsWord")} · +${market.new_24h} ${t("today")}` : t("loading")}
+            {market ? `${totalUp} ${t("jobsWord")} · +${new24Up} ${t("today")}` : t("loading")}
           </span>
           <span className="font-mono text-[11px] text-muted-foreground">
             {market
@@ -527,15 +527,38 @@ const ConversionConsole = () => {
         </div>
       </button>
 
+      {/* Sector tape (real indices) */}
+      {sectorTape.length > 0 && (
+        <div className="sm-sector w-full overflow-hidden border-b" style={{ height: 26, borderColor: "rgba(212,175,55,0.12)", background: "rgba(6,15,29,0.7)" }}>
+          <div className="sm-sector-track flex w-max items-center gap-6 px-3" style={{ height: 26 }}>
+            {[...sectorTape, ...sectorTape].map((s, i) => (
+              <span key={i} className="whitespace-nowrap font-mono text-[10px] text-muted-foreground">
+                <span style={{ color: GOLD }} className="mr-1.5">◆</span>{s}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* 4. CONVERSION HERO */}
-      <div className="max-w-3xl mx-auto px-4 pt-6 pb-4 text-center">
-        <h1 className="text-[10px] sm:text-[11px] uppercase tracking-[0.18em] text-muted-foreground mb-2">
+      <div className="max-w-3xl mx-auto px-4 pt-6 pb-4 text-center relative">
+        <div
+          aria-hidden
+          className="sm-aurora pointer-events-none absolute left-1/2 -translate-x-1/2"
+          style={{
+            top: 20, width: 520, height: 220, maxWidth: "110%",
+            background: "radial-gradient(closest-side, rgba(212,175,55,0.22), rgba(212,175,55,0) 70%)",
+            filter: "blur(8px)",
+          }}
+        />
+        <h1 className="relative text-[10px] sm:text-[11px] uppercase tracking-[0.18em] text-muted-foreground mb-2">
           Seafarer Jobs &amp; Maritime Vacancies — Crew Recruitment &amp; AI Competency Platform
         </h1>
-        <p className="text-[11px] tracking-widest text-muted-foreground mb-2">{t("heroKicker")}</p>
-        <h2 className="sm-hero-gradient text-2xl sm:text-3xl md:text-4xl font-bold leading-tight mb-3">
+        <p className="relative text-[11px] tracking-widest text-muted-foreground mb-2">{t("heroKicker")}</p>
+        <h2 className="sm-hero-gradient sm-shimmer relative text-2xl sm:text-3xl md:text-4xl font-bold leading-tight mb-3">
           {t("heroTitle")}
         </h2>
+
 
         <div className="inline-flex items-center rounded-xl overflow-hidden mb-1" style={{ border: `1px solid ${BORDER}` }}>
           {[t("stepProfile"), t("stepMatch"), t("stepApply"), t("stepInterview")].map((s, i) => (
