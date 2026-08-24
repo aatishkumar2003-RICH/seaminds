@@ -249,16 +249,87 @@ const ConversionConsole = () => {
   const langLabel = LANGS.find((l) => l.code === lang)?.label || "English";
   const total = market?.total ?? null;
 
+  const animate = !reducedMotion;
+  const totalUp = useCountUp(total, animate);
+  const new24Up = useCountUp(market?.new_24h ?? null, animate);
+
+  /** Sector tape built from the real indices */
+  const sectorTape = useMemo(() => {
+    const list = (market?.indices || []).filter((i) => i && i.name);
+    return list.map((i) => (i.new_24h > 0 ? `${i.name} ▲+${i.new_24h}` : `${i.name} ${i.total}`));
+  }, [market]);
+
+  /** JobPosting structured data from the real rows only */
+  const jobsLd = useMemo(() => {
+    const rows = vacancies.slice(0, 10).filter((v) => v.rank_required || v.title);
+    if (rows.length === 0) return null;
+    return JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      itemListElement: rows.map((v, i) => {
+        const posting: Record<string, unknown> = {
+          "@type": "JobPosting",
+          title: v.rank_required || v.title,
+          employmentType: "CONTRACTOR",
+          url: "https://seaminds.life/feed",
+          jobLocation: {
+            "@type": "Place",
+            address: { "@type": "PostalAddress", addressLocality: v.joining_port || "Worldwide" },
+          },
+        };
+        const org = v.company_name || v.source;
+        if (org) posting.hiringOrganization = { "@type": "Organization", name: org };
+        const posted = v.first_seen_at || v.fetched_at;
+        if (posted) posting.datePosted = posted;
+        if (v.expires_at) posting.validThrough = v.expires_at;
+        if (v.description) posting.description = v.description;
+        return { "@type": "ListItem", position: i + 1, item: posting };
+      }),
+    });
+  }, [vacancies]);
+
+  const applyNow = useCallback(async (v: Vacancy) => {
+    if (!user) { navigate("/join?next=%2Fquick-profile"); return; }
+    setApplyBusy(true);
+    try {
+      const { data, error } = await supabase.rpc("submit_application", {
+        p_vacancy_id: v.kind === "direct" ? undefined : v.id,
+        p_company_post_id: undefined,
+        p_company_name: v.company_name || v.source || undefined,
+        p_rank: v.rank_required || undefined,
+        p_vessel: v.vessel_type || undefined,
+        p_external_url: undefined,
+        p_job_posting_id: v.kind === "direct" ? v.id : undefined,
+      } as never);
+      if (error) throw error;
+      const res = (data || {}) as { ok?: boolean; duplicate?: boolean; error?: string };
+      if (res.duplicate || res.error === "duplicate") {
+        setApplied((s) => ({ ...s, [v.id]: "dup" }));
+      } else if (res.ok === false) {
+        toast.error(res.error || "Could not send application");
+      } else {
+        setApplied((s) => ({ ...s, [v.id]: "ok" }));
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Could not send application";
+      if (/duplicate|already/i.test(msg)) setApplied((s) => ({ ...s, [v.id]: "dup" }));
+      else toast.error(msg);
+    } finally {
+      setApplyBusy(false);
+    }
+  }, [user, navigate]);
+
   // Signed-out visitors must reach jobs without a login wall.
   const jobsTo = user ? "/app?tab=jobs" : "/feed";
 
   const dock = [
-    { key: "jobs", label: t("dockJobs"), value: total === null ? "…" : String(total), to: jobsTo },
+    { key: "jobs", label: t("dockJobs"), value: total === null ? "…" : String(totalUp), to: jobsTo },
     { key: "profile", label: t("dockProfile"), value: profileActive ? "✓" : t("dockStart"), to: "/quick-profile" },
     { key: "ai", label: t("dockAi"), value: t("dockTry"), to: "/app?tab=smc" },
     { key: "feed", label: t("dockFeed"), value: t("dockOpen"), to: "/app?tab=home" },
-    { key: "market", label: t("dockMarket"), value: t("dockLive"), to: "/app?tab=news" },
+    { key: "market", label: t("dockMarket"), value: t("dockLive"), to: "/app?tab=home" },
   ];
+
 
   return (
     <div className="relative" style={{ background: NAVY }}>
