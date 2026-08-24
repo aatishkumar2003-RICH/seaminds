@@ -66,12 +66,34 @@ const LOCALISED: Record<string, Record<string, string>> = {
   },
 };
 
+const HTML_RE = /<(div|p|h[1-6]|ul|ol|table|a|section)\b/i;
+
+const sanitizeHtml = (raw: string) => {
+  let s = raw
+    .replace(/<\s*(script|style|iframe|form)\b[\s\S]*?<\s*\/\s*\1\s*>/gi, "")
+    .replace(/<\s*\/?\s*(script|style|iframe|form)\b[^>]*>/gi, "")
+    .replace(/\son[a-z]+\s*=\s*"[^"]*"/gi, "")
+    .replace(/\son[a-z]+\s*=\s*'[^']*'/gi, "")
+    .replace(/\son[a-z]+\s*=\s*[^\s>]+/gi, "")
+    .replace(/(href|src)\s*=\s*(["'])\s*javascript:[^"']*\2/gi, '$1="#"');
+  // External links open in a new tab; seaminds.life links stay in the same tab
+  s = s.replace(/<a\b([^>]*)>/gi, (m, attrs) => {
+    const href = /href\s*=\s*["']([^"']*)["']/i.exec(attrs)?.[1] || "";
+    const external = /^https?:\/\//i.test(href) && !/seaminds\.life/i.test(href);
+    const cleaned = attrs.replace(/\s(target|rel)\s*=\s*["'][^"']*["']/gi, "");
+    return `<a${cleaned}${external ? ' target="_blank" rel="noopener noreferrer"' : ""}>`;
+  });
+  return s;
+};
+
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const [post, setPost] = useState<BlogPostData | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [liveCount, setLiveCount] = useState<number | null>(null);
+
 
   useEffect(() => {
     const fetchPost = async () => {
