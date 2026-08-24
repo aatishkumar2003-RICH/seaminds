@@ -341,13 +341,16 @@ const ConversionConsole = () => {
         .sm-tape:hover .sm-tape-track { animation-play-state: paused; }
         @keyframes sm-aurora { 0%,100% { opacity: .28; transform: scale(1) } 50% { opacity: .5; transform: scale(1.08) } }
         .sm-aurora { animation: sm-aurora 8s ease-in-out infinite; }
-        @keyframes sm-shimmer { 0% { background-position: -180% 0 } 60%,100% { background-position: 180% 0 } }
+        @keyframes sm-shimmer { 0% { background-position: -160% 0, 0 0 } 55%,100% { background-position: 160% 0, 0 0 } }
         .sm-shimmer {
-          background-image: linear-gradient(100deg, transparent 35%, rgba(212,175,55,.55) 50%, transparent 65%);
-          background-size: 200% 100%;
+          background-image:
+            linear-gradient(100deg, transparent 40%, rgba(255,255,255,.9) 50%, transparent 60%),
+            linear-gradient(100deg, #ffffff 0%, #f5e7bd 45%, #D4AF37 100%);
+          background-size: 220% 100%, 100% 100%;
           background-repeat: no-repeat;
           animation: sm-shimmer 6s ease-in-out infinite;
           -webkit-background-clip: text; background-clip: text;
+          color: transparent;
         }
         @keyframes sm-sector { from { transform: translateX(0) } to { transform: translateX(-50%) } }
         .sm-sector-track { animation: sm-sector 28s linear infinite; }
