@@ -8,10 +8,10 @@ const BORDER = "rgba(212,175,55,0.3)";
 
 type Post = { id: string; title: string; slug: string };
 
-const CARDS = [
+const CARDS: { id?: string; title: string; body: string; link: string; cta: string }[] = [
   { title: "SEA PROFILE", body: "One profile, reused for every application — recruiters find you.", link: "/profile-start", cta: "START →" },
-  { title: "AI INTERVIEW & SMC", body: "Scored 0.00–5.00 on Technical · Judgment · English · Behaviour.", link: "/app?tab=smc", cta: "TAKE ASSESSMENT →" },
-  { title: "MARKET & SALARY", body: "Live vacancy indices and salary benchmarks by rank and vessel.", link: "/app?tab=market", cta: "OPEN MARKET →" },
+  { id: "smc-score", title: "AI INTERVIEW & SMC", body: "Scored 0.00–5.00 on Technical · Judgment · English · Behaviour.", link: "/app?tab=smc", cta: "TAKE ASSESSMENT →" },
+  { title: "MARKET & SALARY", body: "Live vacancy indices and salary benchmarks by rank and vessel.", link: "/app?tab=home", cta: "OPEN MARKET →" },
   { title: "CV · CERTIFICATES · REST HOURS", body: "Build your CV, store certificates and keep an MLC rest-hours record.", link: "/app?tab=cv", cta: "OPEN CV →" },
   { title: "ACADEMY & COMMUNITY", body: "PSC prep, vetting and STCW updates — plus a crew community at sea.", link: "/app?tab=home", cta: "EXPLORE →" },
   { title: "MANAGER WORKFLOW", body: "Post Vacancy → Match → AI Interview → Shortlist.", link: "/for-companies", cta: "FIND CREW →" },
@@ -40,6 +40,7 @@ const HomeBento = () => {
         {CARDS.map((c) => (
           <div
             key={c.title}
+            id={c.id}
             className="rounded-xl p-4 flex flex-col justify-between"
             style={{ maxHeight: 120, background: `${PANEL}CC`, border: `1px solid ${BORDER}` }}
           >

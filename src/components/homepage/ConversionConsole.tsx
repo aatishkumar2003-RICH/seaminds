@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Globe, ChevronDown, X, Menu, Search } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import seamindsLogo from "@/assets/seaminds-logo.png";
@@ -36,6 +37,10 @@ type Vacancy = {
   source: string | null;
   fetched_at: string | null;
   first_seen_at: string | null;
+  kind?: "external" | "direct";
+  company_name?: string | null;
+  contract_duration?: string | null;
+  expires_at?: string | null;
 };
 
 const isNew = (v: Vacancy) => {
@@ -51,6 +56,27 @@ const relTime = (d?: string | null) => {
   return `${Math.floor(mins / 1440)}d ago`;
 };
 const idxOf = (m: Market | null, name: string) => (m?.indices || []).find((i) => i.name === name);
+
+/** Count-up for real numbers (first load only, disabled under reduced motion) */
+function useCountUp(target: number | null, enabled: boolean) {
+  const [val, setVal] = useState(0);
+  const done = useRef(false);
+  useEffect(() => {
+    if (target === null) return;
+    if (!enabled || done.current || target <= 0) { setVal(target); done.current = true; return; }
+    done.current = true;
+    const start = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const p = Math.min((now - start) / 1200, 1);
+      setVal(Math.floor(target * p));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, enabled]);
+  return val;
+}
 
 const MARKETS = ["DECK", "ENGINE", "ETO", "RATINGS", "OFFSHORE"] as const;
 const MARKET_KEYWORDS: Record<string, RegExp> = {
@@ -68,8 +94,8 @@ const inMarket = (v: Vacancy, m: string) => {
 const MENU_LINKS: { label: string; to: string; external?: boolean }[] = [
   { label: "For Seafarers", to: "/join" },
   { label: "Find Crew — For Companies", to: "/for-companies" },
-  { label: "Post Vacancy", to: "/manager" },
-  { label: "Create AI Interview", to: "/for-companies" },
+  { label: "Post Vacancy", to: "/post-vacancy" },
+  { label: "Create AI Interview", to: "/manager/interviews" },
   { label: "Manager Login", to: "/manager" },
   { label: "SMC Score", to: "/app?tab=smc" },
   { label: "Jobs", to: "/app?tab=jobs" },
@@ -79,6 +105,7 @@ const MENU_LINKS: { label: string; to: string; external?: boolean }[] = [
   { label: "Privacy", to: "/privacy" },
   { label: "Contact", to: "mailto:info@indossol.com", external: true },
 ];
+
 
 const ConversionConsole = () => {
   const navigate = useNavigate();
@@ -94,6 +121,9 @@ const ConversionConsole = () => {
   const [myMarket, setMyMarket] = useState<string>(() => localStorage.getItem("sm_my_market") || "");
   const [sheet, setSheet] = useState<Vacancy | null>(null);
   const [wire, setWire] = useState<{ kind: string; text: string; ts: string }[]>([]);
+  const [applied, setApplied] = useState<Record<string, "ok" | "dup">>({});
+  const [applyBusy, setApplyBusy] = useState(false);
+  const [newCrew, setNewCrew] = useState(0);
   const reducedMotion = useMemo(
     () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches,
     []
@@ -109,27 +139,64 @@ const ConversionConsole = () => {
     return () => { alive = false; };
   }, []);
 
-
-
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const since = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
+      const { count } = await supabase
+        .from("crew_profiles")
+        .select("id", { count: "exact", head: true })
+        .gt("created_at", since);
+      if (alive) setNewCrew(count || 0);
+    })();
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => {
     let alive = true;
     (async () => {
-      const [{ data: m }, { data: v }] = await Promise.all([
+      const nowIso = new Date().toISOString();
+      const [{ data: m }, { data: v }, { data: p }] = await Promise.all([
         supabase.rpc("get_market_indices" as never),
         supabase
           .from("external_vacancies")
-          .select("id,title,rank_required,vessel_type,joining_port,salary_min,salary_text,description,source,fetched_at,first_seen_at")
-          .gt("expires_at", new Date().toISOString())
+          .select("id,title,rank_required,vessel_type,joining_port,salary_min,salary_text,description,source,fetched_at,first_seen_at,expires_at")
+          .gt("expires_at", nowIso)
           .order("fetched_at", { ascending: false })
           .limit(25),
+        supabase
+          .from("job_postings")
+          .select("id,rank_required,vessel_type,joining_port,contract_duration,monthly_salary,company_name,additional_notes,created_at")
+          .eq("status", "active")
+          .order("created_at", { ascending: false })
+          .limit(10),
       ]);
       if (!alive) return;
       if (m) setMarket(m as unknown as Market);
-      setVacancies((v as Vacancy[]) || []);
+
+      const ext: Vacancy[] = ((v as Vacancy[]) || []).map((x) => ({ ...x, kind: "external" as const }));
+      const direct: Vacancy[] = ((p as Record<string, string | null>[]) || []).map((x) => ({
+        id: String(x.id),
+        title: x.rank_required,
+        rank_required: x.rank_required,
+        vessel_type: x.vessel_type,
+        joining_port: x.joining_port,
+        salary_min: null,
+        salary_text: x.monthly_salary || null,
+        description: x.additional_notes || null,
+        source: null,
+        fetched_at: x.created_at,
+        first_seen_at: x.created_at,
+        kind: "direct" as const,
+        company_name: x.company_name,
+        contract_duration: x.contract_duration,
+      }));
+      const ts = (r: Vacancy) => new Date(r.first_seen_at || r.fetched_at || 0).getTime();
+      setVacancies([...direct, ...ext].sort((a, b) => ts(b) - ts(a)));
     })();
     return () => { alive = false; };
   }, []);
+
 
   useEffect(() => {
     if (!user) { setProfileActive(false); return; }
@@ -182,16 +249,87 @@ const ConversionConsole = () => {
   const langLabel = LANGS.find((l) => l.code === lang)?.label || "English";
   const total = market?.total ?? null;
 
+  const animate = !reducedMotion;
+  const totalUp = useCountUp(total, animate);
+  const new24Up = useCountUp(market?.new_24h ?? null, animate);
+
+  /** Sector tape built from the real indices */
+  const sectorTape = useMemo(() => {
+    const list = (market?.indices || []).filter((i) => i && i.name);
+    return list.map((i) => (i.new_24h > 0 ? `${i.name} ▲+${i.new_24h}` : `${i.name} ${i.total}`));
+  }, [market]);
+
+  /** JobPosting structured data from the real rows only */
+  const jobsLd = useMemo(() => {
+    const rows = vacancies.slice(0, 10).filter((v) => v.rank_required || v.title);
+    if (rows.length === 0) return null;
+    return JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      itemListElement: rows.map((v, i) => {
+        const posting: Record<string, unknown> = {
+          "@type": "JobPosting",
+          title: v.rank_required || v.title,
+          employmentType: "CONTRACTOR",
+          url: "https://seaminds.life/feed",
+          jobLocation: {
+            "@type": "Place",
+            address: { "@type": "PostalAddress", addressLocality: v.joining_port || "Worldwide" },
+          },
+        };
+        const org = v.company_name || v.source;
+        if (org) posting.hiringOrganization = { "@type": "Organization", name: org };
+        const posted = v.first_seen_at || v.fetched_at;
+        if (posted) posting.datePosted = posted;
+        if (v.expires_at) posting.validThrough = v.expires_at;
+        if (v.description) posting.description = v.description;
+        return { "@type": "ListItem", position: i + 1, item: posting };
+      }),
+    });
+  }, [vacancies]);
+
+  const applyNow = useCallback(async (v: Vacancy) => {
+    if (!user) { navigate("/join?next=%2Fquick-profile"); return; }
+    setApplyBusy(true);
+    try {
+      const { data, error } = await supabase.rpc("submit_application", {
+        p_vacancy_id: v.kind === "direct" ? undefined : v.id,
+        p_company_post_id: undefined,
+        p_company_name: v.company_name || v.source || undefined,
+        p_rank: v.rank_required || undefined,
+        p_vessel: v.vessel_type || undefined,
+        p_external_url: undefined,
+        p_job_posting_id: v.kind === "direct" ? v.id : undefined,
+      } as never);
+      if (error) throw error;
+      const res = (data || {}) as { ok?: boolean; duplicate?: boolean; error?: string };
+      if (res.duplicate || res.error === "duplicate") {
+        setApplied((s) => ({ ...s, [v.id]: "dup" }));
+      } else if (res.ok === false) {
+        toast.error(res.error || "Could not send application");
+      } else {
+        setApplied((s) => ({ ...s, [v.id]: "ok" }));
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Could not send application";
+      if (/duplicate|already/i.test(msg)) setApplied((s) => ({ ...s, [v.id]: "dup" }));
+      else toast.error(msg);
+    } finally {
+      setApplyBusy(false);
+    }
+  }, [user, navigate]);
+
   // Signed-out visitors must reach jobs without a login wall.
   const jobsTo = user ? "/app?tab=jobs" : "/feed";
 
   const dock = [
-    { key: "jobs", label: t("dockJobs"), value: total === null ? "…" : String(total), to: jobsTo },
+    { key: "jobs", label: t("dockJobs"), value: total === null ? "…" : String(totalUp), to: jobsTo },
     { key: "profile", label: t("dockProfile"), value: profileActive ? "✓" : t("dockStart"), to: "/quick-profile" },
     { key: "ai", label: t("dockAi"), value: t("dockTry"), to: "/app?tab=smc" },
     { key: "feed", label: t("dockFeed"), value: t("dockOpen"), to: "/app?tab=home" },
-    { key: "market", label: t("dockMarket"), value: t("dockLive"), to: "/app?tab=news" },
+    { key: "market", label: t("dockMarket"), value: t("dockLive"), to: "/app?tab=home" },
   ];
+
 
   return (
     <div className="relative" style={{ background: NAVY }}>
@@ -201,8 +339,33 @@ const ConversionConsole = () => {
         @keyframes sm-tape { from { transform: translateX(0) } to { transform: translateX(-50%) } }
         .sm-tape-track { animation: sm-tape 40s linear infinite; }
         .sm-tape:hover .sm-tape-track { animation-play-state: paused; }
-        @media (prefers-reduced-motion: reduce) { .sm-cta-pulse, .sm-dot, .sm-tape-track { animation: none !important; } }
+        @keyframes sm-aurora { 0%,100% { opacity: .28; transform: scale(1) } 50% { opacity: .5; transform: scale(1.08) } }
+        .sm-aurora { animation: sm-aurora 8s ease-in-out infinite; }
+        @keyframes sm-shimmer { 0% { background-position: -160% 0, 0 0 } 55%,100% { background-position: 160% 0, 0 0 } }
+        .sm-shimmer {
+          background-image:
+            linear-gradient(100deg, transparent 40%, rgba(255,255,255,.9) 50%, transparent 60%),
+            linear-gradient(100deg, #ffffff 0%, #f5e7bd 45%, #D4AF37 100%);
+          background-size: 220% 100%, 100% 100%;
+          background-repeat: no-repeat;
+          animation: sm-shimmer 6s ease-in-out infinite;
+          -webkit-background-clip: text; background-clip: text;
+          color: transparent;
+        }
+        @keyframes sm-sector { from { transform: translateX(0) } to { transform: translateX(-50%) } }
+        .sm-sector-track { animation: sm-sector 28s linear infinite; }
+        .sm-sector:hover .sm-sector-track { animation-play-state: paused; }
+        @keyframes sm-newchip { 0%,100% { opacity: 1 } 50% { opacity: .55 } }
+        .sm-newchip { animation: sm-newchip 2s ease-in-out infinite; }
+        @media (prefers-reduced-motion: reduce) {
+          .sm-cta-pulse, .sm-dot, .sm-tape-track, .sm-aurora, .sm-shimmer, .sm-sector-track, .sm-newchip { animation: none !important; }
+        }
       `}</style>
+
+      {jobsLd && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jobsLd }} />
+      )}
+
 
       {/* 1. HEADER */}
       <header className="sticky top-0 z-40 border-b relative" style={{ height: 86, borderColor: "rgba(255,255,255,0.06)", background: NAVY }}>
@@ -353,7 +516,7 @@ const ConversionConsole = () => {
             SMX {t("live")}
           </span>
           <span className="font-mono text-[11px]" style={{ color: GOLD }}>
-            {market ? `${market.total} ${t("jobsWord")} · +${market.new_24h} ${t("today")}` : t("loading")}
+            {market ? `${totalUp} ${t("jobsWord")} · +${new24Up} ${t("today")}` : t("loading")}
           </span>
           <span className="font-mono text-[11px] text-muted-foreground">
             {market
@@ -367,15 +530,38 @@ const ConversionConsole = () => {
         </div>
       </button>
 
+      {/* Sector tape (real indices) */}
+      {sectorTape.length > 0 && (
+        <div className="sm-sector w-full overflow-hidden border-b" style={{ height: 26, borderColor: "rgba(212,175,55,0.12)", background: "rgba(6,15,29,0.7)" }}>
+          <div className="sm-sector-track flex w-max items-center gap-6 px-3" style={{ height: 26 }}>
+            {[...sectorTape, ...sectorTape].map((s, i) => (
+              <span key={i} className="whitespace-nowrap font-mono text-[10px] text-muted-foreground">
+                <span style={{ color: GOLD }} className="mr-1.5">◆</span>{s}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* 4. CONVERSION HERO */}
-      <div className="max-w-3xl mx-auto px-4 pt-6 pb-4 text-center">
-        <h1 className="text-[10px] sm:text-[11px] uppercase tracking-[0.18em] text-muted-foreground mb-2">
+      <div className="max-w-3xl mx-auto px-4 pt-6 pb-4 text-center relative">
+        <div
+          aria-hidden
+          className="sm-aurora pointer-events-none absolute left-1/2 -translate-x-1/2"
+          style={{
+            top: 20, width: 520, height: 220, maxWidth: "110%",
+            background: "radial-gradient(closest-side, rgba(212,175,55,0.22), rgba(212,175,55,0) 70%)",
+            filter: "blur(8px)",
+          }}
+        />
+        <h1 className="relative text-[10px] sm:text-[11px] uppercase tracking-[0.18em] text-muted-foreground mb-2">
           Seafarer Jobs &amp; Maritime Vacancies — Crew Recruitment &amp; AI Competency Platform
         </h1>
-        <p className="text-[11px] tracking-widest text-muted-foreground mb-2">{t("heroKicker")}</p>
-        <h2 className="sm-hero-gradient text-2xl sm:text-3xl md:text-4xl font-bold leading-tight mb-3">
+        <p className="relative text-[11px] tracking-widest text-muted-foreground mb-2">{t("heroKicker")}</p>
+        <h2 className="sm-hero-gradient sm-shimmer relative text-2xl sm:text-3xl md:text-4xl font-bold leading-tight mb-3">
           {t("heroTitle")}
         </h2>
+
 
         <div className="inline-flex items-center rounded-xl overflow-hidden mb-1" style={{ border: `1px solid ${BORDER}` }}>
           {[t("stepProfile"), t("stepMatch"), t("stepApply"), t("stepInterview")].map((s, i) => (
@@ -473,6 +659,11 @@ const ConversionConsole = () => {
             </button>
           ))}
         </div>
+        {newCrew > 0 && (
+          <p className="mt-2 text-[11px] font-semibold" style={{ color: GREEN }}>
+            ✓ {newCrew} seafarers joined SeaMinds this week
+          </p>
+        )}
       </div>
 
       {/* 6+7. VACANCY TICKER + LIVE JOBS */}
@@ -503,9 +694,16 @@ const ConversionConsole = () => {
               onClick={() => setSheet(v)}
 
               className="w-full text-left px-3 border-b last:border-b-0 flex items-center gap-2"
-              style={{ minHeight: 54, borderColor: "rgba(212,175,55,0.12)" }}
+              style={{
+                minHeight: 54,
+                borderColor: "rgba(212,175,55,0.12)",
+                borderLeft: isUrgent(v) ? "2px solid rgba(239,68,68,0.45)" : undefined,
+              }}
             >
-              {isNew(v) && <span className="rounded px-1.5 py-0.5 text-[9px] font-bold shrink-0" style={{ background: GOLD, color: NAVY }}>NEW</span>}
+              {isNew(v) && <span className="sm-newchip rounded px-1.5 py-0.5 text-[9px] font-bold shrink-0" style={{ background: GOLD, color: NAVY }}>NEW</span>}
+              {v.kind === "direct" && (
+                <span className="rounded px-1.5 py-0.5 text-[9px] font-bold shrink-0" style={{ border: `1px solid ${GOLD}`, color: GOLD }}>DIRECT</span>
+              )}
               {isUrgent(v) && <span className="shrink-0 text-[11px]">🔥</span>}
               <span className="font-bold text-foreground text-sm truncate">{v.rank_required || v.title || t("seafarer")}</span>
               <span className="text-xs truncate" style={{ color: GOLD }}>{v.vessel_type || t("various")}</span>
@@ -526,6 +724,32 @@ const ConversionConsole = () => {
             {t("allJobs")} {market?.total ?? 0} →
           </button>
         </div>
+
+        {/* MANAGER BAND */}
+        <div className="mt-4 rounded-2xl px-4 py-3" style={{ border: `1px solid ${GOLD}`, background: "rgba(212,175,55,0.06)", maxHeight: 110 }}>
+          <p className="text-[9px] font-bold uppercase tracking-[0.18em]" style={{ color: GOLD }}>
+            For shipping companies &amp; manning agents
+          </p>
+          <p className="text-sm font-bold text-foreground">Your next crew may already be on SeaMinds.</p>
+          <p className="text-[10px] text-muted-foreground leading-snug">
+            Post vacancies free during the founding period · Search Sea Profiles · AI competency interviews scored 0.00–5.00 · Shortlist on evidence.
+          </p>
+          <div className="mt-1.5 flex items-center gap-2">
+            <button type="button" onClick={() => navigate("/for-companies")} className="rounded-lg px-3 py-1.5 text-[11px] font-bold" style={{ background: GOLD, color: NAVY }}>
+              FIND CREW →
+            </button>
+            <button type="button" onClick={() => navigate("/manager")} className="rounded-lg px-3 py-1.5 text-[11px] font-semibold" style={{ border: `1px solid ${BORDER}`, color: GOLD }}>
+              MANAGER LOGIN
+            </button>
+            <a href="/post-vacancy" onClick={(e) => { e.preventDefault(); navigate("/post-vacancy"); }} className="text-[10px] font-semibold text-muted-foreground hover:text-foreground">
+              Post a vacancy →
+            </a>
+          </div>
+        </div>
+
+        <p className="mt-4 text-[11px] leading-relaxed text-muted-foreground">
+          SeaMinds connects seafarers with live maritime jobs worldwide and gives shipping and manning companies structured Sea Profiles, AI competency interviews and crew-matching tools. Crew can explore deck, engine, ETO, tanker, LNG, bulk, container, offshore and catering vacancies, create a reusable professional profile and apply directly.
+        </p>
       </div>
 
       {/* Newswire ribbon */}
@@ -591,7 +815,10 @@ const ConversionConsole = () => {
                 {sheet.salary_text || `${t("salaryFrom")} $${Number(sheet.salary_min).toLocaleString()}`}
               </p>
             )}
-            <p className="text-[9px] font-mono tracking-wider text-muted-foreground mb-3">{sheet.source ? t("externalSource") : t("direct")}</p>
+            <p className="text-[9px] font-mono tracking-wider text-muted-foreground mb-3">
+              {sheet.kind === "direct" ? `${sheet.company_name || ""} · DIRECT` : t("externalSource")}
+              {sheet.contract_duration ? ` · ${sheet.contract_duration}` : ""}
+            </p>
 
             <p className="text-xs font-semibold mb-3" style={{ color: profileActive ? GREEN : "#94A3B8" }}>
               {t("yourSeaProfile")}: {profileActive ? t("profileActive") : t("profileNotActive")}
@@ -599,11 +826,18 @@ const ConversionConsole = () => {
 
             <button
               type="button"
-              onClick={() => navigate(user ? "/app?tab=jobs" : "/join?next=%2Fquick-profile")}
-              className="w-full rounded-xl h-12 font-bold mb-3"
+              disabled={applyBusy || !!applied[sheet.id]}
+              onClick={() => applyNow(sheet)}
+              className="w-full rounded-xl h-12 font-bold mb-3 disabled:opacity-70"
               style={{ background: GOLD, color: NAVY }}
             >
-              {user ? t("applyWithProfile") : t("activateAndApply")}
+              {applied[sheet.id] === "ok"
+                ? "Applied ✓ — your Sea Profile has been sent"
+                : applied[sheet.id] === "dup"
+                ? "Already applied ✓"
+                : applyBusy
+                ? "Sending…"
+                : user ? t("applyWithProfile") : t("activateAndApply")}
             </button>
 
             <ul className="space-y-1 text-[11px] text-muted-foreground">
