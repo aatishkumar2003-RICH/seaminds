@@ -220,6 +220,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
       const { data, error } = await supabase.rpc("submit_application" as any, {
         p_vacancy_id: null,
         p_company_post_id: null,
+        p_job_posting_id: jp.id,
         p_company_name: jp.company_name || null,
         p_rank: jp.rank_required || null,
         p_vessel: jp.vessel_type || null,
@@ -231,9 +232,6 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
         return;
       }
       if (r.duplicate) { setDirectApplied((s) => ({ ...s, [jp.id]: "dup" })); return; }
-      if (r.application_id) {
-        await supabase.from("job_applications").update({ job_posting_id: jp.id } as any).eq("id", r.application_id);
-      }
       setDirectApplied((s) => ({ ...s, [jp.id]: "ok" }));
     } finally {
       setDirectBusy((s) => ({ ...s, [jp.id]: false }));
