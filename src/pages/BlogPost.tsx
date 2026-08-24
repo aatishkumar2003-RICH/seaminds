@@ -309,7 +309,9 @@ const BlogPost = () => {
         })()}
 
         {/* Article content */}
+        <style>{`.sm-article a{color:#D4AF37;text-decoration:underline}.sm-article h1,.sm-article h2,.sm-article h3,.sm-article h4{color:#D4AF37;font-weight:700;margin:1.25rem 0 .5rem}.sm-article ul{list-style:disc;padding-left:1.25rem}.sm-article ol{list-style:decimal;padding-left:1.25rem}.sm-article table{width:100%;border-collapse:collapse}.sm-article th,.sm-article td{border:1px solid rgba(212,175,55,0.25);padding:6px 8px;font-size:13px}.sm-article strong{color:#E0E6ED}`}</style>
         <div className="text-base leading-relaxed space-y-4 sm-article" style={{ color: "#CBD5E1" }}>
+
           {isHtml ? (
             <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }} />
           ) : (
