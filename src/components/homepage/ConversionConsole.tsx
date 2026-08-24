@@ -659,6 +659,11 @@ const ConversionConsole = () => {
             </button>
           ))}
         </div>
+        {newCrew > 0 && (
+          <p className="mt-2 text-[11px] font-semibold" style={{ color: GREEN }}>
+            ✓ {newCrew} seafarers joined SeaMinds this week
+          </p>
+        )}
       </div>
 
       {/* 6+7. VACANCY TICKER + LIVE JOBS */}
@@ -689,9 +694,16 @@ const ConversionConsole = () => {
               onClick={() => setSheet(v)}
 
               className="w-full text-left px-3 border-b last:border-b-0 flex items-center gap-2"
-              style={{ minHeight: 54, borderColor: "rgba(212,175,55,0.12)" }}
+              style={{
+                minHeight: 54,
+                borderColor: "rgba(212,175,55,0.12)",
+                borderLeft: isUrgent(v) ? "2px solid rgba(239,68,68,0.45)" : undefined,
+              }}
             >
-              {isNew(v) && <span className="rounded px-1.5 py-0.5 text-[9px] font-bold shrink-0" style={{ background: GOLD, color: NAVY }}>NEW</span>}
+              {isNew(v) && <span className="sm-newchip rounded px-1.5 py-0.5 text-[9px] font-bold shrink-0" style={{ background: GOLD, color: NAVY }}>NEW</span>}
+              {v.kind === "direct" && (
+                <span className="rounded px-1.5 py-0.5 text-[9px] font-bold shrink-0" style={{ border: `1px solid ${GOLD}`, color: GOLD }}>DIRECT</span>
+              )}
               {isUrgent(v) && <span className="shrink-0 text-[11px]">🔥</span>}
               <span className="font-bold text-foreground text-sm truncate">{v.rank_required || v.title || t("seafarer")}</span>
               <span className="text-xs truncate" style={{ color: GOLD }}>{v.vessel_type || t("various")}</span>
@@ -712,6 +724,32 @@ const ConversionConsole = () => {
             {t("allJobs")} {market?.total ?? 0} →
           </button>
         </div>
+
+        {/* MANAGER BAND */}
+        <div className="mt-4 rounded-2xl px-4 py-3" style={{ border: `1px solid ${GOLD}`, background: "rgba(212,175,55,0.06)", maxHeight: 110 }}>
+          <p className="text-[9px] font-bold uppercase tracking-[0.18em]" style={{ color: GOLD }}>
+            For shipping companies &amp; manning agents
+          </p>
+          <p className="text-sm font-bold text-foreground">Your next crew may already be on SeaMinds.</p>
+          <p className="text-[10px] text-muted-foreground leading-snug">
+            Post vacancies free during the founding period · Search Sea Profiles · AI competency interviews scored 0.00–5.00 · Shortlist on evidence.
+          </p>
+          <div className="mt-1.5 flex items-center gap-2">
+            <button type="button" onClick={() => navigate("/for-companies")} className="rounded-lg px-3 py-1.5 text-[11px] font-bold" style={{ background: GOLD, color: NAVY }}>
+              FIND CREW →
+            </button>
+            <button type="button" onClick={() => navigate("/manager")} className="rounded-lg px-3 py-1.5 text-[11px] font-semibold" style={{ border: `1px solid ${BORDER}`, color: GOLD }}>
+              MANAGER LOGIN
+            </button>
+            <a href="/post-vacancy" onClick={(e) => { e.preventDefault(); navigate("/post-vacancy"); }} className="text-[10px] font-semibold text-muted-foreground hover:text-foreground">
+              Post a vacancy →
+            </a>
+          </div>
+        </div>
+
+        <p className="mt-4 text-[11px] leading-relaxed text-muted-foreground">
+          SeaMinds connects seafarers with live maritime jobs worldwide and gives shipping and manning companies structured Sea Profiles, AI competency interviews and crew-matching tools. Crew can explore deck, engine, ETO, tanker, LNG, bulk, container, offshore and catering vacancies, create a reusable professional profile and apply directly.
+        </p>
       </div>
 
       {/* Newswire ribbon */}
@@ -777,7 +815,10 @@ const ConversionConsole = () => {
                 {sheet.salary_text || `${t("salaryFrom")} $${Number(sheet.salary_min).toLocaleString()}`}
               </p>
             )}
-            <p className="text-[9px] font-mono tracking-wider text-muted-foreground mb-3">{sheet.source ? t("externalSource") : t("direct")}</p>
+            <p className="text-[9px] font-mono tracking-wider text-muted-foreground mb-3">
+              {sheet.kind === "direct" ? `${sheet.company_name || ""} · DIRECT` : t("externalSource")}
+              {sheet.contract_duration ? ` · ${sheet.contract_duration}` : ""}
+            </p>
 
             <p className="text-xs font-semibold mb-3" style={{ color: profileActive ? GREEN : "#94A3B8" }}>
               {t("yourSeaProfile")}: {profileActive ? t("profileActive") : t("profileNotActive")}
@@ -785,11 +826,18 @@ const ConversionConsole = () => {
 
             <button
               type="button"
-              onClick={() => navigate(user ? "/app?tab=jobs" : "/join?next=%2Fquick-profile")}
-              className="w-full rounded-xl h-12 font-bold mb-3"
+              disabled={applyBusy || !!applied[sheet.id]}
+              onClick={() => applyNow(sheet)}
+              className="w-full rounded-xl h-12 font-bold mb-3 disabled:opacity-70"
               style={{ background: GOLD, color: NAVY }}
             >
-              {user ? t("applyWithProfile") : t("activateAndApply")}
+              {applied[sheet.id] === "ok"
+                ? "Applied ✓ — your Sea Profile has been sent"
+                : applied[sheet.id] === "dup"
+                ? "Already applied ✓"
+                : applyBusy
+                ? "Sending…"
+                : user ? t("applyWithProfile") : t("activateAndApply")}
             </button>
 
             <ul className="space-y-1 text-[11px] text-muted-foreground">
