@@ -66,12 +66,34 @@ const LOCALISED: Record<string, Record<string, string>> = {
   },
 };
 
+const HTML_RE = /<(div|p|h[1-6]|ul|ol|table|a|section)\b/i;
+
+const sanitizeHtml = (raw: string) => {
+  let s = raw
+    .replace(/<\s*(script|style|iframe|form)\b[\s\S]*?<\s*\/\s*\1\s*>/gi, "")
+    .replace(/<\s*\/?\s*(script|style|iframe|form)\b[^>]*>/gi, "")
+    .replace(/\son[a-z]+\s*=\s*"[^"]*"/gi, "")
+    .replace(/\son[a-z]+\s*=\s*'[^']*'/gi, "")
+    .replace(/\son[a-z]+\s*=\s*[^\s>]+/gi, "")
+    .replace(/(href|src)\s*=\s*(["'])\s*javascript:[^"']*\2/gi, '$1="#"');
+  // External links open in a new tab; seaminds.life links stay in the same tab
+  s = s.replace(/<a\b([^>]*)>/gi, (m, attrs) => {
+    const href = /href\s*=\s*["']([^"']*)["']/i.exec(attrs)?.[1] || "";
+    const external = /^https?:\/\//i.test(href) && !/seaminds\.life/i.test(href);
+    const cleaned = attrs.replace(/\s(target|rel)\s*=\s*["'][^"']*["']/gi, "");
+    return `<a${cleaned}${external ? ' target="_blank" rel="noopener noreferrer"' : ""}>`;
+  });
+  return s;
+};
+
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const [post, setPost] = useState<BlogPostData | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [liveCount, setLiveCount] = useState<number | null>(null);
+
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -98,6 +120,17 @@ const BlogPost = () => {
     };
     fetchPost();
   }, [slug]);
+
+  useEffect(() => {
+    supabase
+      .from("external_vacancies")
+      .select("id", { count: "exact", head: true })
+      .gt("expires_at", new Date().toISOString())
+      .then(({ count, error }) => setLiveCount(error ? null : count ?? null));
+  }, []);
+
+  const isHtml = !!post && HTML_RE.test(post.content);
+
 
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
@@ -276,8 +309,13 @@ const BlogPost = () => {
         })()}
 
         {/* Article content */}
-        <div className="text-base leading-relaxed space-y-4" style={{ color: "#CBD5E1" }}>
-          {post.content.split("\n").filter((l) => l.trim()).map((line, i) => {
+        <style>{`.sm-article a{color:#D4AF37;text-decoration:underline}.sm-article h1,.sm-article h2,.sm-article h3,.sm-article h4{color:#D4AF37;font-weight:700;margin:1.25rem 0 .5rem}.sm-article ul{list-style:disc;padding-left:1.25rem}.sm-article ol{list-style:decimal;padding-left:1.25rem}.sm-article table{width:100%;border-collapse:collapse}.sm-article th,.sm-article td{border:1px solid rgba(212,175,55,0.25);padding:6px 8px;font-size:13px}.sm-article strong{color:#E0E6ED}`}</style>
+        <div className="text-base leading-relaxed space-y-4 sm-article" style={{ color: "#CBD5E1" }}>
+
+          {isHtml ? (
+            <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }} />
+          ) : (
+            post.content.split("\n").filter((l) => l.trim()).map((line, i) => {
             const t = line.trim();
             const bold = (s: string) =>
               s.split(/(\*\*[^*]+\*\*)/g).map((part, j) =>
@@ -291,8 +329,10 @@ const BlogPost = () => {
             if (/^[-*]\s+/.test(t)) return <li key={i} className="ml-5 list-disc">{bold(t.replace(/^[-*]\s+/, ""))}</li>;
             if (/^\d+\.\s+/.test(t)) return <li key={i} className="ml-5 list-decimal">{bold(t.replace(/^\d+\.\s+/, ""))}</li>;
             return <p key={i}>{bold(t)}</p>;
-          })}
+            })
+          )}
         </div>
+
 
         {/* Mid-article tip */}
         <div className="rounded-2xl p-4 my-8" style={{ background: "rgba(212,175,55,0.08)", border: "1px solid rgba(212,175,55,0.3)" }}>
@@ -336,7 +376,10 @@ const BlogPost = () => {
             Know your rights. Get your free SeaMinds Command Score
           </h3>
           <p className="text-sm mb-6" style={{ color: "#94A3B8" }}>
-            Join thousands of seafarers building their maritime career with SeaMinds.
+            {liveCount && liveCount > 0
+              ? `⚓ ${liveCount} live maritime vacancies right now · Free for seafarers · No agent fees, ever`
+              : "Free for seafarers · No agent fees, ever · Built by a Master Mariner"}
+
           </p>
           <Button
             size="lg"

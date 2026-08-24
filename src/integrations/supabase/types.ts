@@ -3527,17 +3527,30 @@ export type Database = {
           title: string
         }[]
       }
-      submit_application: {
-        Args: {
-          p_company_name?: string
-          p_company_post_id?: string
-          p_external_url?: string
-          p_rank?: string
-          p_vacancy_id?: string
-          p_vessel?: string
-        }
-        Returns: Json
-      }
+      submit_application:
+        | {
+            Args: {
+              p_company_name?: string
+              p_company_post_id?: string
+              p_external_url?: string
+              p_rank?: string
+              p_vacancy_id?: string
+              p_vessel?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_company_name?: string
+              p_company_post_id?: string
+              p_external_url?: string
+              p_job_posting_id?: string
+              p_rank?: string
+              p_vacancy_id?: string
+              p_vessel?: string
+            }
+            Returns: Json
+          }
       upsert_email_lead: {
         Args: {
           p_crew_profile_id?: string
