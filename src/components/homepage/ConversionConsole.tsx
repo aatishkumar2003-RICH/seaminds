@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Globe, ChevronDown, X, Menu, Search } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import seamindsLogo from "@/assets/seaminds-logo.png";
@@ -36,6 +37,10 @@ type Vacancy = {
   source: string | null;
   fetched_at: string | null;
   first_seen_at: string | null;
+  kind?: "external" | "direct";
+  company_name?: string | null;
+  contract_duration?: string | null;
+  expires_at?: string | null;
 };
 
 const isNew = (v: Vacancy) => {
@@ -51,6 +56,27 @@ const relTime = (d?: string | null) => {
   return `${Math.floor(mins / 1440)}d ago`;
 };
 const idxOf = (m: Market | null, name: string) => (m?.indices || []).find((i) => i.name === name);
+
+/** Count-up for real numbers (first load only, disabled under reduced motion) */
+function useCountUp(target: number | null, enabled: boolean) {
+  const [val, setVal] = useState(0);
+  const done = useRef(false);
+  useEffect(() => {
+    if (target === null) return;
+    if (!enabled || done.current || target <= 0) { setVal(target); done.current = true; return; }
+    done.current = true;
+    const start = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const p = Math.min((now - start) / 1200, 1);
+      setVal(Math.floor(target * p));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, enabled]);
+  return val;
+}
 
 const MARKETS = ["DECK", "ENGINE", "ETO", "RATINGS", "OFFSHORE"] as const;
 const MARKET_KEYWORDS: Record<string, RegExp> = {
@@ -68,8 +94,8 @@ const inMarket = (v: Vacancy, m: string) => {
 const MENU_LINKS: { label: string; to: string; external?: boolean }[] = [
   { label: "For Seafarers", to: "/join" },
   { label: "Find Crew — For Companies", to: "/for-companies" },
-  { label: "Post Vacancy", to: "/manager" },
-  { label: "Create AI Interview", to: "/for-companies" },
+  { label: "Post Vacancy", to: "/post-vacancy" },
+  { label: "Create AI Interview", to: "/manager/interviews" },
   { label: "Manager Login", to: "/manager" },
   { label: "SMC Score", to: "/app?tab=smc" },
   { label: "Jobs", to: "/app?tab=jobs" },
@@ -79,6 +105,7 @@ const MENU_LINKS: { label: string; to: string; external?: boolean }[] = [
   { label: "Privacy", to: "/privacy" },
   { label: "Contact", to: "mailto:info@indossol.com", external: true },
 ];
+
 
 const ConversionConsole = () => {
   const navigate = useNavigate();
