@@ -339,8 +339,30 @@ const ConversionConsole = () => {
         @keyframes sm-tape { from { transform: translateX(0) } to { transform: translateX(-50%) } }
         .sm-tape-track { animation: sm-tape 40s linear infinite; }
         .sm-tape:hover .sm-tape-track { animation-play-state: paused; }
-        @media (prefers-reduced-motion: reduce) { .sm-cta-pulse, .sm-dot, .sm-tape-track { animation: none !important; } }
+        @keyframes sm-aurora { 0%,100% { opacity: .28; transform: scale(1) } 50% { opacity: .5; transform: scale(1.08) } }
+        .sm-aurora { animation: sm-aurora 8s ease-in-out infinite; }
+        @keyframes sm-shimmer { 0% { background-position: -180% 0 } 60%,100% { background-position: 180% 0 } }
+        .sm-shimmer {
+          background-image: linear-gradient(100deg, transparent 35%, rgba(212,175,55,.55) 50%, transparent 65%);
+          background-size: 200% 100%;
+          background-repeat: no-repeat;
+          animation: sm-shimmer 6s ease-in-out infinite;
+          -webkit-background-clip: text; background-clip: text;
+        }
+        @keyframes sm-sector { from { transform: translateX(0) } to { transform: translateX(-50%) } }
+        .sm-sector-track { animation: sm-sector 28s linear infinite; }
+        .sm-sector:hover .sm-sector-track { animation-play-state: paused; }
+        @keyframes sm-newchip { 0%,100% { opacity: 1 } 50% { opacity: .55 } }
+        .sm-newchip { animation: sm-newchip 2s ease-in-out infinite; }
+        @media (prefers-reduced-motion: reduce) {
+          .sm-cta-pulse, .sm-dot, .sm-tape-track, .sm-aurora, .sm-shimmer, .sm-sector-track, .sm-newchip { animation: none !important; }
+        }
       `}</style>
+
+      {jobsLd && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jobsLd }} />
+      )}
+
 
       {/* 1. HEADER */}
       <header className="sticky top-0 z-40 border-b relative" style={{ height: 86, borderColor: "rgba(255,255,255,0.06)", background: NAVY }}>
