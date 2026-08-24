@@ -276,8 +276,11 @@ const BlogPost = () => {
         })()}
 
         {/* Article content */}
-        <div className="text-base leading-relaxed space-y-4" style={{ color: "#CBD5E1" }}>
-          {post.content.split("\n").filter((l) => l.trim()).map((line, i) => {
+        <div className="text-base leading-relaxed space-y-4 sm-article" style={{ color: "#CBD5E1" }}>
+          {isHtml ? (
+            <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }} />
+          ) : (
+            post.content.split("\n").filter((l) => l.trim()).map((line, i) => {
             const t = line.trim();
             const bold = (s: string) =>
               s.split(/(\*\*[^*]+\*\*)/g).map((part, j) =>
@@ -291,8 +294,10 @@ const BlogPost = () => {
             if (/^[-*]\s+/.test(t)) return <li key={i} className="ml-5 list-disc">{bold(t.replace(/^[-*]\s+/, ""))}</li>;
             if (/^\d+\.\s+/.test(t)) return <li key={i} className="ml-5 list-decimal">{bold(t.replace(/^\d+\.\s+/, ""))}</li>;
             return <p key={i}>{bold(t)}</p>;
-          })}
+            })
+          )}
         </div>
+
 
         {/* Mid-article tip */}
         <div className="rounded-2xl p-4 my-8" style={{ background: "rgba(212,175,55,0.08)", border: "1px solid rgba(212,175,55,0.3)" }}>
