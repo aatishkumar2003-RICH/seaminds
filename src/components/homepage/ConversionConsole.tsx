@@ -182,8 +182,11 @@ const ConversionConsole = () => {
   const langLabel = LANGS.find((l) => l.code === lang)?.label || "English";
   const total = market?.total ?? null;
 
+  // Signed-out visitors must reach jobs without a login wall.
+  const jobsTo = user ? "/app?tab=jobs" : "/feed";
+
   const dock = [
-    { key: "jobs", label: t("dockJobs"), value: total === null ? "…" : String(total), to: "/app?tab=jobs" },
+    { key: "jobs", label: t("dockJobs"), value: total === null ? "…" : String(total), to: jobsTo },
     { key: "profile", label: t("dockProfile"), value: profileActive ? "✓" : t("dockStart"), to: "/quick-profile" },
     { key: "ai", label: t("dockAi"), value: t("dockTry"), to: "/app?tab=smc" },
     { key: "feed", label: t("dockFeed"), value: t("dockOpen"), to: "/app?tab=home" },
@@ -340,7 +343,7 @@ const ConversionConsole = () => {
       {/* 3. LIVE PROOF BAR */}
       <button
         type="button"
-        onClick={() => navigate("/app?tab=jobs")}
+        onClick={() => navigate(jobsTo)}
         className="w-full border-b text-left"
         style={{ borderColor: "rgba(212,175,55,0.15)", background: "rgba(6,15,29,0.9)" }}
       >
@@ -516,7 +519,7 @@ const ConversionConsole = () => {
           )}
           <button
             type="button"
-            onClick={() => navigate("/app?tab=jobs")}
+            onClick={() => navigate(jobsTo)}
             className="w-full py-2.5 text-[11px] font-bold"
             style={{ color: GOLD }}
           >

@@ -36,10 +36,24 @@ const Join = () => {
   const [busy, setBusy] = useState(false);
   const [confirmSent, setConfirmSent] = useState(false);
 
+  /** Meta Pixel signup conversion — must never block or break signup. */
+  const fireRegistration = () => {
+    try { (window as any).fbq?.("track", "CompleteRegistration"); } catch { /* ignore */ }
+  };
+
   useEffect(() => {
     let active = true;
     supabase.auth.getSession().then(({ data }) => {
-      if (active && data.session) navigate(dest, { replace: true });
+      if (!active || !data.session) return;
+      // Google OAuth returning with a brand-new account → count the conversion once.
+      try {
+        const created = new Date(data.session.user.created_at).getTime();
+        if (Date.now() - created < 5 * 60 * 1000 && !localStorage.getItem("sm_reg_tracked")) {
+          localStorage.setItem("sm_reg_tracked", "1");
+          fireRegistration();
+        }
+      } catch { /* ignore */ }
+      navigate(dest, { replace: true });
     });
     return () => { active = false; };
   }, [navigate, dest]);
@@ -67,9 +81,12 @@ const Join = () => {
       toast.error(error.message.includes("already") ? t("joinErrExists") : error.message);
       return;
     }
+    fireRegistration();
+    try { localStorage.setItem("sm_reg_tracked", "1"); } catch { /* ignore */ }
     if (data.session) navigate(dest);
     else setConfirmSent(true);
   };
+
 
   const signIn = async () => {
     if (!email || !password) return;
