@@ -374,7 +374,10 @@ const BlogPost = () => {
             Know your rights. Get your free SeaMinds Command Score
           </h3>
           <p className="text-sm mb-6" style={{ color: "#94A3B8" }}>
-            Join thousands of seafarers building their maritime career with SeaMinds.
+            {liveCount && liveCount > 0
+              ? `⚓ ${liveCount} live maritime vacancies right now · Free for seafarers · No agent fees, ever`
+              : "Free for seafarers · No agent fees, ever · Built by a Master Mariner"}
+
           </p>
           <Button
             size="lg"
