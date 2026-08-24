@@ -380,6 +380,7 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
       const { data, error } = await supabase.rpc("submit_application" as any, {
         p_vacancy_id: null,
         p_company_post_id: null,
+        p_job_posting_id: v.postingId,
         p_company_name: v.company || null,
         p_rank: v.rank || null,
         p_vessel: v.vessel || null,
@@ -390,11 +391,6 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
       if (r.duplicate) {
         setDirectApplied((s) => ({ ...s, [v.postingId]: "dup" }));
         return;
-      }
-      if (r.application_id) {
-        await supabase.from("job_applications")
-          .update({ job_posting_id: v.postingId } as any)
-          .eq("id", r.application_id);
       }
       setDirectApplied((s) => ({ ...s, [v.postingId]: "ok" }));
       log("vacancy", v.id, "apply");
