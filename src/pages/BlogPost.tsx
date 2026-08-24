@@ -121,6 +121,17 @@ const BlogPost = () => {
     fetchPost();
   }, [slug]);
 
+  useEffect(() => {
+    supabase
+      .from("external_vacancies")
+      .select("id", { count: "exact", head: true })
+      .gt("expires_at", new Date().toISOString())
+      .then(({ count, error }) => setLiveCount(error ? null : count ?? null));
+  }, []);
+
+  const isHtml = !!post && HTML_RE.test(post.content);
+
+
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 
