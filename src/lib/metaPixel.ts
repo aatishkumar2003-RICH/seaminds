@@ -8,8 +8,12 @@ let initialised = false;
 /** Loads the Meta Pixel using the ID stored in admin_settings (key: meta_pixel_id). */
 export const initMetaPixel = async () => {
   if (initialised || typeof window === "undefined") return;
-  // Privacy: the pixel loads ONLY after explicit cookie consent.
-  if (getConsent() !== "accepted") return;
+  // Privacy: in the EU the pixel loads ONLY after explicit cookie consent.
+  // Outside the EU it may load on page load; the banner still shows and stores the choice.
+  let isEu = false;
+  try { isEu = (Intl.DateTimeFormat().resolvedOptions().timeZone || "").startsWith("Europe/"); } catch { isEu = false; }
+  const consent = getConsent();
+  if (isEu ? consent !== "accepted" : consent === "declined") return;
   try {
     const { data } = await supabase
       .from("admin_settings")
