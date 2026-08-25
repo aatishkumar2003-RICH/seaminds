@@ -338,11 +338,18 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                     <p className="text-[11px] text-primary font-medium">{m.salary}</p>
                   </div>
                   {m.whatsapp ? (
-                    <a href={`https://wa.me/${m.whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi, I'm interested in the ${m.title} position. My name is ${firstName} ${lastName}, ${role}.`)}`} target="_blank" rel="noopener noreferrer">
-                      <Button size="sm" className="h-8 text-xs gap-1 bg-green-600 hover:bg-green-700 text-white shrink-0">
-                        <MessageCircle size={12} /> Apply
-                      </Button>
-                    </a>
+                    <Button
+                      size="sm"
+                      className="h-8 text-xs gap-1 bg-green-600 hover:bg-green-700 text-white shrink-0"
+                      onClick={() => openWhatsApp({
+                        number: m.whatsapp,
+                        vacancyId: m.source === "ai" ? m.id : null,
+                        jobPostingId: m.source === "posted" ? m.id : null,
+                        company: m.company, rank: m.title, vessel: m.vessel, port: m.port,
+                      })}
+                    >
+                      <MessageCircle size={12} /> Apply
+                    </Button>
                   ) : (
                     <Button size="sm" variant="outline" className="h-8 text-xs shrink-0" onClick={() => {
                       const el = document.getElementById("ai-collected-jobs");
