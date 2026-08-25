@@ -72,6 +72,14 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
   const [needsQuickProfile, setNeedsQuickProfile] = useState(false);
   const [directApplied, setDirectApplied] = useState<Record<string, "ok" | "dup">>({});
   const [directBusy, setDirectBusy] = useState<Record<string, boolean>>({});
+  const [cardInfo, setCardInfo] = useState<CrewCardInfo | null>(null);
+
+  useEffect(() => {
+    if (!profileId) return;
+    fetchCrewCardInfo(profileId).then(setCardInfo);
+  }, [profileId]);
+
+
 
   useEffect(() => {
     if (!profileId) return;
