@@ -35,7 +35,25 @@ interface Applicant {
   crew_rank: string;
   available_from: string;
   offered_joining_date: string;
+  job_posting_id?: string | null;
+  vacancy_label?: string | null;
 }
+
+interface MyPosting {
+  id: string;
+  rank_required: string | null;
+  vessel_type: string | null;
+  status: string | null;
+  created_at: string;
+}
+
+const relTime = (iso: string) => {
+  const d = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+  if (d <= 0) return "today";
+  if (d === 1) return "yesterday";
+  if (d < 30) return `${d}d ago`;
+  return new Date(iso).toLocaleDateString();
+};
 
 interface FleetCrew {
   link_id: string;
@@ -67,7 +85,7 @@ interface ParsedVacancy {
 }
 
 type SortKey = "shipName";
-type DashTab = "crew" | "payments";
+type DashTab = "crew" | "applicants" | "payments";
 
 
 const ManagerDashboard = () => {
@@ -83,6 +101,8 @@ const ManagerDashboard = () => {
   const [managerUserId, setManagerUserId] = useState("");
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [applicantsLoading, setApplicantsLoading] = useState(false);
+  const [myPostings, setMyPostings] = useState<MyPosting[]>([]);
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [offerDrafts, setOfferDrafts] = useState<Record<string, { joiningDate: string; contractMonths: number; open: boolean }>>({});
   const [fleet, setFleet] = useState<FleetResult | null>(null);
   const [fleetEmail, setFleetEmail] = useState("");
@@ -254,6 +274,15 @@ const ManagerDashboard = () => {
       return;
     }
     setApplicants(((data as unknown) as Applicant[]) || []);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: jp } = await supabase
+        .from("job_postings")
+        .select("id, rank_required, vessel_type, status, created_at")
+        .eq("manager_id", user.id)
+        .order("created_at", { ascending: false });
+      setMyPostings(((jp as unknown) as MyPosting[]) || []);
+    }
   };
 
   const openOfferDraft = (id: string) => {
@@ -327,6 +356,11 @@ const ManagerDashboard = () => {
     );
   }, [fleet]);
 
+
+  useEffect(() => {
+    const tab = new URLSearchParams(window.location.search).get("tab");
+    if (tab === "applicants") setDashTab("applicants");
+  }, []);
 
   if (loading) {
     return (
@@ -523,7 +557,7 @@ const ManagerDashboard = () => {
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-6 py-6 space-y-6">
+      <div className="max-w-6xl lg:max-w-[1400px] mx-auto px-6 py-6 space-y-6">
         {/* Tab switcher */}
         <div className="flex gap-1 bg-secondary rounded-xl p-1">
           <button
@@ -535,6 +569,14 @@ const ManagerDashboard = () => {
             Crew Overview
           </button>
           <button
+            onClick={() => setDashTab("applicants")}
+            className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors ${
+              dashTab === "applicants" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            👥 Applicants{awaitingCount > 0 ? ` (${awaitingCount})` : ""}
+          </button>
+          <button
             onClick={() => setDashTab("payments")}
             className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1.5 ${
               dashTab === "payments" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
@@ -544,7 +586,92 @@ const ManagerDashboard = () => {
           </button>
         </div>
 
-        {dashTab === "payments" ? (
+        {dashTab === "applicants" ? (
+          <div className="bg-secondary rounded-xl border border-border p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">👥 Applicants</h2>
+              <button
+                onClick={loadApplicants}
+                disabled={applicantsLoading}
+                className="p-1.5 rounded-lg hover:bg-secondary/80 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                aria-label="Refresh applicants"
+              >
+                <RefreshCw size={16} className={applicantsLoading ? "animate-spin" : ""} />
+              </button>
+            </div>
+
+            {applicantGroups.length === 0 ? (
+              <div className="text-center py-6">
+                <p className="text-sm text-muted-foreground">Applications to your vacancies will appear here.</p>
+                <p className="text-xs text-muted-foreground/70 mt-1">Post a vacancy to start receiving applications.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {applicantGroups.map((g) => {
+                  const expanded = openGroups[g.key] ?? g.items.length > 0;
+                  return (
+                    <div key={g.key} className="rounded-xl border border-border/50 overflow-hidden">
+                      <button
+                        onClick={() => setOpenGroups((prev) => ({ ...prev, [g.key]: !expanded }))}
+                        className="w-full flex items-center justify-between gap-3 px-4 py-3 bg-secondary/60 hover:bg-secondary/80 transition-colors text-left"
+                      >
+                        <span className="min-w-0">
+                          <span className="block text-sm font-bold text-foreground truncate">{g.title}</span>
+                          {g.meta && <span className="block text-xs text-muted-foreground">{g.meta}</span>}
+                        </span>
+                        <span className="text-xs font-bold px-2 py-1 rounded-full bg-[#D4AF37]/15 text-[#D4AF37] shrink-0">
+                          👥 {g.items.length}
+                        </span>
+                      </button>
+
+                      {expanded && (
+                        g.items.length === 0 ? (
+                          <p className="px-4 py-4 text-xs text-muted-foreground">No applications yet.</p>
+                        ) : (
+                          <>
+                            <div className="hidden lg:block overflow-x-auto">
+                              <table className="w-full text-sm">
+                                <thead>
+                                  <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground border-b border-border/50">
+                                    <th className="px-4 py-2 font-medium">Candidate</th>
+                                    <th className="px-4 py-2 font-medium">Nationality</th>
+                                    <th className="px-4 py-2 font-medium">Rank applied</th>
+                                    <th className="px-4 py-2 font-medium">Applied</th>
+                                    <th className="px-4 py-2 font-medium">Status</th>
+                                    <th className="px-4 py-2 font-medium">Actions</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {g.items.map((a) => (
+                                    <tr key={a.application_id} className="border-b border-border/30 last:border-0 align-top">
+                                      <td className="px-4 py-3 font-medium text-foreground">{a.crew_name}</td>
+                                      <td className="px-4 py-3 text-muted-foreground">{a.nationality}</td>
+                                      <td className="px-4 py-3 text-muted-foreground">{a.rank}</td>
+                                      <td className="px-4 py-3 text-muted-foreground">{relTime(a.applied_at)}</td>
+                                      <td className="px-4 py-3">
+                                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${statusMeta(a.outcome).cls}`}>
+                                          {statusMeta(a.outcome).label}
+                                        </span>
+                                      </td>
+                                      <td className="px-4 py-3">{renderApplicantActions(a)}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                            <div className="lg:hidden p-3 space-y-3">
+                              {g.items.map((a) => renderApplicantCard(a))}
+                            </div>
+                          </>
+                        )
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ) : dashTab === "payments" ? (
           <ManagerPaymentHistory managerUserId={managerUserId} />
         ) : (
           <>
