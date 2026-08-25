@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Anchor, MapPin, Ship, BadgeCheck, MessageCircle, ExternalLink } from "lucide-react";
 import { trackPixel } from "@/lib/metaPixel";
 import { formatSalaryText } from "@/lib/salary";
+import { fetchCrewCardInfo, getCachedCrewCardInfo, waApplyLink, CrewCardInfo } from "@/lib/applyMessage";
 
 const NAVY = "#0D1B2A";
 const GOLD = "#D4AF37";
@@ -57,6 +58,18 @@ const JobFeed = () => {
   const [ships, setShips] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("All");
+  const [cardInfo, setCardInfo] = useState<CrewCardInfo | null>(null);
+
+  // Preload the signed-in crew's calling-card data once — never fetched on tap
+  useEffect(() => {
+    let alive = true;
+    supabase.auth.getUser().then(({ data }) => {
+      const uid = data?.user?.id;
+      if (!uid) return;
+      fetchCrewCardInfo(uid).then((c) => { if (alive) setCardInfo(c); });
+    });
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -120,36 +133,46 @@ const JobFeed = () => {
     return items.filter((i) => keys.some((k) => (i.rank || "").toLowerCase().includes(k)));
   }, [items, filter]);
 
-  // Record the outbound handoff before opening — best effort, never blocks
-  const recordOutbound = async (i: FeedItem, url: string) => {
+  // Record the outbound handoff — fire-and-forget, never blocks the open
+  const recordOutbound = (i: FeedItem, url: string | null) => {
+    const raw = String(i.id).replace(/^[pec]-/, "");
     try {
-      await supabase.rpc("submit_application" as any, {
-        p_vacancy_id: null,
-        p_company_post_id: i.isCompanyPost ? String(i.id).replace(/^c-/, "") : null,
+      void Promise.resolve(supabase.rpc("submit_application" as any, {
+        p_vacancy_id: i.source === "market" ? raw : null,
+        p_job_posting_id: !i.isCompanyPost && i.source === "company" ? raw : null,
+        p_company_post_id: i.isCompanyPost ? raw : null,
         p_company_name: i.company || null,
         p_rank: i.rank || null,
         p_vessel: i.vessel || null,
         p_external_url: url,
-      });
+      }) as any).catch(() => {});
     } catch { /* duplicates / signed-out visitors never block the open */ }
   };
 
-  const apply = async (i: FeedItem) => {
-    trackPixel("Contact", { content_name: "job_apply_public" });
-    if (i.whatsapp) {
-      const d = i.whatsapp.replace(/[^\d]/g, "");
-      if (d) {
-        const url = `https://wa.me/${d}?text=${encodeURIComponent(`Hello, I am interested in the ${i.rank} position (seen on SeaMinds).`)}`;
-        await recordOutbound(i, url);
-        return window.open(url, "_blank", "noopener,noreferrer");
+  const apply = (i: FeedItem) => {
+    try {
+      trackPixel("Contact", { content_name: "job_apply_public" });
+      if (i.whatsapp) {
+        const url = waApplyLink(i.whatsapp, cardInfo || getCachedCrewCardInfo(), { rank: i.rank, vessel: i.vessel, port: i.port });
+        if (url) {
+          recordOutbound(i, url);
+          const win = window.open(url, "_blank", "noopener,noreferrer");
+          if (!win) window.location.href = url;
+          return;
+        }
       }
+      if (i.applyUrl) {
+        recordOutbound(i, i.applyUrl);
+        const win = window.open(i.applyUrl, "_blank", "noopener,noreferrer");
+        if (!win) window.location.href = i.applyUrl;
+        return;
+      }
+      navigate("/app?tab=jobs");
+    } catch {
+      navigate("/app?tab=jobs");
     }
-    if (i.applyUrl) {
-      await recordOutbound(i, i.applyUrl);
-      return window.open(i.applyUrl, "_blank", "noopener,noreferrer");
-    }
-    navigate("/app?tab=jobs");
   };
+
 
   return (
     <div style={{ minHeight: "100vh", background: NAVY }}>
