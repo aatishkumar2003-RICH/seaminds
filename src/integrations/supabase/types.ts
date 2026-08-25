@@ -1107,6 +1107,7 @@ export type Database = {
           port_of_joining: string | null
           preferred_vessel_types: string[] | null
           profile_visible: boolean | null
+          public_card_token: string | null
           quick_profile_completed_at: string | null
           rank: string | null
           referral_claimed_at: string | null
@@ -1161,6 +1162,7 @@ export type Database = {
           port_of_joining?: string | null
           preferred_vessel_types?: string[] | null
           profile_visible?: boolean | null
+          public_card_token?: string | null
           quick_profile_completed_at?: string | null
           rank?: string | null
           referral_claimed_at?: string | null
@@ -1215,6 +1217,7 @@ export type Database = {
           port_of_joining?: string | null
           preferred_vessel_types?: string[] | null
           profile_visible?: boolean | null
+          public_card_token?: string | null
           quick_profile_completed_at?: string | null
           rank?: string | null
           referral_claimed_at?: string | null
@@ -3423,6 +3426,7 @@ export type Database = {
         }[]
       }
       get_cert_readiness: { Args: never; Returns: Json }
+      get_crew_card: { Args: { p_token: string }; Returns: Json }
       get_cta_block: {
         Args: { p_audience?: string; p_count?: number; p_intents?: string[] }
         Returns: string
