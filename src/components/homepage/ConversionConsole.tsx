@@ -199,6 +199,7 @@ const ConversionConsole = () => {
         kind: "direct" as const,
         company_name: x.company_name,
         contract_duration: x.contract_duration,
+        contact_whatsapp: x.contact_whatsapp,
       }));
       const ts = (r: Vacancy) => new Date(r.first_seen_at || r.fetched_at || 0).getTime();
       setVacancies([...direct, ...ext].sort((a, b) => ts(b) - ts(a)));
