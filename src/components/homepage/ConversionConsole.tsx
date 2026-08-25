@@ -291,6 +291,9 @@ const ConversionConsole = () => {
   const applyNow = useCallback(async (v: Vacancy) => {
     if (!user) { navigate("/join?next=%2Fquick-profile"); return; }
     setApplyBusy(true);
+    const wa = waApplyLink(v.contact_whatsapp, cardInfo, {
+      rank: v.rank_required || v.title, vessel: v.vessel_type, port: v.joining_port,
+    });
     try {
       const { data, error } = await supabase.rpc("submit_application", {
         p_vacancy_id: v.kind === "direct" ? undefined : v.id,
@@ -298,7 +301,7 @@ const ConversionConsole = () => {
         p_company_name: v.company_name || v.source || undefined,
         p_rank: v.rank_required || undefined,
         p_vessel: v.vessel_type || undefined,
-        p_external_url: undefined,
+        p_external_url: v.kind === "direct" ? undefined : (wa || undefined),
         p_job_posting_id: v.kind === "direct" ? v.id : undefined,
       } as never);
       if (error) throw error;
@@ -316,8 +319,9 @@ const ConversionConsole = () => {
       else toast.error(msg);
     } finally {
       setApplyBusy(false);
+      if (wa) window.open(wa, "_blank", "noopener,noreferrer");
     }
-  }, [user, navigate]);
+  }, [user, navigate, cardInfo]);
 
   // Signed-out visitors must reach jobs without a login wall.
   const jobsTo = user ? "/app?tab=jobs" : "/feed";
