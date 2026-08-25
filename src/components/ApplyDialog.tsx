@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { X, CheckCircle2, AlertCircle } from "lucide-react";
 import { trackPixel } from "@/lib/metaPixel";
+import { fetchCrewCardInfo, waApplyLink, CrewCardInfo } from "@/lib/applyMessage";
 
 const GOLD = "#D4AF37";
 const NAVY = "#0D1B2A";
@@ -13,6 +14,7 @@ export interface ApplyTarget {
   isCompanyPost: boolean;
   rank?: string;
   vessel?: string;
+  port?: string | null;
   company?: string;
   applyUrl?: string | null;
   whatsapp?: string | null;
