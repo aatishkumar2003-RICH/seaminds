@@ -781,7 +781,11 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                       size="sm"
                       variant={ext.apply_url ? "outline" : "default"}
                       className={cn("text-xs h-9 gap-1.5", !ext.apply_url && "flex-1 bg-green-600 hover:bg-green-700 text-white")}
-                      onClick={() => openExternalVacancy(ext, `https://wa.me/${ext.contact_whatsapp!.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi, I'm interested in the ${ext.rank_required || ext.title} position. My name is ${firstName} ${lastName}, ${role}.`)}`)}
+                      onClick={() => openWhatsApp({
+                        number: ext.contact_whatsapp,
+                        vacancyId: ext.id,
+                        company: ext.company_name, rank: ext.rank_required || ext.title, vessel: ext.vessel_type, port: ext.joining_port,
+                      })}
                     >
                       <MessageCircle size={12} /> WhatsApp
                     </Button>
