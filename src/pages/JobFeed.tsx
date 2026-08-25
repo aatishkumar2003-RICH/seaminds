@@ -159,29 +159,34 @@ const JobFeed = () => {
   };
 
   const apply = (i: FeedItem) => {
-    if (signedIn && needsQuickProfile) { setGateOpen(true); return; }
+    if (!signedIn) { navigate(`/join?next=${encodeURIComponent("/feed")}`); return; }
+    if (needsQuickProfile) { setGateOpen(true); return; }
+    setApplying(i.id);
     try {
       trackPixel("Contact", { content_name: "job_apply_public" });
       if (i.whatsapp) {
         const url = waApplyLink(i.whatsapp, cardInfo || getCachedCrewCardInfo(), { rank: i.rank, vessel: i.vessel, port: i.port });
         if (url) {
-          recordOutbound(i, url);
           const win = window.open(url, "_blank", "noopener,noreferrer");
           if (!win) window.location.href = url;
+          recordOutbound(i, url);
           return;
         }
       }
       if (i.applyUrl) {
-        recordOutbound(i, i.applyUrl);
         const win = window.open(i.applyUrl, "_blank", "noopener,noreferrer");
         if (!win) window.location.href = i.applyUrl;
+        recordOutbound(i, i.applyUrl);
         return;
       }
       navigate("/app?tab=jobs");
     } catch {
       navigate("/app?tab=jobs");
+    } finally {
+      setApplying(null);
     }
   };
+
 
 
   return (
