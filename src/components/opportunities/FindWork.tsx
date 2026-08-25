@@ -574,7 +574,11 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                     size="sm"
                     variant="outline"
                     className="w-full text-xs h-9 gap-1.5"
-                    onClick={() => openJobPosting(jp, whatsappUrl)}
+                    onClick={() => openWhatsApp({
+                      number: jp.contact_whatsapp,
+                      jobPostingId: jp.id,
+                      company: jp.company_name, rank: jp.rank_required, vessel: jp.vessel_type, port: jp.joining_port,
+                    })}
                   >
                     <MessageCircle size={12} /> Apply via WhatsApp
                   </Button>
