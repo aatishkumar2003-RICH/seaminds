@@ -64,6 +64,8 @@ const JobFeed = () => {
   const [signedIn, setSignedIn] = useState(false);
   const [needsQuickProfile, setNeedsQuickProfile] = useState(false);
   const [gateOpen, setGateOpen] = useState(false);
+  const [applying, setApplying] = useState<string | null>(null);
+
 
   // Preload the signed-in crew's calling-card data once — never fetched on tap
   useEffect(() => {
