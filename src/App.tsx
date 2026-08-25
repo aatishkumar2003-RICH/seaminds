@@ -69,6 +69,7 @@ import InterviewInvite from "./pages/InterviewInvite";
 import InterviewExam from "./pages/InterviewExam";
 import AdminDashboard from "./pages/AdminDashboard";
 import Verify from "./pages/Verify";
+import CrewCard from "./pages/CrewCard";
 import Marketing from "./pages/Marketing";
 import OAuthConsent from "./pages/OAuthConsent";
 import CookieConsent from "./components/CookieConsent";
