@@ -182,6 +182,7 @@ const App = () => (
             <Route path="/jobs" element={<Navigate to="/feed" replace />} />
             <Route path="/for-seafarers" element={<Navigate to="/app" replace />} />
             <Route path="/verify/:id" element={<Verify />} />
+            <Route path="/crew/:token" element={<CrewCard />} />
             <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
