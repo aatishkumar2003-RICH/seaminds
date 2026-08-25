@@ -313,13 +313,15 @@ const JobFeed = () => {
                   <div style={{ color: "#22c55e", fontWeight: 800, fontSize: 15 }}>{formatSalaryText(i.salary)}</div>
                 )}
 
-                <button onClick={() => apply(i)} style={{
-                  marginTop: 2, width: "100%", padding: "11px", borderRadius: 11, border: "none", cursor: "pointer",
+                <button onClick={() => apply(i)} disabled={applying === i.id} style={{
+                  marginTop: 2, width: "100%", padding: "11px", borderRadius: 11, border: "none",
+                  cursor: applying === i.id ? "default" : "pointer", opacity: applying === i.id ? 0.7 : 1,
                   background: GOLD, color: NAVY, fontWeight: 800, fontSize: 13,
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
                 }}>
                   {i.whatsapp ? <><MessageCircle size={15} /> Apply via WhatsApp</> : <><ExternalLink size={15} /> View & Apply</>}
                 </button>
+
               </div>
 
               {(idx + 1) % 6 === 0 && (
