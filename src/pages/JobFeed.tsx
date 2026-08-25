@@ -5,7 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Anchor, MapPin, Ship, BadgeCheck, MessageCircle, ExternalLink } from "lucide-react";
 import { trackPixel } from "@/lib/metaPixel";
 import { formatSalaryText } from "@/lib/salary";
-import { fetchCrewCardInfo, getCachedCrewCardInfo, waApplyLink, CrewCardInfo } from "@/lib/applyMessage";
+import { fetchCrewCardInfo, getCachedCrewCardInfo, waApplyLink, recordApplication, fetchQuickProfileDone, CrewCardInfo } from "@/lib/applyMessage";
+import ApplyGateSheet from "@/components/ApplyGateSheet";
+import { toast } from "sonner";
 
 const NAVY = "#0D1B2A";
 const GOLD = "#D4AF37";
@@ -59,6 +61,9 @@ const JobFeed = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("All");
   const [cardInfo, setCardInfo] = useState<CrewCardInfo | null>(null);
+  const [signedIn, setSignedIn] = useState(false);
+  const [needsQuickProfile, setNeedsQuickProfile] = useState(false);
+  const [gateOpen, setGateOpen] = useState(false);
 
   // Preload the signed-in crew's calling-card data once — never fetched on tap
   useEffect(() => {
@@ -66,7 +71,9 @@ const JobFeed = () => {
     supabase.auth.getUser().then(({ data }) => {
       const uid = data?.user?.id;
       if (!uid) return;
+      if (alive) setSignedIn(true);
       fetchCrewCardInfo(uid).then((c) => { if (alive) setCardInfo(c); });
+      fetchQuickProfileDone(uid).then((done) => { if (alive) setNeedsQuickProfile(!done); });
     });
     return () => { alive = false; };
   }, []);
@@ -135,21 +142,24 @@ const JobFeed = () => {
 
   // Record the outbound handoff — fire-and-forget, never blocks the open
   const recordOutbound = (i: FeedItem, url: string | null) => {
+    if (!signedIn) return;
     const raw = String(i.id).replace(/^[pec]-/, "");
-    try {
-      void Promise.resolve(supabase.rpc("submit_application" as any, {
-        p_vacancy_id: i.source === "market" ? raw : null,
-        p_job_posting_id: !i.isCompanyPost && i.source === "company" ? raw : null,
-        p_company_post_id: i.isCompanyPost ? raw : null,
-        p_company_name: i.company || null,
-        p_rank: i.rank || null,
-        p_vessel: i.vessel || null,
-        p_external_url: url,
-      }) as any).catch(() => {});
-    } catch { /* duplicates / signed-out visitors never block the open */ }
+    recordApplication({
+      vacancyId: i.source === "market" ? raw : null,
+      jobPostingId: !i.isCompanyPost && i.source === "company" ? raw : null,
+      companyPostId: i.isCompanyPost ? raw : null,
+      company: i.company || null,
+      rank: i.rank || null,
+      vessel: i.vessel || null,
+      externalUrl: url,
+    }, (r) => {
+      if (r.ok) toast.success("Applied ✓ — recorded on SeaMinds");
+      else toast.error("Sent on WhatsApp — could not record on SeaMinds");
+    });
   };
 
   const apply = (i: FeedItem) => {
+    if (signedIn && needsQuickProfile) { setGateOpen(true); return; }
     try {
       trackPixel("Contact", { content_name: "job_apply_public" });
       if (i.whatsapp) {
@@ -176,6 +186,7 @@ const JobFeed = () => {
 
   return (
     <div style={{ minHeight: "100vh", background: NAVY }}>
+      <ApplyGateSheet open={gateOpen} onClose={() => setGateOpen(false)} next="/feed" />
       <Helmet>
         <title>Maritime Jobs Feed — Live Seafarer Vacancies | SeaMinds</title>
         <meta name="description" content="Live maritime job vacancies for seafarers — deck, engine, cadet and catering ranks from manning companies worldwide. Apply free on SeaMinds." />
