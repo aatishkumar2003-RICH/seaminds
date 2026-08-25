@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { X, CheckCircle2, AlertCircle } from "lucide-react";
 import { trackPixel } from "@/lib/metaPixel";
-import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, CrewCardInfo } from "@/lib/applyMessage";
+import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, recordApplication, CrewCardInfo } from "@/lib/applyMessage";
 
 const GOLD = "#D4AF37";
 const NAVY = "#0D1B2A";
