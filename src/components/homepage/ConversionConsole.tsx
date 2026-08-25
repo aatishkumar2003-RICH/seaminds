@@ -124,7 +124,14 @@ const ConversionConsole = () => {
   const [wire, setWire] = useState<{ kind: string; text: string; ts: string }[]>([]);
   const [applied, setApplied] = useState<Record<string, "ok" | "dup">>({});
   const [applyBusy, setApplyBusy] = useState(false);
+  const [cardInfo, setCardInfo] = useState<CrewCardInfo | null>(null);
   const [newCrew, setNewCrew] = useState(0);
+
+  useEffect(() => {
+    if (!user?.id) { setCardInfo(null); return; }
+    fetchCrewCardInfo(user.id).then(setCardInfo);
+  }, [user?.id]);
+
   const reducedMotion = useMemo(
     () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches,
     []
