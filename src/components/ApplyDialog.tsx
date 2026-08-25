@@ -84,7 +84,7 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
         }
       }
 
-      void supabase.rpc("submit_application" as any, {
+      void Promise.resolve(supabase.rpc("submit_application" as any, {
         p_vacancy_id: target.isCompanyPost ? null : target.rawId,
         p_company_post_id: target.isCompanyPost ? target.rawId : null,
         p_company_name: target.company || null,
@@ -111,7 +111,7 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
         setDone({ duplicate: !!r.duplicate });
       }, () => {
         setError("Could not save your application. Please try again.");
-      }).finally?.(() => setSaving(false));
+      })).finally(() => setSaving(false));
     } catch {
       setError("Could not save your application. Please try again.");
       setSaving(false);
