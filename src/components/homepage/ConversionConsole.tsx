@@ -41,6 +41,7 @@ type Vacancy = {
   company_name?: string | null;
   contract_duration?: string | null;
   expires_at?: string | null;
+  contact_whatsapp?: string | null;
 };
 
 const isNew = (v: Vacancy) => {
