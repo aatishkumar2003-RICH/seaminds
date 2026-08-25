@@ -803,7 +803,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                     <Button
                       size="sm"
                       className="flex-1 text-xs h-9 gap-1.5"
-                      onClick={() => openExternalVacancy(ext, `mailto:${ext.contact_email}?subject=${encodeURIComponent(`Application: ${ext.title}`)}&body=${encodeURIComponent(`Dear Hiring Manager,\n\nI am interested in the ${ext.rank_required || ext.title} position.\n\nName: ${firstName} ${lastName}\nRank: ${role}\nNationality: ${nationality}\n\nBest regards`)}`, "_self")}
+                      onClick={() => openExternalVacancy(ext, `mailto:${ext.contact_email}?subject=${encodeURIComponent(`Application: ${ext.title}`)}&body=${encodeURIComponent(`Dear Hiring Manager,\n\nI would like to apply for the ${ext.rank_required || ext.title} position.\n\nName: ${firstName} ${lastName}\nRank: ${role}\nNationality: ${nationality}\n\nBest regards`)}`, "_self")}
                     >
                       <Mail size={12} /> Email
                     </Button>

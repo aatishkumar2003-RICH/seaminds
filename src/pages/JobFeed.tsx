@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Anchor, MapPin, Ship, BadgeCheck, MessageCircle, ExternalLink } from "lucide-react";
 import { trackPixel } from "@/lib/metaPixel";
 import { formatSalaryText } from "@/lib/salary";
+import { fetchCrewCardInfo, getCachedCrewCardInfo, waApplyLink, CrewCardInfo } from "@/lib/applyMessage";
 
 const NAVY = "#0D1B2A";
 const GOLD = "#D4AF37";
@@ -57,6 +58,18 @@ const JobFeed = () => {
   const [ships, setShips] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("All");
+  const [cardInfo, setCardInfo] = useState<CrewCardInfo | null>(null);
+
+  // Preload the signed-in crew's calling-card data once — never fetched on tap
+  useEffect(() => {
+    let alive = true;
+    supabase.auth.getUser().then(({ data }) => {
+      const uid = data?.user?.id;
+      if (!uid) return;
+      fetchCrewCardInfo(uid).then((c) => { if (alive) setCardInfo(c); });
+    });
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -140,7 +153,7 @@ const JobFeed = () => {
     try {
       trackPixel("Contact", { content_name: "job_apply_public" });
       if (i.whatsapp) {
-        const url = waApplyLink(cardInfo || getCachedCrewCardInfo(), i.whatsapp, i);
+        const url = waApplyLink(i.whatsapp, cardInfo || getCachedCrewCardInfo(), { rank: i.rank, vessel: i.vessel, port: i.port });
         if (url) {
           recordOutbound(i, url);
           const win = window.open(url, "_blank", "noopener,noreferrer");
