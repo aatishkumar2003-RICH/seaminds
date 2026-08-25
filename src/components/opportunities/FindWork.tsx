@@ -12,7 +12,8 @@ import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { formatSalaryText, formatSalaryRange } from "@/lib/salary";
-import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, CrewCardInfo } from "@/lib/applyMessage";
+import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, recordApplication, fetchQuickProfileDone, CrewCardInfo } from "@/lib/applyMessage";
+import ApplyGateSheet from "@/components/ApplyGateSheet";
 
 const VESSEL_TYPES = [
   "Bulk Carrier", "Tanker", "Chemical Tanker", "Container Ship",
@@ -121,11 +122,15 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
   const [showPrefs, setShowPrefs] = useState(false);
   const [smcScore, setSmcScore] = useState<number | null>(null);
   const [cardInfo, setCardInfo] = useState<CrewCardInfo | null>(null);
+  const [needsQuickProfile, setNeedsQuickProfile] = useState(false);
+  const [gateOpen, setGateOpen] = useState(false);
 
   useEffect(() => {
     if (!profileId) return;
     fetchCrewCardInfo(profileId).then(setCardInfo);
+    fetchQuickProfileDone(profileId).then((done) => setNeedsQuickProfile(!done));
   }, [profileId]);
+
 
 
 
@@ -200,20 +205,20 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
 
   // Best-effort outbound recording: fire-and-forget, never blocks the handoff
   const recordOutbound = (args: { vacancyId?: string | null; jobPostingId?: string | null; companyPostId?: string | null; company?: string | null; rank?: string | null; vessel?: string | null; url: string | null }) => {
-    try {
-      void supabase.rpc("submit_application" as any, {
-        p_vacancy_id: args.vacancyId || null,
-        p_company_post_id: args.companyPostId || null,
-        p_job_posting_id: args.jobPostingId || null,
-        p_company_name: args.company || null,
-        p_rank: args.rank || null,
-        p_vessel: args.vessel || null,
-        p_external_url: args.url,
-      }).then(() => {}, () => {});
-    } catch { /* duplicates and failures never block the open */ }
+    recordApplication({
+      vacancyId: args.vacancyId || null,
+      companyPostId: args.companyPostId || null,
+      jobPostingId: args.jobPostingId || null,
+      company: args.company, rank: args.rank, vessel: args.vessel,
+      externalUrl: args.url,
+    }, (r) => {
+      if (r.ok) toast({ title: "Applied ✓", description: "Recorded on SeaMinds." });
+      else toast({ title: "Sent", description: "Sent on WhatsApp — could not record on SeaMinds.", variant: "destructive" });
+    });
   };
 
   const openExternalVacancy = (ext: any, url: string, target: "_blank" | "_self" = "_blank") => {
+    if (needsQuickProfile) { setGateOpen(true); return; }
     try {
       window.open(url, target, target === "_blank" ? "noopener,noreferrer" : undefined);
       recordOutbound({ vacancyId: ext.id, company: ext.company_name, rank: ext.rank_required || ext.title, vessel: ext.vessel_type, url });
@@ -226,6 +231,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     vacancyId?: string | null; jobPostingId?: string | null;
     company?: string | null; rank?: string | null; vessel?: string | null; port?: string | null;
   }) => {
+    if (needsQuickProfile) { setGateOpen(true); return; }
     try {
       const url = waApplyLink(args.number, cardInfo || getCachedCrewCardInfo(), { rank: args.rank, vessel: args.vessel, port: args.port });
       if (!url) return;
@@ -242,30 +248,21 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     }
   };
 
-
   const applyDirect = (jp: any) => {
+    if (needsQuickProfile) { setGateOpen(true); return; }
     if (directApplied[jp.id] || directBusy[jp.id]) return;
     setDirectBusy((s) => ({ ...s, [jp.id]: true }));
     try {
-      void Promise.resolve(supabase.rpc("submit_application" as any, {
-        p_vacancy_id: null,
-        p_company_post_id: null,
-        p_job_posting_id: jp.id,
-        p_company_name: jp.company_name || null,
-        p_rank: jp.rank_required || null,
-        p_vessel: jp.vessel_type || null,
-        p_external_url: null,
-      }).then(({ data, error }: any) => {
-        const r: any = data;
-        if (error || !r?.ok) {
-          toast({ title: "Error", description: "Could not send application. Try again.", variant: "destructive" });
-          return;
-        }
-        setDirectApplied((s) => ({ ...s, [jp.id]: r.duplicate ? "dup" : "ok" }));
-      }, () => {
-        toast({ title: "Error", description: "Could not send application. Try again.", variant: "destructive" });
-      })).finally(() => {
+      recordApplication({
+        jobPostingId: jp.id,
+        company: jp.company_name || null,
+        rank: jp.rank_required || null,
+        vessel: jp.vessel_type || null,
+      }, (r) => {
         setDirectBusy((s) => ({ ...s, [jp.id]: false }));
+        if (!r.ok) { toast({ title: "Error", description: "Could not send application. Try again.", variant: "destructive" }); return; }
+        setDirectApplied((s) => ({ ...s, [jp.id]: r.duplicate ? "dup" : "ok" }));
+        if (!r.duplicate) toast({ title: "Applied ✓", description: "Recorded on SeaMinds." });
       });
     } catch {
       toast({ title: "Error", description: "Could not send application. Try again.", variant: "destructive" });
@@ -273,30 +270,23 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     }
   };
 
-
-
-
-
   // External vacancies have no manning-company row, so the application is captured centrally
-  const handleApplyExternal = async (ext: any) => {
-    const { data, error } = await supabase.rpc("submit_application" as any, {
-      p_vacancy_id: null,
-      p_company_post_id: null,
-      p_company_name: ext.company_name || null,
-      p_rank: ext.rank_required || ext.title || null,
-      p_vessel: ext.vessel_type || null,
-      p_external_url: ext.apply_url || ext.company_website || null,
-    });
-    const r: any = data;
-    if (error || !r?.ok) {
-      toast({ title: "Error", description: "Could not send application. Try again.", variant: "destructive" });
-      return;
-    }
-    toast({
-      title: r.duplicate ? "Already applied" : "Application Sent",
-      description: r.duplicate
-        ? "You have already applied to this vacancy."
-        : `Your SeaMinds profile has been sent to ${ext.company_name || "the company"}.`,
+  const handleApplyExternal = (ext: any) => {
+    if (needsQuickProfile) { setGateOpen(true); return; }
+    recordApplication({
+      vacancyId: ext.id || null,
+      company: ext.company_name || null,
+      rank: ext.rank_required || ext.title || null,
+      vessel: ext.vessel_type || null,
+      externalUrl: ext.apply_url || ext.company_website || null,
+    }, (r) => {
+      if (!r.ok) { toast({ title: "Error", description: "Could not send application. Try again.", variant: "destructive" }); return; }
+      toast({
+        title: r.duplicate ? "Already applied" : "Applied ✓",
+        description: r.duplicate
+          ? "You have already applied to this vacancy."
+          : `Recorded on SeaMinds — your profile has been sent to ${ext.company_name || "the company"}.`,
+      });
     });
   };
 
@@ -308,6 +298,8 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
 
   return (
     <div className="space-y-5">
+      <ApplyGateSheet open={gateOpen} onClose={() => setGateOpen(false)} next="/app?tab=jobs" />
+
       {/* Recent Matches */}
       {(() => {
         const rankMatches = [

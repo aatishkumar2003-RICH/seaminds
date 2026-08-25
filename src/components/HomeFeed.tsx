@@ -6,7 +6,8 @@ import { trackPixel } from "@/lib/metaPixel";
 import ShareResult from "@/components/ShareResult";
 import { formatSalaryText, formatSalaryRange } from "@/lib/salary";
 import { toast } from "sonner";
-import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, CrewCardInfo } from "@/lib/applyMessage";
+import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, recordApplication, CrewCardInfo } from "@/lib/applyMessage";
+import ApplyGateSheet from "@/components/ApplyGateSheet";
 
 const GOLD = "#D4AF37";
 const NAVY = "#0D1B2A";
@@ -70,6 +71,7 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
   const [fleetInvites, setFleetInvites] = useState<any[]>([]);
   const [refStats, setRefStats] = useState<{ link: string; shipmates_aboard: number } | null>(null);
   const [needsQuickProfile, setNeedsQuickProfile] = useState(false);
+  const [gateOpen, setGateOpen] = useState(false);
   const [directApplied, setDirectApplied] = useState<Record<string, "ok" | "dup">>({});
   const [directBusy, setDirectBusy] = useState<Record<string, boolean>>({});
   const [cardInfo, setCardInfo] = useState<CrewCardInfo | null>(null);
@@ -354,6 +356,7 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
   };
 
   const applyTo = (v: any) => {
+    if (needsQuickProfile) { setGateOpen(true); return; }
     try {
       log("vacancy", v.id, "apply");
       const rawId = String(v.id).replace(/^[ep]-/, "");
@@ -364,15 +367,15 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
           // Open first — synchronously — then record best-effort
           const win = window.open(url, "_blank", "noopener,noreferrer");
           if (!win) window.location.href = url;
-          void supabase.rpc("submit_application" as any, {
-            p_vacancy_id: isDirect ? null : rawId,
-            p_company_post_id: null,
-            p_job_posting_id: isDirect ? rawId : null,
-            p_company_name: v.company || null,
-            p_rank: v.rank || null,
-            p_vessel: v.vessel || v.vessel_type || null,
-            p_external_url: isDirect ? null : url,
-          }).then(() => {}, () => {});
+          recordApplication({
+            vacancyId: isDirect ? null : rawId,
+            jobPostingId: isDirect ? rawId : null,
+            company: v.company, rank: v.rank, vessel: v.vessel || v.vessel_type,
+            externalUrl: isDirect ? null : url,
+          }, (r) => {
+            if (r.ok) toast.success("Applied ✓ — recorded on SeaMinds");
+            else toast.error("Sent on WhatsApp — could not record on SeaMinds");
+          });
           return;
         }
       }
@@ -388,31 +391,24 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
   };
 
   const applyDirect = (v: any) => {
+    if (needsQuickProfile) { setGateOpen(true); return; }
     if (directApplied[v.postingId] || directBusy[v.postingId]) return;
     setDirectBusy((s) => ({ ...s, [v.postingId]: true }));
     try {
-      void Promise.resolve(supabase.rpc("submit_application" as any, {
-        p_vacancy_id: null,
-        p_company_post_id: null,
-        p_job_posting_id: v.postingId,
-        p_company_name: v.company || null,
-        p_rank: v.rank || null,
-        p_vessel: v.vessel || null,
-        p_external_url: null,
-      }).then(({ data, error }: any) => {
-        const r: any = data;
-        if (error || !r?.ok) { toast.error("Could not send application. Try again."); return; }
-        setDirectApplied((s) => ({ ...s, [v.postingId]: r.duplicate ? "dup" : "ok" }));
-        if (!r.duplicate) log("vacancy", v.id, "apply");
-      }, () => {
-        toast.error("Could not send application. Try again.");
-      })).finally(() => {
+      recordApplication({
+        jobPostingId: v.postingId,
+        company: v.company, rank: v.rank, vessel: v.vessel,
+      }, (r) => {
         setDirectBusy((s) => ({ ...s, [v.postingId]: false }));
+        if (!r.ok) { toast.error("Sent on WhatsApp — could not record on SeaMinds"); return; }
+        setDirectApplied((s) => ({ ...s, [v.postingId]: r.duplicate ? "dup" : "ok" }));
+        if (!r.duplicate) { toast.success("Applied ✓ — recorded on SeaMinds"); log("vacancy", v.id, "apply"); }
       });
     } catch {
       toast.error("Could not send application. Try again.");
       setDirectBusy((s) => ({ ...s, [v.postingId]: false }));
     }
+
   };
 
 
@@ -456,6 +452,8 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
           <RefreshCw size={15} style={{ color: GOLD }} className={refreshing ? "animate-spin" : ""} />
         </button>
       </div>
+
+      <ApplyGateSheet open={gateOpen} onClose={() => setGateOpen(false)} next="/app?tab=jobs" />
 
       {needsQuickProfile && (
         <div className="mx-4 mb-3 rounded-2xl p-4" style={{ background: CARD, border: `1px solid ${GOLD}` }}>
