@@ -64,6 +64,8 @@ const JobFeed = () => {
   const [signedIn, setSignedIn] = useState(false);
   const [needsQuickProfile, setNeedsQuickProfile] = useState(false);
   const [gateOpen, setGateOpen] = useState(false);
+  const [applying, setApplying] = useState<string | null>(null);
+
 
   // Preload the signed-in crew's calling-card data once — never fetched on tap
   useEffect(() => {
@@ -159,29 +161,34 @@ const JobFeed = () => {
   };
 
   const apply = (i: FeedItem) => {
-    if (signedIn && needsQuickProfile) { setGateOpen(true); return; }
+    if (!signedIn) { navigate(`/join?next=${encodeURIComponent("/feed")}`); return; }
+    if (needsQuickProfile) { setGateOpen(true); return; }
+    setApplying(i.id);
     try {
       trackPixel("Contact", { content_name: "job_apply_public" });
       if (i.whatsapp) {
         const url = waApplyLink(i.whatsapp, cardInfo || getCachedCrewCardInfo(), { rank: i.rank, vessel: i.vessel, port: i.port });
         if (url) {
-          recordOutbound(i, url);
           const win = window.open(url, "_blank", "noopener,noreferrer");
           if (!win) window.location.href = url;
+          recordOutbound(i, url);
           return;
         }
       }
       if (i.applyUrl) {
-        recordOutbound(i, i.applyUrl);
         const win = window.open(i.applyUrl, "_blank", "noopener,noreferrer");
         if (!win) window.location.href = i.applyUrl;
+        recordOutbound(i, i.applyUrl);
         return;
       }
       navigate("/app?tab=jobs");
     } catch {
       navigate("/app?tab=jobs");
+    } finally {
+      setApplying(null);
     }
   };
+
 
 
   return (
@@ -306,13 +313,15 @@ const JobFeed = () => {
                   <div style={{ color: "#22c55e", fontWeight: 800, fontSize: 15 }}>{formatSalaryText(i.salary)}</div>
                 )}
 
-                <button onClick={() => apply(i)} style={{
-                  marginTop: 2, width: "100%", padding: "11px", borderRadius: 11, border: "none", cursor: "pointer",
+                <button onClick={() => apply(i)} disabled={applying === i.id} style={{
+                  marginTop: 2, width: "100%", padding: "11px", borderRadius: 11, border: "none",
+                  cursor: applying === i.id ? "default" : "pointer", opacity: applying === i.id ? 0.7 : 1,
                   background: GOLD, color: NAVY, fontWeight: 800, fontSize: 13,
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
                 }}>
                   {i.whatsapp ? <><MessageCircle size={15} /> Apply via WhatsApp</> : <><ExternalLink size={15} /> View & Apply</>}
                 </button>
+
               </div>
 
               {(idx + 1) % 6 === 0 && (
