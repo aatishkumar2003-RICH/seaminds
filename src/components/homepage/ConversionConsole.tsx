@@ -298,14 +298,18 @@ const ConversionConsole = () => {
     });
   }, [vacancies]);
 
-  const applyNow = useCallback(async (v: Vacancy) => {
+  const applyNow = useCallback((v: Vacancy) => {
     if (!user) { navigate("/join?next=%2Fquick-profile"); return; }
     setApplyBusy(true);
-    const wa = waApplyLink(v.contact_whatsapp, cardInfo, {
-      rank: v.rank_required || v.title, vessel: v.vessel_type, port: v.joining_port,
-    });
     try {
-      const { data, error } = await supabase.rpc("submit_application", {
+      const wa = waApplyLink(v.contact_whatsapp, cardInfo || getCachedCrewCardInfo(), {
+        rank: v.rank_required || v.title, vessel: v.vessel_type, port: v.joining_port,
+      });
+      if (wa) {
+        const win = window.open(wa, "_blank", "noopener,noreferrer");
+        if (!win) window.location.href = wa;
+      }
+      void supabase.rpc("submit_application", {
         p_vacancy_id: v.kind === "direct" ? undefined : v.id,
         p_company_post_id: undefined,
         p_company_name: v.company_name || v.source || undefined,
@@ -313,25 +317,24 @@ const ConversionConsole = () => {
         p_vessel: v.vessel_type || undefined,
         p_external_url: v.kind === "direct" ? undefined : (wa || undefined),
         p_job_posting_id: v.kind === "direct" ? v.id : undefined,
-      } as never);
-      if (error) throw error;
-      const res = (data || {}) as { ok?: boolean; duplicate?: boolean; error?: string };
-      if (res.duplicate || res.error === "duplicate") {
-        setApplied((s) => ({ ...s, [v.id]: "dup" }));
-      } else if (res.ok === false) {
-        toast.error(res.error || "Could not send application");
-      } else {
-        setApplied((s) => ({ ...s, [v.id]: "ok" }));
-      }
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Could not send application";
-      if (/duplicate|already/i.test(msg)) setApplied((s) => ({ ...s, [v.id]: "dup" }));
-      else toast.error(msg);
+      } as never).then(({ data, error }) => {
+        if (error) throw error;
+        const res = (data || {}) as { ok?: boolean; duplicate?: boolean; error?: string };
+        if (res.duplicate || res.error === "duplicate") setApplied((s) => ({ ...s, [v.id]: "dup" }));
+        else if (res.ok === false) toast.error(res.error || "Could not send application");
+        else setApplied((s) => ({ ...s, [v.id]: "ok" }));
+      }).catch((e) => {
+        const msg = e instanceof Error ? e.message : "Could not send application";
+        if (/duplicate|already/i.test(msg)) setApplied((s) => ({ ...s, [v.id]: "dup" }));
+        else toast.error(msg);
+      });
+    } catch {
+      toast.error("Could not send application");
     } finally {
       setApplyBusy(false);
-      if (wa) window.open(wa, "_blank", "noopener,noreferrer");
     }
   }, [user, navigate, cardInfo]);
+
 
   // Signed-out visitors must reach jobs without a login wall.
   const jobsTo = user ? "/app?tab=jobs" : "/feed";
