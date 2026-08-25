@@ -12,6 +12,7 @@ import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { formatSalaryText, formatSalaryRange } from "@/lib/salary";
+import { fetchCrewCardInfo, waApplyLink, CrewCardInfo } from "@/lib/applyMessage";
 
 const VESSEL_TYPES = [
   "Bulk Carrier", "Tanker", "Chemical Tanker", "Container Ship",
