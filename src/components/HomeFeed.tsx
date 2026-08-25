@@ -346,19 +346,21 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
 
   const applyTo = async (v: any) => {
     log("vacancy", v.id, "apply");
+    const rawId = String(v.id).replace(/^[ep]-/, "");
+    const isDirect = String(v.id).startsWith("p-");
     if (v.whatsapp) {
-      const d = String(v.whatsapp).replace(/[^\d]/g, "");
-      if (d) {
-        const url = `https://wa.me/${d}?text=${encodeURIComponent(`Hello, I am interested in the ${v.rank || "advertised"} position (seen on SeaMinds).`)}`;
+      const url = waApplyLink(v.whatsapp, cardInfo, { rank: v.rank, vessel: v.vessel || v.vessel_type, port: v.port });
+      if (url) {
         // Record the outbound handoff first — best effort, never blocks the open
         try {
           await supabase.rpc("submit_application" as any, {
-            p_vacancy_id: null,
+            p_vacancy_id: isDirect ? null : rawId,
             p_company_post_id: null,
+            p_job_posting_id: isDirect ? rawId : null,
             p_company_name: v.company || null,
             p_rank: v.rank || null,
             p_vessel: v.vessel || v.vessel_type || null,
-            p_external_url: url,
+            p_external_url: isDirect ? null : url,
           });
         } catch { /* duplicates mean it is already recorded */ }
         window.open(url, "_blank", "noopener,noreferrer");
@@ -366,9 +368,9 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
       }
     }
     setApplyTarget({
-      rawId: String(v.id).replace(/^[ep]-/, ""),
+      rawId,
       isCompanyPost: false,
-      rank: v.rank, vessel: v.vessel || v.vessel_type, company: v.company,
+      rank: v.rank, vessel: v.vessel || v.vessel_type, company: v.company, port: v.port || null,
       applyUrl: v.applyUrl || null, whatsapp: null,
     });
   };
