@@ -119,6 +119,14 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
   const [countryFilter, setCountryFilter] = useState<string>('all');
   const [showPrefs, setShowPrefs] = useState(false);
   const [smcScore, setSmcScore] = useState<number | null>(null);
+  const [cardInfo, setCardInfo] = useState<CrewCardInfo | null>(null);
+
+  useEffect(() => {
+    if (!profileId) return;
+    fetchCrewCardInfo(profileId).then(setCardInfo);
+  }, [profileId]);
+
+
 
 
   const [extRankFilter, setExtRankFilter] = useState("all");
