@@ -69,6 +69,7 @@ import InterviewInvite from "./pages/InterviewInvite";
 import InterviewExam from "./pages/InterviewExam";
 import AdminDashboard from "./pages/AdminDashboard";
 import Verify from "./pages/Verify";
+import CrewCard from "./pages/CrewCard";
 import Marketing from "./pages/Marketing";
 import OAuthConsent from "./pages/OAuthConsent";
 import CookieConsent from "./components/CookieConsent";
@@ -181,6 +182,7 @@ const App = () => (
             <Route path="/jobs" element={<Navigate to="/feed" replace />} />
             <Route path="/for-seafarers" element={<Navigate to="/app" replace />} />
             <Route path="/verify/:id" element={<Verify />} />
+            <Route path="/crew/:token" element={<CrewCard />} />
             <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

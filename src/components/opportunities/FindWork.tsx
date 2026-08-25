@@ -12,6 +12,7 @@ import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { formatSalaryText, formatSalaryRange } from "@/lib/salary";
+import { fetchCrewCardInfo, waApplyLink, CrewCardInfo } from "@/lib/applyMessage";
 
 const VESSEL_TYPES = [
   "Bulk Carrier", "Tanker", "Chemical Tanker", "Container Ship",
@@ -119,6 +120,14 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
   const [countryFilter, setCountryFilter] = useState<string>('all');
   const [showPrefs, setShowPrefs] = useState(false);
   const [smcScore, setSmcScore] = useState<number | null>(null);
+  const [cardInfo, setCardInfo] = useState<CrewCardInfo | null>(null);
+
+  useEffect(() => {
+    if (!profileId) return;
+    fetchCrewCardInfo(profileId).then(setCardInfo);
+  }, [profileId]);
+
+
 
 
   const [extRankFilter, setExtRankFilter] = useState("all");
@@ -190,11 +199,12 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
   };
 
   // Best-effort outbound recording: never block the handoff on failure
-  const recordOutbound = async (args: { companyPostId?: string | null; company?: string | null; rank?: string | null; vessel?: string | null; url: string }) => {
+  const recordOutbound = async (args: { vacancyId?: string | null; jobPostingId?: string | null; companyPostId?: string | null; company?: string | null; rank?: string | null; vessel?: string | null; url: string | null }) => {
     try {
       await supabase.rpc("submit_application" as any, {
-        p_vacancy_id: null,
+        p_vacancy_id: args.vacancyId || null,
         p_company_post_id: args.companyPostId || null,
+        p_job_posting_id: args.jobPostingId || null,
         p_company_name: args.company || null,
         p_rank: args.rank || null,
         p_vessel: args.vessel || null,
@@ -204,14 +214,27 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
   };
 
   const openExternalVacancy = async (ext: any, url: string, target: "_blank" | "_self" = "_blank") => {
-    await recordOutbound({ company: ext.company_name, rank: ext.rank_required || ext.title, vessel: ext.vessel_type, url });
+    await recordOutbound({ vacancyId: ext.id, company: ext.company_name, rank: ext.rank_required || ext.title, vessel: ext.vessel_type, url });
     window.open(url, target, target === "_blank" ? "noopener,noreferrer" : undefined);
   };
 
-  const openJobPosting = async (jp: any, url: string) => {
-    await recordOutbound({ company: jp.company_name, rank: jp.rank_required, vessel: jp.vessel_type, url });
+  /** Records then opens WhatsApp with the SeaMinds calling card. */
+  const openWhatsApp = async (args: {
+    number: string | null | undefined;
+    vacancyId?: string | null; jobPostingId?: string | null;
+    company?: string | null; rank?: string | null; vessel?: string | null; port?: string | null;
+  }) => {
+    const url = waApplyLink(args.number, cardInfo, { rank: args.rank, vessel: args.vessel, port: args.port });
+    if (!url) return;
+    await recordOutbound({
+      vacancyId: args.vacancyId || null,
+      jobPostingId: args.jobPostingId || null,
+      company: args.company, rank: args.rank, vessel: args.vessel,
+      url: args.jobPostingId ? null : url,
+    });
     window.open(url, "_blank", "noopener,noreferrer");
   };
+
 
   const applyDirect = async (jp: any) => {
     if (directApplied[jp.id]) return;
@@ -311,11 +334,18 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                     <p className="text-[11px] text-primary font-medium">{m.salary}</p>
                   </div>
                   {m.whatsapp ? (
-                    <a href={`https://wa.me/${m.whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi, I'm interested in the ${m.title} position. My name is ${firstName} ${lastName}, ${role}.`)}`} target="_blank" rel="noopener noreferrer">
-                      <Button size="sm" className="h-8 text-xs gap-1 bg-green-600 hover:bg-green-700 text-white shrink-0">
-                        <MessageCircle size={12} /> Apply
-                      </Button>
-                    </a>
+                    <Button
+                      size="sm"
+                      className="h-8 text-xs gap-1 bg-green-600 hover:bg-green-700 text-white shrink-0"
+                      onClick={() => openWhatsApp({
+                        number: m.whatsapp,
+                        vacancyId: m.source === "ai" ? m.id : null,
+                        jobPostingId: m.source === "posted" ? m.id : null,
+                        company: m.company, rank: m.title, vessel: m.vessel, port: m.port,
+                      })}
+                    >
+                      <MessageCircle size={12} /> Apply
+                    </Button>
                   ) : (
                     <Button size="sm" variant="outline" className="h-8 text-xs shrink-0" onClick={() => {
                       const el = document.getElementById("ai-collected-jobs");
@@ -477,11 +507,6 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
           </div>
         ) : (
           filteredPostings.map((jp) => {
-            const whatsappNumber = (jp.contact_whatsapp || "").replace(/[^0-9]/g, "");
-            const whatsappText = encodeURIComponent(
-              `Hi, I am interested in the ${jp.rank_required} position. My name is ${firstName} ${lastName}, ${role}, ${nationality}, ${yearsAtSea} experience.`
-            );
-            const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappText}`;
             const postedAgo = formatDistanceToNow(new Date(jp.created_at), { addSuffix: true });
 
             return (
@@ -545,7 +570,11 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                     size="sm"
                     variant="outline"
                     className="w-full text-xs h-9 gap-1.5"
-                    onClick={() => openJobPosting(jp, whatsappUrl)}
+                    onClick={() => openWhatsApp({
+                      number: jp.contact_whatsapp,
+                      jobPostingId: jp.id,
+                      company: jp.company_name, rank: jp.rank_required, vessel: jp.vessel_type, port: jp.joining_port,
+                    })}
                   >
                     <MessageCircle size={12} /> Apply via WhatsApp
                   </Button>
@@ -748,7 +777,11 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                       size="sm"
                       variant={ext.apply_url ? "outline" : "default"}
                       className={cn("text-xs h-9 gap-1.5", !ext.apply_url && "flex-1 bg-green-600 hover:bg-green-700 text-white")}
-                      onClick={() => openExternalVacancy(ext, `https://wa.me/${ext.contact_whatsapp!.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi, I'm interested in the ${ext.rank_required || ext.title} position. My name is ${firstName} ${lastName}, ${role}.`)}`)}
+                      onClick={() => openWhatsApp({
+                        number: ext.contact_whatsapp,
+                        vacancyId: ext.id,
+                        company: ext.company_name, rank: ext.rank_required || ext.title, vessel: ext.vessel_type, port: ext.joining_port,
+                      })}
                     >
                       <MessageCircle size={12} /> WhatsApp
                     </Button>

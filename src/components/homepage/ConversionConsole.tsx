@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 import { useT, LANGS, type LangCode } from "@/i18n";
+import { fetchCrewCardInfo, waApplyLink, type CrewCardInfo } from "@/lib/applyMessage";
 
 
 const GOLD = "#D4AF37";
@@ -41,6 +42,7 @@ type Vacancy = {
   company_name?: string | null;
   contract_duration?: string | null;
   expires_at?: string | null;
+  contact_whatsapp?: string | null;
 };
 
 const isNew = (v: Vacancy) => {
@@ -123,7 +125,14 @@ const ConversionConsole = () => {
   const [wire, setWire] = useState<{ kind: string; text: string; ts: string }[]>([]);
   const [applied, setApplied] = useState<Record<string, "ok" | "dup">>({});
   const [applyBusy, setApplyBusy] = useState(false);
+  const [cardInfo, setCardInfo] = useState<CrewCardInfo | null>(null);
   const [newCrew, setNewCrew] = useState(0);
+
+  useEffect(() => {
+    if (!user?.id) { setCardInfo(null); return; }
+    fetchCrewCardInfo(user.id).then(setCardInfo);
+  }, [user?.id]);
+
   const reducedMotion = useMemo(
     () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches,
     []
@@ -160,13 +169,13 @@ const ConversionConsole = () => {
         supabase.rpc("get_market_indices" as never),
         supabase
           .from("external_vacancies")
-          .select("id,title,rank_required,vessel_type,joining_port,salary_min,salary_text,description,source,fetched_at,first_seen_at,expires_at")
+          .select("id,title,rank_required,vessel_type,joining_port,salary_min,salary_text,description,source,fetched_at,first_seen_at,expires_at,contact_whatsapp")
           .gt("expires_at", nowIso)
           .order("fetched_at", { ascending: false })
           .limit(25),
         supabase
           .from("job_postings")
-          .select("id,rank_required,vessel_type,joining_port,contract_duration,monthly_salary,company_name,additional_notes,created_at")
+          .select("id,rank_required,vessel_type,joining_port,contract_duration,monthly_salary,company_name,additional_notes,created_at,contact_whatsapp")
           .eq("status", "active")
           .order("created_at", { ascending: false })
           .limit(10),
@@ -190,6 +199,7 @@ const ConversionConsole = () => {
         kind: "direct" as const,
         company_name: x.company_name,
         contract_duration: x.contract_duration,
+        contact_whatsapp: x.contact_whatsapp,
       }));
       const ts = (r: Vacancy) => new Date(r.first_seen_at || r.fetched_at || 0).getTime();
       setVacancies([...direct, ...ext].sort((a, b) => ts(b) - ts(a)));
@@ -291,6 +301,9 @@ const ConversionConsole = () => {
   const applyNow = useCallback(async (v: Vacancy) => {
     if (!user) { navigate("/join?next=%2Fquick-profile"); return; }
     setApplyBusy(true);
+    const wa = waApplyLink(v.contact_whatsapp, cardInfo, {
+      rank: v.rank_required || v.title, vessel: v.vessel_type, port: v.joining_port,
+    });
     try {
       const { data, error } = await supabase.rpc("submit_application", {
         p_vacancy_id: v.kind === "direct" ? undefined : v.id,
@@ -298,7 +311,7 @@ const ConversionConsole = () => {
         p_company_name: v.company_name || v.source || undefined,
         p_rank: v.rank_required || undefined,
         p_vessel: v.vessel_type || undefined,
-        p_external_url: undefined,
+        p_external_url: v.kind === "direct" ? undefined : (wa || undefined),
         p_job_posting_id: v.kind === "direct" ? v.id : undefined,
       } as never);
       if (error) throw error;
@@ -316,8 +329,9 @@ const ConversionConsole = () => {
       else toast.error(msg);
     } finally {
       setApplyBusy(false);
+      if (wa) window.open(wa, "_blank", "noopener,noreferrer");
     }
-  }, [user, navigate]);
+  }, [user, navigate, cardInfo]);
 
   // Signed-out visitors must reach jobs without a login wall.
   const jobsTo = user ? "/app?tab=jobs" : "/feed";

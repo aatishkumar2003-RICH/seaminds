@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { X, CheckCircle2, AlertCircle } from "lucide-react";
 import { trackPixel } from "@/lib/metaPixel";
+import { fetchCrewCardInfo, waApplyLink, CrewCardInfo } from "@/lib/applyMessage";
 
 const GOLD = "#D4AF37";
 const NAVY = "#0D1B2A";
@@ -13,6 +14,7 @@ export interface ApplyTarget {
   isCompanyPost: boolean;
   rank?: string;
   vessel?: string;
+  port?: string | null;
   company?: string;
   applyUrl?: string | null;
   whatsapp?: string | null;
@@ -32,6 +34,12 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState<null | { duplicate: boolean }>(null);
   const [error, setError] = useState("");
+  const [cardInfo, setCardInfo] = useState<CrewCardInfo | null>(null);
+
+  useEffect(() => {
+    if (!open || !profileId) return;
+    fetchCrewCardInfo(profileId).then(setCardInfo);
+  }, [open, profileId]);
 
   useEffect(() => {
     if (!open) return;
@@ -87,8 +95,8 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
       trackPixel("Contact", { content_name: "job_apply", content_category: target.rank || "crew" });
 
       if (target.whatsapp) {
-        const d = String(target.whatsapp).replace(/[^\d]/g, "");
-        if (d) window.open(`https://wa.me/${d}?text=${encodeURIComponent(`Hello, I am interested in the ${target.rank || "advertised"} position (seen on SeaMinds).`)}`, "_blank");
+        const url = waApplyLink(target.whatsapp, cardInfo, { rank: target.rank, vessel: target.vessel, port: target.port });
+        if (url) window.open(url, "_blank", "noopener,noreferrer");
       }
 
 
