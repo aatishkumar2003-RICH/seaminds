@@ -235,10 +235,6 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
-  const openJobPosting = async (jp: any, url: string) => {
-    await recordOutbound({ jobPostingId: jp.id, company: jp.company_name, rank: jp.rank_required, vessel: jp.vessel_type, url: null });
-    window.open(url, "_blank", "noopener,noreferrer");
-  };
 
   const applyDirect = async (jp: any) => {
     if (directApplied[jp.id]) return;
