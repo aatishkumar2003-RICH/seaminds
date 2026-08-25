@@ -175,7 +175,7 @@ const ConversionConsole = () => {
           .limit(25),
         supabase
           .from("job_postings")
-          .select("id,rank_required,vessel_type,joining_port,contract_duration,monthly_salary,company_name,additional_notes,created_at")
+          .select("id,rank_required,vessel_type,joining_port,contract_duration,monthly_salary,company_name,additional_notes,created_at,contact_whatsapp")
           .eq("status", "active")
           .order("created_at", { ascending: false })
           .limit(10),
