@@ -199,11 +199,12 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
   };
 
   // Best-effort outbound recording: never block the handoff on failure
-  const recordOutbound = async (args: { companyPostId?: string | null; company?: string | null; rank?: string | null; vessel?: string | null; url: string }) => {
+  const recordOutbound = async (args: { vacancyId?: string | null; jobPostingId?: string | null; companyPostId?: string | null; company?: string | null; rank?: string | null; vessel?: string | null; url: string | null }) => {
     try {
       await supabase.rpc("submit_application" as any, {
-        p_vacancy_id: null,
+        p_vacancy_id: args.vacancyId || null,
         p_company_post_id: args.companyPostId || null,
+        p_job_posting_id: args.jobPostingId || null,
         p_company_name: args.company || null,
         p_rank: args.rank || null,
         p_vessel: args.vessel || null,
@@ -213,12 +214,29 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
   };
 
   const openExternalVacancy = async (ext: any, url: string, target: "_blank" | "_self" = "_blank") => {
-    await recordOutbound({ company: ext.company_name, rank: ext.rank_required || ext.title, vessel: ext.vessel_type, url });
+    await recordOutbound({ vacancyId: ext.id, company: ext.company_name, rank: ext.rank_required || ext.title, vessel: ext.vessel_type, url });
     window.open(url, target, target === "_blank" ? "noopener,noreferrer" : undefined);
   };
 
+  /** Records then opens WhatsApp with the SeaMinds calling card. */
+  const openWhatsApp = async (args: {
+    number: string | null | undefined;
+    vacancyId?: string | null; jobPostingId?: string | null;
+    company?: string | null; rank?: string | null; vessel?: string | null; port?: string | null;
+  }) => {
+    const url = waApplyLink(args.number, cardInfo, { rank: args.rank, vessel: args.vessel, port: args.port });
+    if (!url) return;
+    await recordOutbound({
+      vacancyId: args.vacancyId || null,
+      jobPostingId: args.jobPostingId || null,
+      company: args.company, rank: args.rank, vessel: args.vessel,
+      url: args.jobPostingId ? null : url,
+    });
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
   const openJobPosting = async (jp: any, url: string) => {
-    await recordOutbound({ company: jp.company_name, rank: jp.rank_required, vessel: jp.vessel_type, url });
+    await recordOutbound({ jobPostingId: jp.id, company: jp.company_name, rank: jp.rank_required, vessel: jp.vessel_type, url: null });
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
