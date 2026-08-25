@@ -6,7 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 import { useT, LANGS, type LangCode } from "@/i18n";
-import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, type CrewCardInfo } from "@/lib/applyMessage";
+import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, recordApplication, fetchQuickProfileDone, type CrewCardInfo } from "@/lib/applyMessage";
+import ApplyGateSheet from "@/components/ApplyGateSheet";
 
 
 const GOLD = "#D4AF37";
@@ -128,9 +129,13 @@ const ConversionConsole = () => {
   const [cardInfo, setCardInfo] = useState<CrewCardInfo | null>(null);
   const [newCrew, setNewCrew] = useState(0);
 
+  const [needsQuickProfile, setNeedsQuickProfile] = useState(false);
+  const [gateOpen, setGateOpen] = useState(false);
+
   useEffect(() => {
-    if (!user?.id) { setCardInfo(null); return; }
+    if (!user?.id) { setCardInfo(null); setNeedsQuickProfile(false); return; }
     fetchCrewCardInfo(user.id).then(setCardInfo);
+    fetchQuickProfileDone(user.id).then((done) => setNeedsQuickProfile(!done));
   }, [user?.id]);
 
   const reducedMotion = useMemo(
@@ -345,6 +350,7 @@ const ConversionConsole = () => {
 
   return (
     <div className="relative" style={{ background: NAVY }}>
+      <ApplyGateSheet open={gateOpen} onClose={() => setGateOpen(false)} next="/feed" />
       <style>{`
         @keyframes sm-pulse-cta { 0%,100% { box-shadow: 0 0 0 0 rgba(212,175,55,.45) } 50% { box-shadow: 0 0 0 12px rgba(212,175,55,0) } }
         .sm-cta-pulse { animation: sm-pulse-cta 2.4s ease-out infinite; }
