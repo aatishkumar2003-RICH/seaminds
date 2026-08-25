@@ -353,16 +353,18 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
     setRefreshing(false);
   };
 
-  const applyTo = async (v: any) => {
-    log("vacancy", v.id, "apply");
-    const rawId = String(v.id).replace(/^[ep]-/, "");
-    const isDirect = String(v.id).startsWith("p-");
-    if (v.whatsapp) {
-      const url = waApplyLink(v.whatsapp, cardInfo, { rank: v.rank, vessel: v.vessel || v.vessel_type, port: v.port });
-      if (url) {
-        // Record the outbound handoff first — best effort, never blocks the open
-        try {
-          await supabase.rpc("submit_application" as any, {
+  const applyTo = (v: any) => {
+    try {
+      log("vacancy", v.id, "apply");
+      const rawId = String(v.id).replace(/^[ep]-/, "");
+      const isDirect = String(v.id).startsWith("p-");
+      if (v.whatsapp) {
+        const url = waApplyLink(v.whatsapp, cardInfo || getCachedCrewCardInfo(), { rank: v.rank, vessel: v.vessel || v.vessel_type, port: v.port });
+        if (url) {
+          // Open first — synchronously — then record best-effort
+          const win = window.open(url, "_blank", "noopener,noreferrer");
+          if (!win) window.location.href = url;
+          void supabase.rpc("submit_application" as any, {
             p_vacancy_id: isDirect ? null : rawId,
             p_company_post_id: null,
             p_job_posting_id: isDirect ? rawId : null,
@@ -370,25 +372,26 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
             p_rank: v.rank || null,
             p_vessel: v.vessel || v.vessel_type || null,
             p_external_url: isDirect ? null : url,
-          });
-        } catch { /* duplicates mean it is already recorded */ }
-        window.open(url, "_blank", "noopener,noreferrer");
-        return;
+          }).then(() => {}, () => {});
+          return;
+        }
       }
+      setApplyTarget({
+        rawId,
+        isCompanyPost: false,
+        rank: v.rank, vessel: v.vessel || v.vessel_type, company: v.company, port: v.port || null,
+        applyUrl: v.applyUrl || null, whatsapp: null,
+      });
+    } catch {
+      toast.error("Could not open the application. Try again.");
     }
-    setApplyTarget({
-      rawId,
-      isCompanyPost: false,
-      rank: v.rank, vessel: v.vessel || v.vessel_type, company: v.company, port: v.port || null,
-      applyUrl: v.applyUrl || null, whatsapp: null,
-    });
   };
 
-  const applyDirect = async (v: any) => {
-    if (directApplied[v.postingId]) return;
+  const applyDirect = (v: any) => {
+    if (directApplied[v.postingId] || directBusy[v.postingId]) return;
     setDirectBusy((s) => ({ ...s, [v.postingId]: true }));
     try {
-      const { data, error } = await supabase.rpc("submit_application" as any, {
+      void supabase.rpc("submit_application" as any, {
         p_vacancy_id: null,
         p_company_post_id: null,
         p_job_posting_id: v.postingId,
@@ -396,19 +399,22 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
         p_rank: v.rank || null,
         p_vessel: v.vessel || null,
         p_external_url: null,
+      }).then(({ data, error }: any) => {
+        const r: any = data;
+        if (error || !r?.ok) { toast.error("Could not send application. Try again."); return; }
+        setDirectApplied((s) => ({ ...s, [v.postingId]: r.duplicate ? "dup" : "ok" }));
+        if (!r.duplicate) log("vacancy", v.id, "apply");
+      }, () => {
+        toast.error("Could not send application. Try again.");
+      }).finally?.(() => {
+        setDirectBusy((s) => ({ ...s, [v.postingId]: false }));
       });
-      const r: any = data;
-      if (error || !r?.ok) { toast.error("Could not send application. Try again."); return; }
-      if (r.duplicate) {
-        setDirectApplied((s) => ({ ...s, [v.postingId]: "dup" }));
-        return;
-      }
-      setDirectApplied((s) => ({ ...s, [v.postingId]: "ok" }));
-      log("vacancy", v.id, "apply");
-    } finally {
+    } catch {
+      toast.error("Could not send application. Try again.");
       setDirectBusy((s) => ({ ...s, [v.postingId]: false }));
     }
   };
+
 
 
 
