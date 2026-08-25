@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 import { useT, LANGS, type LangCode } from "@/i18n";
-import { fetchCrewCardInfo, waApplyLink, type CrewCardInfo } from "@/lib/applyMessage";
+import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, type CrewCardInfo } from "@/lib/applyMessage";
 
 
 const GOLD = "#D4AF37";

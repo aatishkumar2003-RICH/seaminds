@@ -6,7 +6,7 @@ import { trackPixel } from "@/lib/metaPixel";
 import ShareResult from "@/components/ShareResult";
 import { formatSalaryText, formatSalaryRange } from "@/lib/salary";
 import { toast } from "sonner";
-import { fetchCrewCardInfo, waApplyLink, CrewCardInfo } from "@/lib/applyMessage";
+import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, CrewCardInfo } from "@/lib/applyMessage";
 
 const GOLD = "#D4AF37";
 const NAVY = "#0D1B2A";
