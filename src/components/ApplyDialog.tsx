@@ -34,6 +34,12 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState<null | { duplicate: boolean }>(null);
   const [error, setError] = useState("");
+  const [cardInfo, setCardInfo] = useState<CrewCardInfo | null>(null);
+
+  useEffect(() => {
+    if (!open || !profileId) return;
+    fetchCrewCardInfo(profileId).then(setCardInfo);
+  }, [open, profileId]);
 
   useEffect(() => {
     if (!open) return;
