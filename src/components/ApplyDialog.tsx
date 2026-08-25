@@ -95,8 +95,8 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
       trackPixel("Contact", { content_name: "job_apply", content_category: target.rank || "crew" });
 
       if (target.whatsapp) {
-        const d = String(target.whatsapp).replace(/[^\d]/g, "");
-        if (d) window.open(`https://wa.me/${d}?text=${encodeURIComponent(`Hello, I am interested in the ${target.rank || "advertised"} position (seen on SeaMinds).`)}`, "_blank");
+        const url = waApplyLink(target.whatsapp, cardInfo, { rank: target.rank, vessel: target.vessel, port: target.port });
+        if (url) window.open(url, "_blank", "noopener,noreferrer");
       }
 
 
