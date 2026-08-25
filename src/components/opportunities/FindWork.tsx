@@ -12,7 +12,7 @@ import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { formatSalaryText, formatSalaryRange } from "@/lib/salary";
-import { fetchCrewCardInfo, waApplyLink, CrewCardInfo } from "@/lib/applyMessage";
+import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, CrewCardInfo } from "@/lib/applyMessage";
 
 const VESSEL_TYPES = [
   "Bulk Carrier", "Tanker", "Chemical Tanker", "Container Ship",
@@ -198,10 +198,10 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     saveAvailability(checked);
   };
 
-  // Best-effort outbound recording: never block the handoff on failure
-  const recordOutbound = async (args: { vacancyId?: string | null; jobPostingId?: string | null; companyPostId?: string | null; company?: string | null; rank?: string | null; vessel?: string | null; url: string | null }) => {
+  // Best-effort outbound recording: fire-and-forget, never blocks the handoff
+  const recordOutbound = (args: { vacancyId?: string | null; jobPostingId?: string | null; companyPostId?: string | null; company?: string | null; rank?: string | null; vessel?: string | null; url: string | null }) => {
     try {
-      await supabase.rpc("submit_application" as any, {
+      void supabase.rpc("submit_application" as any, {
         p_vacancy_id: args.vacancyId || null,
         p_company_post_id: args.companyPostId || null,
         p_job_posting_id: args.jobPostingId || null,
@@ -209,38 +209,45 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
         p_rank: args.rank || null,
         p_vessel: args.vessel || null,
         p_external_url: args.url,
-      });
+      }).then(() => {}, () => {});
     } catch { /* duplicates and failures never block the open */ }
   };
 
-  const openExternalVacancy = async (ext: any, url: string, target: "_blank" | "_self" = "_blank") => {
-    await recordOutbound({ vacancyId: ext.id, company: ext.company_name, rank: ext.rank_required || ext.title, vessel: ext.vessel_type, url });
-    window.open(url, target, target === "_blank" ? "noopener,noreferrer" : undefined);
+  const openExternalVacancy = (ext: any, url: string, target: "_blank" | "_self" = "_blank") => {
+    try {
+      window.open(url, target, target === "_blank" ? "noopener,noreferrer" : undefined);
+      recordOutbound({ vacancyId: ext.id, company: ext.company_name, rank: ext.rank_required || ext.title, vessel: ext.vessel_type, url });
+    } catch { /* noop */ }
   };
 
-  /** Records then opens WhatsApp with the SeaMinds calling card. */
-  const openWhatsApp = async (args: {
+  /** Opens WhatsApp synchronously with the SeaMinds calling card, then records. */
+  const openWhatsApp = (args: {
     number: string | null | undefined;
     vacancyId?: string | null; jobPostingId?: string | null;
     company?: string | null; rank?: string | null; vessel?: string | null; port?: string | null;
   }) => {
-    const url = waApplyLink(args.number, cardInfo, { rank: args.rank, vessel: args.vessel, port: args.port });
-    if (!url) return;
-    await recordOutbound({
-      vacancyId: args.vacancyId || null,
-      jobPostingId: args.jobPostingId || null,
-      company: args.company, rank: args.rank, vessel: args.vessel,
-      url: args.jobPostingId ? null : url,
-    });
-    window.open(url, "_blank", "noopener,noreferrer");
+    try {
+      const url = waApplyLink(args.number, cardInfo || getCachedCrewCardInfo(), { rank: args.rank, vessel: args.vessel, port: args.port });
+      if (!url) return;
+      const win = window.open(url, "_blank", "noopener,noreferrer");
+      if (!win) window.location.href = url;
+      recordOutbound({
+        vacancyId: args.vacancyId || null,
+        jobPostingId: args.jobPostingId || null,
+        company: args.company, rank: args.rank, vessel: args.vessel,
+        url: args.jobPostingId ? null : url,
+      });
+    } catch {
+      toast({ title: "Error", description: "Could not open the application. Try again.", variant: "destructive" });
+    }
   };
 
 
-  const applyDirect = async (jp: any) => {
-    if (directApplied[jp.id]) return;
+  const applyDirect = (jp: any) => {
+    if (directApplied[jp.id] || directBusy[jp.id]) return;
     setDirectBusy((s) => ({ ...s, [jp.id]: true }));
     try {
-      const { data, error } = await supabase.rpc("submit_application" as any, {
+      void Promise.resolve(supabase.rpc("submit_application" as any, {
         p_vacancy_id: null,
         p_company_post_id: null,
         p_job_posting_id: jp.id,
@@ -248,18 +255,24 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
         p_rank: jp.rank_required || null,
         p_vessel: jp.vessel_type || null,
         p_external_url: null,
-      });
-      const r: any = data;
-      if (error || !r?.ok) {
+      }).then(({ data, error }: any) => {
+        const r: any = data;
+        if (error || !r?.ok) {
+          toast({ title: "Error", description: "Could not send application. Try again.", variant: "destructive" });
+          return;
+        }
+        setDirectApplied((s) => ({ ...s, [jp.id]: r.duplicate ? "dup" : "ok" }));
+      }, () => {
         toast({ title: "Error", description: "Could not send application. Try again.", variant: "destructive" });
-        return;
-      }
-      if (r.duplicate) { setDirectApplied((s) => ({ ...s, [jp.id]: "dup" })); return; }
-      setDirectApplied((s) => ({ ...s, [jp.id]: "ok" }));
-    } finally {
+      })).finally(() => {
+        setDirectBusy((s) => ({ ...s, [jp.id]: false }));
+      });
+    } catch {
+      toast({ title: "Error", description: "Could not send application. Try again.", variant: "destructive" });
       setDirectBusy((s) => ({ ...s, [jp.id]: false }));
     }
   };
+
 
 
 

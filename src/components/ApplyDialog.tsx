@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { X, CheckCircle2, AlertCircle } from "lucide-react";
 import { trackPixel } from "@/lib/metaPixel";
-import { fetchCrewCardInfo, waApplyLink, CrewCardInfo } from "@/lib/applyMessage";
+import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, CrewCardInfo } from "@/lib/applyMessage";
 
 const GOLD = "#D4AF37";
 const NAVY = "#0D1B2A";
@@ -71,48 +71,53 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
   const ready = readiness?.ready === true;
   const unknownReadiness = readiness === null;
 
-  const apply = async () => {
+  const apply = () => {
     if (saving) return;                 // guards double-tap
     setSaving(true); setError("");
     try {
-      const { data, error: rpcErr } = await supabase.rpc("submit_application" as any, {
+      // Open WhatsApp synchronously first so mobile browsers never block it
+      if (target.whatsapp) {
+        const url = waApplyLink(target.whatsapp, cardInfo || getCachedCrewCardInfo(), { rank: target.rank, vessel: target.vessel, port: target.port });
+        if (url) {
+          const win = window.open(url, "_blank", "noopener,noreferrer");
+          if (!win) window.location.href = url;
+        }
+      }
+
+      void Promise.resolve(supabase.rpc("submit_application" as any, {
         p_vacancy_id: target.isCompanyPost ? null : target.rawId,
         p_company_post_id: target.isCompanyPost ? target.rawId : null,
         p_company_name: target.company || null,
         p_rank: target.rank || null,
         p_vessel: target.vessel || null,
         p_external_url: target.applyUrl || null,
-      });
-      if (rpcErr) throw rpcErr;
-      const r: any = data;
-      if (!r?.ok) {
-        setError(r?.error === "not_signed_in"
-          ? "Please sign in to apply."
-          : "Could not save your application. Please try again.");
-        return;
-      }
+      }).then(({ data, error: rpcErr }: any) => {
+        const r: any = data;
+        if (rpcErr || !r?.ok) {
+          setError(r?.error === "not_signed_in"
+            ? "Please sign in to apply."
+            : "Could not save your application. Please try again.");
+          return;
+        }
 
-      trackPixel("Contact", { content_name: "job_apply", content_category: target.rank || "crew" });
+        trackPixel("Contact", { content_name: "job_apply", content_category: target.rank || "crew" });
 
-      if (target.whatsapp) {
-        const url = waApplyLink(target.whatsapp, cardInfo, { rank: target.rank, vessel: target.vessel, port: target.port });
-        if (url) window.open(url, "_blank", "noopener,noreferrer");
-      }
+        if (ready !== true) {
+          onClose();
+          onGoToCv();
+          return;
+        }
 
-
-      if (ready !== true) {
-        onClose();
-        onGoToCv();
-        return;
-      }
-
-      setDone({ duplicate: !!r.duplicate });
+        setDone({ duplicate: !!r.duplicate });
+      }, () => {
+        setError("Could not save your application. Please try again.");
+      })).finally(() => setSaving(false));
     } catch {
       setError("Could not save your application. Please try again.");
-    } finally {
       setSaving(false);
     }
   };
+
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}

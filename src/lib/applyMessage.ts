@@ -10,8 +10,28 @@ export interface CrewCardInfo {
   certificateId: string | null;
 }
 
-/** Loads the signed-in crew's calling-card data (token + latest completed score). */
+const cardCache = new Map<string, Promise<CrewCardInfo | null>>();
+let lastCard: CrewCardInfo | null = null;
+
+/** Synchronously returns the last successfully loaded card (no network). */
+export const getCachedCrewCardInfo = (): CrewCardInfo | null => lastCard;
+
+/** Loads the signed-in crew's calling-card data (token + latest completed score), cached per profile. */
 export const fetchCrewCardInfo = async (profileId: string): Promise<CrewCardInfo | null> => {
+  if (!profileId) return null;
+  const hit = cardCache.get(profileId);
+  if (hit) return hit;
+  const p = loadCrewCardInfo(profileId).then((v) => {
+    if (v) lastCard = v;
+    else cardCache.delete(profileId);
+    return v;
+  }).catch(() => { cardCache.delete(profileId); return null; });
+  cardCache.set(profileId, p);
+  return p;
+};
+
+const loadCrewCardInfo = async (profileId: string): Promise<CrewCardInfo | null> => {
+
   if (!profileId) return null;
   try {
     const [{ data: prof }, { data: sc }] = await Promise.all([
