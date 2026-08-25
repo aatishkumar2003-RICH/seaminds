@@ -309,7 +309,7 @@ const ConversionConsole = () => {
         const win = window.open(wa, "_blank", "noopener,noreferrer");
         if (!win) window.location.href = wa;
       }
-      void supabase.rpc("submit_application", {
+      void Promise.resolve(supabase.rpc("submit_application", {
         p_vacancy_id: v.kind === "direct" ? undefined : v.id,
         p_company_post_id: undefined,
         p_company_name: v.company_name || v.source || undefined,
@@ -323,7 +323,7 @@ const ConversionConsole = () => {
         if (res.duplicate || res.error === "duplicate") setApplied((s) => ({ ...s, [v.id]: "dup" }));
         else if (res.ok === false) toast.error(res.error || "Could not send application");
         else setApplied((s) => ({ ...s, [v.id]: "ok" }));
-      }).catch((e) => {
+      })).catch((e) => {
         const msg = e instanceof Error ? e.message : "Could not send application";
         if (/duplicate|already/i.test(msg)) setApplied((s) => ({ ...s, [v.id]: "dup" }));
         else toast.error(msg);

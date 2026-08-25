@@ -391,7 +391,7 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
     if (directApplied[v.postingId] || directBusy[v.postingId]) return;
     setDirectBusy((s) => ({ ...s, [v.postingId]: true }));
     try {
-      void supabase.rpc("submit_application" as any, {
+      void Promise.resolve(supabase.rpc("submit_application" as any, {
         p_vacancy_id: null,
         p_company_post_id: null,
         p_job_posting_id: v.postingId,
@@ -406,7 +406,7 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
         if (!r.duplicate) log("vacancy", v.id, "apply");
       }, () => {
         toast.error("Could not send application. Try again.");
-      }).finally?.(() => {
+      })).finally(() => {
         setDirectBusy((s) => ({ ...s, [v.postingId]: false }));
       });
     } catch {

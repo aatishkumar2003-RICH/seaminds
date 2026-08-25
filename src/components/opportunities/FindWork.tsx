@@ -247,7 +247,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     if (directApplied[jp.id] || directBusy[jp.id]) return;
     setDirectBusy((s) => ({ ...s, [jp.id]: true }));
     try {
-      void supabase.rpc("submit_application" as any, {
+      void Promise.resolve(supabase.rpc("submit_application" as any, {
         p_vacancy_id: null,
         p_company_post_id: null,
         p_job_posting_id: jp.id,
@@ -264,7 +264,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
         setDirectApplied((s) => ({ ...s, [jp.id]: r.duplicate ? "dup" : "ok" }));
       }, () => {
         toast({ title: "Error", description: "Could not send application. Try again.", variant: "destructive" });
-      }).finally?.(() => {
+      })).finally(() => {
         setDirectBusy((s) => ({ ...s, [jp.id]: false }));
       });
     } catch {
