@@ -169,7 +169,7 @@ const ConversionConsole = () => {
         supabase.rpc("get_market_indices" as never),
         supabase
           .from("external_vacancies")
-          .select("id,title,rank_required,vessel_type,joining_port,salary_min,salary_text,description,source,fetched_at,first_seen_at,expires_at")
+          .select("id,title,rank_required,vessel_type,joining_port,salary_min,salary_text,description,source,fetched_at,first_seen_at,expires_at,contact_whatsapp")
           .gt("expires_at", nowIso)
           .order("fetched_at", { ascending: false })
           .limit(25),
