@@ -76,7 +76,7 @@ export const buildApplyMessage = (info: CrewCardInfo | null, v: ApplyVacancyInfo
       "",
       `Candidate: ${info.firstName}${info.role ? ` — ${info.role}` : ""}${info.yearsInRankBand ? `, ${info.yearsInRankBand} in rank` : ""}`,
       "",
-      `Verified Sea Profile: https://seaminds.life/crew/${info.token}`,
+      `View my full Sea Profile (free company registration): https://seaminds.life/crew/${info.token}`,
     );
     if (info.score != null && info.certificateId) {
       lines.push(
@@ -100,3 +100,74 @@ export const waApplyLink = (
   if (!digits) return null;
   return `https://wa.me/${digits}?text=${encodeURIComponent(buildApplyMessage(info, v))}`;
 };
+
+export interface RecordApplyArgs {
+  vacancyId?: string | null;
+  jobPostingId?: string | null;
+  companyPostId?: string | null;
+  company?: string | null;
+  rank?: string | null;
+  vessel?: string | null;
+  externalUrl?: string | null;
+}
+
+export interface RecordApplyResult { ok: boolean; duplicate: boolean; applicationId?: string }
+
+/**
+ * Fire-and-forget application recording. Never throws, never blocks the WhatsApp handoff.
+ * On success it also triggers the manager/recruiter email notification.
+ */
+export const recordApplication = (
+  a: RecordApplyArgs,
+  cb?: (r: RecordApplyResult) => void,
+): void => {
+  const fail = () => { try { cb?.({ ok: false, duplicate: false }); } catch { /* noop */ } };
+  try {
+    void Promise.resolve(supabase.rpc("submit_application" as any, {
+      p_vacancy_id: a.vacancyId || null,
+      p_company_post_id: a.companyPostId || null,
+      p_job_posting_id: a.jobPostingId || null,
+      p_company_name: a.company || null,
+      p_rank: a.rank || null,
+      p_vessel: a.vessel || null,
+      p_external_url: a.externalUrl || null,
+    }) as any)
+      .then((res: any) => {
+        const r: any = res?.data || {};
+        if (res?.error || !r?.ok) { fail(); return; }
+        if (r.application_id && !r.duplicate) {
+          try {
+            void Promise.resolve(
+              supabase.functions.invoke("notify-application", { body: { application_id: r.application_id } }) as any,
+            ).catch(() => {});
+          } catch { /* noop */ }
+        }
+        try { cb?.({ ok: true, duplicate: !!r.duplicate, applicationId: r.application_id }); } catch { /* noop */ }
+      }, fail)
+      .catch(fail);
+  } catch {
+    fail();
+  }
+};
+
+const quickProfileCache = new Map<string, boolean>();
+
+/** True when the crew's Quick Sea Profile is complete. Resolve on mount, never on tap. */
+export const fetchQuickProfileDone = async (profileId: string): Promise<boolean> => {
+  if (!profileId) return false;
+  const hit = quickProfileCache.get(profileId);
+  if (hit !== undefined) return hit;
+  try {
+    const { data } = await supabase
+      .from("crew_profiles")
+      .select("quick_profile_completed_at" as any)
+      .eq("id", profileId)
+      .maybeSingle();
+    const done = !!(data as any)?.quick_profile_completed_at;
+    quickProfileCache.set(profileId, done);
+    return done;
+  } catch {
+    return true; // never block applying on a lookup failure
+  }
+};
+

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { X, CheckCircle2, AlertCircle } from "lucide-react";
 import { trackPixel } from "@/lib/metaPixel";
-import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, CrewCardInfo } from "@/lib/applyMessage";
+import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, recordApplication, CrewCardInfo } from "@/lib/applyMessage";
 
 const GOLD = "#D4AF37";
 const NAVY = "#0D1B2A";
@@ -84,19 +84,17 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
         }
       }
 
-      void Promise.resolve(supabase.rpc("submit_application" as any, {
-        p_vacancy_id: target.isCompanyPost ? null : target.rawId,
-        p_company_post_id: target.isCompanyPost ? target.rawId : null,
-        p_company_name: target.company || null,
-        p_rank: target.rank || null,
-        p_vessel: target.vessel || null,
-        p_external_url: target.applyUrl || null,
-      }).then(({ data, error: rpcErr }: any) => {
-        const r: any = data;
-        if (rpcErr || !r?.ok) {
-          setError(r?.error === "not_signed_in"
-            ? "Please sign in to apply."
-            : "Could not save your application. Please try again.");
+      recordApplication({
+        vacancyId: target.isCompanyPost ? null : target.rawId,
+        companyPostId: target.isCompanyPost ? target.rawId : null,
+        company: target.company || null,
+        rank: target.rank || null,
+        vessel: target.vessel || null,
+        externalUrl: target.applyUrl || null,
+      }, (r) => {
+        setSaving(false);
+        if (!r.ok) {
+          setError("Sent on WhatsApp — could not record on SeaMinds.");
           return;
         }
 
@@ -108,10 +106,9 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
           return;
         }
 
-        setDone({ duplicate: !!r.duplicate });
-      }, () => {
-        setError("Could not save your application. Please try again.");
-      })).finally(() => setSaving(false));
+        setDone({ duplicate: r.duplicate });
+      });
+
     } catch {
       setError("Could not save your application. Please try again.");
       setSaving(false);

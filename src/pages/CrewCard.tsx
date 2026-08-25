@@ -9,6 +9,7 @@ const CARD = "#112240";
 const BORDER = "rgba(212,175,55,0.3)";
 
 interface CardData {
+  tier?: "teaser" | "full";
   first_name?: string;
   last_initial?: string;
   role?: string;
@@ -17,10 +18,12 @@ interface CardData {
   contracts_in_rank_band?: string;
   total_sea_service_band?: string;
   is_available?: boolean;
+  score_band?: string | null;
   vessel_families?: { vessel_family: string; sea_time_band: string }[];
   score?: { overall_score: number; score_band: string; certificate_id: string; completed_at: string } | null;
   claims?: { claim_key: string; status: string }[];
 }
+
 
 const CLAIM_STATUS: Record<string, { label: string; color: string }> = {
   VERIFIED: { label: "Verified", color: "#22c55e" },
@@ -62,7 +65,9 @@ const CrewCard = () => {
   }, [token]);
 
   const score = data?.score || null;
+  const isTeaser = data?.tier !== "full";
   const expired = !!score?.completed_at &&
+
     new Date(score.completed_at).getTime() + 2 * 365 * 24 * 3600 * 1000 < Date.now();
 
   return (
@@ -106,7 +111,33 @@ const CrewCard = () => {
               </span>
             </div>
 
+            {isTeaser ? (
+              <>
+                {data.score_band && (
+                  <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 14, marginBottom: 12 }}>
+                    <p style={{ color: "#94A3B8", fontSize: 10.5, textTransform: "uppercase", letterSpacing: 0.6 }}>SeaMinds Score band</p>
+                    <span style={{ display: "inline-block", marginTop: 8, background: "rgba(212,175,55,0.12)", border: `1px solid ${GOLD}`, color: GOLD, borderRadius: 999, padding: "5px 12px", fontSize: 12.5, fontWeight: 800 }}>
+                      {data.score_band}
+                    </span>
+                  </div>
+                )}
+                <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 16, marginBottom: 14 }}>
+                  <p style={{ color: "#fff", fontSize: 14, fontWeight: 800, marginBottom: 6 }}>🔒 Full Sea Profile</p>
+                  <p style={{ color: "#94A3B8", fontSize: 12.5, lineHeight: 1.6 }}>
+                    Sea service by vessel type, experience bands, certificates and SeaMinds Score details are available to registered companies. Free during the founding period.
+                  </p>
+                </div>
+              </>
+            ) : (
+            <>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
+              <span style={{ background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.4)", color: "#22c55e", borderRadius: 999, padding: "4px 10px", fontSize: 11, fontWeight: 800 }}>
+                ✓ Viewing as registered company
+              </span>
+            </div>
+
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+
               <Row label="Years in rank" value={data.years_in_rank_band} />
               <Row label="Contracts in rank" value={data.contracts_in_rank_band} />
               <Row label="Total sea service" value={data.total_sea_service_band} />
@@ -156,13 +187,24 @@ const CrewCard = () => {
                 })}
               </div>
             )}
+            </>
+            )}
 
-            <Link to="/for-companies" style={{
+            <Link to={isTeaser ? "/manager" : "/for-companies"} style={{
               display: "block", textAlign: "center", background: GOLD, color: NAVY, fontWeight: 900,
               borderRadius: 12, padding: "14px 0", fontSize: 14,
             }}>
-              Contact this candidate via SeaMinds — FIND CREW →
+              {isTeaser ? "REGISTER MY COMPANY FREE →" : "Contact this candidate via SeaMinds — FIND CREW →"}
             </Link>
+            {isTeaser && (
+              <Link to="/manager" style={{
+                display: "block", textAlign: "center", marginTop: 10, color: GOLD, border: `1px solid ${GOLD}`,
+                borderRadius: 12, padding: "12px 0", fontSize: 13, fontWeight: 700,
+              }}>
+                Manager login
+              </Link>
+            )}
+
             <Link to="/join" style={{
               display: "block", textAlign: "center", marginTop: 10, color: GOLD, border: `1px solid ${GOLD}`,
               borderRadius: 12, padding: "12px 0", fontSize: 13, fontWeight: 700,

@@ -6,7 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 import { useT, LANGS, type LangCode } from "@/i18n";
-import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, type CrewCardInfo } from "@/lib/applyMessage";
+import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, recordApplication, fetchQuickProfileDone, type CrewCardInfo } from "@/lib/applyMessage";
+import ApplyGateSheet from "@/components/ApplyGateSheet";
 
 
 const GOLD = "#D4AF37";
@@ -128,9 +129,13 @@ const ConversionConsole = () => {
   const [cardInfo, setCardInfo] = useState<CrewCardInfo | null>(null);
   const [newCrew, setNewCrew] = useState(0);
 
+  const [needsQuickProfile, setNeedsQuickProfile] = useState(false);
+  const [gateOpen, setGateOpen] = useState(false);
+
   useEffect(() => {
-    if (!user?.id) { setCardInfo(null); return; }
+    if (!user?.id) { setCardInfo(null); setNeedsQuickProfile(false); return; }
     fetchCrewCardInfo(user.id).then(setCardInfo);
+    fetchQuickProfileDone(user.id).then((done) => setNeedsQuickProfile(!done));
   }, [user?.id]);
 
   const reducedMotion = useMemo(
@@ -300,6 +305,7 @@ const ConversionConsole = () => {
 
   const applyNow = useCallback((v: Vacancy) => {
     if (!user) { navigate("/join?next=%2Fquick-profile"); return; }
+    if (needsQuickProfile) { setGateOpen(true); return; }
     setApplyBusy(true);
     try {
       const wa = waApplyLink(v.contact_whatsapp, cardInfo || getCachedCrewCardInfo(), {
@@ -309,31 +315,25 @@ const ConversionConsole = () => {
         const win = window.open(wa, "_blank", "noopener,noreferrer");
         if (!win) window.location.href = wa;
       }
-      void Promise.resolve(supabase.rpc("submit_application", {
-        p_vacancy_id: v.kind === "direct" ? undefined : v.id,
-        p_company_post_id: undefined,
-        p_company_name: v.company_name || v.source || undefined,
-        p_rank: v.rank_required || undefined,
-        p_vessel: v.vessel_type || undefined,
-        p_external_url: v.kind === "direct" ? undefined : (wa || undefined),
-        p_job_posting_id: v.kind === "direct" ? v.id : undefined,
-      } as never).then(({ data, error }) => {
-        if (error) throw error;
-        const res = (data || {}) as { ok?: boolean; duplicate?: boolean; error?: string };
-        if (res.duplicate || res.error === "duplicate") setApplied((s) => ({ ...s, [v.id]: "dup" }));
-        else if (res.ok === false) toast.error(res.error || "Could not send application");
-        else setApplied((s) => ({ ...s, [v.id]: "ok" }));
-      })).catch((e) => {
-        const msg = e instanceof Error ? e.message : "Could not send application";
-        if (/duplicate|already/i.test(msg)) setApplied((s) => ({ ...s, [v.id]: "dup" }));
-        else toast.error(msg);
+      recordApplication({
+        vacancyId: v.kind === "direct" ? null : v.id,
+        jobPostingId: v.kind === "direct" ? v.id : null,
+        company: v.company_name || v.source || null,
+        rank: v.rank_required || null,
+        vessel: v.vessel_type || null,
+        externalUrl: v.kind === "direct" ? null : (wa || null),
+      }, (r) => {
+        setApplyBusy(false);
+        if (!r.ok) { toast.error("Sent on WhatsApp — could not record on SeaMinds"); return; }
+        setApplied((s) => ({ ...s, [v.id]: r.duplicate ? "dup" : "ok" }));
+        if (!r.duplicate) toast.success("Applied ✓ — recorded on SeaMinds");
       });
     } catch {
       toast.error("Could not send application");
-    } finally {
       setApplyBusy(false);
     }
-  }, [user, navigate, cardInfo]);
+  }, [user, navigate, cardInfo, needsQuickProfile]);
+
 
 
   // Signed-out visitors must reach jobs without a login wall.
@@ -350,6 +350,7 @@ const ConversionConsole = () => {
 
   return (
     <div className="relative" style={{ background: NAVY }}>
+      <ApplyGateSheet open={gateOpen} onClose={() => setGateOpen(false)} next="/feed" />
       <style>{`
         @keyframes sm-pulse-cta { 0%,100% { box-shadow: 0 0 0 0 rgba(212,175,55,.45) } 50% { box-shadow: 0 0 0 12px rgba(212,175,55,0) } }
         .sm-cta-pulse { animation: sm-pulse-cta 2.4s ease-out infinite; }

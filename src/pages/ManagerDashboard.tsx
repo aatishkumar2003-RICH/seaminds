@@ -35,7 +35,25 @@ interface Applicant {
   crew_rank: string;
   available_from: string;
   offered_joining_date: string;
+  job_posting_id?: string | null;
+  vacancy_label?: string | null;
 }
+
+interface MyPosting {
+  id: string;
+  rank_required: string | null;
+  vessel_type: string | null;
+  status: string | null;
+  created_at: string;
+}
+
+const relTime = (iso: string) => {
+  const d = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+  if (d <= 0) return "today";
+  if (d === 1) return "yesterday";
+  if (d < 30) return `${d}d ago`;
+  return new Date(iso).toLocaleDateString();
+};
 
 interface FleetCrew {
   link_id: string;
@@ -67,7 +85,7 @@ interface ParsedVacancy {
 }
 
 type SortKey = "shipName";
-type DashTab = "crew" | "payments";
+type DashTab = "crew" | "applicants" | "payments";
 
 
 const ManagerDashboard = () => {
@@ -83,6 +101,8 @@ const ManagerDashboard = () => {
   const [managerUserId, setManagerUserId] = useState("");
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [applicantsLoading, setApplicantsLoading] = useState(false);
+  const [myPostings, setMyPostings] = useState<MyPosting[]>([]);
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [offerDrafts, setOfferDrafts] = useState<Record<string, { joiningDate: string; contractMonths: number; open: boolean }>>({});
   const [fleet, setFleet] = useState<FleetResult | null>(null);
   const [fleetEmail, setFleetEmail] = useState("");
@@ -254,6 +274,15 @@ const ManagerDashboard = () => {
       return;
     }
     setApplicants(((data as unknown) as Applicant[]) || []);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: jp } = await supabase
+        .from("job_postings")
+        .select("id, rank_required, vessel_type, status, created_at")
+        .eq("manager_id", user.id)
+        .order("created_at", { ascending: false });
+      setMyPostings(((jp as unknown) as MyPosting[]) || []);
+    }
   };
 
   const openOfferDraft = (id: string) => {
@@ -328,6 +357,11 @@ const ManagerDashboard = () => {
   }, [fleet]);
 
 
+  useEffect(() => {
+    const tab = new URLSearchParams(window.location.search).get("tab");
+    if (tab === "applicants") setDashTab("applicants");
+  }, []);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
@@ -340,133 +374,23 @@ const ManagerDashboard = () => {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border px-6 py-4 flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
-            <Anchor size={20} className="text-primary" />
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold text-foreground">Manager Dashboard</h1>
-            <p className="text-xs text-muted-foreground">{companyName}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            onClick={() => navigate("/manager-search")}
-            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-[#0D1B2A] text-[#D4AF37] border border-[#D4AF37]/40 hover:bg-[#D4AF37]/10 transition-colors"
-          >
-            🔍 Search Crew
-          </button>
-          <button
-            onClick={() => navigate("/manager/interviews")}
-            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-[#D4AF37] text-[#0D1B2A] border border-[#D4AF37] hover:opacity-90 transition-opacity"
-          >
-            🎓 Arrange Interview
-          </button>
-          <button
-            onClick={() => navigate("/company-post")}
-            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-[#D4AF37] text-[#0D1B2A] border border-[#D4AF37] hover:opacity-90 transition-opacity"
-          >
-            ✍️ Create Post
-          </button>
-          <button
-            onClick={() => navigate("/post-vacancy")}
-            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-[#0D1B2A] text-[#D4AF37] border border-[#D4AF37]/40 hover:bg-[#D4AF37]/10 transition-colors"
-          >
-            📢 Post Vacancy
-          </button>
-          <button onClick={handleLogout} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-            <LogOut size={14} /> Logout
-          </button>
-        </div>
-      </header>
+  const statusMeta = (outcome: string) => {
+    switch (outcome) {
+      case "awaiting": return { cls: "bg-muted text-muted-foreground", label: "New" };
+      case "shortlisted": return { cls: "bg-[#D4AF37]/15 text-[#D4AF37]", label: "⭐ Shortlisted" };
+      case "offered": return { cls: "bg-blue-500/15 text-blue-400", label: "📨 Offered" };
+      case "placed": return { cls: "bg-green-500/15 text-green-400", label: "⚓ Placed" };
+      case "declined":
+      case "offer_declined": return { cls: "bg-secondary text-muted-foreground/70", label: "Declined" };
+      case "released": return { cls: "bg-muted text-muted-foreground", label: "Released" };
+      default: return { cls: "bg-muted text-muted-foreground", label: outcome };
+    }
+  };
 
-      <div className="max-w-6xl mx-auto px-6 py-6 space-y-6">
-        {/* Tab switcher */}
-        <div className="flex gap-1 bg-secondary rounded-xl p-1">
-          <button
-            onClick={() => setDashTab("crew")}
-            className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors ${
-              dashTab === "crew" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Crew Overview
-          </button>
-          <button
-            onClick={() => setDashTab("payments")}
-            className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1.5 ${
-              dashTab === "payments" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <CreditCard size={14} /> Credits & Payments
-          </button>
-        </div>
-
-        {dashTab === "payments" ? (
-          <ManagerPaymentHistory managerUserId={managerUserId} />
-        ) : (
-          <>
-            {/* Applicants */}
-            <div className="bg-secondary rounded-xl border border-border p-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">👥 Applicants</h2>
-                <button
-                  onClick={loadApplicants}
-                  disabled={applicantsLoading}
-                  className="p-1.5 rounded-lg hover:bg-secondary/80 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
-                  aria-label="Refresh applicants"
-                >
-                  <RefreshCw size={16} className={applicantsLoading ? "animate-spin" : ""} />
-                </button>
-              </div>
-
-              {applicants.length === 0 ? (
-                <div className="text-center py-6">
-                  <p className="text-sm text-muted-foreground">Applications to your posts will appear here.</p>
-                  <p className="text-xs text-muted-foreground/70 mt-1">Post a vacancy to start receiving applications.</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {applicants.map((a) => {
-                    const draft = offerDrafts[a.application_id];
-                    const statusClass = (() => {
-                      switch (a.outcome) {
-                        case "awaiting": return "bg-muted text-muted-foreground";
-                        case "shortlisted": return "bg-[#D4AF37]/15 text-[#D4AF37]";
-                        case "offered": return "bg-blue-500/15 text-blue-400";
-                        case "placed": return "bg-green-500/15 text-green-400";
-                        case "declined":
-                        case "offer_declined": return "bg-secondary text-muted-foreground/70";
-                        case "released": return "bg-muted text-muted-foreground";
-                        default: return "bg-muted text-muted-foreground";
-                      }
-                    })();
-                    const statusLabel = (() => {
-                      switch (a.outcome) {
-                        case "awaiting": return "New";
-                        case "shortlisted": return "⭐ Shortlisted";
-                        case "offered": return "📨 Offered";
-                        case "placed": return "⚓ Placed";
-                        case "declined":
-                        case "offer_declined": return "Declined";
-                        case "released": return "Released";
-                        default: return a.outcome;
-                      }
-                    })();
-                    return (
-                      <div key={a.application_id} className="bg-secondary/50 rounded-xl border border-border/50 p-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                        <div className="space-y-1">
-                          <p className="text-sm font-bold text-foreground">
-                            {a.crew_name} <span className="font-normal text-muted-foreground">· {a.nationality}</span>
-                          </p>
-                          <p className="text-xs text-muted-foreground">{a.rank} · {a.vessel}</p>
-                          {a.available_from && (
-                            <p className="text-xs text-muted-foreground">Available from {new Date(a.available_from).toLocaleDateString()}</p>
-                          )}
-                        </div>
+  const renderApplicantActions = (a: Applicant) => {
+    const draft = offerDrafts[a.application_id];
+    const { cls: statusClass, label: statusLabel } = statusMeta(a.outcome);
+    return (
                         <div className="flex flex-col items-start sm:items-end gap-2 w-full sm:w-auto">
                           <span className={`text-xs font-medium px-2 py-1 rounded-full ${statusClass}`}>{statusLabel}</span>
                           {a.outcome === "awaiting" && (
@@ -543,12 +467,214 @@ const ManagerDashboard = () => {
                             <p className="text-xs text-green-400">🎉 Placed — congratulations!</p>
                           )}
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+    );
+  };
+
+  const renderApplicantCard = (a: Applicant) => (
+    <div key={a.application_id} className="bg-secondary/50 rounded-xl border border-border/50 p-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+      <div className="space-y-1">
+        <p className="text-sm font-bold text-foreground">
+          {a.crew_name} <span className="font-normal text-muted-foreground">· {a.nationality}</span>
+        </p>
+        <p className="text-xs text-muted-foreground">{a.rank} · {a.vessel}</p>
+        {a.available_from && (
+          <p className="text-xs text-muted-foreground">Available from {new Date(a.available_from).toLocaleDateString()}</p>
+        )}
+      </div>
+      {renderApplicantActions(a)}
+    </div>
+  );
+
+  const applicantGroups = (() => {
+    const byPosting = new Map<string, Applicant[]>();
+    const other: Applicant[] = [];
+    applicants.forEach((a) => {
+      if (a.job_posting_id) {
+        const arr = byPosting.get(a.job_posting_id) || [];
+        arr.push(a);
+        byPosting.set(a.job_posting_id, arr);
+      } else other.push(a);
+    });
+    const groups = myPostings.map((jp) => ({
+      key: jp.id,
+      title: [jp.rank_required, jp.vessel_type].filter(Boolean).join(" — ") || "Vacancy",
+      meta: `posted ${relTime(jp.created_at)} · ${jp.status || "active"}`,
+      items: byPosting.get(jp.id) || [],
+    }));
+    byPosting.forEach((items, id) => {
+      if (!groups.some((g) => g.key === id)) {
+        groups.push({ key: id, title: items[0]?.vacancy_label || "Vacancy", meta: "", items });
+      }
+    });
+    if (other.length) groups.push({ key: "other", title: "Other applications", meta: "", items: other });
+    return groups;
+  })();
+
+  const awaitingCount = applicants.filter((a) => a.outcome === "awaiting").length;
+
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="border-b border-border px-6 py-4 flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
+            <Anchor size={20} className="text-primary" />
+          </div>
+          <div>
+            <h1 className="text-lg font-semibold text-foreground">Manager Dashboard</h1>
+            <p className="text-xs text-muted-foreground">{companyName}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => navigate("/manager-search")}
+            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-[#0D1B2A] text-[#D4AF37] border border-[#D4AF37]/40 hover:bg-[#D4AF37]/10 transition-colors"
+          >
+            🔍 Search Crew
+          </button>
+          <button
+            onClick={() => navigate("/manager/interviews")}
+            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-[#D4AF37] text-[#0D1B2A] border border-[#D4AF37] hover:opacity-90 transition-opacity"
+          >
+            🎓 Arrange Interview
+          </button>
+          <button
+            onClick={() => navigate("/company-post")}
+            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-[#D4AF37] text-[#0D1B2A] border border-[#D4AF37] hover:opacity-90 transition-opacity"
+          >
+            ✍️ Create Post
+          </button>
+          <button
+            onClick={() => navigate("/post-vacancy")}
+            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-[#0D1B2A] text-[#D4AF37] border border-[#D4AF37]/40 hover:bg-[#D4AF37]/10 transition-colors"
+          >
+            📢 Post Vacancy
+          </button>
+          <button onClick={handleLogout} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+            <LogOut size={14} /> Logout
+          </button>
+        </div>
+      </header>
+
+      <div className="max-w-6xl lg:max-w-[1400px] mx-auto px-6 py-6 space-y-6">
+        {/* Tab switcher */}
+        <div className="flex gap-1 bg-secondary rounded-xl p-1">
+          <button
+            onClick={() => setDashTab("crew")}
+            className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors ${
+              dashTab === "crew" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Crew Overview
+          </button>
+          <button
+            onClick={() => setDashTab("applicants")}
+            className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors ${
+              dashTab === "applicants" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            👥 Applicants{awaitingCount > 0 ? ` (${awaitingCount})` : ""}
+          </button>
+          <button
+            onClick={() => setDashTab("payments")}
+            className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1.5 ${
+              dashTab === "payments" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <CreditCard size={14} /> Credits & Payments
+          </button>
+        </div>
+
+        {dashTab === "applicants" ? (
+          <div className="bg-secondary rounded-xl border border-border p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">👥 Applicants</h2>
+              <button
+                onClick={loadApplicants}
+                disabled={applicantsLoading}
+                className="p-1.5 rounded-lg hover:bg-secondary/80 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                aria-label="Refresh applicants"
+              >
+                <RefreshCw size={16} className={applicantsLoading ? "animate-spin" : ""} />
+              </button>
             </div>
+
+            {applicantGroups.length === 0 ? (
+              <div className="text-center py-6">
+                <p className="text-sm text-muted-foreground">Applications to your vacancies will appear here.</p>
+                <p className="text-xs text-muted-foreground/70 mt-1">Post a vacancy to start receiving applications.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {applicantGroups.map((g) => {
+                  const expanded = openGroups[g.key] ?? g.items.length > 0;
+                  return (
+                    <div key={g.key} className="rounded-xl border border-border/50 overflow-hidden">
+                      <button
+                        onClick={() => setOpenGroups((prev) => ({ ...prev, [g.key]: !expanded }))}
+                        className="w-full flex items-center justify-between gap-3 px-4 py-3 bg-secondary/60 hover:bg-secondary/80 transition-colors text-left"
+                      >
+                        <span className="min-w-0">
+                          <span className="block text-sm font-bold text-foreground truncate">{g.title}</span>
+                          {g.meta && <span className="block text-xs text-muted-foreground">{g.meta}</span>}
+                        </span>
+                        <span className="text-xs font-bold px-2 py-1 rounded-full bg-[#D4AF37]/15 text-[#D4AF37] shrink-0">
+                          👥 {g.items.length}
+                        </span>
+                      </button>
+
+                      {expanded && (
+                        g.items.length === 0 ? (
+                          <p className="px-4 py-4 text-xs text-muted-foreground">No applications yet.</p>
+                        ) : (
+                          <>
+                            <div className="hidden lg:block overflow-x-auto">
+                              <table className="w-full text-sm">
+                                <thead>
+                                  <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground border-b border-border/50">
+                                    <th className="px-4 py-2 font-medium">Candidate</th>
+                                    <th className="px-4 py-2 font-medium">Nationality</th>
+                                    <th className="px-4 py-2 font-medium">Rank applied</th>
+                                    <th className="px-4 py-2 font-medium">Applied</th>
+                                    <th className="px-4 py-2 font-medium">Status</th>
+                                    <th className="px-4 py-2 font-medium">Actions</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {g.items.map((a) => (
+                                    <tr key={a.application_id} className="border-b border-border/30 last:border-0 align-top">
+                                      <td className="px-4 py-3 font-medium text-foreground">{a.crew_name}</td>
+                                      <td className="px-4 py-3 text-muted-foreground">{a.nationality}</td>
+                                      <td className="px-4 py-3 text-muted-foreground">{a.rank}</td>
+                                      <td className="px-4 py-3 text-muted-foreground">{relTime(a.applied_at)}</td>
+                                      <td className="px-4 py-3">
+                                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${statusMeta(a.outcome).cls}`}>
+                                          {statusMeta(a.outcome).label}
+                                        </span>
+                                      </td>
+                                      <td className="px-4 py-3">{renderApplicantActions(a)}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                            <div className="lg:hidden p-3 space-y-3">
+                              {g.items.map((a) => renderApplicantCard(a))}
+                            </div>
+                          </>
+                        )
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ) : dashTab === "payments" ? (
+          <ManagerPaymentHistory managerUserId={managerUserId} />
+        ) : (
+          <>
 
             {/* My Fleet */}
             <div className="bg-secondary rounded-xl border border-border p-4 space-y-4">
