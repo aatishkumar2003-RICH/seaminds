@@ -142,11 +142,11 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
             <div style={{ textAlign: "center", padding: "14px 0" }}>
               <CheckCircle2 size={44} style={{ color: "#22c55e" }} />
               <p style={{ color: "#fff", fontSize: 17, fontWeight: 800, marginTop: 10 }}>
-                {done.duplicate ? "Already applied" : "Application saved"}
+                {done.duplicate ? "Already applied ✓" : "Application saved"}
               </p>
               <p style={{ color: "#cbd5e1", fontSize: 13, lineHeight: 1.6, marginTop: 8 }}>
                 {done.duplicate
-                  ? "You have already applied to this vacancy. The company can see your SeaMinds profile."
+                  ? "The company already has your application."
                   : `${target.company || "The company"} can see your SeaMinds profile and CV. Keep your availability date up to date so they can reach you.`}
               </p>
               <p style={{ color: "#94a3b8", fontSize: 12, marginTop: 12, lineHeight: 1.55 }}>
