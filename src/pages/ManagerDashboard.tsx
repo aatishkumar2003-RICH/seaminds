@@ -476,7 +476,7 @@ const ManagerDashboard = () => {
         <p className="text-sm font-bold text-foreground">
           {a.crew_name} <span className="font-normal text-muted-foreground">· {a.nationality}</span>
         </p>
-        <p className="text-xs text-muted-foreground">{a.rank} · {a.vessel}</p>
+        <p className="text-xs text-muted-foreground">{a.rank} · {a.vessel} · {relTime(a.applied_at)}</p>
         {a.available_from && (
           <p className="text-xs text-muted-foreground">Available from {new Date(a.available_from).toLocaleDateString()}</p>
         )}
