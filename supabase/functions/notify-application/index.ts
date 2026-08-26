@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
     if (!applicationId) return json({ ok: false, error: "missing_application_id" });
 
     const { data: app } = await svc.from("job_applications")
-      .select("id, crew_id, vacancy_id, job_posting_id, company_post_id, rank_applied, vessel_type, company_name, offer_details")
+      .select("id, crew_id, vacancy_id, job_posting_id, company_post_id, rank_applied, vessel_type, company_name, offered_at, offered_joining_date, manager_note")
       .eq("id", applicationId).maybeSingle();
     if (!app) return json({ ok: false, error: "not_found" });
 
@@ -97,7 +97,14 @@ Deno.serve(async (req) => {
       }
       if (!authorized) return json({ ok: false, error: "unauthorized" });
 
-      const offer: any = app.offer_details;
+      // offer_details is optional (added later); fall back to the offer columns on the row
+      let offer: any = null;
+      const { data: od } = await svc.from("job_applications")
+        .select("offer_details").eq("id", applicationId).maybeSingle();
+      offer = (od as any)?.offer_details ?? null;
+      if (!offer && app.offered_at) {
+        offer = { joining_date: app.offered_joining_date, message: app.manager_note };
+      }
       if (!offer) return json({ ok: false, error: "no_offer" });
 
       const { data: crewUser } = await svc.auth.admin.getUserById(app.crew_id);
