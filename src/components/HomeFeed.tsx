@@ -402,7 +402,8 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
         setDirectBusy((s) => ({ ...s, [v.postingId]: false }));
         if (!r.ok) { toast.error("Sent on WhatsApp — could not record on SeaMinds"); return; }
         setDirectApplied((s) => ({ ...s, [v.postingId]: r.duplicate ? "dup" : "ok" }));
-        if (!r.duplicate) { toast.success("Applied ✓ — recorded on SeaMinds"); log("vacancy", v.id, "apply"); }
+        if (r.duplicate) toast.success("Already applied ✓ — the company already has your application");
+        else { toast.success("Applied ✓ — recorded on SeaMinds"); log("vacancy", v.id, "apply"); }
       });
     } catch {
       toast.error("Could not send application. Try again.");

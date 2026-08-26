@@ -262,7 +262,8 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
         setDirectBusy((s) => ({ ...s, [jp.id]: false }));
         if (!r.ok) { toast({ title: "Error", description: "Could not send application. Try again.", variant: "destructive" }); return; }
         setDirectApplied((s) => ({ ...s, [jp.id]: r.duplicate ? "dup" : "ok" }));
-        if (!r.duplicate) toast({ title: "Applied ✓", description: "Recorded on SeaMinds." });
+        if (r.duplicate) toast({ title: "Already applied ✓", description: "The company already has your application." });
+        else toast({ title: "Applied ✓", description: "Recorded on SeaMinds." });
       });
     } catch {
       toast({ title: "Error", description: "Could not send application. Try again.", variant: "destructive" });
@@ -282,9 +283,9 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     }, (r) => {
       if (!r.ok) { toast({ title: "Error", description: "Could not send application. Try again.", variant: "destructive" }); return; }
       toast({
-        title: r.duplicate ? "Already applied" : "Applied ✓",
+        title: r.duplicate ? "Already applied ✓" : "Applied ✓",
         description: r.duplicate
-          ? "You have already applied to this vacancy."
+          ? "The company already has your application."
           : `Recorded on SeaMinds — your profile has been sent to ${ext.company_name || "the company"}.`,
       });
     });
