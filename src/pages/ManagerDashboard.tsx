@@ -507,8 +507,6 @@ const ManagerDashboard = () => {
                             <p className="text-xs text-green-400">🎉 Placed — congratulations!</p>
                           )}
                         </div>
-
-                        </div>
     );
   };
 
