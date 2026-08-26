@@ -338,14 +338,18 @@ const JobFeed = () => {
                   <div style={{ color: "#22c55e", fontWeight: 800, fontSize: 15 }}>{formatSalaryText(i.salary)}</div>
                 )}
 
-                <button onClick={() => apply(i)} disabled={applying === i.id} style={{
+                <button onClick={() => apply(i)} disabled={applying === i.id || !authResolved} style={{
                   marginTop: 2, width: "100%", padding: "11px", borderRadius: 11, border: "none",
-                  cursor: applying === i.id ? "default" : "pointer", opacity: applying === i.id ? 0.7 : 1,
+                  cursor: applying === i.id || !authResolved ? "default" : "pointer",
+                  opacity: applying === i.id || !authResolved ? 0.5 : 1,
                   background: GOLD, color: NAVY, fontWeight: 800, fontSize: 13,
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
                 }}>
-                  {i.whatsapp ? <><MessageCircle size={15} /> Apply via WhatsApp</> : <><ExternalLink size={15} /> View & Apply</>}
+                  {i.email ? <>✉️ Apply — sent to company email</>
+                    : i.whatsapp ? <><MessageCircle size={15} /> Apply via WhatsApp</>
+                    : <><ExternalLink size={15} /> View & Apply</>}
                 </button>
+
 
               </div>
 
