@@ -163,39 +163,46 @@ const ManagerDashboard = () => {
   const publishPreviews = async () => {
     if (previews.length === 0) return;
     setPublishing(true);
-    const salaryFallback = "Salary as per international market standards, commensurate with rank and experience. Allowances and terms as per prevailing international market conditions.";
-    const rows = previews.map((v) => {
-      const hasSalary = (v.monthly_salary ?? "").trim().length > 0;
-      const additionalNotes = [
-        v.additional_notes,
-        v.joining_date ? `Joining date: ${v.joining_date}` : "",
-        v.contact_email ? `Email: ${v.contact_email}` : "",
-        !hasSalary ? salaryFallback : "",
-      ].filter(Boolean).join("\n") || null;
-      return {
-        rank_required: v.rank_required || "Not specified",
-        vessel_type: v.vessel_type || "Not specified",
-        contract_duration: v.contract_duration || "Not specified",
-        monthly_salary: v.monthly_salary || null,
-        joining_port: v.joining_port || "Not specified",
-        contact_whatsapp: v.contact_whatsapp || "",
-        additional_notes: additionalNotes,
-        company_name: companyName,
-        status: "active",
-        plan: "founding",
-        verified: false,
-        manager_id: managerUserId,
-      };
-    });
-    const { error } = await supabase.from("job_postings").insert(rows);
-    setPublishing(false);
-    if (error) { toast.error(error.message || "Could not publish vacancies"); return; }
-    toast.success(`${rows.length} vacancies published ⚓`);
-    setPasteText("");
-    setPreviews([]);
-    setRisk(null);
-    loadApplicants();
+    try {
+      const salaryFallback = "Salary as per international market standards, commensurate with rank and experience. Allowances and terms as per prevailing international market conditions.";
+      const rows = previews.map((v) => {
+        const hasSalary = (v.monthly_salary ?? "").trim().length > 0;
+        const additionalNotes = [
+          v.additional_notes,
+          v.joining_date ? `Joining date: ${v.joining_date}` : "",
+          v.contact_email ? `Email: ${v.contact_email}` : "",
+          !hasSalary ? salaryFallback : "",
+        ].filter(Boolean).join("\n") || null;
+        return {
+          rank_required: v.rank_required || "Not specified",
+          vessel_type: v.vessel_type || "Not specified",
+          contract_duration: v.contract_duration || "Not specified",
+          monthly_salary: v.monthly_salary || null,
+          joining_port: v.joining_port || "Not specified",
+          contact_whatsapp: v.contact_whatsapp || "",
+          contact_email: (v.contact_email || "").trim() || null,
+          additional_notes: additionalNotes,
+          company_name: companyName,
+          status: "active",
+          plan: "founding",
+          verified: false,
+          manager_id: managerUserId,
+        };
+      });
+      const { error } = await supabase.from("job_postings").insert(rows as any);
+      if (error) { toast.error(error.message || "Could not publish vacancies"); return; }
+      toast.success(`${rows.length} vacancies published ⚓`);
+      setPasteText("");
+      setPreviews([]);
+      setRisk(null);
+      loadApplicants();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not publish vacancies");
+    } finally {
+      setPublishing(false);
+    }
   };
+
 
 
 
@@ -997,6 +1004,8 @@ const ManagerDashboard = () => {
                           ["contract_duration", "Contract"],
                           ["monthly_salary", "Salary"],
                           ["contact_whatsapp", "WhatsApp"],
+                          ["contact_email", "Email"],
+
                         ] as [keyof ParsedVacancy, string][]).map(([key, label]) => (
                           <label key={key} className="text-xs text-muted-foreground space-y-1">
                             {label}
