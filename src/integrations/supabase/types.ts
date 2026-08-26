@@ -2093,6 +2093,7 @@ export type Database = {
         Row: {
           additional_notes: string | null
           company_name: string
+          contact_email: string | null
           contact_whatsapp: string
           contract_duration: string
           created_at: string
@@ -2111,6 +2112,7 @@ export type Database = {
         Insert: {
           additional_notes?: string | null
           company_name: string
+          contact_email?: string | null
           contact_whatsapp: string
           contract_duration: string
           created_at?: string
@@ -2129,6 +2131,7 @@ export type Database = {
         Update: {
           additional_notes?: string | null
           company_name?: string
+          contact_email?: string | null
           contact_whatsapp?: string
           contract_duration?: string
           created_at?: string
