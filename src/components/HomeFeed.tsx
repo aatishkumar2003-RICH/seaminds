@@ -283,7 +283,7 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
     const loadOffers = async () => {
       const { data, error } = await supabase
         .from("job_applications")
-        .select("id, company_name, rank_applied, offered_joining_date, outcome")
+        .select("id, company_name, rank_applied, offered_joining_date, outcome, offer_details")
         .eq("crew_id", profileId)
         .eq("outcome", "offered")
         .order("offered_at", { ascending: false });
@@ -484,8 +484,29 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
             <div className="space-y-3">
               <p className="text-xl font-black tracking-wide">🎉 JOB OFFER</p>
               <p className="text-base font-bold">{o.company_name} wants you as {o.rank_applied}</p>
-              {o.offered_joining_date && (
+              {o.offered_joining_date && !o.offer_details && (
                 <p className="text-sm font-bold opacity-90">Joining {new Date(o.offered_joining_date).toLocaleDateString()}</p>
+              )}
+              {o.offer_details && (
+                <div className="space-y-1">
+                  <p className="text-sm font-bold opacity-90">
+                    🚢 {o.offer_details.vessel_name || "Vessel to be advised"}
+                    {o.offer_details.joining_date ? ` · Joining ${o.offer_details.joining_date}` : ""}
+                    {o.offer_details.joining_port ? ` at ${o.offer_details.joining_port}` : ""}
+                  </p>
+                  {o.offer_details.interview_required && (
+                    <p className="text-sm font-bold opacity-90">🎤 Interview: {o.offer_details.interview_date || "to be advised"}</p>
+                  )}
+                  {o.offer_details.documents_required && (
+                    <p className="text-sm font-bold opacity-90">📄 Upload your documents for verification</p>
+                  )}
+                  {o.offer_details.salary && (
+                    <p className="text-sm font-bold opacity-90">💰 {o.offer_details.salary}</p>
+                  )}
+                  {o.offer_details.message && (
+                    <p className="text-xs italic leading-relaxed opacity-80">{o.offer_details.message}</p>
+                  )}
+                </div>
               )}
               <div className="flex gap-2">
                 <button
