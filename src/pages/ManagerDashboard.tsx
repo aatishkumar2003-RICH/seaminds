@@ -1098,7 +1098,90 @@ const ManagerDashboard = () => {
         {managerUserId && <MyPostsPanel managerId={managerUserId} />}
       </div>
 
+      {offerFor && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.75)" }}
+          onClick={() => !offerSending && setOfferFor(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md max-h-[85vh] overflow-y-auto rounded-2xl p-5"
+            style={{ background: "#0D1B2A", border: "1px solid rgba(212,175,55,0.3)" }}
+          >
+            <p className="text-base font-extrabold" style={{ color: "#D4AF37" }}>⚓ Offer of Employment</p>
+            <p className="text-xs mb-4" style={{ color: "#94A3B8" }}>
+              {offerFor.crew_name} · {offerFor.rank}
+            </p>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold" style={{ color: "#94A3B8" }}>Vessel name</label>
+                <input value={offerForm.vessel_name} onChange={(e) => setOfferForm((f) => ({ ...f, vessel_name: e.target.value }))}
+                  className="w-full mt-1 rounded-xl px-3 py-2 text-sm bg-[#112240] text-white border border-[#1e3a5f]" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold" style={{ color: "#94A3B8" }}>Joining port</label>
+                <input value={offerForm.joining_port} onChange={(e) => setOfferForm((f) => ({ ...f, joining_port: e.target.value }))}
+                  className="w-full mt-1 rounded-xl px-3 py-2 text-sm bg-[#112240] text-white border border-[#1e3a5f]" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold" style={{ color: "#94A3B8" }}>Joining date</label>
+                <input type="date" value={offerForm.joining_date} onChange={(e) => setOfferForm((f) => ({ ...f, joining_date: e.target.value }))}
+                  className="w-full mt-1 rounded-xl px-3 py-2 text-sm bg-[#112240] text-white border border-[#1e3a5f]" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold" style={{ color: "#94A3B8" }}>Monthly salary USD</label>
+                <input value={offerForm.salary} placeholder="as per rank & experience"
+                  onChange={(e) => setOfferForm((f) => ({ ...f, salary: e.target.value }))}
+                  className="w-full mt-1 rounded-xl px-3 py-2 text-sm bg-[#112240] text-white border border-[#1e3a5f] placeholder:text-[#64748b]" />
+              </div>
+
+              <label className="flex items-center gap-2 text-sm text-white">
+                <input type="checkbox" checked={offerForm.interview_required}
+                  onChange={(e) => setOfferForm((f) => ({ ...f, interview_required: e.target.checked }))}
+                  className="accent-[#D4AF37] w-4 h-4" />
+                Interview required
+              </label>
+              {offerForm.interview_required && (
+                <div>
+                  <label className="text-xs font-semibold" style={{ color: "#94A3B8" }}>Interview date (optional — to be advised)</label>
+                  <input type="date" value={offerForm.interview_date}
+                    onChange={(e) => setOfferForm((f) => ({ ...f, interview_date: e.target.value }))}
+                    className="w-full mt-1 rounded-xl px-3 py-2 text-sm bg-[#112240] text-white border border-[#1e3a5f]" />
+                </div>
+              )}
+
+              <label className="flex items-center gap-2 text-sm text-white">
+                <input type="checkbox" checked={offerForm.documents_required}
+                  onChange={(e) => setOfferForm((f) => ({ ...f, documents_required: e.target.checked }))}
+                  className="accent-[#D4AF37] w-4 h-4" />
+                Documents upload required on SeaMinds
+              </label>
+
+              <div>
+                <label className="text-xs font-semibold" style={{ color: "#94A3B8" }}>Message</label>
+                <textarea rows={5} value={offerForm.message}
+                  onChange={(e) => setOfferForm((f) => ({ ...f, message: e.target.value }))}
+                  className="w-full mt-1 rounded-xl px-3 py-2 text-sm bg-[#112240] text-white border border-[#1e3a5f] leading-relaxed" />
+              </div>
+            </div>
+
+            <div className="flex gap-2 mt-5">
+              <button onClick={() => setOfferFor(null)} disabled={offerSending}
+                className="flex-1 rounded-xl py-2.5 text-sm font-bold border border-[#D4AF37]/50 text-[#D4AF37] bg-transparent">
+                Cancel
+              </button>
+              <button onClick={sendOffer} disabled={offerSending}
+                className="flex-1 rounded-xl py-2.5 text-sm font-extrabold bg-[#D4AF37] text-[#0D1B2A] disabled:opacity-50">
+                {offerSending ? "Sending…" : "Send offer →"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+
   );
 };
 
