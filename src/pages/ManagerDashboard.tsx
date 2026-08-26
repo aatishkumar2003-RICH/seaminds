@@ -299,12 +299,63 @@ const ManagerDashboard = () => {
     }
   };
 
-  const openOfferDraft = (id: string) => {
+  const openOfferDialog = (a: Applicant) => {
     const d = new Date();
     d.setDate(d.getDate() + 14);
-    const defaultDate = d.toISOString().split("T")[0];
-    setOfferDrafts((prev) => ({ ...prev, [id]: { joiningDate: defaultDate, contractMonths: 9, open: true } }));
+    const firstName = (a.crew_name || "Seafarer").split(" ")[0];
+    const rank = a.rank || a.crew_rank || "the position";
+    const posting = myPostings.find((p) => p.id === a.job_posting_id);
+    setOfferFor(a);
+    setOfferForm({
+      vessel_name: a.vessel || posting?.vessel_type || "",
+      joining_port: "",
+      joining_date: d.toISOString().split("T")[0],
+      salary: "",
+      interview_required: true,
+      interview_date: "",
+      documents_required: true,
+      message: `Dear ${firstName}, we are pleased to consider you for the position of ${rank} on our vessel. As the next step you will be planned for an interview, followed by a documentation check. Kindly confirm your readiness and upload your documents on SeaMinds for verification.`,
+    });
   };
+
+  const sendOffer = async () => {
+    if (!offerFor || offerSending) return;
+    setOfferSending(true);
+    const applicationId = offerFor.application_id;
+    const offer = {
+      vessel_name: offerForm.vessel_name.trim() || null,
+      joining_port: offerForm.joining_port.trim() || null,
+      joining_date: offerForm.joining_date || null,
+      salary: offerForm.salary.trim() || null,
+      interview_required: offerForm.interview_required,
+      interview_date: offerForm.interview_required ? (offerForm.interview_date || null) : null,
+      documents_required: offerForm.documents_required,
+      message: offerForm.message.trim() || null,
+    };
+    const { data, error } = await supabase.rpc("manager_update_application" as any, {
+      p_application_id: applicationId,
+      p_action: "offer",
+      p_joining_date: offerForm.joining_date || null,
+      p_offer: offer,
+    } as any);
+    setOfferSending(false);
+    if (error) { toast.error(error.message); return; }
+    const result = data as { ok?: boolean; error?: string } | null;
+    if (result && !result.ok) { toast.error(result.error || "Could not send offer"); return; }
+
+    supabase.functions.invoke("notify-application", {
+      body: { application_id: applicationId, kind: "offer" },
+    }).catch(() => {});
+
+    setOfferSent((prev) => ({
+      ...prev,
+      [applicationId]: { vessel_name: offer.vessel_name || "", joining_date: offer.joining_date || "", salary: offer.salary || "" },
+    }));
+    setOfferFor(null);
+    toast.success("Offer sent ✓");
+    loadApplicants();
+  };
+
 
   const handleApplicationAction = async (
     applicationId: string,
