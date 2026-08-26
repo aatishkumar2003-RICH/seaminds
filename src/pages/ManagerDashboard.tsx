@@ -711,6 +711,7 @@ const ManagerDashboard = () => {
               </div>
             )}
           </div>
+          </>
         ) : dashTab === "payments" ? (
           <ManagerPaymentHistory managerUserId={managerUserId} />
         ) : (
