@@ -112,16 +112,30 @@ Deno.serve(async (req) => {
       const rank = app.rank_applied || "Crew";
       const company = app.company_name || offer.company_name || "the company";
 
+      const steps: string[] = [];
+      if (offer.interview_required) {
+        steps.push(`Interview${offer.interview_date ? ` — planned ${esc(offer.interview_date)}` : " — date to be advised"}`);
+      }
+      if (offer.documents_required) {
+        steps.push("Documentation check — please upload your documents on SeaMinds");
+      }
+      steps.push(
+        `Joining: ${esc(offer.joining_date || "TBA")}${offer.joining_port ? ` at ${esc(offer.joining_port)}` : ""}${
+          offer.vessel_name ? ` · Vessel: ${esc(offer.vessel_name)}` : ""
+        }`,
+      );
+
       const lines = [
-        `<h2 style="color:#D4AF37;margin:0 0 12px">You have received an offer from ${esc(company)}</h2>`,
+        `<h2 style="color:#D4AF37;margin:0 0 12px">⚓ Offer of Employment — ${esc(company)}</h2>`,
         `<p>Rank: <strong>${esc(rank)}</strong>${offer.vessel_name ? ` — ${esc(offer.vessel_name)}` : ""}</p>`,
-        (offer.joining_date || offer.joining_port)
-          ? `<p>Joining ${esc(offer.joining_date || "TBA")}${offer.joining_port ? ` at ${esc(offer.joining_port)}` : ""}</p>` : "",
-        offer.salary ? `<p>Salary: ${esc(offer.salary)}</p>` : "",
+        `<h3 style="color:#D4AF37;margin:18px 0 8px;font-size:15px">Next steps</h3>`,
+        `<ol style="color:#E2E8F0;padding-left:20px;margin:0">${steps.map((s) => `<li style="margin-bottom:6px">${s}</li>`).join("")}</ol>`,
+        offer.salary ? `<p>Salary: ${esc(offer.salary)}${/usd|\$/i.test(String(offer.salary)) ? "" : " USD/month"}</p>` : "",
         offer.message
           ? `<div style="border:1px solid rgba(212,175,55,0.3);border-radius:10px;padding:12px;margin:14px 0;color:#E2E8F0">${esc(offer.message)}</div>` : "",
-        goldBtn(`${SITE}/app?tab=jobs`, "Open SeaMinds"),
+        goldBtn(`${SITE}/app?tab=cv`, "Confirm readiness & upload documents"),
       ].filter(Boolean).join("");
+
 
       await svc.from("notifications").insert({
         crew_id: app.crew_id,

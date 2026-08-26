@@ -103,7 +103,14 @@ const ManagerDashboard = () => {
   const [applicantsLoading, setApplicantsLoading] = useState(false);
   const [myPostings, setMyPostings] = useState<MyPosting[]>([]);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
-  const [offerDrafts, setOfferDrafts] = useState<Record<string, { joiningDate: string; contractMonths: number; open: boolean }>>({});
+  const [offerFor, setOfferFor] = useState<Applicant | null>(null);
+  const [offerForm, setOfferForm] = useState({
+    vessel_name: "", joining_port: "", joining_date: "", salary: "",
+    interview_required: true, interview_date: "", documents_required: true, message: "",
+  });
+  const [offerSending, setOfferSending] = useState(false);
+  const [offerSent, setOfferSent] = useState<Record<string, { vessel_name: string; joining_date: string; salary: string }>>({});
+
   const [fleet, setFleet] = useState<FleetResult | null>(null);
   const [fleetEmail, setFleetEmail] = useState("");
   const [fleetAdding, setFleetAdding] = useState(false);
@@ -292,12 +299,63 @@ const ManagerDashboard = () => {
     }
   };
 
-  const openOfferDraft = (id: string) => {
+  const openOfferDialog = (a: Applicant) => {
     const d = new Date();
     d.setDate(d.getDate() + 14);
-    const defaultDate = d.toISOString().split("T")[0];
-    setOfferDrafts((prev) => ({ ...prev, [id]: { joiningDate: defaultDate, contractMonths: 9, open: true } }));
+    const firstName = (a.crew_name || "Seafarer").split(" ")[0];
+    const rank = a.rank || a.crew_rank || "the position";
+    const posting = myPostings.find((p) => p.id === a.job_posting_id);
+    setOfferFor(a);
+    setOfferForm({
+      vessel_name: a.vessel || posting?.vessel_type || "",
+      joining_port: "",
+      joining_date: d.toISOString().split("T")[0],
+      salary: "",
+      interview_required: true,
+      interview_date: "",
+      documents_required: true,
+      message: `Dear ${firstName}, we are pleased to consider you for the position of ${rank} on our vessel. As the next step you will be planned for an interview, followed by a documentation check. Kindly confirm your readiness and upload your documents on SeaMinds for verification.`,
+    });
   };
+
+  const sendOffer = async () => {
+    if (!offerFor || offerSending) return;
+    setOfferSending(true);
+    const applicationId = offerFor.application_id;
+    const offer = {
+      vessel_name: offerForm.vessel_name.trim() || null,
+      joining_port: offerForm.joining_port.trim() || null,
+      joining_date: offerForm.joining_date || null,
+      salary: offerForm.salary.trim() || null,
+      interview_required: offerForm.interview_required,
+      interview_date: offerForm.interview_required ? (offerForm.interview_date || null) : null,
+      documents_required: offerForm.documents_required,
+      message: offerForm.message.trim() || null,
+    };
+    const { data, error } = await supabase.rpc("manager_update_application" as any, {
+      p_application_id: applicationId,
+      p_action: "offer",
+      p_joining_date: offerForm.joining_date || null,
+      p_offer: offer,
+    } as any);
+    setOfferSending(false);
+    if (error) { toast.error(error.message); return; }
+    const result = data as { ok?: boolean; error?: string } | null;
+    if (result && !result.ok) { toast.error(result.error || "Could not send offer"); return; }
+
+    supabase.functions.invoke("notify-application", {
+      body: { application_id: applicationId, kind: "offer" },
+    }).catch(() => {});
+
+    setOfferSent((prev) => ({
+      ...prev,
+      [applicationId]: { vessel_name: offer.vessel_name || "", joining_date: offer.joining_date || "", salary: offer.salary || "" },
+    }));
+    setOfferFor(null);
+    toast.success("Offer sent ✓");
+    loadApplicants();
+  };
+
 
   const handleApplicationAction = async (
     applicationId: string,
@@ -395,7 +453,7 @@ const ManagerDashboard = () => {
   };
 
   const renderApplicantActions = (a: Applicant) => {
-    const draft = offerDrafts[a.application_id];
+    const sent = offerSent[a.application_id];
     const { cls: statusClass, label: statusLabel } = statusMeta(a.outcome);
     return (
                         <div className="flex flex-col items-start sm:items-end gap-2 w-full sm:w-auto">
@@ -417,58 +475,33 @@ const ManagerDashboard = () => {
                             </div>
                           )}
                           {a.outcome === "shortlisted" && (
-                            <>
-                              {!draft?.open ? (
-                                <div className="flex flex-wrap gap-2">
-                                  <button
-                                    onClick={() => openOfferDraft(a.application_id)}
-                                    className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-[#0D1B2A] text-[#D4AF37] border border-[#D4AF37]/40 hover:bg-[#D4AF37]/10 transition-colors"
-                                  >
-                                    📨 Offer joining
-                                  </button>
-                                  <button
-                                    onClick={() => handleApplicationAction(a.application_id, "decline")}
-                                    className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-secondary text-muted-foreground border border-border hover:bg-secondary/80 transition-colors"
-                                  >
-                                    Decline
-                                  </button>
-                                </div>
-                              ) : (
-                                <div className="flex flex-col gap-2 w-full sm:w-auto">
-                                  <div className="flex flex-wrap gap-2">
-                                    <input
-                                      type="date"
-                                      value={draft.joiningDate}
-                                      onChange={(e) => setOfferDrafts((prev) => {
-                                        const current = prev[a.application_id] || { joiningDate: "", contractMonths: 9, open: true };
-                                        return { ...prev, [a.application_id]: { ...current, joiningDate: e.target.value } };
-                                      })}
-                                      className="bg-background text-foreground text-xs rounded-lg px-2 py-1.5 border border-border"
-                                    />
-                                    <input
-                                      type="number"
-                                      min={1}
-                                      max={36}
-                                      value={draft.contractMonths}
-                                      onChange={(e) => setOfferDrafts((prev) => {
-                                        const current = prev[a.application_id] || { joiningDate: "", contractMonths: 9, open: true };
-                                        return { ...prev, [a.application_id]: { ...current, contractMonths: parseInt(e.target.value) || 1 } };
-                                      })}
-                                      className="bg-background text-foreground text-xs rounded-lg px-2 py-1.5 border border-border w-24"
-                                    />
-                                  </div>
-                                  <button
-                                    onClick={() => handleApplicationAction(a.application_id, "offer", draft.joiningDate, draft.contractMonths)}
-                                    className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-[#D4AF37] text-[#0D1B2A] border border-[#D4AF37] hover:opacity-90 transition-opacity"
-                                  >
-                                    Confirm offer
-                                  </button>
-                                </div>
-                              )}
-                            </>
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                onClick={() => openOfferDialog(a)}
+                                className="text-xs font-bold px-3 py-1.5 rounded-xl bg-[#D4AF37] text-[#0D1B2A] border border-[#D4AF37] hover:opacity-90 transition-opacity"
+                              >
+                                Send offer →
+                              </button>
+                              <button
+                                onClick={() => handleApplicationAction(a.application_id, "decline")}
+                                className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-secondary text-muted-foreground border border-border hover:bg-secondary/80 transition-colors"
+                              >
+                                Decline
+                              </button>
+                            </div>
                           )}
                           {a.outcome === "offered" && (
-                            <p className="text-xs text-muted-foreground italic">Waiting for crew to accept…</p>
+                            <div className="flex flex-col items-start sm:items-end gap-1">
+                              {sent && (
+                                <>
+                                  <span className="text-xs font-bold px-2 py-1 rounded-full bg-green-500/15 text-green-400">Offer sent ✓</span>
+                                  <p className="text-xs text-muted-foreground">
+                                    {[sent.vessel_name, sent.joining_date ? `joining ${sent.joining_date}` : "", sent.salary ? `$${sent.salary}` : ""].filter(Boolean).join(" · ")}
+                                  </p>
+                                </>
+                              )}
+                              <p className="text-xs text-muted-foreground italic">Waiting for crew to accept…</p>
+                            </div>
                           )}
                           {a.outcome === "placed" && (
                             <p className="text-xs text-green-400">🎉 Placed — congratulations!</p>
@@ -1063,7 +1096,90 @@ const ManagerDashboard = () => {
         {managerUserId && <MyPostsPanel managerId={managerUserId} />}
       </div>
 
+      {offerFor && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.75)" }}
+          onClick={() => !offerSending && setOfferFor(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md max-h-[85vh] overflow-y-auto rounded-2xl p-5"
+            style={{ background: "#0D1B2A", border: "1px solid rgba(212,175,55,0.3)" }}
+          >
+            <p className="text-base font-extrabold" style={{ color: "#D4AF37" }}>⚓ Offer of Employment</p>
+            <p className="text-xs mb-4" style={{ color: "#94A3B8" }}>
+              {offerFor.crew_name} · {offerFor.rank}
+            </p>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold" style={{ color: "#94A3B8" }}>Vessel name</label>
+                <input value={offerForm.vessel_name} onChange={(e) => setOfferForm((f) => ({ ...f, vessel_name: e.target.value }))}
+                  className="w-full mt-1 rounded-xl px-3 py-2 text-sm bg-[#112240] text-white border border-[#1e3a5f]" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold" style={{ color: "#94A3B8" }}>Joining port</label>
+                <input value={offerForm.joining_port} onChange={(e) => setOfferForm((f) => ({ ...f, joining_port: e.target.value }))}
+                  className="w-full mt-1 rounded-xl px-3 py-2 text-sm bg-[#112240] text-white border border-[#1e3a5f]" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold" style={{ color: "#94A3B8" }}>Joining date</label>
+                <input type="date" value={offerForm.joining_date} onChange={(e) => setOfferForm((f) => ({ ...f, joining_date: e.target.value }))}
+                  className="w-full mt-1 rounded-xl px-3 py-2 text-sm bg-[#112240] text-white border border-[#1e3a5f]" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold" style={{ color: "#94A3B8" }}>Monthly salary USD</label>
+                <input value={offerForm.salary} placeholder="as per rank & experience"
+                  onChange={(e) => setOfferForm((f) => ({ ...f, salary: e.target.value }))}
+                  className="w-full mt-1 rounded-xl px-3 py-2 text-sm bg-[#112240] text-white border border-[#1e3a5f] placeholder:text-[#64748b]" />
+              </div>
+
+              <label className="flex items-center gap-2 text-sm text-white">
+                <input type="checkbox" checked={offerForm.interview_required}
+                  onChange={(e) => setOfferForm((f) => ({ ...f, interview_required: e.target.checked }))}
+                  className="accent-[#D4AF37] w-4 h-4" />
+                Interview required
+              </label>
+              {offerForm.interview_required && (
+                <div>
+                  <label className="text-xs font-semibold" style={{ color: "#94A3B8" }}>Interview date (optional — to be advised)</label>
+                  <input type="date" value={offerForm.interview_date}
+                    onChange={(e) => setOfferForm((f) => ({ ...f, interview_date: e.target.value }))}
+                    className="w-full mt-1 rounded-xl px-3 py-2 text-sm bg-[#112240] text-white border border-[#1e3a5f]" />
+                </div>
+              )}
+
+              <label className="flex items-center gap-2 text-sm text-white">
+                <input type="checkbox" checked={offerForm.documents_required}
+                  onChange={(e) => setOfferForm((f) => ({ ...f, documents_required: e.target.checked }))}
+                  className="accent-[#D4AF37] w-4 h-4" />
+                Documents upload required on SeaMinds
+              </label>
+
+              <div>
+                <label className="text-xs font-semibold" style={{ color: "#94A3B8" }}>Message</label>
+                <textarea rows={5} value={offerForm.message}
+                  onChange={(e) => setOfferForm((f) => ({ ...f, message: e.target.value }))}
+                  className="w-full mt-1 rounded-xl px-3 py-2 text-sm bg-[#112240] text-white border border-[#1e3a5f] leading-relaxed" />
+              </div>
+            </div>
+
+            <div className="flex gap-2 mt-5">
+              <button onClick={() => setOfferFor(null)} disabled={offerSending}
+                className="flex-1 rounded-xl py-2.5 text-sm font-bold border border-[#D4AF37]/50 text-[#D4AF37] bg-transparent">
+                Cancel
+              </button>
+              <button onClick={sendOffer} disabled={offerSending}
+                className="flex-1 rounded-xl py-2.5 text-sm font-extrabold bg-[#D4AF37] text-[#0D1B2A] disabled:opacity-50">
+                {offerSending ? "Sending…" : "Send offer →"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+
   );
 };
 

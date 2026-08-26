@@ -2029,6 +2029,7 @@ export type Database = {
           id: string
           job_posting_id: string | null
           manager_note: string | null
+          offer_details: Json | null
           offered_at: string | null
           offered_joining_date: string | null
           outcome: string | null
@@ -2053,6 +2054,7 @@ export type Database = {
           id?: string
           job_posting_id?: string | null
           manager_note?: string | null
+          offer_details?: Json | null
           offered_at?: string | null
           offered_joining_date?: string | null
           outcome?: string | null
@@ -2077,6 +2079,7 @@ export type Database = {
           id?: string
           job_posting_id?: string | null
           manager_note?: string | null
+          offer_details?: Json | null
           offered_at?: string | null
           offered_joining_date?: string | null
           outcome?: string | null
@@ -3479,6 +3482,7 @@ export type Database = {
           p_application_id: string
           p_contract_months?: number
           p_joining_date?: string
+          p_offer?: Json
         }
         Returns: Json
       }
