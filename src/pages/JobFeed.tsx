@@ -187,7 +187,8 @@ const JobFeed = () => {
           vessel: i.vessel || null,
           externalUrl: null,
         }, (r) => {
-          if (r.ok) toast.success("Applied ✓ — your application has been emailed to the company");
+          if (r.ok && r.duplicate) toast.success("Already applied ✓ — the company already has your application");
+          else if (r.ok) toast.success("Applied ✓ — your application has been emailed to the company");
           else toast.error("Sent on WhatsApp — could not record on SeaMinds");
         });
         return;
