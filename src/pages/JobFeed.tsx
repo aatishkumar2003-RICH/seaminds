@@ -30,6 +30,7 @@ interface FeedItem {
   duration: string | null;
   flier: string | null;
   whatsapp: string | null;
+  email: string | null;
   applyUrl: string | null;
   verified: boolean;
   posted: string;
@@ -62,6 +63,7 @@ const JobFeed = () => {
   const [filter, setFilter] = useState<string>("All");
   const [cardInfo, setCardInfo] = useState<CrewCardInfo | null>(null);
   const [signedIn, setSignedIn] = useState(false);
+  const [authResolved, setAuthResolved] = useState(false);
   const [needsQuickProfile, setNeedsQuickProfile] = useState(false);
   const [gateOpen, setGateOpen] = useState(false);
   const [applying, setApplying] = useState<string | null>(null);
@@ -70,14 +72,21 @@ const JobFeed = () => {
   // Preload the signed-in crew's calling-card data once — never fetched on tap
   useEffect(() => {
     let alive = true;
-    supabase.auth.getUser().then(({ data }) => {
-      const uid = data?.user?.id;
-      if (!uid) return;
+    const preload = (uid: string | undefined) => {
+      if (!uid) { if (alive) setSignedIn(false); return; }
       if (alive) setSignedIn(true);
       fetchCrewCardInfo(uid).then((c) => { if (alive) setCardInfo(c); });
       fetchQuickProfileDone(uid).then((done) => { if (alive) setNeedsQuickProfile(!done); });
+    };
+    supabase.auth.getSession().then(({ data }) => {
+      preload(data?.session?.user?.id);
+      if (alive) setAuthResolved(true);
     });
-    return () => { alive = false; };
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
+      preload(session?.user?.id);
+      if (alive) setAuthResolved(true);
+    });
+    return () => { alive = false; subscription.unsubscribe(); };
   }, []);
 
   useEffect(() => {
@@ -85,10 +94,10 @@ const JobFeed = () => {
       try {
         const [posts, ext, cposts, shipRes] = await Promise.all([
           supabase.from("job_postings" as any)
-            .select("id, rank_required, vessel_type, monthly_salary, joining_port, contract_duration, company_name, contact_whatsapp, verified, flier_url, created_at, status")
+            .select("id, rank_required, vessel_type, monthly_salary, joining_port, contract_duration, company_name, contact_whatsapp, contact_email, verified, flier_url, created_at, status")
             .eq("status", "active").order("created_at", { ascending: false }).limit(60),
           supabase.from("external_vacancies" as any)
-            .select("id, rank_required, vessel_type, company_name, salary_text, joining_port, contract_duration, contact_whatsapp, apply_url, is_verified, fetched_at")
+            .select("id, rank_required, vessel_type, company_name, salary_text, joining_port, contract_duration, contact_whatsapp, contact_email, apply_url, is_verified, fetched_at")
             .gt("expires_at", new Date().toISOString())
             .order("fetched_at", { ascending: false }).limit(60),
           supabase.from("company_posts" as any)
@@ -105,7 +114,7 @@ const JobFeed = () => {
           rank: r.rank_required || "Crew", vessel: r.vessel_type || "—",
           company: r.company_name || "Maritime Company", salary: r.monthly_salary,
           port: r.joining_port, duration: r.contract_duration, flier: r.flier_url,
-          whatsapp: r.contact_whatsapp, applyUrl: null,
+          whatsapp: r.contact_whatsapp, email: r.contact_email || null, applyUrl: null,
           verified: !!r.verified, posted: r.created_at,
         }));
 
@@ -114,7 +123,7 @@ const JobFeed = () => {
           rank: r.rank_required || "Crew", vessel: r.vessel_type || "—",
           company: r.company_name || "Maritime Company", salary: r.salary_text,
           port: r.joining_port, duration: r.contract_duration, flier: null,
-          whatsapp: r.contact_whatsapp, applyUrl: r.apply_url,
+          whatsapp: r.contact_whatsapp, email: r.contact_email || null, applyUrl: r.apply_url,
           verified: !!r.is_verified, posted: r.fetched_at,
         }));
 
@@ -123,7 +132,7 @@ const JobFeed = () => {
           rank: r.company_name, vessel: "",
           company: r.company_name, salary: null,
           port: null, duration: null, flier: r.image_url,
-          whatsapp: r.whatsapp, applyUrl: r.link_url,
+          whatsapp: r.whatsapp, email: null, applyUrl: r.link_url,
           verified: !!r.verified, posted: r.created_at,
           caption: r.caption, isCompanyPost: true, postType: r.post_type,
         }));
@@ -166,6 +175,22 @@ const JobFeed = () => {
     setApplying(i.id);
     try {
       trackPixel("Contact", { content_name: "job_apply_public" });
+      if (i.email) {
+        const raw = String(i.id).replace(/^[pec]-/, "");
+        recordApplication({
+          vacancyId: i.source === "market" ? raw : null,
+          jobPostingId: !i.isCompanyPost && i.source === "company" ? raw : null,
+          companyPostId: i.isCompanyPost ? raw : null,
+          company: i.company || null,
+          rank: i.rank || null,
+          vessel: i.vessel || null,
+          externalUrl: null,
+        }, (r) => {
+          if (r.ok) toast.success("Applied ✓ — your application has been emailed to the company");
+          else toast.error("Sent on WhatsApp — could not record on SeaMinds");
+        });
+        return;
+      }
       if (i.whatsapp) {
         const url = waApplyLink(i.whatsapp, cardInfo || getCachedCrewCardInfo(), { rank: i.rank, vessel: i.vessel, port: i.port });
         if (url) {
@@ -313,14 +338,18 @@ const JobFeed = () => {
                   <div style={{ color: "#22c55e", fontWeight: 800, fontSize: 15 }}>{formatSalaryText(i.salary)}</div>
                 )}
 
-                <button onClick={() => apply(i)} disabled={applying === i.id} style={{
+                <button onClick={() => apply(i)} disabled={applying === i.id || !authResolved} style={{
                   marginTop: 2, width: "100%", padding: "11px", borderRadius: 11, border: "none",
-                  cursor: applying === i.id ? "default" : "pointer", opacity: applying === i.id ? 0.7 : 1,
+                  cursor: applying === i.id || !authResolved ? "default" : "pointer",
+                  opacity: applying === i.id || !authResolved ? 0.5 : 1,
                   background: GOLD, color: NAVY, fontWeight: 800, fontSize: 13,
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
                 }}>
-                  {i.whatsapp ? <><MessageCircle size={15} /> Apply via WhatsApp</> : <><ExternalLink size={15} /> View & Apply</>}
+                  {i.email ? <>✉️ Apply — sent to company email</>
+                    : i.whatsapp ? <><MessageCircle size={15} /> Apply via WhatsApp</>
+                    : <><ExternalLink size={15} /> View & Apply</>}
                 </button>
+
 
               </div>
 
