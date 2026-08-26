@@ -453,7 +453,7 @@ const ManagerDashboard = () => {
   };
 
   const renderApplicantActions = (a: Applicant) => {
-    const draft = offerDrafts[a.application_id];
+    const sent = offerSent[a.application_id];
     const { cls: statusClass, label: statusLabel } = statusMeta(a.outcome);
     return (
                         <div className="flex flex-col items-start sm:items-end gap-2 w-full sm:w-auto">
@@ -475,62 +475,39 @@ const ManagerDashboard = () => {
                             </div>
                           )}
                           {a.outcome === "shortlisted" && (
-                            <>
-                              {!draft?.open ? (
-                                <div className="flex flex-wrap gap-2">
-                                  <button
-                                    onClick={() => openOfferDraft(a.application_id)}
-                                    className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-[#0D1B2A] text-[#D4AF37] border border-[#D4AF37]/40 hover:bg-[#D4AF37]/10 transition-colors"
-                                  >
-                                    📨 Offer joining
-                                  </button>
-                                  <button
-                                    onClick={() => handleApplicationAction(a.application_id, "decline")}
-                                    className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-secondary text-muted-foreground border border-border hover:bg-secondary/80 transition-colors"
-                                  >
-                                    Decline
-                                  </button>
-                                </div>
-                              ) : (
-                                <div className="flex flex-col gap-2 w-full sm:w-auto">
-                                  <div className="flex flex-wrap gap-2">
-                                    <input
-                                      type="date"
-                                      value={draft.joiningDate}
-                                      onChange={(e) => setOfferDrafts((prev) => {
-                                        const current = prev[a.application_id] || { joiningDate: "", contractMonths: 9, open: true };
-                                        return { ...prev, [a.application_id]: { ...current, joiningDate: e.target.value } };
-                                      })}
-                                      className="bg-background text-foreground text-xs rounded-lg px-2 py-1.5 border border-border"
-                                    />
-                                    <input
-                                      type="number"
-                                      min={1}
-                                      max={36}
-                                      value={draft.contractMonths}
-                                      onChange={(e) => setOfferDrafts((prev) => {
-                                        const current = prev[a.application_id] || { joiningDate: "", contractMonths: 9, open: true };
-                                        return { ...prev, [a.application_id]: { ...current, contractMonths: parseInt(e.target.value) || 1 } };
-                                      })}
-                                      className="bg-background text-foreground text-xs rounded-lg px-2 py-1.5 border border-border w-24"
-                                    />
-                                  </div>
-                                  <button
-                                    onClick={() => handleApplicationAction(a.application_id, "offer", draft.joiningDate, draft.contractMonths)}
-                                    className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-[#D4AF37] text-[#0D1B2A] border border-[#D4AF37] hover:opacity-90 transition-opacity"
-                                  >
-                                    Confirm offer
-                                  </button>
-                                </div>
-                              )}
-                            </>
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                onClick={() => openOfferDialog(a)}
+                                className="text-xs font-bold px-3 py-1.5 rounded-xl bg-[#D4AF37] text-[#0D1B2A] border border-[#D4AF37] hover:opacity-90 transition-opacity"
+                              >
+                                Send offer →
+                              </button>
+                              <button
+                                onClick={() => handleApplicationAction(a.application_id, "decline")}
+                                className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-secondary text-muted-foreground border border-border hover:bg-secondary/80 transition-colors"
+                              >
+                                Decline
+                              </button>
+                            </div>
                           )}
                           {a.outcome === "offered" && (
-                            <p className="text-xs text-muted-foreground italic">Waiting for crew to accept…</p>
+                            <div className="flex flex-col items-start sm:items-end gap-1">
+                              {sent && (
+                                <>
+                                  <span className="text-xs font-bold px-2 py-1 rounded-full bg-green-500/15 text-green-400">Offer sent ✓</span>
+                                  <p className="text-xs text-muted-foreground">
+                                    {[sent.vessel_name, sent.joining_date ? `joining ${sent.joining_date}` : "", sent.salary ? `$${sent.salary}` : ""].filter(Boolean).join(" · ")}
+                                  </p>
+                                </>
+                              )}
+                              <p className="text-xs text-muted-foreground italic">Waiting for crew to accept…</p>
+                            </div>
                           )}
                           {a.outcome === "placed" && (
                             <p className="text-xs text-green-400">🎉 Placed — congratulations!</p>
                           )}
+                        </div>
+
                         </div>
     );
   };
