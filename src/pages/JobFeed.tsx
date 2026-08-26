@@ -30,6 +30,7 @@ interface FeedItem {
   duration: string | null;
   flier: string | null;
   whatsapp: string | null;
+  email: string | null;
   applyUrl: string | null;
   verified: boolean;
   posted: string;
