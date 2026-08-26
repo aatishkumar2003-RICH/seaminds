@@ -103,7 +103,14 @@ const ManagerDashboard = () => {
   const [applicantsLoading, setApplicantsLoading] = useState(false);
   const [myPostings, setMyPostings] = useState<MyPosting[]>([]);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
-  const [offerDrafts, setOfferDrafts] = useState<Record<string, { joiningDate: string; contractMonths: number; open: boolean }>>({});
+  const [offerFor, setOfferFor] = useState<Applicant | null>(null);
+  const [offerForm, setOfferForm] = useState({
+    vessel_name: "", joining_port: "", joining_date: "", salary: "",
+    interview_required: true, interview_date: "", documents_required: true, message: "",
+  });
+  const [offerSending, setOfferSending] = useState(false);
+  const [offerSent, setOfferSent] = useState<Record<string, { vessel_name: string; joining_date: string; salary: string }>>({});
+
   const [fleet, setFleet] = useState<FleetResult | null>(null);
   const [fleetEmail, setFleetEmail] = useState("");
   const [fleetAdding, setFleetAdding] = useState(false);
