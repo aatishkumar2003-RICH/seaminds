@@ -63,6 +63,7 @@ const JobFeed = () => {
   const [filter, setFilter] = useState<string>("All");
   const [cardInfo, setCardInfo] = useState<CrewCardInfo | null>(null);
   const [signedIn, setSignedIn] = useState(false);
+  const [authResolved, setAuthResolved] = useState(false);
   const [needsQuickProfile, setNeedsQuickProfile] = useState(false);
   const [gateOpen, setGateOpen] = useState(false);
   const [applying, setApplying] = useState<string | null>(null);
@@ -71,14 +72,21 @@ const JobFeed = () => {
   // Preload the signed-in crew's calling-card data once — never fetched on tap
   useEffect(() => {
     let alive = true;
-    supabase.auth.getUser().then(({ data }) => {
-      const uid = data?.user?.id;
-      if (!uid) return;
+    const preload = (uid: string | undefined) => {
+      if (!uid) { if (alive) setSignedIn(false); return; }
       if (alive) setSignedIn(true);
       fetchCrewCardInfo(uid).then((c) => { if (alive) setCardInfo(c); });
       fetchQuickProfileDone(uid).then((done) => { if (alive) setNeedsQuickProfile(!done); });
+    };
+    supabase.auth.getSession().then(({ data }) => {
+      preload(data?.session?.user?.id);
+      if (alive) setAuthResolved(true);
     });
-    return () => { alive = false; };
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
+      preload(session?.user?.id);
+      if (alive) setAuthResolved(true);
+    });
+    return () => { alive = false; subscription.unsubscribe(); };
   }, []);
 
   useEffect(() => {
