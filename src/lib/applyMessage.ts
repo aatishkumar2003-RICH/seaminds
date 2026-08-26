@@ -90,13 +90,19 @@ export const buildApplyMessage = (info: CrewCardInfo | null, v: ApplyVacancyInfo
   return lines.join("\n");
 };
 
+/** Normalizes a phone number for wa.me: digits only, no leading zeros. Null when too short. */
+export const normalizeWaNumber = (number: string | null | undefined): string | null => {
+  const digits = String(number || "").replace(/[^\d]/g, "").replace(/^0+/, "");
+  return digits.length >= 8 ? digits : null;
+};
+
 /** WhatsApp deep link carrying the calling-card message. */
 export const waApplyLink = (
   number: string | null | undefined,
   info: CrewCardInfo | null,
   v: ApplyVacancyInfo,
 ): string | null => {
-  const digits = String(number || "").replace(/[^\d]/g, "");
+  const digits = normalizeWaNumber(number);
   if (!digits) return null;
   return `https://wa.me/${digits}?text=${encodeURIComponent(buildApplyMessage(info, v))}`;
 };
