@@ -175,6 +175,22 @@ const JobFeed = () => {
     setApplying(i.id);
     try {
       trackPixel("Contact", { content_name: "job_apply_public" });
+      if (i.email) {
+        const raw = String(i.id).replace(/^[pec]-/, "");
+        recordApplication({
+          vacancyId: i.source === "market" ? raw : null,
+          jobPostingId: !i.isCompanyPost && i.source === "company" ? raw : null,
+          companyPostId: i.isCompanyPost ? raw : null,
+          company: i.company || null,
+          rank: i.rank || null,
+          vessel: i.vessel || null,
+          externalUrl: null,
+        }, (r) => {
+          if (r.ok) toast.success("Applied ✓ — your application has been emailed to the company");
+          else toast.error("Sent on WhatsApp — could not record on SeaMinds");
+        });
+        return;
+      }
       if (i.whatsapp) {
         const url = waApplyLink(i.whatsapp, cardInfo || getCachedCrewCardInfo(), { rank: i.rank, vessel: i.vessel, port: i.port });
         if (url) {
