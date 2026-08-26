@@ -476,7 +476,7 @@ const ManagerDashboard = () => {
         <p className="text-sm font-bold text-foreground">
           {a.crew_name} <span className="font-normal text-muted-foreground">· {a.nationality}</span>
         </p>
-        <p className="text-xs text-muted-foreground">{a.rank} · {a.vessel}</p>
+        <p className="text-xs text-muted-foreground">{a.rank} · {a.vessel} · {relTime(a.applied_at)}</p>
         {a.available_from && (
           <p className="text-xs text-muted-foreground">Available from {new Date(a.available_from).toLocaleDateString()}</p>
         )}
@@ -586,8 +586,48 @@ const ManagerDashboard = () => {
           </button>
         </div>
 
+        {awaitingCount > 0 && (
+          <button
+            onClick={() => {
+              setDashTab("applicants");
+              setTimeout(() => document.getElementById("applicants-section")?.scrollIntoView({ behavior: "smooth" }), 60);
+            }}
+            className="text-xs font-bold px-3 py-1.5 rounded-full bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/40 hover:bg-[#D4AF37]/25 transition-colors"
+          >
+            👥 {awaitingCount} awaiting
+          </button>
+        )}
+
         {dashTab === "applicants" ? (
-          <div className="bg-secondary rounded-xl border border-border p-4 space-y-4">
+          <>
+          {/* My Vacancies */}
+          <div className="bg-secondary rounded-xl border border-border p-4 space-y-3">
+            <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">📢 My Vacancies</h2>
+            {myPostings.length === 0 ? (
+              <p className="text-xs text-muted-foreground">You have not posted any vacancies yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {myPostings.map((jp) => (
+                  <div key={jp.id} className="flex items-center justify-between gap-3 rounded-lg border border-border/50 bg-secondary/50 px-3 py-2">
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-foreground truncate">
+                        {[jp.rank_required, jp.vessel_type].filter(Boolean).join(" · ") || "Vacancy"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">posted {relTime(jp.created_at)}</p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{jp.status || "active"}</span>
+                      <span className="text-xs font-bold px-2 py-1 rounded-full bg-[#D4AF37]/15 text-[#D4AF37]">
+                        👥 {applicants.filter((a) => a.job_posting_id === jp.id).length}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div id="applicants-section" className="bg-secondary rounded-xl border border-border p-4 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">👥 Applicants</h2>
               <button
@@ -671,6 +711,7 @@ const ManagerDashboard = () => {
               </div>
             )}
           </div>
+          </>
         ) : dashTab === "payments" ? (
           <ManagerPaymentHistory managerUserId={managerUserId} />
         ) : (
