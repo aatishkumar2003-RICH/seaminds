@@ -94,10 +94,10 @@ const JobFeed = () => {
       try {
         const [posts, ext, cposts, shipRes] = await Promise.all([
           supabase.from("job_postings" as any)
-            .select("id, rank_required, vessel_type, monthly_salary, joining_port, contract_duration, company_name, contact_whatsapp, verified, flier_url, created_at, status")
+            .select("id, rank_required, vessel_type, monthly_salary, joining_port, contract_duration, company_name, contact_whatsapp, contact_email, verified, flier_url, created_at, status")
             .eq("status", "active").order("created_at", { ascending: false }).limit(60),
           supabase.from("external_vacancies" as any)
-            .select("id, rank_required, vessel_type, company_name, salary_text, joining_port, contract_duration, contact_whatsapp, apply_url, is_verified, fetched_at")
+            .select("id, rank_required, vessel_type, company_name, salary_text, joining_port, contract_duration, contact_whatsapp, contact_email, apply_url, is_verified, fetched_at")
             .gt("expires_at", new Date().toISOString())
             .order("fetched_at", { ascending: false }).limit(60),
           supabase.from("company_posts" as any)
@@ -114,7 +114,7 @@ const JobFeed = () => {
           rank: r.rank_required || "Crew", vessel: r.vessel_type || "—",
           company: r.company_name || "Maritime Company", salary: r.monthly_salary,
           port: r.joining_port, duration: r.contract_duration, flier: r.flier_url,
-          whatsapp: r.contact_whatsapp, applyUrl: null,
+          whatsapp: r.contact_whatsapp, email: r.contact_email || null, applyUrl: null,
           verified: !!r.verified, posted: r.created_at,
         }));
 
@@ -123,7 +123,7 @@ const JobFeed = () => {
           rank: r.rank_required || "Crew", vessel: r.vessel_type || "—",
           company: r.company_name || "Maritime Company", salary: r.salary_text,
           port: r.joining_port, duration: r.contract_duration, flier: null,
-          whatsapp: r.contact_whatsapp, applyUrl: r.apply_url,
+          whatsapp: r.contact_whatsapp, email: r.contact_email || null, applyUrl: r.apply_url,
           verified: !!r.is_verified, posted: r.fetched_at,
         }));
 
@@ -132,7 +132,7 @@ const JobFeed = () => {
           rank: r.company_name, vessel: "",
           company: r.company_name, salary: null,
           port: null, duration: null, flier: r.image_url,
-          whatsapp: r.whatsapp, applyUrl: r.link_url,
+          whatsapp: r.whatsapp, email: null, applyUrl: r.link_url,
           verified: !!r.verified, posted: r.created_at,
           caption: r.caption, isCompanyPost: true, postType: r.post_type,
         }));
