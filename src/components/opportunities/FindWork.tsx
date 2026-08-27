@@ -14,6 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import { formatSalaryText, formatSalaryRange } from "@/lib/salary";
 import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, recordApplication, fetchQuickProfileDone, CrewCardInfo } from "@/lib/applyMessage";
 import ApplyGateSheet from "@/components/ApplyGateSheet";
+import CrewOffers from "@/components/CrewOffers";
+import { useSearchParams } from "react-router-dom";
 
 const VESSEL_TYPES = [
   "Bulk Carrier", "Tanker", "Chemical Tanker", "Container Ship",
@@ -108,6 +110,8 @@ const COUNTRY_PORTS: Record<string, string[]> = {
 };
 
 const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSea, shipName }: FindWorkProps) => {
+  const [searchParams] = useSearchParams();
+  const [offerCount, setOfferCount] = useState(0);
   const [availabilityDate, setAvailabilityDate] = useState<Date>();
   const [preferredVessel, setPreferredVessel] = useState("Any Type");
   const [aboutMe, setAboutMe] = useState("");
@@ -300,6 +304,18 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
   return (
     <div className="space-y-5">
       <ApplyGateSheet open={gateOpen} onClose={() => setGateOpen(false)} next="/app?tab=jobs" />
+
+      <div>
+        {offerCount > 0 && (
+          <h3 className="mx-4 mb-2 text-sm font-extrabold uppercase tracking-wide text-primary">⚡ Action required</h3>
+        )}
+        <CrewOffers
+          profileId={profileId}
+          highlightApplicationId={searchParams.get("offer")}
+          onCountChange={setOfferCount}
+        />
+      </div>
+
 
       {/* Recent Matches */}
       {(() => {

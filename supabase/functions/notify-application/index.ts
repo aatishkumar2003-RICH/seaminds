@@ -133,17 +133,22 @@ Deno.serve(async (req) => {
         offer.salary ? `<p>Salary: ${esc(offer.salary)}${/usd|\$/i.test(String(offer.salary)) ? "" : " USD/month"}</p>` : "",
         offer.message
           ? `<div style="border:1px solid rgba(212,175,55,0.3);border-radius:10px;padding:12px;margin:14px 0;color:#E2E8F0">${esc(offer.message)}</div>` : "",
-        goldBtn(`${SITE}/app?tab=cv`, "Confirm readiness & upload documents"),
+        goldBtn(`${SITE}/app?tab=jobs&offer=${applicationId}`, "View & Respond to Offer"),
+        `<p><a href="${SITE}/app?tab=cv" style="color:#D4AF37">Upload documents</a></p>`,
       ].filter(Boolean).join("");
 
 
-      await svc.from("notifications").insert({
+      const { data: existingNotif } = await svc.from("notifications")
+        .select("id").eq("crew_id", app.crew_id).eq("kind", "job_offer")
+        .eq("link", `/app?tab=jobs&offer=${applicationId}`).limit(1);
+      if (!existingNotif?.length) await svc.from("notifications").insert({
         crew_id: app.crew_id,
+        link: `/app?tab=jobs&offer=${applicationId}`,
         kind: "job_offer",
         title: `🎉 Offer received — ${rank}`,
         body: `${company}${offer.vessel_name ? ` · ${offer.vessel_name}` : ""}`,
         icon: "⚓",
-        screen: "home",
+        screen: "jobs",
       });
 
       if (!to) return json({ ok: true, skipped: "no_email" });
