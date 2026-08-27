@@ -43,6 +43,7 @@ interface MyPosting {
   id: string;
   rank_required: string | null;
   vessel_type: string | null;
+  joining_port?: string | null;
   status: string | null;
   created_at: string;
 }
