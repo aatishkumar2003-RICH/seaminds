@@ -110,6 +110,8 @@ const COUNTRY_PORTS: Record<string, string[]> = {
 };
 
 const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSea, shipName }: FindWorkProps) => {
+  const [searchParams] = useSearchParams();
+  const [offerCount, setOfferCount] = useState(0);
   const [availabilityDate, setAvailabilityDate] = useState<Date>();
   const [preferredVessel, setPreferredVessel] = useState("Any Type");
   const [aboutMe, setAboutMe] = useState("");
@@ -304,8 +306,14 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
       <ApplyGateSheet open={gateOpen} onClose={() => setGateOpen(false)} next="/app?tab=jobs" />
 
       <div>
-        <h3 className="mx-4 mb-2 text-sm font-extrabold uppercase tracking-wide text-primary">⚡ Action required</h3>
-        <CrewOffers profileId={profileId} highlightApplicationId={searchParams.get("offer")} />
+        {offerCount > 0 && (
+          <h3 className="mx-4 mb-2 text-sm font-extrabold uppercase tracking-wide text-primary">⚡ Action required</h3>
+        )}
+        <CrewOffers
+          profileId={profileId}
+          highlightApplicationId={searchParams.get("offer")}
+          onCountChange={setOfferCount}
+        />
       </div>
 
 

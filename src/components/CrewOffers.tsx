@@ -7,6 +7,7 @@ const NAVY = "#0D1B2A";
 interface Props {
   profileId?: string;
   highlightApplicationId?: string | null;
+  onCountChange?: (n: number) => void;
 }
 
 interface Offer {
@@ -17,7 +18,7 @@ interface Offer {
   offer_details: any | null;
 }
 
-const CrewOffers = ({ profileId, highlightApplicationId }: Props) => {
+const CrewOffers = ({ profileId, highlightApplicationId, onCountChange }: Props) => {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [celebrated, setCelebrated] = useState<Set<string>>(new Set());
   const [declined, setDeclined] = useState<Set<string>>(new Set());
@@ -70,6 +71,9 @@ const CrewOffers = ({ profileId, highlightApplicationId }: Props) => {
   };
 
   const visible = offers.filter((o) => !declined.has(o.id));
+
+  useEffect(() => { onCountChange?.(visible.length); }, [visible.length, onCountChange]);
+
   if (!visible.length) return null;
 
   return (
