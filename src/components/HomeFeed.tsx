@@ -315,27 +315,8 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
     toast.success(accept ? `Linked with ${invite.company_name}` : "Declined");
   };
 
-  const respondToOffer = async (offer: any, accept: boolean) => {
-    if (!accept && !window.confirm("Decline this offer? The company will be notified.")) return;
-    const { data, error } = await supabase.rpc("crew_respond_offer" as any, {
-      p_application_id: offer.id,
-      p_accept: accept,
-    });
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    const result = data as { ok?: boolean; error?: string } | null;
-    if (!result?.ok) {
-      toast.error(result?.error || "Failed to respond");
-      return;
-    }
-    if (accept) {
-      setCelebratedOffers((prev) => new Set(prev).add(offer.id));
-    } else {
-      setDeclinedOffers((prev) => new Set(prev).add(offer.id));
-    }
-  };
+
+
 
   const refresh = async () => {
     setRefreshing(true);
