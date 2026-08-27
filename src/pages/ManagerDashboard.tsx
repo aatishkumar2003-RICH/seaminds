@@ -522,6 +522,12 @@ const ManagerDashboard = () => {
                                 </>
                               )}
                               <p className="text-xs text-muted-foreground italic">Waiting for crew to accept…</p>
+                              <button
+                                onClick={() => resendOfferEmail(a.application_id)}
+                                className="text-[11px] font-semibold px-2 py-1 rounded-lg border border-[#D4AF37]/50 text-[#D4AF37] hover:bg-[#D4AF37]/10 transition-colors"
+                              >
+                                Resend email
+                              </button>
                             </div>
                           )}
                           {a.outcome === "placed" && (
