@@ -141,12 +141,30 @@ Deno.serve(async (req) => {
 
 
     // ---- search ----
+    const ADMIN_UID_SEARCH = "492ee966-e015-4440-a415-6ad6275a4a9b";
     let query = admin
       .from("crew_profiles")
       .select(
-        "id, first_name, last_name, rank, role, nationality, vessel_type, preferred_vessel_types, whatsapp_number, email, is_available, available_from, crew_unique_id, email_verified, whatsapp_verified, years_at_sea, created_at, years_in_rank_band, contracts_in_rank_band, total_sea_service_band, quick_profile_completed_at",
+        "id, first_name, last_name, rank, role, nationality, vessel_type, preferred_vessel_types, whatsapp_number, email, is_available, available_from, crew_unique_id, email_verified, whatsapp_verified, years_at_sea, created_at, years_in_rank_band, contracts_in_rank_band, total_sea_service_band, quick_profile_completed_at, placed_until, placed_company",
         { count: "exact" },
       );
+
+    // Placed crew are protected during their contract: only the placing company
+    // (or the admin) may see them, regardless of the availability filter.
+    if (authUser.id !== ADMIN_UID_SEARCH) {
+      const today = new Date().toISOString().slice(0, 10);
+      const myCompany = String(manager.company_name || "").trim().toLowerCase();
+      const { data: placedRows } = await admin
+        .from("crew_profiles")
+        .select("id, placed_company")
+        .gte("placed_until", today)
+        .limit(5000);
+      const hidden = (placedRows || [])
+        .filter((r: any) => String(r.placed_company || "").trim().toLowerCase() !== myCompany || !myCompany)
+        .map((r: any) => r.id);
+      if (hidden.length) query = query.not("id", "in", `(${hidden.join(",")})`);
+    }
+
 
     if (filters.rank) query = query.or(`rank.ilike.%${filters.rank}%,role.ilike.%${filters.rank}%`);
     if (filters.nationality) query = query.ilike("nationality", `%${filters.nationality}%`);
