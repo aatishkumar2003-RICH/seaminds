@@ -2528,6 +2528,7 @@ export type Database = {
           icon: string | null
           id: string
           kind: string
+          link: string | null
           read: boolean | null
           screen: string | null
           title: string
@@ -2539,6 +2540,7 @@ export type Database = {
           icon?: string | null
           id?: string
           kind: string
+          link?: string | null
           read?: boolean | null
           screen?: string | null
           title: string
@@ -2550,6 +2552,7 @@ export type Database = {
           icon?: string | null
           id?: string
           kind?: string
+          link?: string | null
           read?: boolean | null
           screen?: string | null
           title?: string
