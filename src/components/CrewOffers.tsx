@@ -12,16 +12,17 @@ interface Props {
 
 interface Offer {
   id: string;
+  application_id?: string;
   company_name: string | null;
   rank_applied: string | null;
+  outcome?: string | null;
   offered_joining_date: string | null;
   offer_details: any | null;
 }
 
 const CrewOffers = ({ profileId, highlightApplicationId, onCountChange }: Props) => {
   const [offers, setOffers] = useState<Offer[]>([]);
-  const [celebrated, setCelebrated] = useState<Set<string>>(new Set());
-  const [declined, setDeclined] = useState<Set<string>>(new Set());
+  const [placed, setPlaced] = useState<{ id: string; company: string | null }[]>([]);
   const highlightRef = useRef<HTMLDivElement | null>(null);
 
   const load = useCallback(async () => {
@@ -34,7 +35,8 @@ const CrewOffers = ({ profileId, highlightApplicationId, onCountChange }: Props)
 
     const rpc = await supabase.rpc("get_my_offers" as any);
     if (!rpc.error && Array.isArray(rpc.data)) {
-      setOffers(rpc.data as any[]);
+      const rows = (rpc.data as any[]).map((o) => ({ ...o, id: o.id || o.application_id })) as Offer[];
+      setOffers(rows.filter((o) => o.outcome === "offered"));
       return;
     }
     const { data, error } = await supabase
@@ -53,6 +55,8 @@ const CrewOffers = ({ profileId, highlightApplicationId, onCountChange }: Props)
     highlightRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [highlightApplicationId, offers]);
 
+  useEffect(() => { onCountChange?.(offers.length); }, [offers.length, onCountChange]);
+
   const respond = async (offer: Offer, accept: boolean) => {
     if (!accept && !window.confirm("Decline this offer? The company will be notified.")) return;
     const { data, error } = await supabase.rpc("crew_respond_offer" as any, {
@@ -62,23 +66,39 @@ const CrewOffers = ({ profileId, highlightApplicationId, onCountChange }: Props)
     if (error) { toast.error(error.message); return; }
     const result = data as { ok?: boolean; error?: string } | null;
     if (!result?.ok) { toast.error(result?.error || "Failed to respond"); return; }
+
+    // remove immediately so ACTION REQUIRED clears without a reload
+    setOffers((prev) => prev.filter((o) => o.id !== offer.id));
     if (accept) {
-      setCelebrated((p) => new Set(p).add(offer.id));
+      setPlaced((prev) => [...prev, { id: offer.id, company: offer.company_name }]);
       toast.success("Placement confirmed ⚓");
-    } else {
-      setDeclined((p) => new Set(p).add(offer.id));
+      supabase.functions
+        .invoke("notify-application", { body: { application_id: offer.id, kind: "accepted" } })
+        .catch(() => {});
     }
+    load();
   };
 
-  const visible = offers.filter((o) => !declined.has(o.id));
-
-  useEffect(() => { onCountChange?.(visible.length); }, [visible.length, onCountChange]);
-
-  if (!visible.length) return null;
+  if (!offers.length && !placed.length) return null;
 
   return (
     <>
-      {visible.map((o) => {
+      {placed.map((p) => (
+        <div
+          key={`placed-${p.id}`}
+          className="mx-4 mb-3 rounded-2xl p-4 shadow-lg"
+          style={{ background: "linear-gradient(135deg, #D4AF37 0%, #C5941F 100%)", color: NAVY }}
+        >
+          <div className="space-y-2 text-center">
+            <p className="text-xl font-black tracking-wide">⚓ CONGRATULATIONS, SAILOR!</p>
+            <p className="text-sm font-bold">
+              You are officially placed with {p.company || "the company"}. Your CV is now protected from other companies until your contract ends. Fair winds! 🌊
+            </p>
+          </div>
+        </div>
+      ))}
+
+      {offers.map((o) => {
         const d = o.offer_details;
         const isHighlight = !!highlightApplicationId && highlightApplicationId === o.id;
         return (
@@ -92,62 +112,53 @@ const CrewOffers = ({ profileId, highlightApplicationId, onCountChange }: Props)
               ...(isHighlight ? { boxShadow: "0 0 0 4px rgba(212,175,55,0.6)" } : {}),
             }}
           >
-            {celebrated.has(o.id) ? (
-              <div className="space-y-2 text-center">
-                <p className="text-xl font-black tracking-wide">⚓ CONGRATULATIONS, SAILOR!</p>
-                <p className="text-sm font-bold">
-                  You are officially placed with {o.company_name}. Your CV is now protected from other companies until your contract ends. Fair winds! 🌊
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <p className="text-xl font-black tracking-wide">🎉 JOB OFFER</p>
-                <p className="text-base font-bold">{o.company_name} wants you as {o.rank_applied}</p>
-                {o.offered_joining_date && !d && (
-                  <p className="text-sm font-bold opacity-90">Joining {new Date(o.offered_joining_date).toLocaleDateString()}</p>
-                )}
-                {d && (
-                  <div className="space-y-1">
-                    <p className="text-sm font-bold opacity-90">
-                      🚢 {d.vessel_name || "Vessel to be advised"}
-                      {d.joining_date ? ` · Joining ${d.joining_date}` : ""}
-                      {d.joining_port ? ` at ${d.joining_port}` : ""}
-                    </p>
-                    {d.interview_required && (
-                      <p className="text-sm font-bold opacity-90">🎤 Interview: {d.interview_date || "to be advised"}</p>
-                    )}
-                    {d.documents_required && (
-                      <p className="text-sm font-bold opacity-90">📄 Upload your documents for verification</p>
-                    )}
-                    {d.salary && <p className="text-sm font-bold opacity-90">💰 {d.salary}</p>}
-                    {d.message && <p className="text-xs italic leading-relaxed opacity-80">{d.message}</p>}
-                  </div>
-                )}
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => respond(o, true)}
-                    className="flex-1 rounded-xl py-2.5 font-bold text-[13px] flex items-center justify-center gap-2"
-                    style={{ background: NAVY, color: "#D4AF37", border: "none", cursor: "pointer" }}
-                  >
-                    ⚓ Accept & Get Placed
-                  </button>
-                  <button
-                    onClick={() => respond(o, false)}
-                    className="flex-1 rounded-xl py-2.5 font-bold text-[13px] flex items-center justify-center gap-2"
-                    style={{ background: "transparent", color: NAVY, border: `2px solid ${NAVY}`, cursor: "pointer" }}
-                  >
-                    Decline
-                  </button>
+            <div className="space-y-3">
+              <p className="text-xl font-black tracking-wide">🎉 JOB OFFER</p>
+              <p className="text-base font-bold">{o.company_name} wants you as {o.rank_applied}</p>
+              {o.offered_joining_date && !d && (
+                <p className="text-sm font-bold opacity-90">Joining {new Date(o.offered_joining_date).toLocaleDateString()}</p>
+              )}
+              {d && (
+                <div className="space-y-1">
+                  <p className="text-sm font-bold opacity-90">
+                    🚢 {d.vessel_name || "Vessel to be advised"}
+                    {d.joining_date ? ` · Joining ${d.joining_date}` : ""}
+                    {d.joining_port ? ` at ${d.joining_port}` : ""}
+                  </p>
+                  {d.interview_required && (
+                    <p className="text-sm font-bold opacity-90">🎤 Interview: {d.interview_date || "to be advised"}</p>
+                  )}
+                  {d.documents_required && (
+                    <p className="text-sm font-bold opacity-90">📄 Upload your documents for verification</p>
+                  )}
+                  {d.salary && <p className="text-sm font-bold opacity-90">💰 {d.salary}</p>}
+                  {d.message && <p className="text-xs italic leading-relaxed opacity-80">{d.message}</p>}
                 </div>
-                <a
-                  href="/app?tab=cv"
-                  className="block text-center text-[12px] font-bold underline"
-                  style={{ color: NAVY }}
+              )}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => respond(o, true)}
+                  className="flex-1 rounded-xl py-2.5 font-bold text-[13px] flex items-center justify-center gap-2"
+                  style={{ background: NAVY, color: "#D4AF37", border: "none", cursor: "pointer" }}
                 >
-                  Upload documents
-                </a>
+                  ⚓ Accept & Get Placed
+                </button>
+                <button
+                  onClick={() => respond(o, false)}
+                  className="flex-1 rounded-xl py-2.5 font-bold text-[13px] flex items-center justify-center gap-2"
+                  style={{ background: "transparent", color: NAVY, border: `2px solid ${NAVY}`, cursor: "pointer" }}
+                >
+                  Decline
+                </button>
               </div>
-            )}
+              <a
+                href="/app?tab=cv"
+                className="block text-center text-[12px] font-bold underline"
+                style={{ color: NAVY }}
+              >
+                Upload documents
+              </a>
+            </div>
           </div>
         );
       })}
