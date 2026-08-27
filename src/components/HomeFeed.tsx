@@ -8,6 +8,7 @@ import { formatSalaryText, formatSalaryRange } from "@/lib/salary";
 import { toast } from "sonner";
 import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, recordApplication, CrewCardInfo } from "@/lib/applyMessage";
 import ApplyGateSheet from "@/components/ApplyGateSheet";
+import CrewOffers from "@/components/CrewOffers";
 
 const GOLD = "#D4AF37";
 const NAVY = "#0D1B2A";
