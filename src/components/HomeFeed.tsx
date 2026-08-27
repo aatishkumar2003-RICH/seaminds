@@ -473,61 +473,8 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
       )}
 
 
-      {offers.filter((o) => !declinedOffers.has(o.id)).map((o) => (
-        <div key={o.id} className="mx-4 mb-3 rounded-2xl p-4 shadow-lg" style={{ background: "linear-gradient(135deg, #D4AF37 0%, #C5941F 100%)", color: NAVY }}>
-          {celebratedOffers.has(o.id) ? (
-            <div className="space-y-2 text-center">
-              <p className="text-xl font-black tracking-wide">⚓ CONGRATULATIONS, SAILOR!</p>
-              <p className="text-sm font-bold">You are officially placed with {o.company_name}. Your CV is now protected from other companies until your contract ends. Fair winds! 🌊</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <p className="text-xl font-black tracking-wide">🎉 JOB OFFER</p>
-              <p className="text-base font-bold">{o.company_name} wants you as {o.rank_applied}</p>
-              {o.offered_joining_date && !o.offer_details && (
-                <p className="text-sm font-bold opacity-90">Joining {new Date(o.offered_joining_date).toLocaleDateString()}</p>
-              )}
-              {o.offer_details && (
-                <div className="space-y-1">
-                  <p className="text-sm font-bold opacity-90">
-                    🚢 {o.offer_details.vessel_name || "Vessel to be advised"}
-                    {o.offer_details.joining_date ? ` · Joining ${o.offer_details.joining_date}` : ""}
-                    {o.offer_details.joining_port ? ` at ${o.offer_details.joining_port}` : ""}
-                  </p>
-                  {o.offer_details.interview_required && (
-                    <p className="text-sm font-bold opacity-90">🎤 Interview: {o.offer_details.interview_date || "to be advised"}</p>
-                  )}
-                  {o.offer_details.documents_required && (
-                    <p className="text-sm font-bold opacity-90">📄 Upload your documents for verification</p>
-                  )}
-                  {o.offer_details.salary && (
-                    <p className="text-sm font-bold opacity-90">💰 {o.offer_details.salary}</p>
-                  )}
-                  {o.offer_details.message && (
-                    <p className="text-xs italic leading-relaxed opacity-80">{o.offer_details.message}</p>
-                  )}
-                </div>
-              )}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => respondToOffer(o, true)}
-                  className="flex-1 rounded-xl py-2.5 font-bold text-[13px] flex items-center justify-center gap-2"
-                  style={{ background: NAVY, color: GOLD, border: "none", cursor: "pointer" }}
-                >
-                  ⚓ Accept & Get Placed
-                </button>
-                <button
-                  onClick={() => respondToOffer(o, false)}
-                  className="flex-1 rounded-xl py-2.5 font-bold text-[13px] flex items-center justify-center gap-2"
-                  style={{ background: "transparent", color: NAVY, border: `2px solid ${NAVY}`, cursor: "pointer" }}
-                >
-                  Decline
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      ))}
+      <CrewOffers profileId={profileId} />
+
 
       {fleetInvites.map((inv) => (
         <div key={inv.id} className="mx-4 mb-3 rounded-2xl p-4" style={{ background: CARD, border: `1px solid ${GOLD}` }}>
