@@ -27,7 +27,7 @@ const NotificationBell = ({ profileId, onNavigate }: { profileId: string; onNavi
     if (!profileId) return;
     const { data } = await supabase
       .from("notifications" as any)
-      .select("id, kind, title, body, icon, screen, read, created_at")
+      .select("id, kind, title, body, icon, screen, link, read, created_at")
       .eq("crew_id", profileId)
       .order("created_at", { ascending: false })
       .limit(30);
@@ -52,7 +52,9 @@ const NotificationBell = ({ profileId, onNavigate }: { profileId: string; onNavi
 
   const tap = async (n: Note) => {
     try { await supabase.from("notifications" as any).update({ read: true }).eq("id", n.id); } catch { /* ignore */ }
+    setNotes((ns) => ns.map((x) => (x.id === n.id ? { ...x, read: true } : x)));
     setOpen(false);
+    if (n.link) { window.location.assign(n.link); return; }
     if (n.screen) onNavigate?.(n.screen);
   };
 
