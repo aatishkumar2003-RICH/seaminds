@@ -354,7 +354,9 @@ const ManagerDashboard = () => {
     if (notified) {
       toast.success("Offer sent ✓");
     } else {
-      toast.error("Offer saved — email delivery failed, retry from the applicant card");
+      toast.error("Offer saved — email delivery failed. The crew can still see it in SeaMinds.", {
+        action: { label: "Resend email", onClick: () => resendOfferEmail(applicationId) },
+      });
     }
     loadApplicants();
   };
@@ -365,7 +367,8 @@ const ManagerDashboard = () => {
         body: { application_id: applicationId, kind: "offer" },
       });
       if (error) return false;
-      return !!(data as { ok?: boolean } | null)?.ok;
+      const r = data as { ok?: boolean; sent?: boolean } | null;
+      return !!(r?.ok && r?.sent === true);
     } catch {
       return false;
     }
@@ -376,6 +379,7 @@ const ManagerDashboard = () => {
     if (ok) toast.success("Offer email sent ✓");
     else toast.error("Email delivery failed — please try again");
   };
+
 
 
   const handleApplicationAction = async (

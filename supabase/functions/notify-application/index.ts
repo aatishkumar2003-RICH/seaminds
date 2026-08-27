@@ -151,14 +151,68 @@ Deno.serve(async (req) => {
         screen: "jobs",
       });
 
-      if (!to) return json({ ok: true, skipped: "no_email" });
+      if (!to) return json({ ok: true, sent: false, skipped: "no_email" });
+      if (await alreadyEmailed(applicationId, "offer")) {
+        return json({ ok: true, sent: false, skipped: "already_sent" });
+      }
       const sent = await sendMail(to, `⚓ Job Offer via SeaMinds — ${rank}`, card(lines), applicationId, "offer");
       return json({ ok: true, sent });
     }
 
+    // ---------- ACCEPTED BRANCH (caller is the crew who owns the application) ----------
+    if (kind === "accepted") {
+      if (app.crew_id !== user.id) return json({ ok: false, error: "unauthorized" });
+      if (await alreadyEmailed(applicationId, "accepted")) {
+        return json({ ok: true, sent: false, skipped: "already_sent" });
+      }
+
+      const { data: od } = await svc.from("job_applications")
+        .select("offer_details").eq("id", applicationId).maybeSingle();
+      const offer: any = (od as any)?.offer_details ?? {};
+
+      let recipientTo = "";
+      if (app.job_posting_id) {
+        const { data: jp } = await svc.from("job_postings")
+          .select("manager_id, contact_email").eq("id", app.job_posting_id).maybeSingle();
+        recipientTo = (jp as any)?.contact_email || "";
+        if (!recipientTo && jp?.manager_id) {
+          const { data: mgr } = await svc.auth.admin.getUserById(jp.manager_id);
+          recipientTo = mgr?.user?.email || "";
+        }
+      }
+      if (!recipientTo && app.company_post_id) {
+        const { data: cp } = await svc.from("company_posts")
+          .select("manager_id").eq("id", app.company_post_id).maybeSingle();
+        if ((cp as any)?.manager_id) {
+          const { data: mgr } = await svc.auth.admin.getUserById((cp as any).manager_id);
+          recipientTo = mgr?.user?.email || "";
+        }
+      }
+      if (!recipientTo) return json({ ok: true, sent: false, skipped: "no_email" });
+
+      const { data: crewRow } = await svc.from("crew_profiles")
+        .select("first_name, last_name").eq("id", app.crew_id).maybeSingle();
+      const crewName = `${crewRow?.first_name || "The seafarer"} ${(crewRow?.last_name || "").slice(0, 1)}`.trim();
+      const rankA = app.rank_applied || "Crew";
+
+      const html = card([
+        `<h2 style="color:#D4AF37;margin:0 0 12px">⚓ Offer accepted</h2>`,
+        `<p><strong>${esc(crewName)}</strong> has accepted your offer for <strong>${esc(rankA)}</strong>.</p>`,
+        offer.vessel_name ? `<p>Vessel: ${esc(offer.vessel_name)}</p>` : "",
+        offer.joining_date || offer.joining_port
+          ? `<p>Joining: ${esc(offer.joining_date || "TBA")}${offer.joining_port ? ` at ${esc(offer.joining_port)}` : ""}</p>` : "",
+        offer.salary ? `<p>Salary: ${esc(offer.salary)}</p>` : "",
+        goldBtn(`${SITE}/manager/dashboard?tab=applicants`, "Open your Applicants"),
+      ].filter(Boolean).join(""));
+
+      const sent = await sendMail(recipientTo, `⚓ Offer accepted — ${rankA}`, html, applicationId, "accepted");
+      return json({ ok: true, sent });
+    }
+
+
     // ---------- APPLICATION BRANCH (caller is the crew) ----------
     if (app.crew_id !== user.id) return json({ ok: false, error: "not_found" });
-    if (await alreadyEmailed(applicationId, "application")) return json({ ok: true, skipped: "already_emailed" });
+    if (await alreadyEmailed(applicationId, "application")) return json({ ok: true, sent: false, skipped: "already_emailed" });
 
     const { data: crew } = await svc.from("crew_profiles")
       .select("first_name, last_name, rank, role, nationality, years_in_rank_band, public_card_token")
@@ -190,14 +244,14 @@ Deno.serve(async (req) => {
     if (app.job_posting_id) {
       const { data: jp } = await svc.from("job_postings")
         .select("manager_id, rank_required, vessel_type, contact_email").eq("id", app.job_posting_id).maybeSingle();
-      if (!jp) return json({ ok: true, skipped: "no_target" });
+      if (!jp) return json({ ok: true, sent: false, skipped: "no_target" });
       recipient = (jp as any).contact_email || "";
       if (!recipient) {
-        if (!jp.manager_id) return json({ ok: true, skipped: "no_manager" });
+        if (!jp.manager_id) return json({ ok: true, sent: false, skipped: "no_manager" });
         const { data: mgr } = await svc.auth.admin.getUserById(jp.manager_id);
         recipient = mgr?.user?.email || "";
       }
-      if (!recipient) return json({ ok: true, skipped: "no_email" });
+      if (!recipient) return json({ ok: true, sent: false, skipped: "no_email" });
       subject = `New applicant via SeaMinds — ${jp.rank_required || rank}`;
       html = card(`
         <h2 style="color:#D4AF37;margin:0 0 12px">⚓ Application via SeaMinds</h2>
@@ -210,7 +264,7 @@ Deno.serve(async (req) => {
         .select("contact_email, rank_required, title, vessel_type, joining_port")
         .eq("id", app.vacancy_id).maybeSingle();
       recipient = ev?.contact_email || "";
-      if (!recipient) return json({ ok: true, skipped: "no_contact_email" });
+      if (!recipient) return json({ ok: true, sent: false, skipped: "no_contact_email" });
       const pos = ev?.rank_required || ev?.title || rank;
       subject = `A seafarer applied to your ${pos} vacancy via SeaMinds`;
       html = card(`
@@ -220,10 +274,10 @@ Deno.serve(async (req) => {
         ${goldBtn(`${SITE}/for-companies`, "Register your company free to view full profiles")}
       `);
     } else {
-      return json({ ok: true, skipped: "no_target" });
+      return json({ ok: true, sent: false, skipped: "no_target" });
     }
 
-    if (await overDailyLimit(recipient)) return json({ ok: true, skipped: "rate_limited" });
+    if (await overDailyLimit(recipient)) return json({ ok: true, sent: false, skipped: "rate_limited" });
 
     const sent = await sendMail(recipient, subject, html, applicationId, "application");
     return json({ ok: true, sent });
