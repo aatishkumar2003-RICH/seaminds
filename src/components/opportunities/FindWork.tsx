@@ -187,19 +187,37 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
       updated_at: new Date().toISOString(),
     };
 
-    const { data: existing } = await supabase
+    const { error } = await supabase
       .from("crew_availability")
-      .select("id")
+      .upsert(payload, { onConflict: "crew_profile_id" });
+
+    if (error) {
+      console.error("crew_availability save failed:", error);
+      setSaving(false);
+      toast({ title: "Could not save — please try again", variant: "destructive" });
+      return;
+    }
+
+    // Verify the write persisted and sync form state from the stored record
+    const { data: saved, error: readErr } = await supabase
+      .from("crew_availability")
+      .select("*")
       .eq("crew_profile_id", profileId)
       .maybeSingle();
 
-    if (existing) {
-      await supabase.from("crew_availability").update(payload).eq("crew_profile_id", profileId);
-    } else {
-      await supabase.from("crew_availability").insert(payload);
+    if (readErr || !saved) {
+      console.error("crew_availability re-read failed:", readErr);
+      setSaving(false);
+      toast({ title: "Could not save — please try again", variant: "destructive" });
+      return;
     }
+
+    setAvailabilityDate(saved.availability_date ? new Date(saved.availability_date) : undefined);
+    setPreferredVessel(saved.preferred_vessel_type || "Any Type");
+    setAboutMe(saved.about_me || "");
+    setVisible(saved.visible_to_employers);
     setSaving(false);
-    toast({ title: "Profile Updated", description: visVal ? "You are now visible to employers." : "Changes saved." });
+    toast({ title: "Profile Updated", description: saved.visible_to_employers ? "You are now visible to employers." : "Changes saved." });
   };
 
   const handleToggle = (checked: boolean) => {
@@ -447,12 +465,24 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                 <h3 className="text-sm font-semibold text-foreground">Make Me Visible to Employers</h3>
                 <p className="text-[10px] text-muted-foreground mt-0.5">Employers can find and contact you</p>
               </div>
-              <Switch checked={visible} onCheckedChange={handleToggle} className="scale-125" />
+              <div className="flex items-center gap-2.5">
+                <span className={cn("text-xs font-bold tracking-wide", visible ? "text-green-400" : "text-muted-foreground")}>
+                  {visible ? "VISIBLE ✓" : "Hidden"}
+                </span>
+                <Switch
+                  checked={visible}
+                  onCheckedChange={handleToggle}
+                  className={cn(
+                    "scale-125",
+                    visible ? "data-[state=checked]:bg-green-500" : "data-[state=unchecked]:bg-zinc-600"
+                  )}
+                />
+              </div>
             </div>
             {visible && (
-              <div className="flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-lg px-3 py-2">
-                <Check size={14} className="text-primary" />
-                <span className="text-xs text-primary font-medium">Profile Active — Employers Can Find You</span>
+              <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/30 rounded-lg px-3 py-2">
+                <Check size={14} className="text-green-400" />
+                <span className="text-xs text-green-400 font-medium">Profile Active — Employers Can Find You</span>
               </div>
             )}
           </div>

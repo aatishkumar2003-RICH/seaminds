@@ -229,6 +229,7 @@ const JobFeed = () => {
 
       <header style={{ position: "sticky", top: 0, zIndex: 20, background: NAVY, borderBottom: `1px solid ${BORDER}`, padding: "14px 16px" }}>
         <div style={{ maxWidth: 700, margin: "0 auto" }}>
+          <a href="/" style={{ display: "inline-block", color: "#94a3b8", fontSize: 12, fontWeight: 600, textDecoration: "none", marginBottom: 6 }}>← SeaMinds Home</a>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <Anchor size={20} style={{ color: GOLD }} />
