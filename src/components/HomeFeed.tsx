@@ -65,9 +65,6 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
   const [visible, setVisible] = useState(8);
   const [quizState, setQuizState] = useState<Record<string, number>>({});
   const [engaged, setEngaged] = useState<Record<string, { interested: boolean; saved: boolean; count: number }>>({});
-  const [offers, setOffers] = useState<any[]>([]);
-  const [celebratedOffers, setCelebratedOffers] = useState<Set<string>>(new Set());
-  const [declinedOffers, setDeclinedOffers] = useState<Set<string>>(new Set());
   const [fleetInvites, setFleetInvites] = useState<any[]>([]);
   const [refStats, setRefStats] = useState<{ link: string; shipmates_aboard: number } | null>(null);
   const [needsQuickProfile, setNeedsQuickProfile] = useState(false);
