@@ -14,6 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import { formatSalaryText, formatSalaryRange } from "@/lib/salary";
 import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, recordApplication, fetchQuickProfileDone, CrewCardInfo } from "@/lib/applyMessage";
 import ApplyGateSheet from "@/components/ApplyGateSheet";
+import CrewOffers from "@/components/CrewOffers";
+import { useSearchParams } from "react-router-dom";
 
 const VESSEL_TYPES = [
   "Bulk Carrier", "Tanker", "Chemical Tanker", "Container Ship",
