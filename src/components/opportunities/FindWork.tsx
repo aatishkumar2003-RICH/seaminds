@@ -303,6 +303,12 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     <div className="space-y-5">
       <ApplyGateSheet open={gateOpen} onClose={() => setGateOpen(false)} next="/app?tab=jobs" />
 
+      <div>
+        <h3 className="mx-4 mb-2 text-sm font-extrabold uppercase tracking-wide text-primary">⚡ Action required</h3>
+        <CrewOffers profileId={profileId} highlightApplicationId={searchParams.get("offer")} />
+      </div>
+
+
       {/* Recent Matches */}
       {(() => {
         const rankMatches = [
