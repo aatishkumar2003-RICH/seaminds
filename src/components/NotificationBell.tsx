@@ -8,7 +8,7 @@ const BORDER = "#1e3a5f";
 
 interface Note {
   id: string; kind: string; title: string; body: string | null;
-  icon: string | null; screen: string | null; read: boolean; created_at: string;
+  icon: string | null; screen: string | null; link?: string | null; read: boolean; created_at: string;
 }
 
 const timeAgo = (iso: string) => {
