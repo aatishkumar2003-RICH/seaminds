@@ -43,6 +43,7 @@ interface MyPosting {
   id: string;
   rank_required: string | null;
   vessel_type: string | null;
+  joining_port?: string | null;
   status: string | null;
   created_at: string;
 }
@@ -292,7 +293,7 @@ const ManagerDashboard = () => {
     if (user) {
       const { data: jp } = await supabase
         .from("job_postings")
-        .select("id, rank_required, vessel_type, status, created_at")
+        .select("id, rank_required, vessel_type, joining_port, status, created_at")
         .eq("manager_id", user.id)
         .order("created_at", { ascending: false });
       setMyPostings(((jp as unknown) as MyPosting[]) || []);
@@ -308,7 +309,7 @@ const ManagerDashboard = () => {
     setOfferFor(a);
     setOfferForm({
       vessel_name: a.vessel || posting?.vessel_type || "",
-      joining_port: "",
+      joining_port: posting?.joining_port || "",
       joining_date: d.toISOString().split("T")[0],
       salary: "",
       interview_required: true,
@@ -338,22 +339,42 @@ const ManagerDashboard = () => {
       p_joining_date: offerForm.joining_date || null,
       p_offer: offer,
     } as any);
-    setOfferSending(false);
-    if (error) { toast.error(error.message); return; }
+    if (error) { setOfferSending(false); toast.error(error.message); return; }
     const result = data as { ok?: boolean; error?: string } | null;
-    if (result && !result.ok) { toast.error(result.error || "Could not send offer"); return; }
+    if (result && !result.ok) { setOfferSending(false); toast.error(result.error || "Could not send offer"); return; }
 
-    supabase.functions.invoke("notify-application", {
-      body: { application_id: applicationId, kind: "offer" },
-    }).catch(() => {});
+    const notified = await notifyOffer(applicationId);
+    setOfferSending(false);
 
     setOfferSent((prev) => ({
       ...prev,
       [applicationId]: { vessel_name: offer.vessel_name || "", joining_date: offer.joining_date || "", salary: offer.salary || "" },
     }));
     setOfferFor(null);
-    toast.success("Offer sent ✓");
+    if (notified) {
+      toast.success("Offer sent ✓");
+    } else {
+      toast.error("Offer saved — email delivery failed, retry from the applicant card");
+    }
     loadApplicants();
+  };
+
+  const notifyOffer = async (applicationId: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase.functions.invoke("notify-application", {
+        body: { application_id: applicationId, kind: "offer" },
+      });
+      if (error) return false;
+      return !!(data as { ok?: boolean } | null)?.ok;
+    } catch {
+      return false;
+    }
+  };
+
+  const resendOfferEmail = async (applicationId: string) => {
+    const ok = await notifyOffer(applicationId);
+    if (ok) toast.success("Offer email sent ✓");
+    else toast.error("Email delivery failed — please try again");
   };
 
 
@@ -501,6 +522,12 @@ const ManagerDashboard = () => {
                                 </>
                               )}
                               <p className="text-xs text-muted-foreground italic">Waiting for crew to accept…</p>
+                              <button
+                                onClick={() => resendOfferEmail(a.application_id)}
+                                className="text-[11px] font-semibold px-2 py-1 rounded-lg border border-[#D4AF37]/50 text-[#D4AF37] hover:bg-[#D4AF37]/10 transition-colors"
+                              >
+                                Resend email
+                              </button>
                             </div>
                           )}
                           {a.outcome === "placed" && (

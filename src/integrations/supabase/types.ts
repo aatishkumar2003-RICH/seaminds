@@ -3456,6 +3456,7 @@ export type Database = {
       get_my_applicants: { Args: never; Returns: Json }
       get_my_credit_balance: { Args: never; Returns: Json }
       get_my_fleet: { Args: never; Returns: Json }
+      get_my_offers: { Args: never; Returns: Json }
       get_my_referral_stats: { Args: never; Returns: Json }
       get_my_safety_reports: { Args: never; Returns: Json }
       get_my_sos_contacts: { Args: never; Returns: Json }

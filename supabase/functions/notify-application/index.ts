@@ -140,7 +140,7 @@ Deno.serve(async (req) => {
 
       const { data: existingNotif } = await svc.from("notifications")
         .select("id").eq("crew_id", app.crew_id).eq("kind", "job_offer")
-        .eq("link", `/app?tab=jobs&offer=${applicationId}`).limit(1);
+        .ilike("link", `%${applicationId}%`).limit(1);
       if (!existingNotif?.length) await svc.from("notifications").insert({
         crew_id: app.crew_id,
         link: `/app?tab=jobs&offer=${applicationId}`,
