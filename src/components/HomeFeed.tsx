@@ -278,19 +278,8 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
 
   useEffect(() => { build().finally(() => setLoading(false)); }, [build]);
 
-  useEffect(() => {
-    if (!profileId) return;
-    const loadOffers = async () => {
-      const { data, error } = await supabase
-        .from("job_applications")
-        .select("id, company_name, rank_applied, offered_joining_date, outcome, offer_details")
-        .eq("crew_id", profileId)
-        .eq("outcome", "offered")
-        .order("offered_at", { ascending: false });
-      if (!error) setOffers((data as any[]) || []);
-    };
-    loadOffers();
-  }, [profileId]);
+
+
 
   useEffect(() => {
     if (!profileId) return;
