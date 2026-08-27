@@ -309,7 +309,7 @@ const ManagerDashboard = () => {
     setOfferFor(a);
     setOfferForm({
       vessel_name: a.vessel || posting?.vessel_type || "",
-      joining_port: "",
+      joining_port: posting?.joining_port || "",
       joining_date: d.toISOString().split("T")[0],
       salary: "",
       interview_required: true,
