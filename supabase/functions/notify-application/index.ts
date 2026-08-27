@@ -148,7 +148,7 @@ Deno.serve(async (req) => {
         title: `🎉 Offer received — ${rank}`,
         body: `${company}${offer.vessel_name ? ` · ${offer.vessel_name}` : ""}`,
         icon: "⚓",
-        screen: "home",
+        screen: "jobs",
       });
 
       if (!to) return json({ ok: true, skipped: "no_email" });
