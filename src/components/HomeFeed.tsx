@@ -124,19 +124,25 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
       const { data } = await supabase.rpc("engage_company_post" as any, { p_post_id: postId, p_action: action });
       const res: any = data;
       if (action !== "view") log("company_post", postId, action, position);
-      if (action === "interested" && res?.active) {
-        alert("The company can now see you are interested. Keep your CV and availability up to date.");
+      if (action === "interested" && profileId) {
+        const { error } = await supabase
+          .from("post_interests" as any)
+          .insert({ company_post_id: postId, crew_id: profileId } as any);
+        // 23505 = already interested; treat as success
+        if (error && (error as any).code !== "23505") console.error("post_interests insert failed:", error);
+        toast.success("Interested ✓ — the company can see you");
       }
       setEngaged((s) => ({
         ...s,
         [postId]: {
-          interested: action === "interested" ? !!res?.active : (s[postId]?.interested ?? false),
+          interested: action === "interested" ? true : (s[postId]?.interested ?? false),
           saved: action === "save" ? true : (s[postId]?.saved ?? false),
           count: typeof res?.interested === "number" ? res.interested : (s[postId]?.count ?? 0),
         },
       }));
     } catch { /* never break the feed */ }
   };
+
 
 
   const build = useCallback(async () => {
