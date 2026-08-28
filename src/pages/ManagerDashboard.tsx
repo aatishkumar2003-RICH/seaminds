@@ -126,28 +126,12 @@ const ManagerDashboard = () => {
   const [publishing, setPublishing] = useState(false);
   const [previews, setPreviews] = useState<ParsedVacancy[]>([]);
   const [risk, setRisk] = useState<{ level: string; flags: string[] } | null>(null);
+  const [readingFlier, setReadingFlier] = useState(false);
+  const flierInputRef = useRef<HTMLInputElement>(null);
 
-  const extractVacancies = async () => {
-    const text = pasteText.trim();
-    if (!text) { toast.error("Paste an advert first"); return; }
-    setExtracting(true);
-    const { data, error } = await supabase.functions.invoke("parse-vacancy-text", { body: { text: text.slice(0, 8000) } });
-    setExtracting(false);
-    if (error) {
-      const status = (error as unknown as { context?: { status?: number } })?.context?.status;
-      if (status === 403) toast.error("Your company account is pending approval");
-      else if (status === 429) toast.error("Daily limit reached — try again tomorrow");
-      else if (status === 401) toast.error("Please sign in again to continue");
-      else toast.error("Could not read that advert");
-      return;
-    }
-    const res = data as { ok?: boolean; error?: string; vacancies?: ParsedVacancy[]; risk?: { level: string; flags: string[] } };
-    if (!res?.ok) {
-      if (res?.error === "not_approved") toast.error("Your company account is pending approval");
-      else if (res?.error === "daily_limit") toast.error("Daily limit reached — try again tomorrow");
-      else toast.error("Could not read that advert");
-      return;
-    }
+  type ParseResult = { ok?: boolean; error?: string; raw_text?: string; vacancies?: ParsedVacancy[]; risk?: { level: string; flags: string[] } };
+
+  const applyParseResult = (res: ParseResult, setText: boolean) => {
     const list = (res.vacancies || []).map((v) => ({
       rank_required: v.rank_required || "",
       vessel_type: v.vessel_type || "",
@@ -159,10 +143,83 @@ const ManagerDashboard = () => {
       contact_email: v.contact_email || "",
       additional_notes: v.additional_notes || "",
     }));
+    if (setText && res.raw_text) setPasteText(res.raw_text.slice(0, 8000));
     setPreviews(list);
     setRisk(res.risk || null);
-    if (list.length === 0) toast("No vacancies found in that text");
+    if (list.length === 0) toast("No vacancies found");
   };
+
+  const handleParseError = (error: unknown, res?: ParseResult) => {
+    if (error) {
+      const status = (error as { context?: { status?: number } })?.context?.status;
+      if (status === 403) toast.error("Your company account is pending approval");
+      else if (status === 429) toast.error("Daily limit reached — try again tomorrow");
+      else if (status === 401) toast.error("Please sign in again to continue");
+      else toast.error("Could not read that advert");
+      return;
+    }
+    if (res?.error === "not_approved") toast.error("Your company account is pending approval");
+    else if (res?.error === "daily_limit") toast.error("Daily limit reached — try again tomorrow");
+    else toast.error(res?.error || "Could not read that advert");
+  };
+
+  const extractVacancies = async () => {
+    const text = pasteText.trim();
+    if (!text) { toast.error("Paste an advert first"); return; }
+    setExtracting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("parse-vacancy-text", { body: { text: text.slice(0, 8000) } });
+      if (error) { handleParseError(error); return; }
+      const res = data as ParseResult;
+      if (!res?.ok) { handleParseError(null, res); return; }
+      applyParseResult(res, false);
+    } finally {
+      setExtracting(false);
+    }
+  };
+
+  const downscaleImage = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("Could not read that image"));
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error("Could not read that image"));
+        img.onload = () => {
+          const max = 1600;
+          const scale = Math.min(1, max / Math.max(img.width, img.height));
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          const ctx = canvas.getContext("2d");
+          if (!ctx) { reject(new Error("Could not read that image")); return; }
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL("image/jpeg", 0.8));
+        };
+        img.src = String(reader.result);
+      };
+      reader.readAsDataURL(file);
+    });
+
+  const handleFlierUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setReadingFlier(true);
+    try {
+      const image_base64 = await downscaleImage(file);
+      const { data, error } = await supabase.functions.invoke("parse-vacancy-text", { body: { image_base64 } });
+      if (error) { handleParseError(error); return; }
+      const res = data as ParseResult;
+      if (!res?.ok) { handleParseError(null, res); return; }
+      applyParseResult(res, true);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not read that flier");
+    } finally {
+      setReadingFlier(false);
+    }
+  };
+
 
   const updatePreview = (i: number, key: keyof ParsedVacancy, value: string) => {
     setPreviews((prev) => prev.map((p, idx) => (idx === i ? { ...p, [key]: value } : p)));
