@@ -2604,6 +2604,35 @@ export type Database = {
         }
         Relationships: []
       }
+      post_interests: {
+        Row: {
+          company_post_id: string
+          created_at: string
+          crew_id: string
+          id: string
+        }
+        Insert: {
+          company_post_id: string
+          created_at?: string
+          crew_id: string
+          id?: string
+        }
+        Update: {
+          company_post_id?: string
+          created_at?: string
+          crew_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_interests_company_post_id_fkey"
+            columns: ["company_post_id"]
+            isOneToOne: false
+            referencedRelation: "company_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           company_name: string | null

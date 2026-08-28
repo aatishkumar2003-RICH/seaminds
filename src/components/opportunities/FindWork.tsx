@@ -175,55 +175,71 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     setLoading(false);
   };
 
-  const saveAvailability = async (newVisible?: boolean) => {
+  const applyRow = (row: any) => {
+    setAvailabilityDate(row?.availability_date ? new Date(row.availability_date) : undefined);
+    setPreferredVessel(row?.preferred_vessel_type || "Any Type");
+    setAboutMe(row?.about_me || "");
+    setVisible(!!row?.visible_to_employers);
+  };
+
+  const refreshAvailability = async () => {
+    const { data, error } = await supabase
+      .from("crew_availability")
+      .select("*")
+      .eq("crew_profile_id", profileId)
+      .maybeSingle();
+    if (!error && data) applyRow(data);
+  };
+
+  useEffect(() => {
+    if (!profileId) return;
+    refreshAvailability();
+    const onFocus = () => { if (document.visibilityState === "visible") refreshAvailability(); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profileId]);
+
+  const saveAvailability = async () => {
     setSaving(true);
-    const visVal = newVisible !== undefined ? newVisible : visible;
     const payload = {
       crew_profile_id: profileId,
       availability_date: availabilityDate ? format(availabilityDate, "yyyy-MM-dd") : null,
       preferred_vessel_type: preferredVessel,
       about_me: aboutMe,
-      visible_to_employers: visVal,
+      visible_to_employers: visible,
       updated_at: new Date().toISOString(),
     };
 
-    const { error } = await supabase
+    const { data: saved, error } = await supabase
       .from("crew_availability")
-      .upsert(payload, { onConflict: "crew_profile_id" });
+      .upsert(payload, { onConflict: "crew_profile_id" })
+      .select()
+      .single();
 
-    if (error) {
-      console.error("crew_availability save failed:", error);
-      setSaving(false);
-      toast({ title: "Could not save — please try again", variant: "destructive" });
-      return;
-    }
-
-    // Verify the write persisted and sync form state from the stored record
-    const { data: saved, error: readErr } = await supabase
-      .from("crew_availability")
-      .select("*")
-      .eq("crew_profile_id", profileId)
-      .maybeSingle();
-
-    if (readErr || !saved) {
-      console.error("crew_availability re-read failed:", readErr);
-      setSaving(false);
-      toast({ title: "Could not save — please try again", variant: "destructive" });
-      return;
-    }
-
-    setAvailabilityDate(saved.availability_date ? new Date(saved.availability_date) : undefined);
-    setPreferredVessel(saved.preferred_vessel_type || "Any Type");
-    setAboutMe(saved.about_me || "");
-    setVisible(saved.visible_to_employers);
     setSaving(false);
-    toast({ title: "Profile Updated", description: saved.visible_to_employers ? "You are now visible to employers." : "Changes saved." });
+
+    if (error || !saved) {
+      console.error("crew_availability save failed:", error);
+      toast({
+        title: "Could not save",
+        description: error?.message || "Unknown error",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    applyRow(saved);
+    toast({
+      title: "Saved ✓",
+      description: saved.visible_to_employers ? "Employers can find you" : "Hidden from employers",
+    });
   };
 
-  const handleToggle = (checked: boolean) => {
-    setVisible(checked);
-    saveAvailability(checked);
-  };
 
   // Best-effort outbound recording: fire-and-forget, never blocks the handoff
   const recordOutbound = (args: { vacancyId?: string | null; jobPostingId?: string | null; companyPostId?: string | null; company?: string | null; rank?: string | null; vessel?: string | null; url: string | null }) => {
@@ -457,7 +473,8 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
             </div>
 
             <Button size="sm" onClick={() => saveAvailability()} disabled={saving} className="w-full">
-              {saving ? "Saving..." : "Save Profile"}
+              {saving ? "Saving..." : "Save & Update Visibility"}
+
             </Button>
 
             <div className="flex items-center justify-between pt-2 border-t border-border">
@@ -471,7 +488,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                 </span>
                 <Switch
                   checked={visible}
-                  onCheckedChange={handleToggle}
+                  onCheckedChange={(checked) => setVisible(checked)}
                   className={cn(
                     "scale-125",
                     visible ? "data-[state=checked]:bg-green-500" : "data-[state=unchecked]:bg-zinc-600"
