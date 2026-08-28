@@ -1070,7 +1070,7 @@ const ManagerDashboard = () => {
 
             {/* Paste-to-Post */}
             <div className="bg-secondary rounded-xl border border-border p-4 space-y-3">
-              <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">⚡ Paste-to-Post — post a vacancy in 30 seconds</h2>
+              <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">⚡ Paste-to-Post — paste text OR upload your flier</h2>
               <textarea
                 value={pasteText}
                 onChange={(e) => setPasteText(e.target.value)}
@@ -1091,10 +1091,11 @@ const ManagerDashboard = () => {
                 <button
                   onClick={() => flierInputRef.current?.click()}
                   disabled={extracting || readingFlier}
-                  className="text-xs font-bold px-4 py-2 rounded-xl bg-transparent text-[#D4AF37] border border-[#D4AF37] hover:opacity-90 transition-opacity disabled:opacity-50"
+                  className="text-xs font-bold px-4 py-2 rounded-xl bg-[#D4AF37] text-[#0D1B2A] border border-[#D4AF37] hover:opacity-90 transition-opacity disabled:opacity-50"
                 >
                   {readingFlier ? "Reading your flier…" : "📄 Upload flier image"}
                 </button>
+
                 <input
                   ref={flierInputRef}
                   type="file"
