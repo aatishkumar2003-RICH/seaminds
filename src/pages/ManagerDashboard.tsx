@@ -667,12 +667,18 @@ const ManagerDashboard = () => {
           >
             🎓 Arrange Interview
           </button>
-          <button
-            onClick={() => navigate("/company-post")}
-            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-[#D4AF37] text-[#0D1B2A] border border-[#D4AF37] hover:opacity-90 transition-opacity"
-          >
-            ✍️ Create Post
-          </button>
+          <div className="flex flex-col items-start gap-1">
+            <button
+              onClick={() => navigate("/company-post")}
+              className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-[#D4AF37] text-[#0D1B2A] border border-[#D4AF37] hover:opacity-90 transition-opacity"
+            >
+              ✍️ Create Post
+            </button>
+            <span className="text-[10px] text-muted-foreground max-w-[240px] leading-snug">
+              (Create Post publishes your flier as an advert. To turn a flier into searchable vacancies, use Paste-to-Post below.)
+            </span>
+          </div>
+
           <button
             onClick={() => navigate("/post-vacancy")}
             className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-[#0D1B2A] text-[#D4AF37] border border-[#D4AF37]/40 hover:bg-[#D4AF37]/10 transition-colors"
@@ -1104,6 +1110,8 @@ const ManagerDashboard = () => {
                   onChange={handleFlierUpload}
                 />
               </div>
+              <p className="text-xs text-muted-foreground">Have a flier? Upload the image and SeaMinds will read it into vacancies.</p>
+
 
 
               {risk && (risk.level === "medium" || risk.level === "high") && (
