@@ -473,7 +473,8 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
             </div>
 
             <Button size="sm" onClick={() => saveAvailability()} disabled={saving} className="w-full">
-              {saving ? "Saving..." : "Save Profile"}
+              {saving ? "Saving..." : "Save & Update Visibility"}
+
             </Button>
 
             <div className="flex items-center justify-between pt-2 border-t border-border">
@@ -487,7 +488,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                 </span>
                 <Switch
                   checked={visible}
-                  onCheckedChange={handleToggle}
+                  onCheckedChange={(checked) => setVisible(checked)}
                   className={cn(
                     "scale-125",
                     visible ? "data-[state=checked]:bg-green-500" : "data-[state=unchecked]:bg-zinc-600"
