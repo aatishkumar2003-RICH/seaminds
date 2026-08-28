@@ -1079,14 +1079,31 @@ const ManagerDashboard = () => {
                 placeholder="Paste your WhatsApp vacancy advert here — exactly as you send it to your groups."
                 className="w-full bg-background text-foreground text-sm rounded-xl border border-border p-3 outline-none focus:border-[#D4AF37]/60"
               />
-              <p className="text-xs text-muted-foreground">AI reads it and creates your vacancies. You review before publishing.</p>
-              <button
-                onClick={extractVacancies}
-                disabled={extracting}
-                className="text-xs font-bold px-4 py-2 rounded-xl bg-[#D4AF37] text-[#0D1B2A] border border-[#D4AF37] hover:opacity-90 transition-opacity disabled:opacity-50"
-              >
-                {extracting ? "Reading advert…" : "Extract vacancies"}
-              </button>
+              <p className="text-xs text-muted-foreground">This is what SeaMinds read from your flier. Correct anything wrong, then tap Extract vacancies to rebuild — or publish the cards below.</p>
+              <div className="flex flex-wrap gap-2 items-center">
+                <button
+                  onClick={extractVacancies}
+                  disabled={extracting || readingFlier}
+                  className="text-xs font-bold px-4 py-2 rounded-xl bg-[#D4AF37] text-[#0D1B2A] border border-[#D4AF37] hover:opacity-90 transition-opacity disabled:opacity-50"
+                >
+                  {extracting ? "Reading advert…" : "Extract vacancies"}
+                </button>
+                <button
+                  onClick={() => flierInputRef.current?.click()}
+                  disabled={extracting || readingFlier}
+                  className="text-xs font-bold px-4 py-2 rounded-xl bg-transparent text-[#D4AF37] border border-[#D4AF37] hover:opacity-90 transition-opacity disabled:opacity-50"
+                >
+                  {readingFlier ? "Reading your flier…" : "📄 Upload flier image"}
+                </button>
+                <input
+                  ref={flierInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFlierUpload}
+                />
+              </div>
+
 
               {risk && (risk.level === "medium" || risk.level === "high") && (
                 <div
