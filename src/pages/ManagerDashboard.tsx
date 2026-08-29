@@ -5,6 +5,15 @@ import { Anchor, ArrowUpDown, LogOut, FileWarning, CreditCard, RefreshCw } from 
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import ManagerPaymentHistory from "@/components/smc/ManagerPaymentHistory";
+import {
+  type PreviewVacancy,
+  type SimilarVacancy,
+  toPreviewVacancy,
+  loadManagerIdentity,
+  scanDuplicates,
+  publishVacancyBatch,
+  publishSummary,
+} from "@/lib/managerVacancies";
 
 interface CrewRow {
   id: string;
