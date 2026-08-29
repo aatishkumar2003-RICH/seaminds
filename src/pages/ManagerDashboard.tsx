@@ -175,6 +175,7 @@ const ManagerDashboard = () => {
       if (error) { handleParseError(error); return; }
       const res = data as ParseResult;
       if (!res?.ok) { handleParseError(null, res); return; }
+      setSourceType("text");
       applyParseResult(res, false);
     } finally {
       setExtracting(false);
