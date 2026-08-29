@@ -76,15 +76,31 @@ const PostVacancy = () => {
       return;
     }
 
+    if (!identity?.userId) {
+      toast({ title: "Please wait", description: "Loading your company account…", variant: "destructive" });
+      return;
+    }
+    if (!identity.approved) {
+      toast({ title: "Pending approval", description: "Your company account is pending approval.", variant: "destructive" });
+      return;
+    }
+
     setUploadedFileName(file.name);
     setAiReading(true);
     setAiSuccess(false);
     try {
       const image_base64 = await downscaleImage(file);
       // keep the ORIGINAL flier alongside the downscaled copy used for AI reading
-      const originalUrl = identity?.userId ? await uploadOriginalFlier(file, identity.userId) : null;
-      setFlierUrl(originalUrl);
+      const upload = await uploadOriginalFlier(file, identity.userId);
+      if (!upload.ok) {
+        setFlierUrl(null);
+        setUploadedFileName("");
+        toast({ title: "Could not preserve the original flyer. Please try uploading again.", description: upload.error, variant: "destructive" });
+        return;
+      }
+      setFlierUrl(upload.url);
       const { data, error } = await supabase.functions.invoke("parse-vacancy-text", { body: { image_base64 } });
+
       if (error) {
         const status = (error as { context?: { status?: number } })?.context?.status;
         if (status === 403) toast({ title: "Pending approval", description: "Your company account is pending approval.", variant: "destructive" });
