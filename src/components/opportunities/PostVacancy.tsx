@@ -95,7 +95,7 @@ const PostVacancy = () => {
       if (!upload.ok) {
         setFlierUrl(null);
         setUploadedFileName("");
-        toast({ title: "Could not preserve the original flyer. Please try uploading again.", description: upload.error, variant: "destructive" });
+        toast({ title: "Could not preserve the original flyer. Please try uploading again.", description: "error" in upload ? upload.error : undefined, variant: "destructive" });
         return;
       }
       setFlierUrl(upload.url);
