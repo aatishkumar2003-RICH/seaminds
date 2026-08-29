@@ -11,6 +11,7 @@ import {
   toPreviewVacancy,
   loadManagerIdentity,
   scanDuplicates,
+  checkWhatsapp,
   publishVacancyBatch,
   publishSummary,
 } from "@/lib/managerVacancies";
