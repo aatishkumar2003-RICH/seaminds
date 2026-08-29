@@ -1159,6 +1159,7 @@ const ManagerDashboard = () => {
                         {([
                           ["rank_required", "Rank"],
                           ["vessel_type", "Vessel type"],
+                          ["positions", "Positions"],
                           ["joining_port", "Joining port"],
                           ["joining_date", "Joining date"],
                           ["contract_duration", "Contract"],
@@ -1166,11 +1167,11 @@ const ManagerDashboard = () => {
                           ["contact_whatsapp", "WhatsApp"],
                           ["contact_email", "Email"],
 
-                        ] as [keyof ParsedVacancy, string][]).map(([key, label]) => (
+                        ] as [keyof PreviewVacancy, string][]).map(([key, label]) => (
                           <label key={key} className="text-xs text-muted-foreground space-y-1">
                             {label}
                             <input
-                              value={v[key]}
+                              value={String(v[key] ?? "")}
                               onChange={(e) => updatePreview(i, key, e.target.value)}
                               className="w-full bg-background text-foreground text-xs rounded-lg border border-border px-2 py-1.5 outline-none focus:border-[#D4AF37]/60"
                             />
@@ -1178,6 +1179,11 @@ const ManagerDashboard = () => {
                               <p className="text-[11px] italic text-muted-foreground/70 leading-tight">
                                 This line will be published if you leave salary blank.<br />
                                 Salary as per international market standards, commensurate with rank and experience. Allowances and terms as per prevailing international market conditions.
+                              </p>
+                            )}
+                            {key === "contact_whatsapp" && !checkWhatsapp(v.contact_whatsapp).ok && (
+                              <p className="text-[11px] text-amber-400 leading-tight">
+                                Country code required — add +XX before publishing.
                               </p>
                             )}
                           </label>
@@ -1194,9 +1200,42 @@ const ManagerDashboard = () => {
                       </label>
                     </div>
                   ))}
+
+                  <div className="rounded-xl border border-[#D4AF37]/30 bg-[#D4AF37]/10 p-3 text-xs space-y-0.5">
+                    <p className="font-semibold text-[#D4AF37]">Applications will go to</p>
+                    <p className="text-foreground">Email: {previews.find((p) => p.contact_email)?.contact_email || "—"}</p>
+                    <p className="text-foreground">WhatsApp: {previews.find((p) => p.contact_whatsapp)?.contact_whatsapp || "—"}</p>
+                  </div>
+
+                  {similarPending && (
+                    <div className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-3 text-xs space-y-2">
+                      <p className="font-semibold text-amber-300">Similar active vacancies already exist.</p>
+                      <ul className="list-disc list-inside space-y-0.5 text-amber-200/90">
+                        {similarPending.similar.map((s) => (
+                          <li key={s.id}>{s.rank_required} · {s.vessel_type} · {s.joining_port}</li>
+                        ))}
+                      </ul>
+                      <div className="flex gap-2 pt-1">
+                        <button
+                          onClick={() => setSimilarPending(null)}
+                          className="text-xs font-medium px-3 py-1.5 rounded-lg border border-border text-muted-foreground"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => runPublish(similarPending.rows, similarPending.skipped, previews.length)}
+                          disabled={publishing}
+                          className="text-xs font-bold px-3 py-1.5 rounded-lg bg-[#D4AF37] text-[#0D1B2A] disabled:opacity-50"
+                        >
+                          {publishing ? "Publishing…" : "Publish Anyway"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   <button
                     onClick={publishPreviews}
-                    disabled={publishing}
+                    disabled={publishing || previews.some((p) => !checkWhatsapp(p.contact_whatsapp).ok)}
                     className="text-xs font-bold px-4 py-2 rounded-xl bg-[#D4AF37] text-[#0D1B2A] border border-[#D4AF37] hover:opacity-90 transition-opacity disabled:opacity-50"
                   >
                     {publishing ? "Publishing…" : "Publish all vacancies"}
