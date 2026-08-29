@@ -226,45 +226,31 @@ const ManagerDashboard = () => {
   };
 
 
-  const updatePreview = (i: number, key: keyof ParsedVacancy, value: string) => {
-    setPreviews((prev) => prev.map((p, idx) => (idx === i ? { ...p, [key]: value } : p)));
+  const updatePreview = (i: number, key: keyof PreviewVacancy, value: string) => {
+    setPreviews((prev) => prev.map((p, idx) => {
+      if (idx !== i) return p;
+      if (key === "positions") {
+        const n = parseInt(value.replace(/[^0-9]/g, ""), 10);
+        return { ...p, positions: Number.isFinite(n) && n >= 1 ? n : 1 };
+      }
+      return { ...p, [key]: value };
+    }));
   };
 
-  const publishPreviews = async () => {
-    if (previews.length === 0) return;
+  const runPublish = async (rows: PreviewVacancy[], skipped: number, requested: number) => {
     setPublishing(true);
     try {
-      const salaryFallback = "Salary as per international market standards, commensurate with rank and experience. Allowances and terms as per prevailing international market conditions.";
-      const rows = previews.map((v) => {
-        const hasSalary = (v.monthly_salary ?? "").trim().length > 0;
-        const additionalNotes = [
-          v.additional_notes,
-          v.joining_date ? `Joining date: ${v.joining_date}` : "",
-          v.contact_email ? `Email: ${v.contact_email}` : "",
-          !hasSalary ? salaryFallback : "",
-        ].filter(Boolean).join("\n") || null;
-        return {
-          rank_required: v.rank_required || "Not specified",
-          vessel_type: v.vessel_type || "Not specified",
-          contract_duration: v.contract_duration || "Not specified",
-          monthly_salary: v.monthly_salary || null,
-          joining_port: v.joining_port || "Not specified",
-          contact_whatsapp: v.contact_whatsapp || "",
-          contact_email: (v.contact_email || "").trim() || null,
-          additional_notes: additionalNotes,
-          company_name: companyName,
-          status: "active",
-          plan: "founding",
-          verified: false,
-          manager_id: managerUserId,
-        };
-      });
-      const { error } = await supabase.from("job_postings").insert(rows as any);
-      if (error) { toast.error(error.message || "Could not publish vacancies"); return; }
-      toast.success(`${rows.length} vacancies published ⚓`);
+      const identity = await loadManagerIdentity();
+      if (!identity?.approved) { toast.error("Your company account is pending approval"); return; }
+      const result = await publishVacancyBatch(rows, identity, sourceType, { skipDuplicateScan: true });
+      result.requested = requested;
+      result.duplicatesSkipped = skipped;
+      if (result.failures.length > 0) { toast.error(result.failures.join(" · ")); return; }
+      toast.success(publishSummary(result));
       setPasteText("");
       setPreviews([]);
       setRisk(null);
+      setSimilarPending(null);
       loadApplicants();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not publish vacancies");
@@ -272,6 +258,27 @@ const ManagerDashboard = () => {
       setPublishing(false);
     }
   };
+
+  const publishPreviews = async () => {
+    if (previews.length === 0) return;
+    const blocked = previews.some((p) => !checkWhatsapp(p.contact_whatsapp).ok);
+    if (blocked) { toast.error("Country code required — add +XX (or clear the WhatsApp number) before publishing."); return; }
+    setPublishing(true);
+    const identity = await loadManagerIdentity();
+    if (!identity?.approved) { setPublishing(false); toast.error("Your company account is pending approval"); return; }
+    const scan = await scanDuplicates(identity.userId, previews);
+    setPublishing(false);
+    if (scan.toPublish.length === 0) {
+      toast(`0 of ${previews.length} published · ${scan.exactDuplicates.length} exact duplicates skipped`);
+      return;
+    }
+    if (scan.similar.length > 0) {
+      setSimilarPending({ rows: scan.toPublish, skipped: scan.exactDuplicates.length, similar: scan.similar });
+      return;
+    }
+    await runPublish(scan.toPublish, scan.exactDuplicates.length, previews.length);
+  };
+
 
 
 
