@@ -286,7 +286,12 @@ const ManagerDashboard = () => {
 
   const publishPreviews = async () => {
     if (previews.length === 0) return;
+    if (sourceType === "flier" && !flierUrl) {
+      toast.error("Original flyer is missing — upload the flyer again before publishing.");
+      return;
+    }
     const dates = validateJoiningDates(previews);
+
     if (!dates.ok) { toast.error(dates.warnings.join(" · ")); return; }
     const blocked = previews.some((p) => !checkWhatsapp(p.contact_whatsapp).ok);
     if (blocked) { toast.error("Country code required — add +XX (or clear the WhatsApp number) before publishing."); return; }
