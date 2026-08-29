@@ -311,9 +311,19 @@ const PostVacancy = () => {
                   <AlertTriangle size={12} /> Country code required — add +XX before publishing.
                 </p>
               )}
+              {sourceType === "flier" && !flierUrl && (
+                <p className="flex items-center gap-1" style={{ color: "#f59e0b" }}>
+                  <AlertTriangle size={12} /> Original flyer is missing — upload the flyer again before publishing.
+                </p>
+              )}
             </div>
 
-            <Button className="w-full" onClick={handlePublish} disabled={publishing || publishBlocked || !identity?.approved}>
+            <Button
+              className="w-full"
+              onClick={handlePublish}
+              disabled={publishing || publishBlocked || !identity?.approved || (sourceType === "flier" && !flierUrl)}
+            >
+
               {publishing ? "Publishing…" : `Publish ${previews.length} ${previews.length === 1 ? "vacancy" : "vacancies"} →`}
             </Button>
           </>
