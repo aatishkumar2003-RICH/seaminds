@@ -299,7 +299,18 @@ export const publishVacancyBatch = async (
     return { requested, published: 0, duplicatesSkipped: 0, failures: ["Your company account is pending approval"], batchId: null };
   }
 
+  if (sourceType === "flier" && !opts?.flierUrl) {
+    return {
+      requested,
+      published: 0,
+      duplicatesSkipped: 0,
+      failures: ["Original flyer is missing — upload the flyer again before publishing."],
+      batchId: null,
+    };
+  }
+
   const dateCheck = validateJoiningDates(rows);
+
   if (!dateCheck.ok) {
     return { requested, published: 0, duplicatesSkipped: 0, failures: dateCheck.warnings, batchId: null };
   }
