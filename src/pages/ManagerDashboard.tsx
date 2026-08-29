@@ -5,6 +5,16 @@ import { Anchor, ArrowUpDown, LogOut, FileWarning, CreditCard, RefreshCw } from 
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import ManagerPaymentHistory from "@/components/smc/ManagerPaymentHistory";
+import {
+  type PreviewVacancy,
+  type SimilarVacancy,
+  toPreviewVacancy,
+  loadManagerIdentity,
+  scanDuplicates,
+  checkWhatsapp,
+  publishVacancyBatch,
+  publishSummary,
+} from "@/lib/managerVacancies";
 
 interface CrewRow {
   id: string;
@@ -124,30 +134,24 @@ const ManagerDashboard = () => {
   const [pasteText, setPasteText] = useState("");
   const [extracting, setExtracting] = useState(false);
   const [publishing, setPublishing] = useState(false);
-  const [previews, setPreviews] = useState<ParsedVacancy[]>([]);
+  const [previews, setPreviews] = useState<PreviewVacancy[]>([]);
   const [risk, setRisk] = useState<{ level: string; flags: string[] } | null>(null);
   const [readingFlier, setReadingFlier] = useState(false);
+  const [sourceType, setSourceType] = useState<"text" | "flier">("text");
+  const [similarPending, setSimilarPending] = useState<{ rows: PreviewVacancy[]; skipped: number; similar: SimilarVacancy[] } | null>(null);
   const flierInputRef = useRef<HTMLInputElement>(null);
 
-  type ParseResult = { ok?: boolean; error?: string; raw_text?: string; vacancies?: ParsedVacancy[]; risk?: { level: string; flags: string[] } };
+  type ParseResult = { ok?: boolean; error?: string; raw_text?: string; vacancies?: Record<string, unknown>[]; risk?: { level: string; flags: string[] } };
 
   const applyParseResult = (res: ParseResult, setText: boolean) => {
-    const list = (res.vacancies || []).map((v) => ({
-      rank_required: v.rank_required || "",
-      vessel_type: v.vessel_type || "",
-      contract_duration: v.contract_duration || "",
-      monthly_salary: v.monthly_salary || "",
-      joining_port: v.joining_port || "",
-      joining_date: v.joining_date || "",
-      contact_whatsapp: v.contact_whatsapp || "",
-      contact_email: v.contact_email || "",
-      additional_notes: v.additional_notes || "",
-    }));
+    const list = (res.vacancies || []).map(toPreviewVacancy);
     if (setText && res.raw_text) setPasteText(res.raw_text.slice(0, 8000));
     setPreviews(list);
     setRisk(res.risk || null);
+    setSimilarPending(null);
     if (list.length === 0) toast("No vacancies found");
   };
+
 
   const handleParseError = (error: unknown, res?: ParseResult) => {
     if (error) {
@@ -172,6 +176,7 @@ const ManagerDashboard = () => {
       if (error) { handleParseError(error); return; }
       const res = data as ParseResult;
       if (!res?.ok) { handleParseError(null, res); return; }
+      setSourceType("text");
       applyParseResult(res, false);
     } finally {
       setExtracting(false);
@@ -212,6 +217,7 @@ const ManagerDashboard = () => {
       if (error) { handleParseError(error); return; }
       const res = data as ParseResult;
       if (!res?.ok) { handleParseError(null, res); return; }
+      setSourceType("flier");
       applyParseResult(res, true);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not read that flier");
@@ -221,45 +227,31 @@ const ManagerDashboard = () => {
   };
 
 
-  const updatePreview = (i: number, key: keyof ParsedVacancy, value: string) => {
-    setPreviews((prev) => prev.map((p, idx) => (idx === i ? { ...p, [key]: value } : p)));
+  const updatePreview = (i: number, key: keyof PreviewVacancy, value: string) => {
+    setPreviews((prev) => prev.map((p, idx) => {
+      if (idx !== i) return p;
+      if (key === "positions") {
+        const n = parseInt(value.replace(/[^0-9]/g, ""), 10);
+        return { ...p, positions: Number.isFinite(n) && n >= 1 ? n : 1 };
+      }
+      return { ...p, [key]: value };
+    }));
   };
 
-  const publishPreviews = async () => {
-    if (previews.length === 0) return;
+  const runPublish = async (rows: PreviewVacancy[], skipped: number, requested: number) => {
     setPublishing(true);
     try {
-      const salaryFallback = "Salary as per international market standards, commensurate with rank and experience. Allowances and terms as per prevailing international market conditions.";
-      const rows = previews.map((v) => {
-        const hasSalary = (v.monthly_salary ?? "").trim().length > 0;
-        const additionalNotes = [
-          v.additional_notes,
-          v.joining_date ? `Joining date: ${v.joining_date}` : "",
-          v.contact_email ? `Email: ${v.contact_email}` : "",
-          !hasSalary ? salaryFallback : "",
-        ].filter(Boolean).join("\n") || null;
-        return {
-          rank_required: v.rank_required || "Not specified",
-          vessel_type: v.vessel_type || "Not specified",
-          contract_duration: v.contract_duration || "Not specified",
-          monthly_salary: v.monthly_salary || null,
-          joining_port: v.joining_port || "Not specified",
-          contact_whatsapp: v.contact_whatsapp || "",
-          contact_email: (v.contact_email || "").trim() || null,
-          additional_notes: additionalNotes,
-          company_name: companyName,
-          status: "active",
-          plan: "founding",
-          verified: false,
-          manager_id: managerUserId,
-        };
-      });
-      const { error } = await supabase.from("job_postings").insert(rows as any);
-      if (error) { toast.error(error.message || "Could not publish vacancies"); return; }
-      toast.success(`${rows.length} vacancies published ⚓`);
+      const identity = await loadManagerIdentity();
+      if (!identity?.approved) { toast.error("Your company account is pending approval"); return; }
+      const result = await publishVacancyBatch(rows, identity, sourceType, { skipDuplicateScan: true });
+      result.requested = requested;
+      result.duplicatesSkipped = skipped;
+      if (result.failures.length > 0) { toast.error(result.failures.join(" · ")); return; }
+      toast.success(publishSummary(result));
       setPasteText("");
       setPreviews([]);
       setRisk(null);
+      setSimilarPending(null);
       loadApplicants();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not publish vacancies");
@@ -267,6 +259,27 @@ const ManagerDashboard = () => {
       setPublishing(false);
     }
   };
+
+  const publishPreviews = async () => {
+    if (previews.length === 0) return;
+    const blocked = previews.some((p) => !checkWhatsapp(p.contact_whatsapp).ok);
+    if (blocked) { toast.error("Country code required — add +XX (or clear the WhatsApp number) before publishing."); return; }
+    setPublishing(true);
+    const identity = await loadManagerIdentity();
+    if (!identity?.approved) { setPublishing(false); toast.error("Your company account is pending approval"); return; }
+    const scan = await scanDuplicates(identity.userId, previews);
+    setPublishing(false);
+    if (scan.toPublish.length === 0) {
+      toast(`0 of ${previews.length} published · ${scan.exactDuplicates.length} exact duplicates skipped`);
+      return;
+    }
+    if (scan.similar.length > 0) {
+      setSimilarPending({ rows: scan.toPublish, skipped: scan.exactDuplicates.length, similar: scan.similar });
+      return;
+    }
+    await runPublish(scan.toPublish, scan.exactDuplicates.length, previews.length);
+  };
+
 
 
 
@@ -1146,6 +1159,7 @@ const ManagerDashboard = () => {
                         {([
                           ["rank_required", "Rank"],
                           ["vessel_type", "Vessel type"],
+                          ["positions", "Positions"],
                           ["joining_port", "Joining port"],
                           ["joining_date", "Joining date"],
                           ["contract_duration", "Contract"],
@@ -1153,11 +1167,11 @@ const ManagerDashboard = () => {
                           ["contact_whatsapp", "WhatsApp"],
                           ["contact_email", "Email"],
 
-                        ] as [keyof ParsedVacancy, string][]).map(([key, label]) => (
+                        ] as [keyof PreviewVacancy, string][]).map(([key, label]) => (
                           <label key={key} className="text-xs text-muted-foreground space-y-1">
                             {label}
                             <input
-                              value={v[key]}
+                              value={String(v[key] ?? "")}
                               onChange={(e) => updatePreview(i, key, e.target.value)}
                               className="w-full bg-background text-foreground text-xs rounded-lg border border-border px-2 py-1.5 outline-none focus:border-[#D4AF37]/60"
                             />
@@ -1165,6 +1179,11 @@ const ManagerDashboard = () => {
                               <p className="text-[11px] italic text-muted-foreground/70 leading-tight">
                                 This line will be published if you leave salary blank.<br />
                                 Salary as per international market standards, commensurate with rank and experience. Allowances and terms as per prevailing international market conditions.
+                              </p>
+                            )}
+                            {key === "contact_whatsapp" && !checkWhatsapp(v.contact_whatsapp).ok && (
+                              <p className="text-[11px] text-amber-400 leading-tight">
+                                Country code required — add +XX before publishing.
                               </p>
                             )}
                           </label>
@@ -1181,9 +1200,42 @@ const ManagerDashboard = () => {
                       </label>
                     </div>
                   ))}
+
+                  <div className="rounded-xl border border-[#D4AF37]/30 bg-[#D4AF37]/10 p-3 text-xs space-y-0.5">
+                    <p className="font-semibold text-[#D4AF37]">Applications will go to</p>
+                    <p className="text-foreground">Email: {previews.find((p) => p.contact_email)?.contact_email || "—"}</p>
+                    <p className="text-foreground">WhatsApp: {previews.find((p) => p.contact_whatsapp)?.contact_whatsapp || "—"}</p>
+                  </div>
+
+                  {similarPending && (
+                    <div className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-3 text-xs space-y-2">
+                      <p className="font-semibold text-amber-300">Similar active vacancies already exist.</p>
+                      <ul className="list-disc list-inside space-y-0.5 text-amber-200/90">
+                        {similarPending.similar.map((s) => (
+                          <li key={s.id}>{s.rank_required} · {s.vessel_type} · {s.joining_port}</li>
+                        ))}
+                      </ul>
+                      <div className="flex gap-2 pt-1">
+                        <button
+                          onClick={() => setSimilarPending(null)}
+                          className="text-xs font-medium px-3 py-1.5 rounded-lg border border-border text-muted-foreground"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => runPublish(similarPending.rows, similarPending.skipped, previews.length)}
+                          disabled={publishing}
+                          className="text-xs font-bold px-3 py-1.5 rounded-lg bg-[#D4AF37] text-[#0D1B2A] disabled:opacity-50"
+                        >
+                          {publishing ? "Publishing…" : "Publish Anyway"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   <button
                     onClick={publishPreviews}
-                    disabled={publishing}
+                    disabled={publishing || previews.some((p) => !checkWhatsapp(p.contact_whatsapp).ok)}
                     className="text-xs font-bold px-4 py-2 rounded-xl bg-[#D4AF37] text-[#0D1B2A] border border-[#D4AF37] hover:opacity-90 transition-opacity disabled:opacity-50"
                   >
                     {publishing ? "Publishing…" : "Publish all vacancies"}

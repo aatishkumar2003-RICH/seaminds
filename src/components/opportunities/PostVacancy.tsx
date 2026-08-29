@@ -2,294 +2,186 @@ import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { UploadCloud, CheckCircle, Loader2, Star, X } from "lucide-react";
+import { UploadCloud, CheckCircle, Loader2, AlertTriangle, Plus, Trash2 } from "lucide-react";
+import {
+  type PreviewVacancy,
+  type SimilarVacancy,
+  type ManagerIdentity,
+  toPreviewVacancy,
+  emptyPreviewVacancy,
+  loadManagerIdentity,
+  checkWhatsapp,
+  scanDuplicates,
+  publishVacancyBatch,
+  publishSummary,
+} from "@/lib/managerVacancies";
 
-const RANKS = [
-  "Captain", "Chief Officer", "2nd Officer", "3rd Officer",
-  "Chief Engineer", "2nd Engineer", "3rd Engineer", "4th Engineer",
-  "ETO", "Bosun", "AB Seaman", "OS", "Oiler", "Cook", "Steward",
-  "Deck Cadet", "Engine Cadet", "ETO Cadet",
-  "Trainee Officer (Deck)", "Trainee Officer (Engine)", "Trainee OS", "Trainee Cook",
-  "Any Rank",
-];
-
-const VESSEL_TYPES = [
-  "Bulk Carrier", "Container", "Tanker (Oil)", "Tanker (Chemical)",
-  "LNG/LPG", "RORO", "General Cargo", "Offshore", "Cruise", "Tug", "Any Type",
-];
-
-const DURATIONS = [
-  "1-2 months", "3-4 months", "5-6 months", "7-8 months", "9-12 months", "Permanent",
-];
-
-type PricingPlan = "single" | "monthly" | "annual";
-
-const PLANS_STATIC: { id: PricingPlan; name: string; priceKey: string; desc: string; popular?: boolean }[] = [
-  { id: "single", name: "Single Post", priceKey: "single", desc: "1 vacancy, visible 30 days" },
-  { id: "monthly", name: "Monthly", priceKey: "monthly", desc: "Unlimited posts for 30 days", popular: true },
-  { id: "annual", name: "Annual", priceKey: "annual", desc: "Unlimited posts, 12 months" },
-];
+const ACCEPTED = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 const PostVacancy = () => {
-  const [rankRequired, setRankRequired] = useState("");
-  const [vesselType, setVesselType] = useState("");
-  const [contractDuration, setContractDuration] = useState("");
-  const [salaryMin, setSalaryMin] = useState("");
-  const [salaryMax, setSalaryMax] = useState("");
-  const [salaryNegotiable, setSalaryNegotiable] = useState(false);
-  const [joiningPort, setJoiningPort] = useState("");
-  const [contactWhatsapp, setContactWhatsapp] = useState("");
-  const [companyName, setCompanyName] = useState("");
-  const [additionalNotes, setAdditionalNotes] = useState("");
-  const [posting, setPosting] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<PricingPlan>("single");
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-
-  const [uploadedFileName, setUploadedFileName] = useState("");
+  const [identity, setIdentity] = useState<ManagerIdentity | null>(null);
+  const [previews, setPreviews] = useState<PreviewVacancy[]>([]);
+  const [risk, setRisk] = useState<{ level: string; flags: string[] } | null>(null);
   const [aiReading, setAiReading] = useState(false);
+  const [uploadedFileName, setUploadedFileName] = useState("");
   const [aiSuccess, setAiSuccess] = useState(false);
-  const [flierUrl, setFlierUrl] = useState<string | null>(null);
+  const [sourceType, setSourceType] = useState<"flier" | "manual">("manual");
+  const [publishing, setPublishing] = useState(false);
+  const [similar, setSimilar] = useState<SimilarVacancy[] | null>(null);
+  const [pendingRows, setPendingRows] = useState<PreviewVacancy[] | null>(null);
+  const [pendingSkipped, setPendingSkipped] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [jobPrices, setJobPrices] = useState({ single: 0, monthly: 0, annual: 0 });
 
-  useEffect(() => {
-    supabase.rpc('get_admin_settings', {
-      p_keys: ['price_job_single', 'price_job_monthly', 'price_job_annual']
-    }).then(({ data }) => {
-      if (data) {
-        const map: Record<string, number> = {};
-        data.forEach((r: any) => { map[r.key] = Number(r.value) || 0; });
-        setJobPrices({
-          single: map['price_job_single'] || 0,
-          monthly: map['price_job_monthly'] || 0,
-          annual: map['price_job_annual'] || 0,
-        });
-      }
+  useEffect(() => { loadManagerIdentity().then(setIdentity); }, []);
+
+  const primaryEmail = previews.find((p) => p.contact_email)?.contact_email || "";
+  const primaryWhatsapp = previews.find((p) => p.contact_whatsapp)?.contact_whatsapp || "";
+  const blockingRows = previews
+    .map((p, i) => ({ i, p, check: checkWhatsapp(p.contact_whatsapp) }))
+    .filter((r) => !r.check.ok);
+  const publishBlocked = blockingRows.length > 0;
+
+  const downscaleImage = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("Could not read that image"));
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error("Could not read that image"));
+        img.onload = () => {
+          const max = 1600;
+          const scale = Math.min(1, max / Math.max(img.width, img.height));
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          const ctx = canvas.getContext("2d");
+          if (!ctx) { reject(new Error("Could not read that image")); return; }
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL("image/jpeg", 0.8));
+        };
+        img.src = String(reader.result);
+      };
+      reader.readAsDataURL(file);
     });
-  }, []);
-
-  const wordCount = additionalNotes.trim().split(/\s+/).filter(Boolean).length;
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
+    if (!ACCEPTED.includes(file.type.toLowerCase())) {
+      toast({ title: "Unsupported file", description: "Please upload a JPG, PNG or WEBP image.", variant: "destructive" });
+      return;
+    }
 
     setUploadedFileName(file.name);
     setAiReading(true);
     setAiSuccess(false);
-
     try {
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const result = reader.result as string;
-          resolve(result.split(",")[1]);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-
-      try {
-        const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
-        const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-        const { error: upErr } = await supabase.storage
-          .from("job-fliers")
-          .upload(path, file, { contentType: file.type, upsert: false });
-        if (!upErr) {
-          const { data: pub } = supabase.storage.from("job-fliers").getPublicUrl(path);
-          setFlierUrl(pub?.publicUrl || null);
-        }
-      } catch { /* flier image is optional */ }
-
-      const { data, error } = await supabase.functions.invoke("parse-flier", {
-        body: { imageBase64: base64, mimeType: file.type },
-      });
-
-      if (error || !data?.result) {
-        throw new Error("Failed");
+      const image_base64 = await downscaleImage(file);
+      const { data, error } = await supabase.functions.invoke("parse-vacancy-text", { body: { image_base64 } });
+      if (error) {
+        const status = (error as { context?: { status?: number } })?.context?.status;
+        if (status === 403) toast({ title: "Pending approval", description: "Your company account is pending approval.", variant: "destructive" });
+        else if (status === 429) toast({ title: "Daily limit reached", description: "Please try again tomorrow.", variant: "destructive" });
+        else if (status === 401) toast({ title: "Please sign in again", variant: "destructive" });
+        else toast({ title: "Could not read that flier", variant: "destructive" });
+        return;
       }
-
-      const r = data.result;
-
-      const RANK_ALIASES: Record<string, string> = {
-        "c/e": "Chief Engineer", "ce": "Chief Engineer", "chief eng": "Chief Engineer",
-        "c/o": "Chief Officer", "co": "Chief Officer", "chief off": "Chief Officer", "chief mate": "Chief Officer",
-        "2/o": "2nd Officer", "2o": "2nd Officer", "second officer": "2nd Officer", "2nd mate": "2nd Officer",
-        "3/o": "3rd Officer", "3o": "3rd Officer", "third officer": "3rd Officer", "3rd mate": "3rd Officer",
-        "2/e": "2nd Engineer", "2e": "2nd Engineer", "second engineer": "2nd Engineer",
-        "3/e": "3rd Engineer", "3e": "3rd Engineer", "third engineer": "3rd Engineer",
-        "4/e": "4th Engineer", "4e": "4th Engineer", "fourth engineer": "4th Engineer",
-        "master": "Captain", "capt": "Captain",
-        "ab": "AB Seaman", "able seaman": "AB Seaman", "able bodied": "AB Seaman",
-        "os": "OS", "ordinary seaman": "OS",
-        "eto": "ETO", "electro technical officer": "ETO",
-        "bsn": "Bosun", "boatswain": "Bosun",
-      };
-
-      const VESSEL_ALIASES: Record<string, string> = {
-        "bulker": "Bulk Carrier", "bulk": "Bulk Carrier",
-        "container ship": "Container", "containership": "Container",
-        "oil tanker": "Tanker (Oil)", "crude tanker": "Tanker (Oil)", "product tanker": "Tanker (Oil)",
-        "chemical tanker": "Tanker (Chemical)", "chem tanker": "Tanker (Chemical)",
-        "lng": "LNG/LPG", "lpg": "LNG/LPG", "gas carrier": "LNG/LPG", "lng carrier": "LNG/LPG",
-        "ro-ro": "RORO", "ro ro": "RORO", "roll on": "RORO",
-        "general cargo ship": "General Cargo", "gencargo": "General Cargo",
-        "offshore vessel": "Offshore", "osv": "Offshore", "ahts": "Offshore", "psv": "Offshore",
-        "cruise ship": "Cruise", "passenger": "Cruise",
-        "tugboat": "Tug", "tug boat": "Tug",
-      };
-
-      const DURATION_ALIASES: Record<string, string> = {
-        "1 month": "1-2 months", "2 months": "1-2 months",
-        "3 months": "3-4 months", "4 months": "3-4 months",
-        "5 months": "5-6 months", "6 months": "5-6 months",
-        "7 months": "7-8 months", "8 months": "7-8 months",
-        "9 months": "9-12 months", "10 months": "9-12 months", "11 months": "9-12 months", "12 months": "9-12 months",
-        "1 year": "9-12 months", "permanent contract": "Permanent", "full time": "Permanent",
-      };
-
-      const fuzzyMatch = (input: string, options: string[], aliases?: Record<string, string>): string | null => {
-        const lower = input.toLowerCase().trim();
-        if (aliases && aliases[lower]) return aliases[lower];
-        const exact = options.find((o) => o.toLowerCase() === lower);
-        if (exact) return exact;
-        const contains = options.find(
-          (o) => o.toLowerCase().includes(lower) || lower.includes(o.toLowerCase())
-        );
-        if (contains) return contains;
-        if (aliases) {
-          for (const [alias, mapped] of Object.entries(aliases)) {
-            if (lower.includes(alias) || alias.includes(lower)) return mapped;
-          }
-        }
-        const inputWords = lower.split(/[\s\-\/()]+/).filter(Boolean);
-        let bestScore = 0;
-        let bestMatch: string | null = null;
-        for (const option of options) {
-          const optWords = option.toLowerCase().split(/[\s\-\/()]+/).filter(Boolean);
-          const overlap = inputWords.filter((w) => optWords.some((ow) => ow.includes(w) || w.includes(ow))).length;
-          const score = overlap / Math.max(inputWords.length, optWords.length);
-          if (score > bestScore && score >= 0.4) {
-            bestScore = score;
-            bestMatch = option;
-          }
-        }
-        return bestMatch;
-      };
-
-      if (r.rankRequired) {
-        const match = fuzzyMatch(r.rankRequired, RANKS, RANK_ALIASES);
-        if (match) setRankRequired(match);
+      const res = data as { ok?: boolean; error?: string; vacancies?: Record<string, unknown>[]; risk?: { level: string; flags: string[] } };
+      if (!res?.ok) {
+        toast({ title: "Could not read that flier", description: res?.error || undefined, variant: "destructive" });
+        return;
       }
-      if (r.vesselType) {
-        const match = fuzzyMatch(r.vesselType, VESSEL_TYPES, VESSEL_ALIASES);
-        if (match) setVesselType(match);
-      }
-      if (r.contractDuration) {
-        const match = fuzzyMatch(r.contractDuration, DURATIONS, DURATION_ALIASES);
-        if (match) setContractDuration(match);
-      }
-      if (r.monthlySalary) { const nums = r.monthlySalary.replace(/[^0-9\-]/g, "").split("-"); if (nums[0]) setSalaryMin(nums[0]); if (nums[1]) setSalaryMax(nums[1]); }
-      if (r.joiningPort) setJoiningPort(r.joiningPort);
-      if (r.companyName) setCompanyName(r.companyName);
-      if (r.contactWhatsapp) setContactWhatsapp(r.contactWhatsapp);
-      if (r.additionalNotes) setAdditionalNotes(r.additionalNotes);
-
+      const list = (res.vacancies || []).map(toPreviewVacancy);
+      setPreviews(list);
+      setRisk(res.risk || null);
+      setSourceType("flier");
       setAiSuccess(true);
-      toast({ title: "✓ Flier read successfully", description: "Please review and edit the fields below." });
-    } catch {
-      toast({ title: "Could not read flier", description: "Please fill fields manually.", variant: "destructive" });
+      toast({ title: `AI found ${list.length} ${list.length === 1 ? "vacancy" : "vacancies"}`, description: "Review and edit before publishing." });
+    } catch (err) {
+      toast({ title: "Could not read that flier", description: err instanceof Error ? err.message : undefined, variant: "destructive" });
     } finally {
       setAiReading(false);
     }
   };
 
-  const resetForm = () => {
-    setRankRequired("");
-    setVesselType("");
-    setContractDuration("");
-    setSalaryMin(""); setSalaryMax(""); setSalaryNegotiable(false);
-    setJoiningPort("");
-    setContactWhatsapp("");
-    setCompanyName("");
-    setAdditionalNotes("");
-    setUploadedFileName("");
-    setAiSuccess(false);
-    setFlierUrl(null);
-    setSelectedPlan("single");
-  };
-
-  const submitVacancy = async (isFree: boolean) => {
-    setPosting(true);
-
-    const { error } = await supabase.from("job_postings" as any).insert({
-      rank_required: rankRequired,
-      vessel_type: vesselType,
-      contract_duration: contractDuration,
-      monthly_salary: salaryNegotiable ? "Negotiable" : (salaryMin && salaryMax ? `$${salaryMin}–$${salaryMax}/mo` : salaryMin ? `From $${salaryMin}/mo` : null),
-      joining_port: joiningPort,
-      contact_whatsapp: contactWhatsapp,
-      company_name: companyName,
-      additional_notes: additionalNotes || null,
-      flier_url: flierUrl,
-      status: isFree ? "active" : "pending_payment",
-      plan: selectedPlan,
-    } as any);
-
-    setPosting(false);
-
-    if (error) {
-      toast({ title: "Error", description: "Failed to submit vacancy.", variant: "destructive" });
-      return false;
-    }
-
-    resetForm();
-    return true;
-  };
-
-  const handlePostClick = async () => {
-    if (!rankRequired || !vesselType || !contractDuration || !joiningPort || !contactWhatsapp || !companyName) {
-      toast({ title: "Missing Fields", description: "Please fill all required fields.", variant: "destructive" });
-      return;
-    }
-    if (wordCount > 100) {
-      toast({ title: "Too Long", description: "Additional notes must be 100 words or less.", variant: "destructive" });
-      return;
-    }
-    if (allFree) {
-      const ok = await submitVacancy(true);
-      if (ok) {
-        toast({ title: "✅ Vacancy is live!", description: "Your vacancy is now visible to seafarers." });
+  const update = (i: number, key: keyof PreviewVacancy, value: string) => {
+    setPreviews((prev) => prev.map((p, idx) => {
+      if (idx !== i) return p;
+      if (key === "positions") {
+        const n = parseInt(value.replace(/[^0-9]/g, ""), 10);
+        return { ...p, positions: Number.isFinite(n) && n >= 1 ? n : 1 };
       }
+      return { ...p, [key]: value };
+    }));
+  };
+
+  const removeRow = (i: number) => setPreviews((prev) => prev.filter((_, idx) => idx !== i));
+  const addRow = () => { setPreviews((prev) => [...prev, emptyPreviewVacancy()]); if (previews.length === 0) setSourceType("manual"); };
+
+  const reset = () => {
+    setPreviews([]); setRisk(null); setAiSuccess(false); setUploadedFileName("");
+    setSimilar(null); setPendingRows(null); setPendingSkipped(0);
+  };
+
+  const runPublish = async (rows: PreviewVacancy[], skipped: number) => {
+    if (!identity) return;
+    setPublishing(true);
+    try {
+      const result = await publishVacancyBatch(rows, identity, sourceType, { skipDuplicateScan: true });
+      result.requested = previews.length;
+      result.duplicatesSkipped = skipped;
+      if (result.failures.length > 0) {
+        toast({ title: "Publish failed", description: result.failures.join(" · "), variant: "destructive" });
+        return;
+      }
+      toast({ title: publishSummary(result) });
+      reset();
+    } finally {
+      setPublishing(false);
+      setSimilar(null); setPendingRows(null);
+    }
+  };
+
+  const handlePublish = async () => {
+    if (!identity?.approved) {
+      toast({ title: "Pending approval", description: "Only approved company accounts can publish vacancies.", variant: "destructive" });
       return;
     }
-    setShowPaymentModal(true);
+    if (previews.length === 0) return;
+    if (publishBlocked) {
+      toast({ title: "Country code required", description: "Fix or clear the WhatsApp number before publishing.", variant: "destructive" });
+      return;
+    }
+    setPublishing(true);
+    const scan = await scanDuplicates(identity.userId, previews);
+    setPublishing(false);
+
+    if (scan.toPublish.length === 0) {
+      toast({ title: `0 of ${previews.length} published · ${scan.exactDuplicates.length} exact duplicates skipped` });
+      return;
+    }
+    if (scan.similar.length > 0) {
+      setPendingRows(scan.toPublish);
+      setPendingSkipped(scan.exactDuplicates.length);
+      setSimilar(scan.similar);
+      return;
+    }
+    await runPublish(scan.toPublish, scan.exactDuplicates.length);
   };
 
-  const handleConfirmPayment = async () => {
-    const ok = await submitVacancy(false);
-    if (!ok) return;
-    setShowPaymentModal(false);
-    toast({ title: "✅ Received!", description: "Your vacancy goes live within 2 hours after payment confirmation." });
-  };
-
-
-  const currentPlan = PLANS_STATIC.find((p) => p.id === selectedPlan)!;
-  const getPlanPrice = (id: PricingPlan) => {
-    const v = jobPrices[id];
-    if (v === 0) return 'FREE';
-    if (id === 'monthly') return `$${v}/month`;
-    if (id === 'annual') return `$${v}/year`;
-    return `$${v}`;
-  };
-  const allFree = jobPrices.single === 0 && jobPrices.monthly === 0 && jobPrices.annual === 0;
+  const field = (label: string, value: string, onChange: (v: string) => void, placeholder?: string) => (
+    <div className="space-y-1">
+      <label className="text-[11px] text-muted-foreground">{label}</label>
+      <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="text-sm" />
+    </div>
+  );
 
   return (
     <div className="space-y-4 pt-3">
       <div className="rounded-xl bg-card border border-border p-4 space-y-4">
-        <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Post a Vacancy</h3>
+        <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Post Vacancies</h3>
 
         {/* Flier Upload */}
         <div
@@ -297,253 +189,136 @@ const PostVacancy = () => {
           className="rounded-xl border-2 border-dashed cursor-pointer flex flex-col items-center justify-center py-5 px-4 gap-2 transition-colors"
           style={{ borderColor: "#1a3a5c", background: "rgba(26, 58, 92, 0.15)" }}
         >
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*,application/pdf"
-            className="hidden"
-            onChange={handleFileUpload}
-          />
+          <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFileUpload} />
           {aiReading ? (
             <>
               <Loader2 size={28} className="text-green-400 animate-spin" />
-              <p className="text-green-400 text-sm font-medium">AI Reading Flier...</p>
+              <p className="text-green-400 text-sm font-medium">AI reading your flier…</p>
               <p className="text-muted-foreground text-[11px]">{uploadedFileName}</p>
             </>
           ) : aiSuccess ? (
             <>
               <CheckCircle size={28} className="text-green-400" />
-              <p className="text-green-400 text-sm font-medium">✓ Flier read successfully</p>
+              <p className="text-green-400 text-sm font-medium">AI found {previews.length} {previews.length === 1 ? "vacancy" : "vacancies"}</p>
               <p className="text-muted-foreground text-[11px]">{uploadedFileName}</p>
             </>
           ) : (
             <>
               <UploadCloud size={28} className="text-muted-foreground" />
-              <p className="text-foreground text-sm font-medium">Upload Job Flier (PDF or Image)</p>
-              <p className="text-muted-foreground text-[11px]">AI will read your flier and fill the form automatically</p>
+              <p className="text-foreground text-sm font-medium">Upload your recruitment flyer (JPG, PNG or WEBP)</p>
+              <p className="text-muted-foreground text-[11px]">AI reads every rank on the flyer and creates one vacancy per rank</p>
             </>
           )}
         </div>
 
-        <div className="space-y-1.5">
-          <label className="text-xs text-muted-foreground">Rank Required *</label>
-          <Select value={rankRequired} onValueChange={setRankRequired}>
-            <SelectTrigger><SelectValue placeholder="Select rank" /></SelectTrigger>
-            <SelectContent>
-              {RANKS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="text-xs text-muted-foreground">Vessel Type *</label>
-          <Select value={vesselType} onValueChange={setVesselType}>
-            <SelectTrigger><SelectValue placeholder="Select vessel type" /></SelectTrigger>
-            <SelectContent>
-              {VESSEL_TYPES.map((v) => <SelectItem key={v} value={v}>{v}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="text-xs text-muted-foreground">Contract Duration *</label>
-          <Select value={contractDuration} onValueChange={setContractDuration}>
-            <SelectTrigger><SelectValue placeholder="Select duration" /></SelectTrigger>
-            <SelectContent>
-              {DURATIONS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="text-xs text-muted-foreground">Monthly Salary Range USD <span className="text-muted-foreground/60">(optional)</span></label>
-          <div className="flex items-center gap-2">
-            <Input
-              value={salaryMin}
-              onChange={(e) => setSalaryMin(e.target.value.replace(/[^0-9]/g, ""))}
-              placeholder="Min e.g. 3000"
-              className="text-sm"
-              disabled={salaryNegotiable}
-            />
-            <span className="text-muted-foreground text-sm font-medium">—</span>
-            <Input
-              value={salaryMax}
-              onChange={(e) => setSalaryMax(e.target.value.replace(/[^0-9]/g, ""))}
-              placeholder="Max e.g. 5000"
-              className="text-sm"
-              disabled={salaryNegotiable}
-            />
+        {/* Company identity (read-only) */}
+        <div className="space-y-1">
+          <label className="text-[11px] text-muted-foreground">Company Name (verified)</label>
+          <div className="rounded-xl px-4 py-2.5 text-sm" style={{ background: "hsl(var(--secondary))", color: "hsl(var(--foreground))" }}>
+            {identity?.companyName || "—"}
           </div>
-          <button
-            type="button"
-            onClick={() => { setSalaryNegotiable(!salaryNegotiable); setSalaryMin(""); setSalaryMax(""); }}
-            className="flex items-center gap-2 mt-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <div className="w-4 h-4 rounded border flex items-center justify-center transition-colors"
-              style={{ borderColor: salaryNegotiable ? '#D4AF37' : 'var(--border)', background: salaryNegotiable ? '#D4AF37' : 'transparent' }}>
-              {salaryNegotiable && <span style={{ color: '#0D1B2A', fontSize: '10px', fontWeight: 'bold', lineHeight: 1 }}>✓</span>}
-            </div>
-            Negotiable / Undisclosed
-          </button>
+          <p className="text-[10px] text-muted-foreground">Taken from your approved company profile and cannot be edited here.</p>
         </div>
 
-        <div className="space-y-1.5">
-          <label className="text-xs text-muted-foreground">Joining Port *</label>
-          <Input value={joiningPort} onChange={(e) => setJoiningPort(e.target.value)} placeholder="e.g. Singapore, Manila, Mumbai" className="text-sm" />
-        </div>
+        {risk && risk.level !== "low" && (
+          <div className="rounded-xl p-3 text-xs" style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.35)", color: "#f59e0b" }}>
+            <strong>Risk: {risk.level}</strong>
+            {risk.flags.length > 0 && <ul className="mt-1 list-disc pl-4">{risk.flags.map((f, i) => <li key={i}>{f}</li>)}</ul>}
+          </div>
+        )}
 
-        <div className="space-y-1.5">
-          <label className="text-xs text-muted-foreground">WhatsApp for Applications *</label>
-          <Input value={contactWhatsapp} onChange={(e) => setContactWhatsapp(e.target.value)} placeholder="e.g. +6512345678" className="text-sm" />
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="text-xs text-muted-foreground">Company Name *</label>
-          <Input value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="e.g. Pacific Shipping Co." className="text-sm" />
-          <p className="text-[10px] text-muted-foreground">After payment verification, your company receives a ✓ Verified badge on all listings. Crew trust verified companies.</p>
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="text-xs text-muted-foreground">Additional Notes <span className="text-muted-foreground/60">(optional, max 100 words)</span></label>
-          <textarea
-            value={additionalNotes}
-            onChange={(e) => setAdditionalNotes(e.target.value)}
-            placeholder="Any specific requirements..."
-            rows={3}
-            className="w-full bg-secondary text-foreground text-sm rounded-xl px-4 py-3 placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary resize-none"
-          />
-          <p className={`text-[10px] ${wordCount > 100 ? "text-destructive" : "text-muted-foreground"}`}>{wordCount}/100 words</p>
-        </div>
-
-        {/* Pricing Cards */}
-        <div className="space-y-2">
-          {allFree ? (
-            <div style={{
-              background: 'rgba(34,197,94,0.1)',
-              border: '1px solid rgba(34,197,94,0.3)',
-              borderRadius: 12,
-              padding: '16px 20px',
-              textAlign: 'center' as const,
-              marginTop: 16,
-            }}>
-              <div style={{ fontSize: 28, marginBottom: 6 }}>🎉</div>
-              <div style={{ color: '#22c55e', fontWeight: 800, fontSize: 18, marginBottom: 4 }}>
-                Free Posting — Limited Time
+        {/* Preview cards */}
+        {previews.map((v, i) => {
+          const check = checkWhatsapp(v.contact_whatsapp);
+          return (
+            <div key={i} className="rounded-xl p-3 space-y-2" style={{ background: "hsl(var(--secondary))", border: "1px solid hsl(var(--border))" }}>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold" style={{ color: "#D4AF37" }}>Vacancy {i + 1}</span>
+                <button type="button" onClick={() => removeRow(i)} className="text-muted-foreground hover:text-destructive">
+                  <Trash2 size={14} />
+                </button>
               </div>
-              <div style={{ color: '#888', fontSize: 13 }}>
-                Post unlimited vacancies at no cost until we reach 10,000 crew members.
+              <div className="grid grid-cols-2 gap-2">
+                {field("Rank", v.rank_required, (x) => update(i, "rank_required", x), "e.g. Chief Officer")}
+                {field("Vessel", v.vessel_type, (x) => update(i, "vessel_type", x), "e.g. Bulk Carrier")}
+                {field("Positions", String(v.positions), (x) => update(i, "positions", x))}
+                {field("Joining port", v.joining_port, (x) => update(i, "joining_port", x))}
+                {field("Joining date", v.joining_date, (x) => update(i, "joining_date", x), "YYYY-MM-DD")}
+                {field("Contract", v.contract_duration, (x) => update(i, "contract_duration", x), "e.g. 6 months")}
+                {field("Salary", v.monthly_salary, (x) => update(i, "monthly_salary", x), "as printed")}
+                {field("Email", v.contact_email, (x) => update(i, "contact_email", x))}
+              </div>
+              {field("WhatsApp", v.contact_whatsapp, (x) => update(i, "contact_whatsapp", x), "+6512345678")}
+              {!check.ok && (
+                <p className="text-[11px] flex items-center gap-1" style={{ color: "#f59e0b" }}>
+                  <AlertTriangle size={12} /> {check.warning}
+                </p>
+              )}
+              <div className="space-y-1">
+                <label className="text-[11px] text-muted-foreground">Notes</label>
+                <textarea
+                  value={v.additional_notes}
+                  onChange={(e) => update(i, "additional_notes", e.target.value)}
+                  rows={2}
+                  className="w-full bg-background text-foreground text-sm rounded-xl px-3 py-2 outline-none focus:ring-1 focus:ring-primary resize-none"
+                />
               </div>
             </div>
-          ) : (
-            <>
-              <label className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">Select Plan</label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {PLANS_STATIC.map((plan) => (
-                  <button
-                    key={plan.id}
-                    onClick={() => setSelectedPlan(plan.id)}
-                    className="relative rounded-xl p-4 text-left transition-all"
-                    style={{
-                      border: selectedPlan === plan.id
-                        ? "2px solid #D4AF37"
-                        : plan.popular
-                        ? "1px solid rgba(212, 175, 55, 0.4)"
-                        : "1px solid hsl(var(--border))",
-                      background: selectedPlan === plan.id
-                        ? "rgba(212, 175, 55, 0.08)"
-                        : "hsl(var(--secondary))",
-                    }}
-                  >
-                    {plan.popular && (
-                      <span
-                        className="absolute -top-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
-                        style={{ background: "#D4AF37", color: "#0a1929" }}
-                      >
-                        <Star size={10} fill="currentColor" /> POPULAR
-                      </span>
-                    )}
-                    <div className="text-lg font-bold text-foreground">{getPlanPrice(plan.id)}</div>
-                    <div className="text-sm font-medium text-foreground mt-0.5">{plan.name}</div>
-                    <div className="text-[11px] text-muted-foreground mt-1">{plan.desc}</div>
-                    <div
-                      className="mt-3 text-center text-xs font-semibold py-1.5 rounded-lg transition-colors"
-                      style={{
-                        background: selectedPlan === plan.id ? "#D4AF37" : "hsl(var(--muted))",
-                        color: selectedPlan === plan.id ? "#0a1929" : "hsl(var(--muted-foreground))",
-                      }}
-                    >
-                      {selectedPlan === plan.id ? "✓ Selected" : "Select"}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
+          );
+        })}
 
-        <Button className="w-full" onClick={handlePostClick} disabled={posting}>
-          {posting ? "Submitting..." : "Post Vacancy →"}
+        <Button variant="outline" className="w-full" onClick={addRow}>
+          <Plus size={14} className="mr-1" /> Add vacancy manually
         </Button>
+
+        {previews.length > 0 && (
+          <>
+            <div className="rounded-xl p-3 text-xs space-y-1" style={{ background: "rgba(212,175,55,0.08)", border: "1px solid rgba(212,175,55,0.3)" }}>
+              <p className="font-semibold" style={{ color: "#D4AF37" }}>Applications will go to</p>
+              <p className="text-foreground">Email: {primaryEmail || "—"}</p>
+              <p className="text-foreground">WhatsApp: {primaryWhatsapp || "—"}</p>
+              {publishBlocked && (
+                <p className="flex items-center gap-1" style={{ color: "#f59e0b" }}>
+                  <AlertTriangle size={12} /> Country code required — add +XX before publishing.
+                </p>
+              )}
+            </div>
+
+            <Button className="w-full" onClick={handlePublish} disabled={publishing || publishBlocked || !identity?.approved}>
+              {publishing ? "Publishing…" : `Publish ${previews.length} ${previews.length === 1 ? "vacancy" : "vacancies"} →`}
+            </Button>
+          </>
+        )}
       </div>
 
-      {/* Payment Instruction Modal */}
-      {showPaymentModal && (
+      {/* Similar vacancies — ONE batch-level review step */}
+      {similar && pendingRows && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
-          <div
-            className="relative w-full max-w-md rounded-2xl p-6 space-y-4"
-            style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
-          >
-            <button
-              onClick={() => setShowPaymentModal(false)}
-              className="absolute top-3 right-3"
-              style={{ background: "none", border: "none", cursor: "pointer" }}
-            >
-              <X size={18} className="text-muted-foreground" />
-            </button>
-
-            <h3 className="text-base font-bold text-foreground">Your vacancy is ready to publish.</h3>
-
-            <div
-              className="rounded-xl p-3"
-              style={{ background: "rgba(212, 175, 55, 0.1)", border: "1px solid rgba(212, 175, 55, 0.3)" }}
-            >
-              <p className="text-sm text-foreground font-medium">
-                Selected Plan: {currentPlan.name} — {getPlanPrice(currentPlan.id)}
-              </p>
+          <div className="w-full max-w-md rounded-2xl p-5 space-y-3" style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}>
+            <h3 className="text-base font-bold text-foreground">Similar active vacancies already exist.</h3>
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {similar.map((s) => (
+                <div key={s.id} className="text-xs rounded-lg p-2" style={{ background: "hsl(var(--secondary))" }}>
+                  <span className="text-foreground font-medium">{s.rank_required}</span>
+                  <span className="text-muted-foreground"> · {s.vessel_type} · {s.joining_port}</span>
+                </div>
+              ))}
             </div>
-
-            <div className="space-y-3 text-sm text-muted-foreground">
-              <p>
-                Pay via PayPal to: <strong className="text-foreground">info@indossol.com</strong>
-              </p>
-              <p>
-                Reference: <strong className="text-foreground">{companyName || "Company"} - {rankRequired || "Rank"}</strong>
-              </p>
-              <p>After payment, your vacancy goes live within 2 hours.</p>
-              <p>
-                Send payment proof via WhatsApp:<br />
-                <strong className="text-foreground">+62-85219878989</strong>
-              </p>
-              <p>
-                Questions: <strong className="text-foreground">info@indossol.com</strong>
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-2 pt-2">
+            <div className="flex gap-2 pt-1">
               <button
-                onClick={handleConfirmPayment}
-                disabled={posting}
-                className="w-full py-3 rounded-xl text-sm font-bold transition-colors disabled:opacity-50"
-                style={{ background: "#D4AF37", color: "#0a1929" }}
-              >
-                {posting ? "Submitting..." : "I Have Paid — Submit for Review"}
-              </button>
-              <button
-                onClick={() => setShowPaymentModal(false)}
-                className="w-full py-2.5 rounded-xl text-sm font-medium text-muted-foreground"
+                onClick={() => { setSimilar(null); setPendingRows(null); }}
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium text-muted-foreground"
                 style={{ background: "hsl(var(--muted))" }}
               >
                 Cancel
+              </button>
+              <button
+                onClick={() => runPublish(pendingRows, pendingSkipped)}
+                disabled={publishing}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold disabled:opacity-50"
+                style={{ background: "#D4AF37", color: "#0D1B2A" }}
+              >
+                {publishing ? "Publishing…" : "Publish Anyway"}
               </button>
             </div>
           </div>
