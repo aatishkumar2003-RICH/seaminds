@@ -216,6 +216,7 @@ const ManagerDashboard = () => {
       if (error) { handleParseError(error); return; }
       const res = data as ParseResult;
       if (!res?.ok) { handleParseError(null, res); return; }
+      setSourceType("flier");
       applyParseResult(res, true);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not read that flier");
