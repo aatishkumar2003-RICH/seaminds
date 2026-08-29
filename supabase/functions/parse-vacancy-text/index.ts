@@ -168,11 +168,16 @@ Deno.serve(async (req) => {
     const raw_text = isImage ? String(parsed.raw_text ?? "").trim() : text;
 
     // ONE retry for missing ranks only — never a retry loop.
-    if (ranksFound.length > vacancies.length) {
-      const got = new Set(vacancies.map((v) => String(v?.rank_required ?? "").trim().toLowerCase()));
-      const missing = ranksFound.filter((r) => !got.has(String(r).trim().toLowerCase()));
+    // Compare SETS, not lengths: duplicates in the returned list must not hide a missing rank.
+    {
+      const normRank = (r: unknown) => String(r ?? "").trim().toLowerCase();
+      const got = new Set(vacancies.map((v) => normRank(v?.rank_required)).filter(Boolean));
+      const missing = [...new Set(ranksFound.map((r) => normRank(r)).filter(Boolean))]
+        .filter((r) => !got.has(r))
+        .map((r) => ranksFound.find((x) => normRank(x) === r) as string);
       const sourceText = raw_text || text;
       if (missing.length > 0 && sourceText) {
+
         try {
           const retryStart = Date.now();
           const retry = await callAi([
