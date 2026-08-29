@@ -82,6 +82,23 @@ export const loadManagerIdentity = async (): Promise<ManagerIdentity | null> => 
   };
 };
 
+// ---------------- original flier storage ----------------
+
+export const ACCEPTED_FLIER_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+
+/** Upload the ORIGINAL (unaltered) flier image to the public job-fliers bucket. */
+export const uploadOriginalFlier = async (file: File, managerId: string): Promise<string | null> => {
+  if (!ACCEPTED_FLIER_TYPES.includes(file.type.toLowerCase())) return null;
+  const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+  const path = `${managerId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+  const { error } = await supabase.storage.from("job-fliers").upload(path, file, {
+    contentType: file.type,
+    upsert: false,
+  });
+  if (error) return null;
+  return supabase.storage.from("job-fliers").getPublicUrl(path).data.publicUrl || null;
+};
+
 // ---------------- contact validation ----------------
 
 export type WhatsappCheck = { ok: boolean; warning: string | null };
