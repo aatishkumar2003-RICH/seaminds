@@ -2090,7 +2090,15 @@ export type Database = {
           vessel_type?: string | null
           viewed_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "job_applications_job_posting_id_fkey"
+            columns: ["job_posting_id"]
+            isOneToOne: false
+            referencedRelation: "job_postings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       job_postings: {
         Row: {
@@ -2100,15 +2108,21 @@ export type Database = {
           contact_whatsapp: string
           contract_duration: string
           created_at: string
+          expires_at: string
           flier_url: string | null
           id: string
+          joining_date: string | null
           joining_port: string
           manager_id: string | null
           monthly_salary: string | null
           plan: string
+          positions: number
+          posting_batch_id: string | null
           rank_required: string
+          source_type: string
           status: string
           telegram_posted: boolean | null
+          updated_at: string
           verified: boolean
           vessel_type: string
         }
@@ -2119,15 +2133,21 @@ export type Database = {
           contact_whatsapp: string
           contract_duration: string
           created_at?: string
+          expires_at?: string
           flier_url?: string | null
           id?: string
+          joining_date?: string | null
           joining_port: string
           manager_id?: string | null
           monthly_salary?: string | null
           plan?: string
+          positions?: number
+          posting_batch_id?: string | null
           rank_required: string
+          source_type?: string
           status?: string
           telegram_posted?: boolean | null
+          updated_at?: string
           verified?: boolean
           vessel_type: string
         }
@@ -2138,15 +2158,21 @@ export type Database = {
           contact_whatsapp?: string
           contract_duration?: string
           created_at?: string
+          expires_at?: string
           flier_url?: string | null
           id?: string
+          joining_date?: string | null
           joining_port?: string
           manager_id?: string | null
           monthly_salary?: string | null
           plan?: string
+          positions?: number
+          posting_batch_id?: string | null
           rank_required?: string
+          source_type?: string
           status?: string
           telegram_posted?: boolean | null
+          updated_at?: string
           verified?: boolean
           vessel_type?: string
         }
