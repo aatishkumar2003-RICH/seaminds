@@ -118,17 +118,30 @@ Deno.serve(async (req) => {
         ];
 
     const startedAt = Date.now();
-    const res = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model,
-        temperature: 0,
-        max_tokens: isImage ? 4000 : undefined,
-        response_format: { type: "json_object" },
-        messages,
-      }),
-    });
+
+    const callAi = async (msgs: unknown[]) => {
+      const r = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model,
+          temperature: 0,
+          max_tokens: 8000,
+          response_format: { type: "json_object" },
+          messages: msgs,
+        }),
+      });
+      return r;
+    };
+
+    const parseJson = (raw: string): any => {
+      const cleaned = raw.replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+      try { return JSON.parse(cleaned); } catch { /* fall through */ }
+      const m = cleaned.match(/\{[\s\S]*\}/);
+      try { return m ? JSON.parse(m[0]) : null; } catch { return null; }
+    };
+
+    const res = await callAi(messages);
 
     if (!res.ok) {
       const t = await res.text();
@@ -145,26 +158,57 @@ Deno.serve(async (req) => {
       usage: data?.usage ?? null, success: true, latencyMs: Date.now() - startedAt,
     });
 
-    const raw = String(data?.choices?.[0]?.message?.content ?? "");
-    const cleaned = raw.replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
-    let parsed: any = null;
-    try {
-      parsed = JSON.parse(cleaned);
-    } catch {
-      const m = cleaned.match(/\{[\s\S]*\}/);
-      try { parsed = m ? JSON.parse(m[0]) : null; } catch { parsed = null; }
-    }
+    const parsed = parseJson(String(data?.choices?.[0]?.message?.content ?? ""));
     if (!parsed) {
       return new Response(JSON.stringify({ ok: false, error: "parse_failed" }), { status: 200, headers: jsonHeaders });
     }
 
-    const vacancies = Array.isArray(parsed.vacancies) ? parsed.vacancies : [];
+    let vacancies: any[] = Array.isArray(parsed.vacancies) ? parsed.vacancies : [];
+    const ranksFound: string[] = Array.isArray(parsed.ranks_found) ? parsed.ranks_found.map(String) : [];
+    const raw_text = isImage ? String(parsed.raw_text ?? "").trim() : text;
+
+    // ONE retry for missing ranks only — never a retry loop.
+    if (ranksFound.length > vacancies.length) {
+      const got = new Set(vacancies.map((v) => String(v?.rank_required ?? "").trim().toLowerCase()));
+      const missing = ranksFound.filter((r) => !got.has(String(r).trim().toLowerCase()));
+      const sourceText = raw_text || text;
+      if (missing.length > 0 && sourceText) {
+        try {
+          const retryStart = Date.now();
+          const retry = await callAi([
+            { role: "system", content: SYSTEM_PROMPT },
+            {
+              role: "user",
+              content: `From the advert below, return ONLY vacancy objects for these missing ranks: ${missing.join(", ")}. Return JSON {"vacancies":[...],"ranks_found":[],"risk":{"level":"low","flags":[]}}.\n\n---\n${sourceText.slice(0, 12000)}`,
+            },
+          ]);
+          if (retry.ok) {
+            const rd = await retry.json();
+            await meterAi(admin, {
+              userId, feature: "parse-vacancy-text", model,
+              usage: rd?.usage ?? null, success: true, latencyMs: Date.now() - retryStart,
+            });
+            const rp = parseJson(String(rd?.choices?.[0]?.message?.content ?? ""));
+            const extra = Array.isArray(rp?.vacancies) ? rp.vacancies : [];
+            for (const v of extra) {
+              const key = String(v?.rank_required ?? "").trim().toLowerCase();
+              if (key && !got.has(key)) { got.add(key); vacancies.push(v); }
+            }
+          }
+        } catch (_e) { /* retry is best-effort */ }
+      }
+    }
+
+    vacancies = vacancies.map((v) => {
+      const p = Number(v?.positions);
+      return { ...v, positions: Number.isFinite(p) && p >= 1 ? Math.floor(p) : 1 };
+    });
+
     const risk = parsed.risk && typeof parsed.risk === "object"
       ? { level: String(parsed.risk.level || "low"), flags: Array.isArray(parsed.risk.flags) ? parsed.risk.flags.map(String) : [] }
       : { level: "low", flags: [] };
-    const raw_text = isImage ? String(parsed.raw_text ?? "").trim() : text;
 
-    return new Response(JSON.stringify({ ok: true, raw_text, vacancies, risk }), { status: 200, headers: jsonHeaders });
+    return new Response(JSON.stringify({ ok: true, raw_text, vacancies, ranks_found: ranksFound, risk }), { status: 200, headers: jsonHeaders });
   } catch (e) {
     console.error("parse-vacancy-text error:", e);
     return new Response(JSON.stringify({ ok: false, error: "unexpected_error" }), { status: 200, headers: jsonHeaders });
