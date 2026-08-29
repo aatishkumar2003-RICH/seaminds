@@ -133,30 +133,24 @@ const ManagerDashboard = () => {
   const [pasteText, setPasteText] = useState("");
   const [extracting, setExtracting] = useState(false);
   const [publishing, setPublishing] = useState(false);
-  const [previews, setPreviews] = useState<ParsedVacancy[]>([]);
+  const [previews, setPreviews] = useState<PreviewVacancy[]>([]);
   const [risk, setRisk] = useState<{ level: string; flags: string[] } | null>(null);
   const [readingFlier, setReadingFlier] = useState(false);
+  const [sourceType, setSourceType] = useState<"text" | "flier">("text");
+  const [similarPending, setSimilarPending] = useState<{ rows: PreviewVacancy[]; skipped: number; similar: SimilarVacancy[] } | null>(null);
   const flierInputRef = useRef<HTMLInputElement>(null);
 
-  type ParseResult = { ok?: boolean; error?: string; raw_text?: string; vacancies?: ParsedVacancy[]; risk?: { level: string; flags: string[] } };
+  type ParseResult = { ok?: boolean; error?: string; raw_text?: string; vacancies?: Record<string, unknown>[]; risk?: { level: string; flags: string[] } };
 
   const applyParseResult = (res: ParseResult, setText: boolean) => {
-    const list = (res.vacancies || []).map((v) => ({
-      rank_required: v.rank_required || "",
-      vessel_type: v.vessel_type || "",
-      contract_duration: v.contract_duration || "",
-      monthly_salary: v.monthly_salary || "",
-      joining_port: v.joining_port || "",
-      joining_date: v.joining_date || "",
-      contact_whatsapp: v.contact_whatsapp || "",
-      contact_email: v.contact_email || "",
-      additional_notes: v.additional_notes || "",
-    }));
+    const list = (res.vacancies || []).map(toPreviewVacancy);
     if (setText && res.raw_text) setPasteText(res.raw_text.slice(0, 8000));
     setPreviews(list);
     setRisk(res.risk || null);
+    setSimilarPending(null);
     if (list.length === 0) toast("No vacancies found");
   };
+
 
   const handleParseError = (error: unknown, res?: ParseResult) => {
     if (error) {
