@@ -15,9 +15,10 @@ import {
   scanDuplicates,
   publishVacancyBatch,
   publishSummary,
+  uploadOriginalFlier,
+  validateJoiningDates,
+  ACCEPTED_FLIER_TYPES as ACCEPTED,
 } from "@/lib/managerVacancies";
-
-const ACCEPTED = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 const PostVacancy = () => {
   const [identity, setIdentity] = useState<ManagerIdentity | null>(null);
@@ -31,6 +32,7 @@ const PostVacancy = () => {
   const [similar, setSimilar] = useState<SimilarVacancy[] | null>(null);
   const [pendingRows, setPendingRows] = useState<PreviewVacancy[] | null>(null);
   const [pendingSkipped, setPendingSkipped] = useState(0);
+  const [flierUrl, setFlierUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { loadManagerIdentity().then(setIdentity); }, []);
@@ -79,6 +81,9 @@ const PostVacancy = () => {
     setAiSuccess(false);
     try {
       const image_base64 = await downscaleImage(file);
+      // keep the ORIGINAL flier alongside the downscaled copy used for AI reading
+      const originalUrl = identity?.userId ? await uploadOriginalFlier(file, identity.userId) : null;
+      setFlierUrl(originalUrl);
       const { data, error } = await supabase.functions.invoke("parse-vacancy-text", { body: { image_base64 } });
       if (error) {
         const status = (error as { context?: { status?: number } })?.context?.status;
@@ -122,14 +127,17 @@ const PostVacancy = () => {
 
   const reset = () => {
     setPreviews([]); setRisk(null); setAiSuccess(false); setUploadedFileName("");
-    setSimilar(null); setPendingRows(null); setPendingSkipped(0);
+    setSimilar(null); setPendingRows(null); setPendingSkipped(0); setFlierUrl(null);
   };
 
   const runPublish = async (rows: PreviewVacancy[], skipped: number) => {
     if (!identity) return;
     setPublishing(true);
     try {
-      const result = await publishVacancyBatch(rows, identity, sourceType, { skipDuplicateScan: true });
+      const result = await publishVacancyBatch(rows, identity, sourceType, {
+        skipDuplicateScan: true,
+        flierUrl: sourceType === "flier" ? flierUrl : null,
+      });
       result.requested = previews.length;
       result.duplicatesSkipped = skipped;
       if (result.failures.length > 0) {
@@ -150,6 +158,11 @@ const PostVacancy = () => {
       return;
     }
     if (previews.length === 0) return;
+    const dates = validateJoiningDates(previews);
+    if (!dates.ok) {
+      toast({ title: "Check joining date", description: dates.warnings.join(" · "), variant: "destructive" });
+      return;
+    }
     if (publishBlocked) {
       toast({ title: "Country code required", description: "Fix or clear the WhatsApp number before publishing.", variant: "destructive" });
       return;
@@ -245,7 +258,7 @@ const PostVacancy = () => {
                 {field("Joining port", v.joining_port, (x) => update(i, "joining_port", x))}
                 {field("Joining date", v.joining_date, (x) => update(i, "joining_date", x), "YYYY-MM-DD")}
                 {field("Contract", v.contract_duration, (x) => update(i, "contract_duration", x), "e.g. 6 months")}
-                {field("Salary", v.monthly_salary, (x) => update(i, "monthly_salary", x), "as printed")}
+                {field("Salary", v.monthly_salary, (x) => update(i, "monthly_salary", x), "Not stated")}
                 {field("Email", v.contact_email, (x) => update(i, "contact_email", x))}
               </div>
               {field("WhatsApp", v.contact_whatsapp, (x) => update(i, "contact_whatsapp", x), "+6512345678")}
