@@ -7,13 +7,24 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const EXTRACTION_RULES = `Each vacancy object: {rank_required, vessel_type, contract_duration, monthly_salary, joining_port, joining_date, contact_whatsapp, contact_email, additional_notes}. RULES: Never invent or guess any value — use null when the advert does not state it. Never invent contact details. If the advert lists multiple ranks, output ONE object PER RANK, repeating the shared vessel/port/contract details. 'Top 4' means Master, Chief Officer, Chief Engineer, 2nd Engineer. Keep rank names and vessel types in standard English maritime terms. RISK: flag 'high' if the advert asks seafarers for payment, placement fees or deposits; flag 'medium' if there is no company name, or only a personal email/phone with no company, or the salary is far outside normal maritime ranges. List the specific reasons in flags.`;
+const EXTRACTION_RULES = `Each vacancy object: {rank_required, vessel_type, contract_duration, monthly_salary, joining_port, joining_date, contact_whatsapp, contact_email, additional_notes, positions}.
 
-const SYSTEM_PROMPT = `You extract maritime job vacancies from informal recruitment adverts (WhatsApp/Telegram style). Return JSON: {"vacancies":[...],"risk":{"level":"low|medium|high","flags":[]}}. ${EXTRACTION_RULES}`;
+RULES:
+1. ONE vacancy object PER RANK. If the advert lists Master, Chief Officer, 2/O, 3/O, Chief Engineer, 2/E, ETO you MUST return 7 objects. NEVER merge ranks into one object. Repeat the shared vessel / port / contract details on every object.
+2. SALARY INTEGRITY: monthly_salary may contain ONLY the salary explicitly printed against that specific rank. If no salary is printed for that rank, monthly_salary = null. Never invent, average, combine or estimate a salary or salary range.
+3. CONTACT INTEGRITY: read contact_email and contact_whatsapp EXACTLY as printed, including leading zeros and the "+" if present. Never invent contact details. Repeat the common contact details on EVERY rank object.
+4. HEADCOUNT: "C/O x 2", "2 nos Chief Officer", "3 AB" → positions = 2, 2, 3. Otherwise positions = 1 (integer).
+5. JOINING DATE: extract joining_date only when explicitly provided; otherwise null. Never invent a date.
+6. Use null (not empty strings or guesses) for anything the advert does not state. Keep rank names and vessel types in standard English maritime terms.
+7. ranks_found: a top-level array listing every rank you saw in the source advert.
+RISK: flag 'high' if the advert asks seafarers for payment, placement fees or deposits; flag 'medium' if there is no company name, or only a personal email/phone with no company, or the salary is far outside normal maritime ranges. List the specific reasons in flags.`;
+
+const SYSTEM_PROMPT = `You extract maritime job vacancies from informal recruitment adverts (WhatsApp/Telegram style). Return JSON: {"vacancies":[...],"ranks_found":[],"risk":{"level":"low|medium|high","flags":[]}}. ${EXTRACTION_RULES}`;
 
 const VISION_PROMPT = `STEP 1 — TRANSCRIBE: read EVERY piece of text visible in this recruitment flier, including headers, ranks, vessel details, dates, salaries, requirements, company name, licence numbers, phone numbers, emails and small print. Transcribe exactly what you can see, line by line. If some text is blurred or partly unreadable, transcribe your best reading and mark uncertain fragments with (?). STEP 2 — STRUCTURE: from that transcription, build the vacancies.
 
-Return JSON only: {"raw_text":"<the full STEP 1 transcription>","vacancies":[...],"risk":{"level":"low|medium|high","flags":[]}}. ${EXTRACTION_RULES}`;
+Return JSON only: {"raw_text":"<the full STEP 1 transcription>","vacancies":[...],"ranks_found":[],"risk":{"level":"low|medium|high","flags":[]}}. ${EXTRACTION_RULES}`;
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
