@@ -13,6 +13,9 @@ import {
   scanDuplicates,
   checkWhatsapp,
   publishVacancyBatch,
+  uploadOriginalFlier,
+  validateJoiningDates,
+  ACCEPTED_FLIER_TYPES,
   publishSummary,
 } from "@/lib/managerVacancies";
 
@@ -139,6 +142,7 @@ const ManagerDashboard = () => {
   const [readingFlier, setReadingFlier] = useState(false);
   const [sourceType, setSourceType] = useState<"text" | "flier">("text");
   const [similarPending, setSimilarPending] = useState<{ rows: PreviewVacancy[]; skipped: number; similar: SimilarVacancy[] } | null>(null);
+  const [flierUrl, setFlierUrl] = useState<string | null>(null);
   const flierInputRef = useRef<HTMLInputElement>(null);
 
   type ParseResult = { ok?: boolean; error?: string; raw_text?: string; vacancies?: Record<string, unknown>[]; risk?: { level: string; flags: string[] } };
@@ -210,9 +214,16 @@ const ManagerDashboard = () => {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
+    if (!ACCEPTED_FLIER_TYPES.includes(file.type.toLowerCase())) {
+      toast.error("Please upload a JPG, PNG or WEBP image");
+      return;
+    }
     setReadingFlier(true);
     try {
       const image_base64 = await downscaleImage(file);
+      // preserve the ORIGINAL flier; the downscaled copy is only for AI reading
+      const identity = await loadManagerIdentity();
+      setFlierUrl(identity?.userId ? await uploadOriginalFlier(file, identity.userId) : null);
       const { data, error } = await supabase.functions.invoke("parse-vacancy-text", { body: { image_base64 } });
       if (error) { handleParseError(error); return; }
       const res = data as ParseResult;
@@ -243,7 +254,10 @@ const ManagerDashboard = () => {
     try {
       const identity = await loadManagerIdentity();
       if (!identity?.approved) { toast.error("Your company account is pending approval"); return; }
-      const result = await publishVacancyBatch(rows, identity, sourceType, { skipDuplicateScan: true });
+      const result = await publishVacancyBatch(rows, identity, sourceType, {
+        skipDuplicateScan: true,
+        flierUrl: sourceType === "flier" ? flierUrl : null,
+      });
       result.requested = requested;
       result.duplicatesSkipped = skipped;
       if (result.failures.length > 0) { toast.error(result.failures.join(" · ")); return; }
@@ -252,6 +266,7 @@ const ManagerDashboard = () => {
       setPreviews([]);
       setRisk(null);
       setSimilarPending(null);
+      setFlierUrl(null);
       loadApplicants();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not publish vacancies");
@@ -262,6 +277,8 @@ const ManagerDashboard = () => {
 
   const publishPreviews = async () => {
     if (previews.length === 0) return;
+    const dates = validateJoiningDates(previews);
+    if (!dates.ok) { toast.error(dates.warnings.join(" · ")); return; }
     const blocked = previews.some((p) => !checkWhatsapp(p.contact_whatsapp).ok);
     if (blocked) { toast.error("Country code required — add +XX (or clear the WhatsApp number) before publishing."); return; }
     setPublishing(true);
@@ -1118,7 +1135,7 @@ const ManagerDashboard = () => {
                 <input
                   ref={flierInputRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp"
                   className="hidden"
                   onChange={handleFlierUpload}
                 />
@@ -1177,8 +1194,7 @@ const ManagerDashboard = () => {
                             />
                             {key === "monthly_salary" && !v.monthly_salary && (
                               <p className="text-[11px] italic text-muted-foreground/70 leading-tight">
-                                This line will be published if you leave salary blank.<br />
-                                Salary as per international market standards, commensurate with rank and experience. Allowances and terms as per prevailing international market conditions.
+                                Not stated — SeaMinds never adds a salary you did not write.
                               </p>
                             )}
                             {key === "contact_whatsapp" && !checkWhatsapp(v.contact_whatsapp).ok && (

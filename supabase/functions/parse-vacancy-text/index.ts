@@ -14,7 +14,7 @@ RULES:
 2. SALARY INTEGRITY: monthly_salary may contain ONLY the salary explicitly printed against that specific rank. If no salary is printed for that rank, monthly_salary = null. Never invent, average, combine or estimate a salary or salary range.
 3. CONTACT INTEGRITY: read contact_email and contact_whatsapp EXACTLY as printed, including leading zeros and the "+" if present. Never invent contact details. Repeat the common contact details on EVERY rank object.
 4. HEADCOUNT: "C/O x 2", "2 nos Chief Officer", "3 AB" → positions = 2, 2, 3. Otherwise positions = 1 (integer).
-5. JOINING DATE: extract joining_date only when explicitly provided; otherwise null. Never invent a date.
+5. JOINING DATE: joining_date MUST be strict "YYYY-MM-DD" and ONLY when the source states an unambiguous calendar date (e.g. "Joining 2 September 2026" -> "2026-09-02"). Never output natural-language text in joining_date: "Immediate", "ASAP", "TBA", "urgent", "early September", "first week September" -> joining_date = null, and preserve that wording inside additional_notes instead. Never invent or guess a year or a date.
 6. Use null (not empty strings or guesses) for anything the advert does not state. Keep rank names and vessel types in standard English maritime terms.
 7. ranks_found: a top-level array listing every rank you saw in the source advert.
 RISK: flag 'high' if the advert asks seafarers for payment, placement fees or deposits; flag 'medium' if there is no company name, or only a personal email/phone with no company, or the salary is far outside normal maritime ranges. List the specific reasons in flags.`;
@@ -199,9 +199,27 @@ Deno.serve(async (req) => {
       }
     }
 
+    const isoDate = (x: unknown): string | null => {
+      const v = String(x ?? "").trim();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return null;
+      const d = new Date(`${v}T00:00:00Z`);
+      return !isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v ? v : null;
+    };
+
     vacancies = vacancies.map((v) => {
       const p = Number(v?.positions);
-      return { ...v, positions: Number.isFinite(p) && p >= 1 ? Math.floor(p) : 1 };
+      const raw = String(v?.joining_date ?? "").trim();
+      const safe = isoDate(raw);
+      let notes = String(v?.additional_notes ?? "").trim();
+      if (raw && !safe && !notes.toLowerCase().includes(raw.toLowerCase())) {
+        notes = notes ? `${notes}\nJoining: ${raw}` : `Joining: ${raw}`;
+      }
+      return {
+        ...v,
+        joining_date: safe,
+        additional_notes: notes || null,
+        positions: Number.isFinite(p) && p >= 1 ? Math.floor(p) : 1,
+      };
     });
 
     const risk = parsed.risk && typeof parsed.risk === "object"
