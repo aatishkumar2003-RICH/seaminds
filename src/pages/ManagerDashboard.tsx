@@ -218,13 +218,22 @@ const ManagerDashboard = () => {
       toast.error("Please upload a JPG, PNG or WEBP image");
       return;
     }
+    const identity = await loadManagerIdentity();
+    if (!identity?.userId) { toast.error("Loading your company account — please try again"); return; }
+    if (!identity.approved) { toast.error("Your company account is pending approval"); return; }
     setReadingFlier(true);
     try {
       const image_base64 = await downscaleImage(file);
       // preserve the ORIGINAL flier; the downscaled copy is only for AI reading
-      const identity = await loadManagerIdentity();
-      setFlierUrl(identity?.userId ? await uploadOriginalFlier(file, identity.userId) : null);
+      const upload = await uploadOriginalFlier(file, identity.userId);
+      if (!upload.ok) {
+        setFlierUrl(null);
+        toast.error("Could not preserve the original flyer. Please try uploading again.");
+        return;
+      }
+      setFlierUrl(upload.url);
       const { data, error } = await supabase.functions.invoke("parse-vacancy-text", { body: { image_base64 } });
+
       if (error) { handleParseError(error); return; }
       const res = data as ParseResult;
       if (!res?.ok) { handleParseError(null, res); return; }
