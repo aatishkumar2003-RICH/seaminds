@@ -86,18 +86,26 @@ export const loadManagerIdentity = async (): Promise<ManagerIdentity | null> => 
 
 export const ACCEPTED_FLIER_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
-/** Upload the ORIGINAL (unaltered) flier image to the public job-fliers bucket. */
-export const uploadOriginalFlier = async (file: File, managerId: string): Promise<string | null> => {
-  if (!ACCEPTED_FLIER_TYPES.includes(file.type.toLowerCase())) return null;
+export type FlierUploadResult = { ok: true; url: string } | { ok: false; error: string };
+
+/** Upload the ORIGINAL (unaltered) flier image to the public job-fliers bucket. Never swallows failures. */
+export const uploadOriginalFlier = async (file: File, managerId: string): Promise<FlierUploadResult> => {
+  if (!managerId) return { ok: false, error: "Manager identity not ready." };
+  if (!ACCEPTED_FLIER_TYPES.includes(file.type.toLowerCase())) {
+    return { ok: false, error: "Flyer must be a JPG, PNG or WEBP image." };
+  }
   const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
   const path = `${managerId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
   const { error } = await supabase.storage.from("job-fliers").upload(path, file, {
     contentType: file.type,
     upsert: false,
   });
-  if (error) return null;
-  return supabase.storage.from("job-fliers").getPublicUrl(path).data.publicUrl || null;
+  if (error) return { ok: false, error: error.message };
+  const url = supabase.storage.from("job-fliers").getPublicUrl(path).data.publicUrl || "";
+  if (!url) return { ok: false, error: "Storage did not return a public URL." };
+  return { ok: true, url };
 };
+
 
 // ---------------- contact validation ----------------
 
