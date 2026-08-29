@@ -95,13 +95,45 @@ export const checkWhatsapp = (raw: string): WhatsappCheck => {
   const v = str(raw);
   if (!v) return { ok: true, warning: null };
   const compact = v.replace(/[\s()\-.]/g, "");
-  if (compact.startsWith("+")) return { ok: true, warning: null };
-  if (compact.startsWith("00")) return { ok: true, warning: null };
-  if (compact.startsWith("0")) {
-    return { ok: false, warning: "Country code required — add +XX before publishing." };
+  const invalid = { ok: false, warning: "Enter a valid international number with country code (+XX)." } as const;
+  const needsCode = { ok: false, warning: "Country code required — add +XX before publishing." } as const;
+
+  // + international: 8-15 digits after the plus, first digit is not 0
+  if (compact.startsWith("+")) {
+    return /^\+[1-9][0-9]{7,14}$/.test(compact) ? { ok: true, warning: null } : { ...invalid };
   }
-  if (/^[0-9]{6,}$/.test(compact)) return { ok: true, warning: null };
-  return { ok: false, warning: "Country code required — add +XX before publishing." };
+  // 00 international: 8-15 digits after 00, first digit is not 0
+  if (compact.startsWith("00")) {
+    return /^00[1-9][0-9]{7,14}$/.test(compact) ? { ok: true, warning: null } : { ...invalid };
+  }
+  // single domestic leading zero — never guessed into a country code
+  if (compact.startsWith("0")) return { ...needsCode };
+  // explicit international digits
+  if (/^[1-9][0-9]{7,14}$/.test(compact)) return { ok: true, warning: null };
+  return { ...needsCode };
+};
+
+// ---------------- joining date validation ----------------
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** A joining date is publishable when empty or a real YYYY-MM-DD calendar date. */
+export const isValidJoiningDate = (raw: string): boolean => {
+  const v = str(raw);
+  if (!v) return true;
+  if (!ISO_DATE.test(v)) return false;
+  const d = new Date(`${v}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v;
+};
+
+export const validateJoiningDates = (rows: PreviewVacancy[]): { ok: boolean; warnings: string[] } => {
+  const warnings: string[] = [];
+  rows.forEach((r, i) => {
+    if (!isValidJoiningDate(r.joining_date)) {
+      warnings.push(`Vacancy ${i + 1} (${r.rank_required || "rank"}): joining date must be YYYY-MM-DD or left blank.`);
+    }
+  });
+  return { ok: warnings.length === 0, warnings };
 };
 
 export const validateContacts = (rows: PreviewVacancy[]): { ok: boolean; warnings: string[] } => {
@@ -135,7 +167,8 @@ const loadActivePostings = async (managerId: string): Promise<ActiveRow[]> => {
     .from("job_postings")
     .select("id, rank_required, vessel_type, joining_port, joining_date, contract_duration, monthly_salary, created_at")
     .eq("manager_id", managerId)
-    .eq("status", "active");
+    .eq("status", "active")
+    .gt("expires_at", new Date().toISOString());
   return (data || []) as unknown as ActiveRow[];
 };
 
@@ -189,9 +222,6 @@ export const scanDuplicates = async (managerId: string, rows: PreviewVacancy[]):
 
 // ---------------- publishing ----------------
 
-const SALARY_FALLBACK_NOTE =
-  "Salary as per international market standards, commensurate with rank and experience.";
-
 const toRow = (
   v: PreviewVacancy,
   identity: ManagerIdentity,
@@ -201,11 +231,9 @@ const toRow = (
   flierUrl?: string | null,
 ) => {
   const hasSalary = v.monthly_salary.length > 0;
-  const notes = [
-    v.additional_notes,
-    v.contact_email ? `Email: ${v.contact_email}` : "",
-    !hasSalary ? SALARY_FALLBACK_NOTE : "",
-  ].filter(Boolean).join("\n") || null;
+  // Notes carry ONLY what the manager / source actually wrote. Never invented
+  // salary wording, never a copy of the structured contact_email.
+  const notes = v.additional_notes || null;
 
   return {
     rank_required: v.rank_required || "Not specified",
@@ -213,7 +241,7 @@ const toRow = (
     contract_duration: v.contract_duration || "Not specified",
     monthly_salary: hasSalary ? v.monthly_salary : null,
     joining_port: v.joining_port || "Not specified",
-    joining_date: v.joining_date || null,
+    joining_date: isValidJoiningDate(v.joining_date) && v.joining_date ? v.joining_date : null,
     positions: v.positions >= 1 ? v.positions : 1,
     contact_whatsapp: v.contact_whatsapp || "",
     contact_email: v.contact_email || null,
@@ -244,6 +272,11 @@ export const publishVacancyBatch = async (
   if (requested === 0) return { requested: 0, published: 0, duplicatesSkipped: 0, failures: [], batchId: null };
   if (!identity.approved) {
     return { requested, published: 0, duplicatesSkipped: 0, failures: ["Your company account is pending approval"], batchId: null };
+  }
+
+  const dateCheck = validateJoiningDates(rows);
+  if (!dateCheck.ok) {
+    return { requested, published: 0, duplicatesSkipped: 0, failures: dateCheck.warnings, batchId: null };
   }
 
   let toPublish = rows;
