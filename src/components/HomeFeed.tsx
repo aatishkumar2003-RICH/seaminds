@@ -347,7 +347,8 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
             company: v.company, rank: v.rank, vessel: v.vessel || v.vessel_type,
             externalUrl: isDirect ? null : url,
           }, (r) => {
-            if (r.ok) toast.success("Applied ✓ — recorded on SeaMinds");
+            if (r.ok && r.emailSent === false) toast.warning("Applied ✓ — saved on SeaMinds, but the email notification failed");
+            else if (r.ok) toast.success("Applied ✓ — recorded on SeaMinds");
             else toast.error("Sent on WhatsApp — could not record on SeaMinds");
           });
           return;
@@ -377,6 +378,7 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
         if (!r.ok) { toast.error("Sent on WhatsApp — could not record on SeaMinds"); return; }
         setDirectApplied((s) => ({ ...s, [v.postingId]: r.duplicate ? "dup" : "ok" }));
         if (r.duplicate) toast.success("Already applied ✓ — the company already has your application");
+        else if (r.emailSent === false) { toast.warning("Applied ✓ — saved on SeaMinds, but the email notification failed"); log("vacancy", v.id, "apply"); }
         else { toast.success("Applied ✓ — recorded on SeaMinds"); log("vacancy", v.id, "apply"); }
       });
     } catch {

@@ -327,6 +327,7 @@ const ConversionConsole = () => {
         if (!r.ok) { toast.error("Sent on WhatsApp — could not record on SeaMinds"); return; }
         setApplied((s) => ({ ...s, [v.id]: r.duplicate ? "dup" : "ok" }));
         if (r.duplicate) toast.success("Already applied ✓ — the company already has your application");
+        else if (r.emailSent === false) toast.warning("Applied ✓ — saved on SeaMinds, but the email notification failed");
         else toast.success("Applied ✓ — recorded on SeaMinds");
       });
     } catch {

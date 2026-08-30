@@ -165,6 +165,7 @@ const JobFeed = () => {
       externalUrl: url,
     }, (r) => {
       if (r.ok && r.duplicate) toast.success("Already applied ✓ — the company already has your application");
+      else if (r.ok && r.emailSent === false) toast.warning("Applied ✓ — saved on SeaMinds, but the email notification failed");
       else if (r.ok) toast.success("Applied ✓ — recorded on SeaMinds");
       else toast.error("Sent on WhatsApp — could not record on SeaMinds");
     });
@@ -188,6 +189,7 @@ const JobFeed = () => {
           externalUrl: null,
         }, (r) => {
           if (r.ok && r.duplicate) toast.success("Already applied ✓ — the company already has your application");
+          else if (r.ok && r.emailSent === false) toast.warning("Applied ✓ — saved on SeaMinds, but the email to the company failed");
           else if (r.ok) toast.success("Applied ✓ — your application has been emailed to the company");
           else toast.error("Sent on WhatsApp — could not record on SeaMinds");
         });
