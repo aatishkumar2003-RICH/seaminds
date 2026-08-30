@@ -778,32 +778,145 @@ const ManagerDashboard = () => {
 
         {dashTab === "applicants" ? (
           <>
-          {/* My Vacancies */}
-          <div className="bg-secondary rounded-xl border border-border p-4 space-y-3">
-            <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">📢 My Vacancies</h2>
+          {/* Manager Vacancy Console */}
+          <div className="bg-secondary rounded-xl border border-border p-4 space-y-4">
+            <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">📢 Vacancy Console</h2>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+              {[
+                { label: "Active", value: consoleStats.active },
+                { label: "Open Positions", value: consoleStats.openPositions },
+                { label: "Applicants", value: consoleStats.applicants },
+                { label: "Shortlisted", value: consoleStats.shortlisted },
+                { label: "Offers", value: consoleStats.offers },
+                { label: "Placed", value: consoleStats.placed },
+                { label: "Expiring 3d", value: consoleStats.expiring },
+              ].map((s) => (
+                <div key={s.label} className="rounded-lg border border-[#D4AF37]/30 bg-[#0D1B2A] px-3 py-2">
+                  <p className="text-lg font-bold text-[#D4AF37] leading-none">{s.value}</p>
+                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground mt-1">{s.label}</p>
+                </div>
+              ))}
+            </div>
+
             {myPostings.length === 0 ? (
               <p className="text-xs text-muted-foreground">You have not posted any vacancies yet.</p>
             ) : (
-              <div className="space-y-2">
-                {myPostings.map((jp) => (
-                  <div key={jp.id} className="flex items-center justify-between gap-3 rounded-lg border border-border/50 bg-secondary/50 px-3 py-2">
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-foreground truncate">
-                        {[jp.rank_required, jp.vessel_type].filter(Boolean).join(" · ") || "Vacancy"}
+              <div className="space-y-4">
+                {vacancyGroups.map((grp) => (
+                  <div key={grp.key} className="space-y-2">
+                    {grp.batch && (
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-[#D4AF37]">
+                        Campaign · {grp.items.length} vacancies
                       </p>
-                      <p className="text-xs text-muted-foreground">posted {relTime(jp.created_at)}</p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{jp.status || "active"}</span>
-                      <span className="text-xs font-bold px-2 py-1 rounded-full bg-[#D4AF37]/15 text-[#D4AF37]">
-                        👥 {applicants.filter((a) => a.job_posting_id === jp.id).length}
-                      </span>
-                    </div>
+                    )}
+                    {grp.items.map((jp) => {
+                      const m = vacancyMetrics(jp);
+                      return (
+                        <div key={jp.id} className="rounded-lg border border-border/50 bg-secondary/50 px-3 py-2 space-y-2">
+                          <div className="flex flex-wrap items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="text-sm font-bold text-foreground truncate">
+                                {[jp.rank_required, jp.vessel_type].filter(Boolean).join(" · ") || "Vacancy"}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {m.positions} position{m.positions === 1 ? "" : "s"} · {m.open} open · 👥 {m.applicantCount} applicants
+                              </p>
+                              <p className="text-[11px] text-muted-foreground/80">
+                                {sourceLabel(jp.source_type)} · {jp.expires_at ? `expires ${new Date(jp.expires_at).toLocaleDateString()}` : "no expiry"}
+                              </p>
+                              {m.full && <p className="text-[11px] font-semibold text-green-500">All positions filled</p>}
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{m.displayStatus}</span>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {jp.flier_url && (
+                              <button onClick={() => setFlierView(jp.flier_url!)} className="text-[11px] px-2 py-1 rounded-lg border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/10">View Flyer</button>
+                            )}
+                            <button onClick={() => openEditVacancy(jp)} className="text-[11px] px-2 py-1 rounded-lg border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/10">Edit</button>
+                            {jp.status === "filled" ? (
+                              <button onClick={() => reopenVacancy(jp)} className="text-[11px] px-2 py-1 rounded-lg border border-border text-muted-foreground hover:text-foreground">Reopen</button>
+                            ) : (
+                              <button onClick={() => markFilled(jp)} className="text-[11px] px-2 py-1 rounded-lg border border-border text-muted-foreground hover:text-foreground">Mark Filled</button>
+                            )}
+                            <button onClick={() => extendVacancy(jp)} className="text-[11px] px-2 py-1 rounded-lg border border-border text-muted-foreground hover:text-foreground">Extend 14 Days</button>
+                            <button onClick={() => deleteVacancy(jp)} className="text-[11px] px-2 py-1 rounded-lg border border-red-500/40 text-red-400 hover:bg-red-500/10">Delete</button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 ))}
               </div>
             )}
           </div>
+
+          {flierView && (
+            <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setFlierView(null)}>
+              <div className="bg-[#0D1B2A] border border-[#D4AF37]/40 rounded-xl p-3 max-w-3xl w-full max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+                <div className="flex justify-between items-center mb-2">
+                  <p className="text-sm font-semibold text-[#D4AF37]">Original Flyer</p>
+                  <button onClick={() => setFlierView(null)} className="text-xs text-muted-foreground hover:text-foreground">Close</button>
+                </div>
+                <img src={flierView} alt="Vacancy flyer" className="w-full h-full max-h-[70vh] object-contain rounded-lg" />
+              </div>
+            </div>
+          )}
+
+          {editVacancy && (
+            <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto">
+              <div className="bg-[#0D1B2A] border border-[#D4AF37]/40 rounded-xl p-4 max-w-lg w-full space-y-3 max-h-[90vh] overflow-y-auto">
+                <div className="flex justify-between items-center">
+                  <p className="text-sm font-semibold text-[#D4AF37]">Edit Vacancy</p>
+                  <button onClick={() => setEditVacancy(null)} className="text-xs text-muted-foreground hover:text-foreground">Close</button>
+                </div>
+                {editLocked && (
+                  <p className="text-[11px] text-muted-foreground">Rank and vessel type cannot be changed after applications are received.</p>
+                )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {([
+                    ["rank_required", "Rank required"],
+                    ["vessel_type", "Vessel type"],
+                    ["positions", "Positions"],
+                    ["joining_port", "Joining port"],
+                    ["joining_date", "Joining date (YYYY-MM-DD)"],
+                    ["contract_duration", "Contract duration"],
+                    ["monthly_salary", "Monthly salary"],
+                    ["contact_whatsapp", "Contact WhatsApp"],
+                    ["contact_email", "Contact email"],
+                  ] as [keyof typeof editForm, string][]).map(([k, label]) => (
+                    <label key={k} className="text-[11px] text-muted-foreground space-y-1">
+                      <span>{label}</span>
+                      <input
+                        value={editForm[k]}
+                        disabled={editLocked && (k === "rank_required" || k === "vessel_type")}
+                        onChange={(e) => setEditForm((p) => ({ ...p, [k]: e.target.value }))}
+                        className="w-full text-sm bg-secondary border border-border rounded-lg px-2 py-1.5 text-foreground disabled:opacity-50"
+                      />
+                    </label>
+                  ))}
+                </div>
+                <label className="text-[11px] text-muted-foreground space-y-1 block">
+                  <span>Additional notes</span>
+                  <textarea
+                    value={editForm.additional_notes}
+                    onChange={(e) => setEditForm((p) => ({ ...p, additional_notes: e.target.value }))}
+                    rows={3}
+                    className="w-full text-sm bg-secondary border border-border rounded-lg px-2 py-1.5 text-foreground"
+                  />
+                </label>
+                <div className="flex justify-end gap-2">
+                  <button onClick={() => setEditVacancy(null)} className="text-xs px-3 py-1.5 rounded-lg border border-border text-muted-foreground">Cancel</button>
+                  <button onClick={saveVacancyEdit} disabled={savingVacancy} className="text-xs font-bold px-3 py-1.5 rounded-lg bg-[#D4AF37] text-[#0D1B2A] disabled:opacity-50">
+                    {savingVacancy ? "Saving…" : "Save changes"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
 
           <div id="applicants-section" className="bg-secondary rounded-xl border border-border p-4 space-y-4">
             <div className="flex items-center justify-between">
