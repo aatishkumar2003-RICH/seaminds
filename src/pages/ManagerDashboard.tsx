@@ -726,7 +726,7 @@ const ManagerDashboard = () => {
     };
   };
 
-  const consoleStats = useMemo(() => {
+  const consoleStats = (() => {
     const activeVacancies = myPostings.filter((jp) => jp.status === "active" && !isExpired(jp));
     const linked = applicants.filter((a) => !!a.job_posting_id);
     const in3 = Date.now() + 3 * 86400000;
@@ -746,9 +746,9 @@ const ManagerDashboard = () => {
         return t > 0 && t >= Date.now() && t <= in3;
       }).length,
     };
-  }, [myPostings, applicants]);
+  })();
 
-  const vacancyGroups = useMemo(() => {
+  const vacancyGroups = (() => {
     const groups: { key: string; batch: boolean; items: MyPosting[] }[] = [];
     const byBatch = new Map<string, MyPosting[]>();
     myPostings.forEach((jp) => {
@@ -762,7 +762,7 @@ const ManagerDashboard = () => {
     });
     byBatch.forEach((items, key) => groups.push({ key, batch: items.length > 1, items }));
     return groups;
-  }, [myPostings]);
+  })();
 
   const openEditVacancy = (jp: MyPosting) => {
     setEditVacancy(jp);
