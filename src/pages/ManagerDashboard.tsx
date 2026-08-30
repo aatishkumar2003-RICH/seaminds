@@ -726,7 +726,7 @@ const ManagerDashboard = () => {
     };
   };
 
-  const consoleStats = useMemo(() => {
+  const consoleStats = (() => {
     const activeVacancies = myPostings.filter((jp) => jp.status === "active" && !isExpired(jp));
     const linked = applicants.filter((a) => !!a.job_posting_id);
     const in3 = Date.now() + 3 * 86400000;
@@ -746,9 +746,9 @@ const ManagerDashboard = () => {
         return t > 0 && t >= Date.now() && t <= in3;
       }).length,
     };
-  }, [myPostings, applicants]);
+  })();
 
-  const vacancyGroups = useMemo(() => {
+  const vacancyGroups = (() => {
     const groups: { key: string; batch: boolean; items: MyPosting[] }[] = [];
     const byBatch = new Map<string, MyPosting[]>();
     myPostings.forEach((jp) => {
@@ -762,7 +762,7 @@ const ManagerDashboard = () => {
     });
     byBatch.forEach((items, key) => groups.push({ key, batch: items.length > 1, items }));
     return groups;
-  }, [myPostings]);
+  })();
 
   const openEditVacancy = (jp: MyPosting) => {
     setEditVacancy(jp);
@@ -784,7 +784,16 @@ const ManagerDashboard = () => {
 
   const saveVacancyEdit = async () => {
     if (!editVacancy || savingVacancy) return;
-    const positions = Math.max(parseInt(editForm.positions.replace(/[^0-9]/g, ""), 10) || 1, 1);
+    const positionsRaw = editForm.positions.trim();
+    if (!/^\d+$/.test(positionsRaw)) {
+      toast.error("Positions must be a whole number of at least 1.");
+      return;
+    }
+    const positions = Number(positionsRaw);
+    if (!Number.isSafeInteger(positions) || positions < 1) {
+      toast.error("Positions must be a whole number of at least 1.");
+      return;
+    }
     const dateCheck = validateJoiningDates([
       toPreviewVacancy({ rank_required: editForm.rank_required, joining_date: editForm.joining_date }),
     ]);
@@ -1064,6 +1073,9 @@ const ManagerDashboard = () => {
                         value={editForm[k]}
                         disabled={editLocked && (k === "rank_required" || k === "vessel_type")}
                         onChange={(e) => setEditForm((p) => ({ ...p, [k]: e.target.value }))}
+                        type={k === "positions" ? "number" : "text"}
+                        min={k === "positions" ? 1 : undefined}
+                        step={k === "positions" ? 1 : undefined}
                         className="w-full text-sm bg-secondary border border-border rounded-lg px-2 py-1.5 text-foreground disabled:opacity-50"
                       />
                     </label>
