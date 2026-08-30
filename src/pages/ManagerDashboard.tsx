@@ -127,6 +127,13 @@ const ManagerDashboard = () => {
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [applicantsLoading, setApplicantsLoading] = useState(false);
   const [myPostings, setMyPostings] = useState<MyPosting[]>([]);
+  const [flierView, setFlierView] = useState<string | null>(null);
+  const [editVacancy, setEditVacancy] = useState<MyPosting | null>(null);
+  const [savingVacancy, setSavingVacancy] = useState(false);
+  const [editForm, setEditForm] = useState({
+    rank_required: "", vessel_type: "", positions: "1", joining_port: "", joining_date: "",
+    contract_duration: "", monthly_salary: "", contact_whatsapp: "", contact_email: "", additional_notes: "",
+  });
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [offerFor, setOfferFor] = useState<Applicant | null>(null);
   const [offerForm, setOfferForm] = useState({
