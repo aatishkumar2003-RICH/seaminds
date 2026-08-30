@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Anchor, MapPin, Ship, BadgeCheck, MessageCircle, ExternalLink } from "lucide-react";
 import { trackPixel } from "@/lib/metaPixel";
 import { formatSalaryText } from "@/lib/salary";
-import { fetchCrewCardInfo, getCachedCrewCardInfo, waApplyLink, recordApplication, fetchQuickProfileDone, CrewCardInfo } from "@/lib/applyMessage";
+import { fetchCrewCardInfo, getCachedCrewCardInfo, waApplyLink, recordApplication, openHandoffTab, completeHandoff, fetchQuickProfileDone, CrewCardInfo } from "@/lib/applyMessage";
 import ApplyGateSheet from "@/components/ApplyGateSheet";
 import { toast } from "sonner";
 
