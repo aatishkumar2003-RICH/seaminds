@@ -448,7 +448,7 @@ Deno.serve(async (req) => {
         ].filter(Boolean).join("")),
       }));
 
-      return json({ ok: true, sent: attempts.some((a) => a.sent), attempts });
+      return json({ ok: true, sent: attempts.some((a) => a.sent), in_app_notified: offerInApp.notified, attempts });
     }
 
     // ---------------------------------------------------------- offer accepted / declined
