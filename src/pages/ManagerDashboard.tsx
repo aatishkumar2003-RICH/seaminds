@@ -544,9 +544,10 @@ const ManagerDashboard = () => {
       return;
     }
     if (action === "shortlist" || action === "decline") {
-      const emailed = await notifyStatus(applicationId, action === "shortlist" ? "shortlisted" : "declined");
-      if (emailed) toast.success(action === "shortlist" ? "Shortlisted — crew notified by email ✓" : "Declined — crew notified by email ✓");
-      else toast("Status updated, but email delivery failed. The in-app notification was created.");
+      const n = await notifyStatus(applicationId, action === "shortlist" ? "shortlisted" : "declined");
+      if (n.emailed) toast.success(action === "shortlist" ? "Shortlisted — crew notified by email ✓" : "Declined — crew notified by email ✓");
+      else if (n.inApp) toast("Status updated. Email delivery failed, but the in-app notification was created.");
+      else toast("Status updated. Email and in-app notification both failed — the crew may not be aware yet.");
     } else {
       toast("Done");
     }
