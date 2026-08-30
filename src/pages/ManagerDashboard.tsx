@@ -405,7 +405,7 @@ const ManagerDashboard = () => {
     if (user) {
       const { data: jp } = await supabase
         .from("job_postings")
-        .select("id, rank_required, vessel_type, joining_port, status, created_at")
+        .select("id, rank_required, vessel_type, joining_port, status, created_at, joining_date, contract_duration, monthly_salary, positions, contact_email, contact_whatsapp, additional_notes, expires_at, posting_batch_id, source_type, flier_url")
         .eq("manager_id", user.id)
         .order("created_at", { ascending: false });
       setMyPostings(((jp as unknown) as MyPosting[]) || []);
