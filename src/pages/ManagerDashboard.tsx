@@ -684,6 +684,159 @@ const ManagerDashboard = () => {
 
   const awaitingCount = applicants.filter((a) => a.outcome === "awaiting").length;
 
+  // ---------- Vacancy console ----------
+  const sourceLabel = (s?: string | null) =>
+    s === "text" ? "Text Import" : s === "flier" ? "Flyer" : "Manual";
+
+  const isExpired = (jp: MyPosting) => !!jp.expires_at && new Date(jp.expires_at).getTime() < Date.now();
+
+  const appsFor = (id: string) => applicants.filter((a) => a.job_posting_id === id);
+
+  const vacancyMetrics = (jp: MyPosting) => {
+    const linked = appsFor(jp.id);
+    const positions = Math.max(Number(jp.positions) || 1, 1);
+    const placed = linked.filter((a) => a.outcome === "placed").length;
+    const expired = isExpired(jp);
+    return {
+      positions,
+      placed,
+      open: Math.max(positions - placed, 0),
+      applicantCount: linked.length,
+      full: placed >= positions,
+      expired,
+      displayStatus: jp.status === "filled" ? "filled" : expired ? "Expired" : (jp.status || "active"),
+    };
+  };
+
+  const consoleStats = useMemo(() => {
+    const activeVacancies = myPostings.filter((jp) => jp.status === "active" && !isExpired(jp));
+    const linked = applicants.filter((a) => !!a.job_posting_id);
+    const in3 = Date.now() + 3 * 86400000;
+    return {
+      active: activeVacancies.length,
+      openPositions: activeVacancies.reduce((sum, jp) => {
+        const positions = Math.max(Number(jp.positions) || 1, 1);
+        const placed = appsFor(jp.id).filter((a) => a.outcome === "placed").length;
+        return sum + Math.max(positions - placed, 0);
+      }, 0),
+      applicants: linked.length,
+      shortlisted: linked.filter((a) => a.outcome === "shortlisted").length,
+      offers: linked.filter((a) => a.outcome === "offered").length,
+      placed: linked.filter((a) => a.outcome === "placed").length,
+      expiring: activeVacancies.filter((jp) => {
+        const t = jp.expires_at ? new Date(jp.expires_at).getTime() : 0;
+        return t > 0 && t >= Date.now() && t <= in3;
+      }).length,
+    };
+  }, [myPostings, applicants]);
+
+  const vacancyGroups = useMemo(() => {
+    const groups: { key: string; batch: boolean; items: MyPosting[] }[] = [];
+    const byBatch = new Map<string, MyPosting[]>();
+    myPostings.forEach((jp) => {
+      if (jp.posting_batch_id) {
+        const arr = byBatch.get(jp.posting_batch_id) || [];
+        arr.push(jp);
+        byBatch.set(jp.posting_batch_id, arr);
+      } else {
+        groups.push({ key: jp.id, batch: false, items: [jp] });
+      }
+    });
+    byBatch.forEach((items, key) => groups.push({ key, batch: items.length > 1, items }));
+    return groups;
+  }, [myPostings]);
+
+  const openEditVacancy = (jp: MyPosting) => {
+    setEditVacancy(jp);
+    setEditForm({
+      rank_required: jp.rank_required || "",
+      vessel_type: jp.vessel_type || "",
+      positions: String(Math.max(Number(jp.positions) || 1, 1)),
+      joining_port: jp.joining_port || "",
+      joining_date: jp.joining_date || "",
+      contract_duration: jp.contract_duration || "",
+      monthly_salary: jp.monthly_salary || "",
+      contact_whatsapp: jp.contact_whatsapp || "",
+      contact_email: jp.contact_email || "",
+      additional_notes: jp.additional_notes || "",
+    });
+  };
+
+  const editLocked = !!editVacancy && appsFor(editVacancy.id).length > 0;
+
+  const saveVacancyEdit = async () => {
+    if (!editVacancy || savingVacancy) return;
+    const positions = Math.max(parseInt(editForm.positions.replace(/[^0-9]/g, ""), 10) || 1, 1);
+    const dateCheck = validateJoiningDates([
+      toPreviewVacancy({ rank_required: editForm.rank_required, joining_date: editForm.joining_date }),
+    ]);
+    if (!dateCheck.ok) { toast.error(dateCheck.warnings.join(" · ")); return; }
+    const wa = checkWhatsapp(editForm.contact_whatsapp);
+    if (!wa.ok) { toast.error(wa.warning || "Invalid WhatsApp number"); return; }
+
+    setSavingVacancy(true);
+    const patch: Record<string, unknown> = {
+      positions,
+      joining_port: editForm.joining_port.trim() || "Not specified",
+      joining_date: editForm.joining_date.trim() || null,
+      contract_duration: editForm.contract_duration.trim() || "Not specified",
+      monthly_salary: editForm.monthly_salary.trim() || null,
+      contact_whatsapp: editForm.contact_whatsapp.trim(),
+      contact_email: editForm.contact_email.trim() || null,
+      additional_notes: editForm.additional_notes.trim() || null,
+    };
+    if (!editLocked) {
+      patch.rank_required = editForm.rank_required.trim() || "Not specified";
+      patch.vessel_type = editForm.vessel_type.trim() || "Not specified";
+    }
+    const { error } = await supabase.from("job_postings").update(patch as never).eq("id", editVacancy.id);
+    setSavingVacancy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Vacancy updated ✓");
+    setEditVacancy(null);
+    loadApplicants();
+  };
+
+  const markFilled = async (jp: MyPosting) => {
+    const { error } = await supabase.from("job_postings").update({ status: "filled" } as never).eq("id", jp.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Marked as filled ✓");
+    loadApplicants();
+  };
+
+  const reopenVacancy = async (jp: MyPosting) => {
+    const patch: Record<string, unknown> = { status: "active" };
+    const cur = jp.expires_at ? new Date(jp.expires_at).getTime() : 0;
+    if (!cur || cur < Date.now()) patch.expires_at = new Date(Date.now() + 14 * 86400000).toISOString();
+    const { error } = await supabase.from("job_postings").update(patch as never).eq("id", jp.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Vacancy reopened ✓");
+    loadApplicants();
+  };
+
+  const extendVacancy = async (jp: MyPosting) => {
+    const base = Math.max(jp.expires_at ? new Date(jp.expires_at).getTime() : 0, Date.now());
+    const next = new Date(base + 14 * 86400000).toISOString();
+    const { error } = await supabase.from("job_postings").update({ expires_at: next } as never).eq("id", jp.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Extended by 14 days ✓");
+    loadApplicants();
+  };
+
+  const deleteVacancy = async (jp: MyPosting) => {
+    if (appsFor(jp.id).length > 0) {
+      toast.error("This vacancy has applications and cannot be deleted. Mark it filled instead.");
+      return;
+    }
+    if (!window.confirm("Delete this vacancy? This cannot be undone.")) return;
+    const { error } = await supabase.from("job_postings").delete().eq("id", jp.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Vacancy deleted ✓");
+    loadApplicants();
+  };
+
+
+
 
   return (
     <div className="min-h-screen bg-background">
