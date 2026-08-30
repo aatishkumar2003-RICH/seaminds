@@ -423,7 +423,7 @@ Deno.serve(async (req) => {
         }${offer.vessel_name ? ` · Vessel: ${esc(offer.vessel_name)}` : ""}`,
       );
 
-      await ensureNotification(app.crew_id, "job_offer", applicationId, {
+      const offerInApp = await ensureNotification(app.crew_id, "job_offer", applicationId, {
         title: `🎉 Offer received — ${rank}`,
         body: `${company}${offer.vessel_name ? ` · ${offer.vessel_name}` : ""}`,
         icon: "⚓",
@@ -506,7 +506,8 @@ Deno.serve(async (req) => {
       return json({
         ok: true,
         sent: attempts.some((a) => a.sent),
-        manager_notified: managerNotified,
+        manager_notified: managerNotified.notified,
+        in_app_notified: managerNotified.notified,
         attempts,
       });
     }
