@@ -132,7 +132,7 @@ async function deliver(opts: {
   if (!manual && await alreadyDelivered(applicationId, kind, recipient)) {
     return { ...base, sent: false, skipped: "already_sent" };
   }
-  if (manual && await resendBlocked(applicationId, kind)) {
+  if (manual && await resendBlocked(applicationId, kind, recipient)) {
     await logAttempt({ applicationId, kind, recipient, role, ok: false, manual, skipped: "resend_rate_limited" });
     return { ...base, sent: false, skipped: "resend_rate_limited" };
   }
@@ -205,19 +205,32 @@ async function resolveManager(app: any): Promise<{ email: string; userId: string
   return { email: "", userId: null, company: app.company_name ?? null };
 }
 
+const norm = (v: unknown) => String(v ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+
+/**
+ * Legacy postings with manager_id NULL may only be claimed by an admin-approved,
+ * company-verified manager whose company name matches exactly and unambiguously.
+ */
+async function legacyCompanyClaim(uid: string, postingCompany: string | null) {
+  if (!postingCompany) return false;
+  const { data: mp } = await svc.from("manager_profiles")
+    .select("company_name, admin_approved, company_verified").eq("user_id", uid).maybeSingle();
+  if (!mp || (mp as any).admin_approved !== true || (mp as any).company_verified !== true) return false;
+  const target = norm(postingCompany);
+  if (!target || norm((mp as any).company_name) !== target) return false;
+  // Unambiguous: exactly one manager profile carries this company name.
+  const { data: peers } = await svc.from("manager_profiles").select("user_id, company_name").limit(200);
+  const matches = (peers || []).filter((p: any) => norm(p.company_name) === target);
+  return matches.length === 1 && matches[0].user_id === uid;
+}
+
 async function managerOwns(app: any, uid: string) {
-  if (uid === ADMIN_UID) return true;
   if (app.job_posting_id) {
     const { data: jp } = await svc.from("job_postings")
       .select("manager_id, company_name").eq("id", app.job_posting_id).maybeSingle();
     if (jp) {
       if (jp.manager_id === uid) return true;
-      if (!jp.manager_id) {
-        const { data: mp } = await svc.from("manager_profiles")
-          .select("company_name").eq("user_id", uid).maybeSingle();
-        if (mp?.company_name && jp.company_name &&
-          mp.company_name.trim().toLowerCase() === String(jp.company_name).trim().toLowerCase()) return true;
-      }
+      if (!jp.manager_id && await legacyCompanyClaim(uid, (jp as any).company_name)) return true;
     }
   }
   if (app.company_post_id) {
@@ -234,22 +247,24 @@ async function crewName(crewId: string) {
   return `${data?.first_name || "A seafarer"} ${(data?.last_name || "").slice(0, 1)}`.trim();
 }
 
-/** Insert a notification only when an equivalent one does not exist yet. */
+interface NotifyResult { notified: boolean; existed: boolean; error?: string }
+
+/** Insert a notification only when an equivalent one does not exist yet. Reports the real outcome. */
 async function ensureNotification(userId: string | null, kind: string, applicationId: string, row: {
   title: string; body: string; icon: string; screen: string; link?: string;
-}) {
-  if (!userId) return false;
+}): Promise<NotifyResult> {
+  if (!userId) return { notified: false, existed: false, error: "no_recipient" };
   try {
     const { data: existing } = await svc.from("notifications")
       .select("id").eq("crew_id", userId).eq("kind", kind)
       .ilike("link", `%${applicationId}%`).limit(1);
-    if (existing?.length) return true;
+    if (existing?.length) return { notified: true, existed: true };
     const { error } = await svc.from("notifications").insert({
       crew_id: userId, kind, ...row, link: row.link ?? null,
     });
-    return !error;
-  } catch {
-    return false;
+    return { notified: !error, existed: false, error: error ? String(error.message).slice(0, 200) : undefined };
+  } catch (e) {
+    return { notified: false, existed: false, error: e instanceof Error ? e.message.slice(0, 200) : "error" };
   }
 }
 
