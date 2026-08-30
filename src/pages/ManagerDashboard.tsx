@@ -503,16 +503,19 @@ const ManagerDashboard = () => {
   };
 
   /** Fires the crew status email after a successful DB status change. Never reverses the action. */
-  const notifyStatus = async (applicationId: string, kind: "shortlisted" | "declined") => {
+  const notifyStatus = async (
+    applicationId: string,
+    kind: "shortlisted" | "declined",
+  ): Promise<{ emailed: boolean; inApp: boolean }> => {
     try {
       const { data, error } = await supabase.functions.invoke("notify-application", {
         body: { application_id: applicationId, kind },
       });
-      if (error) return false;
-      const r = data as { ok?: boolean; sent?: boolean } | null;
-      return !!(r?.ok && r?.sent === true);
+      if (error) return { emailed: false, inApp: false };
+      const r = data as { ok?: boolean; sent?: boolean; in_app_notified?: boolean } | null;
+      return { emailed: !!(r?.ok && r?.sent === true), inApp: r?.in_app_notified === true };
     } catch {
-      return false;
+      return { emailed: false, inApp: false };
     }
   };
 
