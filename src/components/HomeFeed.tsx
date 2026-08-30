@@ -6,7 +6,7 @@ import { trackPixel } from "@/lib/metaPixel";
 import ShareResult from "@/components/ShareResult";
 import { formatSalaryText, formatSalaryRange } from "@/lib/salary";
 import { toast } from "sonner";
-import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, recordApplication, CrewCardInfo } from "@/lib/applyMessage";
+import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, recordApplication, openHandoffTab, completeHandoff, CrewCardInfo } from "@/lib/applyMessage";
 import ApplyGateSheet from "@/components/ApplyGateSheet";
 import CrewOffers from "@/components/CrewOffers";
 

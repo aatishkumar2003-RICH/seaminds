@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { X, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { trackPixel } from "@/lib/metaPixel";
-import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, recordApplication, CrewCardInfo } from "@/lib/applyMessage";
+import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, recordApplication, openHandoffTab, completeHandoff, CrewCardInfo } from "@/lib/applyMessage";
 
 const GOLD = "#D4AF37";
 const NAVY = "#0D1B2A";
