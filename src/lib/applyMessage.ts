@@ -181,7 +181,14 @@ export const recordApplication = async (
 /** Opens a placeholder tab synchronously from a user click, so the later handoff is not blocked. */
 export const openHandoffTab = (): Window | null => {
   try {
-    return window.open("about:blank", "_blank", "noopener,noreferrer");
+    const win = window.open("about:blank", "_blank");
+    if (win) {
+      win.opener = null;
+      try {
+        win.document.title = "Preparing your application…";
+      } catch { /* noop */ }
+    }
+    return win;
   } catch {
     return null;
   }
