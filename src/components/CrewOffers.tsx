@@ -72,12 +72,24 @@ const CrewOffers = ({ profileId, highlightApplicationId, onCountChange }: Props)
     if (accept) {
       setPlaced((prev) => [...prev, { id: offer.id, company: offer.company_name }]);
       toast.success("Placement confirmed ⚓");
-      supabase.functions
-        .invoke("notify-application", { body: { application_id: offer.id, kind: "accepted" } })
-        .catch(() => {});
+    }
+
+    // Email + manager notification. Delivery failure never reverses the recorded response.
+    let notified: { sent?: boolean; manager_notified?: boolean } | null = null;
+    try {
+      const { data: nd } = await supabase.functions.invoke("notify-application", {
+        body: { application_id: offer.id, kind: accept ? "accepted" : "offer_declined" },
+      });
+      notified = nd as any;
+    } catch { /* ignore — the response is already recorded */ }
+
+    if (!accept) {
+      if (notified?.manager_notified) toast.success("Offer declined — the company was notified");
+      else toast("Offer declined. We could not notify the company automatically.");
     }
     load();
   };
+
 
   if (!offers.length && !placed.length) return null;
 
