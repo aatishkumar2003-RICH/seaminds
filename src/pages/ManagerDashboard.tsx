@@ -462,7 +462,7 @@ const ManagerDashboard = () => {
     const result = data as { ok?: boolean; error?: string } | null;
     if (result && !result.ok) { setOfferSending(false); toast.error(result.error || "Could not send offer"); return; }
 
-    const notified = await notifyOffer(applicationId);
+    const notified = (await notifyOffer(applicationId)).sent;
     setOfferSending(false);
 
     setOfferSent((prev) => ({
@@ -480,10 +480,33 @@ const ManagerDashboard = () => {
     loadApplicants();
   };
 
-  const notifyOffer = async (applicationId: string): Promise<boolean> => {
+  const notifyOffer = async (applicationId: string, force = false): Promise<{ sent: boolean; reason?: string }> => {
     try {
       const { data, error } = await supabase.functions.invoke("notify-application", {
-        body: { application_id: applicationId, kind: "offer" },
+        body: { application_id: applicationId, kind: "offer", force_resend: force },
+      });
+      if (error) return { sent: false, reason: error.message };
+      const r = data as { ok?: boolean; sent?: boolean; attempts?: { skipped?: string; error?: string }[] } | null;
+      if (r?.ok && r?.sent === true) return { sent: true };
+      const a = r?.attempts?.[0];
+      return { sent: false, reason: a?.skipped || a?.error };
+    } catch {
+      return { sent: false };
+    }
+  };
+
+  const resendOfferEmail = async (applicationId: string) => {
+    const r = await notifyOffer(applicationId, true);
+    if (r.sent) toast.success("Offer email sent ✓");
+    else if (r.reason === "resend_rate_limited") toast.error("Too many resends for this offer — please try again later");
+    else toast.error(`Email delivery failed${r.reason ? ` (${r.reason})` : ""} — please try again`);
+  };
+
+  /** Fires the crew status email after a successful DB status change. Never reverses the action. */
+  const notifyStatus = async (applicationId: string, kind: "shortlisted" | "declined") => {
+    try {
+      const { data, error } = await supabase.functions.invoke("notify-application", {
+        body: { application_id: applicationId, kind },
       });
       if (error) return false;
       const r = data as { ok?: boolean; sent?: boolean } | null;
@@ -492,14 +515,6 @@ const ManagerDashboard = () => {
       return false;
     }
   };
-
-  const resendOfferEmail = async (applicationId: string) => {
-    const ok = await notifyOffer(applicationId);
-    if (ok) toast.success("Offer email sent ✓");
-    else toast.error("Email delivery failed — please try again");
-  };
-
-
 
   const handleApplicationAction = async (
     applicationId: string,
@@ -525,9 +540,16 @@ const ManagerDashboard = () => {
       toast.error(result.error || "Update failed");
       return;
     }
-    toast("Done");
+    if (action === "shortlist" || action === "decline") {
+      const emailed = await notifyStatus(applicationId, action === "shortlist" ? "shortlisted" : "declined");
+      if (emailed) toast.success(action === "shortlist" ? "Shortlisted — crew notified by email ✓" : "Declined — crew notified by email ✓");
+      else toast("Status updated, but email delivery failed. The in-app notification was created.");
+    } else {
+      toast("Done");
+    }
     loadApplicants();
   };
+
 
   const loadFleet = async () => {
     const { data } = await supabase.rpc("get_my_fleet" as any);
