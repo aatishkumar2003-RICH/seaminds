@@ -784,7 +784,16 @@ const ManagerDashboard = () => {
 
   const saveVacancyEdit = async () => {
     if (!editVacancy || savingVacancy) return;
-    const positions = Math.max(parseInt(editForm.positions.replace(/[^0-9]/g, ""), 10) || 1, 1);
+    const positionsRaw = editForm.positions.trim();
+    if (!/^\d+$/.test(positionsRaw)) {
+      toast.error("Positions must be a whole number of at least 1.");
+      return;
+    }
+    const positions = Number(positionsRaw);
+    if (!Number.isSafeInteger(positions) || positions < 1) {
+      toast.error("Positions must be a whole number of at least 1.");
+      return;
+    }
     const dateCheck = validateJoiningDates([
       toPreviewVacancy({ rank_required: editForm.rank_required, joining_date: editForm.joining_date }),
     ]);
@@ -1064,6 +1073,9 @@ const ManagerDashboard = () => {
                         value={editForm[k]}
                         disabled={editLocked && (k === "rank_required" || k === "vessel_type")}
                         onChange={(e) => setEditForm((p) => ({ ...p, [k]: e.target.value }))}
+                        type={k === "positions" ? "number" : "text"}
+                        min={k === "positions" ? 1 : undefined}
+                        step={k === "positions" ? 1 : undefined}
                         className="w-full text-sm bg-secondary border border-border rounded-lg px-2 py-1.5 text-foreground disabled:opacity-50"
                       />
                     </label>
