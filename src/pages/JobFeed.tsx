@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Anchor, MapPin, Ship, BadgeCheck, MessageCircle, ExternalLink } from "lucide-react";
 import { trackPixel } from "@/lib/metaPixel";
 import { formatSalaryText } from "@/lib/salary";
-import { fetchCrewCardInfo, getCachedCrewCardInfo, waApplyLink, recordApplication, fetchQuickProfileDone, CrewCardInfo } from "@/lib/applyMessage";
+import { fetchCrewCardInfo, getCachedCrewCardInfo, waApplyLink, recordApplication, openHandoffTab, completeHandoff, fetchQuickProfileDone, CrewCardInfo } from "@/lib/applyMessage";
 import ApplyGateSheet from "@/components/ApplyGateSheet";
 import { toast } from "sonner";
 
@@ -151,11 +151,11 @@ const JobFeed = () => {
     return items.filter((i) => keys.some((k) => (i.rank || "").toLowerCase().includes(k)));
   }, [items, filter]);
 
-  // Record the outbound handoff — fire-and-forget, never blocks the open
-  const recordOutbound = (i: FeedItem, url: string | null) => {
+  // Record the outbound handoff — awaited so the email attempt completes before we leave
+  const recordOutbound = async (i: FeedItem, url: string | null) => {
     if (!signedIn) return;
     const raw = String(i.id).replace(/^[pec]-/, "");
-    recordApplication({
+    const r = await recordApplication({
       vacancyId: i.source === "market" ? raw : null,
       jobPostingId: !i.isCompanyPost && i.source === "company" ? raw : null,
       companyPostId: i.isCompanyPost ? raw : null,
@@ -163,15 +163,14 @@ const JobFeed = () => {
       rank: i.rank || null,
       vessel: i.vessel || null,
       externalUrl: url,
-    }, (r) => {
-      if (r.ok && r.duplicate) toast.success("Already applied ✓ — the company already has your application");
-      else if (r.ok && r.emailSent === false) toast.warning("Applied ✓ — saved on SeaMinds, but the email notification failed");
-      else if (r.ok) toast.success("Applied ✓ — recorded on SeaMinds");
-      else toast.error("Sent on WhatsApp — could not record on SeaMinds");
     });
+    if (r.ok && r.duplicate) toast.success("Already applied ✓ — the company already has your application");
+    else if (r.ok && r.emailSent === false) toast.warning("Applied ✓ — saved on SeaMinds, but the email notification failed");
+    else if (r.ok) toast.success("Applied ✓ — recorded on SeaMinds");
+    else toast.error("Sent on WhatsApp — could not record on SeaMinds");
   };
 
-  const apply = (i: FeedItem) => {
+  const apply = async (i: FeedItem) => {
     if (!signedIn) { navigate(`/join?next=${encodeURIComponent("/feed")}`); return; }
     if (needsQuickProfile) { setGateOpen(true); return; }
     setApplying(i.id);
@@ -179,7 +178,7 @@ const JobFeed = () => {
       trackPixel("Contact", { content_name: "job_apply_public" });
       if (i.email) {
         const raw = String(i.id).replace(/^[pec]-/, "");
-        recordApplication({
+        const r = await recordApplication({
           vacancyId: i.source === "market" ? raw : null,
           jobPostingId: !i.isCompanyPost && i.source === "company" ? raw : null,
           companyPostId: i.isCompanyPost ? raw : null,
@@ -187,27 +186,26 @@ const JobFeed = () => {
           rank: i.rank || null,
           vessel: i.vessel || null,
           externalUrl: null,
-        }, (r) => {
-          if (r.ok && r.duplicate) toast.success("Already applied ✓ — the company already has your application");
-          else if (r.ok && r.emailSent === false) toast.warning("Applied ✓ — saved on SeaMinds, but the email to the company failed");
-          else if (r.ok) toast.success("Applied ✓ — your application has been emailed to the company");
-          else toast.error("Sent on WhatsApp — could not record on SeaMinds");
         });
+        if (r.ok && r.duplicate) toast.success("Already applied ✓ — the company already has your application");
+        else if (r.ok && r.emailSent === false) toast.warning("Applied ✓ — saved on SeaMinds, but the email to the company failed");
+        else if (r.ok) toast.success("Applied ✓ — your application has been emailed to the company");
+        else toast.error("Sent on WhatsApp — could not record on SeaMinds");
         return;
       }
       if (i.whatsapp) {
         const url = waApplyLink(i.whatsapp, cardInfo || getCachedCrewCardInfo(), { rank: i.rank, vessel: i.vessel, port: i.port });
         if (url) {
-          const win = window.open(url, "_blank", "noopener,noreferrer");
-          if (!win) window.location.href = url;
-          recordOutbound(i, url);
+          const win = openHandoffTab();
+          await recordOutbound(i, url);
+          completeHandoff(win, url);
           return;
         }
       }
       if (i.applyUrl) {
-        const win = window.open(i.applyUrl, "_blank", "noopener,noreferrer");
-        if (!win) window.location.href = i.applyUrl;
-        recordOutbound(i, i.applyUrl);
+        const win = openHandoffTab();
+        await recordOutbound(i, i.applyUrl);
+        completeHandoff(win, i.applyUrl);
         return;
       }
       navigate("/app?tab=jobs");
@@ -217,6 +215,7 @@ const JobFeed = () => {
       setApplying(null);
     }
   };
+
 
 
 

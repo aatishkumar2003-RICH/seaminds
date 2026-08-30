@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { X, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { trackPixel } from "@/lib/metaPixel";
-import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, recordApplication, CrewCardInfo } from "@/lib/applyMessage";
+import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, recordApplication, openHandoffTab, completeHandoff, CrewCardInfo } from "@/lib/applyMessage";
 
 const GOLD = "#D4AF37";
 const NAVY = "#0D1B2A";
@@ -72,50 +72,52 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
   const ready = readiness?.ready === true;
   const unknownReadiness = readiness === null;
 
-  const apply = () => {
+  const apply = async () => {
     if (saving) return;                 // guards double-tap
     setSaving(true); setError("");
     try {
-      // Open WhatsApp synchronously first so mobile browsers never block it
-      if (target.whatsapp) {
-        const url = waApplyLink(target.whatsapp, cardInfo || getCachedCrewCardInfo(), { rank: target.rank, vessel: target.vessel, port: target.port });
-        if (url) {
-          const win = window.open(url, "_blank", "noopener,noreferrer");
-          if (!win) window.location.href = url;
-        }
-      }
+      // Reserve the tab synchronously so the later WhatsApp handoff is never blocked
+      const url = target.whatsapp
+        ? waApplyLink(target.whatsapp, cardInfo || getCachedCrewCardInfo(), { rank: target.rank, vessel: target.vessel, port: target.port })
+        : null;
+      const win = url ? openHandoffTab() : null;
 
-      recordApplication({
+      const r = await recordApplication({
         vacancyId: target.isCompanyPost ? null : target.rawId,
         companyPostId: target.isCompanyPost ? target.rawId : null,
         company: target.company || null,
         rank: target.rank || null,
         vessel: target.vessel || null,
         externalUrl: target.applyUrl || null,
-      }, (r) => {
-        setSaving(false);
-        if (!r.ok) {
-          setError("Sent on WhatsApp — could not record on SeaMinds.");
-          return;
-        }
-
-        trackPixel("Contact", { content_name: "job_apply", content_category: target.rank || "crew" });
-
-        if (ready !== true) {
-          onClose();
-          onGoToCv();
-          return;
-        }
-
-        if (r.emailSent === false) toast.warning("Application saved — but the email notification to the company failed");
-        setDone({ duplicate: r.duplicate });
       });
 
+      setSaving(false);
+
+      if (!r.ok) {
+        completeHandoff(win, url);
+        setError("Sent on WhatsApp — could not record on SeaMinds.");
+        return;
+      }
+
+      trackPixel("Contact", { content_name: "job_apply", content_category: target.rank || "crew" });
+
+      if (r.emailSent === false) toast.warning("Application saved — but the email notification to the company failed");
+
+      completeHandoff(win, url);
+
+      if (ready !== true) {
+        onClose();
+        onGoToCv();
+        return;
+      }
+
+      setDone({ duplicate: r.duplicate });
     } catch {
       setError("Could not save your application. Please try again.");
       setSaving(false);
     }
   };
+
 
 
   return (

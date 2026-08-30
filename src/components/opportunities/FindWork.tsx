@@ -12,7 +12,7 @@ import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { formatSalaryText, formatSalaryRange } from "@/lib/salary";
-import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, recordApplication, fetchQuickProfileDone, CrewCardInfo } from "@/lib/applyMessage";
+import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, recordApplication, openHandoffTab, completeHandoff, fetchQuickProfileDone, CrewCardInfo } from "@/lib/applyMessage";
 import ApplyGateSheet from "@/components/ApplyGateSheet";
 import CrewOffers from "@/components/CrewOffers";
 import { useSearchParams } from "react-router-dom";
@@ -241,31 +241,33 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
   };
 
 
-  // Best-effort outbound recording: fire-and-forget, never blocks the handoff
-  const recordOutbound = (args: { vacancyId?: string | null; jobPostingId?: string | null; companyPostId?: string | null; company?: string | null; rank?: string | null; vessel?: string | null; url: string | null }) => {
-    recordApplication({
+  // Outbound recording: awaited so the record + email attempt completes before the handoff
+  const recordOutbound = async (args: { vacancyId?: string | null; jobPostingId?: string | null; companyPostId?: string | null; company?: string | null; rank?: string | null; vessel?: string | null; url: string | null }) => {
+    const r = await recordApplication({
       vacancyId: args.vacancyId || null,
       companyPostId: args.companyPostId || null,
       jobPostingId: args.jobPostingId || null,
       company: args.company, rank: args.rank, vessel: args.vessel,
       externalUrl: args.url,
-    }, (r) => {
-      if (r.ok && r.emailSent === false) toast({ title: "Applied ✓", description: "Saved on SeaMinds, but the email notification failed." });
-      else if (r.ok) toast({ title: "Applied ✓", description: "Recorded on SeaMinds." });
-      else toast({ title: "Sent", description: "Sent on WhatsApp — could not record on SeaMinds.", variant: "destructive" });
     });
+    if (r.ok && r.duplicate) toast({ title: "Already applied ✓", description: "The company already has your application." });
+    else if (r.ok && r.emailSent === false) toast({ title: "Applied ✓", description: "Saved on SeaMinds, but the email notification failed." });
+    else if (r.ok) toast({ title: "Applied ✓", description: "Recorded on SeaMinds." });
+    else toast({ title: "Sent", description: "Sent on WhatsApp — could not record on SeaMinds.", variant: "destructive" });
   };
 
-  const openExternalVacancy = (ext: any, url: string, target: "_blank" | "_self" = "_blank") => {
+  const openExternalVacancy = async (ext: any, url: string, target: "_blank" | "_self" = "_blank") => {
     if (needsQuickProfile) { setGateOpen(true); return; }
     try {
-      window.open(url, target, target === "_blank" ? "noopener,noreferrer" : undefined);
-      recordOutbound({ vacancyId: ext.id, company: ext.company_name, rank: ext.rank_required || ext.title, vessel: ext.vessel_type, url });
+      const win = target === "_blank" ? openHandoffTab() : null;
+      await recordOutbound({ vacancyId: ext.id, company: ext.company_name, rank: ext.rank_required || ext.title, vessel: ext.vessel_type, url });
+      if (target === "_blank") completeHandoff(win, url);
+      else window.location.href = url;
     } catch { /* noop */ }
   };
 
-  /** Opens WhatsApp synchronously with the SeaMinds calling card, then records. */
-  const openWhatsApp = (args: {
+  /** Reserves the tab synchronously, records + emails first, then hands off to WhatsApp. */
+  const openWhatsApp = async (args: {
     number: string | null | undefined;
     vacancyId?: string | null; jobPostingId?: string | null;
     company?: string | null; rank?: string | null; vessel?: string | null; port?: string | null;
@@ -274,37 +276,36 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     try {
       const url = waApplyLink(args.number, cardInfo || getCachedCrewCardInfo(), { rank: args.rank, vessel: args.vessel, port: args.port });
       if (!url) return;
-      const win = window.open(url, "_blank", "noopener,noreferrer");
-      if (!win) window.location.href = url;
-      recordOutbound({
+      const win = openHandoffTab();
+      await recordOutbound({
         vacancyId: args.vacancyId || null,
         jobPostingId: args.jobPostingId || null,
         company: args.company, rank: args.rank, vessel: args.vessel,
         url: args.jobPostingId ? null : url,
       });
+      completeHandoff(win, url);
     } catch {
       toast({ title: "Error", description: "Could not open the application. Try again.", variant: "destructive" });
     }
   };
 
-  const applyDirect = (jp: any) => {
+  const applyDirect = async (jp: any) => {
     if (needsQuickProfile) { setGateOpen(true); return; }
     if (directApplied[jp.id] || directBusy[jp.id]) return;
     setDirectBusy((s) => ({ ...s, [jp.id]: true }));
     try {
-      recordApplication({
+      const r = await recordApplication({
         jobPostingId: jp.id,
         company: jp.company_name || null,
         rank: jp.rank_required || null,
         vessel: jp.vessel_type || null,
-      }, (r) => {
-        setDirectBusy((s) => ({ ...s, [jp.id]: false }));
-        if (!r.ok) { toast({ title: "Error", description: "Could not send application. Try again.", variant: "destructive" }); return; }
-        setDirectApplied((s) => ({ ...s, [jp.id]: r.duplicate ? "dup" : "ok" }));
-        if (r.duplicate) toast({ title: "Already applied ✓", description: "The company already has your application." });
-        else if (r.emailSent === false) toast({ title: "Applied ✓", description: "Saved on SeaMinds, but the email notification failed." });
-        else toast({ title: "Applied ✓", description: "Recorded on SeaMinds." });
       });
+      setDirectBusy((s) => ({ ...s, [jp.id]: false }));
+      if (!r.ok) { toast({ title: "Error", description: "Could not send application. Try again.", variant: "destructive" }); return; }
+      setDirectApplied((s) => ({ ...s, [jp.id]: r.duplicate ? "dup" : "ok" }));
+      if (r.duplicate) toast({ title: "Already applied ✓", description: "The company already has your application." });
+      else if (r.emailSent === false) toast({ title: "Applied ✓", description: "Saved on SeaMinds, but the email notification failed." });
+      else toast({ title: "Applied ✓", description: "Recorded on SeaMinds." });
     } catch {
       toast({ title: "Error", description: "Could not send application. Try again.", variant: "destructive" });
       setDirectBusy((s) => ({ ...s, [jp.id]: false }));
@@ -312,26 +313,26 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
   };
 
   // External vacancies have no manning-company row, so the application is captured centrally
-  const handleApplyExternal = (ext: any) => {
+  const handleApplyExternal = async (ext: any) => {
     if (needsQuickProfile) { setGateOpen(true); return; }
-    recordApplication({
+    const r = await recordApplication({
       vacancyId: ext.id || null,
       company: ext.company_name || null,
       rank: ext.rank_required || ext.title || null,
       vessel: ext.vessel_type || null,
       externalUrl: ext.apply_url || ext.company_website || null,
-    }, (r) => {
-      if (!r.ok) { toast({ title: "Error", description: "Could not send application. Try again.", variant: "destructive" }); return; }
-      toast({
-        title: r.duplicate ? "Already applied ✓" : "Applied ✓",
-        description: r.duplicate
-          ? "The company already has your application."
-          : r.emailSent === false
-            ? "Saved on SeaMinds, but the email notification failed."
-            : `Recorded on SeaMinds — your profile has been sent to ${ext.company_name || "the company"}.`,
-      });
+    });
+    if (!r.ok) { toast({ title: "Error", description: "Could not send application. Try again.", variant: "destructive" }); return; }
+    toast({
+      title: r.duplicate ? "Already applied ✓" : "Applied ✓",
+      description: r.duplicate
+        ? "The company already has your application."
+        : r.emailSent === false
+          ? "Saved on SeaMinds, but the email notification failed."
+          : `Recorded on SeaMinds — your profile has been sent to ${ext.company_name || "the company"}.`,
     });
   };
+
 
   const wordCount = aboutMe.trim().split(/\s+/).filter(Boolean).length;
 

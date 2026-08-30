@@ -129,15 +129,14 @@ export interface RecordApplyResult {
 
 /**
  * Records the application, then awaits the notification email attempt before
- * reporting back. A failed email never undoes the recorded application.
- * Duplicates never trigger another automatic email.
+ * resolving. A failed email never undoes the recorded application.
+ * Duplicates never trigger another automatic email. Never throws.
  */
-export const recordApplication = (
+export const recordApplication = async (
   a: RecordApplyArgs,
   cb?: (r: RecordApplyResult) => void,
-): void => {
-  const done = (r: RecordApplyResult) => { try { cb?.(r); } catch { /* noop */ } };
-  const fail = () => done({ ok: false, duplicate: false });
+): Promise<RecordApplyResult> => {
+  const done = (r: RecordApplyResult) => { try { cb?.(r); } catch { /* noop */ } return r; };
 
   const notify = async (applicationId: string): Promise<{ emailSent: boolean; emailReason?: string }> => {
     try {
@@ -154,35 +153,49 @@ export const recordApplication = (
     }
   };
 
-  const run = async () => {
-    let res: any;
-    try {
-      res = await supabase.rpc("submit_application" as any, {
-        p_vacancy_id: a.vacancyId || null,
-        p_company_post_id: a.companyPostId || null,
-        p_job_posting_id: a.jobPostingId || null,
-        p_company_name: a.company || null,
-        p_rank: a.rank || null,
-        p_vessel: a.vessel || null,
-        p_external_url: a.externalUrl || null,
-      });
-    } catch {
-      fail();
-      return;
-    }
-    const r: any = res?.data || {};
-    if (res?.error || !r?.ok) { fail(); return; }
+  let res: any;
+  try {
+    res = await supabase.rpc("submit_application" as any, {
+      p_vacancy_id: a.vacancyId || null,
+      p_company_post_id: a.companyPostId || null,
+      p_job_posting_id: a.jobPostingId || null,
+      p_company_name: a.company || null,
+      p_rank: a.rank || null,
+      p_vessel: a.vessel || null,
+      p_external_url: a.externalUrl || null,
+    });
+  } catch {
+    return done({ ok: false, duplicate: false });
+  }
 
-    if (r.application_id && !r.duplicate) {
-      const e = await notify(r.application_id);
-      done({ ok: true, duplicate: false, applicationId: r.application_id, ...e });
-      return;
-    }
-    done({ ok: true, duplicate: !!r.duplicate, applicationId: r.application_id });
-  };
+  const r: any = res?.data || {};
+  if (res?.error || !r?.ok) return done({ ok: false, duplicate: false });
 
-  void run();
+  if (r.application_id && !r.duplicate) {
+    const e = await notify(r.application_id);
+    return done({ ok: true, duplicate: false, applicationId: r.application_id, ...e });
+  }
+  return done({ ok: true, duplicate: !!r.duplicate, applicationId: r.application_id });
 };
+
+/** Opens a placeholder tab synchronously from a user click, so the later handoff is not blocked. */
+export const openHandoffTab = (): Window | null => {
+  try {
+    return window.open("about:blank", "_blank", "noopener,noreferrer");
+  } catch {
+    return null;
+  }
+};
+
+/** Navigates the pre-opened tab, or falls back to the current tab. */
+export const completeHandoff = (win: Window | null, url: string | null) => {
+  if (!url) { try { win?.close(); } catch { /* noop */ } return; }
+  try {
+    if (win && !win.closed) { win.location.href = url; return; }
+  } catch { /* noop */ }
+  window.location.href = url;
+};
+
 
 const quickProfileCache = new Map<string, boolean>();
 
