@@ -59,6 +59,17 @@ interface MyPosting {
   joining_port?: string | null;
   status: string | null;
   created_at: string;
+  joining_date?: string | null;
+  contract_duration?: string | null;
+  monthly_salary?: string | null;
+  positions?: number | null;
+  contact_email?: string | null;
+  contact_whatsapp?: string | null;
+  additional_notes?: string | null;
+  expires_at?: string | null;
+  posting_batch_id?: string | null;
+  source_type?: string | null;
+  flier_url?: string | null;
 }
 
 const relTime = (iso: string) => {
