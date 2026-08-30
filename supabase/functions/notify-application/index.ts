@@ -3,7 +3,16 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const svc = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 const RESEND_KEY = Deno.env.get("RESEND_API_KEY") || "";
 const SITE = "https://seaminds.life";
-const ADMIN_UID = "492ee966-e015-4440-a415-6ad6275a4a9b";
+
+/** Authoritative admin check — reuses the project's public.is_admin(uuid) security-definer function. */
+async function isAdmin(uid: string) {
+  try {
+    const { data, error } = await svc.rpc("is_admin", { _user_id: uid });
+    return !error && data === true;
+  } catch {
+    return false;
+  }
+}
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -84,13 +93,14 @@ async function alreadyDelivered(applicationId: string, kind: string, recipient: 
   return !!(data && data.length);
 }
 
-/** Manual resends: max 3 per application+event per hour. */
-async function resendBlocked(applicationId: string, kind: string) {
+/** Manual resends: max 3 per application+event+recipient per hour. */
+async function resendBlocked(applicationId: string, kind: string, recipient: string) {
   const since = new Date(Date.now() - 3600 * 1000).toISOString();
   const { data } = await svc.from("app_events").select("id")
     .eq("event_type", "application_email")
     .filter("metadata->>application_id", "eq", applicationId)
     .filter("metadata->>kind", "eq", kind)
+    .filter("metadata->>recipient", "eq", recipient)
     .filter("metadata->>manual", "eq", "true")
     .gte("created_at", since).limit(4);
   return (data?.length || 0) >= 3;
