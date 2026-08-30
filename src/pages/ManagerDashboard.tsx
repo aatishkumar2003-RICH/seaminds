@@ -462,7 +462,7 @@ const ManagerDashboard = () => {
     const result = data as { ok?: boolean; error?: string } | null;
     if (result && !result.ok) { setOfferSending(false); toast.error(result.error || "Could not send offer"); return; }
 
-    const notified = await notifyOffer(applicationId);
+    const notified = (await notifyOffer(applicationId)).sent;
     setOfferSending(false);
 
     setOfferSent((prev) => ({
