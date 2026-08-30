@@ -291,7 +291,13 @@ Deno.serve(async (req) => {
     if (!app) return json({ ok: false, error: "not_found" }, 404);
 
     const isCrewOwner = app.crew_id === user.id;
-    const isManager = await managerOwns(app, user.id);
+    const admin = await isAdmin(user.id);
+    const isManager = admin || await managerOwns(app, user.id);
+
+    // Manual resend is restricted to an authorized owning manager (or admin) resending a live offer.
+    if (manual && (kind !== "offer" || !isManager || app.outcome !== "offered")) {
+      return json({ ok: false, error: "resend_not_allowed", outcome: app.outcome }, 403);
+    }
     const rank = app.rank_applied || "Crew";
     const mgr = await resolveManager(app);
     const company = app.company_name || mgr.company || "the company";
