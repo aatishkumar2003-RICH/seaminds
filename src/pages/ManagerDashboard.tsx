@@ -59,6 +59,17 @@ interface MyPosting {
   joining_port?: string | null;
   status: string | null;
   created_at: string;
+  joining_date?: string | null;
+  contract_duration?: string | null;
+  monthly_salary?: string | null;
+  positions?: number | null;
+  contact_email?: string | null;
+  contact_whatsapp?: string | null;
+  additional_notes?: string | null;
+  expires_at?: string | null;
+  posting_batch_id?: string | null;
+  source_type?: string | null;
+  flier_url?: string | null;
 }
 
 const relTime = (iso: string) => {
@@ -116,6 +127,13 @@ const ManagerDashboard = () => {
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [applicantsLoading, setApplicantsLoading] = useState(false);
   const [myPostings, setMyPostings] = useState<MyPosting[]>([]);
+  const [flierView, setFlierView] = useState<string | null>(null);
+  const [editVacancy, setEditVacancy] = useState<MyPosting | null>(null);
+  const [savingVacancy, setSavingVacancy] = useState(false);
+  const [editForm, setEditForm] = useState({
+    rank_required: "", vessel_type: "", positions: "1", joining_port: "", joining_date: "",
+    contract_duration: "", monthly_salary: "", contact_whatsapp: "", contact_email: "", additional_notes: "",
+  });
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [offerFor, setOfferFor] = useState<Applicant | null>(null);
   const [offerForm, setOfferForm] = useState({
@@ -394,7 +412,7 @@ const ManagerDashboard = () => {
     if (user) {
       const { data: jp } = await supabase
         .from("job_postings")
-        .select("id, rank_required, vessel_type, joining_port, status, created_at")
+        .select("id, rank_required, vessel_type, joining_port, status, created_at, joining_date, contract_duration, monthly_salary, positions, contact_email, contact_whatsapp, additional_notes, expires_at, posting_batch_id, source_type, flier_url")
         .eq("manager_id", user.id)
         .order("created_at", { ascending: false });
       setMyPostings(((jp as unknown) as MyPosting[]) || []);
@@ -684,6 +702,159 @@ const ManagerDashboard = () => {
 
   const awaitingCount = applicants.filter((a) => a.outcome === "awaiting").length;
 
+  // ---------- Vacancy console ----------
+  const sourceLabel = (s?: string | null) =>
+    s === "text" ? "Text Import" : s === "flier" ? "Flyer" : "Manual";
+
+  const isExpired = (jp: MyPosting) => !!jp.expires_at && new Date(jp.expires_at).getTime() < Date.now();
+
+  const appsFor = (id: string) => applicants.filter((a) => a.job_posting_id === id);
+
+  const vacancyMetrics = (jp: MyPosting) => {
+    const linked = appsFor(jp.id);
+    const positions = Math.max(Number(jp.positions) || 1, 1);
+    const placed = linked.filter((a) => a.outcome === "placed").length;
+    const expired = isExpired(jp);
+    return {
+      positions,
+      placed,
+      open: Math.max(positions - placed, 0),
+      applicantCount: linked.length,
+      full: placed >= positions,
+      expired,
+      displayStatus: jp.status === "filled" ? "filled" : expired ? "Expired" : (jp.status || "active"),
+    };
+  };
+
+  const consoleStats = useMemo(() => {
+    const activeVacancies = myPostings.filter((jp) => jp.status === "active" && !isExpired(jp));
+    const linked = applicants.filter((a) => !!a.job_posting_id);
+    const in3 = Date.now() + 3 * 86400000;
+    return {
+      active: activeVacancies.length,
+      openPositions: activeVacancies.reduce((sum, jp) => {
+        const positions = Math.max(Number(jp.positions) || 1, 1);
+        const placed = appsFor(jp.id).filter((a) => a.outcome === "placed").length;
+        return sum + Math.max(positions - placed, 0);
+      }, 0),
+      applicants: linked.length,
+      shortlisted: linked.filter((a) => a.outcome === "shortlisted").length,
+      offers: linked.filter((a) => a.outcome === "offered").length,
+      placed: linked.filter((a) => a.outcome === "placed").length,
+      expiring: activeVacancies.filter((jp) => {
+        const t = jp.expires_at ? new Date(jp.expires_at).getTime() : 0;
+        return t > 0 && t >= Date.now() && t <= in3;
+      }).length,
+    };
+  }, [myPostings, applicants]);
+
+  const vacancyGroups = useMemo(() => {
+    const groups: { key: string; batch: boolean; items: MyPosting[] }[] = [];
+    const byBatch = new Map<string, MyPosting[]>();
+    myPostings.forEach((jp) => {
+      if (jp.posting_batch_id) {
+        const arr = byBatch.get(jp.posting_batch_id) || [];
+        arr.push(jp);
+        byBatch.set(jp.posting_batch_id, arr);
+      } else {
+        groups.push({ key: jp.id, batch: false, items: [jp] });
+      }
+    });
+    byBatch.forEach((items, key) => groups.push({ key, batch: items.length > 1, items }));
+    return groups;
+  }, [myPostings]);
+
+  const openEditVacancy = (jp: MyPosting) => {
+    setEditVacancy(jp);
+    setEditForm({
+      rank_required: jp.rank_required || "",
+      vessel_type: jp.vessel_type || "",
+      positions: String(Math.max(Number(jp.positions) || 1, 1)),
+      joining_port: jp.joining_port || "",
+      joining_date: jp.joining_date || "",
+      contract_duration: jp.contract_duration || "",
+      monthly_salary: jp.monthly_salary || "",
+      contact_whatsapp: jp.contact_whatsapp || "",
+      contact_email: jp.contact_email || "",
+      additional_notes: jp.additional_notes || "",
+    });
+  };
+
+  const editLocked = !!editVacancy && appsFor(editVacancy.id).length > 0;
+
+  const saveVacancyEdit = async () => {
+    if (!editVacancy || savingVacancy) return;
+    const positions = Math.max(parseInt(editForm.positions.replace(/[^0-9]/g, ""), 10) || 1, 1);
+    const dateCheck = validateJoiningDates([
+      toPreviewVacancy({ rank_required: editForm.rank_required, joining_date: editForm.joining_date }),
+    ]);
+    if (!dateCheck.ok) { toast.error(dateCheck.warnings.join(" · ")); return; }
+    const wa = checkWhatsapp(editForm.contact_whatsapp);
+    if (!wa.ok) { toast.error(wa.warning || "Invalid WhatsApp number"); return; }
+
+    setSavingVacancy(true);
+    const patch: Record<string, unknown> = {
+      positions,
+      joining_port: editForm.joining_port.trim() || "Not specified",
+      joining_date: editForm.joining_date.trim() || null,
+      contract_duration: editForm.contract_duration.trim() || "Not specified",
+      monthly_salary: editForm.monthly_salary.trim() || null,
+      contact_whatsapp: editForm.contact_whatsapp.trim(),
+      contact_email: editForm.contact_email.trim() || null,
+      additional_notes: editForm.additional_notes.trim() || null,
+    };
+    if (!editLocked) {
+      patch.rank_required = editForm.rank_required.trim() || "Not specified";
+      patch.vessel_type = editForm.vessel_type.trim() || "Not specified";
+    }
+    const { error } = await supabase.from("job_postings").update(patch as never).eq("id", editVacancy.id);
+    setSavingVacancy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Vacancy updated ✓");
+    setEditVacancy(null);
+    loadApplicants();
+  };
+
+  const markFilled = async (jp: MyPosting) => {
+    const { error } = await supabase.from("job_postings").update({ status: "filled" } as never).eq("id", jp.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Marked as filled ✓");
+    loadApplicants();
+  };
+
+  const reopenVacancy = async (jp: MyPosting) => {
+    const patch: Record<string, unknown> = { status: "active" };
+    const cur = jp.expires_at ? new Date(jp.expires_at).getTime() : 0;
+    if (!cur || cur < Date.now()) patch.expires_at = new Date(Date.now() + 14 * 86400000).toISOString();
+    const { error } = await supabase.from("job_postings").update(patch as never).eq("id", jp.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Vacancy reopened ✓");
+    loadApplicants();
+  };
+
+  const extendVacancy = async (jp: MyPosting) => {
+    const base = Math.max(jp.expires_at ? new Date(jp.expires_at).getTime() : 0, Date.now());
+    const next = new Date(base + 14 * 86400000).toISOString();
+    const { error } = await supabase.from("job_postings").update({ expires_at: next } as never).eq("id", jp.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Extended by 14 days ✓");
+    loadApplicants();
+  };
+
+  const deleteVacancy = async (jp: MyPosting) => {
+    if (appsFor(jp.id).length > 0) {
+      toast.error("This vacancy has applications and cannot be deleted. Mark it filled instead.");
+      return;
+    }
+    if (!window.confirm("Delete this vacancy? This cannot be undone.")) return;
+    const { error } = await supabase.from("job_postings").delete().eq("id", jp.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Vacancy deleted ✓");
+    loadApplicants();
+  };
+
+
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -778,32 +949,145 @@ const ManagerDashboard = () => {
 
         {dashTab === "applicants" ? (
           <>
-          {/* My Vacancies */}
-          <div className="bg-secondary rounded-xl border border-border p-4 space-y-3">
-            <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">📢 My Vacancies</h2>
+          {/* Manager Vacancy Console */}
+          <div className="bg-secondary rounded-xl border border-border p-4 space-y-4">
+            <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">📢 Vacancy Console</h2>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+              {[
+                { label: "Active", value: consoleStats.active },
+                { label: "Open Positions", value: consoleStats.openPositions },
+                { label: "Applicants", value: consoleStats.applicants },
+                { label: "Shortlisted", value: consoleStats.shortlisted },
+                { label: "Offers", value: consoleStats.offers },
+                { label: "Placed", value: consoleStats.placed },
+                { label: "Expiring 3d", value: consoleStats.expiring },
+              ].map((s) => (
+                <div key={s.label} className="rounded-lg border border-[#D4AF37]/30 bg-[#0D1B2A] px-3 py-2">
+                  <p className="text-lg font-bold text-[#D4AF37] leading-none">{s.value}</p>
+                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground mt-1">{s.label}</p>
+                </div>
+              ))}
+            </div>
+
             {myPostings.length === 0 ? (
               <p className="text-xs text-muted-foreground">You have not posted any vacancies yet.</p>
             ) : (
-              <div className="space-y-2">
-                {myPostings.map((jp) => (
-                  <div key={jp.id} className="flex items-center justify-between gap-3 rounded-lg border border-border/50 bg-secondary/50 px-3 py-2">
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-foreground truncate">
-                        {[jp.rank_required, jp.vessel_type].filter(Boolean).join(" · ") || "Vacancy"}
+              <div className="space-y-4">
+                {vacancyGroups.map((grp) => (
+                  <div key={grp.key} className="space-y-2">
+                    {grp.batch && (
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-[#D4AF37]">
+                        Campaign · {grp.items.length} vacancies
                       </p>
-                      <p className="text-xs text-muted-foreground">posted {relTime(jp.created_at)}</p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{jp.status || "active"}</span>
-                      <span className="text-xs font-bold px-2 py-1 rounded-full bg-[#D4AF37]/15 text-[#D4AF37]">
-                        👥 {applicants.filter((a) => a.job_posting_id === jp.id).length}
-                      </span>
-                    </div>
+                    )}
+                    {grp.items.map((jp) => {
+                      const m = vacancyMetrics(jp);
+                      return (
+                        <div key={jp.id} className="rounded-lg border border-border/50 bg-secondary/50 px-3 py-2 space-y-2">
+                          <div className="flex flex-wrap items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="text-sm font-bold text-foreground truncate">
+                                {[jp.rank_required, jp.vessel_type].filter(Boolean).join(" · ") || "Vacancy"}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {m.positions} position{m.positions === 1 ? "" : "s"} · {m.open} open · 👥 {m.applicantCount} applicants
+                              </p>
+                              <p className="text-[11px] text-muted-foreground/80">
+                                {sourceLabel(jp.source_type)} · {jp.expires_at ? `expires ${new Date(jp.expires_at).toLocaleDateString()}` : "no expiry"}
+                              </p>
+                              {m.full && <p className="text-[11px] font-semibold text-green-500">All positions filled</p>}
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{m.displayStatus}</span>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {jp.flier_url && (
+                              <button onClick={() => setFlierView(jp.flier_url!)} className="text-[11px] px-2 py-1 rounded-lg border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/10">View Flyer</button>
+                            )}
+                            <button onClick={() => openEditVacancy(jp)} className="text-[11px] px-2 py-1 rounded-lg border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/10">Edit</button>
+                            {jp.status === "filled" ? (
+                              <button onClick={() => reopenVacancy(jp)} className="text-[11px] px-2 py-1 rounded-lg border border-border text-muted-foreground hover:text-foreground">Reopen</button>
+                            ) : (
+                              <button onClick={() => markFilled(jp)} className="text-[11px] px-2 py-1 rounded-lg border border-border text-muted-foreground hover:text-foreground">Mark Filled</button>
+                            )}
+                            <button onClick={() => extendVacancy(jp)} className="text-[11px] px-2 py-1 rounded-lg border border-border text-muted-foreground hover:text-foreground">Extend 14 Days</button>
+                            <button onClick={() => deleteVacancy(jp)} className="text-[11px] px-2 py-1 rounded-lg border border-red-500/40 text-red-400 hover:bg-red-500/10">Delete</button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 ))}
               </div>
             )}
           </div>
+
+          {flierView && (
+            <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setFlierView(null)}>
+              <div className="bg-[#0D1B2A] border border-[#D4AF37]/40 rounded-xl p-3 max-w-3xl w-full max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+                <div className="flex justify-between items-center mb-2">
+                  <p className="text-sm font-semibold text-[#D4AF37]">Original Flyer</p>
+                  <button onClick={() => setFlierView(null)} className="text-xs text-muted-foreground hover:text-foreground">Close</button>
+                </div>
+                <img src={flierView} alt="Vacancy flyer" className="w-full h-full max-h-[70vh] object-contain rounded-lg" />
+              </div>
+            </div>
+          )}
+
+          {editVacancy && (
+            <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto">
+              <div className="bg-[#0D1B2A] border border-[#D4AF37]/40 rounded-xl p-4 max-w-lg w-full space-y-3 max-h-[90vh] overflow-y-auto">
+                <div className="flex justify-between items-center">
+                  <p className="text-sm font-semibold text-[#D4AF37]">Edit Vacancy</p>
+                  <button onClick={() => setEditVacancy(null)} className="text-xs text-muted-foreground hover:text-foreground">Close</button>
+                </div>
+                {editLocked && (
+                  <p className="text-[11px] text-muted-foreground">Rank and vessel type cannot be changed after applications are received.</p>
+                )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {([
+                    ["rank_required", "Rank required"],
+                    ["vessel_type", "Vessel type"],
+                    ["positions", "Positions"],
+                    ["joining_port", "Joining port"],
+                    ["joining_date", "Joining date (YYYY-MM-DD)"],
+                    ["contract_duration", "Contract duration"],
+                    ["monthly_salary", "Monthly salary"],
+                    ["contact_whatsapp", "Contact WhatsApp"],
+                    ["contact_email", "Contact email"],
+                  ] as [keyof typeof editForm, string][]).map(([k, label]) => (
+                    <label key={k} className="text-[11px] text-muted-foreground space-y-1">
+                      <span>{label}</span>
+                      <input
+                        value={editForm[k]}
+                        disabled={editLocked && (k === "rank_required" || k === "vessel_type")}
+                        onChange={(e) => setEditForm((p) => ({ ...p, [k]: e.target.value }))}
+                        className="w-full text-sm bg-secondary border border-border rounded-lg px-2 py-1.5 text-foreground disabled:opacity-50"
+                      />
+                    </label>
+                  ))}
+                </div>
+                <label className="text-[11px] text-muted-foreground space-y-1 block">
+                  <span>Additional notes</span>
+                  <textarea
+                    value={editForm.additional_notes}
+                    onChange={(e) => setEditForm((p) => ({ ...p, additional_notes: e.target.value }))}
+                    rows={3}
+                    className="w-full text-sm bg-secondary border border-border rounded-lg px-2 py-1.5 text-foreground"
+                  />
+                </label>
+                <div className="flex justify-end gap-2">
+                  <button onClick={() => setEditVacancy(null)} className="text-xs px-3 py-1.5 rounded-lg border border-border text-muted-foreground">Cancel</button>
+                  <button onClick={saveVacancyEdit} disabled={savingVacancy} className="text-xs font-bold px-3 py-1.5 rounded-lg bg-[#D4AF37] text-[#0D1B2A] disabled:opacity-50">
+                    {savingVacancy ? "Saving…" : "Save changes"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
 
           <div id="applicants-section" className="bg-secondary rounded-xl border border-border p-4 space-y-4">
             <div className="flex items-center justify-between">
