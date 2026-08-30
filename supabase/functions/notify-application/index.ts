@@ -368,7 +368,7 @@ Deno.serve(async (req) => {
       if (app.outcome !== expected) return json({ ok: false, error: "status_mismatch", outcome: app.outcome }, 409);
 
       const shortlisted = kind === "shortlisted";
-      await ensureNotification(app.crew_id, "application_update", applicationId, {
+      const inApp = await ensureNotification(app.crew_id, "application_update", applicationId, {
         title: shortlisted ? "⭐ You have been shortlisted!" : "Application update",
         body: shortlisted
           ? `${company} shortlisted you for ${rank}. Keep your documents ready.`
@@ -394,12 +394,19 @@ Deno.serve(async (req) => {
              ${goldBtn(crewJobsLink, "Browse vacancies")}`),
       }));
 
-      return json({ ok: true, sent: attempts.some((a) => a.sent), attempts });
+      return json({
+        ok: true,
+        sent: attempts.some((a) => a.sent),
+        in_app_notified: inApp.notified,
+        attempts,
+      });
     }
 
     // ---------------------------------------------------------- offer sent
     if (kind === "offer") {
       if (!isManager) return json({ ok: false, error: "unauthorized" }, 403);
+      // Never email an offer that is no longer live (accepted, declined, placed, closed).
+      if (app.outcome !== "offered") return json({ ok: false, error: "offer_not_current", outcome: app.outcome }, 409);
 
       let offer: any = app.offer_details ?? null;
       if (!offer && app.offered_at) offer = { joining_date: app.offered_joining_date, message: app.manager_note };
