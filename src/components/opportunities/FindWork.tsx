@@ -250,7 +250,8 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
       company: args.company, rank: args.rank, vessel: args.vessel,
       externalUrl: args.url,
     }, (r) => {
-      if (r.ok) toast({ title: "Applied ✓", description: "Recorded on SeaMinds." });
+      if (r.ok && r.emailSent === false) toast({ title: "Applied ✓", description: "Saved on SeaMinds, but the email notification failed." });
+      else if (r.ok) toast({ title: "Applied ✓", description: "Recorded on SeaMinds." });
       else toast({ title: "Sent", description: "Sent on WhatsApp — could not record on SeaMinds.", variant: "destructive" });
     });
   };
@@ -301,6 +302,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
         if (!r.ok) { toast({ title: "Error", description: "Could not send application. Try again.", variant: "destructive" }); return; }
         setDirectApplied((s) => ({ ...s, [jp.id]: r.duplicate ? "dup" : "ok" }));
         if (r.duplicate) toast({ title: "Already applied ✓", description: "The company already has your application." });
+        else if (r.emailSent === false) toast({ title: "Applied ✓", description: "Saved on SeaMinds, but the email notification failed." });
         else toast({ title: "Applied ✓", description: "Recorded on SeaMinds." });
       });
     } catch {
@@ -324,7 +326,9 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
         title: r.duplicate ? "Already applied ✓" : "Applied ✓",
         description: r.duplicate
           ? "The company already has your application."
-          : `Recorded on SeaMinds — your profile has been sent to ${ext.company_name || "the company"}.`,
+          : r.emailSent === false
+            ? "Saved on SeaMinds, but the email notification failed."
+            : `Recorded on SeaMinds — your profile has been sent to ${ext.company_name || "the company"}.`,
       });
     });
   };

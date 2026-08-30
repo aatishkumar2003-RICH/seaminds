@@ -3,7 +3,16 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const svc = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 const RESEND_KEY = Deno.env.get("RESEND_API_KEY") || "";
 const SITE = "https://seaminds.life";
-const ADMIN_UID = "492ee966-e015-4440-a415-6ad6275a4a9b";
+
+/** Authoritative admin check — reuses the project's public.is_admin(uuid) security-definer function. */
+async function isAdmin(uid: string) {
+  try {
+    const { data, error } = await svc.rpc("is_admin", { _user_id: uid });
+    return !error && data === true;
+  } catch {
+    return false;
+  }
+}
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -84,13 +93,14 @@ async function alreadyDelivered(applicationId: string, kind: string, recipient: 
   return !!(data && data.length);
 }
 
-/** Manual resends: max 3 per application+event per hour. */
-async function resendBlocked(applicationId: string, kind: string) {
+/** Manual resends: max 3 per application+event+recipient per hour. */
+async function resendBlocked(applicationId: string, kind: string, recipient: string) {
   const since = new Date(Date.now() - 3600 * 1000).toISOString();
   const { data } = await svc.from("app_events").select("id")
     .eq("event_type", "application_email")
     .filter("metadata->>application_id", "eq", applicationId)
     .filter("metadata->>kind", "eq", kind)
+    .filter("metadata->>recipient", "eq", recipient)
     .filter("metadata->>manual", "eq", "true")
     .gte("created_at", since).limit(4);
   return (data?.length || 0) >= 3;
@@ -122,7 +132,7 @@ async function deliver(opts: {
   if (!manual && await alreadyDelivered(applicationId, kind, recipient)) {
     return { ...base, sent: false, skipped: "already_sent" };
   }
-  if (manual && await resendBlocked(applicationId, kind)) {
+  if (manual && await resendBlocked(applicationId, kind, recipient)) {
     await logAttempt({ applicationId, kind, recipient, role, ok: false, manual, skipped: "resend_rate_limited" });
     return { ...base, sent: false, skipped: "resend_rate_limited" };
   }
@@ -195,19 +205,32 @@ async function resolveManager(app: any): Promise<{ email: string; userId: string
   return { email: "", userId: null, company: app.company_name ?? null };
 }
 
+const norm = (v: unknown) => String(v ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+
+/**
+ * Legacy postings with manager_id NULL may only be claimed by an admin-approved,
+ * company-verified manager whose company name matches exactly and unambiguously.
+ */
+async function legacyCompanyClaim(uid: string, postingCompany: string | null) {
+  if (!postingCompany) return false;
+  const { data: mp } = await svc.from("manager_profiles")
+    .select("company_name, admin_approved, company_verified").eq("user_id", uid).maybeSingle();
+  if (!mp || (mp as any).admin_approved !== true || (mp as any).company_verified !== true) return false;
+  const target = norm(postingCompany);
+  if (!target || norm((mp as any).company_name) !== target) return false;
+  // Unambiguous: exactly one manager profile carries this company name.
+  const { data: peers } = await svc.from("manager_profiles").select("user_id, company_name").limit(200);
+  const matches = (peers || []).filter((p: any) => norm(p.company_name) === target);
+  return matches.length === 1 && matches[0].user_id === uid;
+}
+
 async function managerOwns(app: any, uid: string) {
-  if (uid === ADMIN_UID) return true;
   if (app.job_posting_id) {
     const { data: jp } = await svc.from("job_postings")
       .select("manager_id, company_name").eq("id", app.job_posting_id).maybeSingle();
     if (jp) {
       if (jp.manager_id === uid) return true;
-      if (!jp.manager_id) {
-        const { data: mp } = await svc.from("manager_profiles")
-          .select("company_name").eq("user_id", uid).maybeSingle();
-        if (mp?.company_name && jp.company_name &&
-          mp.company_name.trim().toLowerCase() === String(jp.company_name).trim().toLowerCase()) return true;
-      }
+      if (!jp.manager_id && await legacyCompanyClaim(uid, (jp as any).company_name)) return true;
     }
   }
   if (app.company_post_id) {
@@ -224,22 +247,24 @@ async function crewName(crewId: string) {
   return `${data?.first_name || "A seafarer"} ${(data?.last_name || "").slice(0, 1)}`.trim();
 }
 
-/** Insert a notification only when an equivalent one does not exist yet. */
+interface NotifyResult { notified: boolean; existed: boolean; error?: string }
+
+/** Insert a notification only when an equivalent one does not exist yet. Reports the real outcome. */
 async function ensureNotification(userId: string | null, kind: string, applicationId: string, row: {
   title: string; body: string; icon: string; screen: string; link?: string;
-}) {
-  if (!userId) return false;
+}): Promise<NotifyResult> {
+  if (!userId) return { notified: false, existed: false, error: "no_recipient" };
   try {
     const { data: existing } = await svc.from("notifications")
       .select("id").eq("crew_id", userId).eq("kind", kind)
       .ilike("link", `%${applicationId}%`).limit(1);
-    if (existing?.length) return true;
+    if (existing?.length) return { notified: true, existed: true };
     const { error } = await svc.from("notifications").insert({
       crew_id: userId, kind, ...row, link: row.link ?? null,
     });
-    return !error;
-  } catch {
-    return false;
+    return { notified: !error, existed: false, error: error ? String(error.message).slice(0, 200) : undefined };
+  } catch (e) {
+    return { notified: false, existed: false, error: e instanceof Error ? e.message.slice(0, 200) : "error" };
   }
 }
 
@@ -266,7 +291,13 @@ Deno.serve(async (req) => {
     if (!app) return json({ ok: false, error: "not_found" }, 404);
 
     const isCrewOwner = app.crew_id === user.id;
-    const isManager = await managerOwns(app, user.id);
+    const admin = await isAdmin(user.id);
+    const isManager = admin || await managerOwns(app, user.id);
+
+    // Manual resend is restricted to an authorized owning manager (or admin) resending a live offer.
+    if (manual && (kind !== "offer" || !isManager || app.outcome !== "offered")) {
+      return json({ ok: false, error: "resend_not_allowed", outcome: app.outcome }, 403);
+    }
     const rank = app.rank_applied || "Crew";
     const mgr = await resolveManager(app);
     const company = app.company_name || mgr.company || "the company";
@@ -337,7 +368,7 @@ Deno.serve(async (req) => {
       if (app.outcome !== expected) return json({ ok: false, error: "status_mismatch", outcome: app.outcome }, 409);
 
       const shortlisted = kind === "shortlisted";
-      await ensureNotification(app.crew_id, "application_update", applicationId, {
+      const inApp = await ensureNotification(app.crew_id, "application_update", applicationId, {
         title: shortlisted ? "⭐ You have been shortlisted!" : "Application update",
         body: shortlisted
           ? `${company} shortlisted you for ${rank}. Keep your documents ready.`
@@ -363,12 +394,19 @@ Deno.serve(async (req) => {
              ${goldBtn(crewJobsLink, "Browse vacancies")}`),
       }));
 
-      return json({ ok: true, sent: attempts.some((a) => a.sent), attempts });
+      return json({
+        ok: true,
+        sent: attempts.some((a) => a.sent),
+        in_app_notified: inApp.notified,
+        attempts,
+      });
     }
 
     // ---------------------------------------------------------- offer sent
     if (kind === "offer") {
       if (!isManager) return json({ ok: false, error: "unauthorized" }, 403);
+      // Never email an offer that is no longer live (accepted, declined, placed, closed).
+      if (app.outcome !== "offered") return json({ ok: false, error: "offer_not_current", outcome: app.outcome }, 409);
 
       let offer: any = app.offer_details ?? null;
       if (!offer && app.offered_at) offer = { joining_date: app.offered_joining_date, message: app.manager_note };
@@ -385,7 +423,7 @@ Deno.serve(async (req) => {
         }${offer.vessel_name ? ` · Vessel: ${esc(offer.vessel_name)}` : ""}`,
       );
 
-      await ensureNotification(app.crew_id, "job_offer", applicationId, {
+      const offerInApp = await ensureNotification(app.crew_id, "job_offer", applicationId, {
         title: `🎉 Offer received — ${rank}`,
         body: `${company}${offer.vessel_name ? ` · ${offer.vessel_name}` : ""}`,
         icon: "⚓",
@@ -410,7 +448,7 @@ Deno.serve(async (req) => {
         ].filter(Boolean).join("")),
       }));
 
-      return json({ ok: true, sent: attempts.some((a) => a.sent), attempts });
+      return json({ ok: true, sent: attempts.some((a) => a.sent), in_app_notified: offerInApp.notified, attempts });
     }
 
     // ---------------------------------------------------------- offer accepted / declined
@@ -468,7 +506,8 @@ Deno.serve(async (req) => {
       return json({
         ok: true,
         sent: attempts.some((a) => a.sent),
-        manager_notified: managerNotified,
+        manager_notified: managerNotified.notified,
+        in_app_notified: managerNotified.notified,
         attempts,
       });
     }

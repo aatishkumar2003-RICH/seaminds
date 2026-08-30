@@ -503,16 +503,19 @@ const ManagerDashboard = () => {
   };
 
   /** Fires the crew status email after a successful DB status change. Never reverses the action. */
-  const notifyStatus = async (applicationId: string, kind: "shortlisted" | "declined") => {
+  const notifyStatus = async (
+    applicationId: string,
+    kind: "shortlisted" | "declined",
+  ): Promise<{ emailed: boolean; inApp: boolean }> => {
     try {
       const { data, error } = await supabase.functions.invoke("notify-application", {
         body: { application_id: applicationId, kind },
       });
-      if (error) return false;
-      const r = data as { ok?: boolean; sent?: boolean } | null;
-      return !!(r?.ok && r?.sent === true);
+      if (error) return { emailed: false, inApp: false };
+      const r = data as { ok?: boolean; sent?: boolean; in_app_notified?: boolean } | null;
+      return { emailed: !!(r?.ok && r?.sent === true), inApp: r?.in_app_notified === true };
     } catch {
-      return false;
+      return { emailed: false, inApp: false };
     }
   };
 
@@ -541,9 +544,10 @@ const ManagerDashboard = () => {
       return;
     }
     if (action === "shortlist" || action === "decline") {
-      const emailed = await notifyStatus(applicationId, action === "shortlist" ? "shortlisted" : "declined");
-      if (emailed) toast.success(action === "shortlist" ? "Shortlisted — crew notified by email ✓" : "Declined — crew notified by email ✓");
-      else toast("Status updated, but email delivery failed. The in-app notification was created.");
+      const n = await notifyStatus(applicationId, action === "shortlist" ? "shortlisted" : "declined");
+      if (n.emailed) toast.success(action === "shortlist" ? "Shortlisted — crew notified by email ✓" : "Declined — crew notified by email ✓");
+      else if (n.inApp) toast("Status updated. Email delivery failed, but the in-app notification was created.");
+      else toast("Status updated. Email and in-app notification both failed — the crew may not be aware yet.");
     } else {
       toast("Done");
     }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { X, CheckCircle2, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 import { trackPixel } from "@/lib/metaPixel";
 import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, recordApplication, CrewCardInfo } from "@/lib/applyMessage";
 
@@ -106,6 +107,7 @@ const ApplyDialog = ({ open, onClose, profileId, target, onGoToCv }: Props) => {
           return;
         }
 
+        if (r.emailSent === false) toast.warning("Application saved — but the email notification to the company failed");
         setDone({ duplicate: r.duplicate });
       });
 
