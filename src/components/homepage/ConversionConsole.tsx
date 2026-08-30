@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 import { useT, LANGS, type LangCode } from "@/i18n";
-import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, recordApplication, fetchQuickProfileDone, type CrewCardInfo } from "@/lib/applyMessage";
+import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, recordApplication, openHandoffTab, completeHandoff, fetchQuickProfileDone, type CrewCardInfo } from "@/lib/applyMessage";
 import ApplyGateSheet from "@/components/ApplyGateSheet";
 
 
@@ -303,7 +303,7 @@ const ConversionConsole = () => {
     });
   }, [vacancies]);
 
-  const applyNow = useCallback((v: Vacancy) => {
+  const applyNow = useCallback(async (v: Vacancy) => {
     if (!user) { navigate("/join?next=%2Fquick-profile"); return; }
     if (needsQuickProfile) { setGateOpen(true); return; }
     setApplyBusy(true);
@@ -311,25 +311,22 @@ const ConversionConsole = () => {
       const wa = waApplyLink(v.contact_whatsapp, cardInfo || getCachedCrewCardInfo(), {
         rank: v.rank_required || v.title, vessel: v.vessel_type, port: v.joining_port,
       });
-      if (wa) {
-        const win = window.open(wa, "_blank", "noopener,noreferrer");
-        if (!win) window.location.href = wa;
-      }
-      recordApplication({
+      const win = wa ? openHandoffTab() : null;
+      const r = await recordApplication({
         vacancyId: v.kind === "direct" ? null : v.id,
         jobPostingId: v.kind === "direct" ? v.id : null,
         company: v.company_name || v.source || null,
         rank: v.rank_required || null,
         vessel: v.vessel_type || null,
         externalUrl: v.kind === "direct" ? null : (wa || null),
-      }, (r) => {
-        setApplyBusy(false);
-        if (!r.ok) { toast.error("Sent on WhatsApp — could not record on SeaMinds"); return; }
-        setApplied((s) => ({ ...s, [v.id]: r.duplicate ? "dup" : "ok" }));
-        if (r.duplicate) toast.success("Already applied ✓ — the company already has your application");
-        else if (r.emailSent === false) toast.warning("Applied ✓ — saved on SeaMinds, but the email notification failed");
-        else toast.success("Applied ✓ — recorded on SeaMinds");
       });
+      setApplyBusy(false);
+      if (!r.ok) { completeHandoff(win, wa); toast.error("Sent on WhatsApp — could not record on SeaMinds"); return; }
+      setApplied((s) => ({ ...s, [v.id]: r.duplicate ? "dup" : "ok" }));
+      if (r.duplicate) toast.success("Already applied ✓ — the company already has your application");
+      else if (r.emailSent === false) toast.warning("Applied ✓ — saved on SeaMinds, but the email notification failed");
+      else toast.success("Applied ✓ — recorded on SeaMinds");
+      completeHandoff(win, wa);
     } catch {
       toast.error("Could not send application");
       setApplyBusy(false);
