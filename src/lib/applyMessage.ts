@@ -117,43 +117,71 @@ export interface RecordApplyArgs {
   externalUrl?: string | null;
 }
 
-export interface RecordApplyResult { ok: boolean; duplicate: boolean; applicationId?: string }
+export interface RecordApplyResult {
+  ok: boolean;
+  duplicate: boolean;
+  applicationId?: string;
+  /** True only when the notify-application call reported an accepted delivery. */
+  emailSent?: boolean;
+  /** Safe, short reason when the email attempt did not succeed. */
+  emailReason?: string;
+}
 
 /**
- * Fire-and-forget application recording. Never throws, never blocks the WhatsApp handoff.
- * On success it also triggers the manager/recruiter email notification.
+ * Records the application, then awaits the notification email attempt before
+ * reporting back. A failed email never undoes the recorded application.
+ * Duplicates never trigger another automatic email.
  */
 export const recordApplication = (
   a: RecordApplyArgs,
   cb?: (r: RecordApplyResult) => void,
 ): void => {
-  const fail = () => { try { cb?.({ ok: false, duplicate: false }); } catch { /* noop */ } };
-  try {
-    void Promise.resolve(supabase.rpc("submit_application" as any, {
-      p_vacancy_id: a.vacancyId || null,
-      p_company_post_id: a.companyPostId || null,
-      p_job_posting_id: a.jobPostingId || null,
-      p_company_name: a.company || null,
-      p_rank: a.rank || null,
-      p_vessel: a.vessel || null,
-      p_external_url: a.externalUrl || null,
-    }) as any)
-      .then((res: any) => {
-        const r: any = res?.data || {};
-        if (res?.error || !r?.ok) { fail(); return; }
-        if (r.application_id && !r.duplicate) {
-          try {
-            void Promise.resolve(
-              supabase.functions.invoke("notify-application", { body: { application_id: r.application_id } }) as any,
-            ).catch(() => {});
-          } catch { /* noop */ }
-        }
-        try { cb?.({ ok: true, duplicate: !!r.duplicate, applicationId: r.application_id }); } catch { /* noop */ }
-      }, fail)
-      .catch(fail);
-  } catch {
-    fail();
-  }
+  const done = (r: RecordApplyResult) => { try { cb?.(r); } catch { /* noop */ } };
+  const fail = () => done({ ok: false, duplicate: false });
+
+  const notify = async (applicationId: string): Promise<{ emailSent: boolean; emailReason?: string }> => {
+    try {
+      const { data, error } = await supabase.functions.invoke("notify-application", {
+        body: { application_id: applicationId, kind: "application" },
+      });
+      if (error) return { emailSent: false, emailReason: String(error.message || "send_failed").slice(0, 120) };
+      const r = data as { ok?: boolean; sent?: boolean; attempts?: { skipped?: string; error?: string }[] } | null;
+      if (r?.ok && r?.sent === true) return { emailSent: true };
+      const at = r?.attempts?.[0];
+      return { emailSent: false, emailReason: at?.skipped || at?.error || "not_sent" };
+    } catch {
+      return { emailSent: false, emailReason: "network_error" };
+    }
+  };
+
+  const run = async () => {
+    let res: any;
+    try {
+      res = await supabase.rpc("submit_application" as any, {
+        p_vacancy_id: a.vacancyId || null,
+        p_company_post_id: a.companyPostId || null,
+        p_job_posting_id: a.jobPostingId || null,
+        p_company_name: a.company || null,
+        p_rank: a.rank || null,
+        p_vessel: a.vessel || null,
+        p_external_url: a.externalUrl || null,
+      });
+    } catch {
+      fail();
+      return;
+    }
+    const r: any = res?.data || {};
+    if (res?.error || !r?.ok) { fail(); return; }
+
+    if (r.application_id && !r.duplicate) {
+      const e = await notify(r.application_id);
+      done({ ok: true, duplicate: false, applicationId: r.application_id, ...e });
+      return;
+    }
+    done({ ok: true, duplicate: !!r.duplicate, applicationId: r.application_id });
+  };
+
+  void run();
 };
 
 const quickProfileCache = new Map<string, boolean>();
