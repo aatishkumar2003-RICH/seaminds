@@ -155,18 +155,20 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
 
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (crewId) loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [crewId]);
 
   const loadData = async () => {
+    if (!crewId) return;
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     const [availRes, postingsRes, extRes, smcRes] = await Promise.all([
-      supabase.from("crew_availability").select("*").eq("crew_profile_id", profileId).maybeSingle(),
+      supabase.from("crew_availability").select("*").eq("crew_profile_id", crewId).maybeSingle(),
       supabase.from("job_postings").select("id, rank_required, vessel_type, joining_port, contract_duration, monthly_salary, contact_whatsapp, company_name, additional_notes, verified, created_at").eq("status", "active").order("created_at", { ascending: false }).limit(20),
       supabase.from("external_vacancies").select("*").eq("is_scam_flagged", false).gte("quality_score", 30).gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false }).limit(50),
-      supabase.from("smc_assessments").select("overall_score").eq("crew_profile_id", profileId).eq("status", "completed").order("completed_at", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("smc_assessments").select("overall_score").eq("crew_profile_id", crewId).eq("status", "completed").order("completed_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
 
     if (availRes.data) {
