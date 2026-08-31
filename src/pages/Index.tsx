@@ -322,6 +322,17 @@ const Index = () => {
 
   const { user: authUser, isReady: authReady, accessToken } = useAuth();
 
+  const applyProfileRow = (data: any) => {
+    setProfileId(data.id); setFirstName(data.first_name); setLastName(data.last_name || '');
+    setRole((data.rank as string) || data.role || ''); setShipName(data.ship_name || ''); setVoyageStartDate(data.voyage_start_date || '');
+    setManningAgency(data.manning_agency || ''); setNationality(data.nationality || ''); setWhatsappNumber(data.whatsapp_number || '');
+    setVesselType(data.vessel_type || ''); setPortOfJoining(data.port_of_joining || '');
+    setOnboardingComplete(!!data.onboarding_complete);
+    localStorage.setItem(PROFILE_KEY, data.id);
+  };
+
+  const PROFILE_COLS = 'id, first_name, last_name, onboarded, role, rank, ship_name, voyage_start_date, manning_agency, nationality, whatsapp_number, vessel_type, port_of_joining, onboarding_complete';
+
   // Init
   useEffect(() => {
     const init = async () => {
@@ -329,13 +340,9 @@ const Index = () => {
       try {
         const savedId = localStorage.getItem('seamind_profile_id');
         if (savedId) {
-          const { data, error } = await supabase.from('crew_profiles').select('id, first_name, last_name, onboarded, role, rank, ship_name, voyage_start_date, manning_agency, nationality, whatsapp_number, vessel_type, port_of_joining, onboarding_complete').eq('id', savedId).single();
+          const { data, error } = await supabase.from('crew_profiles').select(PROFILE_COLS).eq('id', savedId).single();
           if (!error && data) {
-            setProfileId(data.id); setFirstName(data.first_name); setLastName(data.last_name || '');
-            setRole(((data as any).rank as string) || data.role || ''); setShipName(data.ship_name || ''); setVoyageStartDate(data.voyage_start_date || '');
-            setManningAgency(data.manning_agency || ''); setNationality(data.nationality || ''); setWhatsappNumber(data.whatsapp_number || '');
-            setVesselType((data as any).vessel_type || ''); setPortOfJoining((data as any).port_of_joining || '');
-            setOnboardingComplete(!!(data as any).onboarding_complete);
+            applyProfileRow(data);
             clearTimeout(fallbackTimer);
             setAppState(data.onboarded ? 'main' : 'welcome');
             return;
@@ -344,6 +351,13 @@ const Index = () => {
         }
         clearTimeout(fallbackTimer);
         if (authUser) {
+          // crew_profiles.id equals the auth user id — resolve the real profile before falling back to a name-only session
+          const { data: own } = await supabase.from('crew_profiles').select(PROFILE_COLS).eq('id', authUser.id).maybeSingle();
+          if (own) {
+            applyProfileRow(own);
+            setAppState(own.onboarded ? 'main' : 'welcome');
+            return;
+          }
           const fullName = authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'Seafarer';
           setFirstName(fullName.split(' ')[0]); setAppState('main');
           return;
@@ -367,9 +381,21 @@ const Index = () => {
   useEffect(() => {
     if (!authReady || !authUser) return;
     if (localStorage.getItem('seamind_profile_id')) return;
-    const fullName = authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'Seafarer';
-    setFirstName(fullName.split(' ')[0]); setAppState('main');
+    let active = true;
+    (async () => {
+      const { data: own } = await supabase.from('crew_profiles').select(PROFILE_COLS).eq('id', authUser.id).maybeSingle();
+      if (!active) return;
+      if (own) {
+        applyProfileRow(own);
+        setAppState(own.onboarded ? 'main' : 'welcome');
+        return;
+      }
+      const fullName = authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'Seafarer';
+      setFirstName(fullName.split(' ')[0]); setAppState('main');
+    })();
+    return () => { active = false; };
   }, [authUser, authReady]);
+
 
   const handleNameSubmit = async (profile: {
     firstName: string; lastName: string; shipName: string; role: string;
