@@ -508,20 +508,19 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                 <p className="text-[10px] text-muted-foreground mt-0.5">Employers can find and contact you</p>
               </div>
               <div className="flex items-center gap-2.5">
-                <span className={cn("text-xs font-bold tracking-wide", visible ? "text-green-400" : "text-muted-foreground")}>
-                  {visible ? "VISIBLE ✓" : "Hidden"}
+                <span className={cn("text-xs font-bold tracking-wide", visible ? "text-[#D4AF37]" : "text-muted-foreground")}>
+                  {visible ? "VISIBLE ✓" : "HIDDEN"}
                 </span>
                 <Switch
                   checked={visible}
                   onCheckedChange={(checked) => setVisible(checked)}
                   className={cn(
-                    "scale-125",
-                    visible ? "data-[state=checked]:bg-green-500" : "data-[state=unchecked]:bg-zinc-600"
+                    "scale-125 data-[state=checked]:bg-[#D4AF37] data-[state=unchecked]:bg-[#3f3f46] [&>span]:bg-white"
                   )}
                 />
               </div>
             </div>
-            {visible && (
+            {activeSaved && (
               <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/30 rounded-lg px-3 py-2">
                 <Check size={14} className="text-green-400" />
                 <span className="text-xs text-green-400 font-medium">Profile Active — Employers Can Find You</span>
