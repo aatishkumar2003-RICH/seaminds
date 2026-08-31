@@ -3512,6 +3512,7 @@ export type Database = {
       get_interview_by_token: { Args: { p_token: string }; Returns: Json }
       get_market_indices: { Args: never; Returns: Json }
       get_my_applicants: { Args: never; Returns: Json }
+      get_my_applications: { Args: never; Returns: Json }
       get_my_credit_balance: { Args: never; Returns: Json }
       get_my_fleet: { Args: never; Returns: Json }
       get_my_offers: { Args: never; Returns: Json }
@@ -3652,6 +3653,10 @@ export type Database = {
       }
       verify_certificate: { Args: { p_id: string }; Returns: Json }
       verify_marketing_pin: { Args: { p_pin: string }; Returns: boolean }
+      withdraw_application: {
+        Args: { p_application_id: string }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
