@@ -183,11 +183,14 @@ const App = () => (
             <Route path="/for-companies" element={<ForCompanies />} />
             <Route path="/smc-score" element={<ScrollRedirect hash="smc-score" />} />
             <Route path="/jobs" element={<Navigate to="/feed" replace />} />
+            <Route path="/jobs/rank/:rank" element={<Suspense fallback={null}><RankHub /></Suspense>} />
+            <Route path="/jobs/country/:country" element={<Suspense fallback={null}><CountryHub /></Suspense>} />
+            <Route path="/jobs/:slug" element={<Suspense fallback={null}><JobDetail /></Suspense>} />
             <Route path="/for-seafarers" element={<Navigate to="/app" replace />} />
             <Route path="/verify/:id" element={<Verify />} />
             <Route path="/crew/:token" element={<CrewCard />} />
             <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
           <CookieConsent />
           <InstallPrompt />
