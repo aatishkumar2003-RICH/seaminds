@@ -47,11 +47,11 @@ const ManagerAuth = () => {
     }
   };
 
+  useEffect(() => { document.title = "SeaMinds Manager Login"; }, []);
+
   const overLimit = async (key: string) => {
     const windowStart = new Date(Date.now() - 10 * 60 * 1000).toISOString();
     const { count } = await supabase.from("auth_rate_limits").select("*", { count: "exact", head: true }).eq("ip_address", key).gte("last_attempt", windowStart);
-    useEffect(() => { document.title = "SeaMinds Manager Login"; }, []);
-
   return (count || 0) >= 5;
   };
 
