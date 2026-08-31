@@ -109,6 +109,25 @@ const COUNTRY_PORTS: Record<string, string[]> = {
   Pakistan: ['Karachi', 'Pakistan'],
 };
 
+interface MyApplication {
+  id: string;
+  company_name: string | null;
+  rank_applied: string | null;
+  vessel_type: string | null;
+  outcome: string;
+  applied_at: string | null;
+  vacancy_label: string | null;
+}
+
+const STATUS_CHIP: Record<string, { label: string; cls: string }> = {
+  awaiting: { label: "Applied", cls: "bg-muted text-muted-foreground" },
+  shortlisted: { label: "Shortlisted ⭐", cls: "bg-primary/15 text-primary" },
+  offered: { label: "Offer received 🎉", cls: "bg-emerald-500/15 text-emerald-400" },
+  placed: { label: "Placed ⚓", cls: "bg-emerald-500/15 text-emerald-400" },
+  declined: { label: "Not selected", cls: "bg-destructive/15 text-destructive" },
+  withdrawn: { label: "Withdrawn", cls: "bg-muted text-muted-foreground" },
+};
+
 const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSea, shipName }: FindWorkProps) => {
   const [searchParams] = useSearchParams();
   const [crewId, setCrewId] = useState<string | null>(null);
