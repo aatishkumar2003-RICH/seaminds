@@ -162,8 +162,31 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     fetchQuickProfileDone(crewId).then((done) => setNeedsQuickProfile(!done));
   }, [crewId]);
 
+  const [myApps, setMyApps] = useState<MyApplication[]>([]);
+  const [withdrawing, setWithdrawing] = useState<string | null>(null);
 
+  const loadMyApplications = async () => {
+    const { data, error } = await supabase.rpc("get_my_applications" as never);
+    if (!error && Array.isArray(data)) setMyApps(data as unknown as MyApplication[]);
+  };
 
+  useEffect(() => {
+    if (crewId) loadMyApplications();
+  }, [crewId]);
+
+  const withdrawApplication = async (id: string) => {
+    if (!window.confirm("Withdraw this application? The company will no longer consider you for this position.")) return;
+    setWithdrawing(id);
+    const { data, error } = await supabase.rpc("withdraw_application" as never, { p_application_id: id } as never);
+    setWithdrawing(null);
+    const res = data as { ok?: boolean; error?: string } | null;
+    if (error || !res?.ok) {
+      toast({ title: "Could not withdraw", description: res?.error || error?.message || "Please try again", variant: "destructive" });
+      return;
+    }
+    toast({ title: "Withdrawn", description: "Your application has been withdrawn." });
+    loadMyApplications();
+  };
 
 
   const [extRankFilter, setExtRankFilter] = useState("all");
