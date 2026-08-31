@@ -282,8 +282,19 @@ const JobFeed = () => {
               Telegram
             </a>
           </div>
+
+          <nav aria-label="Browse jobs by rank" style={{ display: "flex", gap: 7, marginTop: 9, overflowX: "auto", paddingBottom: 2 }}>
+            <span style={{ color: "#94a3b8", fontSize: 11, fontWeight: 700, alignSelf: "center", flexShrink: 0 }}>Browse by rank:</span>
+            {RANK_HUBS.map((r) => (
+              <a key={r.slug} href={`/jobs/rank/${r.slug}`} style={{
+                flexShrink: 0, padding: "5px 11px", borderRadius: 999, fontSize: 11, fontWeight: 700,
+                color: GOLD, border: `1px solid ${GOLD}66`, textDecoration: "none", whiteSpace: "nowrap",
+              }}>{r.name}</a>
+            ))}
+          </nav>
         </div>
       </header>
+
 
       <section style={{ borderBottom: `1px solid ${BORDER}`, background: "linear-gradient(160deg, rgba(212,175,55,0.10), transparent)" }}>
         <div style={{ maxWidth: 700, margin: "0 auto", padding: "20px 16px 22px", textAlign: "center" }}>
