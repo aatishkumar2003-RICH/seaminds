@@ -349,6 +349,8 @@ const ManagerDashboard = () => {
     toast.success("Emergency contact saved");
   };
 
+  useEffect(() => { document.title = "SeaMinds Manager Dashboard"; }, []);
+
   useEffect(() => {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -1603,10 +1605,9 @@ const ManagerDashboard = () => {
             </p>
 
 
-            {/* Admin: Free assessment counter */}
-            <div className="bg-secondary/50 rounded-xl border border-border px-4 py-3 flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">Free assessments used</span>
-              <span className="text-xs font-bold text-primary">153 / 1,000</span>
+            {/* Founding period note */}
+            <div className="bg-secondary/50 rounded-xl border border-border px-4 py-3">
+              <span className="text-xs text-muted-foreground">Founding period — SeaMinds Score assessments free for your crew during launch</span>
             </div>
           </>
         )}

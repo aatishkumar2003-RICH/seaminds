@@ -88,6 +88,8 @@ function QuickProfileLine({ crewId, rank, bands }: {
   const [claims, setClaims] = useState<any[]>([]);
   const [vessels, setVessels] = useState<any[]>([]);
 
+  useEffect(() => { document.title = "SeaMinds Crew Search"; }, []);
+
   useEffect(() => {
     let alive = true;
     (async () => {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Search, Award, Megaphone } from "lucide-react";
 import seamindsLogo from "@/assets/seaminds-logo.png";
@@ -47,10 +47,12 @@ const ManagerAuth = () => {
     }
   };
 
+  useEffect(() => { document.title = "SeaMinds Manager Login"; }, []);
+
   const overLimit = async (key: string) => {
     const windowStart = new Date(Date.now() - 10 * 60 * 1000).toISOString();
     const { count } = await supabase.from("auth_rate_limits").select("*", { count: "exact", head: true }).eq("ip_address", key).gte("last_attempt", windowStart);
-    return (count || 0) >= 5;
+  return (count || 0) >= 5;
   };
 
   const handleLogin = async () => {

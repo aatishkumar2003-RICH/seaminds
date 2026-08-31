@@ -318,9 +318,9 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
         <div className="rounded-3xl p-6 text-center" style={{ background: "linear-gradient(160deg, rgba(212,175,55,0.18), rgba(13,27,42,0.4))", border: "1px solid rgba(212,175,55,0.45)" }}>
           <div className="text-5xl mb-3">🏆</div>
           <h1 className="text-2xl font-extrabold mb-2" style={{ color: "#D4AF37" }}>What's Your Competency Score?</h1>
-          <p className="text-sm mb-1" style={{ color: "#e2e8f0" }}>The SeaMinds Competency Score rates you from</p>
+          <p className="text-sm mb-1" style={{ color: "#e2e8f0" }}>The SeaMinds Score rates you from</p>
           <p className="text-3xl font-black mb-4" style={{ color: "#D4AF37" }}>0.00 → 5.00 ⭐</p>
-          <p className="text-xs" style={{ color: "#94a3b8" }}>Technical · Experience · Communication · Behaviour · Wellness</p>
+          <p className="text-xs" style={{ color: "#94a3b8" }}>Technical · Judgment · Maritime English · Professional Behaviour</p>
         </div>
         <div className="mt-5 space-y-3">
           {[

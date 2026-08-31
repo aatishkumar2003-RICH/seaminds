@@ -126,6 +126,7 @@ Deno.serve(async (req) => {
         .from("crew_profiles")
         .select("*")
         .eq("id", userId)
+        .eq("is_test", false)
         .maybeSingle();
       if (!cv && !profile) return json({ success: false, error: "CV not found" }, 404);
       try {
@@ -147,7 +148,8 @@ Deno.serve(async (req) => {
       .select(
         "id, first_name, last_name, rank, role, nationality, vessel_type, preferred_vessel_types, whatsapp_number, email, is_available, available_from, crew_unique_id, email_verified, whatsapp_verified, years_at_sea, created_at, years_in_rank_band, contracts_in_rank_band, total_sea_service_band, quick_profile_completed_at, placed_until, placed_company",
         { count: "exact" },
-      );
+      )
+      .eq("is_test", false);
 
     // Placed crew are protected during their contract: only the placing company
     // (or the admin) may see them, regardless of the availability filter.
@@ -157,6 +159,7 @@ Deno.serve(async (req) => {
       const { data: placedRows } = await admin
         .from("crew_profiles")
         .select("id, placed_company")
+        .eq("is_test", false)
         .gte("placed_until", today)
         .limit(5000);
       const hidden = (placedRows || [])

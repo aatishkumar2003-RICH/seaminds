@@ -67,6 +67,23 @@ const JobFeed = () => {
   const [needsQuickProfile, setNeedsQuickProfile] = useState(false);
   const [gateOpen, setGateOpen] = useState(false);
   const [applying, setApplying] = useState<string | null>(null);
+  const [totalLive, setTotalLive] = useState<number | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const { data } = await supabase.rpc("get_market_indices" as never);
+      const t = Number((data as any)?.total);
+      if (alive && Number.isFinite(t) && t > 0) setTotalLive(t);
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  const countLabel = loading
+    ? "Loading…"
+    : totalLive && totalLive > items.length
+      ? `${totalLive} live vacancies · showing ${items.length}`
+      : `${items.length} live vacancies`;
 
 
   // Preload the signed-in crew's calling-card data once — never fetched on tap
@@ -236,7 +253,7 @@ const JobFeed = () => {
               <Anchor size={20} style={{ color: GOLD }} />
               <div>
                 <h1 style={{ color: GOLD, fontSize: 17, fontWeight: 800, lineHeight: 1.1 }}>Maritime Jobs Feed</h1>
-                <p style={{ color: "#94a3b8", fontSize: 11 }}>{loading ? "Loading…" : `${items.length} live vacancies`}</p>
+                <p style={{ color: "#94a3b8", fontSize: 11 }}>{countLabel}</p>
               </div>
             </div>
             <button onClick={() => navigate("/app")} style={{ background: GOLD, color: NAVY, border: "none", borderRadius: 10, padding: "8px 14px", fontWeight: 800, fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>
@@ -273,13 +290,13 @@ const JobFeed = () => {
             Your next contract, direct from the company
           </h2>
           <p style={{ color: "#cbd5e1", fontSize: 13, marginTop: 8, lineHeight: 1.55 }}>
-            Live maritime vacancies updated every 2 hours. Apply straight to the company on WhatsApp — no agent fees, no middleman.
+            Live maritime vacancies, refreshed several times a day. Apply by email or WhatsApp — no agent fees, no middleman.
           </p>
           <div style={{ display: "flex", justifyContent: "center", gap: 18, marginTop: 14, flexWrap: "wrap" }}>
             {[
-              { v: loading ? "—" : String(items.length), l: "live now" },
+              { v: loading ? "—" : String(totalLive ?? items.length), l: "live now" },
               { v: "Free", l: "always, for crew" },
-              { v: "2h", l: "refresh rate" },
+              { v: "Daily", l: "fresh vacancies" },
             ].map((s) => (
               <div key={s.l} style={{ textAlign: "center" }}>
                 <p style={{ color: GOLD, fontSize: 18, fontWeight: 900 }}>{s.v}</p>

@@ -1089,6 +1089,7 @@ export type Database = {
           home_country_code: string | null
           id: string
           is_available: boolean | null
+          is_test: boolean
           job_alerts_enabled: boolean
           last_login_lat: number | null
           last_login_lng: number | null
@@ -1144,6 +1145,7 @@ export type Database = {
           home_country_code?: string | null
           id?: string
           is_available?: boolean | null
+          is_test?: boolean
           job_alerts_enabled?: boolean
           last_login_lat?: number | null
           last_login_lng?: number | null
@@ -1199,6 +1201,7 @@ export type Database = {
           home_country_code?: string | null
           id?: string
           is_available?: boolean | null
+          is_test?: boolean
           job_alerts_enabled?: boolean
           last_login_lat?: number | null
           last_login_lng?: number | null

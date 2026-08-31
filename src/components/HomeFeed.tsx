@@ -10,6 +10,24 @@ import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, recordApplicatio
 import ApplyGateSheet from "@/components/ApplyGateSheet";
 import CrewOffers from "@/components/CrewOffers";
 
+type NewsItem = { title: string; link: string; pubDate: string; source: string };
+
+const MARITIME_FEEDS: { url: string; source: string }[] = [
+  { url: "https://splash247.com/feed", source: "Splash247" },
+  { url: "https://gcaptain.com/feed", source: "gCaptain" },
+  { url: "https://www.seatrade-maritime.com/rss.xml", source: "Seatrade Maritime" },
+];
+
+function newsTimeAgo(dateStr: string): string {
+  const d = new Date(dateStr).getTime();
+  if (!d) return "";
+  const mins = Math.floor((Date.now() - d) / 60000);
+  if (mins < 60) return `${Math.max(1, mins)}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
 const GOLD = "#D4AF37";
 const NAVY = "#0D1B2A";
 const CARD = "#112240";
@@ -73,11 +91,31 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
   const [directApplied, setDirectApplied] = useState<Record<string, "ok" | "dup">>({});
   const [directBusy, setDirectBusy] = useState<Record<string, boolean>>({});
   const [cardInfo, setCardInfo] = useState<CrewCardInfo | null>(null);
+  const [news, setNews] = useState<NewsItem[]>([]);
 
   useEffect(() => {
     if (!profileId) return;
     fetchCrewCardInfo(profileId).then(setCardInfo);
   }, [profileId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const all: NewsItem[] = [];
+      for (const f of MARITIME_FEEDS) {
+        try {
+          const { data, error } = await supabase.functions.invoke("rss-feed", { body: { feedUrl: f.url, limit: 5 } });
+          if (error || !data?.success) continue;
+          for (const it of (data.items || [])) {
+            if (it?.title && it?.link) all.push({ title: it.title, link: it.link, pubDate: it.pubDate, source: f.source });
+          }
+        } catch { /* news is optional */ }
+      }
+      all.sort((a, b) => (new Date(b.pubDate).getTime() || 0) - (new Date(a.pubDate).getTime() || 0));
+      if (!cancelled) setNews(all.slice(0, 8));
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
 
 
@@ -817,7 +855,21 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
             </article>
           );
         })();
-          if (i !== 3 || !refStats?.link) return [el];
+          const extras: JSX.Element[] = [];
+          if ((i + 1) % 6 === 0) {
+            const n = news[Math.floor((i + 1) / 6) - 1];
+            if (n) {
+              extras.push(
+                <a key={`news-${i}`} href={n.link} target="_blank" rel="noopener noreferrer"
+                  className="block rounded-2xl p-3.5" style={{ background: CARD, border: `1px solid ${BORDER}`, textDecoration: "none" }}>
+                  <p className="text-[11px] font-extrabold" style={{ color: GOLD }}>📰 Maritime news</p>
+                  <p className="mt-1 text-[13px] font-bold text-white leading-snug">{n.title}</p>
+                  <p className="mt-1 text-[11px]" style={{ color: "#94A3B8" }}>{n.source} · {newsTimeAgo(n.pubDate)}</p>
+                </a>,
+              );
+            }
+          }
+          if (i !== 3 || !refStats?.link) return [el, ...extras];
           return [
             <div key="referral-card" className="rounded-2xl" style={{ background: CARD, border: `1px solid ${GOLD}`, padding: 14 }}>
               <p className="text-[14px] font-extrabold" style={{ color: GOLD }}>🤝 Invite a shipmate</p>
@@ -843,6 +895,7 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
               </button>
             </div>,
             el,
+            ...extras,
           ];
         })}
 
