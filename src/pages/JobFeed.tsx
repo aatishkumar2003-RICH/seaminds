@@ -6,6 +6,7 @@ import { Anchor, MapPin, Ship, BadgeCheck, MessageCircle, ExternalLink } from "l
 import { trackPixel } from "@/lib/metaPixel";
 import { formatSalaryText } from "@/lib/salary";
 import { fetchCrewCardInfo, getCachedCrewCardInfo, waApplyLink, recordApplication, openHandoffTab, completeHandoff, fetchQuickProfileDone, CrewCardInfo } from "@/lib/applyMessage";
+import { jobPath, RANK_HUBS } from "@/lib/jobSlug";
 import ApplyGateSheet from "@/components/ApplyGateSheet";
 import { toast } from "sonner";
 
