@@ -111,12 +111,14 @@ const COUNTRY_PORTS: Record<string, string[]> = {
 
 const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSea, shipName }: FindWorkProps) => {
   const [searchParams] = useSearchParams();
+  const [crewId, setCrewId] = useState<string | null>(null);
   const [offerCount, setOfferCount] = useState(0);
   const [availabilityDate, setAvailabilityDate] = useState<Date>();
   const [preferredVessel, setPreferredVessel] = useState("Any Type");
   const [aboutMe, setAboutMe] = useState("");
   const [visible, setVisible] = useState(false);
-  
+  const [activeSaved, setActiveSaved] = useState(false);
+
   const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
   const [directApplied, setDirectApplied] = useState<Record<string, "ok" | "dup">>({});
   const [directBusy, setDirectBusy] = useState<Record<string, boolean>>({});
@@ -130,10 +132,16 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
   const [gateOpen, setGateOpen] = useState(false);
 
   useEffect(() => {
-    if (!profileId) return;
-    fetchCrewCardInfo(profileId).then(setCardInfo);
-    fetchQuickProfileDone(profileId).then((done) => setNeedsQuickProfile(!done));
-  }, [profileId]);
+    supabase.auth.getUser().then(({ data, error }) => {
+      if (data.user?.id && !error) setCrewId(data.user.id);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!crewId) return;
+    fetchCrewCardInfo(crewId).then(setCardInfo);
+    fetchQuickProfileDone(crewId).then((done) => setNeedsQuickProfile(!done));
+  }, [crewId]);
 
 
 
@@ -147,18 +155,20 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
 
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (crewId) loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [crewId]);
 
   const loadData = async () => {
+    if (!crewId) return;
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     const [availRes, postingsRes, extRes, smcRes] = await Promise.all([
-      supabase.from("crew_availability").select("*").eq("crew_profile_id", profileId).maybeSingle(),
+      supabase.from("crew_availability").select("*").eq("crew_profile_id", crewId).maybeSingle(),
       supabase.from("job_postings").select("id, rank_required, vessel_type, joining_port, contract_duration, monthly_salary, contact_whatsapp, company_name, additional_notes, verified, created_at").eq("status", "active").order("created_at", { ascending: false }).limit(20),
       supabase.from("external_vacancies").select("*").eq("is_scam_flagged", false).gte("quality_score", 30).gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false }).limit(50),
-      supabase.from("smc_assessments").select("overall_score").eq("crew_profile_id", profileId).eq("status", "completed").order("completed_at", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("smc_assessments").select("overall_score").eq("crew_profile_id", crewId).eq("status", "completed").order("completed_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
 
     if (availRes.data) {
@@ -183,16 +193,17 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
   };
 
   const refreshAvailability = async () => {
+    if (!crewId) return;
     const { data, error } = await supabase
       .from("crew_availability")
       .select("*")
-      .eq("crew_profile_id", profileId)
+      .eq("crew_profile_id", crewId)
       .maybeSingle();
     if (!error && data) applyRow(data);
   };
 
   useEffect(() => {
-    if (!profileId) return;
+    if (!crewId) return;
     refreshAvailability();
     const onFocus = () => { if (document.visibilityState === "visible") refreshAvailability(); };
     window.addEventListener("focus", onFocus);
@@ -202,12 +213,20 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
       document.removeEventListener("visibilitychange", onFocus);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profileId]);
+  }, [crewId]);
 
   const saveAvailability = async () => {
+    if (!crewId) {
+      toast({
+        title: "Please sign in again",
+        description: "Your session could not be verified.",
+        variant: "destructive",
+      });
+      return;
+    }
     setSaving(true);
     const payload = {
-      crew_profile_id: profileId,
+      crew_profile_id: crewId,
       availability_date: availabilityDate ? format(availabilityDate, "yyyy-MM-dd") : null,
       preferred_vessel_type: preferredVessel,
       about_me: aboutMe,
@@ -234,6 +253,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     }
 
     applyRow(saved);
+    setActiveSaved(!!saved.visible_to_employers);
     toast({
       title: "Saved ✓",
       description: saved.visible_to_employers ? "Employers can find you" : "Hidden from employers",
@@ -349,7 +369,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
           <h3 className="mx-4 mb-2 text-sm font-extrabold uppercase tracking-wide text-primary">⚡ Action required</h3>
         )}
         <CrewOffers
-          profileId={profileId}
+          profileId={crewId || profileId}
           highlightApplicationId={searchParams.get("offer")}
           onCountChange={setOfferCount}
         />
@@ -488,20 +508,19 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                 <p className="text-[10px] text-muted-foreground mt-0.5">Employers can find and contact you</p>
               </div>
               <div className="flex items-center gap-2.5">
-                <span className={cn("text-xs font-bold tracking-wide", visible ? "text-green-400" : "text-muted-foreground")}>
-                  {visible ? "VISIBLE ✓" : "Hidden"}
+                <span className={cn("text-xs font-bold tracking-wide", visible ? "text-[#D4AF37]" : "text-muted-foreground")}>
+                  {visible ? "VISIBLE ✓" : "HIDDEN"}
                 </span>
                 <Switch
                   checked={visible}
                   onCheckedChange={(checked) => setVisible(checked)}
                   className={cn(
-                    "scale-125",
-                    visible ? "data-[state=checked]:bg-green-500" : "data-[state=unchecked]:bg-zinc-600"
+                    "scale-125 data-[state=checked]:bg-[#D4AF37] data-[state=unchecked]:bg-[#3f3f46] [&>span]:bg-white"
                   )}
                 />
               </div>
             </div>
-            {visible && (
+            {activeSaved && (
               <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/30 rounded-lg px-3 py-2">
                 <Check size={14} className="text-green-400" />
                 <span className="text-xs text-green-400 font-medium">Profile Active — Employers Can Find You</span>
