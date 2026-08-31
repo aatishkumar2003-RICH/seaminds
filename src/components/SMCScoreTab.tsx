@@ -391,7 +391,12 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
     );
   };
 
-  if (view === "payment" && !started) return ScoreHero();
+  if (view === "payment" && !started) return (
+    <div className="flex flex-col h-full overflow-y-auto">
+      <ScoreDoorCard />
+      {ScoreHero()}
+    </div>
+  );
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
