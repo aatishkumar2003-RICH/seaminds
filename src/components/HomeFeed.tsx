@@ -10,6 +10,24 @@ import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, recordApplicatio
 import ApplyGateSheet from "@/components/ApplyGateSheet";
 import CrewOffers from "@/components/CrewOffers";
 
+type NewsItem = { title: string; link: string; pubDate: string; source: string };
+
+const MARITIME_FEEDS: { url: string; source: string }[] = [
+  { url: "https://splash247.com/feed", source: "Splash247" },
+  { url: "https://gcaptain.com/feed", source: "gCaptain" },
+  { url: "https://www.seatrade-maritime.com/rss.xml", source: "Seatrade Maritime" },
+];
+
+function newsTimeAgo(dateStr: string): string {
+  const d = new Date(dateStr).getTime();
+  if (!d) return "";
+  const mins = Math.floor((Date.now() - d) / 60000);
+  if (mins < 60) return `${Math.max(1, mins)}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
 const GOLD = "#D4AF37";
 const NAVY = "#0D1B2A";
 const CARD = "#112240";
@@ -73,6 +91,7 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
   const [directApplied, setDirectApplied] = useState<Record<string, "ok" | "dup">>({});
   const [directBusy, setDirectBusy] = useState<Record<string, boolean>>({});
   const [cardInfo, setCardInfo] = useState<CrewCardInfo | null>(null);
+  const [news, setNews] = useState<NewsItem[]>([]);
 
   useEffect(() => {
     if (!profileId) return;
