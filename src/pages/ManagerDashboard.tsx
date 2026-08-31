@@ -124,6 +124,9 @@ const ManagerDashboard = () => {
   const [safetyReports, setSafetyReports] = useState<SafetyReport[]>([]);
   const [dashTab, setDashTab] = useState<DashTab>("crew");
   const [managerUserId, setManagerUserId] = useState("");
+  const [managerNotifs, setManagerNotifs] = useState<ManagerNotif[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [bellOpen, setBellOpen] = useState(false);
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [applicantsLoading, setApplicantsLoading] = useState(false);
   const [myPostings, setMyPostings] = useState<MyPosting[]>([]);
