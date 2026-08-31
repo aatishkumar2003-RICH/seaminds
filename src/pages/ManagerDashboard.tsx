@@ -907,6 +907,41 @@ const ManagerDashboard = () => {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <div className="relative">
+            <button
+              onClick={() => { setBellOpen((o) => !o); if (!bellOpen) loadNotifications(); }}
+              className="relative flex items-center justify-center w-9 h-9 rounded-lg border border-[#D4AF37]/40 bg-[#0D1B2A] text-[#D4AF37] hover:bg-[#D4AF37]/10 transition-colors"
+              aria-label="Notifications"
+            >
+              <Bell size={16} />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-[#D4AF37] text-[#0D1B2A] text-[10px] font-bold flex items-center justify-center">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </button>
+            {bellOpen && (
+              <div className="absolute right-0 z-50 mt-2 w-80 rounded-xl border border-border bg-card shadow-xl p-2">
+                {managerNotifs.length === 0 ? (
+                  <p className="px-3 py-4 text-xs text-muted-foreground">No notifications yet.</p>
+                ) : (
+                  <div className="max-h-80 overflow-y-auto space-y-1">
+                    {managerNotifs.map((n) => (
+                      <button
+                        key={n.id}
+                        onClick={() => openNotification(n)}
+                        className={`w-full text-left rounded-lg px-3 py-2 hover:bg-secondary transition-colors ${n.read ? "opacity-60" : ""}`}
+                      >
+                        <p className="text-xs font-medium text-foreground">{n.title}</p>
+                        <p className="text-[10px] text-muted-foreground">{relTime(n.created_at)}</p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           <button
             onClick={() => navigate("/manager-search")}
             className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-[#0D1B2A] text-[#D4AF37] border border-[#D4AF37]/40 hover:bg-[#D4AF37]/10 transition-colors"
