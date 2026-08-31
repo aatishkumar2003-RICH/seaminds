@@ -1,5 +1,12 @@
 User-agent: *
 Allow: /
+Disallow: /app
+Disallow: /manager
+Disallow: /manager-search
+Disallow: /admin
+Disallow: /marketing
+Disallow: /interview
+Disallow: /crew
+Disallow: /verify
 
 Sitemap: https://seaminds.life/sitemap.xml
-Sitemap: https://luomzexqgcjtcmdlbevo.supabase.co/functions/v1/sitemap

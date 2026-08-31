@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -51,6 +51,9 @@ import ManagerAuth from "./pages/ManagerAuth";
 import ManagerDashboard from "./pages/ManagerDashboard";
 import ManagerSearch from "./pages/ManagerSearch";
 import NotFound from "./pages/NotFound";
+const JobDetail = lazy(() => import("./pages/JobDetail"));
+const RankHub = lazy(() => import("./pages/RankHub"));
+const CountryHub = lazy(() => import("./pages/CountryHub"));
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Pricing from "./pages/Pricing";
@@ -180,11 +183,14 @@ const App = () => (
             <Route path="/for-companies" element={<ForCompanies />} />
             <Route path="/smc-score" element={<ScrollRedirect hash="smc-score" />} />
             <Route path="/jobs" element={<Navigate to="/feed" replace />} />
+            <Route path="/jobs/rank/:rank" element={<Suspense fallback={null}><RankHub /></Suspense>} />
+            <Route path="/jobs/country/:country" element={<Suspense fallback={null}><CountryHub /></Suspense>} />
+            <Route path="/jobs/:slug" element={<Suspense fallback={null}><JobDetail /></Suspense>} />
             <Route path="/for-seafarers" element={<Navigate to="/app" replace />} />
             <Route path="/verify/:id" element={<Verify />} />
             <Route path="/crew/:token" element={<CrewCard />} />
             <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
           <CookieConsent />
           <InstallPrompt />

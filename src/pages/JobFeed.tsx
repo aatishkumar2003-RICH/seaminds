@@ -6,6 +6,7 @@ import { Anchor, MapPin, Ship, BadgeCheck, MessageCircle, ExternalLink } from "l
 import { trackPixel } from "@/lib/metaPixel";
 import { formatSalaryText } from "@/lib/salary";
 import { fetchCrewCardInfo, getCachedCrewCardInfo, waApplyLink, recordApplication, openHandoffTab, completeHandoff, fetchQuickProfileDone, CrewCardInfo } from "@/lib/applyMessage";
+import { jobPath, RANK_HUBS } from "@/lib/jobSlug";
 import ApplyGateSheet from "@/components/ApplyGateSheet";
 import { toast } from "sonner";
 
@@ -281,8 +282,19 @@ const JobFeed = () => {
               Telegram
             </a>
           </div>
+
+          <nav aria-label="Browse jobs by rank" style={{ display: "flex", gap: 7, marginTop: 9, overflowX: "auto", paddingBottom: 2 }}>
+            <span style={{ color: "#94a3b8", fontSize: 11, fontWeight: 700, alignSelf: "center", flexShrink: 0 }}>Browse by rank:</span>
+            {RANK_HUBS.map((r) => (
+              <a key={r.slug} href={`/jobs/rank/${r.slug}`} style={{
+                flexShrink: 0, padding: "5px 11px", borderRadius: 999, fontSize: 11, fontWeight: 700,
+                color: GOLD, border: `1px solid ${GOLD}66`, textDecoration: "none", whiteSpace: "nowrap",
+              }}>{r.name}</a>
+            ))}
+          </nav>
         </div>
       </header>
+
 
       <section style={{ borderBottom: `1px solid ${BORDER}`, background: "linear-gradient(160deg, rgba(212,175,55,0.10), transparent)" }}>
         <div style={{ maxWidth: 700, margin: "0 auto", padding: "20px 16px 22px", textAlign: "center" }}>
@@ -327,7 +339,14 @@ const JobFeed = () => {
               <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start" }}>
                   <div style={{ minWidth: 0 }}>
-                    <h2 style={{ color: "#fff", fontSize: 17, fontWeight: 800, lineHeight: 1.2 }}>{i.rank}</h2>
+                    <h2 style={{ fontSize: 17, fontWeight: 800, lineHeight: 1.2 }}>
+                      {i.isCompanyPost ? (
+                        <span style={{ color: "#fff" }}>{i.rank}</span>
+                      ) : (
+                        <a href={jobPath({ id: String(i.id).replace(/^[pec]-/, ""), rank: i.rank, vessel: i.vessel, port: i.port })}
+                          style={{ color: "#fff", textDecoration: "none" }}>{i.rank}</a>
+                      )}
+                    </h2>
                     <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 3 }}>
                       <span style={{ color: GOLD, fontSize: 12, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{i.company}</span>
                       {i.verified && <BadgeCheck size={13} style={{ color: "#22c55e", flexShrink: 0 }} />}

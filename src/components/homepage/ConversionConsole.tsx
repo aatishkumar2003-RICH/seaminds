@@ -8,6 +8,7 @@ import seamindsLogo from "@/assets/seaminds-logo.png";
 import { useT, LANGS, type LangCode } from "@/i18n";
 import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, recordApplication, openHandoffTab, completeHandoff, fetchQuickProfileDone, type CrewCardInfo } from "@/lib/applyMessage";
 import ApplyGateSheet from "@/components/ApplyGateSheet";
+import { jobPath } from "@/lib/jobSlug";
 
 
 const GOLD = "#D4AF37";
@@ -705,11 +706,8 @@ const ConversionConsole = () => {
         )}
         <div className="rounded-2xl overflow-hidden" style={{ background: `${PANEL}CC`, border: `1px solid ${BORDER}` }}>
           {filtered.slice(0, 3).map((v) => (
-            <button
+            <div
               key={v.id}
-              type="button"
-              onClick={() => setSheet(v)}
-
               className="w-full text-left px-3 border-b last:border-b-0 flex items-center gap-2"
               style={{
                 minHeight: 54,
@@ -722,12 +720,18 @@ const ConversionConsole = () => {
                 <span className="rounded px-1.5 py-0.5 text-[9px] font-bold shrink-0" style={{ border: `1px solid ${GOLD}`, color: GOLD }}>DIRECT</span>
               )}
               {isUrgent(v) && <span className="shrink-0 text-[11px]">🔥</span>}
-              <span className="font-bold text-foreground text-sm truncate">{v.rank_required || v.title || t("seafarer")}</span>
+              <a
+                href={jobPath({ id: v.id, rank: v.rank_required || v.title, vessel: v.vessel_type, port: v.joining_port })}
+                onClick={(e) => { e.preventDefault(); setSheet(v); }}
+                className="font-bold text-foreground text-sm truncate no-underline"
+              >
+                {v.rank_required || v.title || t("seafarer")}
+              </a>
               <span className="text-xs truncate" style={{ color: GOLD }}>{v.vessel_type || t("various")}</span>
               <span className="ml-auto font-mono text-[10px] text-muted-foreground truncate shrink-0">
                 {(v.joining_port || t("worldwide")).slice(0, 14)} · {relTime(v.first_seen_at || v.fetched_at)}
               </span>
-            </button>
+            </div>
           ))}
           {filtered.length === 0 && (
             <p className="text-xs text-muted-foreground py-6 text-center">{t("loadingVacancies")}</p>
