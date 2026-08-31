@@ -111,12 +111,14 @@ const COUNTRY_PORTS: Record<string, string[]> = {
 
 const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSea, shipName }: FindWorkProps) => {
   const [searchParams] = useSearchParams();
+  const [crewId, setCrewId] = useState<string | null>(null);
   const [offerCount, setOfferCount] = useState(0);
   const [availabilityDate, setAvailabilityDate] = useState<Date>();
   const [preferredVessel, setPreferredVessel] = useState("Any Type");
   const [aboutMe, setAboutMe] = useState("");
   const [visible, setVisible] = useState(false);
-  
+  const [activeSaved, setActiveSaved] = useState(false);
+
   const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
   const [directApplied, setDirectApplied] = useState<Record<string, "ok" | "dup">>({});
   const [directBusy, setDirectBusy] = useState<Record<string, boolean>>({});
@@ -130,10 +132,16 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
   const [gateOpen, setGateOpen] = useState(false);
 
   useEffect(() => {
-    if (!profileId) return;
-    fetchCrewCardInfo(profileId).then(setCardInfo);
-    fetchQuickProfileDone(profileId).then((done) => setNeedsQuickProfile(!done));
-  }, [profileId]);
+    supabase.auth.getUser().then(({ data, error }) => {
+      if (data.user?.id && !error) setCrewId(data.user.id);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!crewId) return;
+    fetchCrewCardInfo(crewId).then(setCardInfo);
+    fetchQuickProfileDone(crewId).then((done) => setNeedsQuickProfile(!done));
+  }, [crewId]);
 
 
 
