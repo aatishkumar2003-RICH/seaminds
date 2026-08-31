@@ -2,7 +2,6 @@ User-agent: *
 Allow: /
 Disallow: /app
 Disallow: /manager
-Disallow: /manager-search
 Disallow: /admin
 Disallow: /marketing
 Disallow: /interview
