@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import MyPostsPanel from "@/components/manager/MyPostsPanel";
 import { useNavigate } from "react-router-dom";
-import { Anchor, ArrowUpDown, LogOut, FileWarning, CreditCard, RefreshCw } from "lucide-react";
+import { Anchor, ArrowUpDown, Bell, LogOut, FileWarning, CreditCard, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import ManagerPaymentHistory from "@/components/smc/ManagerPaymentHistory";
@@ -112,6 +112,15 @@ interface ParsedVacancy {
 type SortKey = "shipName";
 type DashTab = "crew" | "applicants" | "payments";
 
+interface ManagerNotif {
+  id: string;
+  kind: string | null;
+  title: string;
+  link: string | null;
+  read: boolean;
+  created_at: string;
+}
+
 
 const ManagerDashboard = () => {
   const navigate = useNavigate();
@@ -124,6 +133,49 @@ const ManagerDashboard = () => {
   const [safetyReports, setSafetyReports] = useState<SafetyReport[]>([]);
   const [dashTab, setDashTab] = useState<DashTab>("crew");
   const [managerUserId, setManagerUserId] = useState("");
+  const [managerNotifs, setManagerNotifs] = useState<ManagerNotif[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [bellOpen, setBellOpen] = useState(false);
+
+  const loadNotifications = async () => {
+    if (!managerUserId) return;
+    const { data } = await supabase
+      .from("notifications")
+      .select("id, kind, title, link, read, created_at")
+      .eq("crew_id", managerUserId)
+      .order("created_at", { ascending: false })
+      .limit(20);
+    const rows = (data || []) as ManagerNotif[];
+    setManagerNotifs(rows);
+    setUnreadCount(rows.filter((n) => !n.read).length);
+    const unreadIds = rows.filter((n) => !n.read).map((n) => n.id);
+    if (unreadIds.length) {
+      await supabase.from("notifications").update({ read: true }).in("id", unreadIds);
+      setUnreadCount(0);
+      setManagerNotifs(rows.map((n) => ({ ...n, read: true })));
+    }
+  };
+
+  const loadUnreadCount = async () => {
+    if (!managerUserId) return;
+    const { count } = await supabase
+      .from("notifications")
+      .select("id", { count: "exact", head: true })
+      .eq("crew_id", managerUserId)
+      .eq("read", false);
+    setUnreadCount(count || 0);
+  };
+
+  useEffect(() => {
+    if (managerUserId) loadUnreadCount();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [managerUserId]);
+
+  const openNotification = (n: ManagerNotif) => {
+    setBellOpen(false);
+    if (n.kind && /offer|accept|declin|application/i.test(`${n.kind} ${n.title}`)) setDashTab("applicants");
+  };
+
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [applicantsLoading, setApplicantsLoading] = useState(false);
   const [myPostings, setMyPostings] = useState<MyPosting[]>([]);
@@ -907,6 +959,41 @@ const ManagerDashboard = () => {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <div className="relative">
+            <button
+              onClick={() => { setBellOpen((o) => !o); if (!bellOpen) loadNotifications(); }}
+              className="relative flex items-center justify-center w-9 h-9 rounded-lg border border-[#D4AF37]/40 bg-[#0D1B2A] text-[#D4AF37] hover:bg-[#D4AF37]/10 transition-colors"
+              aria-label="Notifications"
+            >
+              <Bell size={16} />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-[#D4AF37] text-[#0D1B2A] text-[10px] font-bold flex items-center justify-center">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </button>
+            {bellOpen && (
+              <div className="absolute right-0 z-50 mt-2 w-80 rounded-xl border border-border bg-card shadow-xl p-2">
+                {managerNotifs.length === 0 ? (
+                  <p className="px-3 py-4 text-xs text-muted-foreground">No notifications yet.</p>
+                ) : (
+                  <div className="max-h-80 overflow-y-auto space-y-1">
+                    {managerNotifs.map((n) => (
+                      <button
+                        key={n.id}
+                        onClick={() => openNotification(n)}
+                        className={`w-full text-left rounded-lg px-3 py-2 hover:bg-secondary transition-colors ${n.read ? "opacity-60" : ""}`}
+                      >
+                        <p className="text-xs font-medium text-foreground">{n.title}</p>
+                        <p className="text-[10px] text-muted-foreground">{relTime(n.created_at)}</p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           <button
             onClick={() => navigate("/manager-search")}
             className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-[#0D1B2A] text-[#D4AF37] border border-[#D4AF37]/40 hover:bg-[#D4AF37]/10 transition-colors"
