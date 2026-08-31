@@ -369,7 +369,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
           <h3 className="mx-4 mb-2 text-sm font-extrabold uppercase tracking-wide text-primary">⚡ Action required</h3>
         )}
         <CrewOffers
-          profileId={profileId}
+          profileId={crewId || profileId}
           highlightApplicationId={searchParams.get("offer")}
           onCountChange={setOfferCount}
         />
