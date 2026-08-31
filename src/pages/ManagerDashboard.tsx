@@ -112,6 +112,15 @@ interface ParsedVacancy {
 type SortKey = "shipName";
 type DashTab = "crew" | "applicants" | "payments";
 
+interface ManagerNotif {
+  id: string;
+  kind: string | null;
+  title: string;
+  link: string | null;
+  read: boolean;
+  created_at: string;
+}
+
 
 const ManagerDashboard = () => {
   const navigate = useNavigate();
