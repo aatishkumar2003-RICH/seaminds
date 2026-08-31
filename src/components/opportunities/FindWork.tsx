@@ -216,9 +216,17 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
   }, [crewId]);
 
   const saveAvailability = async () => {
+    if (!crewId) {
+      toast({
+        title: "Please sign in again",
+        description: "Your session could not be verified.",
+        variant: "destructive",
+      });
+      return;
+    }
     setSaving(true);
     const payload = {
-      crew_profile_id: profileId,
+      crew_profile_id: crewId,
       availability_date: availabilityDate ? format(availabilityDate, "yyyy-MM-dd") : null,
       preferred_vessel_type: preferredVessel,
       about_me: aboutMe,
@@ -245,6 +253,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     }
 
     applyRow(saved);
+    setActiveSaved(!!saved.visible_to_employers);
     toast({
       title: "Saved ✓",
       description: saved.visible_to_employers ? "Employers can find you" : "Hidden from employers",
