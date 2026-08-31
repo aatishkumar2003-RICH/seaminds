@@ -349,6 +349,8 @@ const ManagerDashboard = () => {
     toast.success("Emergency contact saved");
   };
 
+  useEffect(() => { document.title = "SeaMinds Manager Dashboard"; }, []);
+
   useEffect(() => {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser();

@@ -50,6 +50,7 @@ const ManagerInterviews = () => {
     setChecking(false);
   }, [navigate]);
 
+  useEffect(() => { document.title = "SeaMinds Crew Interviews"; }, []);
   useEffect(() => { load(); }, [load]);
 
   const create = async () => {
