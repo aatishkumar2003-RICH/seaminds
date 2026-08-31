@@ -32,10 +32,10 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
   const [crewUniqueId, setCrewUniqueId] = useState<string | null>(null);
   const [showCvUpload, setShowCvUpload] = useState(false);
   const [selfPrice, setSelfPrice] = useState(0);
-  const [isAvailable, setIsAvailable] = useState(false);
-  const [availableFrom, setAvailableFrom] = useState('');
   const [jobAlertsEnabled, setJobAlertsEnabled] = useState(true);
   const [started, setStarted] = useState(false);
+  const [scoreValue, setScoreValue] = useState<number | null>(null);
+  const [scoreBand, setScoreBand] = useState<string | null>(null);
 
   // CV parse state
   const [cvStatus, setCvStatus] = useState<CvStatus>("idle");
@@ -47,13 +47,9 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
       try {
         await checkStatus();
         await checkExistingCvData();
-        const { data } = await supabase.from("crew_profiles").select("crew_unique_id, is_available, available_from, job_alerts_enabled").eq("id", profileId).maybeSingle();
+        const { data } = await supabase.from("crew_profiles").select("crew_unique_id, job_alerts_enabled").eq("id", profileId).maybeSingle();
         if (data?.crew_unique_id) setCrewUniqueId(data.crew_unique_id);
-        if (data) {
-          setIsAvailable(data.is_available || false);
-          setAvailableFrom(data.available_from || '');
-          setJobAlertsEnabled(data.job_alerts_enabled !== false);
-        }
+        if (data) setJobAlertsEnabled(data.job_alerts_enabled !== false);
       } catch (e) {
         console.error('SMCScoreTab init error:', e);
         setView("payment");
@@ -61,13 +57,6 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
     };
     init();
   }, [profileId]);
-
-  const toggleAvailability = async (val: boolean) => {
-    setIsAvailable(val);
-    await supabase.from('crew_profiles')
-      .update({ is_available: val, available_from: availableFrom || null })
-      .eq('id', profileId);
-  };
 
   useEffect(() => {
     supabase.rpc('get_admin_settings', { p_keys: ['price_self_assessment'] })
@@ -162,6 +151,8 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
 
       if (assessment?.status === "completed") {
         setAssessmentId(assessment.id);
+        setScoreValue(assessment.overall_score != null ? Number(assessment.overall_score) : null);
+        setScoreBand((assessment as any).score_band || null);
         setView("certificate");
         return;
       }
@@ -359,7 +350,53 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
     );
   };
 
-  if (view === "payment" && !started) return ScoreHero();
+  const ScoreDoorCard = () => {
+    const completed = view === "certificate";
+    const inProgress = view === "assessment";
+    return (
+      <div className="mx-4 mt-3 rounded-2xl p-4" style={{ background: "linear-gradient(160deg, rgba(212,175,55,0.18), rgba(13,27,42,0.5))", border: "1px solid rgba(212,175,55,0.45)" }}>
+        {completed ? (
+          <>
+            <p className="text-xs font-semibold" style={{ color: "#94A3B8" }}>Your SeaMinds Score</p>
+            <div className="flex items-baseline gap-2 mt-1">
+              <span className="text-4xl font-black" style={{ color: "#D4AF37" }}>{scoreValue != null ? scoreValue.toFixed(2) : "—"}</span>
+              {scoreBand && <span className="text-sm font-bold" style={{ color: "#D4AF37" }}>{scoreBand}</span>}
+            </div>
+            <div className="flex gap-2 mt-4">
+              <button onClick={() => setView("certificate")} className="flex-1 rounded-xl py-3 font-bold text-sm"
+                style={{ background: "#D4AF37", color: "#0D1B2A", border: "none", cursor: "pointer" }}>
+                View certificate
+              </button>
+              <button onClick={startRetake} className="flex-1 rounded-xl py-3 font-bold text-sm"
+                style={{ background: "transparent", color: "#D4AF37", border: "1px solid #D4AF37", cursor: "pointer" }}>
+                Retake assessment
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <h2 className="text-lg font-extrabold" style={{ color: "#D4AF37" }}>Get your SeaMinds Score</h2>
+            <p className="text-xs mt-1 leading-snug" style={{ color: "#94A3B8" }}>
+              A 15-minute maritime competency assessment for your rank — scored 0.00–5.00, verifiable by companies
+            </p>
+            <button
+              onClick={() => { if (inProgress) setView("assessment"); else setStarted(true); }}
+              className="w-full mt-4 rounded-xl py-3.5 font-extrabold text-sm"
+              style={{ background: "#D4AF37", color: "#0D1B2A", border: "none", cursor: "pointer" }}>
+              {inProgress ? "Continue my assessment →" : "Start my assessment →"}
+            </button>
+          </>
+        )}
+      </div>
+    );
+  };
+
+  if (view === "payment" && !started) return (
+    <div className="flex flex-col h-full overflow-y-auto">
+      <ScoreDoorCard />
+      {ScoreHero()}
+    </div>
+  );
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
@@ -389,38 +426,24 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
       )}
       {(view !== "payment" || started) && (
         <>
+          <ScoreDoorCard />
           {crewUniqueId && (
             <div className="mx-4 mt-3 mb-1 rounded-xl border px-4 py-3 flex items-center gap-3" style={{ background: 'rgba(212,175,55,0.08)', borderColor: '#D4AF37' }}>
               <span className="text-xs font-semibold" style={{ color: '#D4AF37' }}>Your SeaMinds ID</span>
               <span className="text-sm font-bold tracking-wide" style={{ color: '#D4AF37' }}>{crewUniqueId}</span>
             </div>
           )}
-          {/* Availability Toggle */}
+          {/* Availability lives on the Jobs tab */}
           <div className="mx-4 mt-2 mb-1 rounded-xl border p-3 flex items-center justify-between"
-            style={{ background: isAvailable ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.05)', borderColor: isAvailable ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.1)' }}>
+            style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(212,175,55,0.3)' }}>
             <div>
-              <div className="text-[13px] font-semibold" style={{ color: isAvailable ? '#22c55e' : '#888' }}>
-                {isAvailable ? '✅ Available for Work' : '🔴 Not Available'}
-              </div>
-              <div className="text-[11px] mt-0.5" style={{ color: '#666' }}>
-                {isAvailable ? 'Companies can find your profile' : 'Your profile is hidden from companies'}
-              </div>
+              <div className="text-[13px] font-semibold" style={{ color: '#D4AF37' }}>Availability</div>
+              <div className="text-[11px] mt-0.5" style={{ color: '#666' }}>Manage when companies can find you</div>
             </div>
-            <button
-              onClick={() => toggleAvailability(!isAvailable)}
-              className="rounded-full px-4 py-1.5 text-xs font-semibold text-white border-none cursor-pointer"
-              style={{ background: isAvailable ? '#22c55e' : '#333' }}>
-              {isAvailable ? 'Turn Off' : 'Go Available'}
-            </button>
+            <a href="/app?tab=jobs" className="text-xs font-semibold" style={{ color: '#D4AF37' }}>
+              Set availability →
+            </a>
           </div>
-          {isAvailable && (
-            <div className="mx-4 mt-1 mb-1 flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Available from:</span>
-              <input type="date" value={availableFrom}
-                onChange={e => { setAvailableFrom(e.target.value); supabase.from('crew_profiles').update({ available_from: e.target.value }).eq('id', profileId); }}
-                className="bg-card border border-border text-foreground px-2 py-1 rounded-md text-xs" />
-            </div>
-          )}
           {/* Job Alert Email Preference */}
           <div className="mx-4 mt-2 mb-1 rounded-xl border p-3 flex items-center justify-between"
             style={{ background: jobAlertsEnabled ? 'rgba(96,165,250,0.1)' : 'rgba(255,255,255,0.05)', borderColor: jobAlertsEnabled ? 'rgba(96,165,250,0.3)' : 'rgba(255,255,255,0.1)' }}>

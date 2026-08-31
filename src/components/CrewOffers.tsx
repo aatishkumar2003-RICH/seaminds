@@ -26,11 +26,9 @@ const CrewOffers = ({ profileId, highlightApplicationId, onCountChange }: Props)
   const highlightRef = useRef<HTMLDivElement | null>(null);
 
   const load = useCallback(async () => {
-    let uid = profileId;
-    if (!uid) {
-      const { data } = await supabase.auth.getSession();
-      uid = data.session?.user?.id;
-    }
+    // get_my_offers() resolves the crew from auth.uid(), so a session is all we need
+    const { data: sess } = await supabase.auth.getSession();
+    const uid = sess.session?.user?.id || profileId;
     if (!uid) return;
 
     const rpc = await supabase.rpc("get_my_offers" as any);
