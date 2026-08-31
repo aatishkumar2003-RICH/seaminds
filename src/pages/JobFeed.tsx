@@ -327,7 +327,14 @@ const JobFeed = () => {
               <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start" }}>
                   <div style={{ minWidth: 0 }}>
-                    <h2 style={{ color: "#fff", fontSize: 17, fontWeight: 800, lineHeight: 1.2 }}>{i.rank}</h2>
+                    <h2 style={{ fontSize: 17, fontWeight: 800, lineHeight: 1.2 }}>
+                      {i.isCompanyPost ? (
+                        <span style={{ color: "#fff" }}>{i.rank}</span>
+                      ) : (
+                        <a href={jobPath({ id: String(i.id).replace(/^[pec]-/, ""), rank: i.rank, vessel: i.vessel, port: i.port })}
+                          style={{ color: "#fff", textDecoration: "none" }}>{i.rank}</a>
+                      )}
+                    </h2>
                     <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 3 }}>
                       <span style={{ color: GOLD, fontSize: 12, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{i.company}</span>
                       {i.verified && <BadgeCheck size={13} style={{ color: "#22c55e", flexShrink: 0 }} />}
