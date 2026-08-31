@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { format, formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow, startOfToday } from "date-fns";
 import { CalendarIcon, Ship, Globe, Clock, MapPin, DollarSign, Check, AlertTriangle, Award, ExternalLink, Mail, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -254,9 +254,12 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
 
     applyRow(saved);
     setActiveSaved(!!saved.visible_to_employers);
+    const dateText = saved.availability_date
+      ? format(new Date(saved.availability_date + "T00:00:00"), "d MMM yyyy")
+      : "date open";
     toast({
       title: "Saved ✓",
-      description: saved.visible_to_employers ? "Employers can find you" : "Hidden from employers",
+      description: `available from ${dateText}`,
     });
   };
 
@@ -468,9 +471,25 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={availabilityDate} onSelect={setAvailabilityDate} initialFocus className={cn("p-3 pointer-events-auto")} />
+                  <Calendar mode="single" selected={availabilityDate} onSelect={setAvailabilityDate} initialFocus disabled={(d) => d < startOfToday()} className={cn("p-3 pointer-events-auto")} />
                 </PopoverContent>
               </Popover>
+              <div className="flex flex-wrap gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setAvailabilityDate(startOfToday())}
+                  className="px-2.5 py-1 rounded-full text-xs font-semibold border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/10 transition-colors"
+                >
+                  Available now
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAvailabilityDate(undefined)}
+                  className="px-2.5 py-1 rounded-full text-xs font-semibold border border-muted-foreground/30 text-muted-foreground hover:bg-muted/30 transition-colors"
+                >
+                  Not sure yet
+                </button>
+              </div>
             </div>
 
             <div className="space-y-1.5">
