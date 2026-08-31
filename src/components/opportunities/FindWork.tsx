@@ -193,16 +193,17 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
   };
 
   const refreshAvailability = async () => {
+    if (!crewId) return;
     const { data, error } = await supabase
       .from("crew_availability")
       .select("*")
-      .eq("crew_profile_id", profileId)
+      .eq("crew_profile_id", crewId)
       .maybeSingle();
     if (!error && data) applyRow(data);
   };
 
   useEffect(() => {
-    if (!profileId) return;
+    if (!crewId) return;
     refreshAvailability();
     const onFocus = () => { if (document.visibilityState === "visible") refreshAvailability(); };
     window.addEventListener("focus", onFocus);
@@ -212,7 +213,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
       document.removeEventListener("visibilitychange", onFocus);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profileId]);
+  }, [crewId]);
 
   const saveAvailability = async () => {
     setSaving(true);
