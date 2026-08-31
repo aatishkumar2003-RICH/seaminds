@@ -378,6 +378,41 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
         />
       </div>
 
+      {myApps.length > 0 && (
+        <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">📋 My Applications</h3>
+          <div className="space-y-2">
+            {myApps.map((a) => {
+              const chip = STATUS_CHIP[a.outcome] || { label: a.outcome, cls: "bg-muted text-muted-foreground" };
+              const canWithdraw = a.outcome === "awaiting" || a.outcome === "shortlisted";
+              return (
+                <div key={a.id} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background p-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-foreground">
+                      {a.rank_applied || a.vacancy_label || "Position"}
+                      {a.company_name ? <span className="text-muted-foreground"> · {a.company_name}</span> : null}
+                    </p>
+                    <p className="truncate text-[11px] text-muted-foreground">
+                      {a.vessel_type ? `${a.vessel_type} · ` : ""}
+                      applied {a.applied_at ? formatDistanceToNow(new Date(a.applied_at), { addSuffix: true }) : "recently"}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold", chip.cls)}>{chip.label}</span>
+                    {canWithdraw && (
+                      <Button size="sm" variant="ghost" className="h-7 px-2 text-[11px] text-muted-foreground"
+                        disabled={withdrawing === a.id} onClick={() => withdrawApplication(a.id)}>
+                        Withdraw
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
 
       {/* Recent Matches */}
       {(() => {
