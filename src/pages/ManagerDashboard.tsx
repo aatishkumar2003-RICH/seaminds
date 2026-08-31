@@ -136,6 +136,46 @@ const ManagerDashboard = () => {
   const [managerNotifs, setManagerNotifs] = useState<ManagerNotif[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [bellOpen, setBellOpen] = useState(false);
+
+  const loadNotifications = async () => {
+    if (!managerUserId) return;
+    const { data } = await supabase
+      .from("notifications")
+      .select("id, kind, title, link, read, created_at")
+      .eq("crew_id", managerUserId)
+      .order("created_at", { ascending: false })
+      .limit(20);
+    const rows = (data || []) as ManagerNotif[];
+    setManagerNotifs(rows);
+    setUnreadCount(rows.filter((n) => !n.read).length);
+    const unreadIds = rows.filter((n) => !n.read).map((n) => n.id);
+    if (unreadIds.length) {
+      await supabase.from("notifications").update({ read: true }).in("id", unreadIds);
+      setUnreadCount(0);
+      setManagerNotifs(rows.map((n) => ({ ...n, read: true })));
+    }
+  };
+
+  const loadUnreadCount = async () => {
+    if (!managerUserId) return;
+    const { count } = await supabase
+      .from("notifications")
+      .select("id", { count: "exact", head: true })
+      .eq("crew_id", managerUserId)
+      .eq("read", false);
+    setUnreadCount(count || 0);
+  };
+
+  useEffect(() => {
+    if (managerUserId) loadUnreadCount();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [managerUserId]);
+
+  const openNotification = (n: ManagerNotif) => {
+    setBellOpen(false);
+    if (n.kind && /offer|accept|declin|application/i.test(`${n.kind} ${n.title}`)) setDashTab("applicants");
+  };
+
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [applicantsLoading, setApplicantsLoading] = useState(false);
   const [myPostings, setMyPostings] = useState<MyPosting[]>([]);
