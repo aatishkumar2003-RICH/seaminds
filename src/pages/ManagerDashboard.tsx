@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import MyPostsPanel from "@/components/manager/MyPostsPanel";
 import { useNavigate } from "react-router-dom";
-import { Anchor, ArrowUpDown, LogOut, FileWarning, CreditCard, RefreshCw } from "lucide-react";
+import { Anchor, ArrowUpDown, Bell, LogOut, FileWarning, CreditCard, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import ManagerPaymentHistory from "@/components/smc/ManagerPaymentHistory";
