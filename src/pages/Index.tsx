@@ -203,7 +203,7 @@ const Index = () => {
       chat: "SeaMinds | Wellness", dashboard: "SeaMinds | Wellness",
       opportunities: "SeaMinds | Opportunities", news: "SeaMinds | News",
       academy: "SeaMinds | Academy", bridge: "SeaMinds | PMS",
-      community: "SeaMinds | Community", smc: "SeaMinds | SMC Score",
+      community: "SeaMinds | Community", smc: "SeaMinds | SeaMinds Score",
       resume: "SeaMinds | CV Builder", certs: "SeaMinds | Certificates",
       resthours: "SeaMinds | Rest Hours", vesselrating: "SeaMinds | Vessel Rating",
     };
@@ -566,7 +566,7 @@ const Index = () => {
 
   const vesselOnboardingUI = (
     <Suspense fallback={null}>
-      <VesselOnboardingCard profileId={profileId} existingShipName={shipName} existingRole={role} onBack={() => setScreen("news")} onComplete={handleVesselOnboardingComplete} />
+      <VesselOnboardingCard profileId={profileId} existingShipName={shipName} existingRole={role} onBack={() => setScreen("home")} onComplete={handleVesselOnboardingComplete} />
     </Suspense>
   );
 
@@ -738,7 +738,7 @@ const Index = () => {
           </div>
 
           <div className="relative z-10 flex min-h-0 flex-1 flex-col">
-            <MobileChrome {...mobileChromeProps} showBackToNews headerRight={<NotificationBell profileId={profileId} onNavigate={(s) => setScreen(s as any)} />} />
+            <MobileChrome {...mobileChromeProps} headerRight={<NotificationBell profileId={profileId} onNavigate={(s) => setScreen(s as any)} />} />
             <div className="lg:hidden">
               <VoyageModeBar status={voyageStatus} />
             </div>
@@ -780,7 +780,7 @@ const Index = () => {
                 <button onClick={() => setScreen("smc")} style={cardStyle} className="flex-1 py-3" data-tour="smc">
                   <div className="text-lg">🏆</div>
                   <div className="text-sm font-bold text-foreground">{smcScore !== null ? smcScore : "Get"}</div>
-                  <div className="text-[9px] text-muted-foreground">SMC</div>
+                  <div className="text-[9px] text-muted-foreground">SeaMinds Score</div>
                 </button>
               </div>
 
@@ -795,9 +795,6 @@ const Index = () => {
             <div className="hidden items-center justify-start gap-3 py-1 pl-4 pr-16 lg:flex lg:pl-8">
               <button onClick={() => setShowSignOffConfirm(true)} className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground">
                 <Anchor size={14} /> Sign Off
-              </button>
-              <button onClick={handleSignOut} className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground">
-                <LogOut size={14} /> Sign Out
               </button>
               <button onClick={() => { setShowFeedback(true); setFeedbackDone(false); setFeedbackText(""); setFeedbackSummary(""); setFeedbackRating(0); }}
                 className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground">
@@ -875,7 +872,7 @@ const Index = () => {
               ) : screen === "certs" ? (
                 <ScreenErrorBoundary screenName="Certificates"><CertWallet profileId={profileId} /></ScreenErrorBoundary>
               ) : screen === "smc" ? (
-                <ScreenErrorBoundary screenName="SMC Score"><SMCScoreTab profileId={profileId} firstName={firstName} lastName={lastName} rank={role} shipName={shipName} /></ScreenErrorBoundary>
+                <ScreenErrorBoundary screenName="SeaMinds Score"><SMCScoreTab profileId={profileId} firstName={firstName} lastName={lastName} rank={role} shipName={shipName} /></ScreenErrorBoundary>
               ) : null}
               </Suspense>
             </div>
