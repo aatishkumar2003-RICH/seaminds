@@ -507,25 +507,23 @@ const ConversionConsole = () => {
       <div className="border-b" style={{ borderColor: "rgba(212,175,55,0.15)" }}>
         <div className="max-w-6xl mx-auto grid grid-cols-5" style={{ height: 58 }}>
           {dock.map((d) => (
-            <button
+            <Link
               key={d.key}
-              type="button"
-              onClick={() => navigate(d.to)}
-              className="flex flex-col items-center justify-center gap-0.5 border-r last:border-r-0"
+              to={d.to}
+              className="flex flex-col items-center justify-center gap-0.5 border-r last:border-r-0 no-underline"
               style={{ borderColor: "rgba(255,255,255,0.06)" }}
             >
               <span className="font-mono text-sm font-bold" style={{ color: GOLD }}>{d.value}</span>
               <span className="text-[9px] tracking-wider text-muted-foreground">{d.label}</span>
-            </button>
+            </Link>
           ))}
         </div>
       </div>
 
       {/* 3. LIVE PROOF BAR */}
-      <button
-        type="button"
-        onClick={() => navigate(jobsTo)}
-        className="w-full border-b text-left"
+      <Link
+        to={jobsTo}
+        className="block w-full border-b text-left no-underline"
         style={{ borderColor: "rgba(212,175,55,0.15)", background: "rgba(6,15,29,0.9)" }}
       >
         <div className="max-w-6xl mx-auto px-4 py-2.5 flex flex-wrap items-center gap-x-3 gap-y-1" style={{ minHeight: 60 }}>
@@ -546,7 +544,8 @@ const ConversionConsole = () => {
               : ""}
           </span>
         </div>
-      </button>
+      </Link>
+
 
       {/* Sector tape (real indices) */}
       {sectorTape.length > 0 && (
