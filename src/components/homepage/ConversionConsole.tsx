@@ -672,15 +672,15 @@ const ConversionConsole = () => {
             )}
           </div>
           {suggestion && (
-            <button
-              type="button"
-              onClick={() => navigate(suggestion.to)}
-              className="mt-2 rounded-full px-3 py-1.5 text-[11px] font-semibold"
+            <Link
+              to={suggestion.to}
+              className="mt-2 inline-block rounded-full px-3 py-1.5 text-[11px] font-semibold no-underline"
               style={{ border: `1px solid ${BORDER}`, background: "rgba(212,175,55,0.08)", color: GOLD }}
             >
               {suggestion.label}
-            </button>
+            </Link>
           )}
+
         </div>
       </div>
 
