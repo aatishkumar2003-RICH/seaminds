@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Globe, ChevronDown, X, Menu, Search } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -405,10 +405,11 @@ const ConversionConsole = () => {
 
           <div className="flex items-center gap-2">
             <div className="hidden md:flex items-center gap-2 mr-1 text-[11px] font-semibold">
-              <button type="button" onClick={() => navigate("/for-companies")} className="text-muted-foreground hover:text-foreground">Find Crew</button>
+              <Link to="/for-companies" className="text-muted-foreground hover:text-foreground no-underline">Find Crew</Link>
               <span className="text-muted-foreground/40">·</span>
-              <button type="button" onClick={() => navigate("/manager")} className="text-muted-foreground hover:text-foreground">Manager Login</button>
+              <Link to="/manager" className="text-muted-foreground hover:text-foreground no-underline">Manager Login</Link>
             </div>
+
 
             <div className="relative">
               <button
@@ -483,21 +484,23 @@ const ConversionConsole = () => {
             <ul className="space-y-1">
               {MENU_LINKS.map((l) => (
                 <li key={l.label}>
-                  <a
-                    href={l.to}
-                    onClick={(e) => {
-                      if (l.external) return;
-                      e.preventDefault();
-                      setMenuOpen(false);
-                      navigate(l.to);
-                    }}
-                    className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-white/5"
-                  >
-                    {l.label}
-                  </a>
+                  {l.external ? (
+                    <a href={l.to} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-white/5 no-underline">
+                      {l.label}
+                    </a>
+                  ) : (
+                    <Link
+                      to={l.to}
+                      onClick={() => setMenuOpen(false)}
+                      className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-white/5 no-underline"
+                    >
+                      {l.label}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>
+
           </nav>
         </div>
       )}
@@ -507,25 +510,23 @@ const ConversionConsole = () => {
       <div className="border-b" style={{ borderColor: "rgba(212,175,55,0.15)" }}>
         <div className="max-w-6xl mx-auto grid grid-cols-5" style={{ height: 58 }}>
           {dock.map((d) => (
-            <button
+            <Link
               key={d.key}
-              type="button"
-              onClick={() => navigate(d.to)}
-              className="flex flex-col items-center justify-center gap-0.5 border-r last:border-r-0"
+              to={d.to}
+              className="flex flex-col items-center justify-center gap-0.5 border-r last:border-r-0 no-underline"
               style={{ borderColor: "rgba(255,255,255,0.06)" }}
             >
               <span className="font-mono text-sm font-bold" style={{ color: GOLD }}>{d.value}</span>
               <span className="text-[9px] tracking-wider text-muted-foreground">{d.label}</span>
-            </button>
+            </Link>
           ))}
         </div>
       </div>
 
       {/* 3. LIVE PROOF BAR */}
-      <button
-        type="button"
-        onClick={() => navigate(jobsTo)}
-        className="w-full border-b text-left"
+      <Link
+        to={jobsTo}
+        className="block w-full border-b text-left no-underline"
         style={{ borderColor: "rgba(212,175,55,0.15)", background: "rgba(6,15,29,0.9)" }}
       >
         <div className="max-w-6xl mx-auto px-4 py-2.5 flex flex-wrap items-center gap-x-3 gap-y-1" style={{ minHeight: 60 }}>
@@ -546,7 +547,8 @@ const ConversionConsole = () => {
               : ""}
           </span>
         </div>
-      </button>
+      </Link>
+
 
       {/* Sector tape (real indices) */}
       {sectorTape.length > 0 && (
@@ -561,8 +563,8 @@ const ConversionConsole = () => {
         </div>
       )}
 
-      {/* 4. CONVERSION HERO */}
-      <div className="max-w-3xl mx-auto px-4 pt-6 pb-4 text-center relative">
+      {/* 4. SPLIT HERO — crew + companies */}
+      <div className="max-w-6xl mx-auto px-4 pt-6 pb-4 relative">
         <div
           aria-hidden
           className="sm-aurora pointer-events-none absolute left-1/2 -translate-x-1/2"
@@ -572,49 +574,89 @@ const ConversionConsole = () => {
             filter: "blur(8px)",
           }}
         />
-        <h1 className="relative text-[10px] sm:text-[11px] uppercase tracking-[0.18em] text-muted-foreground mb-2">
+        <h1 className="relative text-center text-[10px] sm:text-[11px] uppercase tracking-[0.18em] text-muted-foreground mb-4">
           Seafarer Jobs &amp; Maritime Vacancies — Crew Recruitment &amp; AI Competency Platform
         </h1>
-        <p className="relative text-[11px] tracking-widest text-muted-foreground mb-2">{t("heroKicker")}</p>
-        <h2 className="sm-hero-gradient sm-shimmer relative text-2xl sm:text-3xl md:text-4xl font-bold leading-tight mb-3">
-          {t("heroTitle")}
-        </h2>
 
-
-        <div className="inline-flex items-center rounded-xl overflow-hidden mb-1" style={{ border: `1px solid ${BORDER}` }}>
-          {[t("stepProfile"), t("stepMatch"), t("stepApply"), t("stepInterview")].map((s, i) => (
-            <span
-              key={s}
-              className="px-2.5 py-1.5 text-[10px] font-bold tracking-wide"
-              style={{ color: "#E2E8F0", borderLeft: i ? "1px solid rgba(212,175,55,0.25)" : undefined }}
-            >
-              {s}
-            </span>
-          ))}
-        </div>
-        <p className="text-[10px] mb-4" style={{ color: GOLD }}>{t("recruitersFindYou")}</p>
-
-        <button
-          type="button"
-          onClick={() => navigate("/profile-start")}
-          className="sm-cta-pulse w-full sm:w-auto rounded-xl px-7 h-12 font-bold"
-          style={{ background: GOLD, color: NAVY }}
-        >
-          {t("heroCta")}
-        </button>
-        <div className="mt-3 flex flex-col items-center gap-2">
-          <button type="button" onClick={() => navigate("/app?tab=jobs")} className="text-xs font-semibold" style={{ color: GOLD }}>
-            {t("alreadyRegistered")}
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate("/for-companies")}
-            className="rounded-lg px-3 py-1.5 text-[11px] font-semibold"
-            style={{ border: `1px solid ${BORDER}`, color: GOLD }}
+        <div className="relative grid gap-4 md:grid-cols-2 md:items-stretch">
+          {/* LEFT — seafarers */}
+          <div
+            className="rounded-2xl p-4 sm:p-5 flex flex-col"
+            style={{ background: `${PANEL}CC`, border: `1px solid ${BORDER}` }}
           >
-            Companies: FIND CREW →
-          </button>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] mb-2" style={{ color: GOLD }}>
+              For Seafarers
+            </p>
+            <h2 className="text-xl sm:text-2xl md:text-[28px] font-bold leading-tight text-foreground mb-3">
+              Find your next ship. Build one Sea Profile. Get matched.
+            </h2>
+
+            <div className="inline-flex w-fit items-center rounded-xl overflow-hidden mb-2" style={{ border: `1px solid ${BORDER}` }}>
+              {["PROFILE", "MATCH", "APPLY", "INTERVIEW"].map((s, i) => (
+                <span
+                  key={s}
+                  className="px-2 sm:px-2.5 py-1.5 text-[9px] sm:text-[10px] font-bold tracking-wide"
+                  style={{ color: "#E2E8F0", borderLeft: i ? "1px solid rgba(212,175,55,0.25)" : undefined }}
+                >
+                  {s}
+                </span>
+              ))}
+            </div>
+            <p className="text-[10px] mb-4" style={{ color: GOLD }}>{t("recruitersFindYou")}</p>
+
+            <div className="mt-auto flex flex-col items-start gap-2">
+              <Link
+                to="/profile-start"
+                className="sm-cta-pulse w-full sm:w-auto rounded-xl px-7 h-12 font-bold no-underline inline-flex items-center justify-center"
+                style={{ background: GOLD, color: NAVY }}
+              >
+                Create my free Sea Profile
+              </Link>
+              <Link to="/feed" className="text-xs font-semibold no-underline" style={{ color: GOLD }}>
+                Browse maritime jobs →
+              </Link>
+            </div>
+          </div>
+
+          {/* RIGHT — shipping & manning companies */}
+          <div
+            className="rounded-2xl p-4 sm:p-5 flex flex-col"
+            style={{ background: `${PANEL}CC`, border: `1px solid ${BORDER}` }}
+          >
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] mb-2" style={{ color: GOLD }}>
+              For Shipping &amp; Manning Companies
+            </p>
+            <h2 className="text-xl sm:text-2xl md:text-[28px] font-bold leading-tight text-foreground mb-3">
+              Find your next crew. Post once. Hire with evidence.
+            </h2>
+            <ul className="space-y-1.5 text-[11px] leading-snug text-muted-foreground mb-4">
+              <li>✓ Upload the flier your crewing team already uses — SeaMinds turns it into searchable vacancies</li>
+              <li>✓ Receive applications with verified Sea Profiles</li>
+              <li>✓ Run AI competency interviews and shortlist on evidence</li>
+            </ul>
+            <div className="mt-auto flex flex-wrap items-center gap-2">
+              <Link
+                to="/for-companies"
+                className="rounded-xl px-6 h-12 font-bold no-underline inline-flex items-center justify-center"
+                style={{ background: GOLD, color: NAVY }}
+              >
+                Search &amp; Hire Seafarers
+              </Link>
+              <Link
+                to="/manager"
+                className="rounded-xl px-5 h-12 font-semibold text-sm no-underline inline-flex items-center justify-center"
+                style={{ border: `1px solid ${GOLD}`, color: GOLD }}
+              >
+                Manager Login
+              </Link>
+            </div>
+          </div>
         </div>
+
+        <p className="relative mt-3 text-center text-[11px] font-semibold text-muted-foreground">
+          Free for crew · No agent fees · Companies join free during the founding period
+        </p>
+
 
         {/* Universal search */}
         <div className="mt-4">
@@ -632,15 +674,15 @@ const ConversionConsole = () => {
             )}
           </div>
           {suggestion && (
-            <button
-              type="button"
-              onClick={() => navigate(suggestion.to)}
-              className="mt-2 rounded-full px-3 py-1.5 text-[11px] font-semibold"
+            <Link
+              to={suggestion.to}
+              className="mt-2 inline-block rounded-full px-3 py-1.5 text-[11px] font-semibold no-underline"
               style={{ border: `1px solid ${BORDER}`, background: "rgba(212,175,55,0.08)", color: GOLD }}
             >
               {suggestion.label}
-            </button>
+            </Link>
           )}
+
         </div>
       </div>
 
@@ -651,16 +693,16 @@ const ConversionConsole = () => {
         </p>
         <div className="flex flex-wrap gap-2">
           {topRanks.map((r) => (
-            <button
+            <Link
               key={r.rank}
-              type="button"
-              onClick={() => navigate(`/profile-start?rank=${encodeURIComponent(r.rank)}`)}
-              className="rounded-full px-3 py-1.5 text-[11px] font-semibold"
+              to={`/profile-start?rank=${encodeURIComponent(r.rank)}`}
+              className="rounded-full px-3 py-1.5 text-[11px] font-semibold no-underline"
               style={{ border: `1px solid ${BORDER}`, background: "rgba(212,175,55,0.08)", color: GOLD }}
             >
               {r.rank} <span className="font-mono">{r.count}</span>
-            </button>
+            </Link>
           ))}
+
           {MARKETS.map((m) => (
             <button
               key={m}
@@ -736,14 +778,13 @@ const ConversionConsole = () => {
           {filtered.length === 0 && (
             <p className="text-xs text-muted-foreground py-6 text-center">{t("loadingVacancies")}</p>
           )}
-          <button
-            type="button"
-            onClick={() => navigate(jobsTo)}
-            className="w-full py-2.5 text-[11px] font-bold"
+          <Link
+            to={jobsTo}
+            className="block w-full py-2.5 text-center text-[11px] font-bold no-underline"
             style={{ color: GOLD }}
           >
             {t("allJobs")} {market?.total ?? 0} →
-          </button>
+          </Link>
         </div>
 
         {/* MANAGER BAND */}
@@ -756,17 +797,18 @@ const ConversionConsole = () => {
             Post vacancies free during the founding period · Search Sea Profiles · AI competency interviews scored 0.00–5.00 · Shortlist on evidence.
           </p>
           <div className="mt-1.5 flex items-center gap-2">
-            <button type="button" onClick={() => navigate("/for-companies")} className="rounded-lg px-3 py-1.5 text-[11px] font-bold" style={{ background: GOLD, color: NAVY }}>
+            <Link to="/for-companies" className="rounded-lg px-3 py-1.5 text-[11px] font-bold no-underline" style={{ background: GOLD, color: NAVY }}>
               FIND CREW →
-            </button>
-            <button type="button" onClick={() => navigate("/manager")} className="rounded-lg px-3 py-1.5 text-[11px] font-semibold" style={{ border: `1px solid ${BORDER}`, color: GOLD }}>
+            </Link>
+            <Link to="/manager" className="rounded-lg px-3 py-1.5 text-[11px] font-semibold no-underline" style={{ border: `1px solid ${BORDER}`, color: GOLD }}>
               MANAGER LOGIN
-            </button>
-            <a href="/post-vacancy" onClick={(e) => { e.preventDefault(); navigate("/post-vacancy"); }} className="text-[10px] font-semibold text-muted-foreground hover:text-foreground">
+            </Link>
+            <Link to="/post-vacancy" className="text-[10px] font-semibold text-muted-foreground hover:text-foreground no-underline">
               Post a vacancy →
-            </a>
+            </Link>
           </div>
         </div>
+
 
         <p className="mt-4 text-[11px] leading-relaxed text-muted-foreground">
           SeaMinds connects seafarers with live maritime jobs worldwide and gives shipping and manning companies structured Sea Profiles, AI competency interviews and crew-matching tools. Crew can explore deck, engine, ETO, tanker, LNG, bulk, container, offshore and catering vacancies, create a reusable professional profile and apply directly.

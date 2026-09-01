@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
+
 import ConversionConsole from "@/components/homepage/ConversionConsole";
 import OceanBackground from "@/components/homepage/OceanBackground";
 import TestimonialsSection from "@/components/homepage/TestimonialsSection";
@@ -18,7 +19,7 @@ const HomePage = () => {
   const { user, isReady: authReady } = useAuth();
   const [timedOut, setTimedOut] = useState(false);
 
-  useEffect(() => { document.title = "Seafarer Jobs, Crew Wellness & Maritime Talent | SeaMinds"; }, []);
+  useEffect(() => { document.title = "Seafarer Jobs & Maritime Vacancies Worldwide | SeaMinds"; }, []);
 
   // Capture referral code from share links (seaminds.life/?ref=CODE)
   useEffect(() => {
@@ -75,7 +76,7 @@ const HomePage = () => {
     url: "https://seaminds.life",
     potentialAction: {
       "@type": "SearchAction",
-      target: "https://seaminds.life/app?q={search_term_string}",
+      target: "https://seaminds.life/feed?q={search_term_string}",
       "query-input": "required name=search_term_string",
     },
   };
@@ -114,18 +115,18 @@ const HomePage = () => {
   return (
     <div className="min-h-screen animated-gradient-bg text-foreground relative">
       <Helmet>
-        <title>Seafarer Jobs, Crew Wellness & Maritime Talent | SeaMinds</title>
-        <meta name="description" content="SeaMinds is the digital platform for seafarers and manning companies — maritime jobs and vacancies, AI crew wellness support, MLC 2006 rest hours tracking, certificate wallet, seafarer CV builder and the SMC competency score. Free for seafarers worldwide." />
+        <title>Seafarer Jobs & Maritime Vacancies Worldwide | SeaMinds</title>
+        <meta name="description" content="Find live seafarer jobs, build one reusable Sea Profile, manage STCW certificates and get matched with maritime employers. Free for crew. Companies: post vacancies and hire with evidence." />
         <meta name="keywords" content="seafarer jobs, maritime jobs, ship jobs, marine jobs, seaman jobs, crew recruitment, manning agency, hire seafarers, crew database, seafarer CV, MLC 2006 rest hours, seafarer wellness, mental health at sea, deck cadet jobs, engine cadet jobs, ETO jobs, chief officer vacancy, able seaman vacancy, crewing manager, maritime recruitment platform, seafarer competency score" />
         <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
-        <link rel="canonical" href="https://seaminds.life" />
-        <meta property="og:title" content="Seafarer Jobs, Crew Wellness & Maritime Talent | SeaMinds" />
-        <meta property="og:description" content="Maritime jobs, AI wellness support, MLC rest hours, certificate wallet and AI-assessed competency scoring — built for seafarers and the companies who hire them." />
+        <link rel="canonical" href="https://seaminds.life/" />
+        <meta property="og:title" content="Seafarer Jobs & Maritime Vacancies Worldwide | SeaMinds" />
+        <meta property="og:description" content="Find live seafarer jobs, build one reusable Sea Profile, manage STCW certificates and get matched with maritime employers. Free for crew. Companies: post vacancies and hire with evidence." />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://seaminds.life" />
+        <meta property="og:url" content="https://seaminds.life/" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Seafarer Jobs, Crew Wellness & Maritime Talent | SeaMinds" />
-        <meta name="twitter:description" content="Maritime jobs, AI wellness support, MLC rest hours, certificate wallet and AI-assessed competency scoring — built for seafarers and the companies who hire them." />
+        <meta name="twitter:title" content="Seafarer Jobs & Maritime Vacancies Worldwide | SeaMinds" />
+        <meta name="twitter:description" content="Find live seafarer jobs, build one reusable Sea Profile, manage STCW certificates and get matched with maritime employers. Free for crew. Companies: post vacancies and hire with evidence." />
         <script type="application/ld+json">{JSON.stringify(organizationLd)}</script>
         <script type="application/ld+json">{JSON.stringify(faqLd)}</script>
         <script type="application/ld+json">{JSON.stringify(websiteLd)}</script>
@@ -139,14 +140,15 @@ const HomePage = () => {
 
         {/* Legacy sections collapsed to one link row */}
         <nav aria-label="More" className="max-w-6xl mx-auto px-4 py-4 flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs font-semibold border-y" style={{ borderColor: "rgba(212,175,55,0.15)" }}>
-          <button type="button" onClick={() => navigate("/for-companies")} className="text-muted-foreground hover:text-foreground">For Companies</button>
+          <Link to="/for-companies" className="text-muted-foreground hover:text-foreground no-underline">For Companies</Link>
           <span className="text-muted-foreground/40">·</span>
-          <button type="button" onClick={() => navigate("/smc-score")} className="text-muted-foreground hover:text-foreground">How SMC works</button>
+          <Link to="/smc-score" className="text-muted-foreground hover:text-foreground no-underline">How SMC works</Link>
           <span className="text-muted-foreground/40">·</span>
-          <button type="button" onClick={() => navigate("/privacy")} className="text-muted-foreground hover:text-foreground">Privacy</button>
+          <Link to="/privacy" className="text-muted-foreground hover:text-foreground no-underline">Privacy</Link>
           <span className="text-muted-foreground/40">·</span>
-          <button type="button" onClick={() => navigate("/contact")} className="text-muted-foreground hover:text-foreground">About</button>
+          <Link to="/contact" className="text-muted-foreground hover:text-foreground no-underline">About</Link>
         </nav>
+
 
         <TestimonialsSection />
         <HomeFooter />
