@@ -483,21 +483,23 @@ const ConversionConsole = () => {
             <ul className="space-y-1">
               {MENU_LINKS.map((l) => (
                 <li key={l.label}>
-                  <a
-                    href={l.to}
-                    onClick={(e) => {
-                      if (l.external) return;
-                      e.preventDefault();
-                      setMenuOpen(false);
-                      navigate(l.to);
-                    }}
-                    className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-white/5"
-                  >
-                    {l.label}
-                  </a>
+                  {l.external ? (
+                    <a href={l.to} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-white/5 no-underline">
+                      {l.label}
+                    </a>
+                  ) : (
+                    <Link
+                      to={l.to}
+                      onClick={() => setMenuOpen(false)}
+                      className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-white/5 no-underline"
+                    >
+                      {l.label}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>
+
           </nav>
         </div>
       )}
