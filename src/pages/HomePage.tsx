@@ -139,14 +139,15 @@ const HomePage = () => {
 
         {/* Legacy sections collapsed to one link row */}
         <nav aria-label="More" className="max-w-6xl mx-auto px-4 py-4 flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs font-semibold border-y" style={{ borderColor: "rgba(212,175,55,0.15)" }}>
-          <button type="button" onClick={() => navigate("/for-companies")} className="text-muted-foreground hover:text-foreground">For Companies</button>
+          <Link to="/for-companies" className="text-muted-foreground hover:text-foreground no-underline">For Companies</Link>
           <span className="text-muted-foreground/40">·</span>
-          <button type="button" onClick={() => navigate("/smc-score")} className="text-muted-foreground hover:text-foreground">How SMC works</button>
+          <Link to="/smc-score" className="text-muted-foreground hover:text-foreground no-underline">How SMC works</Link>
           <span className="text-muted-foreground/40">·</span>
-          <button type="button" onClick={() => navigate("/privacy")} className="text-muted-foreground hover:text-foreground">Privacy</button>
+          <Link to="/privacy" className="text-muted-foreground hover:text-foreground no-underline">Privacy</Link>
           <span className="text-muted-foreground/40">·</span>
-          <button type="button" onClick={() => navigate("/contact")} className="text-muted-foreground hover:text-foreground">About</button>
+          <Link to="/contact" className="text-muted-foreground hover:text-foreground no-underline">About</Link>
         </nav>
+
 
         <TestimonialsSection />
         <HomeFooter />
