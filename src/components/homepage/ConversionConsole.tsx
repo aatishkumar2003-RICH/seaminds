@@ -405,10 +405,11 @@ const ConversionConsole = () => {
 
           <div className="flex items-center gap-2">
             <div className="hidden md:flex items-center gap-2 mr-1 text-[11px] font-semibold">
-              <button type="button" onClick={() => navigate("/for-companies")} className="text-muted-foreground hover:text-foreground">Find Crew</button>
+              <Link to="/for-companies" className="text-muted-foreground hover:text-foreground no-underline">Find Crew</Link>
               <span className="text-muted-foreground/40">·</span>
-              <button type="button" onClick={() => navigate("/manager")} className="text-muted-foreground hover:text-foreground">Manager Login</button>
+              <Link to="/manager" className="text-muted-foreground hover:text-foreground no-underline">Manager Login</Link>
             </div>
+
 
             <div className="relative">
               <button
