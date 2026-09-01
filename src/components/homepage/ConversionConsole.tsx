@@ -561,8 +561,8 @@ const ConversionConsole = () => {
         </div>
       )}
 
-      {/* 4. CONVERSION HERO */}
-      <div className="max-w-3xl mx-auto px-4 pt-6 pb-4 text-center relative">
+      {/* 4. SPLIT HERO — crew + companies */}
+      <div className="max-w-6xl mx-auto px-4 pt-6 pb-4 relative">
         <div
           aria-hidden
           className="sm-aurora pointer-events-none absolute left-1/2 -translate-x-1/2"
@@ -572,49 +572,89 @@ const ConversionConsole = () => {
             filter: "blur(8px)",
           }}
         />
-        <h1 className="relative text-[10px] sm:text-[11px] uppercase tracking-[0.18em] text-muted-foreground mb-2">
+        <h1 className="relative text-center text-[10px] sm:text-[11px] uppercase tracking-[0.18em] text-muted-foreground mb-4">
           Seafarer Jobs &amp; Maritime Vacancies — Crew Recruitment &amp; AI Competency Platform
         </h1>
-        <p className="relative text-[11px] tracking-widest text-muted-foreground mb-2">{t("heroKicker")}</p>
-        <h2 className="sm-hero-gradient sm-shimmer relative text-2xl sm:text-3xl md:text-4xl font-bold leading-tight mb-3">
-          {t("heroTitle")}
-        </h2>
 
-
-        <div className="inline-flex items-center rounded-xl overflow-hidden mb-1" style={{ border: `1px solid ${BORDER}` }}>
-          {[t("stepProfile"), t("stepMatch"), t("stepApply"), t("stepInterview")].map((s, i) => (
-            <span
-              key={s}
-              className="px-2.5 py-1.5 text-[10px] font-bold tracking-wide"
-              style={{ color: "#E2E8F0", borderLeft: i ? "1px solid rgba(212,175,55,0.25)" : undefined }}
-            >
-              {s}
-            </span>
-          ))}
-        </div>
-        <p className="text-[10px] mb-4" style={{ color: GOLD }}>{t("recruitersFindYou")}</p>
-
-        <button
-          type="button"
-          onClick={() => navigate("/profile-start")}
-          className="sm-cta-pulse w-full sm:w-auto rounded-xl px-7 h-12 font-bold"
-          style={{ background: GOLD, color: NAVY }}
-        >
-          {t("heroCta")}
-        </button>
-        <div className="mt-3 flex flex-col items-center gap-2">
-          <button type="button" onClick={() => navigate("/app?tab=jobs")} className="text-xs font-semibold" style={{ color: GOLD }}>
-            {t("alreadyRegistered")}
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate("/for-companies")}
-            className="rounded-lg px-3 py-1.5 text-[11px] font-semibold"
-            style={{ border: `1px solid ${BORDER}`, color: GOLD }}
+        <div className="relative grid gap-4 md:grid-cols-2 md:items-stretch">
+          {/* LEFT — seafarers */}
+          <div
+            className="rounded-2xl p-4 sm:p-5 flex flex-col"
+            style={{ background: `${PANEL}CC`, border: `1px solid ${BORDER}` }}
           >
-            Companies: FIND CREW →
-          </button>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] mb-2" style={{ color: GOLD }}>
+              For Seafarers
+            </p>
+            <h2 className="text-xl sm:text-2xl md:text-[28px] font-bold leading-tight text-foreground mb-3">
+              Find your next ship. Build one Sea Profile. Get matched.
+            </h2>
+
+            <div className="inline-flex w-fit items-center rounded-xl overflow-hidden mb-2" style={{ border: `1px solid ${BORDER}` }}>
+              {["PROFILE", "MATCH", "APPLY", "INTERVIEW"].map((s, i) => (
+                <span
+                  key={s}
+                  className="px-2 sm:px-2.5 py-1.5 text-[9px] sm:text-[10px] font-bold tracking-wide"
+                  style={{ color: "#E2E8F0", borderLeft: i ? "1px solid rgba(212,175,55,0.25)" : undefined }}
+                >
+                  {s}
+                </span>
+              ))}
+            </div>
+            <p className="text-[10px] mb-4" style={{ color: GOLD }}>{t("recruitersFindYou")}</p>
+
+            <div className="mt-auto flex flex-col items-start gap-2">
+              <Link
+                to="/profile-start"
+                className="sm-cta-pulse w-full sm:w-auto rounded-xl px-7 h-12 font-bold no-underline inline-flex items-center justify-center"
+                style={{ background: GOLD, color: NAVY }}
+              >
+                Create my free Sea Profile
+              </Link>
+              <Link to="/feed" className="text-xs font-semibold no-underline" style={{ color: GOLD }}>
+                Browse maritime jobs →
+              </Link>
+            </div>
+          </div>
+
+          {/* RIGHT — shipping & manning companies */}
+          <div
+            className="rounded-2xl p-4 sm:p-5 flex flex-col"
+            style={{ background: `${PANEL}CC`, border: `1px solid ${BORDER}` }}
+          >
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] mb-2" style={{ color: GOLD }}>
+              For Shipping &amp; Manning Companies
+            </p>
+            <h2 className="text-xl sm:text-2xl md:text-[28px] font-bold leading-tight text-foreground mb-3">
+              Find your next crew. Post once. Hire with evidence.
+            </h2>
+            <ul className="space-y-1.5 text-[11px] leading-snug text-muted-foreground mb-4">
+              <li>✓ Upload the flier your crewing team already uses — SeaMinds turns it into searchable vacancies</li>
+              <li>✓ Receive applications with verified Sea Profiles</li>
+              <li>✓ Run AI competency interviews and shortlist on evidence</li>
+            </ul>
+            <div className="mt-auto flex flex-wrap items-center gap-2">
+              <Link
+                to="/for-companies"
+                className="rounded-xl px-6 h-12 font-bold no-underline inline-flex items-center justify-center"
+                style={{ background: GOLD, color: NAVY }}
+              >
+                Search &amp; Hire Seafarers
+              </Link>
+              <Link
+                to="/manager"
+                className="rounded-xl px-5 h-12 font-semibold text-sm no-underline inline-flex items-center justify-center"
+                style={{ border: `1px solid ${GOLD}`, color: GOLD }}
+              >
+                Manager Login
+              </Link>
+            </div>
+          </div>
         </div>
+
+        <p className="relative mt-3 text-center text-[11px] font-semibold text-muted-foreground">
+          Free for crew · No agent fees · Companies join free during the founding period
+        </p>
+
 
         {/* Universal search */}
         <div className="mt-4">
