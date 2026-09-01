@@ -651,16 +651,16 @@ const ConversionConsole = () => {
         </p>
         <div className="flex flex-wrap gap-2">
           {topRanks.map((r) => (
-            <button
+            <Link
               key={r.rank}
-              type="button"
-              onClick={() => navigate(`/profile-start?rank=${encodeURIComponent(r.rank)}`)}
-              className="rounded-full px-3 py-1.5 text-[11px] font-semibold"
+              to={`/profile-start?rank=${encodeURIComponent(r.rank)}`}
+              className="rounded-full px-3 py-1.5 text-[11px] font-semibold no-underline"
               style={{ border: `1px solid ${BORDER}`, background: "rgba(212,175,55,0.08)", color: GOLD }}
             >
               {r.rank} <span className="font-mono">{r.count}</span>
-            </button>
+            </Link>
           ))}
+
           {MARKETS.map((m) => (
             <button
               key={m}
