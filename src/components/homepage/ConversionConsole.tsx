@@ -101,7 +101,7 @@ const MENU_LINKS: { label: string; to: string; external?: boolean }[] = [
   { label: "Post Vacancy", to: "/post-vacancy" },
   { label: "Create AI Interview", to: "/manager/interviews" },
   { label: "Manager Login", to: "/manager" },
-  { label: "SMC Score", to: "/app?tab=smc" },
+  { label: "SeaMinds Score", to: "/app?tab=smc" },
   { label: "Jobs", to: "/app?tab=jobs" },
   { label: "Blog", to: "/blog" },
   { label: "Pricing", to: "/pricing" },
@@ -251,7 +251,7 @@ const ConversionConsole = () => {
     const q = query.trim().toLowerCase();
     if (!q) return null;
     if (/cv|resume|profile/.test(q)) return { label: "Build my Sea Profile →", to: "/quick-profile" };
-    if (/interview|ai|smc|score/.test(q)) return { label: "AI Interview & SMC Score →", to: "/app?tab=smc" };
+    if (/interview|ai|smc|score/.test(q)) return { label: "AI Interview & SeaMinds Score →", to: "/app?tab=smc" };
     return null;
   }, [query]);
 
@@ -787,27 +787,6 @@ const ConversionConsole = () => {
           </Link>
         </div>
 
-        {/* MANAGER BAND */}
-        <div className="mt-4 rounded-2xl px-4 py-3" style={{ border: `1px solid ${GOLD}`, background: "rgba(212,175,55,0.06)", maxHeight: 110 }}>
-          <p className="text-[9px] font-bold uppercase tracking-[0.18em]" style={{ color: GOLD }}>
-            For shipping companies &amp; manning agents
-          </p>
-          <p className="text-sm font-bold text-foreground">Your next crew may already be on SeaMinds.</p>
-          <p className="text-[10px] text-muted-foreground leading-snug">
-            Post vacancies free during the founding period · Search Sea Profiles · AI competency interviews scored 0.00–5.00 · Shortlist on evidence.
-          </p>
-          <div className="mt-1.5 flex items-center gap-2">
-            <Link to="/for-companies" className="rounded-lg px-3 py-1.5 text-[11px] font-bold no-underline" style={{ background: GOLD, color: NAVY }}>
-              FIND CREW →
-            </Link>
-            <Link to="/manager" className="rounded-lg px-3 py-1.5 text-[11px] font-semibold no-underline" style={{ border: `1px solid ${BORDER}`, color: GOLD }}>
-              MANAGER LOGIN
-            </Link>
-            <Link to="/post-vacancy" className="text-[10px] font-semibold text-muted-foreground hover:text-foreground no-underline">
-              Post a vacancy →
-            </Link>
-          </div>
-        </div>
 
 
         <p className="mt-4 text-[11px] leading-relaxed text-muted-foreground">
