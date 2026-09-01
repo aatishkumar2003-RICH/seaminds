@@ -736,14 +736,13 @@ const ConversionConsole = () => {
           {filtered.length === 0 && (
             <p className="text-xs text-muted-foreground py-6 text-center">{t("loadingVacancies")}</p>
           )}
-          <button
-            type="button"
-            onClick={() => navigate(jobsTo)}
-            className="w-full py-2.5 text-[11px] font-bold"
+          <Link
+            to={jobsTo}
+            className="block w-full py-2.5 text-center text-[11px] font-bold no-underline"
             style={{ color: GOLD }}
           >
             {t("allJobs")} {market?.total ?? 0} →
-          </button>
+          </Link>
         </div>
 
         {/* MANAGER BAND */}
@@ -756,17 +755,18 @@ const ConversionConsole = () => {
             Post vacancies free during the founding period · Search Sea Profiles · AI competency interviews scored 0.00–5.00 · Shortlist on evidence.
           </p>
           <div className="mt-1.5 flex items-center gap-2">
-            <button type="button" onClick={() => navigate("/for-companies")} className="rounded-lg px-3 py-1.5 text-[11px] font-bold" style={{ background: GOLD, color: NAVY }}>
+            <Link to="/for-companies" className="rounded-lg px-3 py-1.5 text-[11px] font-bold no-underline" style={{ background: GOLD, color: NAVY }}>
               FIND CREW →
-            </button>
-            <button type="button" onClick={() => navigate("/manager")} className="rounded-lg px-3 py-1.5 text-[11px] font-semibold" style={{ border: `1px solid ${BORDER}`, color: GOLD }}>
+            </Link>
+            <Link to="/manager" className="rounded-lg px-3 py-1.5 text-[11px] font-semibold no-underline" style={{ border: `1px solid ${BORDER}`, color: GOLD }}>
               MANAGER LOGIN
-            </button>
-            <a href="/post-vacancy" onClick={(e) => { e.preventDefault(); navigate("/post-vacancy"); }} className="text-[10px] font-semibold text-muted-foreground hover:text-foreground">
+            </Link>
+            <Link to="/post-vacancy" className="text-[10px] font-semibold text-muted-foreground hover:text-foreground no-underline">
               Post a vacancy →
-            </a>
+            </Link>
           </div>
         </div>
+
 
         <p className="mt-4 text-[11px] leading-relaxed text-muted-foreground">
           SeaMinds connects seafarers with live maritime jobs worldwide and gives shipping and manning companies structured Sea Profiles, AI competency interviews and crew-matching tools. Crew can explore deck, engine, ETO, tanker, LNG, bulk, container, offshore and catering vacancies, create a reusable professional profile and apply directly.
