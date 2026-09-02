@@ -114,7 +114,7 @@ const Join = () => {
     <div style={{ minHeight: "100vh", background: NAVY }}>
       <Helmet>
         <title>Join SeaMinds — Free Crew Account for Seafarers</title>
-        <meta name="description" content="Create your free SeaMinds crew account: 2-minute Sea Profile, live maritime jobs and structured SMC competency assessment." />
+        <meta name="description" content="Create your free SeaMinds crew account: 2-minute Sea Profile, live maritime jobs and structured SeaMinds Score competency assessment." />
         <link rel="canonical" href="https://seaminds.life/join" />
       </Helmet>
 
@@ -136,7 +136,7 @@ const Join = () => {
           </div>
           <h1 className="text-2xl font-extrabold text-white mb-2">{t("joinTitle")}</h1>
           <p className="text-sm" style={{ color: "#94A3B8" }}>
-            {t("joinSubtitle")}
+            {String(t("joinSubtitle")).replace(/SMC/g, "SeaMinds Score")}
           </p>
         </div>
 

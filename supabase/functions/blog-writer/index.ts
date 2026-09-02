@@ -22,7 +22,7 @@ const LANGUAGES = [
 const TOPICS = [
   "How to create your free Sea Profile on SeaMinds in 2 minutes — just taps, no typing",
   "How to find and apply for seafarer jobs on SeaMinds — live vacancies updated daily",
-  "What is the SeaMinds SMC Score — AI competency assessment scored 0.00–5.00 for seafarers",
+  "What is the SeaMinds Score — AI competency assessment scored 0.00–5.00 for seafarers",
   "How SeaMinds AI interviews work — Technical, Judgment, Maritime English and Professional Behaviour",
   "SeaMinds Certificate Wallet — store your STCW certificates and get expiry reminders",
   "Track your rest hours on SeaMinds — personal MLC-style rest record for seafarers",
@@ -33,7 +33,7 @@ const TOPICS = [
   "For ship managers: how to post vacancies and receive applications on SeaMinds",
   "For manning agencies: search crew and run AI competency interviews on SeaMinds",
   "How the SeaMinds Maritime Exchange works — live vacancy market for seafarers worldwide",
-  "How certificate verification works on SeaMinds — scan the QR, verify any SMC certificate",
+  "How certificate verification works on SeaMinds — scan the QR, verify any SeaMinds Score certificate",
 ];
 
 
