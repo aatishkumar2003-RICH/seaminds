@@ -162,6 +162,7 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
 
       if (assessment?.status === "in_progress") {
         setAssessmentId(assessment.id);
+        setHasInProgress(true);
         setView("assessment");
         return;
       }
