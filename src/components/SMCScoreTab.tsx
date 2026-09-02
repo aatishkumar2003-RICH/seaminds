@@ -36,6 +36,9 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
   const [started, setStarted] = useState(false);
   const [scoreValue, setScoreValue] = useState<number | null>(null);
   const [scoreBand, setScoreBand] = useState<string | null>(null);
+  const [flowOpen, setFlowOpen] = useState(false);
+  const [startBusy, setStartBusy] = useState(false);
+  const [hasInProgress, setHasInProgress] = useState(false);
 
   // CV parse state
   const [cvStatus, setCvStatus] = useState<CvStatus>("idle");
