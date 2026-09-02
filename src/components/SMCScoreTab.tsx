@@ -442,6 +442,25 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
     );
   };
 
+  // Assessment opened from the primary button — render the flow on its own screen.
+  if (flowOpen && assessmentId) {
+    return (
+      <div className="flex flex-col h-full overflow-y-auto">
+        <AssessmentFlow
+          profileId={profileId}
+          firstName={firstName}
+          lastName={lastName}
+          rank={rank}
+          shipName={shipName}
+          assessmentId={assessmentId}
+          onComplete={() => { setFlowOpen(false); setHasInProgress(false); setView("certificate"); }}
+          onExit={() => setFlowOpen(false)}
+        />
+      </div>
+    );
+  }
+
+
   if (view === "payment" && !started) return (
     <div className="flex flex-col h-full overflow-y-auto">
       <ScoreDoorCard />
