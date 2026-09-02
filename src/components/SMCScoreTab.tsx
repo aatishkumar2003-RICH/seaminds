@@ -36,6 +36,9 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
   const [started, setStarted] = useState(false);
   const [scoreValue, setScoreValue] = useState<number | null>(null);
   const [scoreBand, setScoreBand] = useState<string | null>(null);
+  const [flowOpen, setFlowOpen] = useState(false);
+  const [startBusy, setStartBusy] = useState(false);
+  const [hasInProgress, setHasInProgress] = useState(false);
 
   // CV parse state
   const [cvStatus, setCvStatus] = useState<CvStatus>("idle");
@@ -159,6 +162,7 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
 
       if (assessment?.status === "in_progress") {
         setAssessmentId(assessment.id);
+        setHasInProgress(true);
         setView("assessment");
         return;
       }
@@ -225,6 +229,44 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
     setView("assessment");
     trackEvent("smc_assessment_retake", { rank });
   };
+
+  // Single entry point: resolve the assessment server-side, then mount the flow full-screen.
+  const openAssessment = async (fresh = false) => {
+    if (startBusy) return;
+    setStartBusy(true);
+    try {
+      if (fresh) {
+        const { error: abErr } = await supabase
+          .from("smc_assessments")
+          .update({ status: "abandoned" })
+          .eq("crew_profile_id", profileId)
+          .eq("status", "in_progress");
+        if (abErr) throw abErr;
+      }
+
+      const { data, error } = await (supabase.rpc as any)("start_or_resume_assessment");
+      if (error) throw error;
+      const res = (typeof data === "string" ? JSON.parse(data) : data) as
+        | { ok: boolean; action?: string; assessment_id?: string; error?: string }
+        | null;
+      if (!res?.ok || !res.assessment_id) throw new Error(res?.error || "Could not start the assessment");
+
+      setAssessmentId(res.assessment_id);
+      setHasInProgress(true);
+      setStarted(true);
+      setView("assessment");
+      setFlowOpen(true);
+      trackEvent(res.action === "resume" ? "smc_assessment_resume" : "smc_assessment_start", { rank });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : JSON.stringify(e);
+      console.error("openAssessment failed:", e);
+      toast.error(msg || "Could not start the assessment");
+    } finally {
+      setStartBusy(false);
+    }
+  };
+
+
 
   if (view === "loading") {
     return (
@@ -352,7 +394,7 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
 
   const ScoreDoorCard = () => {
     const completed = view === "certificate";
-    const inProgress = view === "assessment";
+    
     return (
       <div className="mx-4 mt-3 rounded-2xl p-4" style={{ background: "linear-gradient(160deg, rgba(212,175,55,0.18), rgba(13,27,42,0.5))", border: "1px solid rgba(212,175,55,0.45)" }}>
         {completed ? (
@@ -380,16 +422,44 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
               A 15-minute maritime competency assessment for your rank — scored 0.00–5.00, verifiable by companies
             </p>
             <button
-              onClick={() => { if (inProgress) setView("assessment"); else setStarted(true); }}
-              className="w-full mt-4 rounded-xl py-3.5 font-extrabold text-sm"
-              style={{ background: "#D4AF37", color: "#0D1B2A", border: "none", cursor: "pointer" }}>
-              {inProgress ? "Continue my assessment →" : "Start my assessment →"}
+              onClick={() => openAssessment(false)}
+              disabled={startBusy}
+              className="w-full mt-4 rounded-xl py-3.5 font-extrabold text-sm disabled:opacity-60"
+              style={{ background: "#D4AF37", color: "#0D1B2A", border: "none", cursor: startBusy ? "wait" : "pointer" }}>
+              {startBusy ? "Opening…" : hasInProgress ? "Continue my assessment →" : "Start my assessment →"}
             </button>
+            <button
+              onClick={() => openAssessment(true)}
+              disabled={startBusy}
+              className="w-full mt-2 text-[11px] font-semibold underline"
+              style={{ background: "transparent", border: "none", color: "#94A3B8", cursor: "pointer" }}>
+              Having trouble? Start a fresh assessment
+            </button>
+
           </>
         )}
       </div>
     );
   };
+
+  // Assessment opened from the primary button — render the flow on its own screen.
+  if (flowOpen && assessmentId) {
+    return (
+      <div className="flex flex-col h-full overflow-y-auto">
+        <AssessmentFlow
+          profileId={profileId}
+          firstName={firstName}
+          lastName={lastName}
+          rank={rank}
+          shipName={shipName}
+          assessmentId={assessmentId}
+          onComplete={() => { setFlowOpen(false); setHasInProgress(false); setView("certificate"); }}
+          onExit={() => setFlowOpen(false)}
+        />
+      </div>
+    );
+  }
+
 
   if (view === "payment" && !started) return (
     <div className="flex flex-col h-full overflow-y-auto">
