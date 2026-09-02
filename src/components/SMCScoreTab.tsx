@@ -394,7 +394,7 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
 
   const ScoreDoorCard = () => {
     const completed = view === "certificate";
-    const inProgress = view === "assessment";
+    
     return (
       <div className="mx-4 mt-3 rounded-2xl p-4" style={{ background: "linear-gradient(160deg, rgba(212,175,55,0.18), rgba(13,27,42,0.5))", border: "1px solid rgba(212,175,55,0.45)" }}>
         {completed ? (
