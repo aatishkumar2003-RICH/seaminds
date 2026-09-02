@@ -230,6 +230,44 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
     trackEvent("smc_assessment_retake", { rank });
   };
 
+  // Single entry point: resolve the assessment server-side, then mount the flow full-screen.
+  const openAssessment = async (fresh = false) => {
+    if (startBusy) return;
+    setStartBusy(true);
+    try {
+      if (fresh) {
+        const { error: abErr } = await supabase
+          .from("smc_assessments")
+          .update({ status: "abandoned" })
+          .eq("crew_profile_id", profileId)
+          .eq("status", "in_progress");
+        if (abErr) throw abErr;
+      }
+
+      const { data, error } = await (supabase.rpc as any)("start_or_resume_assessment");
+      if (error) throw error;
+      const res = (typeof data === "string" ? JSON.parse(data) : data) as
+        | { ok: boolean; action?: string; assessment_id?: string; error?: string }
+        | null;
+      if (!res?.ok || !res.assessment_id) throw new Error(res?.error || "Could not start the assessment");
+
+      setAssessmentId(res.assessment_id);
+      setHasInProgress(true);
+      setStarted(true);
+      setView("assessment");
+      setFlowOpen(true);
+      trackEvent(res.action === "resume" ? "smc_assessment_resume" : "smc_assessment_start", { rank });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : JSON.stringify(e);
+      console.error("openAssessment failed:", e);
+      toast.error(msg || "Could not start the assessment");
+    } finally {
+      setStartBusy(false);
+    }
+  };
+
+
+
   if (view === "loading") {
     return (
       <div className="flex items-center justify-center h-full">
