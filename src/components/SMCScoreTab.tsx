@@ -422,11 +422,20 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
               A 15-minute maritime competency assessment for your rank — scored 0.00–5.00, verifiable by companies
             </p>
             <button
-              onClick={() => { if (inProgress) setView("assessment"); else setStarted(true); }}
-              className="w-full mt-4 rounded-xl py-3.5 font-extrabold text-sm"
-              style={{ background: "#D4AF37", color: "#0D1B2A", border: "none", cursor: "pointer" }}>
-              {inProgress ? "Continue my assessment →" : "Start my assessment →"}
+              onClick={() => openAssessment(false)}
+              disabled={startBusy}
+              className="w-full mt-4 rounded-xl py-3.5 font-extrabold text-sm disabled:opacity-60"
+              style={{ background: "#D4AF37", color: "#0D1B2A", border: "none", cursor: startBusy ? "wait" : "pointer" }}>
+              {startBusy ? "Opening…" : hasInProgress ? "Continue my assessment →" : "Start my assessment →"}
             </button>
+            <button
+              onClick={() => openAssessment(true)}
+              disabled={startBusy}
+              className="w-full mt-2 text-[11px] font-semibold underline"
+              style={{ background: "transparent", border: "none", color: "#94A3B8", cursor: "pointer" }}>
+              Having trouble? Start a fresh assessment
+            </button>
+
           </>
         )}
       </div>
