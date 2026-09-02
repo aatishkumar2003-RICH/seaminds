@@ -3601,6 +3601,7 @@ export type Database = {
           title: string
         }[]
       }
+      start_or_resume_assessment: { Args: never; Returns: Json }
       submit_application: {
         Args: {
           p_company_name?: string
