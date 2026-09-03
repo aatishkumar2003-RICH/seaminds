@@ -387,20 +387,9 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
 
       {/* Recent Matches */}
       {(() => {
-        const rankMatches = [
-          ...jobPostings.filter(j => j.rank_required.toLowerCase() === role.toLowerCase() || j.rank_required === "Any Rank").map(j => ({
-            id: j.id, title: j.rank_required, company: j.company_name, vessel: j.vessel_type,
-            port: j.joining_port, salary: formatSalaryText(j.monthly_salary, "/mo") || "Negotiable",
-            source: "posted" as const, date: j.created_at, whatsapp: j.contact_whatsapp, verified: j.verified,
-          })),
-          ...externalVacancies.filter(e => e.rank_required && e.rank_required.toLowerCase() === role.toLowerCase()).map(e => ({
-            id: e.id, title: e.rank_required || e.title, company: e.company_name || "Unknown",
-            vessel: e.vessel_type || "—", port: e.joining_port || "TBD",
-            salary: formatSalaryText(e.salary_text, "/mo") || "—", source: "ai" as const, date: e.created_at || "",
-            whatsapp: e.contact_whatsapp, verified: false,
-          })),
-        ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
-
+        const rankMatches = vacancies
+          .filter((v) => (v.rank || "").toLowerCase() === role.toLowerCase() || v.rank === "Any Rank")
+          .slice(0, 5);
         if (!rankMatches.length) return null;
 
         return (
@@ -412,37 +401,15 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
             </div>
             <p className="text-[11px] text-muted-foreground">Jobs matching your rank: <span className="font-medium text-foreground">{role}</span></p>
             <div className="space-y-2">
-              {rankMatches.map(m => (
-                <div key={m.id} className="flex items-center justify-between gap-3 rounded-lg bg-card border border-border p-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-sm font-semibold text-foreground truncate">{m.title}</span>
-                      {m.verified && <Check size={12} className="text-blue-400 shrink-0" />}
-                      <Badge variant="outline" className="text-[9px] shrink-0">{m.source === "ai" ? "🌐 AI" : "📋 Direct"}</Badge>
-                    </div>
-                    <p className="text-[11px] text-muted-foreground truncate">{m.company} · {m.vessel} · {m.port}</p>
-                    <p className="text-[11px] text-primary font-medium">{m.salary}</p>
-                  </div>
-                  {m.whatsapp ? (
-                    <Button
-                      size="sm"
-                      className="h-8 text-xs gap-1 bg-green-600 hover:bg-green-700 text-white shrink-0"
-                      onClick={() => openWhatsApp({
-                        number: m.whatsapp,
-                        vacancyId: m.source === "ai" ? m.id : null,
-                        jobPostingId: m.source === "posted" ? m.id : null,
-                        company: m.company, rank: m.title, vessel: m.vessel, port: m.port,
-                      })}
-                    >
-                      <MessageCircle size={12} /> Apply
-                    </Button>
-                  ) : (
-                    <Button size="sm" variant="outline" className="h-8 text-xs shrink-0" onClick={() => {
-                      const el = document.getElementById("ai-collected-jobs");
-                      el?.scrollIntoView({ behavior: "smooth" });
-                    }}>View</Button>
-                  )}
-                </div>
+              {rankMatches.map((v) => (
+                <JobCard
+                  key={`m-${v.id}`}
+                  vacancy={v}
+                  variant="row"
+                  applied={appliedState(v)}
+                  busy={!!directBusy[v.id]}
+                  onApply={() => applyVacancy(v)}
+                />
               ))}
             </div>
           </div>
@@ -603,113 +570,46 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
         </div>
       )}
 
-      {/* Job Postings from job_postings table */}
+      {/* Direct company postings */}
       {(() => {
         const filteredPostings = countryFilter === 'all'
-          ? jobPostings
-          : jobPostings.filter((job) => {
+          ? directPostings
+          : directPostings.filter((job) => {
               const ports = COUNTRY_PORTS[countryFilter] || [];
-              const jobPort = (job.joining_port || '').toLowerCase();
-              const jobCompany = (job.company_name || '').toLowerCase();
+              const jobPort = (job.port || '').toLowerCase();
+              const jobCompany = (job.company || '').toLowerCase();
               const countryLower = countryFilter.toLowerCase();
               return ports.some(p => jobPort.includes(p.toLowerCase())) || jobCompany.includes(countryLower);
             });
 
         return (
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide px-1">Available Positions</h3>
-        {filteredPostings.length === 0 ? (
-          <div className="rounded-xl bg-card border border-border p-6 text-center">
-            <Ship size={24} className="text-muted-foreground mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">No company postings yet — scroll down for more jobs from across the industry.</p>
-          </div>
-        ) : (
-          filteredPostings.map((jp) => {
-            const postedAgo = formatDistanceToNow(new Date(jp.created_at), { addSuffix: true });
-
-            return (
-              <div
-                key={jp.id}
-                className="rounded-xl bg-card p-4 space-y-3"
-                style={{ border: "1.5px solid #1a3a5c" }}
-              >
-                <div>
-                  <span className="inline-block rounded-full px-2 py-0.5 mb-1.5 text-[9.5px] font-extrabold tracking-wider"
-                    style={{ background: "rgba(212,175,55,0.12)", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.35)" }}>
-                    DIRECT — POSTED ON SEAMINDS
-                  </span>
-                  <h4 style={{ color: "#D4AF37", fontSize: "18px", fontWeight: "bold" }}>{jp.rank_required}</h4>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <p className="text-sm text-foreground">{jp.company_name}</p>
-                    {jp.verified && (
-                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "rgba(59,130,246,0.12)", color: "#3B82F6", fontSize: "11px", fontWeight: 600 }}>
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                        ✓ Verified
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {jp.vessel_type} · {jp.contract_duration}
-                </p>
-                <div className="space-y-1.5 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1.5">
-                    <span>📍</span>
-                    <span>{jp.joining_port}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <DollarSign size={12} className="text-primary/70" />
-                    <span>{formatSalaryText(jp.monthly_salary) || "Negotiable"}</span>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground/60">Posted {postedAgo}</p>
-                </div>
-                {jp.additional_notes && (
-                  <p className="text-[11px] text-muted-foreground italic">{jp.additional_notes}</p>
-                )}
-                <Button
-                  size="sm"
-                  disabled={!!directApplied[jp.id] || !!directBusy[jp.id]}
-                  className="w-full font-semibold text-sm h-10"
-                  style={{
-                    background: directApplied[jp.id] ? "rgba(34,197,94,0.15)" : "#D4AF37",
-                    color: directApplied[jp.id] ? "#22c55e" : "#0D1B2A",
-                    border: directApplied[jp.id] ? "1px solid #22c55e" : "none",
-                  }}
-                  onClick={() => applyDirect(jp)}
-                >
-                  {directApplied[jp.id] === "dup"
-                    ? "Already applied ✓"
-                    : directApplied[jp.id] === "ok"
-                      ? "Applied ✓ — your Sea Profile has been sent"
-                      : directBusy[jp.id] ? "Sending…" : "APPLY WITH SEA PROFILE →"}
-                </Button>
-                {jp.contact_whatsapp && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full text-xs h-9 gap-1.5"
-                    onClick={() => openWhatsApp({
-                      number: jp.contact_whatsapp,
-                      jobPostingId: jp.id,
-                      company: jp.company_name, rank: jp.rank_required, vessel: jp.vessel_type, port: jp.joining_port,
-                    })}
-                  >
-                    <MessageCircle size={12} /> Apply via WhatsApp
-                  </Button>
-                )}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide px-1">Available Positions</h3>
+            {filteredPostings.length === 0 ? (
+              <div className="rounded-xl bg-card border border-border p-6 text-center">
+                <Ship size={24} className="text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">No company postings yet — scroll down for more jobs from across the industry.</p>
               </div>
-            );
-          })
-        )}
-      </div>
+            ) : (
+              filteredPostings.map((v) => (
+                <JobCard
+                  key={v.id}
+                  vacancy={v}
+                  variant="card"
+                  applied={appliedState(v)}
+                  busy={!!directBusy[v.id]}
+                  onApply={() => applyVacancy(v)}
+                />
+              ))
+            )}
+          </div>
         );
       })()}
 
-
-      {/* AI-Collected External Vacancies */}
-      {externalVacancies.length > 0 && (() => {
-        const extRanks = [...new Set(externalVacancies.map(e => e.rank_required).filter(Boolean))] as string[];
-        const extVessels = [...new Set(externalVacancies.map(e => e.vessel_type).filter(Boolean))] as string[];
+      {/* Jobs collected from across the industry */}
+      {externalList.length > 0 && (() => {
+        const extRanks = [...new Set(externalList.map(e => e.rank).filter(Boolean))] as string[];
+        const extVessels = [...new Set(externalList.map(e => e.vessel).filter(Boolean))] as string[];
 
         // Nationality-based relevance scoring
         const natLower = (nationality || '').toLowerCase();
@@ -719,32 +619,27 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
         const isUkrainian = /ukrain/.test(natLower);
         const isBangladeshi = /bangladesh/.test(natLower);
         const isMyanmar = /myanmar|burm/.test(natLower);
-        const hasRegion = isIndian || isFilipino || isIndonesian || isUkrainian || isBangladeshi || isMyanmar;
-        const isRegionRelevant = (ext: ExternalVacancy) => {
+        const isRegionRelevant = (ext: UnifiedVacancy) => {
           const src = (ext.source || '').toLowerCase();
-          const title = (ext.title || '').toLowerCase();
-          const desc = (ext.description || '').toLowerCase();
-          const company = (ext.company_name || '').toLowerCase();
-          const port = (ext.joining_port || '').toLowerCase();
-          const combined = `${title} ${desc} ${company} ${port}`;
+          const combined = `${ext.rank || ''} ${ext.notes || ''} ${ext.company || ''} ${ext.port || ''}`.toLowerCase();
           if (isIndian && (src === 'india_philippines' || /india|mumbai|chennai|kolkata|cochin|goa|indian/i.test(combined))) return true;
           if (isFilipino && (src === 'india_philippines' || /philippines|manila|cebu|filipino|poea|dmw|pinoy/i.test(combined))) return true;
           if (isIndonesian && (src === 'regional_global' || /indonesia|jakarta|surabaya|indonesian|pelaut/i.test(combined))) return true;
-          if (isUkrainian && (src === 'regional_global' || /ukrain|odesa|odessa|ukrainian|крюінг/i.test(combined))) return true;
+          if (isUkrainian && (src === 'regional_global' || /ukrain|odesa|odessa|ukrainian/i.test(combined))) return true;
           if (isBangladeshi && (src === 'regional_global' || /bangladesh|chittagong|dhaka|bangladeshi/i.test(combined))) return true;
           if (isMyanmar && (src === 'regional_global' || /myanmar|yangon|burmese/i.test(combined))) return true;
           return false;
         };
 
-        const filtered = externalVacancies.filter(e => {
-          const rankMatch = extRankFilter === "all" || e.rank_required === extRankFilter;
-          const vesselMatch = extVesselFilter === "all" || e.vessel_type === extVesselFilter;
+        const filtered = externalList.filter(e => {
+          const rankMatch = extRankFilter === "all" || e.rank === extRankFilter;
+          const vesselMatch = extVesselFilter === "all" || e.vessel === extVesselFilter;
           if (!rankMatch || !vesselMatch) return false;
           if (countryFilter === 'all') return true;
           const ports = COUNTRY_PORTS[countryFilter] || [];
-          const jobPort = (e.joining_port || '').toLowerCase();
-          const jobCompany = (e.company_name || '').toLowerCase();
-          const jobDesc = (e.description || '').toLowerCase();
+          const jobPort = (e.port || '').toLowerCase();
+          const jobCompany = (e.company || '').toLowerCase();
+          const jobDesc = (e.notes || '').toLowerCase();
           const countryLower = countryFilter.toLowerCase();
           return ports.some(p => jobPort.includes(p.toLowerCase())) ||
                  jobCompany.includes(countryLower) ||
@@ -753,7 +648,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
           const aRelevant = isRegionRelevant(a) ? 1 : 0;
           const bRelevant = isRegionRelevant(b) ? 1 : 0;
           if (bRelevant !== aRelevant) return bRelevant - aRelevant;
-          return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+          return new Date(b.postedAt || 0).getTime() - new Date(a.postedAt || 0).getTime();
         });
 
         return (
@@ -761,14 +656,11 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
           <div className="flex items-center gap-2 px-1">
             <Globe size={14} className="text-primary" />
             <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">More Jobs</h3>
-            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-              {filtered.length}
-            </Badge>
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{filtered.length}</Badge>
           </div>
           <p className="text-[11px] text-muted-foreground px-1">
             Fresh vacancies collected from across the industry
           </p>
-
 
           {/* Filters */}
           <div className="flex gap-2">
@@ -816,121 +708,17 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
             <div className="rounded-xl bg-card border border-border p-6 text-center">
               <p className="text-sm text-muted-foreground">No jobs match your filters.</p>
             </div>
-          ) : filtered.map((ext) => {
-            const sourceLabel = (ext.quality_score ?? 0) >= 70 ? "Verified listing" : "";
-            const postedAgo = ext.created_at ? formatDistanceToNow(new Date(ext.created_at), { addSuffix: true }) : '';
-            const regionMatch = hasRegion && isRegionRelevant(ext);
-
-            return (
-              <div
-                key={ext.id}
-                className={cn("rounded-xl bg-card border p-4 space-y-3", regionMatch ? "border-primary/40 ring-1 ring-primary/20" : "border-border")}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <h4 className="text-sm font-semibold text-foreground truncate">{ext.title}</h4>
-                    {ext.company_name && (
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {ext.company_website ? (
-                          <a href={ext.company_website.startsWith('http') ? ext.company_website : `https://${ext.company_website}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:text-primary transition-colors">
-                            {ext.company_name} <Globe size={10} className="text-primary/70" />
-                          </a>
-                        ) : ext.company_name}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    {regionMatch && <Badge className="text-[10px] bg-primary/20 text-primary border-0">{isIndian ? '🇮🇳' : isFilipino ? '🇵🇭' : isIndonesian ? '🇮🇩' : isUkrainian ? '🇺🇦' : isBangladeshi ? '🇧🇩' : isMyanmar ? '🇲🇲' : '🌍'} For You</Badge>}
-                    {sourceLabel && <Badge variant="outline" className="text-[10px]">{sourceLabel}</Badge>}
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-1.5">
-                  {ext.rank_required && (
-                    <Badge className="text-[10px] bg-primary/10 text-primary border-0">{ext.rank_required}</Badge>
-                  )}
-                  {ext.vessel_type && (
-                    <Badge variant="secondary" className="text-[10px]">{ext.vessel_type}</Badge>
-                  )}
-                </div>
-
-                <div className="space-y-1.5 text-xs text-muted-foreground">
-                  {ext.joining_port && (
-                    <div className="flex items-center gap-1.5">
-                      <MapPin size={12} className="text-primary/70" />
-                      <span>{ext.joining_port}</span>
-                    </div>
-                  )}
-                  {formatSalaryText(ext.salary_text) && (
-                    <div className="flex items-center gap-1.5">
-                      <DollarSign size={12} className="text-primary/70" />
-                      <span>{formatSalaryText(ext.salary_text)}</span>
-                    </div>
-                  )}
-                  {ext.contract_duration && (
-                    <div className="flex items-center gap-1.5">
-                      <Clock size={12} className="text-primary/70" />
-                      <span>{ext.contract_duration}</span>
-                    </div>
-                  )}
-                </div>
-
-                {ext.description && (
-                  <p className="text-[11px] text-muted-foreground line-clamp-2">{ext.description}</p>
-                )}
-
-                <div className="flex items-center justify-between">
-                  {postedAgo && <p className="text-[10px] text-muted-foreground/60">{postedAgo}</p>}
-                </div>
-
-
-                <div className="flex gap-2">
-                  {ext.apply_url && (
-                    <Button size="sm" className="flex-1 text-xs h-9 gap-1.5" onClick={() => openExternalVacancy(ext, ext.apply_url!)}>
-                      <ExternalLink size={12} /> Apply
-                    </Button>
-                  )}
-                  {ext.contact_whatsapp && (
-                    <Button
-                      size="sm"
-                      variant={ext.apply_url ? "outline" : "default"}
-                      className={cn("text-xs h-9 gap-1.5", !ext.apply_url && "flex-1 bg-green-600 hover:bg-green-700 text-white")}
-                      onClick={() => openWhatsApp({
-                        number: ext.contact_whatsapp,
-                        vacancyId: ext.id,
-                        company: ext.company_name, rank: ext.rank_required || ext.title, vessel: ext.vessel_type, port: ext.joining_port,
-                      })}
-                    >
-                      <MessageCircle size={12} /> WhatsApp
-                    </Button>
-                  )}
-                  {ext.contact_email && !ext.apply_url && !ext.contact_whatsapp && (
-                    <Button
-                      size="sm"
-                      className="flex-1 text-xs h-9 gap-1.5"
-                      onClick={() => openExternalVacancy(ext, `mailto:${ext.contact_email}?subject=${encodeURIComponent(`Application: ${ext.title}`)}&body=${encodeURIComponent(`Dear Hiring Manager,\n\nI would like to apply for the ${ext.rank_required || ext.title} position.\n\nName: ${firstName} ${lastName}\nRank: ${role}\nNationality: ${nationality}\n\nBest regards`)}`, "_self")}
-                    >
-                      <Mail size={12} /> Email
-                    </Button>
-                  )}
-                  {!ext.apply_url && !ext.contact_whatsapp && !ext.contact_email && ext.company_website && (
-                    <Button
-                      size="sm"
-                      className="flex-1 text-xs h-9 gap-1.5"
-                      onClick={() => openExternalVacancy(ext, ext.company_website!.startsWith('http') ? ext.company_website! : `https://${ext.company_website}`)}
-                    >
-                      <Globe size={12} /> Visit Website
-                    </Button>
-                  )}
-                  {!ext.apply_url && !ext.contact_whatsapp && !ext.contact_email && !ext.company_website && (
-                    <Button size="sm" className="w-full text-xs h-9" onClick={() => handleApplyExternal(ext)}>
-                      Apply →
-                    </Button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+          ) : filtered.map((v) => (
+            <div key={v.id} className={cn(isRegionRelevant(v) && "rounded-2xl ring-1 ring-primary/30")}>
+              <JobCard
+                vacancy={v}
+                variant="card"
+                applied={appliedState(v)}
+                busy={!!directBusy[v.id]}
+                onApply={() => applyVacancy(v)}
+              />
+            </div>
+          ))}
         </div>
         );
       })()}
