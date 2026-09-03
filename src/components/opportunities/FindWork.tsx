@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { format, formatDistanceToNow, startOfToday } from "date-fns";
-import { CalendarIcon, Ship, Globe, Clock, MapPin, DollarSign, Check, AlertTriangle, Award, ExternalLink, Mail, MessageCircle } from "lucide-react";
+import { CalendarIcon, Ship, Globe, Check, AlertTriangle, Award } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -15,7 +15,7 @@ import { formatSalaryText, formatSalaryRange } from "@/lib/salary";
 import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, recordApplication, openHandoffTab, completeHandoff, fetchQuickProfileDone, CrewCardInfo } from "@/lib/applyMessage";
 import ApplyGateSheet from "@/components/ApplyGateSheet";
 import JobCard from "@/components/JobCard";
-import { loadVacancies, loadMyApplicationTargets, UnifiedVacancy, vacancySalary } from "@/lib/vacancyFeed";
+import { loadVacancies, loadMyApplicationTargets, UnifiedVacancy } from "@/lib/vacancyFeed";
 import CrewOffers from "@/components/CrewOffers";
 import { useSearchParams } from "react-router-dom";
 
@@ -270,21 +270,6 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     });
   };
 
-
-  // Outbound recording: awaited so the record + email attempt completes before the handoff
-  const recordOutbound = async (args: { vacancyId?: string | null; jobPostingId?: string | null; companyPostId?: string | null; company?: string | null; rank?: string | null; vessel?: string | null; url: string | null }) => {
-    const r = await recordApplication({
-      vacancyId: args.vacancyId || null,
-      companyPostId: args.companyPostId || null,
-      jobPostingId: args.jobPostingId || null,
-      company: args.company, rank: args.rank, vessel: args.vessel,
-      externalUrl: args.url,
-    });
-    if (r.ok && r.duplicate) toast({ title: "Already applied ✓", description: "The company already has your application." });
-    else if (r.ok && r.emailSent === false) toast({ title: "Applied ✓", description: "Saved on SeaMinds, but the email notification failed." });
-    else if (r.ok) toast({ title: "Applied ✓", description: "Recorded on SeaMinds." });
-    else toast({ title: "Sent", description: "Sent on WhatsApp — could not record on SeaMinds.", variant: "destructive" });
-  };
 
   /** Single apply path for every vacancy on this screen — record + email first, then hand off. */
   const applyVacancy = async (v: UnifiedVacancy) => {
