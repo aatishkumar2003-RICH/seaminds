@@ -2,9 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
-import { Anchor, MapPin, Ship, BadgeCheck, MessageCircle, ExternalLink } from "lucide-react";
+import { Anchor, BadgeCheck } from "lucide-react";
 import { trackPixel } from "@/lib/metaPixel";
-import { formatSalaryText } from "@/lib/salary";
+import JobCard from "@/components/JobCard";
+import { loadVacancies, loadMyApplicationTargets, UnifiedVacancy } from "@/lib/vacancyFeed";
 import { fetchCrewCardInfo, getCachedCrewCardInfo, waApplyLink, recordApplication, openHandoffTab, completeHandoff, fetchQuickProfileDone, CrewCardInfo } from "@/lib/applyMessage";
 import { jobPath, RANK_HUBS } from "@/lib/jobSlug";
 import ApplyGateSheet from "@/components/ApplyGateSheet";
@@ -20,23 +21,15 @@ const TYPE_LABEL: Record<string, string> = {
   training: "🎓 Training", welfare: "🤝 Crew Welfare",
 };
 
-interface FeedItem {
+interface CompanyPostItem {
   id: string;
-  source: "company" | "market";
-  rank: string;
-  vessel: string;
   company: string;
-  salary: string | null;
-  port: string | null;
-  duration: string | null;
-  flier: string | null;
+  caption: string | null;
+  image: string | null;
   whatsapp: string | null;
-  email: string | null;
-  applyUrl: string | null;
+  linkUrl: string | null;
   verified: boolean;
   posted: string;
-  caption?: string;
-  isCompanyPost?: boolean;
   postType?: string;
 }
 
@@ -58,7 +51,9 @@ const timeAgo = (iso: string) => {
 
 const JobFeed = () => {
   const navigate = useNavigate();
-  const [items, setItems] = useState<FeedItem[]>([]);
+  const [items, setItems] = useState<UnifiedVacancy[]>([]);
+  const [posts, setPosts] = useState<CompanyPostItem[]>([]);
+  const [appliedIds, setAppliedIds] = useState<Set<string>>(new Set());
   const [ships, setShips] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("All");
@@ -110,14 +105,8 @@ const JobFeed = () => {
   useEffect(() => {
     (async () => {
       try {
-        const [posts, ext, cposts, shipRes] = await Promise.all([
-          supabase.from("job_postings" as any)
-            .select("id, rank_required, vessel_type, monthly_salary, joining_port, contract_duration, company_name, contact_whatsapp, contact_email, verified, flier_url, created_at, status")
-            .eq("status", "active").order("created_at", { ascending: false }).limit(60),
-          supabase.from("external_vacancies" as any)
-            .select("id, rank_required, vessel_type, company_name, salary_text, joining_port, contract_duration, contact_whatsapp, contact_email, apply_url, is_verified, fetched_at")
-            .gt("expires_at", new Date().toISOString())
-            .order("fetched_at", { ascending: false }).limit(60),
+        const [vacs, cposts, shipRes] = await Promise.all([
+          loadVacancies({ limitDirect: 60, limitExternal: 60 }),
           supabase.from("company_posts" as any)
             .select("id, company_name, post_type, caption, image_url, whatsapp, link_url, verified, created_at")
             .eq("status", "live").order("created_at", { ascending: false }).limit(30),
@@ -125,37 +114,12 @@ const JobFeed = () => {
             .select("id, photo_url, caption").eq("active", true).limit(12),
         ]);
 
-
-
-        const a: FeedItem[] = ((posts.data as any[]) || []).map((r) => ({
-          id: `p-${r.id}`, source: "company",
-          rank: r.rank_required || "Crew", vessel: r.vessel_type || "—",
-          company: r.company_name || "Maritime Company", salary: r.monthly_salary,
-          port: r.joining_port, duration: r.contract_duration, flier: r.flier_url,
-          whatsapp: r.contact_whatsapp, email: r.contact_email || null, applyUrl: null,
-          verified: !!r.verified, posted: r.created_at,
-        }));
-
-        const b: FeedItem[] = ((ext.data as any[]) || []).map((r) => ({
-          id: `e-${r.id}`, source: "market",
-          rank: r.rank_required || "Crew", vessel: r.vessel_type || "—",
-          company: r.company_name || "Maritime Company", salary: r.salary_text,
-          port: r.joining_port, duration: r.contract_duration, flier: null,
-          whatsapp: r.contact_whatsapp, email: r.contact_email || null, applyUrl: r.apply_url,
-          verified: !!r.is_verified, posted: r.fetched_at,
-        }));
-
-        const c: FeedItem[] = (((cposts as any).data as any[]) || []).map((r) => ({
-          id: `c-${r.id}`, source: "company" as const,
-          rank: r.company_name, vessel: "",
-          company: r.company_name, salary: null,
-          port: null, duration: null, flier: r.image_url,
-          whatsapp: r.whatsapp, email: null, applyUrl: r.link_url,
-          verified: !!r.verified, posted: r.created_at,
-          caption: r.caption, isCompanyPost: true, postType: r.post_type,
-        }));
-
-        setItems([...a, ...b, ...c].sort((x, y) => +new Date(y.posted) - +new Date(x.posted)));
+        setItems(vacs);
+        setPosts((((cposts as any).data as any[]) || []).map((r) => ({
+          id: String(r.id), company: r.company_name, caption: r.caption, image: r.image_url,
+          whatsapp: r.whatsapp, linkUrl: r.link_url, verified: !!r.verified,
+          posted: r.created_at, postType: r.post_type,
+        })));
         setShips((((shipRes as any).data as any[]) || []).sort(() => Math.random() - 0.5));
       } finally {
         setLoading(false);
@@ -163,79 +127,72 @@ const JobFeed = () => {
     })();
   }, []);
 
+  useEffect(() => {
+    if (!signedIn) { setAppliedIds(new Set()); return; }
+    loadMyApplicationTargets().then(setAppliedIds);
+  }, [signedIn]);
+
   const shown = useMemo(() => {
     if (filter === "All") return items;
     const keys = GROUPS[filter] || [];
     return items.filter((i) => keys.some((k) => (i.rank || "").toLowerCase().includes(k)));
   }, [items, filter]);
 
-  // Record the outbound handoff — awaited so the email attempt completes before we leave
-  const recordOutbound = async (i: FeedItem, url: string | null) => {
-    if (!signedIn) return;
-    const raw = String(i.id).replace(/^[pec]-/, "");
-    const r = await recordApplication({
-      vacancyId: i.source === "market" ? raw : null,
-      jobPostingId: !i.isCompanyPost && i.source === "company" ? raw : null,
-      companyPostId: i.isCompanyPost ? raw : null,
-      company: i.company || null,
-      rank: i.rank || null,
-      vessel: i.vessel || null,
-      externalUrl: url,
-    });
-    if (r.ok && r.duplicate) toast.success("Already applied ✓ — the company already has your application");
-    else if (r.ok && r.emailSent === false) toast.warning("Applied ✓ — saved on SeaMinds, but the email notification failed");
-    else if (r.ok) toast.success("Applied ✓ — recorded on SeaMinds");
-    else toast.error("Sent on WhatsApp — could not record on SeaMinds");
-  };
-
-  const apply = async (i: FeedItem) => {
+  const applyVacancy = async (v: UnifiedVacancy) => {
     if (!signedIn) { navigate(`/join?next=${encodeURIComponent("/feed")}`); return; }
     if (needsQuickProfile) { setGateOpen(true); return; }
-    setApplying(i.id);
+    setApplying(v.id);
     try {
       trackPixel("Contact", { content_name: "job_apply_public" });
-      if (i.email) {
-        const raw = String(i.id).replace(/^[pec]-/, "");
-        const r = await recordApplication({
-          vacancyId: i.source === "market" ? raw : null,
-          jobPostingId: !i.isCompanyPost && i.source === "company" ? raw : null,
-          companyPostId: i.isCompanyPost ? raw : null,
-          company: i.company || null,
-          rank: i.rank || null,
-          vessel: i.vessel || null,
-          externalUrl: null,
-        });
-        if (r.ok && r.duplicate) toast.success("Already applied ✓ — the company already has your application");
-        else if (r.ok && r.emailSent === false) toast.warning("Applied ✓ — saved on SeaMinds, but the email to the company failed");
-        else if (r.ok) toast.success("Applied ✓ — your application has been emailed to the company");
-        else toast.error("Sent on WhatsApp — could not record on SeaMinds");
-        return;
-      }
-      if (i.whatsapp) {
-        const url = waApplyLink(i.whatsapp, cardInfo || getCachedCrewCardInfo(), { rank: i.rank, vessel: i.vessel, port: i.port });
-        if (url) {
-          const win = openHandoffTab();
-          await recordOutbound(i, url);
-          completeHandoff(win, url);
-          return;
-        }
-      }
-      if (i.applyUrl) {
-        const win = openHandoffTab();
-        await recordOutbound(i, i.applyUrl);
-        completeHandoff(win, i.applyUrl);
-        return;
-      }
-      navigate("/app?tab=jobs");
+      const url = v.kind === "direct"
+        ? null
+        : v.applyUrl
+          || waApplyLink(v.whatsapp, cardInfo || getCachedCrewCardInfo(), { rank: v.rank, vessel: v.vessel, port: v.port });
+      const win = url ? openHandoffTab() : null;
+
+      const r = await recordApplication({
+        vacancyId: v.kind === "external" ? v.id : null,
+        jobPostingId: v.kind === "direct" ? v.id : null,
+        company: v.company || null,
+        rank: v.rank || null,
+        vessel: v.vessel || null,
+        externalUrl: url,
+      });
+
+      if (!r.ok) toast.error(url ? "Sent — could not record on SeaMinds" : "Could not record your application");
+      else if (r.duplicate) toast.success("Already applied ✓ — the company already has your application");
+      else if (r.emailSent === false) toast.warning("Applied ✓ — saved on SeaMinds, but the email notification failed");
+      else if (v.kind === "direct") toast.success("Applied ✓ — the company can now see your application in SeaMinds");
+      else toast.success("Applied ✓ — recorded on SeaMinds");
+
+      if (r.ok) setAppliedIds((s0) => new Set(s0).add(v.id));
+      if (url) completeHandoff(win, url);
     } catch {
-      navigate("/app?tab=jobs");
+      toast.error("Could not send application");
     } finally {
       setApplying(null);
     }
   };
 
-
-
+  const applyPost = async (p: CompanyPostItem) => {
+    if (!signedIn) { navigate(`/join?next=${encodeURIComponent("/feed")}`); return; }
+    if (needsQuickProfile) { setGateOpen(true); return; }
+    setApplying(p.id);
+    try {
+      const url = p.linkUrl
+        || waApplyLink(p.whatsapp, cardInfo || getCachedCrewCardInfo(), { rank: null, vessel: null, port: null });
+      const win = url ? openHandoffTab() : null;
+      const r = await recordApplication({ companyPostId: p.id, company: p.company || null, externalUrl: url });
+      if (!r.ok) toast.error("Could not record your interest on SeaMinds");
+      else if (r.duplicate) toast.success("Already registered ✓");
+      else toast.success("Interest recorded ✓");
+      if (url) completeHandoff(win, url);
+    } catch {
+      toast.error("Could not send");
+    } finally {
+      setApplying(null);
+    }
+  };
 
   return (
     <div style={{ minHeight: "100vh", background: NAVY }}>
@@ -328,82 +285,27 @@ const JobFeed = () => {
           </div>
         )}
 
-        {shown.map((i, idx) => (
-          <div key={i.id} style={{ display: "contents" }}>
-            <article style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 16, overflow: "hidden" }}>
-              {i.flier && (
-                <img src={i.flier} alt={`${i.rank} vacancy flier`} loading="lazy"
-                  style={{ width: "100%", display: "block", maxHeight: 460, objectFit: "cover" }} />
-              )}
+        {shown.map((v, idx) => (
+          <div key={v.id} style={{ display: "contents" }}>
+            <JobCard
+              vacancy={v}
+              variant="row"
+              applied={appliedIds.has(v.id) ? "ok" : undefined}
+              busy={applying === v.id || !authResolved}
+              href={jobPath({ id: v.id, rank: v.rank, vessel: v.vessel, port: v.port })}
+              onApply={() => applyVacancy(v)}
+            />
 
-              <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start" }}>
-                  <div style={{ minWidth: 0 }}>
-                    <h2 style={{ fontSize: 17, fontWeight: 800, lineHeight: 1.2 }}>
-                      {i.isCompanyPost ? (
-                        <span style={{ color: "#fff" }}>{i.rank}</span>
-                      ) : (
-                        <a href={jobPath({ id: String(i.id).replace(/^[pec]-/, ""), rank: i.rank, vessel: i.vessel, port: i.port })}
-                          style={{ color: "#fff", textDecoration: "none" }}>{i.rank}</a>
-                      )}
-                    </h2>
-                    <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 3 }}>
-                      <span style={{ color: GOLD, fontSize: 12, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{i.company}</span>
-                      {i.verified && <BadgeCheck size={13} style={{ color: "#22c55e", flexShrink: 0 }} />}
-                    </div>
-                  </div>
-                  <span style={{ fontSize: 10, color: "#94a3b8", whiteSpace: "nowrap" }}>{timeAgo(i.posted)}</span>
-                </div>
-
-                {i.isCompanyPost ? (
-                  <>
-                    <span style={{
-                      display: "inline-block", alignSelf: "flex-start", borderRadius: 999,
-                      padding: "4px 10px", fontSize: 10, fontWeight: 800,
-                      background: "rgba(212,175,55,0.12)", color: GOLD, border: `1px solid rgba(212,175,55,0.35)`,
-                    }}>
-                      {TYPE_LABEL[i.postType || "update"] || "📢 Update"}
-                    </span>
-                    <p style={{ fontSize: 13, color: "#e2e8f0", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{i.caption}</p>
-                  </>
-                ) : (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 12, fontSize: 12, color: "#cbd5e1" }}>
-                  <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Ship size={13} style={{ color: "#94a3b8" }} />{i.vessel}</span>
-                  {i.port && <span style={{ display: "flex", alignItems: "center", gap: 4 }}><MapPin size={13} style={{ color: "#94a3b8" }} />{i.port}</span>}
-                  {i.duration && <span style={{ color: "#94a3b8" }}>{i.duration}</span>}
-                </div>
-                )}
-
-                {formatSalaryText(i.salary) && (
-                  <div style={{ color: "#22c55e", fontWeight: 800, fontSize: 15 }}>{formatSalaryText(i.salary)}</div>
-                )}
-
-                <button onClick={() => apply(i)} disabled={applying === i.id || !authResolved} style={{
-                  marginTop: 2, width: "100%", padding: "11px", borderRadius: 11, border: "none",
-                  cursor: applying === i.id || !authResolved ? "default" : "pointer",
-                  opacity: applying === i.id || !authResolved ? 0.5 : 1,
-                  background: GOLD, color: NAVY, fontWeight: 800, fontSize: 13,
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
-                }}>
-                  {i.email ? <>✉️ Apply — sent to company email</>
-                    : i.whatsapp ? <><MessageCircle size={15} /> Apply via WhatsApp</>
-                    : <><ExternalLink size={15} /> View & Apply</>}
+            {(idx + 1) % 6 === 0 && (
+              <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 13, textAlign: "center" }}>
+                <p style={{ color: "#cbd5e1", fontSize: 12, marginBottom: 8 }}>
+                  Build your CV free and let companies find you.
+                </p>
+                <button onClick={() => navigate("/app")} style={{ background: "transparent", color: GOLD, border: `1px solid ${GOLD}`, borderRadius: 9, padding: "7px 16px", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
+                  Join SeaMinds Free
                 </button>
-
-
               </div>
-
-              {(idx + 1) % 6 === 0 && (
-                <div style={{ borderTop: `1px solid ${BORDER}`, padding: 13, textAlign: "center" }}>
-                  <p style={{ color: "#cbd5e1", fontSize: 12, marginBottom: 8 }}>
-                    Build your CV free and let companies find you.
-                  </p>
-                  <button onClick={() => navigate("/app")} style={{ background: "transparent", color: GOLD, border: `1px solid ${GOLD}`, borderRadius: 9, padding: "7px 16px", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
-                    Join SeaMinds Free
-                  </button>
-                </div>
-              )}
-            </article>
+            )}
 
             {(idx + 1) % 5 === 0 && ships[Math.floor(idx / 5) % Math.max(ships.length, 1)] && (
               <article style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 16, overflow: "hidden" }}>
@@ -422,6 +324,39 @@ const JobFeed = () => {
               </article>
             )}
           </div>
+        ))}
+
+        {!loading && filter === "All" && posts.map((p) => (
+          <article key={p.id} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 16, overflow: "hidden" }}>
+            {p.image && (
+              <img src={p.image} alt={`${p.company} update`} loading="lazy"
+                style={{ width: "100%", display: "block", maxHeight: 460, objectFit: "cover" }} />
+            )}
+            <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                <span style={{ color: GOLD, fontSize: 12, fontWeight: 700 }}>{p.company}</span>
+                {p.verified && <BadgeCheck size={13} style={{ color: "#22c55e" }} />}
+                <span style={{ marginLeft: "auto", fontSize: 10, color: "#94a3b8" }}>{timeAgo(p.posted)}</span>
+              </div>
+              <span style={{
+                display: "inline-block", alignSelf: "flex-start", borderRadius: 999,
+                padding: "4px 10px", fontSize: 10, fontWeight: 800,
+                background: "rgba(212,175,55,0.12)", color: GOLD, border: `1px solid rgba(212,175,55,0.35)`,
+              }}>
+                {TYPE_LABEL[p.postType || "update"] || "📢 Update"}
+              </span>
+              {p.caption && <p style={{ fontSize: 13, color: "#e2e8f0", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{p.caption}</p>}
+              {(p.linkUrl || p.whatsapp) && (
+                <button onClick={() => applyPost(p)} disabled={applying === p.id || !authResolved} style={{
+                  width: "100%", padding: "11px", borderRadius: 11, border: "none",
+                  cursor: applying === p.id ? "default" : "pointer", opacity: applying === p.id ? 0.5 : 1,
+                  background: GOLD, color: NAVY, fontWeight: 800, fontSize: 13,
+                }}>
+                  I'm interested →
+                </button>
+              )}
+            </div>
+          </article>
         ))}
 
         <p style={{ color: "#64748b", fontSize: 11, textAlign: "center", lineHeight: 1.6, padding: "10px 20px" }}>

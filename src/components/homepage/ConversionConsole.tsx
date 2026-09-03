@@ -9,6 +9,8 @@ import { useT, LANGS, type LangCode } from "@/i18n";
 import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, recordApplication, openHandoffTab, completeHandoff, fetchQuickProfileDone, type CrewCardInfo } from "@/lib/applyMessage";
 import ApplyGateSheet from "@/components/ApplyGateSheet";
 import { jobPath } from "@/lib/jobSlug";
+import JobCard from "@/components/JobCard";
+import { loadVacancies, loadMyApplicationTargets, type UnifiedVacancy } from "@/lib/vacancyFeed";
 
 
 const GOLD = "#D4AF37";
@@ -28,30 +30,10 @@ type Market = {
   top_ranks: string[];
   top_ranks_counted?: { rank: string; count: number }[];
 };
-type Vacancy = {
-  id: string;
-  title: string | null;
-  rank_required: string | null;
-  vessel_type: string | null;
-  joining_port: string | null;
-  salary_min: number | null;
-  salary_text: string | null;
-  description: string | null;
-  source: string | null;
-  fetched_at: string | null;
-  first_seen_at: string | null;
-  kind?: "external" | "direct";
-  company_name?: string | null;
-  contract_duration?: string | null;
-  expires_at?: string | null;
-  contact_whatsapp?: string | null;
-};
+type Vacancy = UnifiedVacancy;
 
-const isNew = (v: Vacancy) => {
-  const d = v.first_seen_at || v.fetched_at;
-  return !!d && Date.now() - new Date(d).getTime() < 24 * 3600 * 1000;
-};
-const isUrgent = (v: Vacancy) => /urgent|immediate/i.test(`${v.title || ""} ${v.description || ""}`);
+const isNew = (v: Vacancy) => v.isNew;
+const isUrgent = (v: Vacancy) => /urgent|immediate/i.test(`${v.rank || ""} ${v.notes || ""}`);
 const relTime = (d?: string | null) => {
   if (!d) return "";
   const mins = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
@@ -91,7 +73,7 @@ const MARKET_KEYWORDS: Record<string, RegExp> = {
   OFFSHORE: /offshore|osv|ahts|psv|dp|rig|platform/i,
 };
 const inMarket = (v: Vacancy, m: string) => {
-  const hay = `${v.rank_required || ""} ${v.title || ""} ${v.vessel_type || ""}`;
+  const hay = `${v.rank || ""} ${v.vessel || ""}`;
   return MARKET_KEYWORDS[m]?.test(hay) ?? true;
 };
 
@@ -137,6 +119,13 @@ const ConversionConsole = () => {
     if (!user?.id) { setCardInfo(null); setNeedsQuickProfile(false); return; }
     fetchCrewCardInfo(user.id).then(setCardInfo);
     fetchQuickProfileDone(user.id).then((done) => setNeedsQuickProfile(!done));
+    loadMyApplicationTargets().then((ids) => {
+      setApplied((prev) => {
+        const next = { ...prev };
+        ids.forEach((id) => { if (!next[id]) next[id] = "ok"; });
+        return next;
+      });
+    });
   }, [user?.id]);
 
   const reducedMotion = useMemo(
@@ -170,45 +159,13 @@ const ConversionConsole = () => {
   useEffect(() => {
     let alive = true;
     (async () => {
-      const nowIso = new Date().toISOString();
-      const [{ data: m }, { data: v }, { data: p }] = await Promise.all([
+      const [{ data: m }, vacs] = await Promise.all([
         supabase.rpc("get_market_indices" as never),
-        supabase
-          .from("external_vacancies")
-          .select("id,title,rank_required,vessel_type,joining_port,salary_min,salary_text,description,source,fetched_at,first_seen_at,expires_at,contact_whatsapp")
-          .gt("expires_at", nowIso)
-          .order("fetched_at", { ascending: false })
-          .limit(25),
-        supabase
-          .from("job_postings")
-          .select("id,rank_required,vessel_type,joining_port,contract_duration,monthly_salary,company_name,additional_notes,created_at,contact_whatsapp")
-          .eq("status", "active")
-          .order("created_at", { ascending: false })
-          .limit(10),
+        loadVacancies({ limitDirect: 10, limitExternal: 25 }),
       ]);
       if (!alive) return;
       if (m) setMarket(m as unknown as Market);
-
-      const ext: Vacancy[] = ((v as Vacancy[]) || []).map((x) => ({ ...x, kind: "external" as const }));
-      const direct: Vacancy[] = ((p as Record<string, string | null>[]) || []).map((x) => ({
-        id: String(x.id),
-        title: x.rank_required,
-        rank_required: x.rank_required,
-        vessel_type: x.vessel_type,
-        joining_port: x.joining_port,
-        salary_min: null,
-        salary_text: x.monthly_salary || null,
-        description: x.additional_notes || null,
-        source: null,
-        fetched_at: x.created_at,
-        first_seen_at: x.created_at,
-        kind: "direct" as const,
-        company_name: x.company_name,
-        contract_duration: x.contract_duration,
-        contact_whatsapp: x.contact_whatsapp,
-      }));
-      const ts = (r: Vacancy) => new Date(r.first_seen_at || r.fetched_at || 0).getTime();
-      setVacancies([...direct, ...ext].sort((a, b) => ts(b) - ts(a)));
+      setVacancies(vacs);
     })();
     return () => { alive = false; };
   }, []);
@@ -243,7 +200,7 @@ const ConversionConsole = () => {
     return vacancies.filter((v) => {
       if (myMarket && !inMarket(v, myMarket)) return false;
       if (!q) return true;
-      return `${v.rank_required || ""} ${v.title || ""} ${v.vessel_type || ""} ${v.joining_port || ""}`.toLowerCase().includes(q);
+      return `${v.rank || ""} ${v.vessel || ""} ${v.port || ""}`.toLowerCase().includes(q);
     });
   }, [vacancies, query, myMarket]);
 
@@ -277,7 +234,7 @@ const ConversionConsole = () => {
 
   /** JobPosting structured data from the real rows only */
   const jobsLd = useMemo(() => {
-    const rows = vacancies.slice(0, 10).filter((v) => v.rank_required || v.title);
+    const rows = vacancies.slice(0, 10).filter((v) => v.rank);
     if (rows.length === 0) return null;
     return JSON.stringify({
       "@context": "https://schema.org",
@@ -285,20 +242,20 @@ const ConversionConsole = () => {
       itemListElement: rows.map((v, i) => {
         const posting: Record<string, unknown> = {
           "@type": "JobPosting",
-          title: v.rank_required || v.title,
+          title: v.rank,
           employmentType: "CONTRACTOR",
           url: "https://seaminds.life/feed",
           jobLocation: {
             "@type": "Place",
-            address: { "@type": "PostalAddress", addressLocality: v.joining_port || "Worldwide" },
+            address: { "@type": "PostalAddress", addressLocality: v.port || "Worldwide" },
           },
         };
-        const org = v.company_name || v.source;
+        const org = v.company || v.source;
         if (org) posting.hiringOrganization = { "@type": "Organization", name: org };
-        const posted = v.first_seen_at || v.fetched_at;
+        const posted = v.postedAt;
         if (posted) posting.datePosted = posted;
-        if (v.expires_at) posting.validThrough = v.expires_at;
-        if (v.description) posting.description = v.description;
+        if (v.expiresAt) posting.validThrough = v.expiresAt;
+        if (v.notes) posting.description = v.notes;
         return { "@type": "ListItem", position: i + 1, item: posting };
       }),
     });
@@ -309,17 +266,18 @@ const ConversionConsole = () => {
     if (needsQuickProfile) { setGateOpen(true); return; }
     setApplyBusy(true);
     try {
-      const wa = waApplyLink(v.contact_whatsapp, cardInfo || getCachedCrewCardInfo(), {
-        rank: v.rank_required || v.title, vessel: v.vessel_type, port: v.joining_port,
-      });
+      const wa = v.kind === "direct"
+        ? null
+        : v.applyUrl
+          || waApplyLink(v.whatsapp, cardInfo || getCachedCrewCardInfo(), { rank: v.rank, vessel: v.vessel, port: v.port });
       const win = wa ? openHandoffTab() : null;
       const r = await recordApplication({
         vacancyId: v.kind === "direct" ? null : v.id,
         jobPostingId: v.kind === "direct" ? v.id : null,
-        company: v.company_name || v.source || null,
-        rank: v.rank_required || null,
-        vessel: v.vessel_type || null,
-        externalUrl: v.kind === "direct" ? null : (wa || null),
+        company: v.company || v.source || null,
+        rank: v.rank || null,
+        vessel: v.vessel || null,
+        externalUrl: wa,
       });
       setApplyBusy(false);
       if (!r.ok) { completeHandoff(win, wa); toast.error("Sent on WhatsApp — could not record on SeaMinds"); return; }
@@ -736,11 +694,11 @@ const ConversionConsole = () => {
             <div className="sm-tape-track flex w-max items-center gap-6 px-3" style={{ height: 34 }}>
               {[...filtered, ...filtered].map((v, i) => (
                 <span key={`${v.id}-${i}`} className="whitespace-nowrap font-mono text-[11px] text-muted-foreground">
-                  <span className="font-bold text-foreground">{v.rank_required || v.title || t("seafarer")}</span>
+                  <span className="font-bold text-foreground">{v.rank || t("seafarer")}</span>
                   {" · "}
-                  <span style={{ color: GOLD }}>{v.vessel_type || t("various")}</span>
+                  <span style={{ color: GOLD }}>{v.vessel || t("various")}</span>
                   {" · "}
-                  {v.joining_port || t("worldwide")}
+                  {v.port || t("worldwide")}
                 </span>
               ))}
             </div>
@@ -763,15 +721,15 @@ const ConversionConsole = () => {
               )}
               {isUrgent(v) && <span className="shrink-0 text-[11px]">🔥</span>}
               <a
-                href={jobPath({ id: v.id, rank: v.rank_required || v.title, vessel: v.vessel_type, port: v.joining_port })}
+                href={jobPath({ id: v.id, rank: v.rank, vessel: v.vessel, port: v.port })}
                 onClick={(e) => { e.preventDefault(); setSheet(v); }}
                 className="font-bold text-foreground text-sm truncate no-underline"
               >
-                {v.rank_required || v.title || t("seafarer")}
+                {v.rank || t("seafarer")}
               </a>
-              <span className="text-xs truncate" style={{ color: GOLD }}>{v.vessel_type || t("various")}</span>
+              <span className="text-xs truncate" style={{ color: GOLD }}>{v.vessel || t("various")}</span>
               <span className="ml-auto font-mono text-[10px] text-muted-foreground truncate shrink-0">
-                {(v.joining_port || t("worldwide")).slice(0, 14)} · {relTime(v.first_seen_at || v.fetched_at)}
+                {(v.port || t("worldwide")).slice(0, 14)} · {relTime(v.postedAt)}
               </span>
             </div>
           ))}
@@ -845,42 +803,21 @@ const ConversionConsole = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-3 mb-2">
-              <p className="font-bold text-foreground">{sheet.title || sheet.rank_required || t("vacancy")}</p>
+              <p className="font-bold text-foreground">{sheet.rank || t("vacancy")}</p>
               <button type="button" aria-label={t("close")} onClick={() => setSheet(null)}><X className="w-5 h-5 text-muted-foreground" /></button>
             </div>
-            <p className="text-xs mb-1" style={{ color: GOLD }}>{sheet.rank_required || "—"} · {sheet.vessel_type || t("variousVessels")}</p>
-            <p className="font-mono text-[11px] text-muted-foreground mb-1">
-              {t("joining")}: {sheet.joining_port || t("worldwide")} · {relTime(sheet.first_seen_at || sheet.fetched_at)}
-            </p>
-            {(sheet.salary_min || sheet.salary_text) && (
-              <p className="font-mono text-[11px] mb-1" style={{ color: GREEN }}>
-                {sheet.salary_text || `${t("salaryFrom")} $${Number(sheet.salary_min).toLocaleString()}`}
-              </p>
-            )}
-            <p className="text-[9px] font-mono tracking-wider text-muted-foreground mb-3">
-              {sheet.kind === "direct" ? `${sheet.company_name || ""} · DIRECT` : t("externalSource")}
-              {sheet.contract_duration ? ` · ${sheet.contract_duration}` : ""}
-            </p>
 
-            <p className="text-xs font-semibold mb-3" style={{ color: profileActive ? GREEN : "#94A3B8" }}>
+            <JobCard
+              vacancy={sheet}
+              variant="card"
+              applied={applied[sheet.id]}
+              busy={applyBusy}
+              onApply={() => applyNow(sheet)}
+            />
+
+            <p className="text-xs font-semibold my-3" style={{ color: profileActive ? GREEN : "#94A3B8" }}>
               {t("yourSeaProfile")}: {profileActive ? t("profileActive") : t("profileNotActive")}
             </p>
-
-            <button
-              type="button"
-              disabled={applyBusy || !!applied[sheet.id]}
-              onClick={() => applyNow(sheet)}
-              className="w-full rounded-xl h-12 font-bold mb-3 disabled:opacity-70"
-              style={{ background: GOLD, color: NAVY }}
-            >
-              {applied[sheet.id] === "ok"
-                ? "Applied ✓ — your Sea Profile has been sent"
-                : applied[sheet.id] === "dup"
-                ? "Already applied ✓"
-                : applyBusy
-                ? "Sending…"
-                : user ? t("applyWithProfile") : t("activateAndApply")}
-            </button>
 
             <ul className="space-y-1 text-[11px] text-muted-foreground">
               <li>✓ {t("benefitReuse")}</li>
