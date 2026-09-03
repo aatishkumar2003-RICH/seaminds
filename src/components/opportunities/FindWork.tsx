@@ -286,83 +286,47 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     else toast({ title: "Sent", description: "Sent on WhatsApp — could not record on SeaMinds.", variant: "destructive" });
   };
 
-  const openExternalVacancy = async (ext: any, url: string, target: "_blank" | "_self" = "_blank") => {
+  /** Single apply path for every vacancy on this screen — record + email first, then hand off. */
+  const applyVacancy = async (v: UnifiedVacancy) => {
     if (needsQuickProfile) { setGateOpen(true); return; }
+    if (appliedIds.has(v.id) || directApplied[v.id] || directBusy[v.id]) return;
+    setDirectBusy((s0) => ({ ...s0, [v.id]: true }));
     try {
-      const win = target === "_blank" ? openHandoffTab() : null;
-      await recordOutbound({ vacancyId: ext.id, company: ext.company_name, rank: ext.rank_required || ext.title, vessel: ext.vessel_type, url });
-      if (target === "_blank") completeHandoff(win, url);
-      else window.location.href = url;
-    } catch { /* noop */ }
-  };
+      const url = v.kind === "direct"
+        ? null
+        : v.applyUrl
+          || waApplyLink(v.whatsapp, cardInfo || getCachedCrewCardInfo(), { rank: v.rank, vessel: v.vessel, port: v.port });
+      const win = url ? openHandoffTab() : null;
 
-  /** Reserves the tab synchronously, records + emails first, then hands off to WhatsApp. */
-  const openWhatsApp = async (args: {
-    number: string | null | undefined;
-    vacancyId?: string | null; jobPostingId?: string | null;
-    company?: string | null; rank?: string | null; vessel?: string | null; port?: string | null;
-  }) => {
-    if (needsQuickProfile) { setGateOpen(true); return; }
-    try {
-      const url = waApplyLink(args.number, cardInfo || getCachedCrewCardInfo(), { rank: args.rank, vessel: args.vessel, port: args.port });
-      if (!url) return;
-      const win = openHandoffTab();
-      await recordOutbound({
-        vacancyId: args.vacancyId || null,
-        jobPostingId: args.jobPostingId || null,
-        company: args.company, rank: args.rank, vessel: args.vessel,
-        url: args.jobPostingId ? null : url,
+      const r = await recordApplication({
+        vacancyId: v.kind === "external" ? v.id : null,
+        jobPostingId: v.kind === "direct" ? v.id : null,
+        company: v.company, rank: v.rank, vessel: v.vessel,
+        externalUrl: url,
       });
-      completeHandoff(win, url);
+      setDirectBusy((s0) => ({ ...s0, [v.id]: false }));
+
+      if (!r.ok) {
+        toast({ title: "Error", description: url ? "Sent — could not record on SeaMinds." : "Could not send application. Try again.", variant: "destructive" });
+      } else {
+        setDirectApplied((s0) => ({ ...s0, [v.id]: r.duplicate ? "dup" : "ok" }));
+        if (r.duplicate) toast({ title: "Already applied ✓", description: "The company already has your application." });
+        else if (r.emailSent === false) toast({ title: "Applied ✓", description: "Saved on SeaMinds, but the email notification failed." });
+        else if (v.kind === "direct") toast({ title: "Applied ✓", description: "The company can now see your application in SeaMinds." });
+        else toast({ title: "Applied ✓", description: "Recorded on SeaMinds." });
+      }
+      if (url) completeHandoff(win, url);
+      loadMyApplications();
     } catch {
+      setDirectBusy((s0) => ({ ...s0, [v.id]: false }));
       toast({ title: "Error", description: "Could not open the application. Try again.", variant: "destructive" });
     }
   };
 
-  const applyDirect = async (jp: any) => {
-    if (needsQuickProfile) { setGateOpen(true); return; }
-    if (directApplied[jp.id] || directBusy[jp.id]) return;
-    setDirectBusy((s) => ({ ...s, [jp.id]: true }));
-    try {
-      const r = await recordApplication({
-        jobPostingId: jp.id,
-        company: jp.company_name || null,
-        rank: jp.rank_required || null,
-        vessel: jp.vessel_type || null,
-      });
-      setDirectBusy((s) => ({ ...s, [jp.id]: false }));
-      if (!r.ok) { toast({ title: "Error", description: "Could not send application. Try again.", variant: "destructive" }); return; }
-      setDirectApplied((s) => ({ ...s, [jp.id]: r.duplicate ? "dup" : "ok" }));
-      if (r.duplicate) toast({ title: "Already applied ✓", description: "The company already has your application." });
-      else if (r.emailSent === false) toast({ title: "Applied ✓", description: "Saved on SeaMinds, but the email notification failed." });
-      else toast({ title: "Applied ✓", description: "Recorded on SeaMinds." });
-    } catch {
-      toast({ title: "Error", description: "Could not send application. Try again.", variant: "destructive" });
-      setDirectBusy((s) => ({ ...s, [jp.id]: false }));
-    }
-  };
+  const appliedState = (v: UnifiedVacancy) => directApplied[v.id] || (appliedIds.has(v.id) ? "ok" : undefined);
 
-  // External vacancies have no manning-company row, so the application is captured centrally
-  const handleApplyExternal = async (ext: any) => {
-    if (needsQuickProfile) { setGateOpen(true); return; }
-    const r = await recordApplication({
-      vacancyId: ext.id || null,
-      company: ext.company_name || null,
-      rank: ext.rank_required || ext.title || null,
-      vessel: ext.vessel_type || null,
-      externalUrl: ext.apply_url || ext.company_website || null,
-    });
-    if (!r.ok) { toast({ title: "Error", description: "Could not send application. Try again.", variant: "destructive" }); return; }
-    toast({
-      title: r.duplicate ? "Already applied ✓" : "Applied ✓",
-      description: r.duplicate
-        ? "The company already has your application."
-        : r.emailSent === false
-          ? "Saved on SeaMinds, but the email notification failed."
-          : `Recorded on SeaMinds — your profile has been sent to ${ext.company_name || "the company"}.`,
-    });
-  };
-
+  const directPostings = vacancies.filter((v) => v.kind === "direct");
+  const externalList = vacancies.filter((v) => v.kind === "external");
 
   const wordCount = aboutMe.trim().split(/\s+/).filter(Boolean).length;
 
