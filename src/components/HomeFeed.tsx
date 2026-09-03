@@ -92,6 +92,7 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
   const [gateOpen, setGateOpen] = useState(false);
   const [directApplied, setDirectApplied] = useState<Record<string, "ok" | "dup">>({});
   const [directBusy, setDirectBusy] = useState<Record<string, boolean>>({});
+  const [appliedIds, setAppliedIds] = useState<Set<string>>(new Set());
   const [cardInfo, setCardInfo] = useState<CrewCardInfo | null>(null);
   const [news, setNews] = useState<NewsItem[]>([]);
 
@@ -184,6 +185,8 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
   };
 
 
+
+  useEffect(() => { loadMyApplicationTargets().then(setAppliedIds); }, [profileId]);
 
   const build = useCallback(async () => {
     const lang = LANG_BY_NATIONALITY[nationality] || "en";
