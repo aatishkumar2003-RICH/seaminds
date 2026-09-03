@@ -7,6 +7,8 @@ import ShareResult from "@/components/ShareResult";
 import { formatSalaryText, formatSalaryRange } from "@/lib/salary";
 import { toast } from "sonner";
 import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, recordApplication, openHandoffTab, completeHandoff, CrewCardInfo } from "@/lib/applyMessage";
+import JobCard from "@/components/JobCard";
+import { loadVacancies, loadMyApplicationTargets, UnifiedVacancy, vacancySalary } from "@/lib/vacancyFeed";
 import ApplyGateSheet from "@/components/ApplyGateSheet";
 import CrewOffers from "@/components/CrewOffers";
 
@@ -66,7 +68,7 @@ interface Props {
 }
 
 type Card =
-  | { kind: "vacancy"; id: string; data: any }
+  | { kind: "vacancy"; id: string; data: UnifiedVacancy }
   | { kind: "company"; id: string; data: any }
   | { kind: "article"; id: string; data: any }
   | { kind: "ship"; id: string; data: { photo: string; caption: string } }
@@ -187,14 +189,8 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
     const lang = LANG_BY_NATIONALITY[nationality] || "en";
     const dept = deptOf(rank);
 
-    const [vacRes, postRes, cpostRes, artRes, quizRes, profRes, shipRes, streakRes, scoreRes] = await Promise.all([
-      supabase.from("external_vacancies")
-        .select("id, rank_required, vessel_type, company_name, salary_text, joining_port, contract_duration, contact_whatsapp, apply_url, is_verified, fetched_at")
-        .gt("expires_at", new Date().toISOString())
-        .order("fetched_at", { ascending: false }).limit(40),
-      supabase.from("job_postings" as any)
-        .select("id, rank_required, vessel_type, company_name, monthly_salary, joining_port, contract_duration, contact_whatsapp, additional_notes, flier_url, verified, created_at")
-        .eq("status", "active").order("created_at", { ascending: false }).limit(20),
+    const [allVacancies, cpostRes, artRes, quizRes, profRes, shipRes, streakRes, scoreRes] = await Promise.all([
+      loadVacancies({ limitDirect: 20, limitExternal: 40 }),
       supabase.from("company_posts" as any)
         .select("id, company_name, post_type, caption, image_url, whatsapp, link_url, verified, created_at")
         .eq("status", "live")
@@ -234,31 +230,18 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
       articles = [...articles, ...((en.data as any[]) || [])];
     }
 
-    const vacancies: any[] = [
-      ...(((postRes.data as any[]) || []).map((p) => ({
-        id: `p-${p.id}`, postingId: p.id, rank: p.rank_required, vessel: p.vessel_type, company: p.company_name,
-        salary: p.monthly_salary, port: p.joining_port, duration: p.contract_duration,
-        notes: p.additional_notes, flier: p.flier_url, whatsapp: p.contact_whatsapp, applyUrl: null,
-        verified: !!p.verified, posted: p.created_at, own: true, direct: true,
-      }))),
-      ...(((vacRes.data as any[]) || []).map((v) => ({
-        id: `e-${v.id}`, rank: v.rank_required, vessel: v.vessel_type, company: v.company_name,
-        salary: v.salary_text, port: v.joining_port, duration: v.contract_duration,
-        flier: null, whatsapp: v.contact_whatsapp, applyUrl: v.apply_url,
-        verified: !!v.is_verified, posted: v.fetched_at, own: false,
-      }))),
-    ];
+    const vacancies: UnifiedVacancy[] = [...allVacancies];
 
     // Rank-relevant vacancies first
     vacancies.sort((a, b) => {
       const am = deptOf(a.rank) === dept ? 1 : 0;
       const bm = deptOf(b.rank) === dept ? 1 : 0;
       if (am !== bm) return bm - am;
-      return +new Date(b.posted) - +new Date(a.posted);
+      return +new Date(b.postedAt || 0) - +new Date(a.postedAt || 0);
     });
 
     const salaryRows = vacancies
-      .map((v) => ({ rank: v.rank || "Crew", salary: formatSalaryText(v.salary) }))
+      .map((v) => ({ rank: v.rank || "Crew", salary: vacancySalary(v) }))
       .filter((r) => !!r.salary && /\d/.test(r.salary!))
       .slice(0, 5) as { rank: string; salary: string }[];
 
@@ -367,62 +350,38 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
     setRefreshing(false);
   };
 
-  const applyTo = async (v: any) => {
+  const applyVacancy = async (v: UnifiedVacancy) => {
     if (needsQuickProfile) { setGateOpen(true); return; }
+    if (appliedIds.has(v.id) || directBusy[v.id]) return;
+    setDirectBusy((s0) => ({ ...s0, [v.id]: true }));
     try {
       log("vacancy", v.id, "apply");
-      const rawId = String(v.id).replace(/^[ep]-/, "");
-      const isDirect = String(v.id).startsWith("p-");
-      if (v.whatsapp) {
-        const url = waApplyLink(v.whatsapp, cardInfo || getCachedCrewCardInfo(), { rank: v.rank, vessel: v.vessel || v.vessel_type, port: v.port });
-        if (url) {
-          // Reserve the tab synchronously, record + email first, then hand off
-          const win = openHandoffTab();
-          const r = await recordApplication({
-            vacancyId: isDirect ? null : rawId,
-            jobPostingId: isDirect ? rawId : null,
-            company: v.company, rank: v.rank, vessel: v.vessel || v.vessel_type,
-            externalUrl: isDirect ? null : url,
-          });
-          if (r.ok && r.duplicate) toast.success("Already applied ✓ — the company already has your application");
-          else if (r.ok && r.emailSent === false) toast.warning("Applied ✓ — saved on SeaMinds, but the email notification failed");
-          else if (r.ok) toast.success("Applied ✓ — recorded on SeaMinds");
-          else toast.error("Sent on WhatsApp — could not record on SeaMinds");
-          completeHandoff(win, url);
-          return;
-        }
-      }
-      setApplyTarget({
-        rawId,
-        isCompanyPost: false,
-        rank: v.rank, vessel: v.vessel || v.vessel_type, company: v.company, port: v.port || null,
-        applyUrl: v.applyUrl || null, whatsapp: null,
+      const url = v.kind === "direct"
+        ? null
+        : v.applyUrl
+          || waApplyLink(v.whatsapp, cardInfo || getCachedCrewCardInfo(), { rank: v.rank, vessel: v.vessel, port: v.port });
+      const win = url ? openHandoffTab() : null;
+
+      const r = await recordApplication({
+        vacancyId: v.kind === "external" ? v.id : null,
+        jobPostingId: v.kind === "direct" ? v.id : null,
+        company: v.company, rank: v.rank, vessel: v.vessel,
+        externalUrl: url,
       });
+      setDirectBusy((s0) => ({ ...s0, [v.id]: false }));
+
+      if (!r.ok) toast.error(url ? "Sent — could not record on SeaMinds" : "Could not record your application");
+      else if (r.duplicate) toast.success("Already applied ✓ — the company already has your application");
+      else if (r.emailSent === false) toast.warning("Applied ✓ — saved on SeaMinds, but the email notification failed");
+      else if (v.kind === "direct") toast.success("Applied ✓ — the company can now see your application in SeaMinds");
+      else toast.success("Applied ✓ — recorded on SeaMinds");
+
+      if (r.ok) setDirectApplied((s0) => ({ ...s0, [v.id]: r.duplicate ? "dup" : "ok" }));
+      if (url) completeHandoff(win, url);
     } catch {
+      setDirectBusy((s0) => ({ ...s0, [v.id]: false }));
       toast.error("Could not open the application. Try again.");
     }
-  };
-
-  const applyDirect = async (v: any) => {
-    if (needsQuickProfile) { setGateOpen(true); return; }
-    if (directApplied[v.postingId] || directBusy[v.postingId]) return;
-    setDirectBusy((s) => ({ ...s, [v.postingId]: true }));
-    try {
-      const r = await recordApplication({
-        jobPostingId: v.postingId,
-        company: v.company, rank: v.rank, vessel: v.vessel,
-      });
-      setDirectBusy((s) => ({ ...s, [v.postingId]: false }));
-      if (!r.ok) { toast.error("Sent on WhatsApp — could not record on SeaMinds"); return; }
-      setDirectApplied((s) => ({ ...s, [v.postingId]: r.duplicate ? "dup" : "ok" }));
-      if (r.duplicate) toast.success("Already applied ✓ — the company already has your application");
-      else if (r.emailSent === false) { toast.warning("Applied ✓ — saved on SeaMinds, but the email notification failed"); log("vacancy", v.id, "apply"); }
-      else { toast.success("Applied ✓ — recorded on SeaMinds"); log("vacancy", v.id, "apply"); }
-    } catch {
-      toast.error("Could not send application. Try again.");
-      setDirectBusy((s) => ({ ...s, [v.postingId]: false }));
-    }
-
   };
 
 
@@ -646,57 +605,15 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
           if (c.kind === "vacancy") {
             const v = c.data;
             return (
-              <article key={c.id} className="rounded-2xl overflow-hidden" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
-                {v.flier && <img src={v.flier} alt={v.rank} loading="lazy" className="w-full object-cover" style={{ maxHeight: 380 }} />}
-                <div className="p-4 space-y-2.5">
-                  {v.direct && (
-                    <span className="inline-block rounded-full px-2.5 py-1 text-[9.5px] font-extrabold tracking-wider"
-                      style={{ background: "rgba(212,175,55,0.12)", color: GOLD, border: `1px solid rgba(212,175,55,0.35)` }}>
-                      DIRECT — POSTED ON SEAMINDS
-                    </span>
-                  )}
-                  <div className="flex justify-between items-start gap-2">
-                    <div className="min-w-0">
-                      <h2 className="text-base font-extrabold text-white leading-tight">{v.rank || "Crew"}</h2>
-                      <p className="text-xs truncate" style={{ color: GOLD }}>{v.company || "Maritime Company"}{v.verified ? " ✅" : ""}</p>
-                    </div>
-                    <span className="text-[10px] shrink-0" style={{ color: "#94a3b8" }}>{timeAgo(v.posted)}</span>
-                  </div>
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px]" style={{ color: "#cbd5e1" }}>
-                    {v.vessel && <span>🚢 {v.vessel}</span>}
-                    {v.port && <span>📍 {v.port}</span>}
-                    {v.duration && <span>📆 {v.duration}</span>}
-                  </div>
-                  {formatSalaryText(v.salary) && <p className="font-extrabold text-sm" style={{ color: "#22c55e" }}>💰 {formatSalaryText(v.salary)}</p>}
-                  {v.direct && v.notes && (
-                    <p className="text-[11px] leading-relaxed" style={{ color: "#94a3b8" }}>{v.notes}</p>
-                  )}
-                  {v.direct ? (
-                    <button
-                      onClick={() => applyDirect(v)}
-                      disabled={!!directApplied[v.postingId] || !!directBusy[v.postingId]}
-                      className="w-full rounded-xl py-2.5 font-bold text-[13px] flex items-center justify-center gap-2"
-                      style={{
-                        background: directApplied[v.postingId] ? "rgba(34,197,94,0.15)" : GOLD,
-                        color: directApplied[v.postingId] ? "#22c55e" : NAVY,
-                        border: directApplied[v.postingId] ? "1px solid #22c55e" : "none",
-                        cursor: directApplied[v.postingId] ? "default" : "pointer",
-                      }}>
-                      {directApplied[v.postingId] === "dup"
-                        ? "Already applied ✓"
-                        : directApplied[v.postingId] === "ok"
-                          ? "Applied ✓ — your Sea Profile has been sent"
-                          : directBusy[v.postingId] ? "Sending…" : "APPLY WITH SEA PROFILE →"}
-                    </button>
-                  ) : (
-                    <button onClick={() => applyTo(v)}
-                      className="w-full rounded-xl py-2.5 font-bold text-[13px] flex items-center justify-center gap-2"
-                      style={{ background: GOLD, color: NAVY, border: "none", cursor: "pointer" }}>
-                      {v.whatsapp ? <><MessageCircle size={14} /> Apply on WhatsApp</> : <>Apply →</>}
-                    </button>
-                  )}
-                </div>
-              </article>
+              <div key={c.id}>
+                <JobCard
+                  vacancy={v}
+                  variant="row"
+                  applied={directApplied[v.id] || (appliedIds.has(v.id) ? "ok" : undefined)}
+                  busy={!!directBusy[v.id]}
+                  onApply={() => applyVacancy(v)}
+                />
+              </div>
             );
           }
 
