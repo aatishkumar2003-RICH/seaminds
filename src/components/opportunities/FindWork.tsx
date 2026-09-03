@@ -14,6 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import { formatSalaryText, formatSalaryRange } from "@/lib/salary";
 import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, recordApplication, openHandoffTab, completeHandoff, fetchQuickProfileDone, CrewCardInfo } from "@/lib/applyMessage";
 import ApplyGateSheet from "@/components/ApplyGateSheet";
+import JobCard from "@/components/JobCard";
+import { loadVacancies, loadMyApplicationTargets, UnifiedVacancy, vacancySalary } from "@/lib/vacancyFeed";
 import CrewOffers from "@/components/CrewOffers";
 import { useSearchParams } from "react-router-dom";
 
@@ -31,43 +33,6 @@ interface FindWorkProps {
   yearsAtSea: string;
   shipName: string;
 }
-
-
-interface JobPosting {
-  id: string;
-  rank_required: string;
-  vessel_type: string;
-  contract_duration: string;
-  monthly_salary: string | null;
-  joining_port: string;
-  contact_whatsapp: string;
-  company_name: string;
-  additional_notes: string | null;
-  created_at: string;
-  verified: boolean;
-}
-
-interface ExternalVacancy {
-  id: string;
-  title: string;
-  rank_required: string | null;
-  vessel_type: string | null;
-  company_name: string | null;
-  salary_text: string | null;
-  joining_port: string | null;
-  joining_date: string | null;
-  contract_duration: string | null;
-  description: string | null;
-  apply_url: string | null;
-  contact_email: string | null;
-  contact_whatsapp: string | null;
-  company_website: string | null;
-  source: string;
-  quality_score: number | null;
-  created_at: string | null;
-}
-
-
 
 
 const COUNTRY_TABS = [
@@ -138,7 +103,8 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
   const [visible, setVisible] = useState(false);
   const [activeSaved, setActiveSaved] = useState(false);
 
-  const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
+  const [vacancies, setVacancies] = useState<UnifiedVacancy[]>([]);
+  const [appliedIds, setAppliedIds] = useState<Set<string>>(new Set());
   const [directApplied, setDirectApplied] = useState<Record<string, "ok" | "dup">>({});
   const [directBusy, setDirectBusy] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
@@ -191,7 +157,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
 
   const [extRankFilter, setExtRankFilter] = useState("all");
   const [extVesselFilter, setExtVesselFilter] = useState("all");
-  const [externalVacancies, setExternalVacancies] = useState<ExternalVacancy[]>([]);
+
 
   // No country filter by default — show all positions until user taps a country
 
@@ -206,10 +172,9 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const [availRes, postingsRes, extRes, smcRes] = await Promise.all([
+    const [availRes, vacs, smcRes] = await Promise.all([
       supabase.from("crew_availability").select("*").eq("crew_profile_id", crewId).maybeSingle(),
-      supabase.from("job_postings").select("id, rank_required, vessel_type, joining_port, contract_duration, monthly_salary, contact_whatsapp, company_name, additional_notes, verified, created_at").eq("status", "active").order("created_at", { ascending: false }).limit(20),
-      supabase.from("external_vacancies").select("*").eq("is_scam_flagged", false).gte("quality_score", 30).gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false }).limit(50),
+      loadVacancies({ limitDirect: 20, limitExternal: 50, minQuality: 30 }),
       supabase.from("smc_assessments").select("overall_score").eq("crew_profile_id", crewId).eq("status", "completed").order("completed_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
 
@@ -221,8 +186,8 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     }
 
     if (smcRes.data?.overall_score != null) setSmcScore(Number(smcRes.data.overall_score));
-    if (postingsRes.data) setJobPostings(postingsRes.data);
-    if (extRes.data) setExternalVacancies(extRes.data);
+    setVacancies(vacs);
+    loadMyApplicationTargets().then(setAppliedIds);
 
     setLoading(false);
   };
