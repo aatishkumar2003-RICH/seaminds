@@ -13,6 +13,8 @@ export interface JobCardProps {
   variant: "row" | "card";
   applied?: "ok" | "dup";
   busy?: boolean;
+  /** Optional crawlable link for the vacancy title. */
+  href?: string;
   onApply: () => void;
 }
 
@@ -42,7 +44,7 @@ const joinDateText = (iso: string | null) => {
 };
 
 /** One vacancy, rendered identically (data + channel + applied state) on every surface. */
-const JobCard = ({ vacancy: v, variant, applied, busy, onApply }: JobCardProps) => {
+const JobCard = ({ vacancy: v, variant, applied, busy, href, onApply }: JobCardProps) => {
   const [flierOpen, setFlierOpen] = useState(false);
   const salary = vacancySalary(v);
   const compact = variant === "row";
@@ -83,7 +85,7 @@ const JobCard = ({ vacancy: v, variant, applied, busy, onApply }: JobCardProps) 
       <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start" }}>
         <div style={{ minWidth: 0 }}>
           <h3 style={{ color: GOLD, fontSize: compact ? 15 : 18, fontWeight: 800, lineHeight: 1.2 }}>
-            {v.rank}
+            {href ? <a href={href} style={{ color: GOLD, textDecoration: "none" }}>{v.rank}</a> : v.rank}
             {v.positions > 1 && (
               <span style={{ color: "#94a3b8", fontSize: 12, fontWeight: 700 }}> ×{v.positions}</span>
             )}
