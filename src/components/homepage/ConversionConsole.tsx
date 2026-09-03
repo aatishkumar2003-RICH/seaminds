@@ -119,6 +119,13 @@ const ConversionConsole = () => {
     if (!user?.id) { setCardInfo(null); setNeedsQuickProfile(false); return; }
     fetchCrewCardInfo(user.id).then(setCardInfo);
     fetchQuickProfileDone(user.id).then((done) => setNeedsQuickProfile(!done));
+    loadMyApplicationTargets().then((ids) => {
+      setApplied((prev) => {
+        const next = { ...prev };
+        ids.forEach((id) => { if (!next[id]) next[id] = "ok"; });
+        return next;
+      });
+    });
   }, [user?.id]);
 
   const reducedMotion = useMemo(
