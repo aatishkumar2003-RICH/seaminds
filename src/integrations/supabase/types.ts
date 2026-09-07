@@ -1760,6 +1760,7 @@ export type Database = {
           company_name: string
           created_at: string
           difficulty: string | null
+          engine_types: string[] | null
           id: string
           language: string
           manager_id: string
@@ -1775,6 +1776,7 @@ export type Database = {
           company_name: string
           created_at?: string
           difficulty?: string | null
+          engine_types?: string[] | null
           id?: string
           language?: string
           manager_id: string
@@ -1790,6 +1792,7 @@ export type Database = {
           company_name?: string
           created_at?: string
           difficulty?: string | null
+          engine_types?: string[] | null
           id?: string
           language?: string
           manager_id?: string
@@ -1868,6 +1871,7 @@ export type Database = {
           experience_tier: string
           id: string
           notes: string | null
+          overlay_kind: string
           rank_group: string
           scenario_weight: number
           senior_mode: boolean
@@ -1881,6 +1885,7 @@ export type Database = {
           experience_tier: string
           id?: string
           notes?: string | null
+          overlay_kind?: string
           rank_group: string
           scenario_weight?: number
           senior_mode?: boolean
@@ -1894,6 +1899,7 @@ export type Database = {
           experience_tier?: string
           id?: string
           notes?: string | null
+          overlay_kind?: string
           rank_group?: string
           scenario_weight?: number
           senior_mode?: boolean
@@ -1910,6 +1916,7 @@ export type Database = {
           availability_date: string | null
           created_at: string | null
           crew_profile_id: string | null
+          engine_experience: string[] | null
           expected_salary: string | null
           id: string
           medical_fit: boolean | null
@@ -1927,6 +1934,7 @@ export type Database = {
           availability_date?: string | null
           created_at?: string | null
           crew_profile_id?: string | null
+          engine_experience?: string[] | null
           expected_salary?: string | null
           id?: string
           medical_fit?: boolean | null
@@ -1944,6 +1952,7 @@ export type Database = {
           availability_date?: string | null
           created_at?: string | null
           crew_profile_id?: string | null
+          engine_experience?: string[] | null
           expected_salary?: string | null
           id?: string
           medical_fit?: boolean | null
@@ -2014,6 +2023,33 @@ export type Database = {
           questions?: Json | null
           resumed_count?: number | null
           seconds_left?: number | null
+        }
+        Relationships: []
+      }
+      interview_question_pool: {
+        Row: {
+          created_at: string
+          id: string
+          questions: Json
+          spec_key: string
+          tier: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          questions?: Json
+          spec_key: string
+          tier: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          questions?: Json
+          spec_key?: string
+          tier?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -3575,6 +3611,19 @@ export type Database = {
         Args: {
           p_contracts_in_rank: number
           p_cv_claims?: Json
+          p_rank: string
+          p_specialist?: string
+          p_vacancy_topics?: Json
+          p_vessel: string
+          p_years_in_rank: number
+        }
+        Returns: Json
+      }
+      resolve_interview_spec_v3: {
+        Args: {
+          p_contracts_in_rank: number
+          p_cv_claims?: Json
+          p_engine_types?: Json
           p_rank: string
           p_specialist?: string
           p_vacancy_topics?: Json
