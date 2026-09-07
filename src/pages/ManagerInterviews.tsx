@@ -11,6 +11,19 @@ const BORDER = "#1e3a5f";
 
 const RANKS = ["Master","Chief Officer","2nd Officer","3rd Officer","Chief Engineer","2nd Engineer","3rd Engineer","4th Engineer","ETO","Electrician","Bosun","AB","OS","Oiler","Fitter","Cook","Messman","Deck Cadet","Engine Cadet"];
 const VESSELS = ["Bulk Carrier","Oil Tanker","Chemical Tanker","LNG Carrier","Container","General Cargo","PSV / OSV","AHTS","Ro-Ro","Passenger"];
+const ENGINE_TYPES = [
+  { key: "MAN ME-C", label: "MAN ME-C" },
+  { key: "MAN MC", label: "MAN MC" },
+  { key: "WinGD X", label: "WinGD X" },
+  { key: "Dual-fuel (X-DF / ME-GI / ME-GA)", label: "Dual-fuel (X-DF / ME-GI / ME-GA)" },
+  { key: "Tier III SCR/EGR", label: "Tier III SCR/EGR" },
+  { key: "Scrubber", label: "Scrubber" },
+  { key: "Shaft generator/PTO", label: "Shaft generator/PTO" },
+  { key: "Battery hybrid", label: "Battery hybrid" },
+  { key: "Methanol/ammonia-ready", label: "Methanol/ammonia-ready" },
+  { key: "Medium-speed", label: "Medium-speed" },
+];
+
 const LANGS = [
   { code: "en", label: "English" },
   { code: "vi", label: "Tiếng Việt" },
@@ -38,6 +51,7 @@ const ManagerInterviews = () => {
   const [rank, setRank] = useState("");
   const [vessel, setVessel] = useState("");
   const [language, setLanguage] = useState("en");
+  const [engineTypes, setEngineTypes] = useState<string[]>([]);
 
   const load = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -68,9 +82,14 @@ const ManagerInterviews = () => {
       if (error) throw error;
       const res: any = data;
       if (!res?.ok) throw new Error(res?.error || "Could not create");
+      if (engineTypes.length && res?.campaign_id) {
+        await supabase.from("interview_campaigns" as any)
+          .update({ engine_types: engineTypes } as any)
+          .eq("id", res.campaign_id);
+      }
       toast.success("Interview created. Share the link with your candidates.");
       setCreating(false);
-      setTitle(""); setRank(""); setVessel(""); setLanguage("en");
+      setTitle(""); setRank(""); setVessel(""); setLanguage("en"); setEngineTypes([]);
       await load();
     } catch (e: any) {
       toast.error(e?.message || "Could not create the interview");
@@ -154,6 +173,27 @@ const ManagerInterviews = () => {
                 <option value="">Any vessel</option>
                 {VESSELS.map((v) => <option key={v} value={v}>{v}</option>)}
               </select>
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <label style={label}>Engine / technology (optional)</label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginTop: 7 }}>
+                {ENGINE_TYPES.map((e) => {
+                  const on = engineTypes.includes(e.key);
+                  return (
+                    <button key={e.key} type="button"
+                      onClick={() => setEngineTypes((s) => on ? s.filter((x) => x !== e.key) : [...s, e.key])}
+                      style={{
+                        padding: "7px 13px", borderRadius: 999, fontSize: 12.5, fontWeight: 700, cursor: "pointer",
+                        background: on ? GOLD : "transparent",
+                        color: on ? NAVY : GOLD,
+                        border: `1px solid ${on ? GOLD : "rgba(212,175,55,0.45)"}`,
+                      }}>{e.label}</button>
+                  );
+                })}
+              </div>
+              <p style={{ color: "#64748b", fontSize: 10.5, marginTop: 7, lineHeight: 1.5 }}>
+                Engineer and electrical candidates get extra questions on the technology you actually run.
+              </p>
             </div>
             <div style={{ marginBottom: 12 }}>
               <label style={label}>Interview language</label>
