@@ -247,33 +247,21 @@ Deno.serve(async (req) => {
   const behaviouralCount = isOfficer ? 5 : 4;
   const totalQuestions = mcqCount + scenarioCount + behaviouralCount;
 
-  // ── QUESTION BANK LOGIC ──
+  // ── RECALL SEED ONLY (question_bank is a seed, never a whole paper) ──
   const rankGroup = isOfficer ? 'OFFICER' : 'RATING';
-  const domains = isOfficer
-    ? [{ domain: 'safety', count: 10 }, { domain: 'security', count: 5 }, { domain: 'management', count: 8 }, { domain: 'technical', count: 7 }]
-    : [{ domain: 'safety', count: 4 }, { domain: 'security', count: 2 }, { domain: 'watchkeeping', count: 2 }, { domain: 'technical', count: 2 }];
-
+  const servedCount = isOfficer ? 15 : 12;
+  const recallSeedTarget = Math.max(2, Math.round(servedCount * 0.3));
   const bankMCQ: any[] = [];
-  let bankHasEnough = true;
-
-  for (const { domain, count } of domains) {
-    const { data: questions } = await adminClient
+  {
+    const { data: seeds } = await adminClient
       .from('question_bank')
       .select('*')
       .eq('rank_group', rankGroup)
-      .eq('domain', domain)
       .eq('active', true)
       .order('times_used', { ascending: true })
-      .limit(count * 3);
-
-    if (!questions || questions.length < count) {
-      bankHasEnough = false;
-      break;
-    }
-
-    const shuffled = questions.sort(() => Math.random() - 0.5).slice(0, count);
-
-    shuffled.forEach((q: any) => {
+      .limit(recallSeedTarget * 4);
+    const picked = ((seeds as any[]) || []).sort(() => Math.random() - 0.5).slice(0, recallSeedTarget);
+    for (const q of picked) {
       const options = typeof q.options === 'string' ? JSON.parse(q.options) : (q.options as string[]);
       const correctAnswer = options[q.correct_index];
       const shuffledOptions = [...options].sort(() => Math.random() - 0.5);
@@ -281,19 +269,18 @@ Deno.serve(async (req) => {
       bankMCQ.push({
         id: q.id,
         domain: q.domain,
+        level: 'recall',
+        weight: 1.0,
         question: q.question,
         options: shuffledOptions,
         correct_index: newCorrectIndex,
         correct_letter: ['A','B','C','D'][newCorrectIndex],
         regulation: q.regulation,
-        explanation: q.explanation
+        basis: q.regulation || 'established practice',
+        explanation: q.explanation,
       });
       adminClient.from('question_bank').update({ times_used: (q.times_used || 0) + 1 }).eq('id', q.id);
-    });
-  }
-
-  if (bankHasEnough && bankMCQ.length >= mcqCount) {
-    console.log(`Using ${bankMCQ.length} questions from question bank`);
+    }
   }
 
   // ── BUILD VESSEL SPECIALISATION CONTEXT ──
@@ -309,10 +296,38 @@ Deno.serve(async (req) => {
     GENERAL: "Use standard SOLAS, ISM, MLC, MARPOL questions relevant to the rank.",
   };
 
-  // ── AI INTERVIEW V2 — RESOLVE INTERVIEW SPEC (never blocks) ──
+  // ── ENGINE / TECHNOLOGY CONTEXT (campaign or candidate pre-form) ──
+  let engineTypes: string[] = [];
+  try {
+    if (_assessmentId) {
+      const { data: prog } = await adminClient
+        .from('interview_progress')
+        .select('campaign_id')
+        .eq('assessment_id', _assessmentId)
+        .maybeSingle();
+      if ((prog as any)?.campaign_id) {
+        const { data: camp } = await adminClient
+          .from('interview_campaigns')
+          .select('engine_types')
+          .eq('id', (prog as any).campaign_id)
+          .maybeSingle();
+        if (Array.isArray((camp as any)?.engine_types)) engineTypes = (camp as any).engine_types;
+      }
+      if (!engineTypes.length) {
+        const { data: pre } = await adminClient
+          .from('interview_pre_form')
+          .select('engine_experience')
+          .eq('assessment_id', _assessmentId)
+          .maybeSingle();
+        if (Array.isArray((pre as any)?.engine_experience)) engineTypes = (pre as any).engine_experience;
+      }
+    }
+  } catch (_e) { /* engine context optional */ }
+
+  // ── AI INTERVIEW V3 — RESOLVE INTERVIEW SPEC (never blocks) ──
   let spec: any = null;
   try {
-    const { data: specData } = await adminClient.rpc('resolve_interview_spec_v2', {
+    const { data: specData } = await adminClient.rpc('resolve_interview_spec_v3', {
       p_rank: rank,
       p_years_in_rank: yearsInRank ?? 2,
       p_contracts_in_rank: contractsInRank ?? 3,
@@ -320,6 +335,7 @@ Deno.serve(async (req) => {
       p_specialist: null,
       p_cv_claims: cvClaims,
       p_vacancy_topics: [],
+      p_engine_types: engineTypes,
     });
     spec = specData || null;
   } catch (_e) {
@@ -355,7 +371,9 @@ Deno.serve(async (req) => {
 Department: ${spec.department} · Rank group: ${spec.rank_group} · Seniority: ${spec.seniority} · Vessel family: ${spec.vessel_family}
 Base topics: ${list(spec.base_topics).join('; ') || 'n/a'}
 Seniority topics: ${list(spec.seniority_topics).join('; ') || 'n/a'}
-Vessel topics: ${list(spec.vessel_topics).join('; ') || 'n/a'}
+Vessel topics: ${list(spec.vessel_topics).join('; ') || 'n/a'}${spec.polar ? ' (POLAR / ice-class operation applies)' : ''}
+Engine technology topics (${list(spec.engine_keys).join(', ') || 'none declared'}): ${list(spec.engine_topics).join('; ') || 'n/a'}
+Modern regulation topics: ${list(spec.modern_reg_topics).join('; ') || 'n/a'}
 Specialist topics: ${list(spec.specialist_topics).join('; ') || 'n/a'}
 Split of judgement vs hard-knowledge emphasis: scenario weight ${spec.scenario_weight}% / technical weight ${spec.technical_weight}%.
 Scenario ambiguity level: ${spec.ambiguity_level}. ${String(spec.seniority) === 'VETERAN' ? 'Scenarios must be layered command situations with incomplete information, conflicting priorities and commercial pressure — but technical questions must STILL verify hard regulatory evidence.' : ''}
@@ -365,8 +383,24 @@ Note: ${spec.generation_note || ''}
 Apply this spec while keeping the exact question counts, difficulty scale and JSON output structure specified below.
 ` : '';
 
-  // ── DETERMINE WHAT GPT NEEDS TO GENERATE ──
-  const needGptMCQ = !bankHasEnough || bankMCQ.length < mcqCount;
+  // ── MCQ comes from the cached calibrated pool, never from the main call ──
+  const needGptMCQ = false;
+
+  // ── CALIBRATION DOCTRINE (identical for manager interviews and the crew SeaMinds Score) ──
+  const tierCharacter: Record<string, string> = {
+    JUNIOR: 'DEVELOPING — test procedures, correct order of steps and knowing when to call a senior.',
+    MID: 'EXPERIENCED — realistic situations with one twist that changes the correct action.',
+    SENIOR: 'SENIOR — prioritisation under conflicting operational, commercial and safety demands.',
+    EXPERT: 'SENIOR — prioritisation under conflicting operational, commercial and safety demands.',
+    COMMAND: 'VETERAN / COMMAND — command decisions, office pressure, crew management, PSC and vetting exposure.',
+  };
+  const rubric = `── CALIBRATION DOCTRINE (mandatory) ──
+Question mix: exactly 30% recall, 50% application, 20% judgment. Mark each question with "level" ("recall" | "application" | "judgment") and "weight" (recall 1.0, application 1.25, judgment 1.5).
+Pass reference: the AVERAGE COMPETENT holder of this rank on this vessel type — never the best officer in the fleet, never a textbook examiner.
+Distractors: plausible misconceptions a weak but real candidate actually holds. Never silly, never two defensible answers, never trick wording or double negatives.
+One skill per question. No compound questions.
+Every question carries "basis": the regulation, manufacturer family or established practice it rests on. The basis is hidden from the candidate and shown only in the manager report.
+Character of this paper: ${tierCharacter[experience_tier] || tierCharacter.MID}`;
 
   // ── MCQ DOMAIN DISTRIBUTION (only if GPT needed for MCQ) ──
   let mcqDistribution: string;
@@ -402,6 +436,7 @@ Classification: ${isOfficer ? 'OFFICER' : 'RATING'}
 
 VESSEL SPECIALISATION CONTEXT: ${shipContext[ship_specialisation] || shipContext.GENERAL}
 ${specBlock}
+${rubric}
 
 ${mcqSection}
 
@@ -489,9 +524,77 @@ Return ONLY valid JSON (no markdown, no explanation) in this EXACT structure:
   try { questions = JSON.parse(clean); }
   catch { questions = { mcq: [], scenario: [], behavioural: [] }; }
 
-  // ── USE BANK MCQ OR GPT MCQ ──
-  if (bankHasEnough && bankMCQ.length >= mcqCount) {
-    questions.mcq = bankMCQ;
+  // ── CALIBRATED MCQ POOL (≥40 per rank/vessel/engine/tier, cached 90 days) ──
+  const poolKey = `${spec?.spec_key || `${department}|${rank}|${ship_specialisation}`}`;
+  const servePool = (pool: any[]) => {
+    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+    const take = (lvl: string, n: number) => shuffled.filter((q) => q.level === lvl).slice(0, n);
+    const recall = take('recall', Math.round(servedCount * 0.3));
+    const application = take('application', Math.round(servedCount * 0.5));
+    const judgment = take('judgment', Math.round(servedCount * 0.2));
+    let picked = [...recall, ...application, ...judgment];
+    if (picked.length < servedCount) {
+      const ids = new Set(picked.map((q) => q.question));
+      picked = [...picked, ...shuffled.filter((q) => !ids.has(q.question))].slice(0, servedCount);
+    }
+    return picked.sort(() => Math.random() - 0.5);
+  };
+
+  const buildPool = async (): Promise<any[]> => {
+    const poolPrompt = `${userMessage.split('SECTION 2')[0]}
+
+Generate a POOL of exactly 40 multiple-choice questions for this profile.
+Follow the calibration doctrine exactly: 12 recall, 20 application, 8 judgment.
+Return ONLY valid JSON: {"pool":[{"id":"q1","domain":"safety|security|management|technical|watchkeeping","level":"recall|application|judgment","weight":1.0,"question":"...","options":["A. ...","B. ...","C. ...","D. ..."],"correct_index":0,"correct_letter":"A","basis":"regulation, manufacturer family or established practice","regulation":"...","explanation":"..."}]}`;
+    const t = Date.now();
+    const r = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${OPENAI_API_KEY}` },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [{ role: "system", content: systemPrompt }, { role: "user", content: poolPrompt }],
+        max_tokens: 12000,
+        temperature: 0.7,
+      }),
+    });
+    const d = await r.json();
+    await meterAi(adminClient, { userId: gate.userId, feature: "generate-smc-questions-pool", model: "gpt-4o-mini", usage: d?.usage, success: r.ok, latencyMs: Date.now() - t });
+    let parsed: any = {};
+    try { parsed = JSON.parse((d.choices?.[0]?.message?.content || '{}').replace(/```json|```/g, '').trim()); } catch { parsed = {}; }
+    const pool = Array.isArray(parsed.pool) ? parsed.pool : (Array.isArray(parsed.mcq) ? parsed.mcq : []);
+    if (pool.length) {
+      await adminClient.from('interview_question_pool').upsert(
+        { spec_key: poolKey, tier: experience_tier, questions: pool, updated_at: new Date().toISOString(), created_at: new Date().toISOString() },
+        { onConflict: 'spec_key,tier' },
+      );
+    }
+    return pool;
+  };
+
+  try {
+    const cutoff = new Date(Date.now() - 90 * 24 * 3600 * 1000).toISOString();
+    const { data: cached } = await adminClient
+      .from('interview_question_pool')
+      .select('questions, created_at')
+      .eq('spec_key', poolKey)
+      .eq('tier', experience_tier)
+      .gte('created_at', cutoff)
+      .maybeSingle();
+    let pool: any[] = Array.isArray((cached as any)?.questions) ? (cached as any).questions : [];
+    if (pool.length < 40) pool = await buildPool();
+    if (pool.length) {
+      const served = servePool(pool);
+      questions.mcq = served.length ? served : bankMCQ;
+    } else if (bankMCQ.length) {
+      questions.mcq = bankMCQ;
+    }
+  } catch (_e) {
+    if (bankMCQ.length) questions.mcq = bankMCQ;
+  }
+
+  // ── LEGACY BANK PATH (kept as final fallback) ──
+  if (Array.isArray(questions.mcq) && questions.mcq.length) {
+    // pool already served
   } else {
     // Save GPT-generated MCQ to question bank for future use
     const generatedMCQ = questions.mcq || [];
@@ -515,7 +618,7 @@ Return ONLY valid JSON (no markdown, no explanation) in this EXACT structure:
   }
 
   // Ensure candidate_context is always present
-  questions.candidate_context = { rank, vessel_type: vesselType, experience_tier, ship_specialisation, is_officer: isOfficer, mcq_count: mcqCount, total_questions: totalQuestions, interview_mode: interviewMode };
+  questions.candidate_context = { rank, vessel_type: vesselType, experience_tier, ship_specialisation, is_officer: isOfficer, mcq_count: (questions.mcq || []).length || mcqCount, total_questions: totalQuestions, interview_mode: interviewMode, engine_types: engineTypes, spec_key: spec?.spec_key || null, rank_group: spec?.rank_group || null, vessel_family: spec?.vessel_family || null, level_mix: { recall: 30, application: 50, judgment: 20 } };
 
   await recordProbedClaims();
 
