@@ -163,7 +163,8 @@ Return ONLY valid JSON, no markdown:
 
   // Any missing dimension falls back to the transcript average, not a fixed number
   const fb = Math.max(0, Math.min(5, Math.round(transcriptAvg * 100) / 100));
-  dims.technical = dims.technical ?? fb;
+  // Technical is measured, not opined: weighted correct / weighted total when available
+  dims.technical = weightedTechnical ?? dims.technical ?? fb;
   dims.judgment  = dims.judgment  ?? fb;
   dims.english   = dims.english   ?? fb;
   dims.behaviour = dims.behaviour ?? fb;
