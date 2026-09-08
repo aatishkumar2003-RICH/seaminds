@@ -42,6 +42,51 @@ Deno.serve(async (req) => {
   const { rank, firstName, transcript, candidateContext, assessmentId, redFlags } = await req.json();
 
   const hasTranscript = Array.isArray(transcript) && transcript.length > 0;
+
+  // ── Level profile: weighted performance by question level ──
+  const levelWeight = (t: any) => {
+    const w = Number(t?.weight);
+    if (isFinite(w) && w > 0) return w;
+    const lvl = String(t?.level || "").toLowerCase();
+    return lvl === "judgment" ? 1.5 : lvl === "application" ? 1.25 : 1.0;
+  };
+  const pctFor = (lvl: string) => {
+    const items = (hasTranscript ? transcript : []).filter(
+      (t: any) => String(t?.level || "recall").toLowerCase() === lvl
+    );
+    if (!items.length) return null;
+    let got = 0, tot = 0;
+    for (const t of items) {
+      const w = levelWeight(t);
+      got += w * Math.max(0, Math.min(10, Number(t?.score) || 0)) / 10;
+      tot += w;
+    }
+    return tot > 0 ? Math.round((got / tot) * 100) : null;
+  };
+  const recall_pct = pctFor("recall");
+  const application_pct = pctFor("application");
+  const judgment_pct = pctFor("judgment");
+  const verdict =
+    (recall_pct ?? 0) >= 70 && (judgment_pct ?? 100) < 50
+      ? "strong knowledge, unproven decision-making"
+      : (judgment_pct ?? 0) >= 70 && (recall_pct ?? 100) < 50
+      ? "sound judgment, weaker recall"
+      : "balanced";
+  const levelProfile = hasTranscript
+    ? { recall_pct, application_pct, judgment_pct, questions: transcript.length, verdict }
+    : null;
+
+  // Weighted technical performance across the whole paper (0.00–5.00)
+  let weightedTechnical: number | null = null;
+  if (hasTranscript) {
+    let got = 0, tot = 0;
+    for (const t of transcript) {
+      const w = levelWeight(t);
+      got += w * Math.max(0, Math.min(10, Number(t?.score) || 0)) / 10;
+      tot += w;
+    }
+    if (tot > 0) weightedTechnical = Math.round((got / tot) * 5 * 100) / 100;
+  }
   const transcriptText = hasTranscript
     ? transcript.map((t: any, i: number) => `Q${i+1}: ${t.question}\nAnswer: ${t.answer}\nScore: ${t.score}/10${t.redFlag ? ' [RED FLAG: '+t.redFlagCategory+']' : ''}${t.followUp ? '\nFollow-up: '+t.followUp : ''}`).join('\n\n')
     : 'No transcript available.';
@@ -118,7 +163,8 @@ Return ONLY valid JSON, no markdown:
 
   // Any missing dimension falls back to the transcript average, not a fixed number
   const fb = Math.max(0, Math.min(5, Math.round(transcriptAvg * 100) / 100));
-  dims.technical = dims.technical ?? fb;
+  // Technical is measured, not opined: weighted correct / weighted total when available
+  dims.technical = weightedTechnical ?? dims.technical ?? fb;
   dims.judgment  = dims.judgment  ?? fb;
   dims.english   = dims.english   ?? fb;
   dims.behaviour = dims.behaviour ?? fb;
@@ -153,6 +199,7 @@ Return ONLY valid JSON, no markdown:
     band,
     recommendation,
     scoring_version: "v1.1",
+    level_profile: levelProfile,
   };
 
   // ── Canonical write: only the service role may write scores (tamper trigger) ──
@@ -173,6 +220,7 @@ Return ONLY valid JSON, no markdown:
       english_score: dims.english,
       behavioural_score: dims.behaviour,
       overall_score: overall,
+      level_profile: levelProfile,
       score_band: band,
       recommendation,
       scoring_version: "v1.1",

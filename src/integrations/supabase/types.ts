@@ -3068,6 +3068,7 @@ export type Database = {
           id: string
           interview_mode: string | null
           judgment_score: number | null
+          level_profile: Json | null
           overall_score: number | null
           probed_claims: Json | null
           recommendation: string | null
@@ -3093,6 +3094,7 @@ export type Database = {
           id?: string
           interview_mode?: string | null
           judgment_score?: number | null
+          level_profile?: Json | null
           overall_score?: number | null
           probed_claims?: Json | null
           recommendation?: string | null
@@ -3118,6 +3120,7 @@ export type Database = {
           id?: string
           interview_mode?: string | null
           judgment_score?: number | null
+          level_profile?: Json | null
           overall_score?: number | null
           probed_claims?: Json | null
           recommendation?: string | null
