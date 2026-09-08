@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Copy, Users } from "lucide-react";
+import { ArrowLeft, Plus, Copy, Users, Mail } from "lucide-react";
 
 const GOLD = "#D4AF37";
 const NAVY = "#0D1B2A";
@@ -45,6 +45,12 @@ const ManagerInterviews = () => {
   const [openId, setOpenId] = useState<string | null>(null);
   const [board, setBoard] = useState<Record<string, any[]>>({});
   const [busy, setBusy] = useState(false);
+
+  // email invite dialog
+  const [inviteFor, setInviteFor] = useState<Campaign | null>(null);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteName, setInviteName] = useState("");
+  const [sending, setSending] = useState(false);
 
   // create form
   const [title, setTitle] = useState("");
@@ -118,6 +124,29 @@ const ManagerInterviews = () => {
   const shareWhatsApp = (c: Campaign) => {
     const msg = `⚓ You are invited to a SeaMinds interview\n\n${c.title}\nRank: ${c.rank_required}${c.vessel_type ? `\nVessel: ${c.vessel_type}` : ""}\n\nAbout 20 minutes. Free.\n\n${linkFor(c.open_link_token)}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+  };
+
+  const sendEmailInvite = async () => {
+    if (!inviteFor) return;
+    const email = inviteEmail.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { toast.error("Enter a valid email address."); return; }
+    setSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-interview-invite", {
+        body: { campaign_id: inviteFor.id, email, name: inviteName.trim() || undefined },
+      });
+      if (error) throw error;
+      const res: any = data;
+      if (!res?.ok) throw new Error(res?.error || "Could not send the invitation");
+      toast.success(res?.skipped === "already_sent"
+        ? `${email} was already invited in the last 24 hours`
+        : `Invitation emailed to ${email}`);
+      setInviteFor(null); setInviteEmail(""); setInviteName("");
+    } catch (e: any) {
+      toast.error(e?.message || "Could not send the invitation");
+    } finally {
+      setSending(false);
+    }
   };
 
   const input: React.CSSProperties = {
