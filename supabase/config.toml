@@ -119,3 +119,6 @@ verify_jwt = true
 verify_jwt = false
 
 
+
+[functions.send-interview-invite]
+verify_jwt = false
