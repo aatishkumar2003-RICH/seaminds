@@ -281,9 +281,13 @@ const ManagerInterviews = () => {
               </div>
 
               <div style={{ display: "flex", gap: 7, marginTop: 12, flexWrap: "wrap" }}>
+                <button onClick={() => { setInviteFor(c); setInviteEmail(""); setInviteName(""); }}
+                  style={{ flex: 1, minWidth: 150, padding: "9px 0", borderRadius: 10, border: "none", background: GOLD, color: NAVY, fontSize: 12.5, fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                  <Mail size={13} /> Email invite
+                </button>
                 <button onClick={() => shareWhatsApp(c)}
-                  style={{ flex: 1, minWidth: 130, padding: "9px 0", borderRadius: 10, border: "none", background: "#25D366", color: "#fff", fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}>
-                  Send on WhatsApp
+                  style={{ flex: 1, minWidth: 150, padding: "9px 0", borderRadius: 10, border: "none", background: "#25D366", color: "#fff", fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}>
+                  Send on WhatsApp (optional)
                 </button>
                 <button onClick={() => copyLink(c.open_link_token)}
                   style={{ padding: "9px 14px", borderRadius: 10, background: "transparent", color: GOLD, border: `1px solid ${GOLD}`, fontSize: 12.5, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
