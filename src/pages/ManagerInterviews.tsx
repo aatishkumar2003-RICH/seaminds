@@ -351,6 +351,39 @@ const ManagerInterviews = () => {
           ))}
         </div>
       </main>
+
+      {inviteFor && (
+        <div onClick={() => !sending && setInviteFor(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", display: "flex", alignItems: "center", justifyContent: "center", padding: 18, zIndex: 60 }}>
+          <div onClick={(e) => e.stopPropagation()}
+            style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 18, width: "100%", maxWidth: 400 }}>
+            <p style={{ color: GOLD, fontSize: 15, fontWeight: 800 }}>Email invite</p>
+            <p style={{ color: "#94a3b8", fontSize: 11.5, marginTop: 4 }}>{inviteFor.title}</p>
+
+            <div style={{ marginTop: 14 }}>
+              <label style={label}>Candidate email *</label>
+              <input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="candidate@example.com" style={input} />
+            </div>
+            <div style={{ marginTop: 12 }}>
+              <label style={label}>Candidate name (optional)</label>
+              <input value={inviteName} onChange={(e) => setInviteName(e.target.value)}
+                placeholder="e.g. Ravi Kumar" style={input} />
+            </div>
+
+            <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
+              <button onClick={sendEmailInvite} disabled={sending || !inviteEmail.trim()}
+                style={{ flex: 1, padding: "12px 0", borderRadius: 12, border: "none", background: GOLD, color: NAVY, fontWeight: 800, fontSize: 14, cursor: sending || !inviteEmail.trim() ? "default" : "pointer", opacity: sending || !inviteEmail.trim() ? 0.45 : 1 }}>
+                {sending ? "Sending…" : "Send"}
+              </button>
+              <button onClick={() => setInviteFor(null)} disabled={sending}
+                style={{ padding: "12px 18px", borderRadius: 12, background: "transparent", color: "#94a3b8", border: `1px solid ${BORDER}`, fontSize: 13, cursor: "pointer" }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
