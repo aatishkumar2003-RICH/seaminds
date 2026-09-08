@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Copy, Users } from "lucide-react";
+import { ArrowLeft, Plus, Copy, Users, Mail } from "lucide-react";
 
 const GOLD = "#D4AF37";
 const NAVY = "#0D1B2A";
@@ -45,6 +45,12 @@ const ManagerInterviews = () => {
   const [openId, setOpenId] = useState<string | null>(null);
   const [board, setBoard] = useState<Record<string, any[]>>({});
   const [busy, setBusy] = useState(false);
+
+  // email invite dialog
+  const [inviteFor, setInviteFor] = useState<Campaign | null>(null);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteName, setInviteName] = useState("");
+  const [sending, setSending] = useState(false);
 
   // create form
   const [title, setTitle] = useState("");
@@ -118,6 +124,29 @@ const ManagerInterviews = () => {
   const shareWhatsApp = (c: Campaign) => {
     const msg = `⚓ You are invited to a SeaMinds interview\n\n${c.title}\nRank: ${c.rank_required}${c.vessel_type ? `\nVessel: ${c.vessel_type}` : ""}\n\nAbout 20 minutes. Free.\n\n${linkFor(c.open_link_token)}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+  };
+
+  const sendEmailInvite = async () => {
+    if (!inviteFor) return;
+    const email = inviteEmail.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { toast.error("Enter a valid email address."); return; }
+    setSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-interview-invite", {
+        body: { campaign_id: inviteFor.id, email, name: inviteName.trim() || undefined },
+      });
+      if (error) throw error;
+      const res: any = data;
+      if (!res?.ok) throw new Error(res?.error || "Could not send the invitation");
+      toast.success(res?.skipped === "already_sent"
+        ? `${email} was already invited in the last 24 hours`
+        : `Invitation emailed to ${email}`);
+      setInviteFor(null); setInviteEmail(""); setInviteName("");
+    } catch (e: any) {
+      toast.error(e?.message || "Could not send the invitation");
+    } finally {
+      setSending(false);
+    }
   };
 
   const input: React.CSSProperties = {
@@ -252,9 +281,13 @@ const ManagerInterviews = () => {
               </div>
 
               <div style={{ display: "flex", gap: 7, marginTop: 12, flexWrap: "wrap" }}>
+                <button onClick={() => { setInviteFor(c); setInviteEmail(""); setInviteName(""); }}
+                  style={{ flex: 1, minWidth: 150, padding: "9px 0", borderRadius: 10, border: "none", background: GOLD, color: NAVY, fontSize: 12.5, fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                  <Mail size={13} /> Email invite
+                </button>
                 <button onClick={() => shareWhatsApp(c)}
-                  style={{ flex: 1, minWidth: 130, padding: "9px 0", borderRadius: 10, border: "none", background: "#25D366", color: "#fff", fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}>
-                  Send on WhatsApp
+                  style={{ flex: 1, minWidth: 150, padding: "9px 0", borderRadius: 10, border: "none", background: "#25D366", color: "#fff", fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}>
+                  Send on WhatsApp (optional)
                 </button>
                 <button onClick={() => copyLink(c.open_link_token)}
                   style={{ padding: "9px 14px", borderRadius: 10, background: "transparent", color: GOLD, border: `1px solid ${GOLD}`, fontSize: 12.5, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
@@ -318,6 +351,39 @@ const ManagerInterviews = () => {
           ))}
         </div>
       </main>
+
+      {inviteFor && (
+        <div onClick={() => !sending && setInviteFor(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", display: "flex", alignItems: "center", justifyContent: "center", padding: 18, zIndex: 60 }}>
+          <div onClick={(e) => e.stopPropagation()}
+            style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 18, width: "100%", maxWidth: 400 }}>
+            <p style={{ color: GOLD, fontSize: 15, fontWeight: 800 }}>Email invite</p>
+            <p style={{ color: "#94a3b8", fontSize: 11.5, marginTop: 4 }}>{inviteFor.title}</p>
+
+            <div style={{ marginTop: 14 }}>
+              <label style={label}>Candidate email *</label>
+              <input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="candidate@example.com" style={input} />
+            </div>
+            <div style={{ marginTop: 12 }}>
+              <label style={label}>Candidate name (optional)</label>
+              <input value={inviteName} onChange={(e) => setInviteName(e.target.value)}
+                placeholder="e.g. Ravi Kumar" style={input} />
+            </div>
+
+            <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
+              <button onClick={sendEmailInvite} disabled={sending || !inviteEmail.trim()}
+                style={{ flex: 1, padding: "12px 0", borderRadius: 12, border: "none", background: GOLD, color: NAVY, fontWeight: 800, fontSize: 14, cursor: sending || !inviteEmail.trim() ? "default" : "pointer", opacity: sending || !inviteEmail.trim() ? 0.45 : 1 }}>
+                {sending ? "Sending…" : "Send"}
+              </button>
+              <button onClick={() => setInviteFor(null)} disabled={sending}
+                style={{ padding: "12px 18px", borderRadius: 12, background: "transparent", color: "#94a3b8", border: `1px solid ${BORDER}`, fontSize: 13, cursor: "pointer" }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
