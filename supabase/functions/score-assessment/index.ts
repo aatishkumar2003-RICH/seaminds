@@ -219,6 +219,7 @@ Return ONLY valid JSON, no markdown:
       english_score: dims.english,
       behavioural_score: dims.behaviour,
       overall_score: overall,
+      level_profile: levelProfile,
       score_band: band,
       recommendation,
       scoring_version: "v1.1",
