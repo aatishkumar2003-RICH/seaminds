@@ -199,6 +199,7 @@ Return ONLY valid JSON, no markdown:
     band,
     recommendation,
     scoring_version: "v1.1",
+    level_profile: levelProfile,
   };
 
   // ── Canonical write: only the service role may write scores (tamper trigger) ──
