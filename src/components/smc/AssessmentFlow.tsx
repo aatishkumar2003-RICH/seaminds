@@ -54,6 +54,8 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   const [aiQuestions, setAiQuestions] = useState<any>(null);
   const [flatQuestions, setFlatQuestions] = useState<FlatQuestion[]>([]);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
+  const [questionError, setQuestionError] = useState<string | null>(null);
+  const [fetchAttempt, setFetchAttempt] = useState(0);
   const [qIndex, setQIndex] = useState(0);
 
   // MCQ state
