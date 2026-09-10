@@ -276,22 +276,23 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
         clearTimeout(timeoutId);
         if (data?.mcq || data?.scenario || data?.behavioural) {
           setAiQuestions(data);
+        } else {
+          setQuestionError('The assessment came back empty. Please try again.');
         }
       } catch (error: any) {
         clearTimeout(timeoutId);
         console.error('Failed to generate questions:', error);
-        await logEvent('smc_stuck', error.name === 'AbortError' ? 'SMC timed out' : error.message, 'error');
-        if (error.name === 'AbortError') {
-          alert('Assessment is taking too long. Please check your internet connection and try again.');
-        } else {
-          alert('Could not load assessment questions. Please try again.');
-        }
+        const msg = error?.name === 'AbortError'
+          ? 'Building your questions took too long. Please check your connection and try again.'
+          : (error?.message || 'Could not load assessment questions.');
+        await logEvent('smc_stuck', error?.name === 'AbortError' ? 'SMC timed out' : msg, 'error');
+        setQuestionError(msg);
       } finally {
         setLoadingQuestions(false);
       }
     };
     fetchQuestions();
-  }, [rank]);
+  }, [rank, fetchAttempt]);
 
   const handlePreFormSubmit = async () => {
     try {
