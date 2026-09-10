@@ -640,12 +640,36 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
 
   // ── QUESTION FLOW ──
   if (flowStep === 'questions') {
-    if (!flatQuestions.length || loadingQuestions) {
+    if (!flatQuestions.length || loadingQuestions || questionError) {
+      const showError = !!questionError && !loadingQuestions;
       return (
-        <div className="flex items-center justify-center h-full" style={{ background: '#0b1929' }}>
-          <div className="text-center space-y-3">
-            <Loader2 size={28} className="animate-spin mx-auto" style={{ color: '#D4AF37' }} />
-            <p className="text-sm font-semibold animate-pulse" style={{ color: '#D4AF37' }}>Preparing your personalised assessment...</p>
+        <div className="flex items-center justify-center h-full px-6" style={{ background: '#0b1929' }}>
+          <div className="text-center max-w-sm w-full space-y-4">
+            {showError ? (
+              <>
+                <p className="text-3xl">⚓</p>
+                <p className="text-base font-bold" style={{ color: '#fff' }}>We could not build your assessment</p>
+                <p className="text-[13px] leading-relaxed" style={{ color: '#94A3B8' }}>{questionError}</p>
+                <button
+                  onClick={() => { setQuestionError(null); setFetchAttempt(n => n + 1); }}
+                  className="w-full py-3 rounded-xl font-bold text-sm"
+                  style={{ background: '#D4AF37', color: '#0b1929' }}
+                >
+                  Retry
+                </button>
+              </>
+            ) : (
+              <>
+                <Loader2 size={30} className="animate-spin mx-auto" style={{ color: '#D4AF37' }} />
+                <p className="text-base font-bold" style={{ color: '#D4AF37' }}>Preparing your assessment…</p>
+                <p className="text-[13px] leading-relaxed" style={{ color: '#94A3B8' }}>
+                  Building 40 questions for {rank}{vesselType ? ` on ${vesselType}` : ''} — about a minute
+                </p>
+                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(212,175,55,0.15)' }}>
+                  <div className="h-full w-1/3 rounded-full animate-pulse" style={{ background: '#D4AF37' }} />
+                </div>
+              </>
+            )}
           </div>
         </div>
       );
