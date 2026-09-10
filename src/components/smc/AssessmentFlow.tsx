@@ -254,8 +254,9 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   useEffect(() => {
     const fetchQuestions = async () => {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000);
+      const timeoutId = setTimeout(() => controller.abort(), 240000);
       setLoadingQuestions(true);
+      setQuestionError(null);
       try {
         const token = accessToken;
         const invokePromise = supabase.functions.invoke('generate-smc-questions', {
