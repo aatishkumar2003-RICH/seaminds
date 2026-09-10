@@ -540,34 +540,159 @@ Return ONLY valid JSON (no markdown, no explanation) in this EXACT structure:
     return picked.sort(() => Math.random() - 0.5);
   };
 
-  const buildPool = async (): Promise<any[]> => {
-    const poolPrompt = `${userMessage.split('SECTION 2')[0]}
+  // ── LEVEL-LOCKED POOL BUILD: three separate calls, then a one-correct-answer validation pass ──
+  const poolBase = userMessage.split('SECTION 2')[0];
+  const LEVEL_WEIGHT: Record<string, number> = { recall: 1.0, application: 1.25, judgment: 1.5 };
+  const isCommandTier = experience_tier === 'COMMAND' || experience_tier === 'SENIOR' || experience_tier === 'EXPERT';
 
-Generate a POOL of exactly 40 multiple-choice questions for this profile.
-Follow the calibration doctrine exactly: 12 recall, 20 application, 8 judgment.
-Return ONLY valid JSON: {"pool":[{"id":"q1","domain":"safety|security|management|technical|watchkeeping","level":"recall|application|judgment","weight":1.0,"question":"...","options":["A. ...","B. ...","C. ...","D. ..."],"correct_index":0,"correct_letter":"A","basis":"regulation, manufacturer family or established practice","regulation":"...","explanation":"..."}]}`;
+  const vesselRealRule = `VESSEL-REAL REQUIREMENT (mandatory at this level):
+Every question must present a CONCRETE operational situation on a ${vesselType || ship_specialisation} — with real numbers, equipment names, cargo names, port/terminal constraints, weather or time pressure drawn from the vessel type and the spec topics above (for example on bulk carriers: BLU Code loading sequences, shear force and bending moment limits, hold flooding and damage stability, cargo liquefaction / TML and moisture content, self-unloader or grab damage, hatch cover weathertight integrity, ballast water exchange under D-1/D-2).
+FORBIDDEN at this level: any question of the form "what should you consider…", "which document…", "what is the definition of…", "which regulation covers…" — those are recall, not application or judgment. The candidate must choose an ACTION or a DECISION in a specific stated situation.`;
+
+  const commandRule = `TIER CHARACTER — COMMAND/SENIOR: every question must be a command dilemma with a genuine trade-off — office/charterer pressure, terminal or berth-window pressure, PSC or vetting (SIRE/RightShip) exposure, or crew safety versus schedule. Never pure recall, never a definition.`;
+
+  const levelSpec: Record<string, { n: number; instruction: string }> = {
+    recall: {
+      n: 12,
+      instruction: `Generate exactly 12 RECALL questions: hard regulatory or technical facts the average competent ${rank} must know cold (limits, thresholds, required entries, mandatory equipment). Each must cite its basis.`,
+    },
+    application: {
+      n: 20,
+      instruction: `Generate exactly 20 APPLICATION questions.\n${vesselRealRule}${isCommandTier ? `\n${commandRule}` : ''}`,
+    },
+    judgment: {
+      n: 8,
+      instruction: `Generate exactly 8 JUDGMENT questions: layered situations with incomplete information and conflicting priorities where the competent ${rank} must decide what to do FIRST or which risk to accept.\n${vesselRealRule}${isCommandTier ? `\n${commandRule}` : ''}`,
+    },
+  };
+
+  const logReject = async (reason: string, level: string, question: string) => {
+    try {
+      await adminClient.from('app_events').insert({
+        event_type: 'question_rejected',
+        message: reason,
+        severity: 'warning',
+        user_id: gate.userId,
+        metadata: { level, rank, vessel_type: vesselType, spec_key: poolKey, tier: experience_tier, question: (question || '').slice(0, 400) },
+      });
+    } catch (_e) { /* logging must never block generation */ }
+  };
+
+  const shapeOk = (q: any) =>
+    q && typeof q.question === 'string' && q.question.trim().length > 15 &&
+    Array.isArray(q.options) && q.options.length === 4 &&
+    Number.isInteger(q.correct_index) && q.correct_index >= 0 && q.correct_index <= 3;
+
+  const RECALL_FORMS = /^(what should you consider|which document|what is the definition|which regulation)/i;
+
+  const callLevel = async (level: string, want: number): Promise<any[]> => {
+    const prompt = `${poolBase}
+
+${levelSpec[level].instruction}
+
+EVERY question in this response must have "level":"${level}". Do not emit any other level.
+Each question has exactly 4 options (A–D) and EXACTLY ONE defensibly correct answer for a competent ${rank}. Distractors must be real misconceptions, never absurd, never a second defensible answer.
+Return ONLY valid JSON: {"pool":[{"id":"q1","domain":"safety|security|management|technical|watchkeeping","level":"${level}","weight":${LEVEL_WEIGHT[level]},"question":"...","options":["A. ...","B. ...","C. ...","D. ..."],"correct_index":0,"correct_letter":"A","basis":"regulation, manufacturer family or established practice","regulation":"...","explanation":"..."}]}`;
     const t = Date.now();
     const r = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${OPENAI_API_KEY}` },
       body: JSON.stringify({
         model: "gpt-4o-mini",
-        messages: [{ role: "system", content: systemPrompt }, { role: "user", content: poolPrompt }],
-        max_tokens: 12000,
+        messages: [{ role: "system", content: systemPrompt }, { role: "user", content: prompt }],
+        max_tokens: 8000,
         temperature: 0.7,
+        response_format: { type: "json_object" },
       }),
     });
     const d = await r.json();
-    await meterAi(adminClient, { userId: gate.userId, feature: "generate-smc-questions-pool", model: "gpt-4o-mini", usage: d?.usage, success: r.ok, latencyMs: Date.now() - t });
+    await meterAi(adminClient, { userId: gate.userId, feature: `generate-smc-questions-pool-${level}`, model: "gpt-4o-mini", usage: d?.usage, success: r.ok, latencyMs: Date.now() - t });
     let parsed: any = {};
     try { parsed = JSON.parse((d.choices?.[0]?.message?.content || '{}').replace(/```json|```/g, '').trim()); } catch { parsed = {}; }
-    const pool = Array.isArray(parsed.pool) ? parsed.pool : (Array.isArray(parsed.mcq) ? parsed.mcq : []);
+    const raw: any[] = Array.isArray(parsed.pool) ? parsed.pool : (Array.isArray(parsed.mcq) ? parsed.mcq : []);
+    const kept: any[] = [];
+    for (const q of raw) {
+      if (!shapeOk(q)) { await logReject('malformed question discarded', level, q?.question || ''); continue; }
+      if (String(q.level || '').toLowerCase() !== level) { await logReject(`level tag mismatch — model returned "${q.level}" for the ${level} call`, level, q.question); continue; }
+      if (level !== 'recall' && RECALL_FORMS.test(q.question.trim())) { await logReject('recall-shaped question returned at application/judgment level', level, q.question); continue; }
+      kept.push({ ...q, level, weight: LEVEL_WEIGHT[level], correct_letter: ['A', 'B', 'C', 'D'][q.correct_index], basis: q.basis || q.regulation || 'established practice' });
+    }
+    return kept.slice(0, want);
+  };
+
+  // Second cheap pass: exactly one defensibly correct option?
+  const validateBatch = async (batch: any[]): Promise<any[]> => {
+    if (!batch.length) return [];
+    const listing = batch.map((q, i) => `#${i + 1} Q: ${q.question}\nOptions: ${q.options.join(' | ')}\nMarked correct: ${q.options[q.correct_index]}`).join('\n\n');
+    const t = Date.now();
+    let verdicts: any[] = [];
+    try {
+      const r = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${OPENAI_API_KEY}` },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: "You are a maritime examination moderator. For each question decide: is exactly one option defensibly correct for a competent seafarer of the stated rank, and is the marked answer that option? Answer YES or NO with a short reason. Return ONLY JSON." },
+            { role: "user", content: `Rank: ${rank}. Vessel: ${vesselType || ship_specialisation}.\n\n${listing}\n\nReturn {"verdicts":[{"n":1,"answer":"YES|NO","reason":"..."}]} for every question.` },
+          ],
+          max_tokens: 3000,
+          temperature: 0,
+          response_format: { type: "json_object" },
+        }),
+      });
+      const d = await r.json();
+      await meterAi(adminClient, { userId: gate.userId, feature: "generate-smc-questions-validate", model: "gpt-4o-mini", usage: d?.usage, success: r.ok, latencyMs: Date.now() - t });
+      const parsed = JSON.parse((d.choices?.[0]?.message?.content || '{}').replace(/```json|```/g, '').trim());
+      verdicts = Array.isArray(parsed?.verdicts) ? parsed.verdicts : [];
+    } catch (_e) {
+      return batch; // validation failure must never empty the paper
+    }
+    if (!verdicts.length) return batch;
+    const bad = new Map<number, string>();
+    for (const v of verdicts) {
+      if (String(v?.answer || '').toUpperCase().startsWith('N')) bad.set(Number(v?.n), String(v?.reason || 'not exactly one defensible answer'));
+    }
+    const passed: any[] = [];
+    for (let i = 0; i < batch.length; i++) {
+      const reason = bad.get(i + 1);
+      if (reason) await logReject(`validator NO — ${reason}`, batch[i].level, batch[i].question);
+      else passed.push(batch[i]);
+    }
+    return passed;
+  };
+
+  const buildLevel = async (level: string): Promise<any[]> => {
+    const want = levelSpec[level].n;
+    let out: any[] = [];
+    for (let attempt = 0; attempt < 3 && out.length < want; attempt++) {
+      const fresh = await callLevel(level, want - out.length);
+      const validated = await validateBatch(fresh);
+      const seen = new Set(out.map((q) => q.question.trim().toLowerCase()));
+      for (const q of validated) {
+        const k = q.question.trim().toLowerCase();
+        if (seen.has(k)) continue;
+        seen.add(k);
+        out.push(q);
+      }
+    }
+    return out.slice(0, want);
+  };
+
+  const buildPool = async (): Promise<any[]> => {
+    const [recall, application, judgment] = await Promise.all([
+      buildLevel('recall'),
+      buildLevel('application'),
+      buildLevel('judgment'),
+    ]);
+    const pool = [...recall, ...application, ...judgment].map((q, i) => ({ ...q, id: q.id || `q${i + 1}` }));
     if (pool.length) {
       await adminClient.from('interview_question_pool').upsert(
         { spec_key: poolKey, tier: experience_tier, questions: pool, updated_at: new Date().toISOString(), created_at: new Date().toISOString() },
         { onConflict: 'spec_key,tier' },
       );
     }
+    console.log(`pool built: ${pool.length}/40 (recall ${recall.length}, application ${application.length}, judgment ${judgment.length})`);
     return pool;
   };
 
