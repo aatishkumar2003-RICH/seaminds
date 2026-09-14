@@ -23,24 +23,29 @@ Deno.serve(async (req) => {
   if (!gate.ok) return gate.response;
 
   const rateLimitKey = `generate-smc:${clientIP}`;
+  // Poll requests (waiting for a pool that is still building) must never burn the rate limit.
+  const isPoll = req.headers.get('x-pool-poll') === '1';
 
   const windowMs = 10 * 60 * 1000;
   const maxAttempts = 10;
-  const { data: rl } = await adminClient.from('auth_rate_limits').select('*').eq('ip_address', rateLimitKey).maybeSingle();
-  const now = Date.now();
-  if (rl) {
-    const windowStart = new Date(rl.window_start).getTime();
-    if (now - windowStart < windowMs && rl.attempt_count >= maxAttempts) {
-      return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please wait before continuing.' }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-    if (now - windowStart >= windowMs) {
-      await adminClient.from('auth_rate_limits').update({ attempt_count: 1, window_start: new Date().toISOString(), last_attempt: new Date().toISOString() }).eq('ip_address', rateLimitKey);
+  if (!isPoll) {
+    const { data: rl } = await adminClient.from('auth_rate_limits').select('*').eq('ip_address', rateLimitKey).maybeSingle();
+    const now = Date.now();
+    if (rl) {
+      const windowStart = new Date(rl.window_start).getTime();
+      if (now - windowStart < windowMs && rl.attempt_count >= maxAttempts) {
+        return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please wait before continuing.' }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      if (now - windowStart >= windowMs) {
+        await adminClient.from('auth_rate_limits').update({ attempt_count: 1, window_start: new Date().toISOString(), last_attempt: new Date().toISOString() }).eq('ip_address', rateLimitKey);
+      } else {
+        await adminClient.from('auth_rate_limits').update({ attempt_count: rl.attempt_count + 1, last_attempt: new Date().toISOString() }).eq('ip_address', rateLimitKey);
+      }
     } else {
-      await adminClient.from('auth_rate_limits').update({ attempt_count: rl.attempt_count + 1, last_attempt: new Date().toISOString() }).eq('ip_address', rateLimitKey);
+      await adminClient.from('auth_rate_limits').insert({ ip_address: rateLimitKey, attempt_count: 1, window_start: new Date().toISOString(), last_attempt: new Date().toISOString() });
     }
-  } else {
-    await adminClient.from('auth_rate_limits').insert({ ip_address: rateLimitKey, attempt_count: 1, window_start: new Date().toISOString(), last_attempt: new Date().toISOString() });
   }
+
 
   const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
   const { rank: _rank, vesselType: _vesselType, yearsExperience: _yearsExperience, department: _department, assessmentId: _assessmentId, mode: _mode } = await req.json();
