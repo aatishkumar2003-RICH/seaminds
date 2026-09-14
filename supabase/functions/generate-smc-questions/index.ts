@@ -6,6 +6,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-worker-secret, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// In-memory build locks per spec (belt-and-braces with the DB lock row)
+const POOL_LOCKS = new Map<string, number>();
+
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -23,24 +27,29 @@ Deno.serve(async (req) => {
   if (!gate.ok) return gate.response;
 
   const rateLimitKey = `generate-smc:${clientIP}`;
+  // Poll requests (waiting for a pool that is still building) must never burn the rate limit.
+  const isPoll = req.headers.get('x-pool-poll') === '1';
 
   const windowMs = 10 * 60 * 1000;
   const maxAttempts = 10;
-  const { data: rl } = await adminClient.from('auth_rate_limits').select('*').eq('ip_address', rateLimitKey).maybeSingle();
-  const now = Date.now();
-  if (rl) {
-    const windowStart = new Date(rl.window_start).getTime();
-    if (now - windowStart < windowMs && rl.attempt_count >= maxAttempts) {
-      return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please wait before continuing.' }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-    if (now - windowStart >= windowMs) {
-      await adminClient.from('auth_rate_limits').update({ attempt_count: 1, window_start: new Date().toISOString(), last_attempt: new Date().toISOString() }).eq('ip_address', rateLimitKey);
+  if (!isPoll) {
+    const { data: rl } = await adminClient.from('auth_rate_limits').select('*').eq('ip_address', rateLimitKey).maybeSingle();
+    const now = Date.now();
+    if (rl) {
+      const windowStart = new Date(rl.window_start).getTime();
+      if (now - windowStart < windowMs && rl.attempt_count >= maxAttempts) {
+        return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please wait before continuing.' }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      if (now - windowStart >= windowMs) {
+        await adminClient.from('auth_rate_limits').update({ attempt_count: 1, window_start: new Date().toISOString(), last_attempt: new Date().toISOString() }).eq('ip_address', rateLimitKey);
+      } else {
+        await adminClient.from('auth_rate_limits').update({ attempt_count: rl.attempt_count + 1, last_attempt: new Date().toISOString() }).eq('ip_address', rateLimitKey);
+      }
     } else {
-      await adminClient.from('auth_rate_limits').update({ attempt_count: rl.attempt_count + 1, last_attempt: new Date().toISOString() }).eq('ip_address', rateLimitKey);
+      await adminClient.from('auth_rate_limits').insert({ ip_address: rateLimitKey, attempt_count: 1, window_start: new Date().toISOString(), last_attempt: new Date().toISOString() });
     }
-  } else {
-    await adminClient.from('auth_rate_limits').insert({ ip_address: rateLimitKey, attempt_count: 1, window_start: new Date().toISOString(), last_attempt: new Date().toISOString() });
   }
+
 
   const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
   const { rank: _rank, vesselType: _vesselType, yearsExperience: _yearsExperience, department: _department, assessmentId: _assessmentId, mode: _mode } = await req.json();
@@ -499,31 +508,6 @@ Return ONLY valid JSON (no markdown, no explanation) in this EXACT structure:
 
   if (await aiPaused(adminClient)) return aiPausedResponse(corsHeaders);
 
-  const _t0 = Date.now();
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${OPENAI_API_KEY}` },
-    body: JSON.stringify({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userMessage }
-      ],
-      max_tokens: 8000,
-      temperature: 0.7,
-    }),
-  });
-
-  const data = await response.json();
-  await meterAi(adminClient, { userId: gate.userId, feature: "generate-smc-questions", model: "gpt-4o-mini", usage: data?.usage, success: response.ok, latencyMs: Date.now() - _t0 });
-
-  const text = data.choices?.[0]?.message?.content || "{}";
-  const clean = text.replace(/```json|```/g, "").trim();
-
-  let questions;
-  try { questions = JSON.parse(clean); }
-  catch { questions = { mcq: [], scenario: [], behavioural: [] }; }
-
   // ── CALIBRATED MCQ POOL (≥40 per rank/vessel/engine/tier, cached 90 days) ──
   const poolKey = `${spec?.spec_key || `${department}|${rank}|${ship_specialisation}`}`;
   const servePool = (pool: any[]) => {
@@ -540,7 +524,7 @@ Return ONLY valid JSON (no markdown, no explanation) in this EXACT structure:
     return picked.sort(() => Math.random() - 0.5);
   };
 
-  // ── LEVEL-LOCKED POOL BUILD: three separate calls, then a one-correct-answer validation pass ──
+  // ── LEVEL-LOCKED POOL BUILD: three parallel calls, then a one-correct-answer validation pass ──
   const poolBase = userMessage.split('SECTION 2')[0];
   const LEVEL_WEIGHT: Record<string, number> = { recall: 1.0, application: 1.25, judgment: 1.5 };
   const isCommandTier = experience_tier === 'COMMAND' || experience_tier === 'SENIOR' || experience_tier === 'EXPERT';
@@ -662,13 +646,21 @@ Return ONLY valid JSON: {"pool":[{"id":"q1","domain":"safety|security|management
     return passed;
   };
 
+  // Validate candidates in parallel batches of 10
+  const validateAll = async (candidates: any[]): Promise<any[]> => {
+    const chunks: any[][] = [];
+    for (let i = 0; i < candidates.length; i += 10) chunks.push(candidates.slice(i, i + 10));
+    const results = await Promise.all(chunks.map((c) => validateBatch(c)));
+    return results.flat();
+  };
+
   const buildLevel = async (level: string): Promise<any[]> => {
     const want = levelSpec[level].n;
-    let out: any[] = [];
+    const out: any[] = [];
+    const seen = new Set<string>();
     for (let attempt = 0; attempt < 3 && out.length < want; attempt++) {
       const fresh = await callLevel(level, want - out.length);
-      const validated = await validateBatch(fresh);
-      const seen = new Set(out.map((q) => q.question.trim().toLowerCase()));
+      const validated = await validateAll(fresh);
       for (const q of validated) {
         const k = q.question.trim().toLowerCase();
         if (seen.has(k)) continue;
@@ -679,23 +671,53 @@ Return ONLY valid JSON: {"pool":[{"id":"q1","domain":"safety|security|management
     return out.slice(0, want);
   };
 
-  const buildPool = async (): Promise<any[]> => {
-    const [recall, application, judgment] = await Promise.all([
-      buildLevel('recall'),
-      buildLevel('application'),
-      buildLevel('judgment'),
-    ]);
-    const pool = [...recall, ...application, ...judgment].map((q, i) => ({ ...q, id: q.id || `q${i + 1}` }));
-    if (pool.length) {
-      await adminClient.from('interview_question_pool').upsert(
-        { spec_key: poolKey, tier: experience_tier, questions: pool, updated_at: new Date().toISOString(), created_at: new Date().toISOString() },
-        { onConflict: 'spec_key,tier' },
-      );
-    }
-    console.log(`pool built: ${pool.length}/40 (recall ${recall.length}, application ${application.length}, judgment ${judgment.length})`);
-    return pool;
+  const lockKey = `pool_lock:${poolKey}|${experience_tier}`;
+  const LOCK_MS = 10 * 60 * 1000;
+  const releaseLock = async () => {
+    POOL_LOCKS.delete(lockKey);
+    try { await adminClient.from('admin_settings').delete().eq('key', lockKey); } catch (_e) { /* ignore */ }
   };
 
+  const buildPool = async (): Promise<void> => {
+    try {
+      const [recall, application, judgment] = await Promise.all([
+        buildLevel('recall'),
+        buildLevel('application'),
+        buildLevel('judgment'),
+      ]);
+      const pool = [...recall, ...application, ...judgment].map((q, i) => ({ ...q, id: q.id || `q${i + 1}` }));
+      if (pool.length >= 40) {
+        await adminClient.from('interview_question_pool').upsert(
+          { spec_key: poolKey, tier: experience_tier, questions: pool, updated_at: new Date().toISOString(), created_at: new Date().toISOString() },
+          { onConflict: 'spec_key,tier' },
+        );
+        console.log(`pool built: ${pool.length}/40 (recall ${recall.length}, application ${application.length}, judgment ${judgment.length})`);
+      } else {
+        await adminClient.from('app_events').insert({
+          event_type: 'pool_build_failed',
+          message: `only ${pool.length}/40 validated questions (recall ${recall.length}, application ${application.length}, judgment ${judgment.length})`,
+          severity: 'error',
+          user_id: gate.userId,
+          metadata: { spec_key: poolKey, tier: experience_tier, rank, vessel_type: vesselType, built: pool.length },
+        });
+      }
+    } catch (e: any) {
+      try {
+        await adminClient.from('app_events').insert({
+          event_type: 'pool_build_failed',
+          message: (e?.message || 'pool generation threw').toString().slice(0, 400),
+          severity: 'error',
+          user_id: gate.userId,
+          metadata: { spec_key: poolKey, tier: experience_tier, rank, vessel_type: vesselType },
+        });
+      } catch (_e) { /* ignore */ }
+    } finally {
+      await releaseLock();
+    }
+  };
+
+  // ── CACHE FIRST: never make the candidate wait behind a paper that already exists ──
+  let pool: any[] = [];
   try {
     const cutoff = new Date(Date.now() - 90 * 24 * 3600 * 1000).toISOString();
     const { data: cached } = await adminClient
@@ -705,17 +727,67 @@ Return ONLY valid JSON: {"pool":[{"id":"q1","domain":"safety|security|management
       .eq('tier', experience_tier)
       .gte('created_at', cutoff)
       .maybeSingle();
-    let pool: any[] = Array.isArray((cached as any)?.questions) ? (cached as any).questions : [];
-    if (pool.length < 40) pool = await buildPool();
-    if (pool.length) {
-      const served = servePool(pool);
-      questions.mcq = served.length ? served : bankMCQ;
-    } else if (bankMCQ.length) {
-      questions.mcq = bankMCQ;
+    pool = Array.isArray((cached as any)?.questions) ? (cached as any).questions : [];
+  } catch (_e) { pool = []; }
+
+  if (pool.length < 40) {
+    // Pool missing — answer immediately and build in the background, one build per spec.
+    let alreadyBuilding = false;
+    const memLock = POOL_LOCKS.get(lockKey);
+    if (memLock && Date.now() - memLock < LOCK_MS) alreadyBuilding = true;
+    if (!alreadyBuilding) {
+      try {
+        const { data: lockRow } = await adminClient.from('admin_settings').select('value').eq('key', lockKey).maybeSingle();
+        const ts = (lockRow as any)?.value ? Date.parse((lockRow as any).value) : 0;
+        if (ts && Date.now() - ts < LOCK_MS) alreadyBuilding = true;
+      } catch (_e) { /* ignore */ }
     }
+    if (!alreadyBuilding) {
+      POOL_LOCKS.set(lockKey, Date.now());
+      try {
+        await adminClient.from('admin_settings').upsert({ key: lockKey, value: new Date().toISOString() }, { onConflict: 'key' });
+      } catch (_e) { /* ignore */ }
+      const task = buildPool();
+      try { (globalThis as any).EdgeRuntime?.waitUntil?.(task); } catch (_e) { /* ignore */ }
+    }
+    return new Response(
+      JSON.stringify({ status: 'building', spec_key: poolKey }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
+
+  const _t0 = Date.now();
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${OPENAI_API_KEY}` },
+    body: JSON.stringify({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userMessage }
+      ],
+      max_tokens: 8000,
+      temperature: 0.7,
+    }),
+  });
+
+  const data = await response.json();
+  await meterAi(adminClient, { userId: gate.userId, feature: "generate-smc-questions", model: "gpt-4o-mini", usage: data?.usage, success: response.ok, latencyMs: Date.now() - _t0 });
+
+  const text = data.choices?.[0]?.message?.content || "{}";
+  const clean = text.replace(/```json|```/g, "").trim();
+
+  let questions;
+  try { questions = JSON.parse(clean); }
+  catch { questions = { mcq: [], scenario: [], behavioural: [] }; }
+
+  try {
+    const served = servePool(pool);
+    questions.mcq = served.length ? served : bankMCQ;
   } catch (_e) {
     if (bankMCQ.length) questions.mcq = bankMCQ;
   }
+
 
   // ── LEGACY BANK PATH (kept as final fallback) ──
   if (Array.isArray(questions.mcq) && questions.mcq.length) {
