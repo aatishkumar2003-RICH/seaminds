@@ -250,49 +250,67 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     setFlatQuestions(flat);
   }, [aiQuestions]);
 
-  // Fetch questions
+  // Fetch questions — the first paper for a rank/vessel is built in the background,
+  // so we poll every 5 seconds for up to 6 minutes instead of timing out.
   useEffect(() => {
+    let cancelled = false;
+
+    const callOnce = async (poll: boolean) => {
+      const { data, error } = await supabase.functions.invoke('generate-smc-questions', {
+        body: {
+          rank,
+          assessmentId,
+          mode: interviewMode,
+          ...(vesselType ? { vesselType } : {}),
+          ...(yearsExperience ? { yearsExperience } : {}),
+        },
+        headers: poll
+          ? { Authorization: `Bearer ${accessToken}`, 'x-pool-poll': '1' }
+          : { Authorization: `Bearer ${accessToken}` },
+      });
+      if (error) throw error;
+      return data as any;
+    };
+
     const fetchQuestions = async () => {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 240000);
       setLoadingQuestions(true);
       setQuestionError(null);
+      const deadline = Date.now() + 6 * 60 * 1000;
+      let poll = false;
       try {
-        const token = accessToken;
-        const invokePromise = supabase.functions.invoke('generate-smc-questions', {
-          body: {
-            rank,
-            assessmentId,
-            mode: interviewMode,
-            ...(vesselType ? { vesselType } : {}),
-            ...(yearsExperience ? { yearsExperience } : {}),
-          },
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const abortPromise = new Promise<never>((_, reject) => {
-          controller.signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
-        });
-        const { data } = await Promise.race([invokePromise, abortPromise]);
-        clearTimeout(timeoutId);
-        if (data?.mcq || data?.scenario || data?.behavioural) {
-          setAiQuestions(data);
-        } else {
-          setQuestionError('The assessment came back empty. Please try again.');
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+          const data = await callOnce(poll);
+          if (cancelled) return;
+          if (data?.mcq || data?.scenario || data?.behavioural) {
+            setAiQuestions(data);
+            return;
+          }
+          if (data?.status === 'building') {
+            if (Date.now() >= deadline) {
+              throw new Error('Your question paper is still being built. Please try again in a few minutes.');
+            }
+            poll = true;
+            await new Promise((r) => setTimeout(r, 5000));
+            continue;
+          }
+          throw new Error(data?.error || 'The assessment came back empty. Please try again.');
         }
       } catch (error: any) {
-        clearTimeout(timeoutId);
+        if (cancelled) return;
         console.error('Failed to generate questions:', error);
-        const msg = error?.name === 'AbortError'
-          ? 'Building your questions took too long. Please check your connection and try again.'
-          : (error?.message || 'Could not load assessment questions.');
-        await logEvent('smc_stuck', error?.name === 'AbortError' ? 'SMC timed out' : msg, 'error');
+        const msg = error?.message || 'Could not load assessment questions.';
+        await logEvent('smc_stuck', msg, 'error');
         setQuestionError(msg);
       } finally {
-        setLoadingQuestions(false);
+        if (!cancelled) setLoadingQuestions(false);
       }
     };
+
     fetchQuestions();
+    return () => { cancelled = true; };
   }, [rank, fetchAttempt]);
+
 
   const handlePreFormSubmit = async () => {
     try {
