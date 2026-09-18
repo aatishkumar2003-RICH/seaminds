@@ -1,0 +1,3680 @@
+{
+  "id": "bulk-carrier-pre-management-v1",
+  "version": 1,
+  "name": "Bulk Carrier Pre-Management Takeover Inspection",
+  "source_file": "Bulk_Carrier_Pre_Management_Takeover_Inspection_Checklist.xlsx",
+  "source_sha256": "6D491CE6903EBCEAD02F61B44B95DE37F037B8274316C0461250992ABF8ACFB7",
+  "notes": "Exact source template data. Blank observation cells are intentionally absent. Formula strings are reference material, not observed results. Quantities are template recommendations until confirmed against vessel-specific requirements.",
+  "groups": [
+    {
+      "sheet": "Master Checklist",
+      "headers": {
+        "A": "Ref",
+        "B": "Section",
+        "C": "Item",
+        "D": "Detailed inspection / test to be carried out",
+        "E": "Takeover acceptance / minimum condition",
+        "F": "Evidence / records to sight",
+        "G": "Photo required",
+        "H": "Result",
+        "I": "Grade 1-5",
+        "J": "Criticality",
+        "K": "Remarks / deficiency",
+        "L": "Photo ID(s)",
+        "M": "Immediate action / recommendation",
+        "N": "Est. cost USD",
+        "O": "Responsible",
+        "P": "Due date"
+      },
+      "item_count": 119,
+      "items": [
+        {
+          "source_row": 2,
+          "ref": "1",
+          "cells": {
+            "A": "1",
+            "B": "A. Pre-boarding & Records",
+            "C": "Vessel particulars / ownership / management",
+            "D": "Verify vessel name, IMO, flag, port of registry, class, owner, DOC company, technical manager, crew manager, P&I, H&M and trading area. Cross-check all against certificates and class status.",
+            "E": "All identities consistent; no unresolved ownership/manager discrepancy.",
+            "F": "Registry, CSR, DOC/SMC, P&I entry",
+            "G": "N",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 3,
+          "ref": "2",
+          "cells": {
+            "A": "2",
+            "B": "A. Pre-boarding & Records",
+            "C": "Current class status",
+            "D": "Obtain current class status report directly from vessel/office. Review class notation, survey status, Conditions of Class, Recommendations, Memoranda, overdue items, damage surveys and outstanding statutory recommendations.",
+            "E": "No overdue class/statutory item affecting safe trading. Any open item has agreed rectification plan, budget and class acceptance.",
+            "F": "Latest class status report",
+            "G": "N",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 4,
+          "ref": "3",
+          "cells": {
+            "A": "3",
+            "B": "A. Pre-boarding & Records",
+            "C": "Statutory certificate matrix",
+            "D": "Check issue/expiry/endorsement dates and survey windows for all statutory certificates; compare originals onboard with office matrix.",
+            "E": "No expired certificate; no survey overdue; upcoming 180/90/60/30-day items identified.",
+            "F": "Certificate originals + matrix",
+            "G": "N",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 5,
+          "ref": "4",
+          "cells": {
+            "A": "4",
+            "B": "A. Pre-boarding & Records",
+            "C": "PSC / Flag / RightShip history",
+            "D": "Review last 36 months PSC, flag, class and RightShip/RISQ reports. Identify repeat deficiencies, detentions, ISM-related findings and unresolved CAPA.",
+            "E": "All findings closed with objective evidence; repeat deficiencies specifically risk-assessed.",
+            "F": "PSC Form A/B, flag/class reports, RISQ",
+            "G": "N",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 6,
+          "ref": "5",
+          "cells": {
+            "A": "5",
+            "B": "A. Pre-boarding & Records",
+            "C": "ISM internal/external audits",
+            "D": "Review last internal audit, SMC audit, DOC-related vessel findings, NCs and corrective actions. Interview Master/CE on open findings.",
+            "E": "No overdue NC/CAPA; evidence supports closure; crew familiar with current SMS.",
+            "F": "Audit reports, CAPA log",
+            "G": "N",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 7,
+          "ref": "6",
+          "cells": {
+            "A": "6",
+            "B": "A. Pre-boarding & Records",
+            "C": "PMS database and backlog",
+            "D": "Open live PMS with Chief Engineer. Export overdue jobs by department, critical equipment jobs, postponed jobs and jobs overdue >30/>90 days. Sample-check completion evidence against engine/deck logs.",
+            "E": "Critical PMS overdue = 0. Any non-critical backlog quantified and takeover rectification plan agreed.",
+            "F": "PMS export/screenshots, logs",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 8,
+          "ref": "7",
+          "cells": {
+            "A": "7",
+            "B": "A. Pre-boarding & Records",
+            "C": "Critical equipment list",
+            "D": "Verify SMS/PMS list of critical equipment and operational tests. Confirm redundancy arrangements and last test dates.",
+            "E": "Company-approved critical equipment list exists; critical failures/degraded redundancy explicitly recorded.",
+            "F": "SMS critical equipment list, test logs",
+            "G": "N",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 9,
+          "ref": "8",
+          "cells": {
+            "A": "8",
+            "B": "A. Pre-boarding & Records",
+            "C": "Current defect list",
+            "D": "Review deck, engine, electrical, cargo gear and safety defect lists. Reconcile with PMS, class status, requisitions and superintendent reports.",
+            "E": "One consolidated defect register. No unrecorded safety-critical defect.",
+            "F": "Defect list, requisitions, reports",
+            "G": "N",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 10,
+          "ref": "9",
+          "cells": {
+            "A": "9",
+            "B": "A. Pre-boarding & Records",
+            "C": "Open requisitions / purchase orders",
+            "D": "Review all open requisitions/POs, especially safety-critical and machinery spares. Confirm delivery location/status and budget commitment.",
+            "E": "No safety-critical requisition stalled without approved action or substitute.",
+            "F": "Open PR/PO report",
+            "G": "N",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 11,
+          "ref": "10",
+          "cells": {
+            "A": "10",
+            "B": "A. Pre-boarding & Records",
+            "C": "Main engine maintenance history",
+            "D": "Review last 24 months overhaul reports, performance reports, indicator cards, liner/piston/exhaust valve records, turbocharger service, crankcase inspections and alarm history.",
+            "E": "History traceable; next major maintenance and remaining running hours known.",
+            "F": "Overhaul reports, PMS, performance data",
+            "G": "N",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 12,
+          "ref": "11",
+          "cells": {
+            "A": "11",
+            "B": "A. Pre-boarding & Records",
+            "C": "Auxiliary engine maintenance history",
+            "D": "Review running hours, major overhaul dates, load test/performance, black-start readiness, repeated alarms and lube oil trends.",
+            "E": "At least required generating redundancy is dependable; no unresolved repeated load-sharing problem.",
+            "F": "PMS, overhaul & load-test reports",
+            "G": "N",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 13,
+          "ref": "12",
+          "cells": {
+            "A": "12",
+            "B": "A. Pre-boarding & Records",
+            "C": "Lube oil / fuel / cooling water analysis",
+            "D": "Review trend reports, abnormal alerts and closure actions for ME, AE, gear/shaft, hydraulics, boiler/cooling water and fuel quality.",
+            "E": "No uninvestigated abnormal trend; latest samples within company/maker interval.",
+            "F": "Lab reports and treatment logs",
+            "G": "N",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 14,
+          "ref": "13",
+          "cells": {
+            "A": "13",
+            "B": "A. Pre-boarding & Records",
+            "C": "Dry dock / repair history",
+            "D": "Review last docking specification, completion report, underwater repairs, propeller/rudder/shaft measurements, sea valves, thickness measurements and next docking due.",
+            "E": "Major repair history understood; no deferred docking work creating takeover risk.",
+            "F": "DD report, UTM, repair invoices",
+            "G": "N",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 15,
+          "ref": "14",
+          "cells": {
+            "A": "14",
+            "B": "A. Pre-boarding & Records",
+            "C": "Breakdown / off-hire / casualty history",
+            "D": "Review at least previous 24–36 months breakdowns, off-hire, towage, grounding/contact, major repairs and insurance claims. Reconcile with logbooks and service records.",
+            "E": "All material events declared and technically closed; residual risks identified.",
+            "F": "Breakdown log, claims, logbook abstracts",
+            "G": "N",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 16,
+          "ref": "15",
+          "cells": {
+            "A": "15",
+            "B": "A. Pre-boarding & Records",
+            "C": "Fuel / lube / water / power performance",
+            "D": "Compare 12-month consumption and speed records with charter/owner figures. Identify deterioration, abnormal cylinder oil, AE fuel, freshwater or electrical load.",
+            "E": "Baseline established for takeover; abnormal consumption investigated.",
+            "F": "Noon reports, bunker records, performance reports",
+            "G": "N",
+            "J": "Medium"
+          }
+        },
+        {
+          "source_row": 17,
+          "ref": "16",
+          "cells": {
+            "A": "16",
+            "B": "B. Opening Meeting",
+            "C": "Master / CE takeover briefing",
+            "D": "Explain inspection scope. Ask Master and CE separately for their top five technical/safety concerns, recurring defects, spare shortages and expected major jobs next 6 months.",
+            "E": "Concerns recorded verbatim and cross-checked during inspection.",
+            "F": "Opening meeting notes",
+            "G": "N",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 18,
+          "ref": "17",
+          "cells": {
+            "A": "17",
+            "B": "B. Opening Meeting",
+            "C": "Crew competence / familiarization sample",
+            "D": "Interview OOW, 2/E, 3/E, bosun and key ratings on emergency duties, critical equipment, enclosed space, hot work, steering emergency operation, OWS and cargo hold water ingress alarms.",
+            "E": "Key personnel demonstrate practical familiarity; gaps entered as takeover training actions.",
+            "F": "Interview notes",
+            "G": "N",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 19,
+          "ref": "18",
+          "cells": {
+            "A": "18",
+            "B": "C. Hull & Deck",
+            "C": "External hull / visible shell",
+            "D": "Inspect visible shell, bow/stern, draft marks, load line, damage, buckling, wastage, temporary repairs and sea-chest/discharge areas where visible.",
+            "E": "No significant deformation, uncontrolled corrosion or temporary repair affecting seaworthiness.",
+            "F": "Visual inspection",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 20,
+          "ref": "19",
+          "cells": {
+            "A": "19",
+            "B": "C. Hull & Deck",
+            "C": "Main deck plating and structure",
+            "D": "Walk full weather deck. Inspect corrosion, grooving, cracks, wasted doublers, welded repairs, deck penetrations and coating breakdown.",
+            "E": "No structural defect requiring class notification; suspect areas measured/referred.",
+            "F": "Visual + class/UTM records",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 21,
+          "ref": "20",
+          "cells": {
+            "A": "20",
+            "B": "C. Hull & Deck",
+            "C": "Air pipes / vents / sounding caps",
+            "D": "Inspect heads, floats, flame screens where fitted, gaskets, closing devices, caps and corrosion at deck penetration.",
+            "E": "All closing devices functional; no holed/wasted heads; markings legible.",
+            "F": "Visual/function test",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 22,
+          "ref": "21",
+          "cells": {
+            "A": "21",
+            "B": "C. Hull & Deck",
+            "C": "Watertight / weathertight doors and openings",
+            "D": "Inspect and operate representative doors, manholes, skylights, store doors and engine casing closures; check gaskets, dogs and remote indications.",
+            "E": "All required closures close effectively and are not seized or defeated.",
+            "F": "Visual/function test",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 23,
+          "ref": "22",
+          "cells": {
+            "A": "22",
+            "B": "C. Hull & Deck",
+            "C": "Ballast tank sample inspection",
+            "D": "Enter only gas-freed tanks under permit. Select representative forward/midship/aft tanks if possible. Inspect coating, corrosion, frames, brackets, ladders, piping, anodes and mud accumulation.",
+            "E": "No serious structural defect; coating condition and corrosion risk graded; inaccessible tanks supported by latest internal inspection photos/report.",
+            "F": "Tank inspection report, photos",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 24,
+          "ref": "23",
+          "cells": {
+            "A": "23",
+            "B": "C. Hull & Deck",
+            "C": "Forepeak / aftpeak / void spaces",
+            "D": "Inspect accessible spaces for corrosion, leakage, coating, piping and cleanliness.",
+            "E": "No active leakage or serious wastage; access arrangements safe.",
+            "F": "Visual",
+            "G": "Y",
+            "J": "Medium"
+          }
+        },
+        {
+          "source_row": 25,
+          "ref": "24",
+          "cells": {
+            "A": "24",
+            "B": "D. Cargo Holds & Hatch Covers",
+            "C": "Cargo hold structure",
+            "D": "Inspect each accessible hold: side frames, lower/upper brackets, hopper/topside areas, tank top, bulkheads, stool areas and previous repairs. Note cracks, buckling, indentations and heavy corrosion.",
+            "E": "No visible structural damage requiring immediate class attendance; all suspect areas photographed and located.",
+            "F": "Hold photos, UTM, class history",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 26,
+          "ref": "25",
+          "cells": {
+            "A": "25",
+            "B": "D. Cargo Holds & Hatch Covers",
+            "C": "Cargo hold cleanliness / coatings",
+            "D": "Assess hold cleanliness, coating breakdown, rust scale, cargo residues, contamination and suitability for anticipated trades.",
+            "E": "Condition documented; any major coating/rust scale work estimated.",
+            "F": "Photos",
+            "G": "Y",
+            "J": "Medium"
+          }
+        },
+        {
+          "source_row": 27,
+          "ref": "26",
+          "cells": {
+            "A": "26",
+            "B": "D. Cargo Holds & Hatch Covers",
+            "C": "Hold bilges / strainers / NR valves",
+            "D": "Open and inspect bilge wells, strainers, suction, non-return valves and remote alarms. Test suction where practical.",
+            "E": "Bilges clean and operational; non-return protection effective; high-level alarms function.",
+            "F": "Test record",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 28,
+          "ref": "27",
+          "cells": {
+            "A": "27",
+            "B": "D. Cargo Holds & Hatch Covers",
+            "C": "Water ingress detection",
+            "D": "Test all cargo hold and forward-space water ingress alarms from sensors and panel. Verify fault monitoring and alarm records.",
+            "E": "All required channels operational with no bypass/fault.",
+            "F": "Alarm test log",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 29,
+          "ref": "28",
+          "cells": {
+            "A": "28",
+            "B": "D. Cargo Holds & Hatch Covers",
+            "C": "Hatch panels / pontoons",
+            "D": "Inspect each panel for distortion, cracks, wasted plating, hydraulic leaks, hinges, wheels, chains and operating mechanism.",
+            "E": "Panels structurally sound and operate smoothly without unsafe manual intervention.",
+            "F": "Visual + operation",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 30,
+          "ref": "29",
+          "cells": {
+            "A": "29",
+            "B": "D. Cargo Holds & Hatch Covers",
+            "C": "Hatch rubber packing",
+            "D": "Inspect rubber for permanent set, hardening, cuts, compression and joints. Check spare rubber/profile onboard.",
+            "E": "Continuous effective packing; no significant hardening/damage; spare stock available.",
+            "F": "Visual + chalk/compression evidence",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 31,
+          "ref": "30",
+          "cells": {
+            "A": "30",
+            "B": "D. Cargo Holds & Hatch Covers",
+            "C": "Compression bars / channels",
+            "D": "Inspect for corrosion, grooving, deformation and previous weld repairs. Check landing pads and supports.",
+            "E": "Bars smooth and intact; no major wastage affecting sealing.",
+            "F": "Visual",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 32,
+          "ref": "31",
+          "cells": {
+            "A": "31",
+            "B": "D. Cargo Holds & Hatch Covers",
+            "C": "Cleats / wedges / locators",
+            "D": "Inspect representative cleats and all visibly defective items. Verify adjustment, rubber washers and securing.",
+            "E": "All hatch securing devices complete, correctly adjusted and operable.",
+            "F": "Visual",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 33,
+          "ref": "32",
+          "cells": {
+            "A": "32",
+            "B": "D. Cargo Holds & Hatch Covers",
+            "C": "Drain channels / non-return valves",
+            "D": "Clean/test hatch drain channels and non-return arrangements; verify drainage paths not blocked.",
+            "E": "Free drainage; non-return function satisfactory.",
+            "F": "Test/visual",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 34,
+          "ref": "33",
+          "cells": {
+            "A": "33",
+            "B": "D. Cargo Holds & Hatch Covers",
+            "C": "Hatch tightness evidence",
+            "D": "Review latest ultrasonic/hose/chalk test; conduct spot test if permitted, especially suspect panels.",
+            "E": "Recent satisfactory tightness evidence and no signs of cargo wet damage.",
+            "F": "Test report",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 35,
+          "ref": "34",
+          "cells": {
+            "A": "34",
+            "B": "E. Cargo Cranes & Lifting Gear",
+            "C": "Crane structure / pedestal",
+            "D": "Inspect all cranes for corrosion, cracks, pedestal/foundation condition, jib structure, slewing ring area and access ladders/platforms.",
+            "E": "No structural crack/deformation; inspection points accessible and safe.",
+            "F": "Visual + NDT history",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 36,
+          "ref": "35",
+          "cells": {
+            "A": "35",
+            "B": "E. Cargo Cranes & Lifting Gear",
+            "C": "Hoisting / luffing wire ropes",
+            "D": "Inspect full accessible length, end terminations, sheaves and drums. Review renewal date, lubrication and discard criteria.",
+            "E": "No broken-wire/corrosion/diameter-loss condition beyond maker/class criteria; renewal history known.",
+            "F": "Wire records/certs",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 37,
+          "ref": "36",
+          "cells": {
+            "A": "36",
+            "B": "E. Cargo Cranes & Lifting Gear",
+            "C": "Crane brakes / limits / emergency stop",
+            "D": "Operationally test hoist/luff/slew brakes, limit switches, emergency stop and alarms where safe.",
+            "E": "All safety functions operate correctly.",
+            "F": "Operational test",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 38,
+          "ref": "37",
+          "cells": {
+            "A": "37",
+            "B": "E. Cargo Cranes & Lifting Gear",
+            "C": "Crane hydraulics / machinery",
+            "D": "Check hydraulic pumps, motors, hoses, leaks, oil condition, filters, coolers and standby arrangements.",
+            "E": "No significant leak; pressures/temperatures normal; critical hoses/spares available.",
+            "F": "Visual + logs",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 39,
+          "ref": "38",
+          "cells": {
+            "A": "38",
+            "B": "E. Cargo Cranes & Lifting Gear",
+            "C": "Loose gear / lifting register",
+            "D": "Verify register, annual thorough examination, 5-year load tests as applicable, certificates for hooks, blocks, shackles, spreaders and grabs.",
+            "E": "Certificates current and gear ID matches physical markings.",
+            "F": "Cargo gear register/certs",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 40,
+          "ref": "39",
+          "cells": {
+            "A": "39",
+            "B": "E. Cargo Cranes & Lifting Gear",
+            "C": "Grabs (if ship-owned)",
+            "D": "Inspect shells, pins, sheaves, wires, hydraulic system, closing mechanism and certification.",
+            "E": "Serviceable with critical consumables/spares available.",
+            "F": "Visual/certs",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 41,
+          "ref": "40",
+          "cells": {
+            "A": "40",
+            "B": "F. Mooring & Anchoring",
+            "C": "Windlass / mooring winches",
+            "D": "Operate where possible. Check foundation, guards, brakes, clutches, controls, hydraulic/electric leaks, emergency stops and warping ends.",
+            "E": "Safe operation; guards complete; no serious foundation or brake defect.",
+            "F": "Operational test",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 42,
+          "ref": "41",
+          "cells": {
+            "A": "41",
+            "B": "F. Mooring & Anchoring",
+            "C": "Mooring brake condition / testing",
+            "D": "Review brake holding/test records and inspect brake linings, drums, adjustment and markings.",
+            "E": "Records current; no oil contamination or excessive wear.",
+            "F": "Brake test record",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 43,
+          "ref": "42",
+          "cells": {
+            "A": "42",
+            "B": "F. Mooring & Anchoring",
+            "C": "Mooring lines / tails",
+            "D": "Check certificates, line-management records, condition, chafing, retirement criteria, storage and spare lines.",
+            "E": "All working lines serviceable; minimum company spare reserve available.",
+            "F": "Certificates/line register",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 44,
+          "ref": "43",
+          "cells": {
+            "A": "43",
+            "B": "F. Mooring & Anchoring",
+            "C": "Fairleads / bitts / rollers",
+            "D": "Inspect wear, corrosion, free movement, securing, foundations and sharp edges.",
+            "E": "No structural defect or seized roller creating line hazard.",
+            "F": "Visual",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 45,
+          "ref": "44",
+          "cells": {
+            "A": "44",
+            "B": "F. Mooring & Anchoring",
+            "C": "Anchors / chains / chain stoppers",
+            "D": "Inspect visible chain, bitter end arrangements, stoppers and windlass. Review latest calibration.",
+            "E": "Calibration within limits; no missing/stuck securing arrangements.",
+            "F": "Chain calibration report",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 46,
+          "ref": "45",
+          "cells": {
+            "A": "45",
+            "B": "G. Navigation & Radio",
+            "C": "ECDIS / ENCs",
+            "D": "Check both units where fitted, licenses, chart updates, sensors, alarms, backup arrangement and officer familiarization.",
+            "E": "Operational with current ENCs and backup arrangement; no unresolved alarm/fault.",
+            "F": "Logs/certificates as applicable",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 47,
+          "ref": "46",
+          "cells": {
+            "A": "46",
+            "B": "G. Navigation & Radio",
+            "C": "Radars / ARPA",
+            "D": "Test radars, performance monitor, guard zones, ARPA, inputs and controls.",
+            "E": "Both required radars operational.",
+            "F": "Logs/certificates as applicable",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 48,
+          "ref": "47",
+          "cells": {
+            "A": "47",
+            "B": "G. Navigation & Radio",
+            "C": "Gyro / repeaters",
+            "D": "Compare repeaters, alarm status and service history.",
+            "E": "Accurate and all required repeaters functional.",
+            "F": "Logs/certificates as applicable",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 49,
+          "ref": "48",
+          "cells": {
+            "A": "48",
+            "B": "G. Navigation & Radio",
+            "C": "Magnetic compass",
+            "D": "Check deviation card, illumination, condition and comparison error.",
+            "E": "Usable, current deviation information.",
+            "F": "Logs/certificates as applicable",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 50,
+          "ref": "49",
+          "cells": {
+            "A": "49",
+            "B": "G. Navigation & Radio",
+            "C": "GPS / speed log / echo sounder",
+            "D": "Verify operation, alarm status, sensor inputs and self-tests.",
+            "E": "Required units operational.",
+            "F": "Logs/certificates as applicable",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 51,
+          "ref": "50",
+          "cells": {
+            "A": "50",
+            "B": "G. Navigation & Radio",
+            "C": "AIS / LRIT / SSAS",
+            "D": "Verify operational status, static data, testing records and security procedure.",
+            "E": "Correct static data and required systems operational.",
+            "F": "Logs/certificates as applicable",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 52,
+          "ref": "51",
+          "cells": {
+            "A": "51",
+            "B": "G. Navigation & Radio",
+            "C": "VDR / S-VDR",
+            "D": "Check annual performance test, alarms, recording status and recovery media.",
+            "E": "No active fault; APT current.",
+            "F": "Logs/certificates as applicable",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 53,
+          "ref": "52",
+          "cells": {
+            "A": "52",
+            "B": "G. Navigation & Radio",
+            "C": "BNWAS",
+            "D": "Test modes, stages, resets and records of use.",
+            "E": "Functional and used in accordance with procedure.",
+            "F": "Logs/certificates as applicable",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 54,
+          "ref": "53",
+          "cells": {
+            "A": "53",
+            "B": "G. Navigation & Radio",
+            "C": "GMDSS",
+            "D": "Test required equipment, batteries, reserve source, printers/logs and annual radio survey.",
+            "E": "All required GMDSS equipment operational; batteries within capacity/life.",
+            "F": "Logs/certificates as applicable",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 55,
+          "ref": "54",
+          "cells": {
+            "A": "54",
+            "B": "G. Navigation & Radio",
+            "C": "Navigation lights / shapes / sound signals",
+            "D": "Test panel, failure alarms, spare lamps/LED modules, whistles and shapes.",
+            "E": "All required signals operational and spares available.",
+            "F": "Logs/certificates as applicable",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 56,
+          "ref": "55",
+          "cells": {
+            "A": "55",
+            "B": "G. Navigation & Radio",
+            "C": "Steering controls / emergency steering comms",
+            "D": "Test bridge controls, NFU, changeover, rudder indicators and communication with steering gear room.",
+            "E": "Normal and emergency control arrangements proven.",
+            "F": "Logs/certificates as applicable",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 57,
+          "ref": "56",
+          "cells": {
+            "A": "56",
+            "B": "G. Navigation & Radio",
+            "C": "Passage planning / bridge procedures",
+            "D": "Review recent berth-to-berth plan, UKC, no-go areas, chart corrections, Master/Pilot exchange, standing/night orders.",
+            "E": "Recent voyage demonstrates SMS compliance and proper BRM practice.",
+            "F": "Logs/certificates as applicable",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 58,
+          "ref": "57",
+          "cells": {
+            "A": "57",
+            "B": "H. Safety & Emergency",
+            "C": "Fire detection / alarm system",
+            "D": "Test sample detectors across accommodation, engine room and stores; check panel faults/bypasses and zone plans.",
+            "E": "No unauthorized bypass/fault; alarms audible/visible.",
+            "F": "Safety certificates / approved plans",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 59,
+          "ref": "58",
+          "cells": {
+            "A": "58",
+            "B": "H. Safety & Emergency",
+            "C": "Main fire pumps",
+            "D": "Run each main fire pump; record pressure and check remote/local starting where fitted.",
+            "E": "Required pumps deliver stable pressure without abnormal leakage/vibration.",
+            "F": "Safety certificates / approved plans",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 60,
+          "ref": "59",
+          "cells": {
+            "A": "59",
+            "B": "H. Safety & Emergency",
+            "C": "Emergency fire pump",
+            "D": "Start locally and from required arrangement; verify suction, priming and two-jet capability where practical.",
+            "E": "Immediate reliable start and adequate pressure.",
+            "F": "Safety certificates / approved plans",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 61,
+          "ref": "60",
+          "cells": {
+            "A": "60",
+            "B": "H. Safety & Emergency",
+            "C": "Fire main / hydrants / hoses / nozzles",
+            "D": "Inspect representative full route for leaks/corrosion; check hoses/nozzles and international shore connection.",
+            "E": "System ready for immediate use; no wasted/leaking section.",
+            "F": "Safety certificates / approved plans",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 62,
+          "ref": "61",
+          "cells": {
+            "A": "61",
+            "B": "H. Safety & Emergency",
+            "C": "Fixed CO2 / fixed firefighting system",
+            "D": "Check service date, bottle weights/levels, release cabinet seals, alarms, time delay, instructions and space closure arrangements.",
+            "E": "Certification current; release arrangements secured and unobstructed.",
+            "F": "Safety certificates / approved plans",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 63,
+          "ref": "62",
+          "cells": {
+            "A": "62",
+            "B": "H. Safety & Emergency",
+            "C": "Quick-closing valves / remote stops",
+            "D": "Operationally test selected fuel quick-closing valves and remote stops for fans, pumps and machinery in accordance with safe procedure.",
+            "E": "All tested items operate and reset correctly.",
+            "F": "Safety certificates / approved plans",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 64,
+          "ref": "63",
+          "cells": {
+            "A": "63",
+            "B": "H. Safety & Emergency",
+            "C": "Fire doors / dampers / ventilation closures",
+            "D": "Inspect and operate representative fire doors, dampers, skylights and ventilation flaps.",
+            "E": "Close effectively; no hooks/wedges defeating fire integrity.",
+            "F": "Safety certificates / approved plans",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 65,
+          "ref": "64",
+          "cells": {
+            "A": "64",
+            "B": "H. Safety & Emergency",
+            "C": "SCBA / EEBD",
+            "D": "Check quantity against Fire Control Plan/Form E, cylinder pressure, masks, hoses, service dates and spare charges.",
+            "E": "Statutory quantity complete; all units ready; spare charge arrangement compliant.",
+            "F": "Safety certificates / approved plans",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 66,
+          "ref": "65",
+          "cells": {
+            "A": "65",
+            "B": "H. Safety & Emergency",
+            "C": "Portable extinguishers",
+            "D": "Check location, type, seal, pressure/weight, service date and accessibility.",
+            "E": "Matches approved fire plan; no overdue unit.",
+            "F": "Safety certificates / approved plans",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 67,
+          "ref": "66",
+          "cells": {
+            "A": "66",
+            "B": "H. Safety & Emergency",
+            "C": "Lifeboat / rescue boat",
+            "D": "Inspect hull, engine, fuel, batteries, starting, steering, equipment, falls, hooks, limit switches, davit, winch and service certificates. Run engine.",
+            "E": "Statutory craft ready; annual/5-year service current; no unresolved recommendation.",
+            "F": "Safety certificates / approved plans",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 68,
+          "ref": "67",
+          "cells": {
+            "A": "67",
+            "B": "H. Safety & Emergency",
+            "C": "Liferafts / HRUs",
+            "D": "Check quantity/capacity, service dates, securing, painter, HRU, weak links and launching access.",
+            "E": "Statutory capacity and servicing current.",
+            "F": "Safety certificates / approved plans",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 69,
+          "ref": "68",
+          "cells": {
+            "A": "68",
+            "B": "H. Safety & Emergency",
+            "C": "Lifejackets / immersion suits / thermal aids",
+            "D": "Verify quantities/locations against Form E and muster list; sample condition and lights/whistles.",
+            "E": "Approved quantity complete and serviceable.",
+            "F": "Safety certificates / approved plans",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 70,
+          "ref": "69",
+          "cells": {
+            "A": "69",
+            "B": "H. Safety & Emergency",
+            "C": "EPIRB / SART / portable VHF",
+            "D": "Check required quantities, batteries, registration, self-tests and locations.",
+            "E": "Required units current and operational.",
+            "F": "Safety certificates / approved plans",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 71,
+          "ref": "70",
+          "cells": {
+            "A": "70",
+            "B": "H. Safety & Emergency",
+            "C": "Emergency generator / emergency switchboard",
+            "D": "Black-start from dead condition where practical; verify auto-start, breaker closure, emergency lighting and essential loads.",
+            "E": "Starts reliably and accepts essential load.",
+            "F": "Safety certificates / approved plans",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 72,
+          "ref": "71",
+          "cells": {
+            "A": "71",
+            "B": "H. Safety & Emergency",
+            "C": "Emergency lighting / low-location lighting if applicable",
+            "D": "Test emergency lights throughout escape routes, bridge, ER, muster/embarkation areas.",
+            "E": "All required emergency lights operate.",
+            "F": "Safety certificates / approved plans",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 73,
+          "ref": "72",
+          "cells": {
+            "A": "72",
+            "B": "H. Safety & Emergency",
+            "C": "Enclosed-space rescue equipment",
+            "D": "Check dedicated rescue tripod/winch where provided, SCBA, harness, gas meters, resuscitator, intrinsically safe communications and calibration.",
+            "E": "Equipment complete, calibrated and crew can demonstrate use.",
+            "F": "Safety certificates / approved plans",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 74,
+          "ref": "73",
+          "cells": {
+            "A": "73",
+            "B": "H. Safety & Emergency",
+            "C": "Pilot ladders / embarkation arrangements",
+            "D": "Inspect ladder steps, ropes, spreaders, identification, certificates, securing points, combination arrangement and lighting.",
+            "E": "Complies with approved arrangement; no damaged/modified ladder.",
+            "F": "Safety certificates / approved plans",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 75,
+          "ref": "74",
+          "cells": {
+            "A": "74",
+            "B": "I. Machinery & Electrical",
+            "C": "Engine room overall condition",
+            "D": "Inspect cleanliness, bilges, leaks, hot surfaces, lagging, escape routes, guards and housekeeping.",
+            "E": "Bilges controlled; no significant fuel/oil spray risk; escapes clear.",
+            "F": "PMS/logs/service reports",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 76,
+          "ref": "75",
+          "cells": {
+            "A": "75",
+            "B": "I. Machinery & Electrical",
+            "C": "Main engine external condition",
+            "D": "Inspect leaks, exhaust joints, insulation, foundation, holding-down, crankcase doors, scavenge drains and alarm status.",
+            "E": "No active high-risk leak, abnormal vibration or defeated alarm.",
+            "F": "PMS/logs/service reports",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 77,
+          "ref": "76",
+          "cells": {
+            "A": "76",
+            "B": "I. Machinery & Electrical",
+            "C": "Main engine performance",
+            "D": "Record RPM/load, exhaust temperatures, scavenge pressure, Pmax/Pcomp/indicator data if available, FO index and recent trends.",
+            "E": "No unexplained cylinder imbalance or deterioration.",
+            "F": "PMS/logs/service reports",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 78,
+          "ref": "77",
+          "cells": {
+            "A": "77",
+            "B": "I. Machinery & Electrical",
+            "C": "Main engine crankcase / scavenge inspection records",
+            "D": "Review latest crankcase and scavenge inspections, bearing temperatures, drain condition and photos.",
+            "E": "Inspections current; no unresolved metal/water/sludge concern.",
+            "F": "PMS/logs/service reports",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 79,
+          "ref": "78",
+          "cells": {
+            "A": "78",
+            "B": "I. Machinery & Electrical",
+            "C": "Starting air system",
+            "D": "Inspect compressors, receivers, drains, relief devices, non-return/flame arresting arrangements and starting-air valves.",
+            "E": "No excessive oil/water; redundancy available; safety devices current.",
+            "F": "PMS/logs/service reports",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 80,
+          "ref": "79",
+          "cells": {
+            "A": "79",
+            "B": "I. Machinery & Electrical",
+            "C": "Fuel oil system / hot surfaces",
+            "D": "Inspect HP pipes, shielding, leak-off, pumps, heaters, purifiers, quick-closing valves and lagging near ignition sources.",
+            "E": "No unshielded spray risk; leaks controlled.",
+            "F": "PMS/logs/service reports",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 81,
+          "ref": "80",
+          "cells": {
+            "A": "80",
+            "B": "I. Machinery & Electrical",
+            "C": "Lubricating oil system",
+            "D": "Inspect pumps, filters, coolers, tank levels, alarms, purifier and trend data.",
+            "E": "Required redundancy and normal pressures/temperatures.",
+            "F": "PMS/logs/service reports",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 82,
+          "ref": "81",
+          "cells": {
+            "A": "81",
+            "B": "I. Machinery & Electrical",
+            "C": "Cooling water systems",
+            "D": "Inspect HT/LT pumps, expansion tanks, chemical treatment, coolers, leaks and test records.",
+            "E": "Chemistry controlled; standby pumps available.",
+            "F": "PMS/logs/service reports",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 83,
+          "ref": "82",
+          "cells": {
+            "A": "82",
+            "B": "I. Machinery & Electrical",
+            "C": "Turbocharger",
+            "D": "Inspect cleanliness, leakage, vibration/noise, wash records and overhaul/clearance history.",
+            "E": "No abnormal condition; service interval controlled.",
+            "F": "PMS/logs/service reports",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 84,
+          "ref": "83",
+          "cells": {
+            "A": "83",
+            "B": "I. Machinery & Electrical",
+            "C": "Auxiliary engines",
+            "D": "Run/load-test as practical; inspect leaks, exhaust temperatures, load sharing, governor response, black-start availability and overhaul history.",
+            "E": "Sufficient healthy generators to meet normal + contingency electrical demand.",
+            "F": "PMS/logs/service reports",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 85,
+          "ref": "84",
+          "cells": {
+            "A": "84",
+            "B": "I. Machinery & Electrical",
+            "C": "Main switchboard / distribution",
+            "D": "Inspect insulation/cleanliness, breaker status, earth-fault monitoring, interlocks, protection trips and thermography if available.",
+            "E": "No active earth fault or unsafe temporary wiring.",
+            "F": "PMS/logs/service reports",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 86,
+          "ref": "85",
+          "cells": {
+            "A": "85",
+            "B": "I. Machinery & Electrical",
+            "C": "Emergency generator engine",
+            "D": "Inspect fuel, cooling, starting batteries/charger, local alarms and service spares.",
+            "E": "Ready for independent operation.",
+            "F": "PMS/logs/service reports",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 87,
+          "ref": "86",
+          "cells": {
+            "A": "86",
+            "B": "I. Machinery & Electrical",
+            "C": "Boiler / economizer",
+            "D": "Inspect burners, safeties, water-level controls, flame failure, valves, leaks, refractory and water treatment.",
+            "E": "Safety trips/protections functional; no dangerous leakage.",
+            "F": "PMS/logs/service reports",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 88,
+          "ref": "87",
+          "cells": {
+            "A": "87",
+            "B": "I. Machinery & Electrical",
+            "C": "Air compressors",
+            "D": "Run/test each required compressor, unloaders, cooling, oil carryover and receiver drains.",
+            "E": "Required starting-air capacity/redundancy available.",
+            "F": "PMS/logs/service reports",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 89,
+          "ref": "88",
+          "cells": {
+            "A": "88",
+            "B": "I. Machinery & Electrical",
+            "C": "Bilge system",
+            "D": "Test bilge pumps, alarms, emergency bilge suction arrangement and valve identification.",
+            "E": "Operational and correctly lined/marked.",
+            "F": "PMS/logs/service reports",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 90,
+          "ref": "89",
+          "cells": {
+            "A": "89",
+            "B": "I. Machinery & Electrical",
+            "C": "OWS / 15 ppm alarm",
+            "D": "Inspect piping for unauthorized bypass, sample line, seals, alarm printer/log, calibration and operational test in recirculation if permitted.",
+            "E": "No illegal bypass; 15ppm monitor/auto-stop functional and calibrated.",
+            "F": "PMS/logs/service reports",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 91,
+          "ref": "90",
+          "cells": {
+            "A": "90",
+            "B": "I. Machinery & Electrical",
+            "C": "Sewage treatment plant",
+            "D": "Check operation, aeration/disinfection, alarms, sludge handling and discharge arrangements.",
+            "E": "Operational and no uncontrolled bypass.",
+            "F": "PMS/logs/service reports",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 92,
+          "ref": "91",
+          "cells": {
+            "A": "91",
+            "B": "I. Machinery & Electrical",
+            "C": "Incinerator if fitted",
+            "D": "Inspect refractory, burner, safeties, operating records and prohibited-waste controls.",
+            "E": "Operational and used per MARPOL/procedure.",
+            "F": "PMS/logs/service reports",
+            "G": "Y",
+            "J": "Medium"
+          }
+        },
+        {
+          "source_row": 93,
+          "ref": "92",
+          "cells": {
+            "A": "92",
+            "B": "I. Machinery & Electrical",
+            "C": "Fresh water generator / potable water",
+            "D": "Check output, vacuum/ejector, salinometer, chlorination/treatment and potable water tests.",
+            "E": "Adequate capacity or documented shore-water plan; potable quality controlled.",
+            "F": "PMS/logs/service reports",
+            "G": "Y",
+            "J": "Medium"
+          }
+        },
+        {
+          "source_row": 94,
+          "ref": "93",
+          "cells": {
+            "A": "93",
+            "B": "I. Machinery & Electrical",
+            "C": "Purifiers",
+            "D": "Inspect leaks, bowl service history, alarms and sludge handling.",
+            "E": "Required FO/LO treatment capacity available.",
+            "F": "PMS/logs/service reports",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 95,
+          "ref": "94",
+          "cells": {
+            "A": "94",
+            "B": "I. Machinery & Electrical",
+            "C": "Pumps / heat exchangers",
+            "D": "Review all critical pumps/coolers for leakage, vibration, standby availability and overdue overhauls.",
+            "E": "At least required redundancy intact; seal/bearing kits available.",
+            "F": "PMS/logs/service reports",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 96,
+          "ref": "95",
+          "cells": {
+            "A": "95",
+            "B": "I. Machinery & Electrical",
+            "C": "Steering gear",
+            "D": "Test both power units, changeover, alarms, emergency steering, hydraulic leaks, communication and local instructions.",
+            "E": "Full SOLAS emergency functionality demonstrated.",
+            "F": "PMS/logs/service reports",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 97,
+          "ref": "96",
+          "cells": {
+            "A": "96",
+            "B": "I. Machinery & Electrical",
+            "C": "Stern tube / shafting",
+            "D": "Review LO consumption, analysis, seal leakage, bearing temperatures, last shaft survey/condition monitoring.",
+            "E": "No adverse trend or unresolved class item.",
+            "F": "PMS/logs/service reports",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 98,
+          "ref": "97",
+          "cells": {
+            "A": "97",
+            "B": "I. Machinery & Electrical",
+            "C": "BWTS",
+            "D": "Check type approval docs, operation logs, alarms, TRO/UV components, sampling, filters and critical consumables/spares.",
+            "E": "System operational for intended trade; no persistent alarm/non-compliance.",
+            "F": "PMS/logs/service reports",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 99,
+          "ref": "98",
+          "cells": {
+            "A": "98",
+            "B": "I. Machinery & Electrical",
+            "C": "Engine room automation / UMS",
+            "D": "Review active alarms, bypasses, alarm history, dead-man/engineer alarm and UMS notation status if applicable.",
+            "E": "No unauthorized bypass; all critical alarms active.",
+            "F": "PMS/logs/service reports",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 100,
+          "ref": "99",
+          "cells": {
+            "A": "99",
+            "B": "J. Environmental Compliance",
+            "C": "Oil Record Book / sludge balance",
+            "D": "Reconcile ORB entries with tank soundings, sludge landing receipts, incineration and OWS operations.",
+            "E": "No unexplained discrepancy or suspicious entry.",
+            "F": "MARPOL records/certificates",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 101,
+          "ref": "100",
+          "cells": {
+            "A": "100",
+            "B": "J. Environmental Compliance",
+            "C": "Garbage management / record book",
+            "D": "Inspect segregation, placards, storage, record book and disposal receipts.",
+            "E": "Compliant and traceable.",
+            "F": "MARPOL records/certificates",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 102,
+          "ref": "101",
+          "cells": {
+            "A": "101",
+            "B": "J. Environmental Compliance",
+            "C": "Ballast Water Record Book",
+            "D": "Review BWMS operations, bypass/contingency entries and recent voyages.",
+            "E": "Entries consistent with BWTS logs and ballast operations.",
+            "F": "MARPOL records/certificates",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 103,
+          "ref": "102",
+          "cells": {
+            "A": "102",
+            "B": "J. Environmental Compliance",
+            "C": "SOPEP/SMPEP equipment",
+            "D": "Verify plan approval, contact list, spill kit inventory and accessibility.",
+            "E": "Plan current; equipment complete.",
+            "F": "MARPOL records/certificates",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 104,
+          "ref": "103",
+          "cells": {
+            "A": "103",
+            "B": "J. Environmental Compliance",
+            "C": "IAPP / ODS / refrigerants",
+            "D": "Review ODS record, refrigerant leaks, incinerator/boiler status and NOx technical files as applicable.",
+            "E": "Records complete; no uncontrolled emissions-related defect.",
+            "F": "MARPOL records/certificates",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 105,
+          "ref": "104",
+          "cells": {
+            "A": "104",
+            "B": "J. Environmental Compliance",
+            "C": "SEEMP / CII / DCS",
+            "D": "Verify current SEEMP parts, latest Statement of Compliance and data collection process.",
+            "E": "Current required documents onboard and reporting process established.",
+            "F": "MARPOL records/certificates",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 106,
+          "ref": "105",
+          "cells": {
+            "A": "105",
+            "B": "K. Accommodation & MLC",
+            "C": "Accommodation hygiene and habitability",
+            "D": "Inspect representative cabins, sanitary spaces, mess rooms, recreation rooms, hospital and laundry.",
+            "E": "Clean, habitable and no serious MLC defect.",
+            "F": "MLC records",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 107,
+          "ref": "106",
+          "cells": {
+            "A": "106",
+            "B": "K. Accommodation & MLC",
+            "C": "Galley / provisions",
+            "D": "Inspect galley hygiene, refrigeration, provision stores, temperatures, pest control and food stocks.",
+            "E": "Safe food storage and adequate provisions.",
+            "F": "MLC records",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 108,
+          "ref": "107",
+          "cells": {
+            "A": "107",
+            "B": "K. Accommodation & MLC",
+            "C": "Ventilation / HVAC",
+            "D": "Check temperatures, ventilation, AC plant and accommodation fans.",
+            "E": "Reasonable habitability and no major defect.",
+            "F": "MLC records",
+            "G": "Y",
+            "J": "Medium"
+          }
+        },
+        {
+          "source_row": 109,
+          "ref": "108",
+          "cells": {
+            "A": "108",
+            "B": "K. Accommodation & MLC",
+            "C": "Hospital / medical locker",
+            "D": "Check medicines/equipment against flag requirement, controlled drugs records and expiry dates.",
+            "E": "Required medical inventory complete and in date.",
+            "F": "MLC records",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 110,
+          "ref": "109",
+          "cells": {
+            "A": "109",
+            "B": "K. Accommodation & MLC",
+            "C": "Hours of rest / work",
+            "D": "Sample previous 3 months records and compare with logbooks/port operations.",
+            "E": "No systematic falsification or unresolved non-compliance.",
+            "F": "MLC records",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 111,
+          "ref": "110",
+          "cells": {
+            "A": "110",
+            "B": "K. Accommodation & MLC",
+            "C": "MLC complaints / welfare",
+            "D": "Check onboard complaint procedure, SEA availability, wage statements, repatriation security and crew welfare facilities.",
+            "E": "Required documents posted/available; no unresolved complaint.",
+            "F": "MLC records",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 112,
+          "ref": "111",
+          "cells": {
+            "A": "111",
+            "B": "L. Cyber & Data",
+            "C": "Shipboard IT inventory",
+            "D": "Record critical PCs, ECDIS software versions, PMS workstation/server, network equipment, antivirus and backup media.",
+            "E": "Inventory available and critical systems backed up.",
+            "F": "Cyber/SMS records",
+            "G": "N",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 113,
+          "ref": "112",
+          "cells": {
+            "A": "112",
+            "B": "L. Cyber & Data",
+            "C": "PMS backup / ship-shore sync",
+            "D": "Demonstrate latest backup and restoration path; confirm last successful shore synchronization/export.",
+            "E": "Recent verified backup; no dependence on a single unprotected PC.",
+            "F": "Cyber/SMS records",
+            "G": "N",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 114,
+          "ref": "113",
+          "cells": {
+            "A": "113",
+            "B": "L. Cyber & Data",
+            "C": "User access / passwords",
+            "D": "Check individual accounts for PMS/ship systems, admin control and leaver access.",
+            "E": "No shared admin account for routine use; access controlled.",
+            "F": "Cyber/SMS records",
+            "G": "N",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 115,
+          "ref": "114",
+          "cells": {
+            "A": "114",
+            "B": "L. Cyber & Data",
+            "C": "Cyber incident readiness",
+            "D": "Review cyber procedure, offline contact list, removable-media controls and last drill/training.",
+            "E": "Procedure available and crew familiar.",
+            "F": "Cyber/SMS records",
+            "G": "N",
+            "J": "Medium"
+          }
+        },
+        {
+          "source_row": 116,
+          "ref": "115",
+          "cells": {
+            "A": "115",
+            "B": "M. Takeover Readiness",
+            "C": "Critical spares physical verification",
+            "D": "Physically sight and count all items on Critical Spares sheet. Verify preservation, identification, location and compatibility with installed equipment.",
+            "E": "No critical shortfall without approved purchase/shore-stock mitigation.",
+            "F": "Takeover handover pack",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 117,
+          "ref": "116",
+          "cells": {
+            "A": "116",
+            "B": "M. Takeover Readiness",
+            "C": "Safety equipment inventory verification",
+            "D": "Reconcile Safety & Emergency sheet with Form E, Fire Control Plan, LSA plan and actual equipment.",
+            "E": "Statutory quantity complete and serviceable.",
+            "F": "Takeover handover pack",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 118,
+          "ref": "117",
+          "cells": {
+            "A": "117",
+            "B": "M. Takeover Readiness",
+            "C": "Onboard manuals / drawings",
+            "D": "Verify key maker manuals, piping diagrams, electrical single-line, damage control, stability booklet, loading manual, cargo securing (if applicable), trim/stability computer docs and approved plans.",
+            "E": "Critical operational documents onboard and controlled.",
+            "F": "Takeover handover pack",
+            "G": "Y",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 119,
+          "ref": "118",
+          "cells": {
+            "A": "118",
+            "B": "M. Takeover Readiness",
+            "C": "Technical handover data package",
+            "D": "Confirm handover copy/export of PMS, running hours, inventory, certificates, defects, open PR/POs, bunker/lube ROB, drawings/manuals and passwords/contacts.",
+            "E": "Complete data package received before management transfer.",
+            "F": "Takeover handover pack",
+            "G": "Y",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 120,
+          "ref": "119",
+          "cells": {
+            "A": "119",
+            "B": "M. Takeover Readiness",
+            "C": "30/60/90-day takeover action plan",
+            "D": "Classify all findings by immediate, 30-day, 60-day, 90-day and drydock action. Estimate cost and owner approval required.",
+            "E": "No Critical item deferred beyond takeover without risk control and approval.",
+            "F": "Takeover handover pack",
+            "G": "Y",
+            "J": "High"
+          }
+        }
+      ]
+    },
+    {
+      "sheet": "Critical Spares",
+      "headers": {
+        "A": "Ref",
+        "B": "System",
+        "C": "Critical spare / consumable",
+        "D": "Applicability / inspection note",
+        "E": "Recommended takeover minimum onboard",
+        "F": "Alternative acceptable mitigation",
+        "G": "Actual qty",
+        "H": "Serviceable qty",
+        "I": "Shortfall",
+        "J": "Criticality",
+        "K": "Location / bin",
+        "L": "Photo ID",
+        "M": "Remarks / action"
+      },
+      "item_count": 72,
+      "items": [
+        {
+          "source_row": 2,
+          "ref": "1",
+          "cells": {
+            "A": "1",
+            "B": "Main Engine",
+            "C": "Fuel injector / fuel valve complete",
+            "D": "For low-speed ME; verify exact part number and test pressure.",
+            "E": "2",
+            "F": "25% of cylinder count rounded up if maker requires more.",
+            "I": "=IF(OR(G2=\"\",H2=\"\"),\"\",MAX(0,E2-H2))",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 3,
+          "ref": "2",
+          "cells": {
+            "A": "2",
+            "B": "Main Engine",
+            "C": "Exhaust valve complete",
+            "D": "If exhaust-valve type engine.",
+            "E": "1",
+            "F": "Complete ready-for-use unit or fully overhauled spare.",
+            "I": "=IF(OR(G3=\"\",H3=\"\"),\"\",MAX(0,E3-H3))",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 4,
+          "ref": "3",
+          "cells": {
+            "A": "3",
+            "B": "Main Engine",
+            "C": "Exhaust valve spindle/seat overhaul kit",
+            "D": "Gaskets, seals, spindle/seat parts as applicable.",
+            "E": "1",
+            "I": "=IF(OR(G4=\"\",H4=\"\"),\"\",MAX(0,E4-H4))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 5,
+          "ref": "4",
+          "cells": {
+            "A": "4",
+            "B": "Main Engine",
+            "C": "Starting air valve complete",
+            "D": "Correct cylinder type.",
+            "E": "1",
+            "I": "=IF(OR(G5=\"\",H5=\"\"),\"\",MAX(0,E5-H5))",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 6,
+          "ref": "5",
+          "cells": {
+            "A": "5",
+            "B": "Main Engine",
+            "C": "Cylinder relief/safety valve complete",
+            "D": "Correct setting/type.",
+            "E": "1",
+            "I": "=IF(OR(G6=\"\",H6=\"\"),\"\",MAX(0,E6-H6))",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 7,
+          "ref": "6",
+          "cells": {
+            "A": "6",
+            "B": "Main Engine",
+            "C": "Piston ring full set for one cylinder",
+            "D": "Complete ring set for one piston.",
+            "E": "1",
+            "I": "=IF(OR(G7=\"\",H7=\"\"),\"\",MAX(0,E7-H7))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 8,
+          "ref": "7",
+          "cells": {
+            "A": "7",
+            "B": "Main Engine",
+            "C": "Cylinder cover gasket/seal full set",
+            "D": "For one cylinder overhaul.",
+            "E": "2",
+            "I": "=IF(OR(G8=\"\",H8=\"\"),\"\",MAX(0,E8-H8))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 9,
+          "ref": "8",
+          "cells": {
+            "A": "8",
+            "B": "Main Engine",
+            "C": "Fuel pump/plunger-barrel unit or overhaul kit",
+            "D": "Depending engine design.",
+            "E": "1",
+            "F": "Complete pump OR maker-approved overhaul kit.",
+            "I": "=IF(OR(G9=\"\",H9=\"\"),\"\",MAX(0,E9-H9))",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 10,
+          "ref": "9",
+          "cells": {
+            "A": "9",
+            "B": "Main Engine",
+            "C": "High-pressure fuel pipe",
+            "D": "Correct type/length; shielded/jacketed arrangement.",
+            "E": "1",
+            "F": "At least one compatible spare of each unique critical type.",
+            "I": "=IF(OR(G10=\"\",H10=\"\"),\"\",MAX(0,E10-H10))",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 11,
+          "ref": "10",
+          "cells": {
+            "A": "10",
+            "B": "Main Engine",
+            "C": "Cylinder lubricator pump element / quill kit",
+            "D": "If mechanical/electronic cylinder lubrication system.",
+            "E": "2",
+            "I": "=IF(OR(G11=\"\",H11=\"\"),\"\",MAX(0,E11-H11))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 12,
+          "ref": "11",
+          "cells": {
+            "A": "11",
+            "B": "Main Engine",
+            "C": "Turbocharger bearing/overhaul kit",
+            "D": "Maker-specific critical service kit.",
+            "E": "1",
+            "F": "Documented shore stock with <7-day delivery if class/maker accepts.",
+            "I": "=IF(OR(G12=\"\",H12=\"\"),\"\",MAX(0,E12-H12))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 13,
+          "ref": "12",
+          "cells": {
+            "A": "12",
+            "B": "Main Engine",
+            "C": "Governor/actuator critical service kit",
+            "D": "Maker-specific actuator/solenoid/sensor kit.",
+            "E": "1",
+            "F": "Complete tested spare actuator if electronic type.",
+            "I": "=IF(OR(G13=\"\",H13=\"\"),\"\",MAX(0,E13-H13))",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 14,
+          "ref": "13",
+          "cells": {
+            "A": "13",
+            "B": "Main Engine",
+            "C": "Main bearing shell pair",
+            "D": "Verify maker/class required spare gear.",
+            "E": "1",
+            "F": "Class/maker spare list prevails.",
+            "I": "=IF(OR(G14=\"\",H14=\"\"),\"\",MAX(0,E14-H14))",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 15,
+          "ref": "14",
+          "cells": {
+            "A": "14",
+            "B": "Main Engine",
+            "C": "Crosshead / crankpin bearing shell set",
+            "D": "As applicable to engine type.",
+            "E": "1",
+            "F": "Class/maker spare list prevails.",
+            "I": "=IF(OR(G15=\"\",H15=\"\"),\"\",MAX(0,E15-H15))",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 16,
+          "ref": "15",
+          "cells": {
+            "A": "15",
+            "B": "Main Engine",
+            "C": "Indicator cock / pressure sensor spare",
+            "D": "At least one complete critical measurement item.",
+            "E": "1",
+            "I": "=IF(OR(G16=\"\",H16=\"\"),\"\",MAX(0,E16-H16))",
+            "J": "Medium"
+          }
+        },
+        {
+          "source_row": 17,
+          "ref": "16",
+          "cells": {
+            "A": "16",
+            "B": "Auxiliary Engines",
+            "C": "Fuel injector complete",
+            "D": "Common type across gensets if applicable.",
+            "E": "2",
+            "I": "=IF(OR(G17=\"\",H17=\"\"),\"\",MAX(0,E17-H17))",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 18,
+          "ref": "17",
+          "cells": {
+            "A": "17",
+            "B": "Auxiliary Engines",
+            "C": "Fuel injection pump complete / overhaul kit",
+            "D": "Per engine type.",
+            "E": "1",
+            "I": "=IF(OR(G18=\"\",H18=\"\"),\"\",MAX(0,E18-H18))",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 19,
+          "ref": "18",
+          "cells": {
+            "A": "18",
+            "B": "Auxiliary Engines",
+            "C": "Cylinder head complete or ready-overhauled",
+            "D": "For one genset cylinder.",
+            "E": "1",
+            "F": "If no complete head, full valve/guide/spring kit and rapid shore stock.",
+            "I": "=IF(OR(G19=\"\",H19=\"\"),\"\",MAX(0,E19-H19))",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 20,
+          "ref": "19",
+          "cells": {
+            "A": "19",
+            "B": "Auxiliary Engines",
+            "C": "Inlet valve",
+            "D": "Correct type.",
+            "E": "2",
+            "I": "=IF(OR(G20=\"\",H20=\"\"),\"\",MAX(0,E20-H20))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 21,
+          "ref": "20",
+          "cells": {
+            "A": "20",
+            "B": "Auxiliary Engines",
+            "C": "Exhaust valve",
+            "D": "Correct type.",
+            "E": "2",
+            "I": "=IF(OR(G21=\"\",H21=\"\"),\"\",MAX(0,E21-H21))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 22,
+          "ref": "21",
+          "cells": {
+            "A": "21",
+            "B": "Auxiliary Engines",
+            "C": "Piston ring set for one cylinder",
+            "D": "Complete set.",
+            "E": "1",
+            "I": "=IF(OR(G22=\"\",H22=\"\"),\"\",MAX(0,E22-H22))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 23,
+          "ref": "22",
+          "cells": {
+            "A": "22",
+            "B": "Auxiliary Engines",
+            "C": "Connecting rod bearing shell set",
+            "D": "For one unit.",
+            "E": "1",
+            "I": "=IF(OR(G23=\"\",H23=\"\"),\"\",MAX(0,E23-H23))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 24,
+          "ref": "23",
+          "cells": {
+            "A": "23",
+            "B": "Auxiliary Engines",
+            "C": "Main bearing shell pair/set",
+            "D": "Maker/class list prevails.",
+            "E": "1",
+            "I": "=IF(OR(G24=\"\",H24=\"\"),\"\",MAX(0,E24-H24))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 25,
+          "ref": "24",
+          "cells": {
+            "A": "24",
+            "B": "Auxiliary Engines",
+            "C": "Turbocharger bearing/service kit",
+            "D": "Per turbo type.",
+            "E": "1",
+            "I": "=IF(OR(G25=\"\",H25=\"\"),\"\",MAX(0,E25-H25))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 26,
+          "ref": "25",
+          "cells": {
+            "A": "25",
+            "B": "Auxiliary Engines",
+            "C": "Starter motor / starting solenoid critical spare",
+            "D": "Depending electric/air start arrangement.",
+            "E": "1",
+            "F": "Serviceable common spare or shore stock if all engines use separate starters.",
+            "I": "=IF(OR(G26=\"\",H26=\"\"),\"\",MAX(0,E26-H26))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 27,
+          "ref": "26",
+          "cells": {
+            "A": "26",
+            "B": "Cooling / Pumps",
+            "C": "Main seawater pump seal + bearing kit",
+            "D": "One complete service kit for installed critical pump type.",
+            "E": "1",
+            "I": "=IF(OR(G27=\"\",H27=\"\"),\"\",MAX(0,E27-H27))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 28,
+          "ref": "27",
+          "cells": {
+            "A": "27",
+            "B": "Cooling / Pumps",
+            "C": "HT cooling water pump seal + bearing kit",
+            "D": "One complete service kit for installed critical pump type.",
+            "E": "1",
+            "I": "=IF(OR(G28=\"\",H28=\"\"),\"\",MAX(0,E28-H28))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 29,
+          "ref": "28",
+          "cells": {
+            "A": "28",
+            "B": "Cooling / Pumps",
+            "C": "LT cooling water pump seal + bearing kit",
+            "D": "One complete service kit for installed critical pump type.",
+            "E": "1",
+            "I": "=IF(OR(G29=\"\",H29=\"\"),\"\",MAX(0,E29-H29))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 30,
+          "ref": "29",
+          "cells": {
+            "A": "29",
+            "B": "Bilge / Fire",
+            "C": "Bilge/fire/general service pump seal + bearing kit",
+            "D": "One complete service kit for installed critical pump type.",
+            "E": "1",
+            "I": "=IF(OR(G30=\"\",H30=\"\"),\"\",MAX(0,E30-H30))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 31,
+          "ref": "30",
+          "cells": {
+            "A": "30",
+            "B": "Ballast",
+            "C": "Ballast pump mechanical seal + bearing kit",
+            "D": "One complete service kit for installed critical pump type.",
+            "E": "1",
+            "I": "=IF(OR(G31=\"\",H31=\"\"),\"\",MAX(0,E31-H31))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 32,
+          "ref": "31",
+          "cells": {
+            "A": "31",
+            "B": "Fuel / Lube",
+            "C": "FO transfer/service pump overhaul kit",
+            "D": "One complete service kit for installed critical pump type.",
+            "E": "1",
+            "I": "=IF(OR(G32=\"\",H32=\"\"),\"\",MAX(0,E32-H32))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 33,
+          "ref": "32",
+          "cells": {
+            "A": "32",
+            "B": "Fuel / Lube",
+            "C": "LO transfer/service pump overhaul kit",
+            "D": "One complete service kit for installed critical pump type.",
+            "E": "1",
+            "I": "=IF(OR(G33=\"\",H33=\"\"),\"\",MAX(0,E33-H33))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 34,
+          "ref": "33",
+          "cells": {
+            "A": "33",
+            "B": "Starting Air",
+            "C": "Air compressor suction/discharge valve full set",
+            "D": "For one compressor overhaul.",
+            "E": "1",
+            "I": "=IF(OR(G34=\"\",H34=\"\"),\"\",MAX(0,E34-H34))",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 35,
+          "ref": "34",
+          "cells": {
+            "A": "34",
+            "B": "Starting Air",
+            "C": "Air compressor piston ring/gasket kit",
+            "D": "For one compressor.",
+            "E": "1",
+            "I": "=IF(OR(G35=\"\",H35=\"\"),\"\",MAX(0,E35-H35))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 36,
+          "ref": "35",
+          "cells": {
+            "A": "35",
+            "B": "Steering Gear",
+            "C": "Hydraulic seal kit for ram/vane/pump",
+            "D": "Maker-specific.",
+            "E": "1",
+            "I": "=IF(OR(G36=\"\",H36=\"\"),\"\",MAX(0,E36-H36))",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 37,
+          "ref": "36",
+          "cells": {
+            "A": "36",
+            "B": "Steering Gear",
+            "C": "Critical solenoid/coil/pressure switch",
+            "D": "At least one of each unique critical control type.",
+            "E": "1",
+            "I": "=IF(OR(G37=\"\",H37=\"\"),\"\",MAX(0,E37-H37))",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 38,
+          "ref": "37",
+          "cells": {
+            "A": "37",
+            "B": "Steering Gear",
+            "C": "Hydraulic hose/pipe repair capability",
+            "D": "Approved hose(s), fittings or rapid shore support.",
+            "E": "1",
+            "F": "Documented compatible hose/fitting kit.",
+            "I": "=IF(OR(G38=\"\",H38=\"\"),\"\",MAX(0,E38-H38))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 39,
+          "ref": "38",
+          "cells": {
+            "A": "38",
+            "B": "Emergency Generator",
+            "C": "Fuel filters",
+            "D": "Correct type.",
+            "E": "2",
+            "I": "=IF(OR(G39=\"\",H39=\"\"),\"\",MAX(0,E39-H39))",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 40,
+          "ref": "39",
+          "cells": {
+            "A": "39",
+            "B": "Emergency Generator",
+            "C": "Lubricating oil filters",
+            "D": "Correct type.",
+            "E": "2",
+            "I": "=IF(OR(G40=\"\",H40=\"\"),\"\",MAX(0,E40-H40))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 41,
+          "ref": "40",
+          "cells": {
+            "A": "40",
+            "B": "Emergency Generator",
+            "C": "Drive belt set",
+            "D": "If belt-driven auxiliaries fitted.",
+            "E": "1",
+            "I": "=IF(OR(G41=\"\",H41=\"\"),\"\",MAX(0,E41-H41))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 42,
+          "ref": "41",
+          "cells": {
+            "A": "41",
+            "B": "Emergency Generator",
+            "C": "Starter motor / starter solenoid",
+            "D": "Depending starting arrangement.",
+            "E": "1",
+            "F": "Tested spare or duplicate starter arrangement.",
+            "I": "=IF(OR(G42=\"\",H42=\"\"),\"\",MAX(0,E42-H42))",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 43,
+          "ref": "42",
+          "cells": {
+            "A": "42",
+            "B": "Electrical",
+            "C": "Critical control fuses",
+            "D": "Assorted correct ratings for MSB/ESB/automation.",
+            "E": "1",
+            "F": "One complete labelled assortment.",
+            "I": "=IF(OR(G43=\"\",H43=\"\"),\"\",MAX(0,E43-H43))",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 44,
+          "ref": "43",
+          "cells": {
+            "A": "43",
+            "B": "Electrical",
+            "C": "Contactor / relay / coil assortment",
+            "D": "For critical starters and control circuits.",
+            "E": "1",
+            "F": "One spare of each critical unique type.",
+            "I": "=IF(OR(G44=\"\",H44=\"\"),\"\",MAX(0,E44-H44))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 45,
+          "ref": "44",
+          "cells": {
+            "A": "44",
+            "B": "Electrical",
+            "C": "Navigation light LED module / lamp",
+            "D": "Per unique light type.",
+            "E": "2",
+            "I": "=IF(OR(G45=\"\",H45=\"\"),\"\",MAX(0,E45-H45))",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 46,
+          "ref": "45",
+          "cells": {
+            "A": "45",
+            "B": "Electrical",
+            "C": "24V/UPS critical power supply module",
+            "D": "For bridge/PMS/GMDSS as fitted.",
+            "E": "1",
+            "F": "Documented interchangeable spare.",
+            "I": "=IF(OR(G46=\"\",H46=\"\"),\"\",MAX(0,E46-H46))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 47,
+          "ref": "46",
+          "cells": {
+            "A": "46",
+            "B": "Hatch Covers",
+            "C": "Rubber packing",
+            "D": "Correct hatch profile.",
+            "E": "10",
+            "F": "Minimum 10 m or enough for one panel-side local repair, whichever is greater.",
+            "I": "=IF(OR(G47=\"\",H47=\"\"),\"\",MAX(0,E47-H47))",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 48,
+          "ref": "47",
+          "cells": {
+            "A": "47",
+            "B": "Hatch Covers",
+            "C": "Cleat assembly",
+            "D": "Complete compatible unit.",
+            "E": "2",
+            "I": "=IF(OR(G48=\"\",H48=\"\"),\"\",MAX(0,E48-H48))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 49,
+          "ref": "48",
+          "cells": {
+            "A": "48",
+            "B": "Hatch Covers",
+            "C": "Rubber washer / cleat pad set",
+            "D": "For several cleats.",
+            "E": "10",
+            "I": "=IF(OR(G49=\"\",H49=\"\"),\"\",MAX(0,E49-H49))",
+            "J": "Medium"
+          }
+        },
+        {
+          "source_row": 50,
+          "ref": "49",
+          "cells": {
+            "A": "49",
+            "B": "Hatch Covers",
+            "C": "Drain non-return valve",
+            "D": "Complete unit.",
+            "E": "2",
+            "I": "=IF(OR(G50=\"\",H50=\"\"),\"\",MAX(0,E50-H50))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 51,
+          "ref": "50",
+          "cells": {
+            "A": "50",
+            "B": "Hatch Covers",
+            "C": "Hydraulic hose",
+            "D": "Critical lengths/diameters.",
+            "E": "2",
+            "F": "At least two longest/most common critical hoses or onboard hose-making capability.",
+            "I": "=IF(OR(G51=\"\",H51=\"\"),\"\",MAX(0,E51-H51))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 52,
+          "ref": "51",
+          "cells": {
+            "A": "51",
+            "B": "Hatch Covers",
+            "C": "Hydraulic cylinder seal kit",
+            "D": "Per cylinder type.",
+            "E": "1",
+            "I": "=IF(OR(G52=\"\",H52=\"\"),\"\",MAX(0,E52-H52))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 53,
+          "ref": "52",
+          "cells": {
+            "A": "52",
+            "B": "Hatch Covers",
+            "C": "Limit switch / proximity sensor",
+            "D": "If fitted.",
+            "E": "2",
+            "I": "=IF(OR(G53=\"\",H53=\"\"),\"\",MAX(0,E53-H53))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 54,
+          "ref": "53",
+          "cells": {
+            "A": "53",
+            "B": "Cargo Cranes",
+            "C": "Hoisting wire rope",
+            "D": "If geared bulk carrier.",
+            "E": "1",
+            "F": "One complete spare for common crane type OR documented shore stock with rapid delivery.",
+            "I": "=IF(OR(G54=\"\",H54=\"\"),\"\",MAX(0,E54-H54))",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 55,
+          "ref": "54",
+          "cells": {
+            "A": "54",
+            "B": "Cargo Cranes",
+            "C": "Luffing wire rope",
+            "D": "If geared bulk carrier.",
+            "E": "1",
+            "F": "One complete spare for common crane type OR rapid shore stock.",
+            "I": "=IF(OR(G55=\"\",H55=\"\"),\"\",MAX(0,E55-H55))",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 56,
+          "ref": "55",
+          "cells": {
+            "A": "55",
+            "B": "Cargo Cranes",
+            "C": "Brake lining / brake service kit",
+            "D": "Per common crane type.",
+            "E": "1",
+            "I": "=IF(OR(G56=\"\",H56=\"\"),\"\",MAX(0,E56-H56))",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 57,
+          "ref": "56",
+          "cells": {
+            "A": "56",
+            "B": "Cargo Cranes",
+            "C": "Limit switch",
+            "D": "Common compatible unit.",
+            "E": "2",
+            "I": "=IF(OR(G57=\"\",H57=\"\"),\"\",MAX(0,E57-H57))",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 58,
+          "ref": "57",
+          "cells": {
+            "A": "57",
+            "B": "Cargo Cranes",
+            "C": "Hydraulic hose assortment",
+            "D": "High-pressure hoses/fittings.",
+            "E": "1",
+            "F": "Labelled repair assortment.",
+            "I": "=IF(OR(G58=\"\",H58=\"\"),\"\",MAX(0,E58-H58))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 59,
+          "ref": "58",
+          "cells": {
+            "A": "58",
+            "B": "Cargo Cranes",
+            "C": "Hydraulic pump/motor seal kit",
+            "D": "Per common crane type.",
+            "E": "1",
+            "I": "=IF(OR(G59=\"\",H59=\"\"),\"\",MAX(0,E59-H59))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 60,
+          "ref": "59",
+          "cells": {
+            "A": "59",
+            "B": "Cargo Cranes",
+            "C": "Wire-rope lubricant",
+            "D": "Suitable product.",
+            "E": "2",
+            "F": "Two containers/drums sized for fleet maintenance interval.",
+            "I": "=IF(OR(G60=\"\",H60=\"\"),\"\",MAX(0,E60-H60))",
+            "J": "Medium"
+          }
+        },
+        {
+          "source_row": 61,
+          "ref": "60",
+          "cells": {
+            "A": "60",
+            "B": "Mooring",
+            "C": "Serviceable spare mooring line",
+            "D": "Same certified type/size as working set where practicable.",
+            "E": "2",
+            "F": "At least two ready-to-use spare lines.",
+            "I": "=IF(OR(G61=\"\",H61=\"\"),\"\",MAX(0,E61-H61))",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 62,
+          "ref": "61",
+          "cells": {
+            "A": "61",
+            "B": "Mooring",
+            "C": "Heaving lines / messengers",
+            "D": "Safe, weighted without dangerous additions.",
+            "E": "4",
+            "I": "=IF(OR(G62=\"\",H62=\"\"),\"\",MAX(0,E62-H62))",
+            "J": "Medium"
+          }
+        },
+        {
+          "source_row": 63,
+          "ref": "62",
+          "cells": {
+            "A": "62",
+            "B": "Fire Fighting",
+            "C": "Fire hoses",
+            "D": "Approved type/length.",
+            "E": "2",
+            "F": "In addition to statutory in-place hoses.",
+            "I": "=IF(OR(G63=\"\",H63=\"\"),\"\",MAX(0,E63-H63))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 64,
+          "ref": "63",
+          "cells": {
+            "A": "63",
+            "B": "Fire Fighting",
+            "C": "Dual-purpose nozzles",
+            "D": "Compatible with ship couplings.",
+            "E": "2",
+            "I": "=IF(OR(G64=\"\",H64=\"\"),\"\",MAX(0,E64-H64))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 65,
+          "ref": "64",
+          "cells": {
+            "A": "64",
+            "B": "Fire Fighting",
+            "C": "SCBA spare charged cylinders",
+            "D": "Company reserve in addition to statutory arrangement.",
+            "E": "2",
+            "F": "Statutory spare-charge arrangement always prevails.",
+            "I": "=IF(OR(G65=\"\",H65=\"\"),\"\",MAX(0,E65-H65))",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 66,
+          "ref": "65",
+          "cells": {
+            "A": "65",
+            "B": "LSA",
+            "C": "Lifeboat engine service kit",
+            "D": "Fuel/oil filters, belts/impeller as applicable.",
+            "E": "1",
+            "I": "=IF(OR(G66=\"\",H66=\"\"),\"\",MAX(0,E66-H66))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 67,
+          "ref": "66",
+          "cells": {
+            "A": "66",
+            "B": "LSA",
+            "C": "Portable VHF spare battery pack",
+            "D": "Compatible approved battery.",
+            "E": "1",
+            "F": "At least one spare per unique radio type.",
+            "I": "=IF(OR(G67=\"\",H67=\"\"),\"\",MAX(0,E67-H67))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 68,
+          "ref": "67",
+          "cells": {
+            "A": "67",
+            "B": "Gas Detection",
+            "C": "Portable gas detector sensors / calibration gas",
+            "D": "For onboard detector types.",
+            "E": "1",
+            "F": "Sufficient unexpired calibration gas + critical sensor replacement.",
+            "I": "=IF(OR(G68=\"\",H68=\"\"),\"\",MAX(0,E68-H68))",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 69,
+          "ref": "68",
+          "cells": {
+            "A": "68",
+            "B": "OWS",
+            "C": "15 ppm monitor consumable/service kit",
+            "D": "Maker-specific.",
+            "E": "1",
+            "I": "=IF(OR(G69=\"\",H69=\"\"),\"\",MAX(0,E69-H69))",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 70,
+          "ref": "69",
+          "cells": {
+            "A": "69",
+            "B": "OWS",
+            "C": "OWS filter/coalescer service element",
+            "D": "As fitted.",
+            "E": "1",
+            "I": "=IF(OR(G70=\"\",H70=\"\"),\"\",MAX(0,E70-H70))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 71,
+          "ref": "70",
+          "cells": {
+            "A": "70",
+            "B": "BWTS",
+            "C": "Critical filter element / seal kit",
+            "D": "Maker-specific.",
+            "E": "1",
+            "I": "=IF(OR(G71=\"\",H71=\"\"),\"\",MAX(0,E71-H71))",
+            "J": "High"
+          }
+        },
+        {
+          "source_row": 72,
+          "ref": "71",
+          "cells": {
+            "A": "71",
+            "B": "BWTS",
+            "C": "UV lamp / TRO sensor critical spare",
+            "D": "Depending BWTS technology.",
+            "E": "1",
+            "F": "Maker critical-spares list prevails.",
+            "I": "=IF(OR(G72=\"\",H72=\"\"),\"\",MAX(0,E72-H72))",
+            "J": "Critical"
+          }
+        },
+        {
+          "source_row": 73,
+          "ref": "72",
+          "cells": {
+            "A": "72",
+            "B": "Sewage",
+            "C": "Air blower service kit / diaphragm",
+            "D": "As fitted.",
+            "E": "1",
+            "I": "=IF(OR(G73=\"\",H73=\"\"),\"\",MAX(0,E73-H73))",
+            "J": "Medium"
+          }
+        }
+      ]
+    },
+    {
+      "sheet": "Safety & Emergency",
+      "headers": {
+        "A": "Ref",
+        "B": "Equipment / system",
+        "C": "Statutory / approved source to compare against",
+        "D": "Physical / operational check",
+        "E": "Takeover minimum",
+        "F": "Qty required by approved plan",
+        "G": "Qty onboard",
+        "H": "Serviceable qty",
+        "I": "Shortfall",
+        "J": "Last service / test",
+        "K": "Next due",
+        "L": "Photo ID",
+        "M": "Status",
+        "N": "Remarks / action"
+      },
+      "item_count": 31,
+      "items": [
+        {
+          "source_row": 2,
+          "ref": "1",
+          "cells": {
+            "A": "1",
+            "B": "Lifeboat(s)",
+            "C": "Cargo Ship Safety Equipment Record (Form E), LSA plan, muster list",
+            "D": "Inspect craft, engine, batteries, steering, inventory, falls/hooks/davit/winch; run engine and review service certs.",
+            "E": "Approved statutory capacity and equipment complete; annual/5-year services current.",
+            "I": "=IF(OR(F2=\"\",H2=\"\"),\"\",MAX(0,F2-H2))"
+          }
+        },
+        {
+          "source_row": 3,
+          "ref": "2",
+          "cells": {
+            "A": "2",
+            "B": "Rescue boat",
+            "C": "Form E / LSA plan",
+            "D": "Inspect/run boat and launching arrangement; verify recovery and certificates.",
+            "E": "Required rescue boat ready for immediate use.",
+            "I": "=IF(OR(F3=\"\",H3=\"\"),\"\",MAX(0,F3-H3))"
+          }
+        },
+        {
+          "source_row": 4,
+          "ref": "3",
+          "cells": {
+            "A": "3",
+            "B": "Liferafts",
+            "C": "Form E / LSA plan",
+            "D": "Check capacity, service date, painter, HRU, weak link, securing and launching access.",
+            "E": "Approved total capacity complete and in date.",
+            "I": "=IF(OR(F4=\"\",H4=\"\"),\"\",MAX(0,F4-H4))"
+          }
+        },
+        {
+          "source_row": 5,
+          "ref": "4",
+          "cells": {
+            "A": "4",
+            "B": "Lifejackets",
+            "C": "Form E / LSA plan / muster list",
+            "D": "Count, sample lights/whistles/condition and locations.",
+            "E": "At least approved quantity including required additional units.",
+            "I": "=IF(OR(F5=\"\",H5=\"\"),\"\",MAX(0,F5-H5))"
+          }
+        },
+        {
+          "source_row": 6,
+          "ref": "5",
+          "cells": {
+            "A": "5",
+            "B": "Immersion suits",
+            "C": "Form E / LSA plan",
+            "D": "Count, check size mix, zips, lights and condition.",
+            "E": "Approved quantity complete and serviceable.",
+            "I": "=IF(OR(F6=\"\",H6=\"\"),\"\",MAX(0,F6-H6))"
+          }
+        },
+        {
+          "source_row": 7,
+          "ref": "6",
+          "cells": {
+            "A": "6",
+            "B": "Lifebuoys",
+            "C": "Form E / LSA plan",
+            "D": "Count, check markings, lights, smoke signals, lines and bridge-wing MOB buoys.",
+            "E": "Approved quantity/configuration complete.",
+            "I": "=IF(OR(F7=\"\",H7=\"\"),\"\",MAX(0,F7-H7))"
+          }
+        },
+        {
+          "source_row": 8,
+          "ref": "7",
+          "cells": {
+            "A": "7",
+            "B": "EPIRB",
+            "C": "Form E / GMDSS record",
+            "D": "Check registration, HRU, battery expiry and self-test.",
+            "E": "Required unit operational and in date.",
+            "I": "=IF(OR(F8=\"\",H8=\"\"),\"\",MAX(0,F8-H8))"
+          }
+        },
+        {
+          "source_row": 9,
+          "ref": "8",
+          "cells": {
+            "A": "8",
+            "B": "Radar SART / AIS-SART",
+            "C": "Form E / GMDSS record",
+            "D": "Check quantity, batteries and self-test.",
+            "E": "Approved quantity operational.",
+            "I": "=IF(OR(F9=\"\",H9=\"\"),\"\",MAX(0,F9-H9))"
+          }
+        },
+        {
+          "source_row": 10,
+          "ref": "9",
+          "cells": {
+            "A": "9",
+            "B": "Portable GMDSS VHF",
+            "C": "Form E / radio record",
+            "D": "Check quantity, batteries, chargers and seals.",
+            "E": "Approved quantity operational.",
+            "I": "=IF(OR(F10=\"\",H10=\"\"),\"\",MAX(0,F10-H10))"
+          }
+        },
+        {
+          "source_row": 11,
+          "ref": "10",
+          "cells": {
+            "A": "10",
+            "B": "Line-throwing appliances",
+            "C": "Form E",
+            "D": "Count projectiles/lines, expiry dates and stowage.",
+            "E": "Approved set complete and in date.",
+            "I": "=IF(OR(F11=\"\",H11=\"\"),\"\",MAX(0,F11-H11))"
+          }
+        },
+        {
+          "source_row": 12,
+          "ref": "11",
+          "cells": {
+            "A": "11",
+            "B": "Pyrotechnics",
+            "C": "Form E / LSA plan",
+            "D": "Check approved quantities and expiries for lifeboats/bridge as applicable.",
+            "E": "No expired item; approved quantity complete.",
+            "I": "=IF(OR(F12=\"\",H12=\"\"),\"\",MAX(0,F12-H12))"
+          }
+        },
+        {
+          "source_row": 13,
+          "ref": "12",
+          "cells": {
+            "A": "12",
+            "B": "SCBA",
+            "C": "Fire Control Plan / Form E",
+            "D": "Check count, cylinder pressure, mask, hoses, whistle, service date.",
+            "E": "Approved quantity ready.",
+            "I": "=IF(OR(F13=\"\",H13=\"\"),\"\",MAX(0,F13-H13))"
+          }
+        },
+        {
+          "source_row": 14,
+          "ref": "13",
+          "cells": {
+            "A": "13",
+            "B": "SCBA spare charges",
+            "C": "Fire Control Plan / SOLAS arrangement",
+            "D": "Check charged spare cylinders or approved onboard compressor arrangement.",
+            "E": "Compliant spare-charge arrangement available.",
+            "I": "=IF(OR(F14=\"\",H14=\"\"),\"\",MAX(0,F14-H14))"
+          }
+        },
+        {
+          "source_row": 15,
+          "ref": "14",
+          "cells": {
+            "A": "14",
+            "B": "EEBD",
+            "C": "Fire Control Plan / Form E",
+            "D": "Check count, location, seal, gauge and expiry/service date.",
+            "E": "Approved quantity plus required training/spare units where specified.",
+            "I": "=IF(OR(F15=\"\",H15=\"\"),\"\",MAX(0,F15-H15))"
+          }
+        },
+        {
+          "source_row": 16,
+          "ref": "15",
+          "cells": {
+            "A": "15",
+            "B": "Fireman's outfits",
+            "C": "Fire Control Plan / Form E",
+            "D": "Check protective clothing, boots, gloves, helmet, lamp, axe and SCBA association.",
+            "E": "Approved outfits complete.",
+            "I": "=IF(OR(F16=\"\",H16=\"\"),\"\",MAX(0,F16-H16))"
+          }
+        },
+        {
+          "source_row": 17,
+          "ref": "16",
+          "cells": {
+            "A": "16",
+            "B": "Portable fire extinguishers",
+            "C": "Fire Control Plan",
+            "D": "Count by type/location, service date, pressure/weight and seals.",
+            "E": "Exactly matches approved plan or approved equivalent.",
+            "I": "=IF(OR(F17=\"\",H17=\"\"),\"\",MAX(0,F17-H17))"
+          }
+        },
+        {
+          "source_row": 18,
+          "ref": "17",
+          "cells": {
+            "A": "17",
+            "B": "Fire hoses / nozzles",
+            "C": "Fire Control Plan",
+            "D": "Check location, coupling, hose condition and nozzle operation.",
+            "E": "Required hydrant coverage plus company spare reserve.",
+            "I": "=IF(OR(F18=\"\",H18=\"\"),\"\",MAX(0,F18-H18))"
+          }
+        },
+        {
+          "source_row": 19,
+          "ref": "18",
+          "cells": {
+            "A": "18",
+            "B": "Main fire pumps",
+            "C": "Fire Control Plan / machinery certificate",
+            "D": "Run and record discharge pressure.",
+            "E": "Required pumps operational.",
+            "I": "=IF(OR(F19=\"\",H19=\"\"),\"\",MAX(0,F19-H19))"
+          }
+        },
+        {
+          "source_row": 20,
+          "ref": "19",
+          "cells": {
+            "A": "19",
+            "B": "Emergency fire pump",
+            "C": "Fire Control Plan / SOLAS arrangement",
+            "D": "Start from independent source and verify delivery pressure.",
+            "E": "Immediate reliable operation.",
+            "I": "=IF(OR(F20=\"\",H20=\"\"),\"\",MAX(0,F20-H20))"
+          }
+        },
+        {
+          "source_row": 21,
+          "ref": "20",
+          "cells": {
+            "A": "20",
+            "B": "Fixed CO2 / fixed extinguishing",
+            "C": "Fire Control Plan / service certificate",
+            "D": "Check service, bottle status, release cabinet, alarm/time delay and closure arrangements.",
+            "E": "Certification current and system unobstructed.",
+            "I": "=IF(OR(F21=\"\",H21=\"\"),\"\",MAX(0,F21-H21))"
+          }
+        },
+        {
+          "source_row": 22,
+          "ref": "21",
+          "cells": {
+            "A": "21",
+            "B": "Fire detection/alarm",
+            "C": "Fire Control Plan / Safety Equipment Certificate",
+            "D": "Test sample detectors and panel; check faults/bypasses.",
+            "E": "No unauthorized bypass/fault.",
+            "I": "=IF(OR(F22=\"\",H22=\"\"),\"\",MAX(0,F22-H22))"
+          }
+        },
+        {
+          "source_row": 23,
+          "ref": "22",
+          "cells": {
+            "A": "22",
+            "B": "Sprinkler / water mist if fitted",
+            "C": "Fire Control Plan",
+            "D": "Check pressure, alarm, pumps and service records.",
+            "E": "System operational.",
+            "I": "=IF(OR(F23=\"\",H23=\"\"),\"\",MAX(0,F23-H23))"
+          }
+        },
+        {
+          "source_row": 24,
+          "ref": "23",
+          "cells": {
+            "A": "23",
+            "B": "Emergency generator",
+            "C": "Safety Equipment Certificate / electrical drawings",
+            "D": "Black-start and load test; check fuel, batteries/air start, charger and emergency switchboard.",
+            "E": "Starts and supplies essential loads.",
+            "I": "=IF(OR(F24=\"\",H24=\"\"),\"\",MAX(0,F24-H24))"
+          }
+        },
+        {
+          "source_row": 25,
+          "ref": "24",
+          "cells": {
+            "A": "24",
+            "B": "Emergency lighting",
+            "C": "Safety Equipment Certificate / emergency lighting plan",
+            "D": "Test escape routes, bridge, ER, muster and embarkation areas.",
+            "E": "All required lights operational.",
+            "I": "=IF(OR(F25=\"\",H25=\"\"),\"\",MAX(0,F25-H25))"
+          }
+        },
+        {
+          "source_row": 26,
+          "ref": "25",
+          "cells": {
+            "A": "25",
+            "B": "General alarm / PA",
+            "C": "Muster list / Safety Equipment Certificate",
+            "D": "Test audible/visual coverage and PA.",
+            "E": "Effective throughout required spaces.",
+            "I": "=IF(OR(F26=\"\",H26=\"\"),\"\",MAX(0,F26-H26))"
+          }
+        },
+        {
+          "source_row": 27,
+          "ref": "26",
+          "cells": {
+            "A": "26",
+            "B": "Navigation lights",
+            "C": "COLREG / Safety Equipment Certificate",
+            "D": "Test all lights, failure alarms and spare modules/lamps.",
+            "E": "All required lights operational.",
+            "I": "=IF(OR(F27=\"\",H27=\"\"),\"\",MAX(0,F27-H27))"
+          }
+        },
+        {
+          "source_row": 28,
+          "ref": "27",
+          "cells": {
+            "A": "27",
+            "B": "Pilot ladder",
+            "C": "SOLAS V / pilot transfer arrangement",
+            "D": "Inspect steps, ropes, spreaders, securing and certificates/ID.",
+            "E": "Compliant ladder and securing arrangement.",
+            "I": "=IF(OR(F28=\"\",H28=\"\"),\"\",MAX(0,F28-H28))"
+          }
+        },
+        {
+          "source_row": 29,
+          "ref": "28",
+          "cells": {
+            "A": "28",
+            "B": "Gas detectors",
+            "C": "SMS / enclosed-space procedure",
+            "D": "Check O2/LEL/H2S/CO capability as applicable, calibration and bump-test kit.",
+            "E": "Sufficient calibrated detectors for shipboard risk profile.",
+            "I": "=IF(OR(F29=\"\",H29=\"\"),\"\",MAX(0,F29-H29))"
+          }
+        },
+        {
+          "source_row": 30,
+          "ref": "29",
+          "cells": {
+            "A": "29",
+            "B": "Resuscitator / first-aid oxygen if carried",
+            "C": "Flag/SMS medical inventory",
+            "D": "Check bottle pressure, masks, expiry and location.",
+            "E": "Required medical/rescue equipment ready.",
+            "I": "=IF(OR(F30=\"\",H30=\"\"),\"\",MAX(0,F30-H30))"
+          }
+        },
+        {
+          "source_row": 31,
+          "ref": "30",
+          "cells": {
+            "A": "30",
+            "B": "Medical locker",
+            "C": "Flag medical scale",
+            "D": "Check required medicines/equipment and expiries.",
+            "E": "No critical shortage/expired essential medicine.",
+            "I": "=IF(OR(F31=\"\",H31=\"\"),\"\",MAX(0,F31-H31))"
+          }
+        },
+        {
+          "source_row": 32,
+          "ref": "31",
+          "cells": {
+            "A": "31",
+            "B": "SOPEP equipment",
+            "C": "SOPEP/SMPEP inventory",
+            "D": "Check absorbents, booms/pads, PPE, plugs and tools.",
+            "E": "Plan inventory complete.",
+            "I": "=IF(OR(F32=\"\",H32=\"\"),\"\",MAX(0,F32-H32))"
+          }
+        }
+      ]
+    },
+    {
+      "sheet": "Certificates & Records",
+      "headers": {
+        "A": "Ref",
+        "B": "Certificate / record",
+        "C": "Check",
+        "D": "Issue date",
+        "E": "Expiry / next due",
+        "F": "Status",
+        "G": "Remarks"
+      },
+      "item_count": 60,
+      "items": [
+        {
+          "source_row": 2,
+          "ref": "1",
+          "cells": {
+            "A": "1",
+            "B": "Certificate of Registry",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 3,
+          "ref": "2",
+          "cells": {
+            "A": "2",
+            "B": "Class Certificate",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 4,
+          "ref": "3",
+          "cells": {
+            "A": "3",
+            "B": "Cargo Ship Safety Construction",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 5,
+          "ref": "4",
+          "cells": {
+            "A": "4",
+            "B": "Cargo Ship Safety Equipment",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 6,
+          "ref": "5",
+          "cells": {
+            "A": "5",
+            "B": "Cargo Ship Safety Radio",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 7,
+          "ref": "6",
+          "cells": {
+            "A": "6",
+            "B": "International Load Line",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 8,
+          "ref": "7",
+          "cells": {
+            "A": "7",
+            "B": "IOPP",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 9,
+          "ref": "8",
+          "cells": {
+            "A": "8",
+            "B": "IAPP",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 10,
+          "ref": "9",
+          "cells": {
+            "A": "9",
+            "B": "ISPP",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 11,
+          "ref": "10",
+          "cells": {
+            "A": "10",
+            "B": "International Energy Efficiency Certificate",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 12,
+          "ref": "11",
+          "cells": {
+            "A": "11",
+            "B": "Ballast Water Management Certificate",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 13,
+          "ref": "12",
+          "cells": {
+            "A": "12",
+            "B": "Anti-Fouling System Certificate",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 14,
+          "ref": "13",
+          "cells": {
+            "A": "13",
+            "B": "Maritime Labour Certificate",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 15,
+          "ref": "14",
+          "cells": {
+            "A": "14",
+            "B": "DMLC Part I",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 16,
+          "ref": "15",
+          "cells": {
+            "A": "15",
+            "B": "DMLC Part II",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 17,
+          "ref": "16",
+          "cells": {
+            "A": "16",
+            "B": "Safety Management Certificate (SMC)",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 18,
+          "ref": "17",
+          "cells": {
+            "A": "17",
+            "B": "DOC copy relevant to ship type",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 19,
+          "ref": "18",
+          "cells": {
+            "A": "18",
+            "B": "International Ship Security Certificate",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 20,
+          "ref": "19",
+          "cells": {
+            "A": "19",
+            "B": "Continuous Synopsis Record",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 21,
+          "ref": "20",
+          "cells": {
+            "A": "20",
+            "B": "Minimum Safe Manning Document",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 22,
+          "ref": "21",
+          "cells": {
+            "A": "21",
+            "B": "Tonnage Certificate",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 23,
+          "ref": "22",
+          "cells": {
+            "A": "22",
+            "B": "Ship Station Licence",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 24,
+          "ref": "23",
+          "cells": {
+            "A": "23",
+            "B": "LRIT conformance test report",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 25,
+          "ref": "24",
+          "cells": {
+            "A": "24",
+            "B": "VDR annual performance test",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 26,
+          "ref": "25",
+          "cells": {
+            "A": "25",
+            "B": "GMDSS shore-based maintenance / annual survey",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 27,
+          "ref": "26",
+          "cells": {
+            "A": "26",
+            "B": "Lifeboat/davit annual service",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 28,
+          "ref": "27",
+          "cells": {
+            "A": "27",
+            "B": "Lifeboat/davit 5-year service",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 29,
+          "ref": "28",
+          "cells": {
+            "A": "28",
+            "B": "Liferaft service certificates",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 30,
+          "ref": "29",
+          "cells": {
+            "A": "29",
+            "B": "Fire extinguishing system service",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 31,
+          "ref": "30",
+          "cells": {
+            "A": "30",
+            "B": "Cargo gear register and lifting appliance certificates",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 32,
+          "ref": "31",
+          "cells": {
+            "A": "31",
+            "B": "Crane wire rope certificates / renewal records",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 33,
+          "ref": "32",
+          "cells": {
+            "A": "32",
+            "B": "Hatch cover tightness test",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 34,
+          "ref": "33",
+          "cells": {
+            "A": "33",
+            "B": "Pilot ladder certificate / inspection record",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 35,
+          "ref": "34",
+          "cells": {
+            "A": "34",
+            "B": "Mooring line certificates / line management plan",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 36,
+          "ref": "35",
+          "cells": {
+            "A": "35",
+            "B": "Anchor chain calibration",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 37,
+          "ref": "36",
+          "cells": {
+            "A": "36",
+            "B": "Latest UTM / thickness measurement report",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 38,
+          "ref": "37",
+          "cells": {
+            "A": "37",
+            "B": "Last dry dock completion report",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 39,
+          "ref": "38",
+          "cells": {
+            "A": "38",
+            "B": "Latest class status report",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 40,
+          "ref": "39",
+          "cells": {
+            "A": "39",
+            "B": "PSC inspections last 36 months",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 41,
+          "ref": "40",
+          "cells": {
+            "A": "40",
+            "B": "Flag inspections last 36 months",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 42,
+          "ref": "41",
+          "cells": {
+            "A": "41",
+            "B": "RightShip/RISQ inspection and CAPA",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 43,
+          "ref": "42",
+          "cells": {
+            "A": "42",
+            "B": "Internal ISM audit",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 44,
+          "ref": "43",
+          "cells": {
+            "A": "43",
+            "B": "External SMC audit",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 45,
+          "ref": "44",
+          "cells": {
+            "A": "44",
+            "B": "P&I Certificate of Entry",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 46,
+          "ref": "45",
+          "cells": {
+            "A": "45",
+            "B": "MLC financial security certificates",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 47,
+          "ref": "46",
+          "cells": {
+            "A": "46",
+            "B": "Bunker Convention certificate",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 48,
+          "ref": "47",
+          "cells": {
+            "A": "47",
+            "B": "Wreck Removal Convention certificate",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 49,
+          "ref": "48",
+          "cells": {
+            "A": "48",
+            "B": "Civil liability certificates as applicable",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 50,
+          "ref": "49",
+          "cells": {
+            "A": "49",
+            "B": "SEEMP Part I/II/III as applicable",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 51,
+          "ref": "50",
+          "cells": {
+            "A": "50",
+            "B": "Latest IMO DCS / CII Statement of Compliance",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 52,
+          "ref": "51",
+          "cells": {
+            "A": "51",
+            "B": "Loading Manual / Stability Booklet",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 53,
+          "ref": "52",
+          "cells": {
+            "A": "52",
+            "B": "Grain Loading Manual if applicable",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 54,
+          "ref": "53",
+          "cells": {
+            "A": "53",
+            "B": "Cargo Securing Manual if applicable",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 55,
+          "ref": "54",
+          "cells": {
+            "A": "54",
+            "B": "Damage Control Plan/Booklet",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 56,
+          "ref": "55",
+          "cells": {
+            "A": "55",
+            "B": "Fire Control Plan",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 57,
+          "ref": "56",
+          "cells": {
+            "A": "56",
+            "B": "LSA Plan",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 58,
+          "ref": "57",
+          "cells": {
+            "A": "57",
+            "B": "SOPEP/SMPEP",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 59,
+          "ref": "58",
+          "cells": {
+            "A": "58",
+            "B": "Garbage Management Plan",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 60,
+          "ref": "59",
+          "cells": {
+            "A": "59",
+            "B": "Ballast Water Management Plan",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        },
+        {
+          "source_row": 61,
+          "ref": "60",
+          "cells": {
+            "A": "60",
+            "B": "Ship Security Plan approval evidence",
+            "C": "Sight original/current controlled copy and verify against issuing authority/class where possible."
+          }
+        }
+      ]
+    }
+  ],
+  "photo_log_headers": {
+    "A1": "Photo ID",
+    "B1": "Date",
+    "C1": "Section",
+    "D1": "Location / equipment",
+    "E1": "Description / what photo proves",
+    "F1": "Severity",
+    "G1": "File name / link",
+    "H1": "Inspector remarks"
+  },
+  "references": [
+    {
+      "A1": "Source",
+      "B1": "Use in checklist",
+      "C1": "URL / note"
+    },
+    {
+      "A2": "User-supplied pre-purchase inspection template",
+      "B2": "Structure, condition grading, certificate/document review, physical inspection, safety equipment and deficiency/photo approach",
+      "C2": "Template  Pre-purchase inspection  copy_260917_161834.pdf"
+    },
+    {
+      "A3": "RightShip RISQ 3.2",
+      "B3": "Bulk carrier inspection readiness, SMS effectiveness, machinery, hatch covers, lifesaving/firefighting and crew familiarity",
+      "C3": "https://rightship.com/hubfs/RISQ-3.2.pdf"
+    },
+    {
+      "A4": "RightShip RISQ overview",
+      "B4": "Current applicability to bulk carriers and inspection philosophy",
+      "C4": "https://store.rightship.com/catalog/products/rightship-inspection-ship-questionnaire-v32"
+    },
+    {
+      "A5": "IMO ISM Code",
+      "B5": "Risk-based safe management and critical equipment safeguards",
+      "C5": "https://www.imo.org/en/ourwork/humanelement/pages/ismcode.aspx"
+    },
+    {
+      "A6": "IMO surveys and certification",
+      "B6": "Statutory survey/certification framework",
+      "C6": "https://www.imo.org/en/ourwork/msas/pages/surveysandcertification.aspx"
+    },
+    {
+      "A7": "Tokyo MoU PSC Annual Report 2025",
+      "B7": "PSC focus areas: fire safety, LSA, working/living conditions, navigation and maintenance",
+      "C7": "https://www.tokyo-mou.org/annual-report/2026/05/01/annual-report-2025/"
+    }
+  ]
+}

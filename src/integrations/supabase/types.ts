@@ -3207,6 +3207,243 @@ export type Database = {
         }
         Relationships: []
       }
+      takeover_answers: {
+        Row: {
+          author_id: string
+          created_at: string
+          data: Json
+          group_key: string
+          id: string
+          inspection_id: string
+          item_ref: string
+          template_version: number
+          updated_at: string
+          updated_by: string | null
+          version: number
+        }
+        Insert: {
+          author_id?: string
+          created_at?: string
+          data?: Json
+          group_key: string
+          id?: string
+          inspection_id: string
+          item_ref: string
+          template_version?: number
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Update: {
+          author_id?: string
+          created_at?: string
+          data?: Json
+          group_key?: string
+          id?: string
+          inspection_id?: string
+          item_ref?: string
+          template_version?: number
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "takeover_answers_inspection_id_fkey"
+            columns: ["inspection_id"]
+            isOneToOne: false
+            referencedRelation: "takeover_inspections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      takeover_attachments: {
+        Row: {
+          caption: string | null
+          created_at: string
+          group_key: string | null
+          id: string
+          inspection_id: string
+          item_ref: string | null
+          mime_type: string | null
+          photo_no: number | null
+          size_bytes: number | null
+          source_type: string
+          storage_path: string
+          uploaded_by: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          group_key?: string | null
+          id?: string
+          inspection_id: string
+          item_ref?: string | null
+          mime_type?: string | null
+          photo_no?: number | null
+          size_bytes?: number | null
+          source_type?: string
+          storage_path: string
+          uploaded_by?: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          group_key?: string | null
+          id?: string
+          inspection_id?: string
+          item_ref?: string | null
+          mime_type?: string | null
+          photo_no?: number | null
+          size_bytes?: number | null
+          source_type?: string
+          storage_path?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "takeover_attachments_inspection_id_fkey"
+            columns: ["inspection_id"]
+            isOneToOne: false
+            referencedRelation: "takeover_inspections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      takeover_audit: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          detail: Json
+          entity: string
+          entity_id: string | null
+          id: string
+          inspection_id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          detail?: Json
+          entity: string
+          entity_id?: string | null
+          id?: string
+          inspection_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          detail?: Json
+          entity?: string
+          entity_id?: string | null
+          id?: string
+          inspection_id?: string
+        }
+        Relationships: []
+      }
+      takeover_inspections: {
+        Row: {
+          class_society: string | null
+          created_at: string
+          flag: string | null
+          id: string
+          imo: string | null
+          inspector_name: string | null
+          limitation_note: string | null
+          owner_id: string
+          port_of_registry: string | null
+          record_version: number
+          started_on: string
+          status: string
+          submitted_at: string | null
+          submitted_by: string | null
+          submitted_snapshot: Json | null
+          template_id: string
+          template_version: number
+          updated_at: string
+          vessel_name: string
+        }
+        Insert: {
+          class_society?: string | null
+          created_at?: string
+          flag?: string | null
+          id?: string
+          imo?: string | null
+          inspector_name?: string | null
+          limitation_note?: string | null
+          owner_id?: string
+          port_of_registry?: string | null
+          record_version?: number
+          started_on?: string
+          status?: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          submitted_snapshot?: Json | null
+          template_id?: string
+          template_version?: number
+          updated_at?: string
+          vessel_name: string
+        }
+        Update: {
+          class_society?: string | null
+          created_at?: string
+          flag?: string | null
+          id?: string
+          imo?: string | null
+          inspector_name?: string | null
+          limitation_note?: string | null
+          owner_id?: string
+          port_of_registry?: string | null
+          record_version?: number
+          started_on?: string
+          status?: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          submitted_snapshot?: Json | null
+          template_id?: string
+          template_version?: number
+          updated_at?: string
+          vessel_name?: string
+        }
+        Relationships: []
+      }
+      takeover_members: {
+        Row: {
+          added_by: string
+          created_at: string
+          id: string
+          inspection_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          added_by?: string
+          created_at?: string
+          id?: string
+          inspection_id: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          added_by?: string
+          created_at?: string
+          id?: string
+          inspection_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "takeover_members_inspection_id_fkey"
+            columns: ["inspection_id"]
+            isOneToOne: false
+            referencedRelation: "takeover_inspections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vacancy_sources: {
         Row: {
           active: boolean
@@ -3664,6 +3901,51 @@ export type Database = {
           p_vacancy_id?: string
           p_vessel?: string
         }
+        Returns: Json
+      }
+      takeover_add_member: {
+        Args: { p_email: string; p_inspection_id: string; p_role: string }
+        Returns: Json
+      }
+      takeover_can_edit: { Args: { _inspection_id: string }; Returns: boolean }
+      takeover_can_read: { Args: { _inspection_id: string }; Returns: boolean }
+      takeover_create_inspection: {
+        Args: {
+          p_class_society?: string
+          p_flag?: string
+          p_imo?: string
+          p_inspector_name?: string
+          p_port_of_registry?: string
+          p_started_on?: string
+          p_vessel_name: string
+        }
+        Returns: Json
+      }
+      takeover_list_members: {
+        Args: { p_inspection_id: string }
+        Returns: {
+          created_at: string
+          email: string
+          role: string
+          user_id: string
+        }[]
+      }
+      takeover_remove_member: {
+        Args: { p_inspection_id: string; p_user_id: string }
+        Returns: Json
+      }
+      takeover_save_answer: {
+        Args: {
+          p_data: Json
+          p_expected_version: number
+          p_group_key: string
+          p_inspection_id: string
+          p_item_ref: string
+        }
+        Returns: Json
+      }
+      takeover_submit: {
+        Args: { p_inspection_id: string; p_limitation_note?: string }
         Returns: Json
       }
       upsert_email_lead: {

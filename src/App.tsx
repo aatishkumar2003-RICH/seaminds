@@ -52,6 +52,8 @@ import ManagerDashboard from "./pages/ManagerDashboard";
 import ManagerSearch from "./pages/ManagerSearch";
 import NotFound from "./pages/NotFound";
 const JobDetail = lazy(() => import("./pages/JobDetail"));
+const TakeoverInspections = lazy(() => import("./pages/TakeoverInspections"));
+const TakeoverInspection = lazy(() => import("./pages/TakeoverInspection"));
 const RankHub = lazy(() => import("./pages/RankHub"));
 const CountryHub = lazy(() => import("./pages/CountryHub"));
 import TermsOfService from "./pages/TermsOfService";
@@ -95,6 +97,8 @@ const MetaPixelManager = () => {
 
   useEffect(() => {
     if (first.current) { first.current = false; return; }
+    // Private inspection workspace: never report these page views externally
+    if (location.pathname.startsWith("/management")) return;
     trackPixel("PageView");
   }, [location.pathname]);
 
@@ -180,6 +184,8 @@ const App = () => (
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/marketing" element={<Marketing />} />
+            <Route path="/management/inspections" element={<Suspense fallback={null}><TakeoverInspections /></Suspense>} />
+            <Route path="/management/inspections/:id" element={<Suspense fallback={null}><TakeoverInspection /></Suspense>} />
             <Route path="/for-companies" element={<ForCompanies />} />
             <Route path="/smc-score" element={<ScrollRedirect hash="smc-score" />} />
             <Route path="/jobs" element={<Navigate to="/feed" replace />} />
