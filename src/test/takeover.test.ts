@@ -6,6 +6,7 @@ import {
   SAFETY_ITEMS,
   CERT_ITEMS,
   TOTAL_ITEMS,
+  GRADE_LABELS,
   isFormula,
 } from "@/lib/takeover/template";
 import {
@@ -13,12 +14,26 @@ import {
   computeSafetyShortfall,
   computeShortfall,
   computeStats,
+  contradictsAssessment,
+  hasAssessment,
   isAnswered,
+  isDeficiency,
+  isNotApplicable,
   isVerified,
+  naReasonMissing,
   validateQuantities,
   type AnswerMap,
 } from "@/lib/takeover/answers";
-import { buildCsv } from "@/lib/takeover/exports";
+import { buildCsv, buildJson } from "@/lib/takeover/exports";
+import { buildFindings, totalCost } from "@/lib/takeover/findings";
+import { isPhotoEvidence, SOURCE_LABELS } from "@/lib/takeover/photos";
+
+const row = (group: any, ref: string, data: any, version = 1) => ({
+  group_key: group,
+  item_ref: ref,
+  data,
+  version,
+});
 
 describe("template coverage", () => {
   it("carries every source row", () => {
@@ -47,6 +62,16 @@ describe("template coverage", () => {
   it("treats source formulas as reference text only", () => {
     expect(isFormula(SPARE_ITEMS[0].shortfallFormula)).toBe(true);
   });
+
+  it("uses the exact source grade meanings", () => {
+    expect(GRADE_LABELS[1]).toBe("Very good");
+    expect(GRADE_LABELS[2]).toBe("Good / satisfactory");
+    expect(GRADE_LABELS[3]).toBe("Serviceable");
+    expect(GRADE_LABELS[4]).toBe("Unsatisfactory");
+    // source grade 5 is "not verified" and never a condition grade
+    expect((GRADE_LABELS as any)[5]).toBeUndefined();
+    expect(isVerified("master", { result: "not_verified" })).toBe(false);
+  });
 });
 
 describe("blank vs zero", () => {
@@ -73,6 +98,47 @@ describe("blank vs zero", () => {
   });
 });
 
+describe("recorded versus verified", () => {
+  it("a partial quantity is recorded but never verified", () => {
+    const d = { actual_qty: 3 };
+    expect(isAnswered("spares", d)).toBe(true);
+    expect(hasAssessment("spares", d)).toBe(false);
+    expect(isVerified("spares", d)).toBe(false);
+  });
+
+  it("invalid quantities block verification even with an assessment", () => {
+    const d = { result: "ok", actual_qty: 1, serviceable_qty: 4 } as any;
+    expect(hasAssessment("spares", d)).toBe(true);
+    expect(isVerified("spares", d)).toBe(false);
+  });
+
+  it("not applicable stays visible and needs a reason", () => {
+    expect(isNotApplicable("master", { result: "na" })).toBe(true);
+    expect(naReasonMissing("master", { result: "na" })).toBe(true);
+    expect(naReasonMissing("master", { result: "na", na_reason: "No such equipment fitted" })).toBe(false);
+  });
+});
+
+describe("measured shortfalls are findings", () => {
+  it("raises a spares finding without a shortfall button press", () => {
+    const min = SPARE_ITEMS[0].recommendedMinimum;
+    const d = { actual_qty: 0, serviceable_qty: 0 };
+    expect(isDeficiency("spares", d, min)).toBe(true);
+  });
+
+  it("does not silently accept 'meets requirement' against a measured shortfall", () => {
+    const d: any = { result: "ok", actual_qty: 1, serviceable_qty: 1 };
+    expect(contradictsAssessment("spares", d, "4")).toBe(true);
+    expect(isDeficiency("spares", d, "4")).toBe(true);
+  });
+
+  it("raises a safety finding from required versus serviceable", () => {
+    const d = { required_qty: 6, onboard_qty: 6, serviceable_qty: 4 };
+    expect(isDeficiency("safety", d)).toBe(true);
+    expect(contradictsAssessment("safety", { ...d, status: "satisfactory" } as any)).toBe(true);
+  });
+});
+
 describe("progress counting", () => {
   it("counts blanks as unanswered across every row", () => {
     const stats = computeStats({});
@@ -82,20 +148,27 @@ describe("progress counting", () => {
     expect(stats.deficiencies).toBe(0);
   });
 
-  it("separates verified from answered-but-not-verified, and deficiencies from completion", () => {
+  it("separates verified from recorded-but-not-verified, and findings from completion", () => {
     const answers: AnswerMap = {
-      [answerKey("master", "1")]: { group_key: "master", item_ref: "1", data: { result: "pass" }, version: 1 },
-      [answerKey("master", "2")]: { group_key: "master", item_ref: "2", data: { result: "not_verified" }, version: 1 },
-      [answerKey("master", "3")]: { group_key: "master", item_ref: "3", data: { result: "deficiency" }, version: 1 },
+      [answerKey("master", "1")]: row("master", "1", { result: "pass" }),
+      [answerKey("master", "2")]: row("master", "2", { result: "not_verified" }),
+      [answerKey("master", "3")]: row("master", "3", { result: "deficiency" }),
+      [answerKey("spares", "1")]: row("spares", "1", { actual_qty: 2 }),
     };
     const s = computeStats(answers);
-    expect(s.answered).toBe(3);
-    expect(s.verified).toBe(2);
-    expect(s.notVerified).toBe(1);
+    expect(s.answered).toBe(4);
+    expect(s.verified).toBe(2); // pass + deficiency are explicit assessments
+    expect(s.notVerified).toBe(2); // not_verified + quantity-only spare
     expect(s.deficiencies).toBe(1);
-    expect(s.unanswered).toBe(279);
-    expect(isVerified("master", { result: "not_verified" })).toBe(false);
+    expect(s.unanswered).toBe(278);
     expect(isAnswered("master", {})).toBe(false);
+  });
+
+  it("counts invalid quantity rows", () => {
+    const answers: AnswerMap = {
+      [answerKey("safety", "1")]: row("safety", "1", { onboard_qty: 1, serviceable_qty: 5 }),
+    };
+    expect(computeStats(answers).invalidQuantities).toBe(1);
   });
 
   it("counts required photos that are missing", () => {
@@ -108,13 +181,77 @@ describe("progress counting", () => {
   });
 });
 
+describe("evidence", () => {
+  it("only images qualify as photographic evidence", () => {
+    expect(isPhotoEvidence("image/jpeg")).toBe(true);
+    expect(isPhotoEvidence("application/pdf")).toBe(false);
+    expect(isPhotoEvidence(null)).toBe(false);
+  });
+
+  it("camera selection is recorded honestly", () => {
+    expect(SOURCE_LABELS.camera_requested).toMatch(/request/i);
+    expect(SOURCE_LABELS.gallery).toBeTruthy();
+    expect(SOURCE_LABELS.document).toBeTruthy();
+  });
+});
+
+describe("findings view", () => {
+  it("derives findings from the same answer ids with action data", () => {
+    const answers: AnswerMap = {
+      [answerKey("master", "3")]: row("master", "3", {
+        result: "deficiency",
+        remarks: "Gasket blowing",
+        action: "Renew gasket",
+        responsible: "C/E",
+        due_date: "2026-01-31",
+        cost_usd: 400,
+        bucket: "30d",
+      }),
+      [answerKey("spares", "1")]: row("spares", "1", { actual_qty: 0, serviceable_qty: 0 }),
+    };
+    const f = buildFindings(answers);
+    expect(f.length).toBe(2);
+    expect(f.some((x) => x.group === "master" && x.ref === "3" && x.action === "Renew gasket")).toBe(true);
+    expect(totalCost(f)).toBe(400);
+  });
+});
+
 describe("export", () => {
   it("writes one row per template item and never shows recommendations as actuals", () => {
     const csv = buildCsv({ id: "x", vessel_name: "MV Test" }, {});
     const lines = csv.trim().split("\n");
-    expect(lines.length).toBe(1 + 1 + 282); // meta + header + rows
+    expect(lines.filter((l) => l.startsWith("Master,") || l.startsWith("Spares,") || l.startsWith("Safety,") || l.startsWith("Certificates,")).length).toBe(282);
     const spareLine = lines.find((l) => l.startsWith("Spares,1,"))!;
-    expect(spareLine).toContain("recommended min 2");
+    expect(spareLine).toContain("template recommendation: min");
     expect(spareLine).toContain("unknown");
+  });
+
+  it("sanitises spreadsheet formula injection in free text", () => {
+    const answers: AnswerMap = {
+      [answerKey("master", "1")]: row("master", "1", { result: "pass", remarks: "=cmd|'/c calc'!A1" }),
+    };
+    const csv = buildCsv({ id: "x", vessel_name: "MV Test" }, answers);
+    expect(csv).toContain("'=cmd");
+    expect(csv).not.toMatch(/,=cmd/);
+  });
+
+  it("includes evidence metadata and the frozen snapshot in JSON", () => {
+    const evidence = [
+      {
+        id: "e1",
+        storage_path: "x/y.jpg",
+        mime_type: "image/jpeg",
+        caption: "Boiler",
+        photo_no: 1,
+        group_key: "master",
+        item_ref: "1",
+        source_type: "camera_requested",
+        created_at: "2026-01-01T00:00:00Z",
+        size_bytes: 100,
+      },
+    ] as any;
+    const json = buildJson({ id: "x", vessel_name: "MV Test" }, {}, evidence, { frozen: true });
+    expect(json.evidence_manifest.length).toBe(1);
+    expect((json as any).submitted_snapshot).toEqual({ frozen: true });
   });
 });
