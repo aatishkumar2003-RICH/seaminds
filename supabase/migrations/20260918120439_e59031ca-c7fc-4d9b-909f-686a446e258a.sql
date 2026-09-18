@@ -1,0 +1,10 @@
+REVOKE EXECUTE ON FUNCTION public.takeover_limitations(uuid) FROM anon;
+REVOKE EXECUTE ON FUNCTION public.takeover_submit(uuid, text, integer, bigint) FROM anon;
+REVOKE EXECUTE ON FUNCTION public.takeover_save_answer(uuid, text, text, jsonb, integer) FROM anon;
+REVOKE EXECUTE ON FUNCTION public.takeover_create_inspection(text, text, text, text, text, text, date) FROM anon;
+REVOKE EXECUTE ON FUNCTION public.takeover_add_member(uuid, text, text) FROM anon;
+REVOKE EXECUTE ON FUNCTION public.takeover_remove_member(uuid, uuid) FROM anon;
+REVOKE EXECUTE ON FUNCTION public.takeover_list_members(uuid) FROM anon;
+REVOKE EXECUTE ON FUNCTION public.takeover_can_read(uuid) FROM anon;
+REVOKE EXECUTE ON FUNCTION public.takeover_can_edit(uuid) FROM anon;
+REVOKE EXECUTE ON FUNCTION public.takeover_member_role(uuid) FROM anon;
