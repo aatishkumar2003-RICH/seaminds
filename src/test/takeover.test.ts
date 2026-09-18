@@ -222,7 +222,7 @@ describe("export", () => {
     const lines = csv.trim().split("\n");
     expect(lines.filter((l) => l.startsWith("Master,") || l.startsWith("Spares,") || l.startsWith("Safety,") || l.startsWith("Certificates,")).length).toBe(282);
     const spareLine = lines.find((l) => l.startsWith("Spares,1,"))!;
-    expect(spareLine).toContain("recommended min");
+    expect(spareLine).toContain("template recommendation: min");
     expect(spareLine).toContain("unknown");
   });
 
