@@ -3930,6 +3930,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      takeover_member_role: {
+        Args: { _inspection_id: string }
+        Returns: string
+      }
       takeover_remove_member: {
         Args: { p_inspection_id: string; p_user_id: string }
         Returns: Json
