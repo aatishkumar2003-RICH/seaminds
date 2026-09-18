@@ -46,7 +46,15 @@ export interface CertAnswer {
   evidence?: string;
 }
 
-export type AnyAnswer = MasterAnswer & SpareAnswer & SafetyAnswer & CertAnswer;
+export interface AnyAnswer
+  extends Omit<MasterAnswer, "result">,
+    Omit<SpareAnswer, "result" | "remarks">,
+    Omit<SafetyAnswer, "status" | "remarks">,
+    Omit<CertAnswer, "status" | "remarks"> {
+  result?: MasterAnswer["result"] | SpareAnswer["result"];
+  status?: SafetyAnswer["status"] | CertAnswer["status"];
+  remarks?: string;
+}
 
 export interface AnswerRow {
   id?: string;
@@ -117,7 +125,7 @@ export function isDeficiency(group: GroupKey, data?: AnyAnswer): boolean {
  * Uses serviceable quantity, never the actual count.
  */
 export function computeShortfall(
-  data?: SpareAnswer,
+  data?: Pick<SpareAnswer, "actual_qty" | "serviceable_qty">,
   recommendedMinimum?: string
 ): number | null {
   const min = Number(recommendedMinimum);
@@ -127,7 +135,7 @@ export function computeShortfall(
 }
 
 /** Safety shortfall = required per approved plan − serviceable. Unknown required ≠ zero. */
-export function computeSafetyShortfall(data?: SafetyAnswer): number | null {
+export function computeSafetyShortfall(data?: Pick<SafetyAnswer, "required_qty" | "serviceable_qty">): number | null {
   if (!data) return null;
   if (isBlank(data.required_qty) || isBlank(data.serviceable_qty)) return null;
   return Math.max(0, Number(data.required_qty) - Number(data.serviceable_qty));

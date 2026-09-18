@@ -72,7 +72,7 @@ export default function CertificatesTab({ answers, canEdit, onUpdate }: Props) {
                       { value: "missing", label: "Missing", tone: "bad" },
                       { value: "not_sighted", label: "Not sighted", tone: "muted" },
                     ]}
-                    value={d.status as any}
+                    value={d.status}
                     disabled={!canEdit}
                     onChange={(v) => onUpdate(i.ref, { status: v as any })}
                   />

@@ -97,7 +97,7 @@ export default function SafetyTab({ answers, canEdit, photoRefs, onUpdate, onAdd
                       { value: "deficiency", label: "Deficiency", tone: "bad" },
                       { value: "not_verified", label: "Not verified", tone: "muted" },
                     ]}
-                    value={d.status as any}
+                    value={d.status}
                     disabled={!canEdit}
                     onChange={(v) => onUpdate(i.ref, { status: v as any })}
                   />

@@ -108,7 +108,7 @@ export default function SparesTab({ answers, canEdit, onUpdate }: Props) {
                       { value: "shortfall", label: "Shortfall", tone: "bad" },
                       { value: "not_verified", label: "Not verified", tone: "muted" },
                     ]}
-                    value={d.result as any}
+                    value={d.result}
                     disabled={!canEdit}
                     onChange={(v) => onUpdate(i.ref, { result: v as any })}
                   />
