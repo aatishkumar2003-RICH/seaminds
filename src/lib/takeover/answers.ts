@@ -46,7 +46,15 @@ export interface CertAnswer {
   evidence?: string;
 }
 
-export type AnyAnswer = MasterAnswer & SpareAnswer & SafetyAnswer & CertAnswer;
+export interface AnyAnswer
+  extends Omit<MasterAnswer, "result">,
+    Omit<SpareAnswer, "result" | "remarks">,
+    Omit<SafetyAnswer, "status" | "remarks">,
+    Omit<CertAnswer, "status" | "remarks"> {
+  result?: MasterAnswer["result"] | SpareAnswer["result"];
+  status?: SafetyAnswer["status"] | CertAnswer["status"];
+  remarks?: string;
+}
 
 export interface AnswerRow {
   id?: string;
