@@ -3351,6 +3351,7 @@ export type Database = {
           id: string
           imo: string | null
           inspector_name: string | null
+          is_partial: boolean
           limitation_note: string | null
           owner_id: string
           port_of_registry: string | null
@@ -3372,6 +3373,7 @@ export type Database = {
           id?: string
           imo?: string | null
           inspector_name?: string | null
+          is_partial?: boolean
           limitation_note?: string | null
           owner_id?: string
           port_of_registry?: string | null
@@ -3393,6 +3395,7 @@ export type Database = {
           id?: string
           imo?: string | null
           inspector_name?: string | null
+          is_partial?: boolean
           limitation_note?: string | null
           owner_id?: string
           port_of_registry?: string | null
@@ -3443,6 +3446,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      takeover_template_requirements: {
+        Row: {
+          group_key: string
+          item_ref: string
+          photo_required: boolean
+          template_id: string
+          template_version: number
+        }
+        Insert: {
+          group_key: string
+          item_ref: string
+          photo_required?: boolean
+          template_id: string
+          template_version: number
+        }
+        Update: {
+          group_key?: string
+          item_ref?: string
+          photo_required?: boolean
+          template_id?: string
+          template_version?: number
+        }
+        Relationships: []
       }
       vacancy_sources: {
         Row: {
@@ -3921,6 +3948,7 @@ export type Database = {
         }
         Returns: Json
       }
+      takeover_limitations: { Args: { p_inspection_id: string }; Returns: Json }
       takeover_list_members: {
         Args: { p_inspection_id: string }
         Returns: {
@@ -3948,10 +3976,20 @@ export type Database = {
         }
         Returns: Json
       }
-      takeover_submit: {
-        Args: { p_inspection_id: string; p_limitation_note?: string }
-        Returns: Json
-      }
+      takeover_submit:
+        | {
+            Args: { p_inspection_id: string; p_limitation_note?: string }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_expected_answer_count?: number
+              p_expected_version_sum?: number
+              p_inspection_id: string
+              p_limitation_note?: string
+            }
+            Returns: Json
+          }
       upsert_email_lead: {
         Args: {
           p_crew_profile_id?: string
