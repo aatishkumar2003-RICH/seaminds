@@ -102,7 +102,7 @@ export function isDeficiency(group: GroupKey, data?: AnyAnswer): boolean {
     case "master":
       return data.result === "deficiency";
     case "spares":
-      return data.result === "shortfall" || (computeShortfall(data) ?? 0) > 0;
+      return data.result === "shortfall";
     case "safety":
       return data.status === "deficiency" || (computeSafetyShortfall(data) ?? 0) > 0;
     case "certificates":
