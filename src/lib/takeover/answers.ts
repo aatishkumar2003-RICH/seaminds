@@ -125,7 +125,7 @@ export function isDeficiency(group: GroupKey, data?: AnyAnswer): boolean {
  * Uses serviceable quantity, never the actual count.
  */
 export function computeShortfall(
-  data?: SpareAnswer,
+  data?: Pick<SpareAnswer, "actual_qty" | "serviceable_qty">,
   recommendedMinimum?: string
 ): number | null {
   const min = Number(recommendedMinimum);
@@ -135,7 +135,7 @@ export function computeShortfall(
 }
 
 /** Safety shortfall = required per approved plan − serviceable. Unknown required ≠ zero. */
-export function computeSafetyShortfall(data?: SafetyAnswer): number | null {
+export function computeSafetyShortfall(data?: Pick<SafetyAnswer, "required_qty" | "serviceable_qty">): number | null {
   if (!data) return null;
   if (isBlank(data.required_qty) || isBlank(data.serviceable_qty)) return null;
   return Math.max(0, Number(data.required_qty) - Number(data.serviceable_qty));
