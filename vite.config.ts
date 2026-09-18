@@ -30,6 +30,11 @@ export default defineConfig(({ mode }) => ({
         navigateFallbackDenylist: [/^\/~oauth/, /^\/\.lovable\/oauth/],
         runtimeCaching: [
           {
+            // Private takeover inspection data and evidence must never be cached
+            urlPattern: /^https:\/\/.*\.supabase\.co\/.*(takeover|takeover-evidence).*/i,
+            handler: "NetworkOnly",
+          },
+          {
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
             handler: "NetworkFirst",
             options: {

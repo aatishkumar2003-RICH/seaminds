@@ -1453,6 +1453,13 @@ export default function AdminDashboard() {
             >
               🔍 Manager Search
             </Button>
+            <Button
+              variant="outline"
+              onClick={() => (window.location.href = "/management/inspections")}
+              style={{ borderColor: "#D4AF37", color: "#D4AF37" }}
+            >
+              🛠 Inspections
+            </Button>
             <Button variant="outline" onClick={lock} style={{ borderColor: "#D4AF37", color: "#D4AF37" }}>
               <Lock className="w-4 h-4 mr-1" /> Lock
             </Button>

@@ -1006,6 +1006,12 @@ const ManagerDashboard = () => {
           >
             🎓 Arrange Interview
           </button>
+          <button
+            onClick={() => navigate("/management/inspections")}
+            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-[#0D1B2A] text-[#D4AF37] border border-[#D4AF37]/40 hover:bg-[#D4AF37]/10 transition-colors"
+          >
+            🛠 Inspections
+          </button>
           <div className="flex flex-col items-start gap-1">
             <button
               onClick={() => navigate("/company-post")}
