@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { isBlank } from "@/lib/takeover/answers";
-import type { SaveState } from "@/hooks/takeover/useInspection";
+import type { ItemStatus, SaveState } from "@/hooks/takeover/useInspection";
 
 export const GOLD = "#D4AF37";
 
@@ -153,7 +153,70 @@ export const SaveIndicator = ({ state }: { state: SaveState }) => {
     saved: { text: "Saved to server", cls: "text-green-400" },
     unsynced: { text: "Unsynced", cls: "text-amber-400" },
     failed: { text: "Save failed", cls: "text-red-400" },
+    conflict: { text: "Conflict — needs a decision", cls: "text-amber-300" },
   };
   const s = map[state];
   return <span className={cn("text-xs font-semibold", s.cls)}>{s.text}</span>;
 };
+
+/** Per-item sync badge so an inspector can see exactly which row is behind. */
+export const ItemSyncBadge = ({ status }: { status?: ItemStatus }) => {
+  if (!status || status === "clean") return null;
+  const map: Record<Exclude<ItemStatus, "clean">, { t: string; c: string }> = {
+    pending: { t: "unsynced", c: "text-amber-400" },
+    saving: { t: "saving…", c: "text-[#D4AF37]" },
+    failed: { t: "save failed", c: "text-red-400" },
+    conflict: { t: "conflict", c: "text-amber-300" },
+  };
+  const s = map[status];
+  return <span className={cn("text-[10px] font-semibold", s.c)}>{s.t}</span>;
+};
+
+/** Multi-select chips — nothing is preselected and nothing is inferred. */
+export function MultiSelect({
+  options,
+  values,
+  onChange,
+  disabled,
+}: {
+  options: readonly { value: string; label: string }[];
+  values?: string[];
+  onChange: (v: string[]) => void;
+  disabled?: boolean;
+}) {
+  const set = new Set(values || []);
+  return (
+    <div className="flex flex-wrap gap-2">
+      {options.map((o) => {
+        const active = set.has(o.value);
+        return (
+          <button
+            key={o.value}
+            type="button"
+            disabled={disabled}
+            onClick={() => {
+              const next = new Set(set);
+              if (active) next.delete(o.value);
+              else next.add(o.value);
+              onChange([...next]);
+            }}
+            className={cn(
+              "min-h-[40px] px-3 rounded-xl text-xs font-semibold border transition-colors disabled:opacity-50",
+              active
+                ? "bg-[#D4AF37] border-[#D4AF37] text-[#0D1B2A]"
+                : "bg-transparent border-[rgba(212,175,55,0.3)] text-slate-300"
+            )}
+          >
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+export const WarnNote = ({ children }: { children: ReactNode }) => (
+  <p className="text-[11px] text-amber-300 bg-amber-400/10 border border-amber-400/30 rounded-xl px-3 py-2">
+    {children}
+  </p>
+);

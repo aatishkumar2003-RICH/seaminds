@@ -5,7 +5,8 @@ import { answerKey, type AnswerMap, type AnyAnswer } from "@/lib/takeover/answer
 import type { GroupKey } from "@/lib/takeover/template";
 import { deleteDraft, listDrafts, outboxKey, putDraft } from "@/lib/takeover/outbox";
 
-export type SaveState = "idle" | "saving" | "saved" | "unsynced" | "failed";
+export type SaveState = "idle" | "saving" | "saved" | "unsynced" | "failed" | "conflict";
+export type ItemStatus = "clean" | "pending" | "saving" | "failed" | "conflict";
 
 export interface InspectionRecord {
   id: string;
@@ -19,8 +20,10 @@ export interface InspectionRecord {
   started_on: string;
   status: "draft" | "submitted";
   limitation_note: string | null;
+  is_partial?: boolean;
   submitted_at: string | null;
   submitted_by: string | null;
+  submitted_snapshot?: Record<string, unknown> | null;
   template_id: string;
   template_version: number;
   record_version: number;
@@ -50,25 +53,105 @@ export interface ConflictInfo {
   localData: AnyAnswer;
 }
 
+/** Authoritative per-item record held outside React state. */
+interface Item {
+  group: GroupKey;
+  ref: string;
+  data: AnyAnswer;
+  /** Local revision counter — increments on every keystroke batch. */
+  rev: number;
+  /** Revision the server has acknowledged. */
+  ackedRev: number;
+  version: number;
+  updated_at?: string;
+  sending: boolean;
+  failed: boolean;
+}
+
+const DEBOUNCE_MS = 700;
+
 export function useInspection(inspectionId?: string) {
   const { user, isReady } = useAuth();
+  const userId = user?.id;
+
   const [inspection, setInspection] = useState<InspectionRecord | null>(null);
   const [answers, setAnswers] = useState<AnswerMap>({});
   const [attachments, setAttachments] = useState<AttachmentRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [storageError, setStorageError] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<SaveState>("idle");
-  const [conflict, setConflict] = useState<ConflictInfo | null>(null);
+  const [conflicts, setConflicts] = useState<Record<string, ConflictInfo>>({});
+  const [itemStatus, setItemStatus] = useState<Record<string, ItemStatus>>({});
   const [canEdit, setCanEdit] = useState(false);
 
+  const items = useRef<Record<string, Item>>({});
+  const conflictsRef = useRef<Record<string, ConflictInfo>>({});
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
-  const inflight = useRef(0);
+  /**
+   * Bumped whenever the account or inspection changes, or the hook unmounts.
+   * Every async callback checks it, so a save started for one user or record
+   * can never write into the state of another.
+   */
+  const gen = useRef(0);
+
+  const clearTimers = () => {
+    Object.values(timers.current).forEach(clearTimeout);
+    timers.current = {};
+  };
+
+  /** Publishes the authoritative refs into React state for rendering. */
+  const publish = useCallback(() => {
+    const map: AnswerMap = {};
+    const status: Record<string, ItemStatus> = {};
+    let pending = 0;
+    let saving = 0;
+    let failed = 0;
+    Object.entries(items.current).forEach(([k, it]) => {
+      map[k] = { group_key: it.group, item_ref: it.ref, data: it.data, version: it.version, updated_at: it.updated_at };
+      let s: ItemStatus = "clean";
+      if (conflictsRef.current[k]) s = "conflict";
+      else if (it.sending) s = "saving";
+      else if (it.failed) s = "failed";
+      else if (it.rev !== it.ackedRev) s = "pending";
+      status[k] = s;
+      if (s === "saving") saving++;
+      else if (s === "failed") failed++;
+      else if (s === "pending") pending++;
+    });
+    setAnswers(map);
+    setItemStatus(status);
+    setConflicts({ ...conflictsRef.current });
+    const hasConflict = Object.keys(conflictsRef.current).length > 0;
+    setSaveState(
+      failed ? "failed" : hasConflict ? "conflict" : saving ? "saving" : pending ? "unsynced" : "saved"
+    );
+  }, []);
+
+  // ---------------------------------------------------------------- loading
+  const loadAttachments = useCallback(async () => {
+    if (!inspectionId) return;
+    const myGen = gen.current;
+    const res = await supabase
+      .from("takeover_attachments" as any)
+      .select("*")
+      .eq("inspection_id", inspectionId)
+      .order("photo_no", { ascending: true });
+    if (myGen !== gen.current) return;
+    if (res.error) {
+      setLoadError(`Evidence list could not be refreshed: ${res.error.message}`);
+      return;
+    }
+    setAttachments(((res.data as any[]) || []) as AttachmentRecord[]);
+  }, [inspectionId]);
 
   const load = useCallback(async () => {
-    if (!inspectionId || !user) return;
+    if (!inspectionId || !userId) return;
+    const myGen = gen.current;
     setLoading(true);
     setLoadError(null);
-    const [insRes, ansRes, attRes] = await Promise.all([
+
+    const [insRes, ansRes, attRes, editRes] = await Promise.all([
       supabase.from("takeover_inspections" as any).select("*").eq("id", inspectionId).maybeSingle(),
       supabase.from("takeover_answers" as any).select("*").eq("inspection_id", inspectionId),
       supabase
@@ -76,7 +159,9 @@ export function useInspection(inspectionId?: string) {
         .select("*")
         .eq("inspection_id", inspectionId)
         .order("photo_no", { ascending: true }),
+      supabase.rpc("takeover_can_edit" as any, { _inspection_id: inspectionId }),
     ]);
+    if (myGen !== gen.current) return;
 
     if (insRes.error || !insRes.data) {
       setLoadError("This inspection is not available to your account.");
@@ -85,136 +170,282 @@ export function useInspection(inspectionId?: string) {
     }
     const rec = insRes.data as unknown as InspectionRecord;
     setInspection(rec);
+    // Real server permission, not a guess from the status field.
+    setCanEdit(editRes.error ? false : Boolean(editRes.data));
 
-    const map: AnswerMap = {};
+    if (ansRes.error) {
+      // Never replace existing data with an empty map on a failed read.
+      setLoadError(`Answers could not be loaded: ${ansRes.error.message}. Nothing has been changed — retry before editing.`);
+      setLoading(false);
+      return;
+    }
+    if (attRes.error) setLoadError(`Evidence could not be loaded: ${attRes.error.message}`);
+    else setAttachments(((attRes.data as any[]) || []) as AttachmentRecord[]);
+
+    const next: Record<string, Item> = {};
     ((ansRes.data as any[]) || []).forEach((r) => {
-      map[answerKey(r.group_key, r.item_ref)] = {
-        id: r.id,
-        group_key: r.group_key,
-        item_ref: r.item_ref,
+      next[answerKey(r.group_key, r.item_ref)] = {
+        group: r.group_key,
+        ref: r.item_ref,
         data: r.data || {},
+        rev: 0,
+        ackedRev: 0,
         version: r.version,
         updated_at: r.updated_at,
+        sending: false,
+        failed: false,
       };
     });
 
-    // merge any locally recovered drafts that never reached the server
-    const drafts = await listDrafts(user.id, inspectionId);
-    let recovered = false;
-    for (const d of drafts) {
-      const k = answerKey(d.group_key as GroupKey, d.item_ref);
-      const server = map[k];
-      if (!server || (d.expected_version ?? 0) >= server.version) {
-        map[k] = {
-          ...(server || { group_key: d.group_key as GroupKey, item_ref: d.item_ref, version: 0 }),
+    // Restore every unsynced local draft for this account + inspection.
+    conflictsRef.current = {};
+    const drafts = await listDrafts(userId, inspectionId);
+    if (myGen !== gen.current) return;
+    if (!drafts.ok) setStorageError(drafts.error || "Local draft recovery is unavailable on this device.");
+    else {
+      setStorageError(null);
+      for (const d of drafts.value || []) {
+        const k = answerKey(d.group_key as GroupKey, d.item_ref);
+        const server = next[k];
+        const serverVersion = server?.version ?? 0;
+        next[k] = {
+          group: d.group_key as GroupKey,
+          ref: d.item_ref,
           data: d.data as AnyAnswer,
-        } as any;
-        recovered = true;
+          rev: 1,
+          ackedRev: 0,
+          version: serverVersion,
+          updated_at: server?.updated_at,
+          sending: false,
+          failed: false,
+        };
+        // The server moved on while this draft was waiting — that is a conflict,
+        // not a reason to drop the inspector's work.
+        if ((d.expected_version ?? 0) !== serverVersion) {
+          conflictsRef.current[k] = {
+            group: d.group_key as GroupKey,
+            ref: d.item_ref,
+            serverData: (server?.data as AnyAnswer) || {},
+            serverVersion,
+            localData: d.data as AnyAnswer,
+          };
+        }
       }
     }
 
-    setAnswers(map);
-    setAttachments(((attRes.data as any[]) || []) as AttachmentRecord[]);
-    setCanEdit(rec.status === "draft");
-    if (recovered) setSaveState("unsynced");
+    items.current = next;
+    publish();
     setLoading(false);
-  }, [inspectionId, user]);
+  }, [inspectionId, userId, publish]);
 
   useEffect(() => {
-    if (isReady && user && inspectionId) load();
-    else if (isReady && !user) setLoading(false);
-  }, [isReady, user, inspectionId, load]);
+    gen.current += 1;
+    clearTimers();
+    items.current = {};
+    conflictsRef.current = {};
+    setAnswers({});
+    setConflicts({});
+    setItemStatus({});
+    setSaveState("idle");
+    if (isReady && userId && inspectionId) load();
+    else if (isReady && !userId) setLoading(false);
+    return () => {
+      gen.current += 1;
+      clearTimers();
+    };
+  }, [isReady, userId, inspectionId, load]);
 
-  const pushAnswer = useCallback(
-    async (group: GroupKey, ref: string, data: AnyAnswer, expected: number | null) => {
-      if (!inspectionId || !user) return;
-      const obKey = outboxKey(user.id, inspectionId, group, ref);
-      inflight.current += 1;
-      setSaveState("saving");
-      try {
-        const { data: res, error } = await supabase.rpc("takeover_save_answer" as any, {
-          p_inspection_id: inspectionId,
-          p_group_key: group,
-          p_item_ref: ref,
-          p_data: data as any,
-          p_expected_version: expected,
-        });
-        const r = res as any;
-        if (error) throw error;
-        if (r?.conflict) {
-          setConflict({ group, ref, serverData: r.data || {}, serverVersion: r.version, localData: data });
-          setSaveState("unsynced");
-          return;
-        }
-        if (r?.error) {
-          setSaveState("failed");
-          return;
-        }
-        setAnswers((prev) => {
-          const k = answerKey(group, ref);
-          return { ...prev, [k]: { ...(prev[k] || { group_key: group, item_ref: ref, data }), data, version: r.version, updated_at: r.updated_at } };
-        });
-        await deleteDraft(obKey);
-        if (inflight.current <= 1) setSaveState("saved");
-      } catch {
-        setSaveState("failed");
-      } finally {
-        inflight.current = Math.max(0, inflight.current - 1);
-      }
+  // ------------------------------------------------------------- persistence
+  const persistDraft = useCallback(
+    async (it: Item) => {
+      if (!inspectionId || !userId) return;
+      const res = await putDraft({
+        key: outboxKey(userId, inspectionId, it.group, it.ref),
+        user_id: userId,
+        inspection_id: inspectionId,
+        group_key: it.group,
+        item_ref: it.ref,
+        data: it.data as Record<string, unknown>,
+        expected_version: it.version,
+        updated_at: Date.now(),
+      });
+      if (!res.ok) setStorageError(res.error || "This device could not keep a local copy of your last entry.");
+      else setStorageError(null);
     },
-    [inspectionId, user]
+    [inspectionId, userId]
   );
 
-  /** Local-first update: state changes instantly, server save is debounced per item. */
+  /** Serialised per item: loops until the latest revision is acknowledged. */
+  const pushItem = useCallback(
+    async (key: string) => {
+      const myGen = gen.current;
+      if (!inspectionId || !userId) return;
+      const it = items.current[key];
+      if (!it || it.sending) return;
+      if (conflictsRef.current[key]) return; // wait for the inspector to resolve it
+
+      it.sending = true;
+      publish();
+
+      try {
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+          const cur = items.current[key];
+          if (!cur || cur.rev === cur.ackedRev) break;
+          const sentRev = cur.rev;
+          const sentVersion = cur.version;
+          const payload = cur.data;
+
+          const { data: res, error } = await supabase.rpc("takeover_save_answer" as any, {
+            p_inspection_id: inspectionId,
+            p_group_key: cur.group,
+            p_item_ref: cur.ref,
+            p_data: payload as any,
+            p_expected_version: sentVersion,
+          });
+          if (myGen !== gen.current) return; // account or record changed — discard
+
+          const r = res as any;
+          if (error) throw new Error(error.message);
+          const live = items.current[key];
+          if (!live) return;
+
+          if (r?.conflict) {
+            conflictsRef.current[key] = {
+              group: live.group,
+              ref: live.ref,
+              serverData: (r.data || {}) as AnyAnswer,
+              serverVersion: Number(r.version || 0),
+              localData: live.data,
+            };
+            break;
+          }
+          if (r?.error) throw new Error(r.error);
+
+          // Acknowledge ONLY the revision that was sent; never overwrite newer typing.
+          live.version = Number(r.version);
+          live.updated_at = r.updated_at;
+          live.failed = false;
+          if (live.ackedRev < sentRev) live.ackedRev = sentRev;
+          if (live.rev === live.ackedRev) {
+            await deleteDraft(outboxKey(userId, inspectionId, live.group, live.ref));
+          }
+        }
+      } catch (e) {
+        if (myGen !== gen.current) return;
+        const live = items.current[key];
+        if (live) live.failed = true;
+      } finally {
+        if (myGen === gen.current) {
+          const live = items.current[key];
+          if (live) live.sending = false;
+          publish();
+        }
+      }
+    },
+    [inspectionId, userId, publish]
+  );
+
+  /** Local-first update: state changes instantly, only the network is debounced. */
   const updateAnswer = useCallback(
     (group: GroupKey, ref: string, patch: AnyAnswer) => {
-      if (!inspectionId || !user || !canEdit) return;
+      if (!inspectionId || !userId || !canEdit) return;
       const k = answerKey(group, ref);
-      let merged: AnyAnswer = {};
-      let expected: number | null = null;
-      setAnswers((prev) => {
-        const cur = prev[k];
-        merged = { ...(cur?.data || {}), ...patch };
-        expected = cur?.version ?? null;
-        return { ...prev, [k]: { ...(cur || { group_key: group, item_ref: ref, version: 0 }), data: merged } as any };
-      });
-      setSaveState("unsynced");
+      const cur =
+        items.current[k] ||
+        (items.current[k] = {
+          group,
+          ref,
+          data: {},
+          rev: 0,
+          ackedRev: 0,
+          version: 0,
+          sending: false,
+          failed: false,
+        });
+      cur.data = { ...cur.data, ...patch };
+      cur.rev += 1;
+      cur.failed = false;
+      publish();
+
+      // Local recovery copy is written immediately, before any success is shown.
+      void persistDraft(cur);
 
       clearTimeout(timers.current[k]);
       timers.current[k] = setTimeout(() => {
-        putDraft({
-          key: outboxKey(user.id, inspectionId, group, ref),
-          user_id: user.id,
-          inspection_id: inspectionId,
-          group_key: group,
-          item_ref: ref,
-          data: merged as any,
-          expected_version: expected,
-          updated_at: Date.now(),
-        });
-        pushAnswer(group, ref, merged, expected);
-      }, 700);
+        delete timers.current[k];
+        void pushItem(k);
+      }, DEBOUNCE_MS);
     },
-    [inspectionId, user, canEdit, pushAnswer]
+    [inspectionId, userId, canEdit, publish, persistDraft, pushItem]
   );
 
-  const resolveConflictKeepMine = useCallback(async () => {
-    if (!conflict) return;
-    await pushAnswer(conflict.group, conflict.ref, conflict.localData, conflict.serverVersion);
-    setConflict(null);
-  }, [conflict, pushAnswer]);
+  const pendingKeys = () =>
+    Object.keys(items.current).filter((k) => {
+      const it = items.current[k];
+      return it.rev !== it.ackedRev || it.failed;
+    });
 
-  const resolveConflictTakeServer = useCallback(() => {
-    if (!conflict) return;
-    const k = answerKey(conflict.group, conflict.ref);
-    setAnswers((prev) => ({
-      ...prev,
-      [k]: { group_key: conflict.group, item_ref: conflict.ref, data: conflict.serverData, version: conflict.serverVersion },
-    }));
-    if (inspectionId && user) deleteDraft(outboxKey(user.id, inspectionId, conflict.group, conflict.ref));
-    setConflict(null);
-    setSaveState("saved");
-  }, [conflict, inspectionId, user]);
+  const retryNow = useCallback(async () => {
+    clearTimers();
+    const keys = pendingKeys();
+    keys.forEach((k) => {
+      const it = items.current[k];
+      if (it) it.failed = false;
+    });
+    publish();
+    await Promise.all(keys.map((k) => pushItem(k)));
+  }, [pushItem, publish]);
+
+  /** Flush everything and report honestly what is still not on the server. */
+  const flush = useCallback(async () => {
+    await retryNow();
+    const stillPending = pendingKeys();
+    return {
+      pending: stillPending.length,
+      conflicts: Object.keys(conflictsRef.current).length,
+      answerCount: Object.values(items.current).filter((i) => i.version > 0).length,
+      versionSum: Object.values(items.current).reduce((s, i) => s + (i.version || 0), 0),
+    };
+  }, [retryNow]);
+
+  useEffect(() => {
+    const onOnline = () => void retryNow();
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, [retryNow]);
+
+  // -------------------------------------------------------------- conflicts
+  const resolveConflictKeepMine = useCallback(
+    async (key: string) => {
+      const c = conflictsRef.current[key];
+      const it = items.current[key];
+      if (!c || !it) return;
+      delete conflictsRef.current[key];
+      it.version = c.serverVersion;
+      it.rev += 1;
+      await persistDraft(it);
+      publish();
+      await pushItem(key);
+    },
+    [persistDraft, publish, pushItem]
+  );
+
+  const resolveConflictTakeServer = useCallback(
+    async (key: string) => {
+      const c = conflictsRef.current[key];
+      const it = items.current[key];
+      if (!c || !it) return;
+      delete conflictsRef.current[key];
+      it.data = c.serverData;
+      it.version = c.serverVersion;
+      it.ackedRev = it.rev;
+      it.failed = false;
+      if (userId && inspectionId) await deleteDraft(outboxKey(userId, inspectionId, it.group, it.ref));
+      publish();
+    },
+    [userId, inspectionId, publish]
+  );
 
   return {
     inspection,
@@ -222,12 +453,16 @@ export function useInspection(inspectionId?: string) {
     attachments,
     loading,
     loadError,
+    storageError,
     saveState,
-    conflict,
+    itemStatus,
+    conflicts,
     canEdit,
     reload: load,
+    reloadAttachments: loadAttachments,
     updateAnswer,
-    setAttachments,
+    retryNow,
+    flush,
     resolveConflictKeepMine,
     resolveConflictTakeServer,
   };

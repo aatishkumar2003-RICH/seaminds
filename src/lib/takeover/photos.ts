@@ -2,7 +2,23 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const BUCKET = "takeover-evidence";
 export const MAX_BYTES = 20 * 1024 * 1024;
-export const ALLOWED_MIME = ["image/jpeg", "image/png", "image/webp", "image/heic", "application/pdf"];
+export const IMAGE_MIME = ["image/jpeg", "image/png", "image/webp", "image/heic"];
+export const ALLOWED_MIME = [...IMAGE_MIME, "application/pdf"];
+
+/**
+ * Honest capture source. The browser cannot prove a file was taken just now,
+ * so asking the camera is recorded as a request, not as proof of fresh capture.
+ */
+export type SourceType = "camera_requested" | "gallery" | "document";
+
+export const SOURCE_LABELS: Record<string, string> = {
+  camera_requested: "Camera requested (capture time not proven)",
+  camera: "Camera requested (capture time not proven)",
+  gallery: "Chosen from device storage",
+  document: "Document file",
+};
+
+export const isPhotoEvidence = (mime?: string | null) => !!mime && mime.startsWith("image/");
 
 export interface UploadArgs {
   inspectionId: string;
@@ -10,7 +26,7 @@ export interface UploadArgs {
   caption?: string;
   groupKey?: string;
   itemRef?: string;
-  sourceType: "camera" | "gallery" | "document";
+  sourceType: SourceType;
 }
 
 /**
@@ -27,9 +43,11 @@ export async function uploadEvidence({
   sourceType,
 }: UploadArgs): Promise<{ error?: string; id?: string }> {
   if (!ALLOWED_MIME.includes(file.type)) return { error: `Unsupported file type: ${file.type || "unknown"}` };
+  if (sourceType !== "document" && !isPhotoEvidence(file.type))
+    return { error: "This slot accepts photographs only. Use the document button for a PDF." };
   if (file.size > MAX_BYTES) return { error: "File is larger than 20 MB" };
   if (typeof navigator !== "undefined" && navigator.onLine === false)
-    return { error: "You are offline. Photo evidence needs a connection to upload." };
+    return { error: "You are offline. Evidence needs a connection to upload — nothing is queued." };
 
   const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
   const path = `${inspectionId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
