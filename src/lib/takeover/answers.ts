@@ -7,6 +7,22 @@ import {
   TOTAL_ITEMS,
 } from "./template";
 
+/**
+ * Evidence method actually used for an observation.
+ * Never inferred and never prefilled — an unrecorded method stays unrecorded.
+ */
+export const EVIDENCE_METHODS = [
+  { value: "visual", label: "Visual examination" },
+  { value: "records", label: "Records reviewed" },
+  { value: "function_test", label: "Function test witnessed" },
+  { value: "crew_demo", label: "Crew demonstration" },
+  { value: "not_tested", label: "Not tested" },
+] as const;
+
+export type EvidenceMethod = (typeof EVIDENCE_METHODS)[number]["value"];
+
+export const methodLabel = (m: string) => EVIDENCE_METHODS.find((e) => e.value === m)?.label || m;
+
 /** Shape of the per-item answer payload stored in takeover_answers.data */
 export interface MasterAnswer {
   result?: "pass" | "deficiency" | "na" | "not_verified";
@@ -16,6 +32,13 @@ export interface MasterAnswer {
   cost_usd?: number | null;
   responsible?: string;
   due_date?: string;
+  /** Multi-select: how this observation was actually established. */
+  methods?: string[];
+  test_reading?: string;
+  /** Required reason when the item is marked not applicable. */
+  na_reason?: string;
+  /** Planning bucket for the corrective action. */
+  bucket?: "immediate" | "30d" | "60d" | "90d" | "drydock";
 }
 
 export interface SpareAnswer {
@@ -24,7 +47,13 @@ export interface SpareAnswer {
   location?: string;
   remarks?: string;
   mitigation_accepted?: boolean;
-  result?: "ok" | "shortfall" | "not_verified";
+  result?: "ok" | "shortfall" | "not_verified" | "na";
+  na_reason?: string;
+  action?: string;
+  responsible?: string;
+  due_date?: string;
+  cost_usd?: number | null;
+  bucket?: MasterAnswer["bucket"];
 }
 
 export interface SafetyAnswer {
@@ -33,8 +62,16 @@ export interface SafetyAnswer {
   serviceable_qty?: number | null;
   last_test?: string;
   next_due?: string;
-  status?: "satisfactory" | "deficiency" | "not_verified";
+  status?: "satisfactory" | "deficiency" | "not_verified" | "na";
   remarks?: string;
+  methods?: string[];
+  test_reading?: string;
+  na_reason?: string;
+  action?: string;
+  responsible?: string;
+  due_date?: string;
+  cost_usd?: number | null;
+  bucket?: MasterAnswer["bucket"];
 }
 
 export interface CertAnswer {
@@ -44,6 +81,11 @@ export interface CertAnswer {
   status?: "valid" | "expired" | "missing" | "not_sighted";
   remarks?: string;
   evidence?: string;
+  action?: string;
+  responsible?: string;
+  due_date?: string;
+  cost_usd?: number | null;
+  bucket?: MasterAnswer["bucket"];
 }
 
 export interface AnyAnswer
@@ -74,7 +116,7 @@ const has = (v: unknown) => v !== undefined && v !== null && v !== "";
 /** Null and zero are distinct: 0 is an observation, null/blank is unknown. */
 export const isBlank = (v: unknown) => v === undefined || v === null || v === "";
 
-/** An item counts as answered only if a real observation exists. */
+/** Any real content recorded against the row — including partial quantities. */
 export function isAnswered(group: GroupKey, data?: AnyAnswer): boolean {
   if (!data) return false;
   switch (group) {
@@ -83,39 +125,71 @@ export function isAnswered(group: GroupKey, data?: AnyAnswer): boolean {
     case "spares":
       return has(data.result) || has(data.actual_qty) || has(data.serviceable_qty);
     case "safety":
-      return has(data.status) || has(data.onboard_qty) || has(data.serviceable_qty);
+      return has(data.status) || has(data.onboard_qty) || has(data.serviceable_qty) || has(data.required_qty);
     case "certificates":
-      return has(data.status);
+      return has(data.status) || has(data.issue_date) || has(data.expiry_date);
   }
 }
 
-/** "Verified" excludes explicit not-verified / not-sighted outcomes. */
-export function isVerified(group: GroupKey, data?: AnyAnswer): boolean {
-  if (!isAnswered(group, data)) return false;
+/**
+ * An explicit assessment was made by the inspector.
+ * Quantities alone are recorded data, never an assessment.
+ */
+export function hasAssessment(group: GroupKey, data?: AnyAnswer): boolean {
+  if (!data) return false;
   switch (group) {
     case "master":
-      return data!.result !== "not_verified";
+      return ["pass", "deficiency", "na"].includes(String(data.result));
     case "spares":
-      return data!.result !== "not_verified";
+      return ["ok", "shortfall", "na"].includes(String(data.result));
     case "safety":
-      return data!.status !== "not_verified";
+      return ["satisfactory", "deficiency", "na"].includes(String(data.status));
     case "certificates":
-      return data!.status !== "not_sighted";
+      return ["valid", "expired", "missing"].includes(String(data.status));
   }
 }
 
-export function isDeficiency(group: GroupKey, data?: AnyAnswer): boolean {
+/**
+ * "Verified" requires an explicit assessment AND valid quantities.
+ * Partial quantities with no assessment are recorded but never verified.
+ */
+export function isVerified(group: GroupKey, data?: AnyAnswer): boolean {
+  if (!hasAssessment(group, data)) return false;
+  if (validateQuantities(data || {}).length) return false;
+  return true;
+}
+
+/** Marked not applicable — stays visible as an excluded row and needs a reason. */
+export const isNotApplicable = (group: GroupKey, data?: AnyAnswer): boolean =>
+  group === "master" || group === "spares" ? data?.result === "na" : data?.status === "na";
+
+export const naReasonMissing = (group: GroupKey, data?: AnyAnswer): boolean =>
+  isNotApplicable(group, data) && !String(data?.na_reason || "").trim();
+
+export function isDeficiency(group: GroupKey, data?: AnyAnswer, recommendedMinimum?: string): boolean {
   if (!data) return false;
   switch (group) {
     case "master":
       return data.result === "deficiency";
     case "spares":
-      return data.result === "shortfall";
+      // A measured shortfall is a finding whether or not the button was pressed.
+      return data.result === "shortfall" || (computeShortfall(data, recommendedMinimum) ?? 0) > 0;
     case "safety":
       return data.status === "deficiency" || (computeSafetyShortfall(data) ?? 0) > 0;
     case "certificates":
       return data.status === "expired" || data.status === "missing";
   }
+}
+
+/**
+ * A measured shortfall contradicts an "ok" assessment — surface it rather than
+ * silently accepting the inspector's button press.
+ */
+export function contradictsAssessment(group: GroupKey, data?: AnyAnswer, recommendedMinimum?: string): boolean {
+  if (!data) return false;
+  if (group === "spares") return data.result === "ok" && (computeShortfall(data, recommendedMinimum) ?? 0) > 0;
+  if (group === "safety") return data.status === "satisfactory" && (computeSafetyShortfall(data) ?? 0) > 0;
+  return false;
 }
 
 /**
@@ -179,8 +253,11 @@ export interface InspectionStats {
   notVerified: number;
   deficiencies: number;
   missingPhotos: number;
+  invalidQuantities: number;
   byGroup: Record<GroupKey, { total: number; answered: number; deficiencies: number }>;
 }
+
+const SPARE_MIN = new Map(SPARE_ITEMS.map((i) => [i.ref, i.recommendedMinimum]));
 
 const GROUPED: { key: GroupKey; refs: string[] }[] = [
   { key: "master", refs: MASTER_ITEMS.map((i) => i.ref) },
@@ -199,6 +276,7 @@ export function computeStats(answers: AnswerMap, photoRefs: Set<string> = new Se
     notVerified: 0,
     deficiencies: 0,
     missingPhotos: 0,
+    invalidQuantities: 0,
     byGroup: {
       master: { total: MASTER_ITEMS.length, answered: 0, deficiencies: 0 },
       spares: { total: SPARE_ITEMS.length, answered: 0, deficiencies: 0 },
@@ -216,7 +294,8 @@ export function computeStats(answers: AnswerMap, photoRefs: Set<string> = new Se
         if (isVerified(g.key, data)) stats.verified++;
         else stats.notVerified++;
       }
-      if (isDeficiency(g.key, data)) {
+      if (data && validateQuantities(data).length) stats.invalidQuantities++;
+      if (isDeficiency(g.key, data, g.key === "spares" ? SPARE_MIN.get(ref) : undefined)) {
         stats.deficiencies++;
         stats.byGroup[g.key].deficiencies++;
       }
@@ -230,3 +309,5 @@ export function computeStats(answers: AnswerMap, photoRefs: Set<string> = new Se
   stats.unanswered = stats.total - stats.answered;
   return stats;
 }
+
+export const spareMinimumFor = (ref: string) => SPARE_MIN.get(ref);
