@@ -165,6 +165,24 @@ export const GROUP_COUNTS: Record<GroupKey, number> = {
 export const TOTAL_ITEMS =
   GROUP_COUNTS.master + GROUP_COUNTS.spares + GROUP_COUNTS.safety + GROUP_COUNTS.certificates;
 
+/**
+ * Condition grades exactly as worded in the source workbook.
+ * The workbook's grade 5 is "not verified" and is kept as a separate result,
+ * never folded into the worst condition grade.
+ */
+export const GRADE_LABELS: Record<1 | 2 | 3 | 4, string> = {
+  1: "Very good",
+  2: "Good / satisfactory",
+  3: "Serviceable",
+  4: "Unsatisfactory",
+};
+
+export const GRADE_OPTIONS = ([1, 2, 3, 4] as const).map((g) => ({
+  value: String(g),
+  label: `${g} · ${GRADE_LABELS[g]}`,
+  tone: g === 4 ? ("bad" as const) : undefined,
+}));
+
 export const groupItemRefs = (key: GroupKey): string[] => {
   switch (key) {
     case "master":
