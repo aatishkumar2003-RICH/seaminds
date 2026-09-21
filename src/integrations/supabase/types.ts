@@ -2887,6 +2887,65 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_codes: {
+        Row: {
+          active: boolean
+          channel: string | null
+          code: string
+          created_at: string
+          notes: string | null
+          owner_contact: string | null
+          owner_name: string
+        }
+        Insert: {
+          active?: boolean
+          channel?: string | null
+          code: string
+          created_at?: string
+          notes?: string | null
+          owner_contact?: string | null
+          owner_name: string
+        }
+        Update: {
+          active?: boolean
+          channel?: string | null
+          code?: string
+          created_at?: string
+          notes?: string | null
+          owner_contact?: string | null
+          owner_name?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          code: string
+          created_at: string
+          crew_id: string
+          id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          crew_id: string
+          id?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          crew_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_code_fkey"
+            columns: ["code"]
+            isOneToOne: false
+            referencedRelation: "referral_codes"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       rest_hours_data: {
         Row: {
           crew_profile_id: string | null
@@ -3702,6 +3761,15 @@ export type Database = {
         Args: { p_activate: boolean; p_email: string }
         Returns: string
       }
+      admin_upsert_referral_code: {
+        Args: {
+          p_channel: string
+          p_code: string
+          p_contact: string
+          p_owner: string
+        }
+        Returns: Json
+      }
       ai_spend_sentinel: { Args: never; Returns: string }
       apply_to_job: {
         Args: {
@@ -3823,6 +3891,7 @@ export type Database = {
       get_my_safety_reports: { Args: never; Returns: Json }
       get_my_sos_contacts: { Args: never; Returns: Json }
       get_public_ticker_stats: { Args: never; Returns: Json }
+      get_referral_stats: { Args: never; Returns: Json }
       get_social_pulse: { Args: never; Returns: Json }
       get_trade_log: { Args: { p_limit?: number }; Returns: Json }
       get_voyage_state: { Args: never; Returns: Json }
@@ -3865,6 +3934,7 @@ export type Database = {
       placement_release_scan: { Args: never; Returns: string }
       process_scoring_jobs: { Args: never; Returns: string }
       rank_group_of: { Args: { p_rank: string }; Returns: string }
+      record_referral: { Args: { p_code: string }; Returns: Json }
       refresh_ticker_stats: { Args: never; Returns: undefined }
       report_company_post: {
         Args: { post_id: string; reason?: string }
