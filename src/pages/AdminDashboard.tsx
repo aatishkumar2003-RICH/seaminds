@@ -306,6 +306,88 @@ function PricingTab() {
   );
 }
 
+/* ─── Referrals Tab ─── */
+function ReferralsTab() {
+  const [rows, setRows] = useState<any[]>([]);
+  const [form, setForm] = useState({ code: "", owner: "", contact: "", channel: "" });
+  const [busy, setBusy] = useState(false);
+
+  const load = useCallback(async () => {
+    const { data, error } = await supabase.rpc("get_referral_stats" as any);
+    if (error) { toast.error(error.message); return; }
+    setRows(Array.isArray(data) ? (data as any[]) : []);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const addCode = async () => {
+    if (!form.code.trim()) { toast.error("Enter a code"); return; }
+    setBusy(true);
+    const { data, error } = await supabase.rpc("admin_upsert_referral_code" as any, {
+      p_code: form.code,
+      p_owner: form.owner,
+      p_contact: form.contact,
+      p_channel: form.channel,
+    });
+    setBusy(false);
+    const res: any = data;
+    if (error || !res?.ok) { toast.error(error?.message || res?.error || "Could not save code"); return; }
+    toast.success("Code saved");
+    setForm({ code: "", owner: "", contact: "", channel: "" });
+    load();
+  };
+
+  const cell = "px-3 py-2 text-sm";
+
+  return (
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold" style={{ color: "#D4AF37" }}>📣 Referrals</h2>
+      <p className="text-xs" style={{ color: "#94A3B8" }}>
+        Qualified = completed Sea Profile. Share links as seaminds.life/profile-start?ref=CODE
+      </p>
+
+      <div className="rounded-xl p-4 grid gap-2 md:grid-cols-5" style={{ background: "#112240", border: "1px solid rgba(212,175,55,0.3)" }}>
+        <Input placeholder="CODE" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} />
+        <Input placeholder="Owner name" value={form.owner} onChange={(e) => setForm({ ...form, owner: e.target.value })} />
+        <Input placeholder="Contact" value={form.contact} onChange={(e) => setForm({ ...form, contact: e.target.value })} />
+        <Input placeholder="Channel" value={form.channel} onChange={(e) => setForm({ ...form, channel: e.target.value })} />
+        <Button onClick={addCode} disabled={busy} style={{ background: "#D4AF37", color: "#0D1B2A", fontWeight: 700 }}>
+          {busy ? "Saving…" : "Add / update"}
+        </Button>
+      </div>
+
+      <div className="rounded-xl overflow-x-auto" style={{ background: "#112240", border: "1px solid rgba(212,175,55,0.3)" }}>
+        <table className="w-full min-w-[720px]">
+          <thead>
+            <tr style={{ color: "#D4AF37", borderBottom: "1px solid rgba(212,175,55,0.25)" }}>
+              {["Code", "Owner", "Channel", "Signups", "Qualified", "Visible", "Last signup", "Active"].map((h) => (
+                <th key={h} className={`${cell} text-left font-semibold`}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.length === 0 && (
+              <tr><td className={cell} colSpan={8} style={{ color: "#94A3B8" }}>No referral codes yet.</td></tr>
+            )}
+            {rows.map((r: any) => (
+              <tr key={r.code} style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", color: "#E2E8F0" }}>
+                <td className={cell} style={{ color: "#D4AF37", fontWeight: 700 }}>{r.code}</td>
+                <td className={cell}>{r.owner_name}</td>
+                <td className={cell}>{r.channel || "—"}</td>
+                <td className={cell}>{r.signups ?? 0}</td>
+                <td className={cell}>{r.qualified ?? 0}</td>
+                <td className={cell}>{r.visible ?? 0}</td>
+                <td className={cell}>{r.last_signup_at ? new Date(r.last_signup_at).toLocaleString() : "—"}</td>
+                <td className={cell}>{r.active ? "Yes" : "No"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Discount Codes Tab ─── */
 function DiscountCodesTab() {
   const [codes, setCodes] = useState<any[]>([]);
@@ -1374,7 +1456,7 @@ function ApplicationsTab() {
 /* ─── Main Dashboard ─── */
 export default function AdminDashboard() {
   const [authed, setAuthed] = useState<boolean | null>(null);
-  const [tab, setTab] = useState<"content_studio" | "company_approval" | "crew" | "activity" | "activity_full" | "cv_database" | "mobile_verify" | "pricing" | "discount" | "country_pricing" | "sub_admins" | "dpa" | "blog_images" | "agents" | "vacancy_intel" | "company_dir" | "company_posts" | "marketing" | "applications">("crew");
+  const [tab, setTab] = useState<"content_studio" | "company_approval" | "crew" | "activity" | "activity_full" | "cv_database" | "mobile_verify" | "pricing" | "discount" | "country_pricing" | "sub_admins" | "dpa" | "blog_images" | "agents" | "vacancy_intel" | "company_dir" | "company_posts" | "marketing" | "applications" | "referrals">("crew");
 
   useEffect(() => {
     let active = true;
@@ -1419,6 +1501,7 @@ export default function AdminDashboard() {
     { id: "company_posts" as const, label: "Company Posts" },
     { id: "applications" as const, label: "📨 Applications" },
     { id: "marketing" as const, label: "📣 Marketing" },
+    { id: "referrals" as const, label: "📣 Referrals" },
   ];
 
   return (
@@ -1499,6 +1582,7 @@ export default function AdminDashboard() {
       {tab === "company_posts" && <CompanyPostsTab />}
       {tab === "marketing" && <MarketingTab />}
       {tab === "applications" && <ApplicationsTab />}
+      {tab === "referrals" && <ReferralsTab />}
     </div>
   );
 }

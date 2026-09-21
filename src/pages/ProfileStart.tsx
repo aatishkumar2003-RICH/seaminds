@@ -93,6 +93,13 @@ const ProfileStart = () => {
   const [counts, setCounts] = useState<{ rank: number; vessel: number; new24: number } | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Capture referral code from ?ref=
+  useEffect(() => {
+    const ref = params.get("ref");
+    if (!ref) return;
+    try { localStorage.setItem("sm_ref", ref.trim().toUpperCase()); } catch { /* ignore */ }
+  }, [params]);
+
   // Pre-select rank passed from "Matching now" chips
   useEffect(() => {
     const r = params.get("rank");

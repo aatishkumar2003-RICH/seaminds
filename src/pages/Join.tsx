@@ -41,9 +41,26 @@ const Join = () => {
     try { (window as any).fbq?.("track", "CompleteRegistration"); } catch { /* ignore */ }
   };
 
+  /** Referral attribution — best effort, never blocks auth. */
+  const recordReferral = async () => {
+    try {
+      const code = localStorage.getItem("sm_ref");
+      if (!code) return;
+      const { data } = await supabase.rpc("record_referral" as any, { p_code: code });
+      if ((data as any)?.ok) localStorage.removeItem("sm_ref");
+    } catch { /* ignore */ }
+  };
+
+  // Capture referral code from ?ref=
+  useEffect(() => {
+    const ref = params.get("ref");
+    if (!ref) return;
+    try { localStorage.setItem("sm_ref", ref.trim().toUpperCase()); } catch { /* ignore */ }
+  }, [params]);
+
   useEffect(() => {
     let active = true;
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
       if (!active || !data.session) return;
       // Google OAuth returning with a brand-new account → count the conversion once.
       try {
@@ -53,10 +70,12 @@ const Join = () => {
           fireRegistration();
         }
       } catch { /* ignore */ }
+      await recordReferral();
+      if (!active) return;
       navigate(dest, { replace: true });
     });
     return () => { active = false; };
-  }, [navigate, dest]);
+  }, [navigate, dest, params]);
 
   const google = async () => {
     await supabase.auth.signInWithOAuth({
@@ -83,7 +102,7 @@ const Join = () => {
     }
     fireRegistration();
     try { localStorage.setItem("sm_reg_tracked", "1"); } catch { /* ignore */ }
-    if (data.session) navigate(dest);
+    if (data.session) { await recordReferral(); navigate(dest); }
     else setConfirmSent(true);
   };
 
@@ -97,6 +116,7 @@ const Join = () => {
       toast.error(t("joinErrWrong"));
       return;
     }
+    await recordReferral();
     navigate(dest);
   };
 
