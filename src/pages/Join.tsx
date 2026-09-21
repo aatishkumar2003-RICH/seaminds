@@ -102,7 +102,7 @@ const Join = () => {
     }
     fireRegistration();
     try { localStorage.setItem("sm_reg_tracked", "1"); } catch { /* ignore */ }
-    if (data.session) navigate(dest);
+    if (data.session) { await recordReferral(); navigate(dest); }
     else setConfirmSent(true);
   };
 
@@ -116,6 +116,7 @@ const Join = () => {
       toast.error(t("joinErrWrong"));
       return;
     }
+    await recordReferral();
     navigate(dest);
   };
 
