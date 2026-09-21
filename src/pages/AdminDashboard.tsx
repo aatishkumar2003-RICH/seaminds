@@ -1456,7 +1456,7 @@ function ApplicationsTab() {
 /* ─── Main Dashboard ─── */
 export default function AdminDashboard() {
   const [authed, setAuthed] = useState<boolean | null>(null);
-  const [tab, setTab] = useState<"content_studio" | "company_approval" | "crew" | "activity" | "activity_full" | "cv_database" | "mobile_verify" | "pricing" | "discount" | "country_pricing" | "sub_admins" | "dpa" | "blog_images" | "agents" | "vacancy_intel" | "company_dir" | "company_posts" | "marketing" | "applications">("crew");
+  const [tab, setTab] = useState<"content_studio" | "company_approval" | "crew" | "activity" | "activity_full" | "cv_database" | "mobile_verify" | "pricing" | "discount" | "country_pricing" | "sub_admins" | "dpa" | "blog_images" | "agents" | "vacancy_intel" | "company_dir" | "company_posts" | "marketing" | "applications" | "referrals">("crew");
 
   useEffect(() => {
     let active = true;
@@ -1501,6 +1501,7 @@ export default function AdminDashboard() {
     { id: "company_posts" as const, label: "Company Posts" },
     { id: "applications" as const, label: "📨 Applications" },
     { id: "marketing" as const, label: "📣 Marketing" },
+    { id: "referrals" as const, label: "📣 Referrals" },
   ];
 
   return (
@@ -1581,6 +1582,7 @@ export default function AdminDashboard() {
       {tab === "company_posts" && <CompanyPostsTab />}
       {tab === "marketing" && <MarketingTab />}
       {tab === "applications" && <ApplicationsTab />}
+      {tab === "referrals" && <ReferralsTab />}
     </div>
   );
 }
