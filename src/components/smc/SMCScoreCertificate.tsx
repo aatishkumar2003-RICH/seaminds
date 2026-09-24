@@ -416,6 +416,16 @@ const SMCScoreCertificate = ({ data: hint, onImproveScore }: SMCScoreCertificate
                   </div>
                 ))}
               </div>
+
+              {/* Assessment calibration */}
+              {hasLevelProfile(cert.levelProfile) && (
+                <div style={{ marginTop: '12px', borderTop: '1px solid rgba(212,175,55,0.2)', paddingTop: '8px' }}>
+                  <div style={{ fontSize: '8px', letterSpacing: '0.15em', color: '#94a3b8', textTransform: 'uppercase' as const, marginBottom: '6px' }}>
+                    Assessment calibration
+                  </div>
+                  <CalibrationPanel lp={cert.levelProfile!} compact />
+                </div>
+              )}
             </div>
 
             {/* Right column */}
