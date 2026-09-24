@@ -18,8 +18,77 @@ interface SMCScoreData {
   certificateId: string;
 }
 
+export interface LevelProfile {
+  recall_pct?: number | null;
+  application_pct?: number | null;
+  judgment_pct?: number | null;
+  questions?: number | null;
+  verdict?: string | null;
+}
+
+export const VERDICT_LABELS: Record<string, string> = {
+  balanced: "Balanced across knowledge and judgment",
+  "strong knowledge, unproven decision-making": "Strong knowledge — decision-making not yet proven",
+  "sound judgment, weaker recall": "Sound judgment — regulatory recall weaker",
+};
+
+export const LEVEL_TIERS = [
+  { key: "recall_pct" as const, label: "Regulatory recall", hint: "Rules, limits and required values" },
+  { key: "application_pct" as const, label: "Operational application", hint: "Applying procedure to real equipment" },
+  { key: "judgment_pct" as const, label: "Command judgment", hint: "Deciding under pressure and risk" },
+];
+
+export function hasLevelProfile(lp?: LevelProfile | null) {
+  if (!lp) return false;
+  return LEVEL_TIERS.some((t) => typeof lp[t.key] === "number" && lp[t.key] !== null);
+}
+
+function pctColor(p: number) {
+  if (p >= 70) return "#22c55e";
+  if (p >= 50) return "#f59e0b";
+  return "#ef4444";
+}
+
+export const CalibrationPanel = ({ lp, compact }: { lp: LevelProfile; compact?: boolean }) => {
+  const fs = compact ? 10 : 13;
+  return (
+    <div style={{ width: "100%" }}>
+      {LEVEL_TIERS.map((t) => {
+        const raw = lp[t.key];
+        const known = typeof raw === "number" && raw !== null;
+        const p = known ? Math.max(0, Math.min(100, Number(raw))) : 0;
+        return (
+          <div key={t.key} style={{ marginBottom: compact ? 6 : 12 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: fs, marginBottom: 3 }}>
+              <span style={{ color: "#94A3B8" }}>{t.label}</span>
+              <span style={{ color: known ? pctColor(p) : "#64748b", fontWeight: 700 }}>
+                {known ? `${Math.round(p)}%` : "Not assessed"}
+              </span>
+            </div>
+            <div style={{ height: compact ? 5 : 8, background: "#1a2e47", borderRadius: 4, overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${p}%`, background: known ? pctColor(p) : "transparent", borderRadius: 4 }} />
+            </div>
+            {!compact && <div style={{ fontSize: 11, color: "#64748b", marginTop: 3 }}>{t.hint}</div>}
+          </div>
+        );
+      })}
+      {lp.verdict && (
+        <div style={{ fontSize: compact ? 9 : 12, color: "#D4AF37", marginTop: compact ? 4 : 8 }}>
+          {VERDICT_LABELS[String(lp.verdict).toLowerCase()] || lp.verdict}
+        </div>
+      )}
+      {!!lp.questions && (
+        <div style={{ fontSize: compact ? 8 : 11, color: "#64748b", marginTop: 2 }}>
+          Based on {lp.questions} assessed answers
+        </div>
+      )}
+    </div>
+  );
+};
+
 interface CertRecord extends SMCScoreData {
   band: string;
+  levelProfile: LevelProfile | null;
 }
 
 function bandVisual(label: string) {
