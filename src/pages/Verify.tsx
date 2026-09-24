@@ -16,9 +16,31 @@ type VerifyResult = {
   score?: number | string;
   band?: string;
   scoring_version?: string;
+  dimensions?: { technical?: number | null; judgment?: number | null; english?: number | null; behavioural?: number | null } | null;
+  level_profile?: {
+    recall_pct?: number | null;
+    application_pct?: number | null;
+    judgment_pct?: number | null;
+    questions?: number | null;
+    verdict?: string | null;
+  } | null;
 };
 
 const fmt = (d?: string) => (d ? new Date(d).toLocaleDateString('en-GB') : '—');
+
+const TIERS: Array<{ key: 'recall_pct' | 'application_pct' | 'judgment_pct'; label: string; hint: string }> = [
+  { key: 'recall_pct', label: 'Regulatory recall', hint: 'Rules, limits and required values' },
+  { key: 'application_pct', label: 'Operational application', hint: 'Applying procedure to real equipment' },
+  { key: 'judgment_pct', label: 'Command judgment', hint: 'Deciding under pressure and risk' },
+];
+
+const VERDICTS: Record<string, string> = {
+  balanced: 'Balanced across knowledge and judgment',
+  'strong knowledge, unproven decision-making': 'Strong knowledge — decision-making not yet proven',
+  'sound judgment, weaker recall': 'Sound judgment — regulatory recall weaker',
+};
+
+const pctColor = (p: number) => (p >= 70 ? '#22c55e' : p >= 50 ? '#f59e0b' : '#ef4444');
 
 const Verify = () => {
   const { id } = useParams<{ id: string }>();
