@@ -134,7 +134,7 @@ const SMCScoreCertificate = ({ data: hint, onImproveScore }: SMCScoreCertificate
       try {
         let q = supabase
           .from("smc_assessments")
-          .select("id, crew_profile_id, overall_score, technical_score, judgment_score, english_score, behavioural_score, score_band, certificate_id, completed_at, status, report")
+          .select("id, crew_profile_id, overall_score, technical_score, judgment_score, english_score, behavioural_score, score_band, certificate_id, completed_at, status, report, level_profile")
           .eq("status", "completed")
           .not("completed_at", "is", null)
           .order("completed_at", { ascending: false })
@@ -196,6 +196,7 @@ const SMCScoreCertificate = ({ data: hint, onImproveScore }: SMCScoreCertificate
           expiryDate: expiry.toISOString(),
           certificateId: a.certificate_id || a.id,
           band: a.score_band || "",
+          levelProfile: (a.level_profile && typeof a.level_profile === "object") ? (a.level_profile as LevelProfile) : null,
         });
         setLoading(false);
       } catch {
