@@ -488,6 +488,19 @@ const SMCScoreCertificate = ({ data: hint, onImproveScore }: SMCScoreCertificate
           </div>
         )}
 
+        {/* Calibration breakdown */}
+        {hasLevelProfile(cert.levelProfile) && (
+          <div className="bg-secondary rounded-xl border border-border p-4 space-y-3">
+            <div>
+              <h3 className="text-sm font-bold text-foreground">How this score was earned</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Your paper mixes three question levels. Managers see this depth, not just the headline number.
+              </p>
+            </div>
+            <CalibrationPanel lp={cert.levelProfile!} />
+          </div>
+        )}
+
         {/* Export buttons */}
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <button onClick={handleDownloadPNG} style={{ background: '#0D1B2A', border: '1px solid #D4AF37', color: '#D4AF37', padding: '10px 18px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
