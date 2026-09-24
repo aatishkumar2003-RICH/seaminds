@@ -105,6 +105,7 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
 
       setScores(stored.scores);
       setCertId(stored.certId);
+      setLevelProfile(stored.levelProfile);
       if (stored.report) setReport(stored.report);
       setTimeout(() => { if (!cancelled) setPhase("counting"); }, 500);
 
