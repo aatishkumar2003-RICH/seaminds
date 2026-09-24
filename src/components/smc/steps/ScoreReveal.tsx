@@ -51,7 +51,7 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
     const readRow = async () => {
       const { data } = await supabase
         .from("smc_assessments")
-        .select("overall_score, score_band, certificate_id, dimension_scores, report")
+        .select("overall_score, score_band, certificate_id, dimension_scores, report, level_profile")
         .eq("id", assessmentId)
         .maybeSingle();
       if (!data || data.overall_score === null || data.overall_score === undefined) return null;
@@ -68,6 +68,8 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
         } as Scores,
         certId: data.certificate_id || "",
         report: data.report || null,
+        levelProfile: (data.level_profile && typeof data.level_profile === "object")
+          ? (data.level_profile as LevelProfile) : null,
       };
     };
 
