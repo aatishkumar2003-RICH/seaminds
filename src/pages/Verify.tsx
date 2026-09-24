@@ -16,9 +16,31 @@ type VerifyResult = {
   score?: number | string;
   band?: string;
   scoring_version?: string;
+  dimensions?: { technical?: number | null; judgment?: number | null; english?: number | null; behavioural?: number | null } | null;
+  level_profile?: {
+    recall_pct?: number | null;
+    application_pct?: number | null;
+    judgment_pct?: number | null;
+    questions?: number | null;
+    verdict?: string | null;
+  } | null;
 };
 
 const fmt = (d?: string) => (d ? new Date(d).toLocaleDateString('en-GB') : '—');
+
+const TIERS: Array<{ key: 'recall_pct' | 'application_pct' | 'judgment_pct'; label: string; hint: string }> = [
+  { key: 'recall_pct', label: 'Regulatory recall', hint: 'Rules, limits and required values' },
+  { key: 'application_pct', label: 'Operational application', hint: 'Applying procedure to real equipment' },
+  { key: 'judgment_pct', label: 'Command judgment', hint: 'Deciding under pressure and risk' },
+];
+
+const VERDICTS: Record<string, string> = {
+  balanced: 'Balanced across knowledge and judgment',
+  'strong knowledge, unproven decision-making': 'Strong knowledge — decision-making not yet proven',
+  'sound judgment, weaker recall': 'Sound judgment — regulatory recall weaker',
+};
+
+const pctColor = (p: number) => (p >= 70 ? '#22c55e' : p >= 50 ? '#f59e0b' : '#ef4444');
 
 const Verify = () => {
   const { id } = useParams<{ id: string }>();
@@ -90,7 +112,7 @@ const Verify = () => {
                 <div style={{ color:'#ffffff', fontSize:'24px', fontWeight:'bold', marginBottom:'4px' }}>{result?.candidate || '—'}</div>
                 <div style={{ color:'#D4AF37', fontSize:'16px', marginBottom:'16px' }}>{result?.rank || ''}</div>
                 <div style={{ textAlign:'left', display:'inline-block' }}>
-                  {result?.score != null && <p style={{ color:'#ccc', fontSize:'13px', marginBottom:'6px' }}>SMC Score: {Number(result.score).toFixed(2)}/5.00</p>}
+                  {result?.score != null && <p style={{ color:'#ccc', fontSize:'13px', marginBottom:'6px' }}>SeaMinds Score: {Number(result.score).toFixed(2)}/5.00</p>}
                   {result?.band && <p style={{ color:'#ccc', fontSize:'13px', marginBottom:'6px' }}>Band: {result.band}</p>}
                   <p style={{ color:'#ccc', fontSize:'13px', marginBottom:'6px' }}>Assessed on: {fmt(result?.assessed_on)}</p>
                   <p style={{ color: expired ? '#f59e0b' : '#ccc', fontSize:'13px', marginBottom:'6px' }}>Valid until: {fmt(result?.expires_on)}</p>
@@ -98,6 +120,37 @@ const Verify = () => {
                   {result?.scoring_version && <p style={{ color:'#94a3b8', fontSize:'12px' }}>Scoring version: {result.scoring_version}</p>}
                 </div>
               </div>
+
+              {result?.level_profile && TIERS.some(t => typeof result.level_profile?.[t.key] === 'number') && (
+                <div style={{ borderTop:'1px solid rgba(212,175,55,0.2)', paddingTop:'20px', marginTop:'20px', textAlign:'left' }}>
+                  <div style={{ color:'#D4AF37', fontSize:'11px', letterSpacing:'2px', marginBottom:'12px', textTransform:'uppercase' }}>Assessment calibration</div>
+                  {TIERS.map(t => {
+                    const raw = result.level_profile?.[t.key];
+                    const known = typeof raw === 'number' && raw !== null;
+                    const p = known ? Math.max(0, Math.min(100, Number(raw))) : 0;
+                    return (
+                      <div key={t.key} style={{ marginBottom:'12px' }}>
+                        <div style={{ display:'flex', justifyContent:'space-between', fontSize:'13px', marginBottom:'4px' }}>
+                          <span style={{ color:'#94A3B8' }}>{t.label}</span>
+                          <span style={{ color: known ? pctColor(p) : '#64748b', fontWeight:'bold' }}>{known ? `${Math.round(p)}%` : 'Not assessed'}</span>
+                        </div>
+                        <div style={{ height:'8px', background:'#0d1b2a', borderRadius:'4px', overflow:'hidden' }}>
+                          <div style={{ height:'100%', width:`${p}%`, background: known ? pctColor(p) : 'transparent', borderRadius:'4px' }} />
+                        </div>
+                        <div style={{ color:'#64748b', fontSize:'11px', marginTop:'3px' }}>{t.hint}</div>
+                      </div>
+                    );
+                  })}
+                  {result.level_profile?.verdict && (
+                    <div style={{ color:'#D4AF37', fontSize:'12px', marginTop:'8px' }}>
+                      {VERDICTS[String(result.level_profile.verdict).toLowerCase()] || result.level_profile.verdict}
+                    </div>
+                  )}
+                  {!!result.level_profile?.questions && (
+                    <div style={{ color:'#64748b', fontSize:'11px', marginTop:'2px' }}>Based on {result.level_profile.questions} assessed answers</div>
+                  )}
+                </div>
+              )}
 
               <div style={{ borderTop:'1px solid rgba(212,175,55,0.2)', paddingTop:'16px', marginTop:'20px' }}>
                 <div style={{ color:'#888', fontSize:'11px' }}>Verified by SeaMinds · seaminds.life</div>

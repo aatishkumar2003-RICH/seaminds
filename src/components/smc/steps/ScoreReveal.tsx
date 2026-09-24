@@ -3,7 +3,7 @@ import { trackEvent } from "@/lib/analytics";
 import { Shield, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import SMCScoreCertificate from "../SMCScoreCertificate";
+import SMCScoreCertificate, { CalibrationPanel, hasLevelProfile, type LevelProfile } from "../SMCScoreCertificate";
 
 interface Props {
   assessmentId: string;
@@ -42,6 +42,7 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
   const [report, setReport] = useState<any>(null);
   const [reportLoading, setReportLoading] = useState(false);
   const [scoringFailed, setScoringFailed] = useState(false);
+  const [levelProfile, setLevelProfile] = useState<LevelProfile | null>(null);
   const { accessToken } = useAuth();
 
   useEffect(() => {
@@ -50,7 +51,7 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
     const readRow = async () => {
       const { data } = await supabase
         .from("smc_assessments")
-        .select("overall_score, score_band, certificate_id, dimension_scores, report")
+        .select("overall_score, score_band, certificate_id, dimension_scores, report, level_profile")
         .eq("id", assessmentId)
         .maybeSingle();
       if (!data || data.overall_score === null || data.overall_score === undefined) return null;
@@ -67,6 +68,8 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
         } as Scores,
         certId: data.certificate_id || "",
         report: data.report || null,
+        levelProfile: (data.level_profile && typeof data.level_profile === "object")
+          ? (data.level_profile as LevelProfile) : null,
       };
     };
 
@@ -102,6 +105,7 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
 
       setScores(stored.scores);
       setCertId(stored.certId);
+      setLevelProfile(stored.levelProfile);
       if (stored.report) setReport(stored.report);
       setTimeout(() => { if (!cancelled) setPhase("counting"); }, 500);
 
@@ -252,6 +256,16 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
           certificateId: certId,
         }}
       />
+      {hasLevelProfile(levelProfile) && (
+        <div style={{ marginTop:'20px', background:'#112240', border:'1px solid rgba(212,175,55,0.3)', borderRadius:'12px', padding:'16px' }}>
+          <div style={{ color:'#D4AF37', fontSize:'13px', fontWeight:'bold', marginBottom:'4px' }}>How this score was earned</div>
+          <div style={{ color:'#94A3B8', fontSize:'12px', marginBottom:'12px' }}>
+            Your paper mixes three question levels. This is what managers see alongside your score.
+          </div>
+          <CalibrationPanel lp={levelProfile!} />
+        </div>
+      )}
+
       {/* Certificate footer with logo and QR */}
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:'24px', paddingTop:'16px', borderTop:'1px solid rgba(212,175,55,0.3)' }}>
         <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
