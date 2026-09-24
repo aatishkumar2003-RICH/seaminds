@@ -3,7 +3,7 @@ import { trackEvent } from "@/lib/analytics";
 import { Shield, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import SMCScoreCertificate from "../SMCScoreCertificate";
+import SMCScoreCertificate, { CalibrationPanel, hasLevelProfile, type LevelProfile } from "../SMCScoreCertificate";
 
 interface Props {
   assessmentId: string;
@@ -42,6 +42,7 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
   const [report, setReport] = useState<any>(null);
   const [reportLoading, setReportLoading] = useState(false);
   const [scoringFailed, setScoringFailed] = useState(false);
+  const [levelProfile, setLevelProfile] = useState<LevelProfile | null>(null);
   const { accessToken } = useAuth();
 
   useEffect(() => {
