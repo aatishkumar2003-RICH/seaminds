@@ -256,6 +256,16 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
           certificateId: certId,
         }}
       />
+      {hasLevelProfile(levelProfile) && (
+        <div style={{ marginTop:'20px', background:'#112240', border:'1px solid rgba(212,175,55,0.3)', borderRadius:'12px', padding:'16px' }}>
+          <div style={{ color:'#D4AF37', fontSize:'13px', fontWeight:'bold', marginBottom:'4px' }}>How this score was earned</div>
+          <div style={{ color:'#94A3B8', fontSize:'12px', marginBottom:'12px' }}>
+            Your paper mixes three question levels. This is what managers see alongside your score.
+          </div>
+          <CalibrationPanel lp={levelProfile!} />
+        </div>
+      )}
+
       {/* Certificate footer with logo and QR */}
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:'24px', paddingTop:'16px', borderTop:'1px solid rgba(212,175,55,0.3)' }}>
         <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
