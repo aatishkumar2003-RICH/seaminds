@@ -148,10 +148,16 @@ const JobFeed = () => {
   }, [signedIn]);
 
   const shown = useMemo(() => {
+    if (filter === "Matched") {
+      if (!matchProfile) return items;
+      return rankVacancies(items, matchProfile).filter((r) => r.match.isMatch).map((r) => r.vacancy);
+    }
     if (filter === "All") return items;
     const keys = GROUPS[filter] || [];
     return items.filter((i) => keys.some((k) => (i.rank || "").toLowerCase().includes(k)));
-  }, [items, filter]);
+  }, [items, filter, matchProfile]);
+
+  const matchOf = (v: UnifiedVacancy) => (matchProfile ? matchVacancy(v, matchProfile) : null);
 
   const applyVacancy = async (v: UnifiedVacancy) => {
     if (!signedIn) { navigate(`/join?next=${encodeURIComponent("/feed")}`); return; }
