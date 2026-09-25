@@ -15,6 +15,8 @@ export interface JobCardProps {
   busy?: boolean;
   /** Optional crawlable link for the vacancy title. */
   href?: string;
+  /** Optional Smart Match result, shown as a gold badge. */
+  match?: { score: number; reason: string } | null;
   onApply: () => void;
 }
 
