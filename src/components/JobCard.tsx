@@ -15,6 +15,8 @@ export interface JobCardProps {
   busy?: boolean;
   /** Optional crawlable link for the vacancy title. */
   href?: string;
+  /** Optional Smart Match result, shown as a gold badge. */
+  match?: { score: number; reason: string } | null;
   onApply: () => void;
 }
 
@@ -44,7 +46,7 @@ const joinDateText = (iso: string | null) => {
 };
 
 /** One vacancy, rendered identically (data + channel + applied state) on every surface. */
-const JobCard = ({ vacancy: v, variant, applied, busy, href, onApply }: JobCardProps) => {
+const JobCard = ({ vacancy: v, variant, applied, busy, href, match, onApply }: JobCardProps) => {
   const [flierOpen, setFlierOpen] = useState(false);
   const salary = vacancySalary(v);
   const compact = variant === "row";
@@ -70,6 +72,18 @@ const JobCard = ({ vacancy: v, variant, applied, busy, href, onApply }: JobCardP
         gap: compact ? 7 : 10,
       }}
     >
+      {match && match.score >= 50 && (
+        <span
+          style={{
+            alignSelf: "flex-start", borderRadius: 999, padding: "4px 10px",
+            fontSize: 10, fontWeight: 800, letterSpacing: 0.3,
+            background: "linear-gradient(90deg, #D4AF37, #C5941F)", color: NAVY,
+          }}
+        >
+          🎯 {match.score}% match{match.reason ? ` · ${match.reason}` : ""}
+        </span>
+      )}
+
       {v.kind === "direct" && (
         <span
           style={{

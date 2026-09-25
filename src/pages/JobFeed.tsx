@@ -10,6 +10,7 @@ import { fetchCrewCardInfo, getCachedCrewCardInfo, waApplyLink, recordApplicatio
 import { jobPath, RANK_HUBS } from "@/lib/jobSlug";
 import ApplyGateSheet from "@/components/ApplyGateSheet";
 import { toast } from "sonner";
+import { matchVacancy, rankVacancies, type MatchProfile } from "@/lib/smartMatch";
 
 const NAVY = "#0D1B2A";
 const GOLD = "#D4AF37";
@@ -64,6 +65,7 @@ const JobFeed = () => {
   const [gateOpen, setGateOpen] = useState(false);
   const [applying, setApplying] = useState<string | null>(null);
   const [totalLive, setTotalLive] = useState<number | null>(null);
+  const [matchProfile, setMatchProfile] = useState<MatchProfile | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -90,6 +92,19 @@ const JobFeed = () => {
       if (alive) setSignedIn(true);
       fetchCrewCardInfo(uid).then((c) => { if (alive) setCardInfo(c); });
       fetchQuickProfileDone(uid).then((done) => { if (alive) setNeedsQuickProfile(!done); });
+      Promise.all([
+        supabase.from("crew_profiles").select("rank, role, nationality" as any).eq("id", uid).maybeSingle(),
+        supabase.from("crew_availability").select("preferred_vessel_type").eq("crew_profile_id", uid).maybeSingle(),
+      ]).then(([p, a]) => {
+        if (!alive) return;
+        const row = (p as any)?.data;
+        if (!row) return;
+        setMatchProfile({
+          rank: row.rank || row.role || null,
+          nationality: row.nationality || null,
+          preferredVessel: (a as any)?.data?.preferred_vessel_type || null,
+        });
+      });
     };
     supabase.auth.getSession().then(({ data }) => {
       preload(data?.session?.user?.id);
@@ -133,10 +148,16 @@ const JobFeed = () => {
   }, [signedIn]);
 
   const shown = useMemo(() => {
+    if (filter === "Matched") {
+      if (!matchProfile) return items;
+      return rankVacancies(items, matchProfile).filter((r) => r.match.isMatch).map((r) => r.vacancy);
+    }
     if (filter === "All") return items;
     const keys = GROUPS[filter] || [];
     return items.filter((i) => keys.some((k) => (i.rank || "").toLowerCase().includes(k)));
-  }, [items, filter]);
+  }, [items, filter, matchProfile]);
+
+  const matchOf = (v: UnifiedVacancy) => (matchProfile ? matchVacancy(v, matchProfile) : null);
 
   const applyVacancy = async (v: UnifiedVacancy) => {
     if (!signedIn) { navigate(`/join?next=${encodeURIComponent("/feed")}`); return; }
@@ -220,12 +241,12 @@ const JobFeed = () => {
           </div>
 
           <div style={{ display: "flex", gap: 7, marginTop: 11, overflowX: "auto", paddingBottom: 2 }}>
-            {["All", "Deck", "Engine", "Cadet", "Catering"].map((f) => (
+            {[...(matchProfile ? ["Matched"] : []), "All", "Deck", "Engine", "Cadet", "Catering"].map((f) => (
               <button key={f} onClick={() => setFilter(f)} style={{
                 flexShrink: 0, padding: "6px 13px", borderRadius: 999, fontSize: 12, fontWeight: 700, cursor: "pointer",
                 background: filter === f ? GOLD : "transparent", color: filter === f ? NAVY : GOLD,
                 border: `1px solid ${GOLD}${filter === f ? "" : "66"}`,
-              }}>{f}</button>
+              }}>{f === "Matched" ? "🎯 Matched for you" : f}</button>
             ))}
           </div>
 
@@ -290,6 +311,7 @@ const JobFeed = () => {
             <JobCard
               vacancy={v}
               variant="row"
+              match={matchOf(v)}
               applied={appliedIds.has(v.id) ? "ok" : undefined}
               busy={applying === v.id || !authResolved}
               href={jobPath({ id: v.id, rank: v.rank, vessel: v.vessel, port: v.port })}

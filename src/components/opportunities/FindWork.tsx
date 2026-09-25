@@ -16,6 +16,7 @@ import ApplyGateSheet from "@/components/ApplyGateSheet";
 import JobCard from "@/components/JobCard";
 import { loadVacancies, loadMyApplicationTargets, UnifiedVacancy } from "@/lib/vacancyFeed";
 import CrewOffers from "@/components/CrewOffers";
+import { smartMatches, matchVacancy } from "@/lib/smartMatch";
 import { useSearchParams } from "react-router-dom";
 
 const VESSEL_TYPES = [
@@ -369,33 +370,41 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
       )}
 
 
-      {/* Recent Matches */}
+      {/* Smart Matches — ranked by rank, vessel, region and channel */}
       {(() => {
-        const rankMatches = vacancies
-          .filter((v) => (v.rank || "").toLowerCase() === role.toLowerCase() || v.rank === "Any Rank")
-          .slice(0, 5);
-        if (!rankMatches.length) return null;
+        const ranked = smartMatches(vacancies, { rank: role, preferredVessel: preferredVessel, nationality }, 8);
+        if (!ranked.length) return null;
 
         return (
           <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-3">
             <div className="flex items-center gap-2">
               <Award size={16} className="text-primary" />
-              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Matches for You</h3>
-              <Badge className="text-[10px] bg-primary text-primary-foreground px-1.5 py-0">{rankMatches.length}</Badge>
+              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">🎯 Smart Matches</h3>
+              <Badge className="text-[10px] bg-primary text-primary-foreground px-1.5 py-0">{ranked.length}</Badge>
             </div>
-            <p className="text-[11px] text-muted-foreground">Jobs matching your rank: <span className="font-medium text-foreground">{role}</span></p>
+            <p className="text-[11px] text-muted-foreground">
+              Best fit for <span className="font-medium text-foreground">{role}</span>
+              {preferredVessel && preferredVessel !== "Any Type" ? <> · {preferredVessel}</> : null}
+              {nationality ? <> · {nationality}</> : null}
+            </p>
             <div className="space-y-2">
-              {rankMatches.map((v) => (
+              {ranked.map(({ vacancy: v, match }) => (
                 <JobCard
                   key={`m-${v.id}`}
                   vacancy={v}
                   variant="row"
+                  match={match}
                   applied={appliedState(v)}
                   busy={!!directBusy[v.id]}
                   onApply={() => applyVacancy(v)}
                 />
               ))}
             </div>
+            {!visible && (
+              <p className="text-[11px] text-muted-foreground">
+                Turn on “Companies can find you” below so recruiters can reach you for these jobs.
+              </p>
+            )}
           </div>
         );
       })()}
@@ -580,6 +589,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                   key={v.id}
                   vacancy={v}
                   variant="card"
+                  match={matchVacancy(v, { rank: role, preferredVessel, nationality })}
                   applied={appliedState(v)}
                   busy={!!directBusy[v.id]}
                   onApply={() => applyVacancy(v)}
@@ -697,6 +707,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
               <JobCard
                 vacancy={v}
                 variant="card"
+                match={matchVacancy(v, { rank: role, preferredVessel, nationality })}
                 applied={appliedState(v)}
                 busy={!!directBusy[v.id]}
                 onApply={() => applyVacancy(v)}
