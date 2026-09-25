@@ -589,6 +589,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
                   key={v.id}
                   vacancy={v}
                   variant="card"
+                  match={matchVacancy(v, { rank: role, preferredVessel, nationality })}
                   applied={appliedState(v)}
                   busy={!!directBusy[v.id]}
                   onApply={() => applyVacancy(v)}
