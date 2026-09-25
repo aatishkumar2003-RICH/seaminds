@@ -46,7 +46,7 @@ const joinDateText = (iso: string | null) => {
 };
 
 /** One vacancy, rendered identically (data + channel + applied state) on every surface. */
-const JobCard = ({ vacancy: v, variant, applied, busy, href, onApply }: JobCardProps) => {
+const JobCard = ({ vacancy: v, variant, applied, busy, href, match, onApply }: JobCardProps) => {
   const [flierOpen, setFlierOpen] = useState(false);
   const salary = vacancySalary(v);
   const compact = variant === "row";
