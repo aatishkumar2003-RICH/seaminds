@@ -241,12 +241,12 @@ const JobFeed = () => {
           </div>
 
           <div style={{ display: "flex", gap: 7, marginTop: 11, overflowX: "auto", paddingBottom: 2 }}>
-            {["All", "Deck", "Engine", "Cadet", "Catering"].map((f) => (
+            {[...(matchProfile ? ["Matched"] : []), "All", "Deck", "Engine", "Cadet", "Catering"].map((f) => (
               <button key={f} onClick={() => setFilter(f)} style={{
                 flexShrink: 0, padding: "6px 13px", borderRadius: 999, fontSize: 12, fontWeight: 700, cursor: "pointer",
                 background: filter === f ? GOLD : "transparent", color: filter === f ? NAVY : GOLD,
                 border: `1px solid ${GOLD}${filter === f ? "" : "66"}`,
-              }}>{f}</button>
+              }}>{f === "Matched" ? "🎯 Matched for you" : f}</button>
             ))}
           </div>
 
@@ -311,6 +311,7 @@ const JobFeed = () => {
             <JobCard
               vacancy={v}
               variant="row"
+              match={matchOf(v)}
               applied={appliedIds.has(v.id) ? "ok" : undefined}
               busy={applying === v.id || !authResolved}
               href={jobPath({ id: v.id, rank: v.rank, vessel: v.vessel, port: v.port })}
