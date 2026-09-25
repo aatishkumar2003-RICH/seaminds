@@ -72,6 +72,18 @@ const JobCard = ({ vacancy: v, variant, applied, busy, href, match, onApply }: J
         gap: compact ? 7 : 10,
       }}
     >
+      {match && match.score >= 50 && (
+        <span
+          style={{
+            alignSelf: "flex-start", borderRadius: 999, padding: "4px 10px",
+            fontSize: 10, fontWeight: 800, letterSpacing: 0.3,
+            background: "linear-gradient(90deg, #D4AF37, #C5941F)", color: NAVY,
+          }}
+        >
+          🎯 {match.score}% match{match.reason ? ` · ${match.reason}` : ""}
+        </span>
+      )}
+
       {v.kind === "direct" && (
         <span
           style={{
