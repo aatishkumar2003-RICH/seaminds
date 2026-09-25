@@ -92,6 +92,19 @@ const JobFeed = () => {
       if (alive) setSignedIn(true);
       fetchCrewCardInfo(uid).then((c) => { if (alive) setCardInfo(c); });
       fetchQuickProfileDone(uid).then((done) => { if (alive) setNeedsQuickProfile(!done); });
+      Promise.all([
+        supabase.from("crew_profiles").select("rank, role, nationality" as any).eq("id", uid).maybeSingle(),
+        supabase.from("crew_availability").select("preferred_vessel_type").eq("crew_profile_id", uid).maybeSingle(),
+      ]).then(([p, a]) => {
+        if (!alive) return;
+        const row = (p as any)?.data;
+        if (!row) return;
+        setMatchProfile({
+          rank: row.rank || row.role || null,
+          nationality: row.nationality || null,
+          preferredVessel: (a as any)?.data?.preferred_vessel_type || null,
+        });
+      });
     };
     supabase.auth.getSession().then(({ data }) => {
       preload(data?.session?.user?.id);
