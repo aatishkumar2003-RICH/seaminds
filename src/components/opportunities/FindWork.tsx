@@ -16,6 +16,7 @@ import ApplyGateSheet from "@/components/ApplyGateSheet";
 import JobCard from "@/components/JobCard";
 import { loadVacancies, loadMyApplicationTargets, UnifiedVacancy } from "@/lib/vacancyFeed";
 import CrewOffers from "@/components/CrewOffers";
+import { smartMatches, matchVacancy } from "@/lib/smartMatch";
 import { useSearchParams } from "react-router-dom";
 
 const VESSEL_TYPES = [
