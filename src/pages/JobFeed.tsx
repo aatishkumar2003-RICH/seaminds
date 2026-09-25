@@ -10,6 +10,7 @@ import { fetchCrewCardInfo, getCachedCrewCardInfo, waApplyLink, recordApplicatio
 import { jobPath, RANK_HUBS } from "@/lib/jobSlug";
 import ApplyGateSheet from "@/components/ApplyGateSheet";
 import { toast } from "sonner";
+import { matchVacancy, rankVacancies, type MatchProfile } from "@/lib/smartMatch";
 
 const NAVY = "#0D1B2A";
 const GOLD = "#D4AF37";
@@ -64,6 +65,7 @@ const JobFeed = () => {
   const [gateOpen, setGateOpen] = useState(false);
   const [applying, setApplying] = useState<string | null>(null);
   const [totalLive, setTotalLive] = useState<number | null>(null);
+  const [matchProfile, setMatchProfile] = useState<MatchProfile | null>(null);
 
   useEffect(() => {
     let alive = true;
