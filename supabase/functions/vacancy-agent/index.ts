@@ -163,7 +163,20 @@ async function fetchRSS(url: string): Promise<any[]> {
   } catch (err) { return noteError('RSS', err); }
 }
 
+// Indonesian recruiters write mobiles as 0812-xxxx / 62812 / +62 812 — normalise to E.164.
+function normalizeIndoPhone(raw: string | null): string | null {
+  if (!raw) return null;
+  const digits = raw.replace(/[^\d+]/g, '');
+  if (!digits) return null;
+  if (digits.startsWith('+')) return digits;
+  if (digits.startsWith('62')) return `+${digits}`;
+  if (digits.startsWith('08')) return `+62${digits.slice(1)}`;
+  if (digits.startsWith('8') && digits.length >= 9) return `+62${digits}`;
+  return digits;
+}
+
 async function fetchTelegramChannel(channel: string): Promise<any[]> {
+
   try {
     // Read public channel via web preview - no bot membership needed
     const res = await fetch(`https://t.me/s/${channel}`, {
@@ -177,18 +190,22 @@ async function fetchTelegramChannel(channel: string): Promise<any[]> {
     for (const msg of messages) {
       const raw = msg[1].replace(/<[^>]+>/g, ' ').trim();
       if (raw.length < 20) continue;
-      // Only keep messages that look like job postings
-      if (/captain|chief|officer|engineer|bosun|cook|rating|vacancy|hiring|salary|\$|whatsapp|contact|apply/i.test(raw)) {
+      // Only keep messages that look like job postings (English + Bahasa Indonesia)
+      if (/captain|chief|officer|engineer|bosun|cook|rating|vacancy|hiring|salary|\$|whatsapp|contact|apply|nakhoda|mualim|masinis|kkm|juru\s*mudi|juru\s*minyak|kelasi|abk|loker|lowongan|dibutuhkan|gaji|kapal|pelaut|ijazah/i.test(raw)) {
         // Extract contact details directly from raw text
         const email = raw.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
-        const whatsapp = raw.match(/(?:wa\.me\/|whatsapp[:\s]+|📱\s*)(\+?[\d\s()-]{8,15})/i)?.[1]?.trim() || null;
-        const phone = raw.match(/\+\d[\d\s()-]{7,14}/)?.[0] || null;
+        const whatsapp = raw.match(/(?:wa\.me\/|whatsapp[:\s]+|wa[:\s]+|hub[:\s]+|📱\s*)(\+?[\d\s()-]{8,18})/i)?.[1]?.trim() || null;
+        const phone = raw.match(/\+\d[\d\s()-]{7,14}/)?.[0]
+          || raw.match(/\b0?8\d{2}[\d\s().-]{6,14}/)?.[0]
+          || null;
+        const contact = whatsapp || phone;
         items.push({
           text: raw.substring(0, 500),
           channel,
           contact_email: email,
-          contact_whatsapp: whatsapp || phone,
+          contact_whatsapp: /^(\+?62|08|8)/.test((contact || '').replace(/[^\d+]/g, '')) ? normalizeIndoPhone(contact) : contact,
         });
+
       }
     }
     return noteSource('TelegramChannel', items.slice(0, 40));
@@ -222,6 +239,17 @@ IMPORTANT RULE: If apply_url is provided in the input, you MUST include it in ou
 - external_id: string (generate unique hash from title+company+port)
 
 MULTI-RANK RULE: If a single posting advertises multiple ranks (e.g. "Top 4", "Master & Chief Engineer", a list of positions), output ONE object PER RANK, each with the shared company/vessel/port/contact details. "Top 4" means Master, Chief Officer, Chief Engineer, 2nd Engineer.
+
+INDONESIAN LANGUAGE RULE: Many postings are in Bahasa Indonesia. Always translate the rank into the standard English maritime rank before output:
+Nakhoda/Kapten = Captain; Mualim I/1 = Chief Officer; Mualim II/2 = 2nd Officer; Mualim III/3 = 3rd Officer;
+KKM (Kepala Kamar Mesin) = Chief Engineer; Masinis I/1 = 2nd Engineer; Masinis II/2 = 3rd Engineer; Masinis III/3 = 4th Engineer;
+Serang = Bosun; Juru Mudi = AB; Kelasi = OS; Juru Minyak = Oiler; Mandor Mesin = Fitter; Koki/Juru Masak = Cook; Pelayan = Messman;
+Kadet Dek = Deck Cadet; Kadet Mesin = Engine Cadet; Elektrisi = ETO; ABK = Ratings (only when no specific rank is given).
+Also translate vessel words: Kapal Tunda/Tugboat = Tug, Tongkang = Barge, Kapal Kontainer = Container, Kapal Curah = Bulk Carrier, Kapal Penumpang = Passenger, Kapal Ikan = Fishing.
+Indonesian salaries written as "Rp" or "juta" are IDR per month — do NOT put them in salary_min/salary_max (which are USD); mention them in description instead.
+Indonesian phone numbers starting 08 must be output in international form beginning +62 (e.g. 081234567890 -> +6281234567890).
+When the posting is Indonesian, set joining_port to the Indonesian city if named, otherwise "Indonesia".
+
 
 Return ONLY a valid JSON array. No markdown, no explanation. If an item is not a job vacancy at all, skip it.
 
@@ -498,52 +526,63 @@ async function scrapePOEA(): Promise<any[]> {
   } catch (err) { return noteError('POEA', err); }
 }
 
-// INDONESIA — Pelaut.com (Indonesian seafarer portal)
-async function scrapePelaut(): Promise<any[]> {
+// INDONESIA — Kapal dan Logistik monthly seafarer vacancy digests (Blogger JSON feed)
+// Replaces the dead pelaut.com (timeout) and kapal.co.id (404) scrapers.
+async function scrapeIndoJobBlog(): Promise<any[]> {
   try {
-    const res = await fetch('https://pelaut.com/lowongan', {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SeaMinds/1.0)' }
-    });
-    const html = await res.text();
+    const res = await fetch(
+      'https://www.kapaldanlogistik.com/feeds/posts/default?q=lowongan%20pelaut&alt=json&max-results=3',
+      { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SeaMinds/1.0)' } }
+    );
+    const data = await res.json();
+    const entries: any[] = data?.feed?.entry || [];
     const items: any[] = [];
-    const posts = html.matchAll(/<div[^>]*class="[^"]*job[^"]*"[^>]*>([\s\S]*?)<\/div>\s*(?:<\/div>|<div)/g);
-    for (const post of posts) {
-      const content = post[1];
-      const title = content.match(/<h[234][^>]*>([^<]{5,80})<\/h[234]>/)?.[1]?.trim() || '';
-      const company = content.match(/(?:company|perusahaan)[:\s]+([^<\n]{3,50})/i)?.[1]?.trim() || null;
-      const link = content.match(/href="([^"]*pelaut[^"]*)"/)?.[1] || null;
-      const website = extractWebsite(content, ['pelaut.com']);
-      if (title && /captain|chief|officer|engineer|bosun|cook|ab|os|rating|nakhoda|masinis|mualim/i.test(title)) {
-        items.push({ title, company_name: company, apply_url: link, company_website: website, nationality_fit: ['Indonesian'], source_url: 'pelaut.com' });
+
+    const FRESH_MS = 45 * 24 * 60 * 60 * 1000;
+    for (const entry of entries.slice(0, 2)) {
+      const pubRaw = entry?.updated?.$t || entry?.published?.$t || '';
+      const pubMs = pubRaw ? Date.parse(pubRaw) : NaN;
+      // Skip stale digests — this blog publishes monthly and may go quiet for months
+      if (!isNaN(pubMs) && Date.now() - pubMs > FRESH_MS) continue;
+      const postedAt = (entry?.published?.$t || '').slice(0, 10) || null;
+      const link = (entry?.link || []).find((l: any) => l.rel === 'alternate')?.href || null;
+
+      const html = entry?.content?.$t || '';
+      const text = html
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/(p|div|h[1-6]|li)>/gi, '\n')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&gt;/g, '>')
+        .replace(/&lt;/g, '<')
+        .replace(/[ \t]{2,}/g, ' ')
+        .replace(/\n{3,}/g, '\n\n');
+
+      // Each vacancy block starts with a numbered heading ("1. Lowongan ...").
+      const blocks = text.split(/\n(?=\s*\d{1,2}\.\s*(?:Lowongan|Loker|Job|Cans|Info|Dibutuhkan))/i);
+      for (const block of blocks) {
+        const chunk = block.trim();
+        if (chunk.length < 120) continue;
+        if (!/(nakhoda|mualim|masinis|kkm|juru\s*mudi|kelasi|juru\s*minyak|abk|crew|master|officer|engineer|oiler|bosun|cook|able\s*seaman|ab\b|ordinary)/i.test(chunk)) continue;
+        const email = chunk.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
+        const phone = chunk.match(/(?:\+62|62|0)8\d[\d\s().-]{6,14}/)?.[0] || null;
+        items.push({
+          text: chunk.substring(0, 1800),
+          contact_email: email,
+          contact_whatsapp: normalizeIndoPhone(phone),
+          apply_url: link,
+          source_posted_at: postedAt,
+          nationality_fit: ['Indonesian'],
+          joining_port_hint: 'Indonesia',
+          source_url: 'kapaldanlogistik.com',
+        });
       }
     }
-    return noteSource('Pelaut', items.slice(0, 40));
-  } catch (err) { return noteError('Pelaut', err); }
+    return noteSource('IndoJobBlog', items.slice(0, 40));
+  } catch (err) { return noteError('IndoJobBlog', err); }
 }
 
-// INDONESIA — Kapal.co.id
-async function scrapeKapal(): Promise<any[]> {
-  try {
-    const res = await fetch('https://kapal.co.id/lowongan-kerja-pelaut', {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SeaMinds/1.0)' }
-    });
-    const html = await res.text();
-    const items: any[] = [];
-    const posts = html.matchAll(/<article[^>]*>([\s\S]*?)<\/article>/g);
-    for (const post of posts) {
-      const content = post[1];
-      const title = content.match(/<h[234][^>]*>([^<]{5,100})<\/h[234]>/)?.[1]?.trim() || '';
-      const email = content.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
-      const phone = content.match(/(?:\+62|08)[\d\s-]{8,14}/)?.[0] || null;
-      const link = content.match(/href="([^"]*kapal\.co\.id[^"]*)"/)?.[1] || null;
-      const website = extractWebsite(content, ['kapal.co.id']);
-      if (title && /captain|chief|officer|engineer|bosun|cook|rating|nakhoda|masinis|mualim|pelaut/i.test(title)) {
-        items.push({ title, contact_email: email, contact_whatsapp: phone, apply_url: link, company_website: website, nationality_fit: ['Indonesian'], source_url: 'kapal.co.id' });
-      }
-    }
-    return noteSource('Kapal', items.slice(0, 40));
-  } catch (err) { return noteError('Kapal', err); }
-}
 
 // UKRAINE — CrewBoard (Ukrainian manning portal)
 async function scrapeCrewBoard(): Promise<any[]> {
@@ -778,7 +817,16 @@ Deno.serve(async (req) => {
       const processed = await processWithAI(googleRaw);
       stats.google = await saveVacancies(processed, 'google_jobs');
     }
+
+    // Indonesia digest also runs in this slot (Google queries are retired), so
+    // Indonesian vacancies refresh twice a day instead of once every 36 hours.
+    const indoRaw = await scrapeIndoJobBlog();
+    if (indoRaw.length) {
+      const processed = await processWithAI(indoRaw);
+      stats.saved += await saveVacancies(processed, 'indonesia');
     }
+    }
+
 
     if (group === 1) {
     // 2. RSS Feeds
@@ -808,9 +856,15 @@ Deno.serve(async (req) => {
       telegramRaw.push(...msgs);
     }
     if (telegramRaw.length) {
-      const processed = await processWithAI(telegramRaw.map(m => ({ text: m.text, channel: m.channel })));
+      const processed = await processWithAI(telegramRaw.map(m => ({
+        text: m.text,
+        channel: m.channel,
+        contact_email: m.contact_email,
+        contact_whatsapp: m.contact_whatsapp,
+      })));
       stats.telegram = await saveVacancies(processed, 'telegram');
     }
+
     }
 
 
@@ -846,8 +900,8 @@ Deno.serve(async (req) => {
 
     // 5. Indonesia, Ukraine, Bangladesh, Myanmar, Global scrapers
     const expandedRegionalRaw: any[] = [
-      ...await scrapePelaut(),
-      ...await scrapeKapal(),
+      ...await scrapeIndoJobBlog(),
+
       ...await scrapeCrewBoard(),
       ...await scrapeMoryak(),
       ...await scrapeMarineJobBD(),
