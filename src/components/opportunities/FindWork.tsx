@@ -618,7 +618,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
           const combined = `${ext.rank || ''} ${ext.notes || ''} ${ext.company || ''} ${ext.port || ''}`.toLowerCase();
           if (isIndian && (src === 'india_philippines' || /india|mumbai|chennai|kolkata|cochin|goa|indian/i.test(combined))) return true;
           if (isFilipino && (src === 'india_philippines' || /philippines|manila|cebu|filipino|poea|dmw|pinoy/i.test(combined))) return true;
-          if (isIndonesian && (src === 'regional_global' || /indonesia|jakarta|surabaya|indonesian|pelaut/i.test(combined))) return true;
+          if (isIndonesian && (src === 'regional_global' || src === 'indonesia' || /indonesia|jakarta|surabaya|batam|balikpapan|samarinda|makassar|semarang|indonesian|pelaut|singapore/i.test(combined))) return true;
           if (isUkrainian && (src === 'regional_global' || /ukrain|odesa|odessa|ukrainian/i.test(combined))) return true;
           if (isBangladeshi && (src === 'regional_global' || /bangladesh|chittagong|dhaka|bangladeshi/i.test(combined))) return true;
           if (isMyanmar && (src === 'regional_global' || /myanmar|yangon|burmese/i.test(combined))) return true;
