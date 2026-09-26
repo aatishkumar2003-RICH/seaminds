@@ -811,7 +811,16 @@ Deno.serve(async (req) => {
       const processed = await processWithAI(googleRaw);
       stats.google = await saveVacancies(processed, 'google_jobs');
     }
+
+    // Indonesia digest also runs in this slot (Google queries are retired), so
+    // Indonesian vacancies refresh twice a day instead of once every 36 hours.
+    const indoRaw = await scrapeIndoJobBlog();
+    if (indoRaw.length) {
+      const processed = await processWithAI(indoRaw);
+      stats.saved += await saveVacancies(processed, 'indonesia');
     }
+    }
+
 
     if (group === 1) {
     // 2. RSS Feeds
