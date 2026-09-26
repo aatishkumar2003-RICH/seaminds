@@ -841,9 +841,15 @@ Deno.serve(async (req) => {
       telegramRaw.push(...msgs);
     }
     if (telegramRaw.length) {
-      const processed = await processWithAI(telegramRaw.map(m => ({ text: m.text, channel: m.channel })));
+      const processed = await processWithAI(telegramRaw.map(m => ({
+        text: m.text,
+        channel: m.channel,
+        contact_email: m.contact_email,
+        contact_whatsapp: m.contact_whatsapp,
+      })));
       stats.telegram = await saveVacancies(processed, 'telegram');
     }
+
     }
 
 
