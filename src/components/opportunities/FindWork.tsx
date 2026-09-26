@@ -58,7 +58,7 @@ const COUNTRY_TABS = [
 const COUNTRY_PORTS: Record<string, string[]> = {
   India: ['Mumbai', 'Chennai', 'Kolkata', 'Goa', 'Cochin', 'India'],
   Philippines: ['Manila', 'Cebu', 'Philippines'],
-  Indonesia: ['Jakarta', 'Surabaya', 'Batam', 'Indonesia'],
+  Indonesia: ['Jakarta', 'Surabaya', 'Batam', 'Balikpapan', 'Samarinda', 'Makassar', 'Semarang', 'Banjarmasin', 'Merak', 'Indonesia'],
   China: ['Shanghai', 'Tianjin', 'Dalian', 'Qingdao', 'Guangzhou', 'Shenzhen', 'China'],
   Turkey: ['Istanbul', 'Izmir', 'Mersin', 'Aliaga', 'Turkey'],
   Croatia: ['Rijeka', 'Split', 'Dubrovnik', 'Croatia'],
