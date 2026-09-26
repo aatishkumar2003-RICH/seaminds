@@ -190,18 +190,22 @@ async function fetchTelegramChannel(channel: string): Promise<any[]> {
     for (const msg of messages) {
       const raw = msg[1].replace(/<[^>]+>/g, ' ').trim();
       if (raw.length < 20) continue;
-      // Only keep messages that look like job postings
-      if (/captain|chief|officer|engineer|bosun|cook|rating|vacancy|hiring|salary|\$|whatsapp|contact|apply/i.test(raw)) {
+      // Only keep messages that look like job postings (English + Bahasa Indonesia)
+      if (/captain|chief|officer|engineer|bosun|cook|rating|vacancy|hiring|salary|\$|whatsapp|contact|apply|nakhoda|mualim|masinis|kkm|juru\s*mudi|juru\s*minyak|kelasi|abk|loker|lowongan|dibutuhkan|gaji|kapal|pelaut|ijazah/i.test(raw)) {
         // Extract contact details directly from raw text
         const email = raw.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
-        const whatsapp = raw.match(/(?:wa\.me\/|whatsapp[:\s]+|📱\s*)(\+?[\d\s()-]{8,15})/i)?.[1]?.trim() || null;
-        const phone = raw.match(/\+\d[\d\s()-]{7,14}/)?.[0] || null;
+        const whatsapp = raw.match(/(?:wa\.me\/|whatsapp[:\s]+|wa[:\s]+|hub[:\s]+|📱\s*)(\+?[\d\s()-]{8,18})/i)?.[1]?.trim() || null;
+        const phone = raw.match(/\+\d[\d\s()-]{7,14}/)?.[0]
+          || raw.match(/\b0?8\d{2}[\d\s().-]{6,14}/)?.[0]
+          || null;
+        const contact = whatsapp || phone;
         items.push({
           text: raw.substring(0, 500),
           channel,
           contact_email: email,
-          contact_whatsapp: whatsapp || phone,
+          contact_whatsapp: /^(\+?62|08|8)/.test((contact || '').replace(/[^\d+]/g, '')) ? normalizeIndoPhone(contact) : contact,
         });
+
       }
     }
     return noteSource('TelegramChannel', items.slice(0, 40));
