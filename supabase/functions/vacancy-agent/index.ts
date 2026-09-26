@@ -498,52 +498,57 @@ async function scrapePOEA(): Promise<any[]> {
   } catch (err) { return noteError('POEA', err); }
 }
 
-// INDONESIA — Pelaut.com (Indonesian seafarer portal)
-async function scrapePelaut(): Promise<any[]> {
+// INDONESIA — Kapal dan Logistik monthly seafarer vacancy digests (Blogger JSON feed)
+// Replaces the dead pelaut.com (timeout) and kapal.co.id (404) scrapers.
+async function scrapeIndoJobBlog(): Promise<any[]> {
   try {
-    const res = await fetch('https://pelaut.com/lowongan', {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SeaMinds/1.0)' }
-    });
-    const html = await res.text();
+    const res = await fetch(
+      'https://www.kapaldanlogistik.com/feeds/posts/default?q=lowongan%20pelaut&alt=json&max-results=3',
+      { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SeaMinds/1.0)' } }
+    );
+    const data = await res.json();
+    const entries: any[] = data?.feed?.entry || [];
     const items: any[] = [];
-    const posts = html.matchAll(/<div[^>]*class="[^"]*job[^"]*"[^>]*>([\s\S]*?)<\/div>\s*(?:<\/div>|<div)/g);
-    for (const post of posts) {
-      const content = post[1];
-      const title = content.match(/<h[234][^>]*>([^<]{5,80})<\/h[234]>/)?.[1]?.trim() || '';
-      const company = content.match(/(?:company|perusahaan)[:\s]+([^<\n]{3,50})/i)?.[1]?.trim() || null;
-      const link = content.match(/href="([^"]*pelaut[^"]*)"/)?.[1] || null;
-      const website = extractWebsite(content, ['pelaut.com']);
-      if (title && /captain|chief|officer|engineer|bosun|cook|ab|os|rating|nakhoda|masinis|mualim/i.test(title)) {
-        items.push({ title, company_name: company, apply_url: link, company_website: website, nationality_fit: ['Indonesian'], source_url: 'pelaut.com' });
+
+    for (const entry of entries.slice(0, 2)) {
+      const postedAt = (entry?.published?.$t || '').slice(0, 10) || null;
+      const link = (entry?.link || []).find((l: any) => l.rel === 'alternate')?.href || null;
+      const html = entry?.content?.$t || '';
+      const text = html
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/(p|div|h[1-6]|li)>/gi, '\n')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&gt;/g, '>')
+        .replace(/&lt;/g, '<')
+        .replace(/[ \t]{2,}/g, ' ')
+        .replace(/\n{3,}/g, '\n\n');
+
+      // Each vacancy block starts with a numbered heading ("1. Lowongan ...").
+      const blocks = text.split(/\n(?=\s*\d{1,2}\.\s*(?:Lowongan|Loker|Job|Cans|Info|Dibutuhkan))/i);
+      for (const block of blocks) {
+        const chunk = block.trim();
+        if (chunk.length < 120) continue;
+        if (!/(nakhoda|mualim|masinis|kkm|juru\s*mudi|kelasi|juru\s*minyak|abk|crew|master|officer|engineer|oiler|bosun|cook|able\s*seaman|ab\b|ordinary)/i.test(chunk)) continue;
+        const email = chunk.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
+        const phone = chunk.match(/(?:\+62|62|0)8\d[\d\s().-]{6,14}/)?.[0] || null;
+        items.push({
+          text: chunk.substring(0, 1800),
+          contact_email: email,
+          contact_whatsapp: normalizeIndoPhone(phone),
+          apply_url: link,
+          source_posted_at: postedAt,
+          nationality_fit: ['Indonesian'],
+          joining_port_hint: 'Indonesia',
+          source_url: 'kapaldanlogistik.com',
+        });
       }
     }
-    return noteSource('Pelaut', items.slice(0, 40));
-  } catch (err) { return noteError('Pelaut', err); }
+    return noteSource('IndoJobBlog', items.slice(0, 40));
+  } catch (err) { return noteError('IndoJobBlog', err); }
 }
 
-// INDONESIA — Kapal.co.id
-async function scrapeKapal(): Promise<any[]> {
-  try {
-    const res = await fetch('https://kapal.co.id/lowongan-kerja-pelaut', {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SeaMinds/1.0)' }
-    });
-    const html = await res.text();
-    const items: any[] = [];
-    const posts = html.matchAll(/<article[^>]*>([\s\S]*?)<\/article>/g);
-    for (const post of posts) {
-      const content = post[1];
-      const title = content.match(/<h[234][^>]*>([^<]{5,100})<\/h[234]>/)?.[1]?.trim() || '';
-      const email = content.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
-      const phone = content.match(/(?:\+62|08)[\d\s-]{8,14}/)?.[0] || null;
-      const link = content.match(/href="([^"]*kapal\.co\.id[^"]*)"/)?.[1] || null;
-      const website = extractWebsite(content, ['kapal.co.id']);
-      if (title && /captain|chief|officer|engineer|bosun|cook|rating|nakhoda|masinis|mualim|pelaut/i.test(title)) {
-        items.push({ title, contact_email: email, contact_whatsapp: phone, apply_url: link, company_website: website, nationality_fit: ['Indonesian'], source_url: 'kapal.co.id' });
-      }
-    }
-    return noteSource('Kapal', items.slice(0, 40));
-  } catch (err) { return noteError('Kapal', err); }
-}
 
 // UKRAINE — CrewBoard (Ukrainian manning portal)
 async function scrapeCrewBoard(): Promise<any[]> {
