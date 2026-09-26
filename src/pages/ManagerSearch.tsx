@@ -212,16 +212,22 @@ const ManagerSearch = () => {
   const [pdfBusy, setPdfBusy] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [balance, setBalance] = useState<number | null>(null);
+  const [planOpen, setPlanOpen] = useState(false);
   const [revealBusy, setRevealBusy] = useState<string | null>(null);
   const [revealed, setRevealed] = useState<Record<string, { email: string | null; whatsapp: string | null }>>({});
+
+  const subscribed = (balance ?? 0) > 0;
 
   const loadBalance = async () => {
     const { data } = await supabase.rpc("get_my_credit_balance" as any);
     const bal = (data as any)?.balance;
-    if (typeof bal === "number") setBalance(bal);
+    if (typeof bal === "number") { setBalance(bal); return bal; }
+    setBalance(0);
+    return 0;
   };
 
   const search = async () => {
+    if (!subscribed) { setPlanOpen(true); return; }
     setLoading(true);
     try {
       const data = await callFn({
@@ -230,6 +236,7 @@ const ManagerSearch = () => {
         page: 0,
         pageSize: 50,
       });
+
       setResults(data.results || []);
       setTotal(data.total ?? (data.results || []).length);
       setPage(0);
