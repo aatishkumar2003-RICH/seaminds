@@ -303,12 +303,15 @@ const ManagerSearch = () => {
       if (!active) return;
       if (!data?.user) { navigate("/manager"); return; }
       setReady(true);
-      loadBalance();
-      search();
+      const bal = await loadBalance();
+      if (!active) return;
+      if (bal > 0) search(true);
+      else setPlanOpen(true);
     })();
     return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
 
   const viewFullCv = async (row: CrewResult) => {
