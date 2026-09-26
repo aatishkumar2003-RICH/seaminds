@@ -63,9 +63,10 @@ export default function LiveTicker() {
   }, []);
 
   const tickerItems = [
-    ...nationalities.map(n=>`${n.flag} ${n.name} ${n.count.toLocaleString()}`),
+    ...nationalities.map(n=>`${n.flag} ${n.name}`),
     ...jobs.map(j=>`🆕 ${j.rank} · ${j.vessel} · ${j.salary} · ${j.port}`),
   ];
+
   const displayItems = tickerItems.length > 0 ? tickerItems : ['⚓ SeaMinds — AI wellness, jobs & competency for seafarers'];
   const doubled = [...displayItems, ...displayItems];
   const duration = Math.max(20, displayItems.length * 4);
