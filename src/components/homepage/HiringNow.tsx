@@ -152,10 +152,17 @@ const HiringNow = () => {
           {stats.countries > 0 && (
             <CountPill value={stats.countries} label="Countries" active={visible} />
           )}
-          {stats.profiles > 0 && (
-            <CountPill value={stats.profiles} label="Sea Profiles completed" active={visible} />
-          )}
+          {/* Crew scale shown as a verified proxy — exact numbers stay private */}
+          <div
+            className="rounded-2xl px-4 py-3 text-center"
+            style={{ border: "1px solid rgba(212,175,55,0.3)", background: "rgba(17,34,64,0.6)" }}
+          >
+            <div className="text-xl font-bold text-primary font-mono-score">10,000+</div>
+            <div className="text-[11px] text-muted-foreground">Seafarers in the network</div>
+            <div className="text-[11px] tracking-[-1px] text-primary">★★★★</div>
+          </div>
         </div>
+
 
         <div className="flex justify-center">
           <Button size="lg" className="h-12 px-6 text-sm font-bold rounded-xl" onClick={() => navigate("/feed")}>

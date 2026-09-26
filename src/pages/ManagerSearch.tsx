@@ -212,16 +212,23 @@ const ManagerSearch = () => {
   const [pdfBusy, setPdfBusy] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [balance, setBalance] = useState<number | null>(null);
+  const [planOpen, setPlanOpen] = useState(false);
   const [revealBusy, setRevealBusy] = useState<string | null>(null);
   const [revealed, setRevealed] = useState<Record<string, { email: string | null; whatsapp: string | null }>>({});
+
+  const subscribed = (balance ?? 0) > 0;
 
   const loadBalance = async () => {
     const { data } = await supabase.rpc("get_my_credit_balance" as any);
     const bal = (data as any)?.balance;
-    if (typeof bal === "number") setBalance(bal);
+    if (typeof bal === "number") { setBalance(bal); return bal; }
+    setBalance(0);
+    return 0;
   };
 
-  const search = async () => {
+  const search = async (bypassGate = false) => {
+    if (!bypassGate && !subscribed) { setPlanOpen(true); return; }
+
     setLoading(true);
     try {
       const data = await callFn({
@@ -230,6 +237,7 @@ const ManagerSearch = () => {
         page: 0,
         pageSize: 50,
       });
+
       setResults(data.results || []);
       setTotal(data.total ?? (data.results || []).length);
       setPage(0);
@@ -296,12 +304,15 @@ const ManagerSearch = () => {
       if (!active) return;
       if (!data?.user) { navigate("/manager"); return; }
       setReady(true);
-      loadBalance();
-      search();
+      const bal = await loadBalance();
+      if (!active) return;
+      if (bal > 0) search(true);
+      else setPlanOpen(true);
     })();
     return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
 
   const viewFullCv = async (row: CrewResult) => {
@@ -358,7 +369,48 @@ const ManagerSearch = () => {
 
   return (
     <div style={{ minHeight: "100vh", background: NAVY, padding: "24px 16px" }}>
+      {planOpen && (
+        <div
+          onClick={() => setPlanOpen(false)}
+          style={{ position: "fixed", inset: 0, background: "rgba(5,10,20,0.78)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: CARD, border: `1px solid rgba(212,175,55,0.3)`, borderRadius: 16, padding: 22, maxWidth: 420, width: "100%" }}
+          >
+            <p style={{ fontSize: 30, marginBottom: 8 }}>🔐</p>
+            <h2 style={{ color: GOLD, fontSize: 18, fontWeight: 800, marginBottom: 8 }}>Subscription required</h2>
+            <p style={{ color: "#cbd5e1", fontSize: 13, lineHeight: 1.6, marginBottom: 12 }}>
+              Searching seafarers and filtering by nationality is part of the company plan.
+              Subscribe to reach our network of 10,000+ seafarers with verified profiles and assessed competency.
+            </p>
+            <ul style={{ color: "#94A3B8", fontSize: 12.5, lineHeight: 1.8, marginBottom: 16, paddingLeft: 16 }}>
+              <li>Full crew search by rank, vessel, nationality and availability</li>
+              <li>Verified Sea Profiles and SeaMinds Score</li>
+              <li>Direct contact once approved</li>
+            </ul>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <button onClick={() => navigate("/pricing")} style={{ ...goldBtn, borderRadius: 12, padding: "12px 16px" }}>
+                View subscription plans
+              </button>
+              <a
+                href="mailto:info@indossol.com?subject=SeaMinds%20company%20subscription"
+                style={{ ...ghostBtn, borderRadius: 12, padding: "12px 16px", textAlign: "center", textDecoration: "none" }}
+              >
+                Talk to our team
+              </a>
+              <button
+                onClick={() => setPlanOpen(false)}
+                style={{ background: "transparent", border: "none", color: "#94A3B8", fontSize: 12, cursor: "pointer", padding: 4 }}
+              >
+                Not now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div style={{ maxWidth: 1180, margin: "0 auto", display: "flex", flexDirection: "column", gap: 18 }}>
+
         <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <button
@@ -420,11 +472,20 @@ const ManagerSearch = () => {
             </div>
             <div>
               <span style={label}>Nationality</span>
-              <select value={nationality} onChange={(e) => setNationality(e.target.value)} style={input}>
+              <select
+                value={nationality}
+                onChange={(e) => {
+                  if (!subscribed) { setPlanOpen(true); return; }
+                  setNationality(e.target.value);
+                }}
+                onMouseDown={(e) => { if (!subscribed) { e.preventDefault(); setPlanOpen(true); } }}
+                style={input}
+              >
                 <option value="">All nationalities</option>
                 {NATIONALITIES.map((n) => <option key={n} value={n}>{n}</option>)}
               </select>
             </div>
+
             <div>
               <span style={label}>Vessel Type</span>
               <select value={vesselType} onChange={(e) => setVesselType(e.target.value)} style={input}>

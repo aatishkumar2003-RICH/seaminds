@@ -28,9 +28,11 @@ export default function LiveTicker() {
   const [stats, setStats] = useState({ totalCrew: 0, availableCrew: 0, totalVacancies: 0 });
   const [nationalities, setNationalities] = useState<{flag:string;name:string;count:number}[]>([]);
   const [jobs, setJobs] = useState<{rank:string;vessel:string;salary:string;port:string}[]>([]);
-  const crew = useCountUp(stats.totalCrew);
-  const avail = useCountUp(stats.availableCrew);
   const vac = useCountUp(stats.totalVacancies);
+  // Public proxy scale — exact crew numbers are never disclosed publicly
+  const CREW_PROXY = "10,000+";
+
+
 
   useEffect(() => {
     const load = async () => {
@@ -61,9 +63,10 @@ export default function LiveTicker() {
   }, []);
 
   const tickerItems = [
-    ...nationalities.map(n=>`${n.flag} ${n.name} ${n.count.toLocaleString()}`),
+    ...nationalities.map(n=>`${n.flag} ${n.name}`),
     ...jobs.map(j=>`🆕 ${j.rank} · ${j.vessel} · ${j.salary} · ${j.port}`),
   ];
+
   const displayItems = tickerItems.length > 0 ? tickerItems : ['⚓ SeaMinds — AI wellness, jobs & competency for seafarers'];
   const doubled = [...displayItems, ...displayItems];
   const duration = Math.max(20, displayItems.length * 4);
@@ -95,20 +98,24 @@ export default function LiveTicker() {
             <span className="text-[10px] text-muted-foreground">⚓ SeaMinds</span>
           </div>
 
-          {/* Stats */}
+          {/* Stats — crew scale shown as a verified proxy, never an exact count */}
           <div className="flex items-center gap-4">
-            {[
-              {icon:'👥',val:crew,label:'Crew',color:'#D4AF37'},
-              {icon:'✅',val:avail,label:'Available',color:'#22c55e'},
-              {icon:'💼',val:vac,label:'Vacancies',color:'#60a5fa'},
-            ].map(s=>(
-              <div key={s.label} className="flex items-center gap-1.5 text-xs">
-                <span>{s.icon}</span>
-                <span className="font-bold" style={{color:s.color}}>{s.val.toLocaleString()}</span>
-                <span className="text-muted-foreground hidden sm:inline">{s.label}</span>
-              </div>
-            ))}
+            <div className="flex items-center gap-1.5 text-xs">
+              <span className="tracking-[-1px]" style={{ color: '#D4AF37' }}>★★★★</span>
+              <span className="font-bold" style={{ color: '#D4AF37' }}>{CREW_PROXY}</span>
+              <span className="text-muted-foreground hidden sm:inline">Crew</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs">
+              <span>✅</span>
+              <span className="font-bold" style={{ color: '#22c55e' }}>Available daily</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs">
+              <span>💼</span>
+              <span className="font-bold" style={{ color: '#60a5fa' }}>{vac.toLocaleString()}</span>
+              <span className="text-muted-foreground hidden sm:inline">Vacancies</span>
+            </div>
           </div>
+
         </div>
       </div>
 
