@@ -163,7 +163,20 @@ async function fetchRSS(url: string): Promise<any[]> {
   } catch (err) { return noteError('RSS', err); }
 }
 
+// Indonesian recruiters write mobiles as 0812-xxxx / 62812 / +62 812 — normalise to E.164.
+function normalizeIndoPhone(raw: string | null): string | null {
+  if (!raw) return null;
+  const digits = raw.replace(/[^\d+]/g, '');
+  if (!digits) return null;
+  if (digits.startsWith('+')) return digits;
+  if (digits.startsWith('62')) return `+${digits}`;
+  if (digits.startsWith('08')) return `+62${digits.slice(1)}`;
+  if (digits.startsWith('8') && digits.length >= 9) return `+62${digits}`;
+  return digits;
+}
+
 async function fetchTelegramChannel(channel: string): Promise<any[]> {
+
   try {
     // Read public channel via web preview - no bot membership needed
     const res = await fetch(`https://t.me/s/${channel}`, {
