@@ -98,20 +98,24 @@ export default function LiveTicker() {
             <span className="text-[10px] text-muted-foreground">⚓ SeaMinds</span>
           </div>
 
-          {/* Stats */}
+          {/* Stats — crew scale shown as a verified proxy, never an exact count */}
           <div className="flex items-center gap-4">
-            {[
-              {icon:'👥',val:crew,label:'Crew',color:'#D4AF37'},
-              {icon:'✅',val:avail,label:'Available',color:'#22c55e'},
-              {icon:'💼',val:vac,label:'Vacancies',color:'#60a5fa'},
-            ].map(s=>(
-              <div key={s.label} className="flex items-center gap-1.5 text-xs">
-                <span>{s.icon}</span>
-                <span className="font-bold" style={{color:s.color}}>{s.val.toLocaleString()}</span>
-                <span className="text-muted-foreground hidden sm:inline">{s.label}</span>
-              </div>
-            ))}
+            <div className="flex items-center gap-1.5 text-xs">
+              <span className="tracking-[-1px]" style={{ color: '#D4AF37' }}>★★★★</span>
+              <span className="font-bold" style={{ color: '#D4AF37' }}>{CREW_PROXY}</span>
+              <span className="text-muted-foreground hidden sm:inline">Crew</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs">
+              <span>✅</span>
+              <span className="font-bold" style={{ color: '#22c55e' }}>Available daily</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs">
+              <span>💼</span>
+              <span className="font-bold" style={{ color: '#60a5fa' }}>{vac.toLocaleString()}</span>
+              <span className="text-muted-foreground hidden sm:inline">Vacancies</span>
+            </div>
           </div>
+
         </div>
       </div>
 
