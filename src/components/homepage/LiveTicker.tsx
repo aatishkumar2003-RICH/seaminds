@@ -28,9 +28,10 @@ export default function LiveTicker() {
   const [stats, setStats] = useState({ totalCrew: 0, availableCrew: 0, totalVacancies: 0 });
   const [nationalities, setNationalities] = useState<{flag:string;name:string;count:number}[]>([]);
   const [jobs, setJobs] = useState<{rank:string;vessel:string;salary:string;port:string}[]>([]);
-  const crew = useCountUp(stats.totalCrew);
-  const avail = useCountUp(stats.availableCrew);
   const vac = useCountUp(stats.totalVacancies);
+  // Public proxy scale — exact crew numbers are never disclosed publicly
+  const crewProxy = stats.totalCrew > 0 ? "10,000+" : "10,000+";
+
 
   useEffect(() => {
     const load = async () => {
