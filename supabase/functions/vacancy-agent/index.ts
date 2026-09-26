@@ -538,9 +538,15 @@ async function scrapeIndoJobBlog(): Promise<any[]> {
     const entries: any[] = data?.feed?.entry || [];
     const items: any[] = [];
 
+    const FRESH_MS = 45 * 24 * 60 * 60 * 1000;
     for (const entry of entries.slice(0, 2)) {
+      const pubRaw = entry?.updated?.$t || entry?.published?.$t || '';
+      const pubMs = pubRaw ? Date.parse(pubRaw) : NaN;
+      // Skip stale digests — this blog publishes monthly and may go quiet for months
+      if (!isNaN(pubMs) && Date.now() - pubMs > FRESH_MS) continue;
       const postedAt = (entry?.published?.$t || '').slice(0, 10) || null;
       const link = (entry?.link || []).find((l: any) => l.rel === 'alternate')?.href || null;
+
       const html = entry?.content?.$t || '';
       const text = html
         .replace(/<br\s*\/?>/gi, '\n')
