@@ -226,8 +226,9 @@ const ManagerSearch = () => {
     return 0;
   };
 
-  const search = async () => {
-    if (!subscribed) { setPlanOpen(true); return; }
+  const search = async (bypassGate = false) => {
+    if (!bypassGate && !subscribed) { setPlanOpen(true); return; }
+
     setLoading(true);
     try {
       const data = await callFn({
