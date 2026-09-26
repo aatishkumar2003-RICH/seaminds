@@ -879,8 +879,8 @@ Deno.serve(async (req) => {
 
     // 5. Indonesia, Ukraine, Bangladesh, Myanmar, Global scrapers
     const expandedRegionalRaw: any[] = [
-      ...await scrapePelaut(),
-      ...await scrapeKapal(),
+      ...await scrapeIndoJobBlog(),
+
       ...await scrapeCrewBoard(),
       ...await scrapeMoryak(),
       ...await scrapeMarineJobBD(),
