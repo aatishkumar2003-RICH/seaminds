@@ -431,11 +431,20 @@ const ManagerSearch = () => {
             </div>
             <div>
               <span style={label}>Nationality</span>
-              <select value={nationality} onChange={(e) => setNationality(e.target.value)} style={input}>
+              <select
+                value={nationality}
+                onChange={(e) => {
+                  if (!subscribed) { setPlanOpen(true); return; }
+                  setNationality(e.target.value);
+                }}
+                onMouseDown={(e) => { if (!subscribed) { e.preventDefault(); setPlanOpen(true); } }}
+                style={input}
+              >
                 <option value="">All nationalities</option>
                 {NATIONALITIES.map((n) => <option key={n} value={n}>{n}</option>)}
               </select>
             </div>
+
             <div>
               <span style={label}>Vessel Type</span>
               <select value={vesselType} onChange={(e) => setVesselType(e.target.value)} style={input}>
