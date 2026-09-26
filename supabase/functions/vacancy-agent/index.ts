@@ -240,6 +240,17 @@ IMPORTANT RULE: If apply_url is provided in the input, you MUST include it in ou
 
 MULTI-RANK RULE: If a single posting advertises multiple ranks (e.g. "Top 4", "Master & Chief Engineer", a list of positions), output ONE object PER RANK, each with the shared company/vessel/port/contact details. "Top 4" means Master, Chief Officer, Chief Engineer, 2nd Engineer.
 
+INDONESIAN LANGUAGE RULE: Many postings are in Bahasa Indonesia. Always translate the rank into the standard English maritime rank before output:
+Nakhoda/Kapten = Captain; Mualim I/1 = Chief Officer; Mualim II/2 = 2nd Officer; Mualim III/3 = 3rd Officer;
+KKM (Kepala Kamar Mesin) = Chief Engineer; Masinis I/1 = 2nd Engineer; Masinis II/2 = 3rd Engineer; Masinis III/3 = 4th Engineer;
+Serang = Bosun; Juru Mudi = AB; Kelasi = OS; Juru Minyak = Oiler; Mandor Mesin = Fitter; Koki/Juru Masak = Cook; Pelayan = Messman;
+Kadet Dek = Deck Cadet; Kadet Mesin = Engine Cadet; Elektrisi = ETO; ABK = Ratings (only when no specific rank is given).
+Also translate vessel words: Kapal Tunda/Tugboat = Tug, Tongkang = Barge, Kapal Kontainer = Container, Kapal Curah = Bulk Carrier, Kapal Penumpang = Passenger, Kapal Ikan = Fishing.
+Indonesian salaries written as "Rp" or "juta" are IDR per month — do NOT put them in salary_min/salary_max (which are USD); mention them in description instead.
+Indonesian phone numbers starting 08 must be output in international form beginning +62 (e.g. 081234567890 -> +6281234567890).
+When the posting is Indonesian, set joining_port to the Indonesian city if named, otherwise "Indonesia".
+
+
 Return ONLY a valid JSON array. No markdown, no explanation. If an item is not a job vacancy at all, skip it.
 
 Raw items:
