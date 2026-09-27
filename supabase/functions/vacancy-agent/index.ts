@@ -175,6 +175,17 @@ function normalizeIndoPhone(raw: string | null): string | null {
   return digits;
 }
 
+// Philippine mobiles: 0917-xxx / 63917 / +63 917 → E.164.
+function normalizePhPhone(raw: string | null): string | null {
+  if (!raw) return null;
+  const d = raw.replace(/[^\d+]/g, '');
+  if (!d) return null;
+  if (d.startsWith('+')) return d;
+  if (d.startsWith('63')) return `+${d}`;
+  if (d.startsWith('09')) return `+63${d.slice(1)}`;
+  return d;
+}
+
 async function fetchTelegramChannel(channel: string): Promise<any[]> {
 
   try {
