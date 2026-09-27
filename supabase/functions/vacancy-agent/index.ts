@@ -175,6 +175,17 @@ function normalizeIndoPhone(raw: string | null): string | null {
   return digits;
 }
 
+// Philippine mobiles: 0917-xxx / 63917 / +63 917 → E.164.
+function normalizePhPhone(raw: string | null): string | null {
+  if (!raw) return null;
+  const d = raw.replace(/[^\d+]/g, '');
+  if (!d) return null;
+  if (d.startsWith('+')) return d;
+  if (d.startsWith('63')) return `+${d}`;
+  if (d.startsWith('09')) return `+63${d.slice(1)}`;
+  return d;
+}
+
 async function fetchTelegramChannel(channel: string): Promise<any[]> {
 
   try {
@@ -191,19 +202,21 @@ async function fetchTelegramChannel(channel: string): Promise<any[]> {
       const raw = msg[1].replace(/<[^>]+>/g, ' ').trim();
       if (raw.length < 20) continue;
       // Only keep messages that look like job postings (English + Bahasa Indonesia)
-      if (/captain|chief|officer|engineer|bosun|cook|rating|vacancy|hiring|salary|\$|whatsapp|contact|apply|nakhoda|mualim|masinis|kkm|juru\s*mudi|juru\s*minyak|kelasi|abk|loker|lowongan|dibutuhkan|gaji|kapal|pelaut|ijazah/i.test(raw)) {
+      if (/captain|chief|officer|engineer|bosun|cook|rating|vacancy|hiring|salary|\$|whatsapp|contact|apply|nakhoda|mualim|masinis|kkm|juru\s*mudi|juru\s*minyak|kelasi|abk|loker|lowongan|dibutuhkan|gaji|kapal|pelaut|ijazah|kapitan|hepe|makinista|timonel|mandaragat|kadete|kusinero|marino|hiring|poea|dmw|sweldo|₱|php/i.test(raw)) {
         // Extract contact details directly from raw text
         const email = raw.match(/[\w.-]+@[\w.-]+\.\w{2,}/)?.[0] || null;
-        const whatsapp = raw.match(/(?:wa\.me\/|whatsapp[:\s]+|wa[:\s]+|hub[:\s]+|📱\s*)(\+?[\d\s()-]{8,18})/i)?.[1]?.trim() || null;
+        const whatsapp = raw.match(/(?:wa\.me\/|whatsapp[:\s]+|viber[:\s]+|wa[:\s]+|hub[:\s]+|📱\s*)(\+?[\d\s()-]{8,18})/i)?.[1]?.trim() || null;
         const phone = raw.match(/\+\d[\d\s()-]{7,14}/)?.[0]
+          || raw.match(/\b09\d{2}[\d\s().-]{6,12}/)?.[0]
           || raw.match(/\b0?8\d{2}[\d\s().-]{6,14}/)?.[0]
           || null;
         const contact = whatsapp || phone;
+        const cd = (contact || '').replace(/[^\d+]/g, '');
         items.push({
           text: raw.substring(0, 500),
           channel,
           contact_email: email,
-          contact_whatsapp: /^(\+?62|08|8)/.test((contact || '').replace(/[^\d+]/g, '')) ? normalizeIndoPhone(contact) : contact,
+          contact_whatsapp: /^(\+?63|09)/.test(cd) ? normalizePhPhone(contact) : /^(\+?62|08|8)/.test(cd) ? normalizeIndoPhone(contact) : contact,
         });
 
       }
@@ -249,6 +262,11 @@ Also translate vessel words: Kapal Tunda/Tugboat = Tug, Tongkang = Barge, Kapal 
 Indonesian salaries written as "Rp" or "juta" are IDR per month — do NOT put them in salary_min/salary_max (which are USD); mention them in description instead.
 Indonesian phone numbers starting 08 must be output in international form beginning +62 (e.g. 081234567890 -> +6281234567890).
 When the posting is Indonesian, set joining_port to the Indonesian city if named, otherwise "Indonesia".
+
+FILIPINO LANGUAGE RULE: Many Philippine postings mix Tagalog/Cebuano and English. Translate ranks: Kapitan/Kapitán = Captain; Piloto/Primera = Chief Officer; Segunda = 2nd Officer; Tercera = 3rd Officer; Hepe/Chief Mate (engine context "Hepe ng Makina") = Chief Engineer; Makinista/Primera Makinista = 2nd Engineer; Segunda Makinista = 3rd Engineer; Timonel = AB; Mandaragat/Marino (no rank) = Ratings; Kusinero/Kusinera = Cook; Kadete/Kadet = Deck Cadet (Engine Cadet if engine context); Oiler/Aceitero = Oiler; Wiper = Wiper.
+Philippine salaries in "PHP", "Php", "₱" or "piso" are PHP per month — do NOT put them in salary_min/salary_max; mention them in description. USD amounts stay in salary fields.
+Philippine mobiles starting 09 must be output as +63 (e.g. 09171234567 -> +639171234567). Agencies often cite a POEA/DMW licence — keep the licence number in description; an agency with a licence is NOT a scam.
+When the posting is Philippine, set joining_port to the Philippine city if named (Manila, Cebu, Batangas, Subic, Davao, Iloilo), otherwise "Philippines".
 
 
 Return ONLY a valid JSON array. No markdown, no explanation. If an item is not a job vacancy at all, skip it.
