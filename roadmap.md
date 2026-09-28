@@ -8,10 +8,10 @@ Queued stages (~2 credits each). Execute in order, on user's go-ahead.
 - [x] Seeded 7 live-verified Telegram channels + 3 Manila agency pages (most guessed PH/ID channel names don't exist publicly)
 - [x] Deployed + sweep: 38 new jobs saved (global channels; no PH/ID-specific posts yet)
 
-## Stage 2 — Zero-Login Employer Loop
-- [ ] Auto-indexer writing agency identity/email/WhatsApp into company_contacts on ingestion
-- [ ] Passwordless secure "View Sea Profile" magic link in manager application notifications
-- [ ] Inbound forward-to-post parser (agency emails vacancy text → AI parse → published listing)
+## Stage 2 — Zero-Login Employer Loop ✅ (email routing setup pending user)
+- [x] Auto-indexer writing agency identity/email/WhatsApp into company_contacts on ingestion
+- [x] Passwordless secure "View Sea Profile" magic link in manager application notifications
+- [x] Inbound forward-to-post parser (agency emails vacancy text → AI parse → published listing)
 
 ## Stage 3 — PH/ID Seafarer Funnels + Viral Sharing
 - [ ] Philippines Country Hub /jobs/country/philippines (Manila, Cebu, Batangas, Subic, Davao, Iloilo)
