@@ -328,9 +328,20 @@ Deno.serve(async (req) => {
             score.score_band ? ` (${esc(score.score_band)})` : ""
           }${score.certificate_id ? ` — <a href="${SITE}/verify/${score.certificate_id}" style="color:#D4AF37">verify</a>` : ""}</p>`
         : "";
-      const profileBtn = (crew as any)?.public_card_token
-        ? goldBtn(`${SITE}/crew/${(crew as any).public_card_token}`, "View full Sea Profile (free company registration)")
-        : "";
+      // Passwordless 30-day link scoped to this one application — no login needed.
+      let magicToken: string | null = null;
+      try {
+        const { data: link } = await svc.from("profile_view_links")
+          .upsert({ application_id: applicationId, crew_id: app.crew_id, recipient_email: mgr.email },
+            { onConflict: "application_id" })
+          .select("token").maybeSingle();
+        magicToken = link?.token ?? null;
+      } catch { /* fall back to public card */ }
+      const profileBtn = magicToken
+        ? goldBtn(`${SITE}/crew/view/${magicToken}`, "View Sea Profile — no login needed")
+        : (crew as any)?.public_card_token
+          ? goldBtn(`${SITE}/crew/${(crew as any).public_card_token}`, "View full Sea Profile (free company registration)")
+          : "";
 
       attempts.push(await deliver({
         applicationId, kind: "application", recipient: mgr.email, role: "manager", manual, capped: true,

@@ -194,6 +194,7 @@ const App = () => (
             <Route path="/jobs/:slug" element={<Suspense fallback={null}><JobDetail /></Suspense>} />
             <Route path="/for-seafarers" element={<Navigate to="/app" replace />} />
             <Route path="/verify/:id" element={<Verify />} />
+            <Route path="/crew/view/:token" element={<CrewCard />} />
             <Route path="/crew/:token" element={<CrewCard />} />
             <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
             <Route path="*" element={<NotFound />} />

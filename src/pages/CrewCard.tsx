@@ -54,15 +54,18 @@ const CrewCard = () => {
     return () => { meta.remove(); };
   }, []);
 
+  const viaLink = typeof window !== "undefined" && window.location.pathname.startsWith("/crew/view/");
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const { data: res } = await supabase.rpc("get_crew_card" as any, { p_token: token });
-      const d = (res || {}) as CardData;
-      setData(d && Object.keys(d).length ? d : null);
+      const { data: res } = viaLink
+        ? await supabase.rpc("get_crew_card_by_link" as any, { p_token: token })
+        : await supabase.rpc("get_crew_card" as any, { p_token: token });
+      const d = (res || {}) as CardData & { error?: string };
+      setData(d && Object.keys(d).length && !d.error ? d : null);
       setLoading(false);
     })();
-  }, [token]);
+  }, [token, viaLink]);
 
   const score = data?.score || null;
   const isTeaser = data?.tier !== "full";
@@ -132,9 +135,25 @@ const CrewCard = () => {
             <>
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
               <span style={{ background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.4)", color: "#22c55e", borderRadius: 999, padding: "4px 10px", fontSize: 11, fontWeight: 800 }}>
-                ✓ Viewing as registered company
+                {viaLink ? "✓ This seafarer applied to your vacancy" : "✓ Viewing as registered company"}
               </span>
             </div>
+            {viaLink && ((data as any).contact_whatsapp || (data as any).contact_email) && (
+              <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                {(data as any).contact_whatsapp && (
+                  <a href={`https://wa.me/${String((data as any).contact_whatsapp).replace(/\D/g, "")}`} target="_blank" rel="noreferrer"
+                    style={{ flex: 1, textAlign: "center", background: GOLD, color: NAVY, fontWeight: 800, borderRadius: 12, padding: "11px 0", fontSize: 13 }}>
+                    WhatsApp candidate
+                  </a>
+                )}
+                {(data as any).contact_email && (
+                  <a href={`mailto:${(data as any).contact_email}`}
+                    style={{ flex: 1, textAlign: "center", border: `1px solid ${GOLD}`, color: GOLD, fontWeight: 800, borderRadius: 12, padding: "11px 0", fontSize: 13 }}>
+                    Email candidate
+                  </a>
+                )}
+              </div>
+            )}
 
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
 

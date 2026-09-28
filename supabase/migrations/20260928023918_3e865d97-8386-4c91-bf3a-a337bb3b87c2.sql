@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.index_company_contact() FROM public, anon, authenticated;

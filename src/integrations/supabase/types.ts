@@ -2698,6 +2698,39 @@ export type Database = {
           },
         ]
       }
+      profile_view_links: {
+        Row: {
+          application_id: string
+          created_at: string
+          crew_id: string
+          expires_at: string
+          last_viewed_at: string | null
+          recipient_email: string | null
+          token: string
+          view_count: number
+        }
+        Insert: {
+          application_id: string
+          created_at?: string
+          crew_id: string
+          expires_at?: string
+          last_viewed_at?: string | null
+          recipient_email?: string | null
+          token?: string
+          view_count?: number
+        }
+        Update: {
+          application_id?: string
+          created_at?: string
+          crew_id?: string
+          expires_at?: string
+          last_viewed_at?: string | null
+          recipient_email?: string | null
+          token?: string
+          view_count?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           company_name: string | null
@@ -3865,6 +3898,7 @@ export type Database = {
       }
       get_cert_readiness: { Args: never; Returns: Json }
       get_crew_card: { Args: { p_token: string }; Returns: Json }
+      get_crew_card_by_link: { Args: { p_token: string }; Returns: Json }
       get_cta_block: {
         Args: { p_audience?: string; p_count?: number; p_intents?: string[] }
         Returns: string
