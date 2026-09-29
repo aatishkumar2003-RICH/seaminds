@@ -192,6 +192,17 @@ const JobCard = ({ vacancy: v, variant, applied, busy, href, match, onApply }: J
         {label}
       </button>
 
+      <button
+        onClick={() => shareVacancyOnWhatsApp(v, href)}
+        style={{
+          width: "100%", padding: compact ? "8px 0" : "10px 0", borderRadius: 12,
+          background: "transparent", color: GOLD, border: `1px solid ${GOLD}`,
+          fontWeight: 700, fontSize: 12, cursor: "pointer",
+        }}
+      >
+        Share to WhatsApp group
+
+
       {flierOpen && v.flierUrl && (
         <div
           onClick={() => setFlierOpen(false)}
