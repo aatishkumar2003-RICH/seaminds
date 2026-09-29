@@ -201,6 +201,9 @@ const JobCard = ({ vacancy: v, variant, applied, busy, href, match, onApply }: J
         }}
       >
         Share to WhatsApp group
+      </button>
+
+
 
 
       {flierOpen && v.flierUrl && (
