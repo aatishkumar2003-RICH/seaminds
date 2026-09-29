@@ -18,6 +18,8 @@ import { loadVacancies, loadMyApplicationTargets, UnifiedVacancy } from "@/lib/v
 import CrewOffers from "@/components/CrewOffers";
 import { smartMatches, matchVacancy } from "@/lib/smartMatch";
 import { useSearchParams } from "react-router-dom";
+import { hubForNationality } from "@/lib/jobSlug";
+
 
 const VESSEL_TYPES = [
   "Bulk Carrier", "Tanker", "Chemical Tanker", "Container Ship",
