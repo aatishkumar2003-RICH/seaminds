@@ -29,7 +29,7 @@ const CountryHub = () => {
       const nowIso = new Date().toISOString();
       const [p, e] = await Promise.all([
         supabase.from("job_postings" as any)
-          .select("id, rank_required, vessel_type, joining_port, company_name, created_at, description")
+          .select("id, rank_required, vessel_type, joining_port, company_name, created_at")
           .eq("status", "active").order("created_at", { ascending: false }).limit(300),
         supabase.from("external_vacancies" as any)
           .select("id, rank_required, title, vessel_type, joining_port, company_name, fetched_at, is_scam_flagged, description")
