@@ -76,7 +76,7 @@ export const buildApplyMessage = (info: CrewCardInfo | null, v: ApplyVacancyInfo
       "",
       `Candidate: ${info.firstName}${info.role ? ` — ${info.role}` : ""}${info.yearsInRankBand ? `, ${info.yearsInRankBand} in rank` : ""}`,
       "",
-      `View my full Sea Profile (free company registration): https://seaminds.life/crew/${info.token}`,
+      `View my Sea Profile (no login needed): https://seaminds.life/crew/${info.token}`,
     );
     if (info.score != null && info.certificateId) {
       lines.push(
