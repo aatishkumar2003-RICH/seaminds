@@ -13,10 +13,11 @@ Queued stages (~2 credits each). Execute in order, on user's go-ahead.
 - [x] Passwordless secure "View Sea Profile" magic link in manager application notifications
 - [x] Inbound forward-to-post parser (agency emails vacancy text → AI parse → published listing)
 
-## Stage 3 — PH/ID Seafarer Funnels + Viral Sharing
-- [ ] Philippines Country Hub /jobs/country/philippines (Manila, Cebu, Batangas, Subic, Davao, Iloilo)
-- [ ] "Share to WhatsApp Group" action on every job card
-- [ ] Auto country code detect (+62/+63) + 1-tap "make me visible to employers" prompt
+## Stage 3 — PH/ID Seafarer Funnels + Viral Sharing ✅
+- [x] Philippines/Indonesia country hubs live at /jobs/country/:slug
+- [x] "Share to WhatsApp group" action on every job card
+- [x] Nationality/phone country detect + 1-tap "make me visible to employers" prompt
+
 
 ## Stage 4 — Global Expansion (India & Eastern Europe)
 - [ ] India engine: RPSL agency feeds, Indian rank conventions, INR parsing, /jobs/country/india

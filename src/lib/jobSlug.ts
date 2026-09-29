@@ -89,3 +89,33 @@ export const portMatches = (hub: CountryHub, port: string | null | undefined): b
   if (!p) return false;
   return hub.ports.some((k) => p.includes(k));
 };
+
+/** Nationality (free text) → country hub, for regional job funnels. */
+const NATIONALITY_HUB: Record<string, string> = {
+  filipino: "philippines", philippine: "philippines", philippines: "philippines", pinoy: "philippines",
+  indonesian: "indonesia", indonesia: "indonesia",
+  indian: "india", india: "india",
+  vietnamese: "vietnam", vietnam: "vietnam",
+  ukrainian: "ukraine", ukraine: "ukraine",
+  bangladeshi: "bangladesh", bangladesh: "bangladesh",
+  burmese: "myanmar", myanmar: "myanmar",
+  "sri lankan": "sri-lanka", "sri lanka": "sri-lanka", srilankan: "sri-lanka",
+  greek: "greece", greece: "greece",
+  emirati: "uae", uae: "uae",
+  singaporean: "singapore", singapore: "singapore",
+};
+
+export const hubForNationality = (nationality: string | null | undefined): CountryHub | null => {
+  const n = (nationality || "").trim().toLowerCase();
+  if (!n) return null;
+  const slug = NATIONALITY_HUB[n] || Object.entries(NATIONALITY_HUB).find(([k]) => n.includes(k))?.[1];
+  return slug ? countryHubBySlug(slug) : null;
+};
+
+/** Country hub implied by a phone number's dialling code (+63 PH, +62 ID, +91 IN, +84 VN, +380 UA). */
+export const hubForPhone = (phone: string | null | undefined): CountryHub | null => {
+  const p = (phone || "").replace(/[^\d+]/g, "");
+  const map: [string, string][] = [["+380", "ukraine"], ["+63", "philippines"], ["+62", "indonesia"], ["+91", "india"], ["+84", "vietnam"], ["+880", "bangladesh"], ["+94", "sri-lanka"], ["+95", "myanmar"]];
+  const hit = map.find(([code]) => p.startsWith(code));
+  return hit ? countryHubBySlug(hit[1]) : null;
+};

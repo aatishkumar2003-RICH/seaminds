@@ -18,6 +18,8 @@ import { loadVacancies, loadMyApplicationTargets, UnifiedVacancy } from "@/lib/v
 import CrewOffers from "@/components/CrewOffers";
 import { smartMatches, matchVacancy } from "@/lib/smartMatch";
 import { useSearchParams } from "react-router-dom";
+import { hubForNationality } from "@/lib/jobSlug";
+
 
 const VESSEL_TYPES = [
   "Bulk Carrier", "Tanker", "Chemical Tanker", "Container Ship",
@@ -319,9 +321,51 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     return <div className="flex items-center justify-center py-20"><span className="text-muted-foreground text-sm">Loading...</span></div>;
   }
 
+  const myHub = hubForNationality(nationality);
+
+  const enableVisibility = async () => {
+    if (!crewId || saving) return;
+    setSaving(true);
+    const { data: saved, error } = await supabase
+      .from("crew_availability")
+      .upsert({ crew_profile_id: crewId, visible_to_employers: true, preferred_vessel_type: preferredVessel, updated_at: new Date().toISOString() }, { onConflict: "crew_profile_id" })
+      .select()
+      .single();
+    setSaving(false);
+    if (error || !saved) {
+      toast({ title: "Could not save", description: error?.message || "Please try again.", variant: "destructive" });
+      return;
+    }
+    applyRow(saved);
+    setActiveSaved(!!saved.visible_to_employers);
+    toast({ title: "You are visible ✓", description: "Companies can now find your profile." });
+  };
+
   return (
     <div className="space-y-5">
       <ApplyGateSheet open={gateOpen} onClose={() => setGateOpen(false)} next="/app?tab=jobs" />
+
+      {!visible && (
+        <div className="rounded-xl border border-primary/40 bg-primary/10 p-4 space-y-2">
+          <p className="text-sm font-semibold text-foreground">Companies cannot find you yet</p>
+          <p className="text-[11.5px] text-muted-foreground">
+            Turn this on and crewing companies can see your profile and contact you directly for jobs.
+          </p>
+          <Button className="w-full font-bold" disabled={saving} onClick={enableVisibility}>
+            {saving ? "Saving…" : "Make me visible to employers"}
+          </Button>
+        </div>
+      )}
+
+      {myHub && (
+        <a
+          href={`/jobs/country/${myHub.slug}`}
+          className="block rounded-xl border border-border bg-card px-4 py-3 text-sm font-semibold text-primary"
+        >
+          See all jobs joining in {myHub.name} →
+        </a>
+      )}
+
 
       <div>
         {offerCount > 0 && (

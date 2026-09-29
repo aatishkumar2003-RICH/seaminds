@@ -2,11 +2,13 @@ import { useState } from "react";
 import { BadgeCheck, MapPin, Ship, Calendar, X } from "lucide-react";
 import type { UnifiedVacancy } from "@/lib/vacancyFeed";
 import { vacancySalary } from "@/lib/vacancyFeed";
+import { jobPath } from "@/lib/jobSlug";
 
 const GOLD = "#D4AF37";
 const NAVY = "#0D1B2A";
 const CARD = "#112240";
 const BORDER = "#1e3a5f";
+
 
 export interface JobCardProps {
   vacancy: UnifiedVacancy;
@@ -44,6 +46,23 @@ const joinDateText = (iso: string | null) => {
   if (Number.isNaN(d.getTime())) return "";
   return d.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
 };
+
+/** Share text + public link for a vacancy, for WhatsApp groups. */
+export const shareVacancyOnWhatsApp = (v: UnifiedVacancy, href?: string) => {
+  const path = href || jobPath({ id: v.id, rank: v.rank, vessel: v.vessel, port: v.port });
+  const url = `https://seaminds.life${path}`;
+  const lines = [
+    `⚓ ${v.rank}${v.positions > 1 ? ` ×${v.positions}` : ""} — ${v.company}`,
+    [v.vessel, v.port].filter(Boolean).join(" · "),
+    vacancySalary(v) || "",
+    "",
+    `Apply free on SeaMinds (no agent fees):`,
+    url,
+  ].filter(Boolean);
+  window.open(`https://wa.me/?text=${encodeURIComponent(lines.join("\n"))}`, "_blank", "noopener,noreferrer");
+};
+
+
 
 /** One vacancy, rendered identically (data + channel + applied state) on every surface. */
 const JobCard = ({ vacancy: v, variant, applied, busy, href, match, onApply }: JobCardProps) => {
@@ -172,6 +191,20 @@ const JobCard = ({ vacancy: v, variant, applied, busy, href, match, onApply }: J
       >
         {label}
       </button>
+
+      <button
+        onClick={() => shareVacancyOnWhatsApp(v, href)}
+        style={{
+          width: "100%", padding: compact ? "8px 0" : "10px 0", borderRadius: 12,
+          background: "transparent", color: GOLD, border: `1px solid ${GOLD}`,
+          fontWeight: 700, fontSize: 12, cursor: "pointer",
+        }}
+      >
+        Share to WhatsApp group
+      </button>
+
+
+
 
       {flierOpen && v.flierUrl && (
         <div
