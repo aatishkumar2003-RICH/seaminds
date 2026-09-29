@@ -2,11 +2,13 @@ import { useState } from "react";
 import { BadgeCheck, MapPin, Ship, Calendar, X } from "lucide-react";
 import type { UnifiedVacancy } from "@/lib/vacancyFeed";
 import { vacancySalary } from "@/lib/vacancyFeed";
+import { jobPath } from "@/lib/jobSlug";
 
 const GOLD = "#D4AF37";
 const NAVY = "#0D1B2A";
 const CARD = "#112240";
 const BORDER = "#1e3a5f";
+
 
 export interface JobCardProps {
   vacancy: UnifiedVacancy;
