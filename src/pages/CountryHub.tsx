@@ -4,7 +4,7 @@ import { Helmet } from "react-helmet-async";
 import { ChevronLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import NotFound from "@/pages/NotFound";
-import { COUNTRY_HUBS, countryHubBySlug, portMatches, RANK_HUBS, jobPath } from "@/lib/jobSlug";
+import { COUNTRY_HUBS, countryHubBySlug, portMatches, crewMatches, RANK_HUBS, jobPath } from "@/lib/jobSlug";
 
 const NAVY = "#0D1B2A";
 const CARD = "#112240";
@@ -29,17 +29,17 @@ const CountryHub = () => {
       const nowIso = new Date().toISOString();
       const [p, e] = await Promise.all([
         supabase.from("job_postings" as any)
-          .select("id, rank_required, vessel_type, joining_port, company_name, created_at")
+          .select("id, rank_required, vessel_type, joining_port, company_name, created_at, description")
           .eq("status", "active").order("created_at", { ascending: false }).limit(300),
         supabase.from("external_vacancies" as any)
-          .select("id, rank_required, title, vessel_type, joining_port, company_name, fetched_at, is_scam_flagged")
-          .gt("expires_at", nowIso).order("fetched_at", { ascending: false }).limit(400),
+          .select("id, rank_required, title, vessel_type, joining_port, company_name, fetched_at, is_scam_flagged, description")
+          .gt("expires_at", nowIso).order("fetched_at", { ascending: false }).limit(800),
       ]);
       const direct: Row[] = (((p as any).data as any[]) || [])
-        .filter((r) => portMatches(hub, r.joining_port))
+        .filter((r) => portMatches(hub, r.joining_port) || crewMatches(hub, `${r.description || ""} ${r.company_name || ""}`))
         .map((r) => ({ id: r.id, rank: r.rank_required || "Crew", vessel: r.vessel_type || "—", port: r.joining_port, company: r.company_name || "Maritime Company", kind: "direct" as const }));
       const ext: Row[] = (((e as any).data as any[]) || [])
-        .filter((r) => !r.is_scam_flagged && portMatches(hub, r.joining_port))
+        .filter((r) => !r.is_scam_flagged && (portMatches(hub, r.joining_port) || crewMatches(hub, `${r.title || ""} ${r.description || ""} ${r.company_name || ""}`)))
         .map((r) => ({ id: r.id, rank: r.rank_required || r.title || "Crew", vessel: r.vessel_type || "—", port: r.joining_port, company: r.company_name || "Maritime Company", kind: "external" as const }));
       if (alive) { setRows([...direct, ...ext]); setLoading(false); }
     })();
@@ -87,7 +87,7 @@ const CountryHub = () => {
           ))}
           {!loading && rows.length === 0 && (
             <p style={{ color: "#94a3b8", fontSize: 13 }}>
-              No vacancies joining in {hub.name} right now — <a href="/feed" style={{ color: GOLD }}>see all live vacancies</a>.
+              No vacancies for {hub.name} crew right now — <a href="/feed" style={{ color: GOLD }}>see all live vacancies</a>.
             </p>
           )}
         </div>

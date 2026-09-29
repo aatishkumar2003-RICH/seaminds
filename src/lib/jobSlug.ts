@@ -105,6 +105,21 @@ const NATIONALITY_HUB: Record<string, string> = {
   singaporean: "singapore", singapore: "singapore",
 };
 
+/** Nationality-first match: vacancy text mentions the hub's crew nationality/agency licence. */
+const HUB_CREW_TERMS: Record<string, string[]> = {
+  india: ["indian", "rpsl", "dg shipping", "cdc holder", "indos"],
+  philippines: ["filipino", "pinoy", "poea", "dmw", "marina licen"],
+  indonesia: ["indonesian", "indonesia crew", "pelaut", "buku pelaut"],
+  vietnam: ["vietnamese"], ukraine: ["ukrainian", "украин", "одесса", "odessa", "odesa"],
+  bangladesh: ["bangladeshi"], myanmar: ["myanmar crew", "burmese"], "sri-lanka": ["sri lankan"],
+  greece: ["greek"], uae: [], singapore: [],
+};
+export const crewMatches = (hub: CountryHub, text: string | null | undefined): boolean => {
+  const t = (text || "").toLowerCase();
+  if (!t) return false;
+  return (HUB_CREW_TERMS[hub.slug] || []).some((k) => t.includes(k));
+};
+
 export const hubForNationality = (nationality: string | null | undefined): CountryHub | null => {
   const n = (nationality || "").trim().toLowerCase();
   if (!n) return null;
