@@ -24,7 +24,7 @@ Queued stages (~2 credits each). Execute in order, on user's go-ahead.
 - [x] Ukraine/Eastern Europe engine: Odesa/Constanta/Varna sources, /jobs/country/ukraine
 - [x] Cross-channel deduplication + 21-day auto-expiry garbage collector
 
-## Stage 5 — Autonomous Match Alerts & Activation
-- [ ] 1-tap professional WhatsApp maritime calling card generator
-- [ ] Daily smart-match alert pipeline (rank + vessel + availability), bounded batch job
-- [ ] Admin live pulse: intake rate and application counts per country
+## Stage 5 — Autonomous Match Alerts & Activation ✅
+- [x] 1-tap WhatsApp calling card (apply message with no-login Sea Profile link)
+- [x] Daily smart-match alert pipeline (rank + vessel + availability), capped 5,000/run
+- [x] Admin live pulse: intake + applications per port/nationality (Activity tab)
