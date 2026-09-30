@@ -3790,6 +3790,7 @@ export type Database = {
         Args: { p_campaign_id: string; p_people: Json }
         Returns: Json
       }
+      admin_growth_pulse: { Args: never; Returns: Json }
       admin_manage_marketing_member: {
         Args: { p_activate: boolean; p_email: string }
         Returns: string
