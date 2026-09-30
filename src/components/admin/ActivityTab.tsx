@@ -48,6 +48,7 @@ export default function ActivityTab() {
   const [smc, setSmc] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [leadCount, setLeadCount] = useState(0);
+  const [pulse, setPulse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -71,6 +72,8 @@ export default function ActivityTab() {
     setSmc(s.data || []);
     setEvents(ev.data || []);
     setLeadCount(l.count || 0);
+    const { data: pu } = await (supabase.rpc as any)("admin_growth_pulse");
+    if (pu) setPulse(pu);
     setLoading(false);
   }, []);
 
@@ -100,6 +103,23 @@ export default function ActivityTab() {
         <Card label="SMC Assessments" value={smc.length} />
         <Card label="Email Leads" value={leadCount} />
       </div>
+
+      {pulse && (
+        <>
+          <h3 className="text-sm font-bold mb-2" style={{ color: GOLD }}>📈 Growth Pulse</h3>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+            <Card label="New jobs 24h" value={pulse.jobs_24h} />
+            <Card label="New jobs 7d" value={pulse.jobs_7d} />
+            <Card label="Applications 24h" value={pulse.apps_24h} />
+            <Card label="Applications 7d" value={pulse.apps_7d} />
+            <Card label="Match alerts 24h" value={pulse.alerts_24h} />
+          </div>
+          <Table title="Jobs by joining port" headers={["Port", "24h", "7d"]}
+            rows={(pulse.jobs_by_port || []).map((r: any) => [r.k, r.d1, r.d7])} />
+          <Table title="Applications by crew nationality" headers={["Nationality", "24h", "7d"]}
+            rows={(pulse.apps_by_nationality || []).map((r: any) => [r.k, r.d1, r.d7])} />
+        </>
+      )}
 
       <Table
         title="Crew"
