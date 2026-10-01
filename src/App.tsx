@@ -56,6 +56,7 @@ const TakeoverInspections = lazy(() => import("./pages/TakeoverInspections"));
 const TakeoverInspection = lazy(() => import("./pages/TakeoverInspection"));
 const RankHub = lazy(() => import("./pages/RankHub"));
 const CountryHub = lazy(() => import("./pages/CountryHub"));
+const FleetHome = lazy(() => import("./pages/FleetHome"));
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Pricing from "./pages/Pricing";
@@ -184,6 +185,7 @@ const App = () => (
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/marketing" element={<Marketing />} />
+            <Route path="/management/fleet" element={<Suspense fallback={null}><FleetHome /></Suspense>} />
             <Route path="/management/inspections" element={<Suspense fallback={null}><TakeoverInspections /></Suspense>} />
             <Route path="/management/inspections/:id" element={<Suspense fallback={null}><TakeoverInspection /></Suspense>} />
             <Route path="/for-companies" element={<ForCompanies />} />

@@ -99,6 +99,7 @@ export default function TakeoverInspections() {
           <ChevronLeft size={20} /> Back
         </button>
 
+        <button onClick={() => navigate("/management/fleet")} className="text-xs text-[#D4AF37] underline">Open Fleet →</button>
         <h1 className="text-xl font-bold text-[#D4AF37] mt-2">Pre-management takeover inspections</h1>
         <p className="text-xs text-[#94A3B8] mb-4">
           {TEMPLATE_NAME} · template v{TEMPLATE_VERSION} · {TOTAL_ITEMS} checklist rows
