@@ -28,3 +28,7 @@ Queued stages (~2 credits each). Execute in order, on user's go-ahead.
 - [x] 1-tap WhatsApp calling card (apply message with no-login Sea Profile link)
 - [x] Daily smart-match alert pipeline (rank + vessel + availability), capped 5,000/run
 - [x] Admin live pulse: intake + applications per port/nationality (Activity tab)
+
+## Fleet Track
+- [x] Step 1 — Multi-vessel foundation + fleet switcher (/management/fleet)
+- [ ] Step 2 onward — awaiting go-ahead
