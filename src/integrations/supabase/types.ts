@@ -1709,6 +1709,83 @@ export type Database = {
         }
         Relationships: []
       }
+      fleet_cells: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          superintendent: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          superintendent?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          superintendent?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fleet_vessels: {
+        Row: {
+          cell_id: string | null
+          created_at: string
+          created_by: string | null
+          flag: string | null
+          id: string
+          imo: string | null
+          inspection_id: string | null
+          name: string
+          owner_company: string | null
+          status: string
+          updated_at: string
+          vessel_type: string | null
+        }
+        Insert: {
+          cell_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          flag?: string | null
+          id?: string
+          imo?: string | null
+          inspection_id?: string | null
+          name: string
+          owner_company?: string | null
+          status?: string
+          updated_at?: string
+          vessel_type?: string | null
+        }
+        Update: {
+          cell_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          flag?: string | null
+          id?: string
+          imo?: string | null
+          inspection_id?: string | null
+          name?: string
+          owner_company?: string | null
+          status?: string
+          updated_at?: string
+          vessel_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fleet_vessels_cell_id_fkey"
+            columns: ["cell_id"]
+            isOneToOne: false
+            referencedRelation: "fleet_cells"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       interview_answers: {
         Row: {
           ai_score: number | null
@@ -2275,6 +2352,44 @@ export type Database = {
             columns: ["manager_profile_id"]
             isOneToOne: false
             referencedRelation: "manager_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      management_periods: {
+        Row: {
+          created_at: string
+          ends_on: string | null
+          id: string
+          starts_on: string
+          status: string
+          updated_at: string
+          vessel_id: string
+        }
+        Insert: {
+          created_at?: string
+          ends_on?: string | null
+          id?: string
+          starts_on?: string
+          status?: string
+          updated_at?: string
+          vessel_id: string
+        }
+        Update: {
+          created_at?: string
+          ends_on?: string | null
+          id?: string
+          starts_on?: string
+          status?: string
+          updated_at?: string
+          vessel_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "management_periods_vessel_id_fkey"
+            columns: ["vessel_id"]
+            isOneToOne: false
+            referencedRelation: "fleet_vessels"
             referencedColumns: ["id"]
           },
         ]

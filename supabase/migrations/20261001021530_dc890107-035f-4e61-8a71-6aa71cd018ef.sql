@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.fleet_open_period() FROM PUBLIC, anon, authenticated;
