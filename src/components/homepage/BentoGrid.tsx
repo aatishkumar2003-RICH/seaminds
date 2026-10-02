@@ -51,7 +51,7 @@ const features = [
   { icon: BookOpen, title: "Academy", desc: "PSC prep, vetting, STCW updates." },
   { icon: Briefcase, title: "Jobs", desc: "Verified listings with SMC requirements." },
   { icon: Heart, title: "Family", desc: "Keep your family connected at sea." },
-  { icon: Users, title: "Community", desc: "35 nationalities. One crew." },
+  { icon: Users, title: "Community", desc: "Global community. One crew." },
 ];
 
 const subScores = [

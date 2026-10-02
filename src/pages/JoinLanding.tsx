@@ -14,18 +14,14 @@ const BORDER = "#1e3a5f";
 const JoinLanding = () => {
   const navigate = useNavigate();
   const [jobs, setJobs] = useState<number | null>(null);
-  const [countries, setCountries] = useState<number | null>(null);
 
   useEffect(() => {
     (async () => {
       try {
-        const [{ count: jobCount }, { data: nats }] = await Promise.all([
+        const [{ count: jobCount }] = await Promise.all([
           supabase.from("external_vacancies").select("*", { count: "exact", head: true }).gt("expires_at", new Date().toISOString()),
-          supabase.from("crew_profiles").select("nationality").not("nationality", "is", null),
         ]);
         setJobs(jobCount ?? null);
-        const uniq = new Set(((nats as any[]) || []).map((n) => n.nationality).filter(Boolean));
-        setCountries(uniq.size || null);
       } catch { /* show without numbers */ }
     })();
   }, []);
@@ -112,7 +108,7 @@ const JoinLanding = () => {
         <section className="mt-6 grid grid-cols-3 gap-2 text-center">
           {[
             { v: jobs ? `${jobs}+` : "Live", l: "vacancies" },
-            { v: countries ? `${countries}` : "15", l: "nationalities" },
+            { v: "★★★★★", l: "global nationalities" },
             { v: "Free", l: "always, for crew" },
           ].map((s) => (
             <div key={s.l} className="rounded-2xl py-3" style={{ background: CARD, border: `1px solid ${BORDER}` }}>

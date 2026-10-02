@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -363,8 +363,6 @@ const ManagerSearch = () => {
     window.open(`https://wa.me/${digits}?text=${msg}`, "_blank");
   };
 
-  const availableCount = useMemo(() => results.filter((r) => r.is_available).length, [results]);
-
   if (!ready) return null;
 
   return (
@@ -382,7 +380,7 @@ const ManagerSearch = () => {
             <h2 style={{ color: GOLD, fontSize: 18, fontWeight: 800, marginBottom: 8 }}>Subscription required</h2>
             <p style={{ color: "#cbd5e1", fontSize: 13, lineHeight: 1.6, marginBottom: 12 }}>
               Searching seafarers and filtering by nationality is part of the company plan.
-              Subscribe to reach our network of 10,000+ seafarers with verified profiles and assessed competency.
+              Subscribe to reach our five-star verified maritime network with assessed competency profiles.
             </p>
             <ul style={{ color: "#94A3B8", fontSize: 12.5, lineHeight: 1.8, marginBottom: 16, paddingLeft: 16 }}>
               <li>Full crew search by rank, vessel, nationality and availability</li>
@@ -422,7 +420,7 @@ const ManagerSearch = () => {
             <div>
               <h1 style={{ color: GOLD, fontSize: 22, fontWeight: 700 }}>Crew Search</h1>
               <p style={{ color: "#9CA3AF", fontSize: 13 }}>
-                {searched ? `${results.length} crew · ${availableCount} available now` : "Search verified SeaMinds crew"}
+                {searched ? "★★★★★ Verified matches · totals remain private" : "★★★★★ Verified maritime network"}
               </p>
             </div>
             {balance !== null && (
@@ -606,7 +604,7 @@ const ManagerSearch = () => {
         {total > results.length && results.length > 0 && (
           <div style={{ display: "flex", justifyContent: "center" }}>
             <button onClick={loadMore} disabled={loadingMore} style={{ ...ghostBtn, opacity: loadingMore ? 0.6 : 1 }}>
-              {loadingMore ? "Loading…" : `Load more (${results.length}/${total})`}
+              {loadingMore ? "Loading…" : "Load more verified profiles"}
             </button>
           </div>
         )}

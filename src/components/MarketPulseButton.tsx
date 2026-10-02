@@ -1,13 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-const FLAGS: Record<string, string> = {
-  Filipino:'🇵🇭',Indian:'🇮🇳',Indonesian:'🇮🇩',Ukrainian:'🇺🇦',
-  Russian:'🇷🇺',Chinese:'🇨🇳',Vietnamese:'🇻🇳',Myanmar:'🇲🇲',
-  Bangladeshi:'🇧🇩',Greek:'🇬🇷',Croatian:'🇭🇷',Turkish:'🇹🇷',
-  Pakistani:'🇵🇰',Nepali:'🇳🇵',Nigerian:'🇳🇬',
-};
-
 const VESSEL_ICONS: Record<string, string> = {
   'LNG':'⛽','FPSO':'🛢️','Bulk Carrier':'⚓','Container':'📦',
   'Tanker':'🛢️','Offshore':'🔧','General Cargo':'🚢','PSV':'🚤',
@@ -49,17 +42,11 @@ function HeatBar({ value, max, color }: { value: number; max: number; color: str
 }
 
 interface MarketData {
-  totalCrew: number;
-  availableCrew: number;
-  newToday: number;
-  byNationality: { flag: string; name: string; count: number; pct: number }[];
   byVessel: { vessel: string; icon: string; count: number; avgSalary: number; trend: string }[];
   myVacancies: number;
   myAvgSalary: number;
   myMaxSalary: number;
   myMinSalary: number;
-  myCompetition: number;
-  myCompetitionLevel: 'Low' | 'Medium' | 'High';
   topPorts: { port: string; count: number }[];
   topJobs: { rank: string; vessel: string; salary: number; company: string; port: string; website: string | null }[];
   salaryTrend: number;
@@ -96,38 +83,18 @@ export default function MarketPulseButton({
       const lastMonth = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
       const nowIso = new Date().toISOString();
-      const [crewRes, availRes, natRes, newTodayRes,
-             extVacRes, new24hRes, myVacRes,
-             myCompRes, topJobsRes, lastMonthVacRes] = await Promise.all([
-        supabase.from('crew_profiles').select('*', { count: 'exact', head: true }),
-        supabase.from('crew_profiles').select('*', { count: 'exact', head: true }).eq('is_available', true),
-        supabase.from('crew_profiles').select('nationality').not('nationality', 'is', null),
-        supabase.from('crew_profiles').select('*', { count: 'exact', head: true }).gte('created_at', yesterday),
+      const [extVacRes, new24hRes, myVacRes,
+             topJobsRes, lastMonthVacRes] = await Promise.all([
         supabase.from('external_vacancies').select('rank_required, vessel_type, salary_min, salary_max, joining_port, company_name').gte('quality_score', 40).gt('expires_at', nowIso),
         supabase.from('external_vacancies').select('*', { count: 'exact', head: true }).gte('fetched_at', yesterday).gt('expires_at', nowIso),
         // My rank vacancies
         userRank ? supabase.from('external_vacancies').select('salary_max, joining_port').gt('expires_at', nowIso).ilike('rank_required', `%${userRank.split(' ')[0]}%`)
           : supabase.from('external_vacancies').select('salary_max, joining_port').limit(0),
-        // My competition (same rank crew)
-        userRank ? supabase.from('crew_profiles').select('*', { count: 'exact', head: true }).ilike('role', `%${userRank.split(' ')[0]}%`)
-          : supabase.from('crew_profiles').select('*', { count: 'exact', head: true }).limit(0),
         // Top paying jobs
         supabase.from('external_vacancies').select('rank_required, vessel_type, salary_max, company_name, joining_port, company_website').not('salary_max', 'is', null).gt('expires_at', nowIso).order('salary_max', { ascending: false }).limit(5),
         // Last month vacancies for trend
         supabase.from('external_vacancies').select('*', { count: 'exact', head: true }).gte('fetched_at', lastMonth).lt('fetched_at', yesterday),
       ]);
-
-      const totalCrew = crewRes.count || 0;
-
-      // Nationality breakdown
-      const natMap: Record<string, number> = {};
-      (natRes.data || []).forEach((r: any) => {
-        const k = r.nationality?.trim();
-        if (k) natMap[k] = (natMap[k] || 0) + 1;
-      });
-      const byNationality = Object.entries(natMap)
-        .sort((a, b) => b[1] - a[1]).slice(0, 7)
-        .map(([name, count]) => ({ flag: FLAGS[name] || '🌍', name, count, pct: totalCrew ? Math.round(count / totalCrew * 100) : 0 }));
 
       // All vacancies merged
       const allVac = [...(extVacRes.data || [])];
@@ -155,10 +122,6 @@ export default function MarketPulseButton({
       const myAvgSalary = mySalaries.length ? Math.round(mySalaries.reduce((a, b) => a + b, 0) / mySalaries.length / 100) * 100 : 0;
       const myMaxSalary = mySalaries.length ? Math.max(...mySalaries) : 0;
       const myMinSalary = mySalaries.length ? Math.min(...mySalaries) : 0;
-      const myCompetition = myCompRes.count || 0;
-      const ratio = myVacs.length > 0 ? myCompetition / myVacs.length : 99;
-      const myCompetitionLevel = ratio < 3 ? 'Low' : ratio < 8 ? 'Medium' : 'High';
-
       // Top joining ports
       const portMap: Record<string, number> = {};
       allVac.forEach((v: any) => { if (v.joining_port) portMap[v.joining_port] = (portMap[v.joining_port] || 0) + 1; });
@@ -177,12 +140,9 @@ export default function MarketPulseButton({
       const salaryTrend = prevCount > 0 ? Math.round(((currCount - prevCount) / prevCount) * 100) : 0;
 
       setData({
-        totalCrew, availableCrew: availRes.count || 0,
-        newToday: newTodayRes.count || 0,
-        byNationality, byVessel, totalVacancies,
+        byVessel, totalVacancies,
         myVacancies: myVacs.length,
         myAvgSalary, myMaxSalary, myMinSalary,
-        myCompetition, myCompetitionLevel,
         topPorts, topJobs, salaryTrend,
         newVacancies24h: new24hRes.count || 0,
       });
@@ -191,9 +151,6 @@ export default function MarketPulseButton({
   };
 
   useEffect(() => { if (open) load(); }, [open]);
-
-  const competitionColor = { Low: '#22c55e', Medium: '#f59e0b', High: '#ef4444' };
-  const competitionEmoji = { Low: '🟢', Medium: '🟡', High: '🔴' };
 
   return (
     <>
@@ -253,9 +210,17 @@ export default function MarketPulseButton({
               {/* Platform stats strip */}
               {data && (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, marginTop: 12 }}>
+                  <div style={{ textAlign: 'center', background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '8px 4px' }}>
+                    <p style={{ fontSize: 14, margin: 0 }}>👥</p>
+                    <p style={{ fontSize: 13, fontWeight: 800, color: '#D4AF37', margin: '2px 0', letterSpacing: -1 }}>★★★★★</p>
+                    <p style={{ fontSize: 9, color: '#6b7a8d', margin: 0 }}>Crew network</p>
+                  </div>
+                  <div style={{ textAlign: 'center', background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '8px 4px' }}>
+                    <p style={{ fontSize: 14, margin: 0 }}>✅</p>
+                    <p style={{ fontSize: 13, fontWeight: 800, color: '#22c55e', margin: '2px 0', letterSpacing: -1 }}>★★★★★</p>
+                    <p style={{ fontSize: 9, color: '#6b7a8d', margin: 0 }}>Availability</p>
+                  </div>
                   {[
-                    { v: data.totalCrew, l: 'Crew', icon: '👥', c: '#D4AF37' },
-                    { v: data.availableCrew, l: 'Available', icon: '✅', c: '#22c55e' },
                     { v: data.totalVacancies, l: 'Vacancies', icon: '💼', c: '#60a5fa' },
                     { v: data.newVacancies24h, l: 'New 24h', icon: '🆕', c: '#a78bfa' },
                   ].map(s => (
@@ -287,18 +252,18 @@ export default function MarketPulseButton({
                         🎯 Your Market — {userRank}
                       </p>
 
-                      {/* Competition indicator */}
+                      {/* Crew supply remains private; only company subscribers can search it. */}
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
                         <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 10, padding: 10 }}>
-                          <p style={{ fontSize: 9, color: '#6b7a8d', margin: '0 0 4px' }}>Competition Level</p>
-                          <p style={{ fontSize: 16, fontWeight: 800, color: competitionColor[data.myCompetitionLevel], margin: 0 }}>
-                            {competitionEmoji[data.myCompetitionLevel]} {data.myCompetitionLevel}
+                          <p style={{ fontSize: 9, color: '#6b7a8d', margin: '0 0 4px' }}>Crew Supply</p>
+                          <p style={{ fontSize: 14, fontWeight: 800, color: '#D4AF37', margin: 0, letterSpacing: -1 }}>
+                            ★★★★★
                           </p>
                         </div>
                         <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 10, padding: 10 }}>
                           <p style={{ fontSize: 9, color: '#6b7a8d', margin: '0 0 4px' }}>Supply vs Demand</p>
-                          <p style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0', margin: 0 }}>
-                            {data.myCompetition} crew : {data.myVacancies} jobs
+                          <p style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0', margin: 0 }}>
+                            Private company insight
                           </p>
                         </div>
                       </div>
@@ -368,30 +333,20 @@ export default function MarketPulseButton({
                     </div>
                   )}
 
-                  {/* CREW NATIONALITY MAP */}
+                  {/* Crew totals and nationality distribution are subscription-protected. */}
                   <div style={{ marginBottom: 16 }}>
                     <p style={{ fontSize: 12, fontWeight: 700, color: '#8896a8', letterSpacing: 1, marginBottom: 8, textTransform: 'uppercase' }}>
                       🌍 Crew Nationalities
                     </p>
-                    {data.byNationality.map(n => (
-                      <div key={n.name} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, fontSize: 11 }}>
-                        <span>{n.flag}</span>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
-                            <span style={{ color: '#e2e8f0' }}>{n.name}</span>
-                            <span style={{ display: 'flex', gap: 8 }}>
-                              <span style={{ color: '#6b7a8d' }}>{n.pct}%</span>
-                              <span style={{ color: '#D4AF37', fontWeight: 700 }}>{n.count}</span>
-                            </span>
-                          </div>
-                          <HeatBar value={n.pct} max={100} color="#D4AF37" />
-                        </div>
-                      </div>
-                    ))}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#6b7a8d', marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                      <span>Available for joining</span>
-                      <span style={{ color: '#22c55e', fontWeight: 700 }}>{data.availableCrew} crew</span>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { window.location.href = '/pricing#company'; }}
+                      style={{ width: '100%', background: 'rgba(212,175,55,0.06)', border: '1px solid rgba(212,175,55,0.25)', borderRadius: 12, padding: 14, cursor: 'pointer', textAlign: 'left' }}
+                    >
+                      <span style={{ display: 'block', color: '#D4AF37', fontSize: 14, fontWeight: 800, letterSpacing: -1 }}>★★★★★</span>
+                      <span style={{ display: 'block', color: '#e2e8f0', fontSize: 12, fontWeight: 700, marginTop: 4 }}>Company subscription required</span>
+                      <span style={{ display: 'block', color: '#6b7a8d', fontSize: 10, marginTop: 3 }}>Unlock crew search by nationality and availability →</span>
+                    </button>
                   </div>
 
                   {/* TOP JOINING PORTS */}
@@ -411,13 +366,6 @@ export default function MarketPulseButton({
                     </div>
                   )}
 
-                  {/* NEW CREW TODAY */}
-                  {data.newToday > 0 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#6b7a8d', padding: '8px 0' }}>
-                      <span>🆕 Crew joined today</span>
-                      <span style={{ color: '#22c55e', fontWeight: 700 }}>+{data.newToday}</span>
-                    </div>
-                  )}
                 </>
               )}
             </div>

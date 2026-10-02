@@ -16,8 +16,8 @@ const useScrollFade = () => {
 };
 
 const stats = [
-  { value: "10,000+", label: "Seafarers Consulted" },
-  { value: "35+", label: "Countries Represented" },
+  { value: "★★★★★", label: "Seafarer Network" },
+  { value: "★★★★★", label: "Global Representation" },
   { value: "12", label: "Months of Research" },
   { value: "4", label: "Core Needs Identified" },
 ];
@@ -115,10 +115,10 @@ const TestimonialsSection = () => {
               SeaMinds was conceived by a coalition of maritime professionals — ITF-affiliated inspectors, Flag State surveyors, Classification Society surveyors, and freelance Port State Control inspectors — who spent decades witnessing the same problems repeat across every ocean. They partnered with AI engineers and platform architects with one brief: build what seafarers actually need.
             </p>
             <p>
-              Before a single line of code was written, the team conducted 12 months of structured research. Over 10,000 seafarers across 35 countries were consulted through surveys, WhatsApp groups, maritime forums, port welfare centre interviews, and direct conversations in Singapore, Rotterdam, Manila, Mumbai and Jakarta. HR personnel from major shipping companies, crewing agencies, and mental health NGOs including Mission to Seafarers and ISWAN contributed insights.
+              Before a single line of code was written, the team conducted 12 months of structured global research through surveys, WhatsApp groups, maritime forums, port welfare centre interviews, and direct conversations in Singapore, Rotterdam, Manila, Mumbai and Jakarta. HR personnel from major shipping companies, crewing agencies, and mental health NGOs including Mission to Seafarers and ISWAN contributed insights.
             </p>
             <p>
-              Four needs emerged from every response regardless of rank, nationality or vessel type: private mental health support with no company visibility, a portable verified competency score, protection from recruitment exploitation, and reliable family connection at sea. Every feature in SeaMinds traces directly to those four needs. This is not a product someone invented. It is a platform 10,000 seafarers asked for.
+              Four needs emerged from every response regardless of rank, nationality or vessel type: private mental health support with no company visibility, a portable verified competency score, protection from recruitment exploitation, and reliable family connection at sea. Every feature in SeaMinds traces directly to those four needs. This is a platform shaped by seafarers worldwide.
             </p>
           </div>
         </div>

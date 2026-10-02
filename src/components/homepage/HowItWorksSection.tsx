@@ -7,7 +7,7 @@ const steps = [
     num: "01",
     icon: "📱",
     title: "Create Your Profile",
-    text: "Your nationality, rank, vessel type. 35 countries supported. Takes 90 seconds.",
+    text: "Your nationality, rank and vessel type. Global coverage. Takes 90 seconds.",
   },
   {
     num: "02",
