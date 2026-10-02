@@ -1,13 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-const FLAGS: Record<string, string> = {
-  Filipino:'🇵🇭', Indian:'🇮🇳', Indonesian:'🇮🇩', Ukrainian:'🇺🇦',
-  Russian:'🇷🇺', Chinese:'🇨🇳', Vietnamese:'🇻🇳', Myanmar:'🇲🇲',
-  Bangladeshi:'🇧🇩', Greek:'🇬🇷', Croatian:'🇭🇷', Turkish:'🇹🇷',
-  Nigerian:'🇳🇬', Pakistani:'🇵🇰', Nepali:'🇳🇵',
-};
-
 function useCountUp(target: number, duration = 1200) {
   const [val, setVal] = useState(0);
   useEffect(() => {
@@ -25,10 +18,9 @@ function useCountUp(target: number, duration = 1200) {
 }
 
 export default function LiveTicker() {
-  const [stats, setStats] = useState({ totalCrew: 0, availableCrew: 0, totalVacancies: 0 });
-  const [nationalities, setNationalities] = useState<{flag:string;name:string;count:number}[]>([]);
+  const [totalVacancies, setTotalVacancies] = useState(0);
   const [jobs, setJobs] = useState<{rank:string;vessel:string;salary:string;port:string}[]>([]);
-  const vac = useCountUp(stats.totalVacancies);
+  const vac = useCountUp(totalVacancies);
   // Public proxy scale — exact crew numbers are never disclosed publicly
   const CREW_PROXY = "10,000+";
 
@@ -37,23 +29,11 @@ export default function LiveTicker() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [{ data }, j] = await Promise.all([
-          supabase.rpc('get_public_ticker_stats'),
+        const [vacancies, j] = await Promise.all([
+          supabase.from('external_vacancies').select('id', { count: 'exact', head: true }).gt('expires_at', new Date().toISOString()),
           supabase.from('external_vacancies').select('rank_required,vessel_type,salary_max,joining_port').gt('expires_at', new Date().toISOString()).order('created_at',{ascending:false}).limit(10),
         ]);
-        const tickerData = data as { total_crew?: number; available_crew?: number; total_vacancies?: number; nationalities?: { name: string; count: number }[] } | null;
-        if (tickerData) {
-          setStats({
-            totalCrew: tickerData.total_crew || 0,
-            availableCrew: tickerData.available_crew || 0,
-            totalVacancies: tickerData.total_vacancies || 0,
-          });
-          setNationalities((tickerData.nationalities || []).map((n) => ({
-            flag: FLAGS[n.name] || '🌍',
-            name: n.name,
-            count: n.count || 0,
-          })));
-        }
+        setTotalVacancies(vacancies.count || 0);
         setJobs((j.data||[]).map((v:any)=>({rank:v.rank_required||'Officer',vessel:v.vessel_type||'Various',salary:v.salary_max?`$${Number(v.salary_max).toLocaleString()}`:'Competitive',port:v.joining_port||'Worldwide'})));
       } catch(e) { console.error(e); }
     };
@@ -63,7 +43,6 @@ export default function LiveTicker() {
   }, []);
 
   const tickerItems = [
-    ...nationalities.map(n=>`${n.flag} ${n.name}`),
     ...jobs.map(j=>`🆕 ${j.rank} · ${j.vessel} · ${j.salary} · ${j.port}`),
   ];
 
@@ -101,7 +80,7 @@ export default function LiveTicker() {
           {/* Stats — crew scale shown as a verified proxy, never an exact count */}
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1.5 text-xs">
-              <span className="tracking-[-1px]" style={{ color: '#D4AF37' }}>★★★★</span>
+              <span className="tracking-[-1px]" style={{ color: '#D4AF37' }}>★★★★★</span>
               <span className="font-bold" style={{ color: '#D4AF37' }}>{CREW_PROXY}</span>
               <span className="text-muted-foreground hidden sm:inline">Crew</span>
             </div>

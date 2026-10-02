@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -363,8 +363,6 @@ const ManagerSearch = () => {
     window.open(`https://wa.me/${digits}?text=${msg}`, "_blank");
   };
 
-  const availableCount = useMemo(() => results.filter((r) => r.is_available).length, [results]);
-
   if (!ready) return null;
 
   return (
@@ -422,7 +420,7 @@ const ManagerSearch = () => {
             <div>
               <h1 style={{ color: GOLD, fontSize: 22, fontWeight: 700 }}>Crew Search</h1>
               <p style={{ color: "#9CA3AF", fontSize: 13 }}>
-                {searched ? `${results.length} crew · ${availableCount} available now` : "Search verified SeaMinds crew"}
+                {searched ? "★★★★★ Verified matches · totals remain private" : "★★★★★ Verified maritime network"}
               </p>
             </div>
             {balance !== null && (
@@ -606,7 +604,7 @@ const ManagerSearch = () => {
         {total > results.length && results.length > 0 && (
           <div style={{ display: "flex", justifyContent: "center" }}>
             <button onClick={loadMore} disabled={loadingMore} style={{ ...ghostBtn, opacity: loadingMore ? 0.6 : 1 }}>
-              {loadingMore ? "Loading…" : `Load more (${results.length}/${total})`}
+              {loadingMore ? "Loading…" : "Load more verified profiles"}
             </button>
           </div>
         )}

@@ -113,7 +113,6 @@ const ConversionConsole = () => {
   const [applied, setApplied] = useState<Record<string, "ok" | "dup">>({});
   const [applyBusy, setApplyBusy] = useState(false);
   const [cardInfo, setCardInfo] = useState<CrewCardInfo | null>(null);
-  const [newCrew, setNewCrew] = useState(0);
 
   const [needsQuickProfile, setNeedsQuickProfile] = useState(false);
   const [gateOpen, setGateOpen] = useState(false);
@@ -142,19 +141,6 @@ const ConversionConsole = () => {
       const { data, error } = await supabase.rpc("get_trade_log" as never, { p_limit: 14 } as never);
       if (!alive || error || !Array.isArray(data)) return;
       setWire(data as { kind: string; text: string; ts: string }[]);
-    })();
-    return () => { alive = false; };
-  }, []);
-
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      const since = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
-      const { count } = await supabase
-        .from("crew_profiles")
-        .select("id", { count: "exact", head: true })
-        .gt("created_at", since);
-      if (alive) setNewCrew(count || 0);
     })();
     return () => { alive = false; };
   }, []);
@@ -689,11 +675,9 @@ const ConversionConsole = () => {
             </button>
           ))}
         </div>
-        {newCrew > 0 && (
-          <p className="mt-2 text-[11px] font-semibold" style={{ color: GREEN }}>
-            ✓ {newCrew} seafarers joined SeaMinds this week
-          </p>
-        )}
+        <p className="mt-2 text-[11px] font-semibold" style={{ color: GREEN }}>
+          ★★★★★ Verified maritime network · exact totals stay private
+        </p>
       </div>
 
       {/* 6+7. VACANCY TICKER + LIVE JOBS */}

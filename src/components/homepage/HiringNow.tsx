@@ -51,7 +51,7 @@ function CountPill({ value, label, active }: { value: number; label: string; act
 const HiringNow = () => {
   const navigate = useNavigate();
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [stats, setStats] = useState({ fresh: 0, countries: 0, profiles: 0 });
+  const [stats, setStats] = useState({ fresh: 0 });
   const [visible, setVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -71,7 +71,7 @@ const HiringNow = () => {
       const nowIso = new Date().toISOString();
       const dayAgo = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
       try {
-        const [list, fresh, nats, profiles] = await Promise.all([
+        const [list, fresh] = await Promise.all([
           supabase
             .from("external_vacancies")
             .select("rank_required,vessel_type,joining_port,fetched_at")
@@ -83,11 +83,6 @@ const HiringNow = () => {
             .select("id", { count: "exact", head: true })
             .gt("expires_at", nowIso)
             .gt("fetched_at", dayAgo),
-          supabase.from("crew_profiles").select("nationality").not("nationality", "is", null).limit(2000),
-          supabase
-            .from("crew_profiles")
-            .select("id", { count: "exact", head: true })
-            .not("quick_profile_completed_at", "is", null),
         ]);
 
         setJobs(
@@ -98,13 +93,8 @@ const HiringNow = () => {
             when: rel(v.fetched_at),
           }))
         );
-        const countries = new Set(
-          (nats.data || []).map((r: any) => (r.nationality || "").trim()).filter(Boolean)
-        ).size;
         setStats({
           fresh: fresh.count || 0,
-          countries,
-          profiles: profiles.count || 0,
         });
       } catch (e) {
         console.error(e);
@@ -149,17 +139,21 @@ const HiringNow = () => {
           {stats.fresh > 0 && (
             <CountPill value={stats.fresh} label="Fresh vacancies today" active={visible} />
           )}
-          {stats.countries > 0 && (
-            <CountPill value={stats.countries} label="Countries" active={visible} />
-          )}
-          {/* Crew scale shown as a verified proxy — exact numbers stay private */}
+          <div
+            className="rounded-2xl px-4 py-3 text-center"
+            style={{ border: "1px solid rgba(212,175,55,0.3)", background: "rgba(17,34,64,0.6)" }}
+          >
+            <div className="text-lg font-bold text-primary font-mono-score tracking-[-1px]">★★★★★</div>
+            <div className="text-[11px] text-muted-foreground">Global nationalities</div>
+          </div>
+          {/* Crew scale is a broad public proxy; exact totals stay private. */}
           <div
             className="rounded-2xl px-4 py-3 text-center"
             style={{ border: "1px solid rgba(212,175,55,0.3)", background: "rgba(17,34,64,0.6)" }}
           >
             <div className="text-xl font-bold text-primary font-mono-score">10,000+</div>
             <div className="text-[11px] text-muted-foreground">Seafarers in the network</div>
-            <div className="text-[11px] tracking-[-1px] text-primary">★★★★</div>
+            <div className="text-[11px] tracking-[-1px] text-primary">★★★★★</div>
           </div>
         </div>
 
