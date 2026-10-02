@@ -11,6 +11,7 @@ import ApplyGateSheet from "@/components/ApplyGateSheet";
 import { jobPath } from "@/lib/jobSlug";
 import JobCard from "@/components/JobCard";
 import { loadVacancies, loadMyApplicationTargets, type UnifiedVacancy } from "@/lib/vacancyFeed";
+import SignInSheet from "@/components/homepage/SignInSheet";
 
 
 const GOLD = "#D4AF37";
@@ -83,6 +84,7 @@ const MENU_LINKS: { label: string; to: string; external?: boolean }[] = [
   { label: "Post Vacancy", to: "/post-vacancy" },
   { label: "Create AI Interview", to: "/manager/interviews" },
   { label: "Manager Login", to: "/manager" },
+  { label: "🚢 Ship Management Login", to: "/fleet/login" },
   { label: "SeaMinds Score", to: "/app?tab=smc" },
   { label: "Jobs", to: "/app?tab=jobs" },
   { label: "Blog", to: "/blog" },
@@ -103,6 +105,7 @@ const ConversionConsole = () => {
   const [langOpen, setLangOpen] = useState(false);
   const [marketOpen, setMarketOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [signInOpen, setSignInOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [myMarket, setMyMarket] = useState<string>(() => localStorage.getItem("sm_my_market") || "");
   const [sheet, setSheet] = useState<Vacancy | null>(null);
@@ -413,6 +416,15 @@ const ConversionConsole = () => {
               )}
             </div>
 
+            <button
+              type="button"
+              onClick={() => setSignInOpen(true)}
+              className="rounded-lg px-2.5 py-1.5 text-xs font-bold"
+              style={{ background: GOLD, color: "#0D1B2A" }}
+            >
+              🔐 Sign In
+            </button>
+            {signInOpen && <SignInSheet onClose={() => setSignInOpen(false)} />}
             <button
               type="button"
               aria-label="Open menu"
