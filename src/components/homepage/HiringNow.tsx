@@ -146,14 +146,13 @@ const HiringNow = () => {
             <div className="text-lg font-bold text-primary font-mono-score tracking-[-1px]">★★★★★</div>
             <div className="text-[11px] text-muted-foreground">Global nationalities</div>
           </div>
-          {/* Crew scale is a broad public proxy; exact totals stay private. */}
+          {/* Crew scale is anonymous; exact totals stay private. */}
           <div
             className="rounded-2xl px-4 py-3 text-center"
             style={{ border: "1px solid rgba(212,175,55,0.3)", background: "rgba(17,34,64,0.6)" }}
           >
-            <div className="text-xl font-bold text-primary font-mono-score">10,000+</div>
-            <div className="text-[11px] text-muted-foreground">Seafarers in the network</div>
-            <div className="text-[11px] tracking-[-1px] text-primary">★★★★★</div>
+            <div className="text-xl font-bold tracking-[-1px] text-primary font-mono-score">★★★★★</div>
+            <div className="text-[11px] text-muted-foreground">Verified maritime network</div>
           </div>
         </div>
 

@@ -21,11 +21,6 @@ export default function LiveTicker() {
   const [totalVacancies, setTotalVacancies] = useState(0);
   const [jobs, setJobs] = useState<{rank:string;vessel:string;salary:string;port:string}[]>([]);
   const vac = useCountUp(totalVacancies);
-  // Public proxy scale — exact crew numbers are never disclosed publicly
-  const CREW_PROXY = "10,000+";
-
-
-
   useEffect(() => {
     const load = async () => {
       try {
@@ -81,8 +76,7 @@ export default function LiveTicker() {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1.5 text-xs">
               <span className="tracking-[-1px]" style={{ color: '#D4AF37' }}>★★★★★</span>
-              <span className="font-bold" style={{ color: '#D4AF37' }}>{CREW_PROXY}</span>
-              <span className="text-muted-foreground hidden sm:inline">Crew</span>
+              <span className="text-muted-foreground hidden sm:inline">Verified Crew</span>
             </div>
             <div className="flex items-center gap-1.5 text-xs">
               <span>✅</span>

@@ -193,7 +193,7 @@ const HeroSection = ({ timeOfDay = "day" }: Props) => {
             <div className="flex flex-row flex-wrap gap-x-6 gap-y-2 justify-center text-xs text-muted-foreground font-mono-score">
               {[
                 "Free to join — no card",
-                "Seafarers from 15 countries",
+                "Global seafarer community",
                 "MLC 2006 aligned",
               ].map((stat, i) => (
                 <span key={i} className="flex items-center gap-1.5 shrink-0">

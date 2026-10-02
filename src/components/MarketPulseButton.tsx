@@ -1,13 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-const FLAGS: Record<string, string> = {
-  Filipino:'🇵🇭',Indian:'🇮🇳',Indonesian:'🇮🇩',Ukrainian:'🇺🇦',
-  Russian:'🇷🇺',Chinese:'🇨🇳',Vietnamese:'🇻🇳',Myanmar:'🇲🇲',
-  Bangladeshi:'🇧🇩',Greek:'🇬🇷',Croatian:'🇭🇷',Turkish:'🇹🇷',
-  Pakistani:'🇵🇰',Nepali:'🇳🇵',Nigerian:'🇳🇬',
-};
-
 const VESSEL_ICONS: Record<string, string> = {
   'LNG':'⛽','FPSO':'🛢️','Bulk Carrier':'⚓','Container':'📦',
   'Tanker':'🛢️','Offshore':'🔧','General Cargo':'🚢','PSV':'🚤',
