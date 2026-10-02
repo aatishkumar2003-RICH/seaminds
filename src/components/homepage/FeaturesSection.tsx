@@ -7,7 +7,7 @@ const features = [
   { icon: BookOpen, title: "Maritime Academy", desc: "PSC inspection prep, vetting knowledge, STCW updates." },
   { icon: Briefcase, title: "Jobs Board", desc: "Verified job listings with minimum SMC Score requirements." },
   { icon: Heart, title: "Family Connection", desc: "Keep your family informed and connected during voyages." },
-  { icon: Users, title: "Community", desc: "Connect with seafarers from 35 nationalities worldwide." },
+  { icon: Users, title: "Community", desc: "Connect with a global seafarer community." },
 ];
 
 const FeaturesSection = () => {
