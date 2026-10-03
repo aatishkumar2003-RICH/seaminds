@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import SignInGate from "@/components/takeover/SignInGate";
+import StaffApprovals from "@/components/fleet/StaffApprovals";
 
 interface Cell { id: string; name: string; superintendent: string | null }
 interface Vessel {
@@ -110,6 +111,8 @@ export default function FleetHome() {
             </button>
           </div>
         )}
+
+        <StaffApprovals cells={cells} vessels={vessels} />
 
         <div className="flex gap-2 mb-4">
           <button onClick={() => setAdding("vessel")} className="flex-1 min-h-[48px] rounded-xl bg-[#D4AF37] text-[#0D1B2A] font-bold flex items-center justify-center gap-2">
