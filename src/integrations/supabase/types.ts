@@ -1735,11 +1735,18 @@ export type Database = {
       }
       fleet_staff_members: {
         Row: {
+          approval_limit_usd: number
           approved_at: string | null
           approved_by: string | null
           approved_role: string | null
+          can_approve_permits: boolean
+          can_approve_salaries: boolean
+          can_approve_staff: boolean
+          can_approve_travel: boolean
+          cell_ids: string[]
           company: string | null
           created_at: string
+          department: string | null
           email: string | null
           full_name: string | null
           id: string
@@ -1747,13 +1754,21 @@ export type Database = {
           status: string
           updated_at: string
           user_id: string
+          vessel_ids: string[]
         }
         Insert: {
+          approval_limit_usd?: number
           approved_at?: string | null
           approved_by?: string | null
           approved_role?: string | null
+          can_approve_permits?: boolean
+          can_approve_salaries?: boolean
+          can_approve_staff?: boolean
+          can_approve_travel?: boolean
+          cell_ids?: string[]
           company?: string | null
           created_at?: string
+          department?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
@@ -1761,13 +1776,21 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id: string
+          vessel_ids?: string[]
         }
         Update: {
+          approval_limit_usd?: number
           approved_at?: string | null
           approved_by?: string | null
           approved_role?: string | null
+          can_approve_permits?: boolean
+          can_approve_salaries?: boolean
+          can_approve_staff?: boolean
+          can_approve_travel?: boolean
+          cell_ids?: string[]
           company?: string | null
           created_at?: string
+          department?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
@@ -1775,6 +1798,7 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string
+          vessel_ids?: string[]
         }
         Relationships: []
       }
