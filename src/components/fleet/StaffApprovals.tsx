@@ -31,6 +31,23 @@ const GATES: [string, string][] = [
   ["can_approve_permits", "Sign high-risk permits"],
   ["can_approve_staff", "Approve new staff logins"],
 ];
+const MODULES: [string, string][] = [
+  ["fleet", "Fleet overview"], ["pms", "Maintenance (PMS)"], ["inspections", "Inspections"], ["qhse", "Safety / QHSE"],
+  ["permits", "Work permits"], ["procurement", "Purchasing"], ["crewing", "Crewing"], ["payroll", "Payroll"],
+  ["travel", "Crew travel"], ["cashbook", "Ship cashbook"], ["accounts", "Accounts"], ["voyage", "Voyage / noon reports"],
+  ["owner_reports", "Owner reports"], ["documents", "Documents"],
+];
+const MOD_DEFAULT: Record<string, string[]> = {
+  technical_manager: ["fleet", "pms", "inspections", "procurement", "documents", "owner_reports"],
+  technical_superintendent: ["fleet", "pms", "inspections", "procurement", "documents"],
+  marine_superintendent: ["fleet", "qhse", "permits", "inspections", "documents"],
+  purchasing_officer: ["procurement", "documents"],
+  accounts_officer: ["accounts", "payroll", "cashbook"],
+  crewing_officer: ["crewing", "travel"], crewing_manager: ["crewing", "travel", "payroll"],
+  ship_master: ["pms", "permits", "cashbook", "voyage", "documents"], chief_engineer: ["pms", "permits", "documents"],
+  vessel_owner: ["owner_reports"], approval_admin: MODULES_ALL(),
+};
+function MODULES_ALL() { return ["fleet", "pms", "inspections", "qhse", "permits", "procurement", "crewing", "payroll", "travel", "cashbook", "accounts", "voyage", "owner_reports", "documents"]; }
 
 interface Props { cells: { id: string; name: string }[]; vessels: { id: string; name: string }[] }
 
@@ -57,16 +74,30 @@ export default function StaffApprovals({ cells, vessels }: Props) {
       ...r, approved_role: role,
       department: r.department || ROLES.find(([k]) => k === role)?.[2] || "",
       approval_limit_usd: r.status === "approved" ? Number(r.approval_limit_usd) : DEFAULT_LIMIT[role] ?? 0,
+      modules: r.modules?.length ? r.modules : MOD_DEFAULT[role] || [],
     });
   };
+
+  const startNew = () => setEdit({
+    isNew: true, full_name: "", staff_code: "", password: "", contact_email: "", company: "",
+    approved_role: "technical_superintendent", department: "Technical", approval_limit_usd: 5000,
+    modules: MOD_DEFAULT.technical_superintendent, cell_ids: [], vessel_ids: [],
+  });
 
   const save = async (status: string) => {
     const e = edit;
     if (status === "approved" && ["ship_master", "chief_engineer", "vessel_owner"].includes(e.approved_role) && !e.vessel_ids.length)
       return toast.error("Pick at least one ship for this person");
+    if (e.isNew) {
+      const { data, error } = await supabase.functions.invoke("admin-create-staff", { body: { ...e, role: e.approved_role } });
+      const msg = error ? (await (error as any).context?.json?.().catch(() => null))?.error || error.message : data?.error;
+      if (msg) return toast.error(msg);
+      toast.success(`Staff ID ${data.staff_code} created. Share the ID and password with them.`);
+      setEdit(null); load(); setTab("approved"); return;
+    }
     const { error } = await db.from("fleet_staff_members").update({
       status, approved_role: e.approved_role, department: e.department,
-      approval_limit_usd: e.approval_limit_usd, cell_ids: e.cell_ids, vessel_ids: e.vessel_ids,
+      approval_limit_usd: e.approval_limit_usd, cell_ids: e.cell_ids, vessel_ids: e.vessel_ids, modules: e.modules || [],
       can_approve_salaries: e.can_approve_salaries, can_approve_travel: e.can_approve_travel,
       can_approve_permits: e.can_approve_permits, can_approve_staff: e.can_approve_staff,
       approved_by: user!.id, approved_at: new Date().toISOString(),
