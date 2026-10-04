@@ -32,4 +32,5 @@ Queued stages (~2 credits each). Execute in order, on user's go-ahead.
 ## Fleet Track
 - [x] Step 1 — Multi-vessel foundation + fleet switcher (/management/fleet)
 - [x] Step 2 — Front-space Sign In + staff access requests (/fleet/login)
-- [ ] Step 3 — Admin approvals & authority limits console
+- [x] Step 3 — Admin approvals & authority limits console
+- [x] M1 — Admin-issued Staff IDs + module access control

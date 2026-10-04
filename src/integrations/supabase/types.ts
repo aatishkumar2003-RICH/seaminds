@@ -1745,12 +1745,16 @@ export type Database = {
           can_approve_travel: boolean
           cell_ids: string[]
           company: string | null
+          contact_email: string | null
           created_at: string
           department: string | null
           email: string | null
           full_name: string | null
           id: string
+          modules: string[]
+          provisioned_by_admin: boolean
           requested_role: string
+          staff_code: string | null
           status: string
           updated_at: string
           user_id: string
@@ -1767,12 +1771,16 @@ export type Database = {
           can_approve_travel?: boolean
           cell_ids?: string[]
           company?: string | null
+          contact_email?: string | null
           created_at?: string
           department?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
+          modules?: string[]
+          provisioned_by_admin?: boolean
           requested_role: string
+          staff_code?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -1789,12 +1797,16 @@ export type Database = {
           can_approve_travel?: boolean
           cell_ids?: string[]
           company?: string | null
+          contact_email?: string | null
           created_at?: string
           department?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
+          modules?: string[]
+          provisioned_by_admin?: boolean
           requested_role?: string
+          staff_code?: string | null
           status?: string
           updated_at?: string
           user_id?: string

@@ -59,7 +59,7 @@ export default function FleetLogin() {
 
   const signIn = async () => {
     setBusy(true);
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    const { error } = await supabase.auth.signInWithPassword({ email: email.includes("@") ? email.trim() : `${email.trim().toLowerCase()}@staff.seaminds.life`, password });
     setBusy(false);
     if (error) toast.error(error.message);
   };
@@ -125,7 +125,7 @@ export default function FleetLogin() {
   } else {
     body = (
       <div className={card}>
-        <div className="flex mb-4 rounded-xl overflow-hidden border border-[rgba(212,175,55,0.3)]">
+        <div className="hidden flex mb-4 rounded-xl overflow-hidden border border-[rgba(212,175,55,0.3)]">
           {(["signin", "request"] as const).map((m) => (
             <button key={m} onClick={() => setMode(m)} className={`flex-1 min-h-[40px] text-sm font-bold ${mode === m ? "bg-[#D4AF37] text-[#0D1B2A]" : "text-[#D4AF37]"}`}>
               {m === "signin" ? "Sign in" : "New staff"}
@@ -139,12 +139,12 @@ export default function FleetLogin() {
             {ROLES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
           </select>
         </>}
-        <input className={inputCls} type="email" placeholder="Work email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <input className={inputCls} placeholder="Staff ID or email" value={email} onChange={(e) => setEmail(e.target.value)} />
         <input className={inputCls + " mb-3"} type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
         <button className={gold} disabled={busy} onClick={mode === "signin" ? signIn : requestAccess}>
           {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Request access"}
         </button>
-        <p className="text-[11px] text-[#94A3B8] mt-3">New staff can only enter after the admin approves their job.</p>
+        <p className="text-[11px] text-[#94A3B8] mt-3">Your Staff ID and password are issued by your company admin.</p>
       </div>
     );
   }
