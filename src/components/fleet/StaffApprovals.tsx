@@ -197,7 +197,7 @@ export default function StaffApprovals({ cells, vessels }: Props) {
               </div>
             </div>
             <button onClick={() => save("approved")} className="w-full min-h-[48px] rounded-xl bg-[#D4AF37] text-[#0D1B2A] font-bold">
-              {edit.status === "approved" ? "Save changes" : "Approve access"}
+              {edit.isNew ? "Create ID & give access" : edit.status === "approved" ? "Save changes" : "Approve access"}
             </button>
             <div className="flex gap-2">
               {edit.status === "approved"
