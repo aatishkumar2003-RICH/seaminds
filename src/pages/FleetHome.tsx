@@ -6,6 +6,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import SignInGate from "@/components/takeover/SignInGate";
 import StaffApprovals from "@/components/fleet/StaffApprovals";
+import TakeoverInspections from "@/pages/TakeoverInspections";
+
+const TABS = [
+  { id: "fleet", label: "🚢 Ships" }, { id: "staff", label: "👥 Staff & Access" }, { id: "pms", label: "🛠 PMS" },
+  { id: "inspections", label: "📋 Inspections" }, { id: "safety", label: "🦺 Safety" }, { id: "spares", label: "📦 Spares" }, { id: "crew", label: "🧑‍✈️ Crew" },
+];
+const SOON: Record<string, string> = { pms: "Planned Maintenance (PMS)", safety: "Safety & Permits", spares: "Spares & Procurement", crew: "Crew & Payroll" };
 
 interface Cell { id: string; name: string; superintendent: string | null }
 interface Vessel {
@@ -30,6 +37,7 @@ export default function FleetHome() {
   const [form, setForm] = useState({ name: "", imo: "", flag: "", vessel_type: "Bulk carrier", owner_company: "", cell_id: "", status: "active" });
   const [cellForm, setCellForm] = useState({ name: "", superintendent: "" });
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState(() => new URLSearchParams(window.location.search).get("tab") || "fleet");
 
   const load = async () => {
     const [c, v, p] = await Promise.all([
@@ -79,7 +87,7 @@ export default function FleetHome() {
       {/* Fleet switcher bar */}
       <div className="sticky top-0 z-10 bg-[#0D1B2A]/95 backdrop-blur border-b border-[rgba(212,175,55,0.3)]">
         <div className="max-w-4xl mx-auto p-3 flex items-center gap-2">
-          <button onClick={() => navigate(-1)} className="flex items-center text-[#D4AF37] min-h-[44px] pr-1" aria-label="Back">
+          <button onClick={() => navigate("/admin")} className="flex items-center text-[#D4AF37] min-h-[44px] pr-1" aria-label="Back">
             <ChevronLeft size={22} />
           </button>
           <Ship size={18} className="text-[#D4AF37] shrink-0" />
@@ -195,6 +203,7 @@ export default function FleetHome() {
             </div>
           </button>
         )) : <p className="text-sm text-[#94A3B8]">No ships yet. Tap "Add ship" to start your fleet.</p>}
+        </>}
       </div>
     </div>
   );
