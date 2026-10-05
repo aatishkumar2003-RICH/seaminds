@@ -15,6 +15,13 @@
       "when": 1791073015166,
       "tag": "0001_fleet_staff_provisioning",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791170657306,
+      "tag": "0002_lock_cached_stats_interview_matrix",
+      "breakpoints": true
     }
   ]
 }
