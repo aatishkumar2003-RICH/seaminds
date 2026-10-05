@@ -22,6 +22,13 @@
       "when": 1791170657306,
       "tag": "0002_lock_cached_stats_interview_matrix",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791175239941,
+      "tag": "0003_vacancy_expiry_45_days",
+      "breakpoints": true
     }
   ]
 }

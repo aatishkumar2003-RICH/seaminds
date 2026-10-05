@@ -57,6 +57,16 @@ const COUNTRY_TABS = [
   { code: 'Pakistan', flag: '🇵🇰', label: 'Pakistan' },
 ];
 
+const COUNTRY_DIAL: Record<string, string> = {
+  India: '91', Philippines: '63', Indonesia: '62', China: '86', Turkey: '90', Croatia: '385',
+  Ukraine: '380', Russia: '7', Myanmar: '95', Bangladesh: '880', Greece: '30', Poland: '48',
+};
+const phoneInCountry = (wa: string | null, country: string) => {
+  const code = COUNTRY_DIAL[country];
+  if (!wa || !code) return false;
+  const d = wa.replace(/[^\d+]/g, '').replace(/^00/, '+');
+  return d.startsWith('+' + code) || (!d.startsWith('+') && d.startsWith(code) && d.length > 10);
+};
 const COUNTRY_PORTS: Record<string, string[]> = {
   India: ['Mumbai', 'Chennai', 'Kolkata', 'Goa', 'Cochin', 'India'],
   Philippines: ['Manila', 'Cebu', 'Philippines'],
@@ -176,7 +186,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
 
     const [availRes, vacs, smcRes] = await Promise.all([
       supabase.from("crew_availability").select("*").eq("crew_profile_id", crewId).maybeSingle(),
-      loadVacancies({ limitDirect: 20, limitExternal: 50, minQuality: 30 }),
+      loadVacancies({ limitDirect: 300, limitExternal: 1000 }),
       supabase.from("smc_assessments").select("overall_score").eq("crew_profile_id", crewId).eq("status", "completed").order("completed_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
 
@@ -616,7 +626,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
               const jobPort = (job.port || '').toLowerCase();
               const jobCompany = (job.company || '').toLowerCase();
               const countryLower = countryFilter.toLowerCase();
-              return ports.some(p => jobPort.includes(p.toLowerCase())) || jobCompany.includes(countryLower);
+              return ports.some(p => jobPort.includes(p.toLowerCase())) || jobCompany.includes(countryLower) || phoneInCountry(job.whatsapp, countryFilter);
             });
 
         return (
@@ -681,7 +691,8 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
           const countryLower = countryFilter.toLowerCase();
           return ports.some(p => jobPort.includes(p.toLowerCase())) ||
                  jobCompany.includes(countryLower) ||
-                 jobDesc.includes(countryLower);
+                 jobDesc.includes(countryLower) ||
+                 phoneInCountry(e.whatsapp, countryFilter);
         }).sort((a, b) => {
           const aRelevant = isRegionRelevant(a) ? 1 : 0;
           const bRelevant = isRegionRelevant(b) ? 1 : 0;

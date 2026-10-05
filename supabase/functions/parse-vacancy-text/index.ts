@@ -17,13 +17,14 @@ RULES:
 5. JOINING DATE: joining_date MUST be strict "YYYY-MM-DD" and ONLY when the source states an unambiguous calendar date (e.g. "Joining 2 September 2026" -> "2026-09-02"). Never output natural-language text in joining_date: "Immediate", "ASAP", "TBA", "urgent", "early September", "first week September" -> joining_date = null, and preserve that wording inside additional_notes instead. Never invent or guess a year or a date.
 6. Use null (not empty strings or guesses) for anything the advert does not state. Keep rank names and vessel types in standard English maritime terms.
 7. ranks_found: a top-level array listing every rank you saw in the source advert.
+8. PRODUCING COUNTRY: top-level "producing_country_dial_code" = the dial code digits (e.g. "63","62","91","84","880","95","380") of the country that produced this advert, inferred from company address, licence body (POEA/DMW=63, RPSL/DG Shipping=91, Dirjen Hubla/SIUPPAK=62), ports, currency or phone formats. null if unclear.
 RISK: flag 'high' if the advert asks seafarers for payment, placement fees or deposits; flag 'medium' if there is no company name, or only a personal email/phone with no company, or the salary is far outside normal maritime ranges. List the specific reasons in flags.`;
 
-const SYSTEM_PROMPT = `You extract maritime job vacancies from informal recruitment adverts (WhatsApp/Telegram style). Return JSON: {"vacancies":[...],"ranks_found":[],"risk":{"level":"low|medium|high","flags":[]}}. ${EXTRACTION_RULES}`;
+const SYSTEM_PROMPT = `You extract maritime job vacancies from informal recruitment adverts (WhatsApp/Telegram style). Return JSON: {"vacancies":[...],"ranks_found":[],"producing_country_dial_code":null,"risk":{"level":"low|medium|high","flags":[]}}. ${EXTRACTION_RULES}`;
 
 const VISION_PROMPT = `STEP 1 — TRANSCRIBE: read EVERY piece of text visible in this recruitment flier, including headers, ranks, vessel details, dates, salaries, requirements, company name, licence numbers, phone numbers, emails and small print. Transcribe exactly what you can see, line by line. If some text is blurred or partly unreadable, transcribe your best reading and mark uncertain fragments with (?). STEP 2 — STRUCTURE: from that transcription, build the vacancies.
 
-Return JSON only: {"raw_text":"<the full STEP 1 transcription>","vacancies":[...],"ranks_found":[],"risk":{"level":"low|medium|high","flags":[]}}. ${EXTRACTION_RULES}`;
+Return JSON only: {"raw_text":"<the full STEP 1 transcription>","vacancies":[...],"ranks_found":[],"producing_country_dial_code":null,"risk":{"level":"low|medium|high","flags":[]}}. ${EXTRACTION_RULES}`;
 
 
 Deno.serve(async (req) => {
@@ -65,8 +66,10 @@ Deno.serve(async (req) => {
     // --- kill switch ---
     if (await aiPaused(admin)) return aiPausedResponse(corsHeaders);
 
-    // --- daily limit (30/day) ---
-    try {
+    // --- daily limit (30/day) — owner/admin accounts are unlimited ---
+    const { data: isAdm } = await admin.rpc("is_admin", { _user_id: userId });
+    const UNLIMITED = new Set(["492ee966-e015-4440-a415-6ad6275a4a9b", "1f2bf462-d6c2-420e-b2a8-01717d611444"]);
+    if (!UNLIMITED.has(userId) && isAdm !== true) try {
       const startOfDay = new Date();
       startOfDay.setUTCHours(0, 0, 0, 0);
       const { count } = await admin
@@ -184,7 +187,7 @@ Deno.serve(async (req) => {
             { role: "system", content: SYSTEM_PROMPT },
             {
               role: "user",
-              content: `From the advert below, return ONLY vacancy objects for these missing ranks: ${missing.join(", ")}. Return JSON {"vacancies":[...],"ranks_found":[],"risk":{"level":"low","flags":[]}}.\n\n---\n${sourceText.slice(0, 12000)}`,
+              content: `From the advert below, return ONLY vacancy objects for these missing ranks: ${missing.join(", ")}. Return JSON {"vacancies":[...],"ranks_found":[],"producing_country_dial_code":null,"risk":{"level":"low","flags":[]}}.\n\n---\n${sourceText.slice(0, 12000)}`,
             },
           ]);
           if (retry.ok) {
@@ -211,6 +214,18 @@ Deno.serve(async (req) => {
       return !isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v ? v : null;
     };
 
+    const dial = String(parsed.producing_country_dial_code ?? "").replace(/\D/g, "");
+    const fixPhone = (x: unknown): string | null => {
+      const raw = String(x ?? "").trim();
+      if (!raw) return null;
+      const c = raw.replace(/[\s()\-.]/g, "");
+      if (c.startsWith("+")) return c;
+      if (c.startsWith("00")) return "+" + c.slice(2);
+      if (!dial || !/^\d{6,15}$/.test(c)) return raw;
+      if (c.startsWith(dial) && c.length >= 10) return "+" + c;
+      return "+" + dial + c.replace(/^0+/, "");
+    };
+
     vacancies = vacancies.map((v) => {
       const p = Number(v?.positions);
       const raw = String(v?.joining_date ?? "").trim();
@@ -222,6 +237,7 @@ Deno.serve(async (req) => {
       return {
         ...v,
         joining_date: safe,
+        contact_whatsapp: fixPhone(v?.contact_whatsapp),
         additional_notes: notes || null,
         positions: Number.isFinite(p) && p >= 1 ? Math.floor(p) : 1,
       };
