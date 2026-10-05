@@ -6,6 +6,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import SignInGate from "@/components/takeover/SignInGate";
 import StaffApprovals from "@/components/fleet/StaffApprovals";
+import TakeoverInspections from "@/pages/TakeoverInspections";
+
+const TABS = [
+  { id: "fleet", label: "🚢 Ships" }, { id: "staff", label: "👥 Staff & Access" }, { id: "pms", label: "🛠 PMS" },
+  { id: "inspections", label: "📋 Inspections" }, { id: "safety", label: "🦺 Safety" }, { id: "spares", label: "📦 Spares" }, { id: "crew", label: "🧑‍✈️ Crew" },
+];
+const SOON: Record<string, string> = { pms: "Planned Maintenance (PMS)", safety: "Safety & Permits", spares: "Spares & Procurement", crew: "Crew & Payroll" };
 
 interface Cell { id: string; name: string; superintendent: string | null }
 interface Vessel {
@@ -30,6 +37,7 @@ export default function FleetHome() {
   const [form, setForm] = useState({ name: "", imo: "", flag: "", vessel_type: "Bulk carrier", owner_company: "", cell_id: "", status: "active" });
   const [cellForm, setCellForm] = useState({ name: "", superintendent: "" });
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState(() => new URLSearchParams(window.location.search).get("tab") || "fleet");
 
   const load = async () => {
     const [c, v, p] = await Promise.all([
@@ -79,7 +87,7 @@ export default function FleetHome() {
       {/* Fleet switcher bar */}
       <div className="sticky top-0 z-10 bg-[#0D1B2A]/95 backdrop-blur border-b border-[rgba(212,175,55,0.3)]">
         <div className="max-w-4xl mx-auto p-3 flex items-center gap-2">
-          <button onClick={() => navigate(-1)} className="flex items-center text-[#D4AF37] min-h-[44px] pr-1" aria-label="Back">
+          <button onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/"))} className="flex items-center text-[#D4AF37] min-h-[44px] pr-1" aria-label="Back">
             <ChevronLeft size={22} />
           </button>
           <Ship size={18} className="text-[#D4AF37] shrink-0" />
@@ -91,8 +99,17 @@ export default function FleetHome() {
       </div>
 
       <div className="p-4 max-w-4xl mx-auto">
-        <h1 className="text-xl font-bold text-[#D4AF37]">SeaMinds Fleet</h1>
-        <p className="text-xs text-[#94A3B8] mb-4">Ships under management · add or hand over ships any time</p>
+        <h1 className="text-xl font-bold text-[#D4AF37]">Fleet & PMS Workspace</h1>
+        <p className="text-xs text-[#94A3B8] mb-3">One command centre for every ship under management</p>
+
+        <div className="flex gap-2 overflow-x-auto mb-4 -mx-1 px-1">
+          {TABS.map((t) => (
+            <button key={t.id} onClick={() => setTab(t.id)}
+              className={`shrink-0 min-h-[40px] px-3 rounded-xl text-xs font-bold border ${tab === t.id ? "bg-[#D4AF37] text-[#0D1B2A] border-[#D4AF37]" : "border-[rgba(212,175,55,0.3)] text-[#D4AF37]"}`}>
+              {t.label}
+            </button>
+          ))}
+        </div>
 
         {current && (
           <div className="rounded-2xl bg-[#112240] border border-[#D4AF37] p-4 mb-4">
@@ -105,15 +122,20 @@ export default function FleetHome() {
               {cellName(current.cell_id)} · {STATUS_LABEL[current.status]}
               {periods[current.id] && ` since ${periods[current.id].starts_on}`}
             </p>
-            <button onClick={() => navigate("/management/inspections")}
-              className="mt-3 min-h-[44px] w-full rounded-xl border border-[#D4AF37] text-[#D4AF37] font-bold text-sm flex items-center justify-center gap-2">
-              <ClipboardCheck size={16} /> Takeover inspections
-            </button>
           </div>
         )}
 
-        <StaffApprovals cells={cells} vessels={vessels} />
+        {tab === "staff" && <StaffApprovals cells={cells} vessels={vessels} />}
+        {tab === "inspections" && <TakeoverInspections embedded />}
+        {SOON[tab] && (
+          <div className="rounded-2xl bg-[#112240] border border-[rgba(212,175,55,0.3)] p-6 text-center">
+            <ClipboardCheck className="mx-auto text-[#D4AF37] mb-2" size={28} />
+            <p className="text-sm font-bold text-slate-100">{SOON[tab]}</p>
+            <p className="text-xs text-[#94A3B8] mt-1">This module is being built in the next workspace phases.</p>
+          </div>
+        )}
 
+        {tab === "fleet" && <>
         <div className="flex gap-2 mb-4">
           <button onClick={() => setAdding("vessel")} className="flex-1 min-h-[48px] rounded-xl bg-[#D4AF37] text-[#0D1B2A] font-bold flex items-center justify-center gap-2">
             <Plus size={18} /> Add ship
@@ -181,6 +203,7 @@ export default function FleetHome() {
             </div>
           </button>
         )) : <p className="text-sm text-[#94A3B8]">No ships yet. Tap "Add ship" to start your fleet.</p>}
+        </>}
       </div>
     </div>
   );

@@ -1538,10 +1538,10 @@ export default function AdminDashboard() {
             </Button>
             <Button
               variant="outline"
-              onClick={() => (window.location.href = "/management/inspections")}
-              style={{ borderColor: "#D4AF37", color: "#D4AF37" }}
+              onClick={() => (window.location.href = "/management/fleet")}
+              style={{ background: "#D4AF37", borderColor: "#D4AF37", color: "#0D1B2A", fontWeight: 700 }}
             >
-              🛠 Inspections
+              🚢 Fleet & PMS Workspace
             </Button>
             <Button variant="outline" onClick={lock} style={{ borderColor: "#D4AF37", color: "#D4AF37" }}>
               <Lock className="w-4 h-4 mr-1" /> Lock

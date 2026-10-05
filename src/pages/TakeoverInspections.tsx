@@ -20,7 +20,7 @@ interface Row {
   updated_at: string;
 }
 
-export default function TakeoverInspections() {
+export default function TakeoverInspections({ embedded = false }: { embedded?: boolean }) {
   const navigate = useNavigate();
   const { user, isReady } = useAuth();
   const [rows, setRows] = useState<Row[]>([]);
@@ -93,13 +93,13 @@ export default function TakeoverInspections() {
   if (isReady && !user) return <SignInGate />;
 
   return (
-    <div className="min-h-screen bg-[#0D1B2A] pb-16">
-      <div className="p-4 max-w-4xl mx-auto">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-[#D4AF37] min-h-[44px]">
-          <ChevronLeft size={20} /> Back
-        </button>
-
-        <button onClick={() => navigate("/management/fleet")} className="text-xs text-[#D4AF37] underline">Open Fleet →</button>
+    <div className={embedded ? "" : "min-h-screen bg-[#0D1B2A] pb-16"}>
+      <div className={embedded ? "" : "p-4 max-w-4xl mx-auto"}>
+        {!embedded && (
+          <button onClick={() => navigate("/management/fleet")} className="flex items-center gap-1 text-[#D4AF37] min-h-[44px]">
+            <ChevronLeft size={20} /> Workspace
+          </button>
+        )}
         <h1 className="text-xl font-bold text-[#D4AF37] mt-2">Pre-management takeover inspections</h1>
         <p className="text-xs text-[#94A3B8] mb-4">
           {TEMPLATE_NAME} · template v{TEMPLATE_VERSION} · {TOTAL_ITEMS} checklist rows
