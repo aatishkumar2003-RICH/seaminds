@@ -176,7 +176,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
 
     const [availRes, vacs, smcRes] = await Promise.all([
       supabase.from("crew_availability").select("*").eq("crew_profile_id", crewId).maybeSingle(),
-      loadVacancies({ limitDirect: 20, limitExternal: 50, minQuality: 30 }),
+      loadVacancies({ limitDirect: 300, limitExternal: 1000 }),
       supabase.from("smc_assessments").select("overall_score").eq("crew_profile_id", crewId).eq("status", "completed").order("completed_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
 
