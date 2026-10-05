@@ -87,7 +87,7 @@ export default function FleetHome() {
       {/* Fleet switcher bar */}
       <div className="sticky top-0 z-10 bg-[#0D1B2A]/95 backdrop-blur border-b border-[rgba(212,175,55,0.3)]">
         <div className="max-w-4xl mx-auto p-3 flex items-center gap-2">
-          <button onClick={() => navigate("/admin")} className="flex items-center text-[#D4AF37] min-h-[44px] pr-1" aria-label="Back">
+          <button onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/"))} className="flex items-center text-[#D4AF37] min-h-[44px] pr-1" aria-label="Back">
             <ChevronLeft size={22} />
           </button>
           <Ship size={18} className="text-[#D4AF37] shrink-0" />
