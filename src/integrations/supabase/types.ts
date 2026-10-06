@@ -3707,6 +3707,135 @@ export type Database = {
         }
         Relationships: []
       }
+      recovery_cases: {
+        Row: {
+          assessment_id: string
+          created_at: string
+          crew_profile_id: string
+          id: string
+          interruption_state: string
+          is_test: boolean
+          last_health: Json | null
+          mode: string
+          next_action_at: string | null
+          reminders_sent: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assessment_id: string
+          created_at?: string
+          crew_profile_id: string
+          id?: string
+          interruption_state: string
+          is_test?: boolean
+          last_health?: Json | null
+          mode?: string
+          next_action_at?: string | null
+          reminders_sent?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assessment_id?: string
+          created_at?: string
+          crew_profile_id?: string
+          id?: string
+          interruption_state?: string
+          is_test?: boolean
+          last_health?: Json | null
+          mode?: string
+          next_action_at?: string | null
+          reminders_sent?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recovery_cases_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "smc_assessments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recovery_events: {
+        Row: {
+          case_id: string
+          created_at: string
+          detail: Json | null
+          event: string
+          id: number
+        }
+        Insert: {
+          case_id: string
+          created_at?: string
+          detail?: Json | null
+          event: string
+          id?: number
+        }
+        Update: {
+          case_id?: string
+          created_at?: string
+          detail?: Json | null
+          event?: string
+          id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recovery_events_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "recovery_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recovery_tokens: {
+        Row: {
+          assessment_id: string
+          case_id: string
+          created_at: string
+          crew_profile_id: string
+          expires_at: string
+          purpose: string
+          revoked_at: string | null
+          token_hash: string
+          used_at: string | null
+        }
+        Insert: {
+          assessment_id: string
+          case_id: string
+          created_at?: string
+          crew_profile_id: string
+          expires_at: string
+          purpose?: string
+          revoked_at?: string | null
+          token_hash: string
+          used_at?: string | null
+        }
+        Update: {
+          assessment_id?: string
+          case_id?: string
+          created_at?: string
+          crew_profile_id?: string
+          expires_at?: string
+          purpose?: string
+          revoked_at?: string | null
+          token_hash?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recovery_tokens_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "recovery_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       referral_codes: {
         Row: {
           active: boolean
@@ -4755,6 +4884,7 @@ export type Database = {
       get_my_credit_balance: { Args: never; Returns: Json }
       get_my_fleet: { Args: never; Returns: Json }
       get_my_offers: { Args: never; Returns: Json }
+      get_my_recovery: { Args: never; Returns: Json }
       get_my_referral_stats: { Args: never; Returns: Json }
       get_my_safety_reports: { Args: never; Returns: Json }
       get_my_sos_contacts: { Args: never; Returns: Json }
@@ -4807,6 +4937,7 @@ export type Database = {
         Returns: Json
       }
       process_answer_scoring_queue: { Args: never; Returns: string }
+      process_recovery_queue: { Args: never; Returns: string }
       process_scoring_jobs: { Args: never; Returns: string }
       rank_group_of: { Args: { p_rank: string }; Returns: string }
       record_interruption: {
@@ -4818,6 +4949,28 @@ export type Database = {
         Args: { p_assessment_id: string; p_reason: string }
         Returns: undefined
       }
+      recovery_claim_due: {
+        Args: { p_assessment_id?: string; p_limit?: number }
+        Returns: Json
+      }
+      recovery_health_check: {
+        Args: { p_assessment_id: string }
+        Returns: Json
+      }
+      recovery_log: {
+        Args: { p_case: string; p_detail?: Json; p_event: string }
+        Returns: undefined
+      }
+      recovery_mark_sent: {
+        Args: { p_case: string; p_error?: string; p_ok: boolean }
+        Returns: undefined
+      }
+      recovery_policy: { Args: never; Returns: Json }
+      recovery_test_simulate: {
+        Args: { p_assessment_id: string }
+        Returns: Json
+      }
+      redeem_recovery_token: { Args: { p_token: string }; Returns: Json }
       refresh_ticker_stats: { Args: never; Returns: undefined }
       report_company_post: {
         Args: { post_id: string; reason?: string }
