@@ -112,16 +112,25 @@ Deno.serve(async (req) => {
     rank = String(ctx.canonical_rank);
     if (ctx.vessel_context && ctx.vessel_context !== 'General') vesselType = sanitize(String(ctx.vessel_context), 100);
   }
-  let taxonomy: string[] = [];
-  try {
-    const { data: tx } = await adminClient.from('rank_taxonomy').select('rank_pattern');
-    taxonomy = ((tx as any[]) || []).map((r) => String(r.rank_pattern || '').toLowerCase().trim()).filter(Boolean);
-  } catch (_e) { taxonomy = []; }
-  const norm = (r: string) => ' ' + (r || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() + ' ';
-  const isSupported = (r: string) => {
-    const n = norm(r);
-    return n.trim().length > 0 && taxonomy.some((p) => n.includes(' ' + p.replace(/[^a-z0-9]+/g, ' ').trim() + ' '));
+  // R1: single canonical resolver (DB). Ambiguous/unknown => fail closed.
+  const resolvedCache = new Map<string, string | null>();
+  const resolveCanon = async (r: string): Promise<string | null> => {
+    const k = (r || '').trim();
+    if (!k) return null;
+    if (resolvedCache.has(k)) return resolvedCache.get(k)!;
+    let out: string | null = null;
+    try {
+      const { data } = await adminClient.rpc('resolve_canonical_rank', { p_rank: k });
+      if ((data as any)?.ok && (data as any)?.canonical_rank) out = String((data as any).canonical_rank);
+    } catch (_e) { out = null; }
+    resolvedCache.set(k, out);
+    return out;
   };
+  {
+    const c = await resolveCanon(rank);
+    if (c) rank = c;
+  }
+  const isSupported = (r: string) => !!r && resolvedCache.get(r.trim()) != null && resolvedCache.get(r.trim()) === r.trim();
   const rankSource: string[] = [];
   if (!isSupported(rank) && !isCompanyMode && gate.userId) {
     // Resolve from what SeaMinds already holds — never ask the candidate again.
