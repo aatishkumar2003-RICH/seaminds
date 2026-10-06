@@ -76,6 +76,8 @@ import InterviewInvite from "./pages/InterviewInvite";
 import InterviewExam from "./pages/InterviewExam";
 import AdminDashboard from "./pages/AdminDashboard";
 import Verify from "./pages/Verify";
+import Recover from "./pages/Recover";
+import RecoveryBanner from "./components/RecoveryBanner";
 import CrewCard from "./pages/CrewCard";
 import Marketing from "./pages/Marketing";
 import OAuthConsent from "./pages/OAuthConsent";
@@ -201,8 +203,10 @@ const App = () => (
             <Route path="/crew/view/:token" element={<CrewCard />} />
             <Route path="/crew/:token" element={<CrewCard />} />
             <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
+            <Route path="/recover/:token" element={<Recover />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <RecoveryBanner />
           <CookieConsent />
           <InstallPrompt />
         </BrowserRouter>
