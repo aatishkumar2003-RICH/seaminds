@@ -478,6 +478,59 @@ export type Database = {
         }
         Relationships: []
       }
+      assessment_checkpoints: {
+        Row: {
+          assessment_id: string
+          crew_profile_id: string
+          current_index: number
+          delivered_at: string | null
+          elapsed_seconds: number
+          interrupted_at: string | null
+          interruption_reason: string | null
+          interruption_state: string | null
+          last_seen_at: string
+          lifecycle_state: string
+          paper_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          assessment_id: string
+          crew_profile_id: string
+          current_index?: number
+          delivered_at?: string | null
+          elapsed_seconds?: number
+          interrupted_at?: string | null
+          interruption_reason?: string | null
+          interruption_state?: string | null
+          last_seen_at?: string
+          lifecycle_state?: string
+          paper_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assessment_id?: string
+          crew_profile_id?: string
+          current_index?: number
+          delivered_at?: string | null
+          elapsed_seconds?: number
+          interrupted_at?: string | null
+          interruption_reason?: string | null
+          interruption_state?: string | null
+          last_seen_at?: string
+          lifecycle_state?: string
+          paper_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_checkpoints_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: true
+            referencedRelation: "smc_assessments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assessment_items: {
         Row: {
           answer_key: Json
@@ -559,6 +612,45 @@ export type Database = {
           source_version?: string | null
           updated_at?: string
           vessel_scope?: string[]
+        }
+        Relationships: []
+      }
+      assessment_state_log: {
+        Row: {
+          actor: string | null
+          assessment_id: string
+          created_at: string
+          event: string
+          from_state: string | null
+          id: number
+          paper_id: string | null
+          reason: string | null
+          source: string | null
+          to_state: string | null
+        }
+        Insert: {
+          actor?: string | null
+          assessment_id: string
+          created_at?: string
+          event: string
+          from_state?: string | null
+          id?: number
+          paper_id?: string | null
+          reason?: string | null
+          source?: string | null
+          to_state?: string | null
+        }
+        Update: {
+          actor?: string | null
+          assessment_id?: string
+          created_at?: string
+          event?: string
+          from_state?: string | null
+          id?: number
+          paper_id?: string | null
+          reason?: string | null
+          source?: string | null
+          to_state?: string | null
         }
         Relationships: []
       }
@@ -3277,6 +3369,60 @@ export type Database = {
           },
         ]
       }
+      paper_supersessions: {
+        Row: {
+          answered_count: number
+          assessment_id: string
+          authorized_by: string
+          created_at: string
+          disposition: string
+          id: string
+          new_paper_id: string | null
+          old_paper_id: string
+          reason: string
+          recovery_policy: string
+        }
+        Insert: {
+          answered_count?: number
+          assessment_id: string
+          authorized_by: string
+          created_at?: string
+          disposition: string
+          id?: string
+          new_paper_id?: string | null
+          old_paper_id: string
+          reason: string
+          recovery_policy: string
+        }
+        Update: {
+          answered_count?: number
+          assessment_id?: string
+          authorized_by?: string
+          created_at?: string
+          disposition?: string
+          id?: string
+          new_paper_id?: string | null
+          old_paper_id?: string
+          reason?: string
+          recovery_policy?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paper_supersessions_new_paper_id_fkey"
+            columns: ["new_paper_id"]
+            isOneToOne: false
+            referencedRelation: "issued_papers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "paper_supersessions_old_paper_id_fkey"
+            columns: ["old_paper_id"]
+            isOneToOne: true
+            referencedRelation: "issued_papers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_engagement: {
         Row: {
           action: string
@@ -4445,6 +4591,10 @@ export type Database = {
         Args: { p_activate: boolean; p_email: string }
         Returns: string
       }
+      admin_reissue_paper: {
+        Args: { p_assessment_id: string; p_policy?: string; p_reason: string }
+        Returns: Json
+      }
       admin_upsert_referral_code: {
         Args: {
           p_channel: string
@@ -4610,6 +4760,7 @@ export type Database = {
       get_my_sos_contacts: { Args: never; Returns: Json }
       get_public_ticker_stats: { Args: never; Returns: Json }
       get_referral_stats: { Args: never; Returns: Json }
+      get_resume_state: { Args: { p_assessment_id: string }; Returns: Json }
       get_social_pulse: { Args: never; Returns: Json }
       get_trade_log: { Args: { p_limit?: number }; Returns: Json }
       get_voyage_state: { Args: never; Returns: Json }
@@ -4658,7 +4809,15 @@ export type Database = {
       process_answer_scoring_queue: { Args: never; Returns: string }
       process_scoring_jobs: { Args: never; Returns: string }
       rank_group_of: { Args: { p_rank: string }; Returns: string }
+      record_interruption: {
+        Args: { p_assessment_id: string; p_kind: string; p_reason?: string }
+        Returns: Json
+      }
       record_referral: { Args: { p_code: string }; Returns: Json }
+      record_system_interruption: {
+        Args: { p_assessment_id: string; p_reason: string }
+        Returns: undefined
+      }
       refresh_ticker_stats: { Args: never; Returns: undefined }
       report_company_post: {
         Args: { post_id: string; reason?: string }
@@ -4700,6 +4859,14 @@ export type Database = {
       }
       resolve_rank: { Args: { p_rank: string }; Returns: Json }
       reveal_contact: { Args: { p_crew_id: string }; Returns: Json }
+      save_checkpoint: {
+        Args: {
+          p_assessment_id: string
+          p_current_index: number
+          p_elapsed_seconds?: number
+        }
+        Returns: Json
+      }
       seaminds_housekeeping: { Args: never; Returns: string }
       search_maritime_history: {
         Args: { p_kind?: string; p_limit?: number; p_query?: string }
