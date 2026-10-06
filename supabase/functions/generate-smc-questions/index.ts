@@ -111,16 +111,11 @@ Deno.serve(async (req) => {
   const rankSource: string[] = [];
   if (!isSupported(rank) && !isCompanyMode && gate.userId) {
     // Resolve from what SeaMinds already holds — never ask the candidate again.
+    // R0: only the current profile rank is authoritative. role and CV history are never used.
     const candidates: { v: string; src: string }[] = [];
     try {
-      const { data: cp } = await adminClient.from('crew_profiles').select('rank, role').eq('id', gate.userId).maybeSingle();
-      candidates.push({ v: (cp as any)?.rank || '', src: 'crew_profiles.rank' }, { v: (cp as any)?.role || '', src: 'crew_profiles.role' });
-    } catch (_e) { /* ignore */ }
-    try {
-      const { data: cvr } = await adminClient.from('crew_cv_data').select('sea_service').eq('user_id', gate.userId).maybeSingle();
-      const ss = Array.isArray((cvr as any)?.sea_service) ? (cvr as any).sea_service : [];
-      const first = ss[0] || {};
-      candidates.push({ v: first.rank || first.rankOnBoard || first.position || '', src: 'crew_cv_data.sea_service[0]' });
+      const { data: cp } = await adminClient.from('crew_profiles').select('rank').eq('id', gate.userId).maybeSingle();
+      candidates.push({ v: (cp as any)?.rank || '', src: 'crew_profiles.rank' });
     } catch (_e) { /* ignore */ }
     const hit = candidates.find((c) => isSupported(c.v));
     if (hit) { rankSource.push(hit.src); rank = sanitize(hit.v, 100); }
