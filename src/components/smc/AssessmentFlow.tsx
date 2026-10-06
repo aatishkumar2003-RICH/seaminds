@@ -88,6 +88,13 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   const [preForm, setPreForm] = useState<{reasonForLeaving:string,expectedSalary:string,availabilityDate:string,medicalFit:boolean,accidentHistory:string,pscDetention:boolean,nearMiss:boolean,safetyViolation:boolean,pscDetentionDetail:string,nearMissDetail:string,safetyViolationDetail:string}>({ reasonForLeaving:'', expectedSalary:'', availabilityDate:'', medicalFit:true, accidentHistory:'', pscDetention:false, nearMiss:false, safetyViolation:false, pscDetentionDetail:'', nearMissDetail:'', safetyViolationDetail:'' });
 
   const [cvSummary, setCvSummary] = useState<{certs:number; service:number; hasCv:boolean} | null>(null);
+  const offlineSinceRef = useRef<number | null>(null);
+  const flowStepRef = useRef(flowStep);
+  flowStepRef.current = flowStep;
+  const reportInterruption = (kind: string, reason: string) => {
+    if (!assessmentId || flowStepRef.current === 'score') return;
+    void supabase.rpc('record_interruption' as any, { p_assessment_id: assessmentId, p_kind: kind, p_reason: reason }).then(() => {}, () => {});
+  };
 
   // ── Resilience: persistence + resume ──
   const seqRef = useRef(0);
