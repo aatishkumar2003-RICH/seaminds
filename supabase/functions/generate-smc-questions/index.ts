@@ -98,6 +98,20 @@ Deno.serve(async (req) => {
       if (bv?.until && Date.now() < Number(bv.until)) return unavailable(bv.reason || 'paper_unavailable');
     } catch (_e) { /* ignore */ }
   }
+  // ── R1 PRE-FLIGHT GATE: no paper until the canonical context is resolved and accepted ──
+  if (assessmentKey) {
+    const { data: pf } = await adminClient.from('smc_assessments')
+      .select('preflight_context, preflight_confirmed_at, crew_profile_id').eq('id', assessmentKey).maybeSingle();
+    const ctx: any = (pf as any)?.preflight_context;
+    if (!gate.isWorker && (pf as any)?.crew_profile_id && (pf as any).crew_profile_id !== gate.userId) {
+      return new Response(JSON.stringify({ error_code: 'NOT_FOUND' }), { status: 404, headers: jsonH });
+    }
+    if (!ctx?.canonical_rank || !(pf as any)?.preflight_confirmed_at) {
+      return new Response(JSON.stringify({ status: 'preflight_required', error_code: 'PREFLIGHT_REQUIRED', attempt_preserved: true }), { status: 409, headers: jsonH });
+    }
+    rank = String(ctx.canonical_rank);
+    if (ctx.vessel_context && ctx.vessel_context !== 'General') vesselType = sanitize(String(ctx.vessel_context), 100);
+  }
   let taxonomy: string[] = [];
   try {
     const { data: tx } = await adminClient.from('rank_taxonomy').select('rank_pattern');

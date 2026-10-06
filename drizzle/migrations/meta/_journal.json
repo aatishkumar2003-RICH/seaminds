@@ -36,6 +36,41 @@
       "when": 1791287206087,
       "tag": "0004_market_indices_include_direct_postings",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791299991083,
+      "tag": "0005_r1_rank_taxonomy_preflight",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791300016303,
+      "tag": "0006_r1_resolver_ambiguity",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791300035993,
+      "tag": "0007_r1_resolver_cte",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791300053829,
+      "tag": "0008_r1_resolver_vars",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791300123594,
+      "tag": "0009_r1_protect_preflight_columns",
+      "breakpoints": true
     }
   ]
 }

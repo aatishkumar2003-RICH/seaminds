@@ -161,6 +161,7 @@ const InterviewExam = () => {
           yearsExperience={ctx.yearsExperience}
           mode="interview"
           onComplete={finish}
+          onExit={() => navigate("/feed")}
         />
       </div>
     </div>
