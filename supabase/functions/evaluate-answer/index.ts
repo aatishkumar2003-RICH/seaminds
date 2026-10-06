@@ -16,10 +16,10 @@ Deno.serve(async (req) => {
 
   // ── Rate limiting ──
   // R3: keyed on the authenticated candidate, never on shared ship/NAT IP (IP kept only in other telemetry)
-  const rateLimitKey = gate.isWorker ? `evaluate-answer:worker:${crypto.randomUUID()}` : `evaluate-answer:user:${gate.userId}`;
+  const rateLimitKey = gate.isWorker ? `evaluate-answer:worker` : `evaluate-answer:user:${gate.userId}`;
 
   const windowMs = 10 * 60 * 1000;
-  const maxAttempts = 30;
+  const maxAttempts = gate.isWorker ? 100000 : 60;
   const { data: rl } = await adminClient.from('auth_rate_limits').select('*').eq('ip_address', rateLimitKey).maybeSingle();
   const now = Date.now();
   if (rl) {
