@@ -99,6 +99,13 @@
       "when": 1791300728848,
       "tag": "0013_r2_issue_paper_test_vessel_relax",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1791300799419,
+      "tag": "0014_r2_issue_paper_strip_option_letters",
+      "breakpoints": true
     }
   ]
 }
