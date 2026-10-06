@@ -78,6 +78,13 @@
       "when": 1791300273653,
       "tag": "0010_r1_preflight_profile_authority",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791300593982,
+      "tag": "0011_r2_governed_inventory_issued_papers",
+      "breakpoints": true
     }
   ]
 }
