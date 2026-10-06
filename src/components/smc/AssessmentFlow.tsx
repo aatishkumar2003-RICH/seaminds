@@ -355,70 +355,42 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     setMcqSubmitted(true);
     setTimerActive(false);
 
-    // Evaluate MCQ
+    // R3: write-first ledger; MCQ graded deterministically on the server
     setEvaluating(true);
     try {
-      const token = accessToken;
-      const { data } = await supabase.functions.invoke('evaluate-answer', {
-        body: {
-          question: currentQ.question,
-          answer: selected.toString(),
-          question_type: 'mcq',
-          paper_item_id: currentQ.id,
-          rank,
-          experience_tier: aiQuestions?.candidate_context?.experience_tier || 'MID',
-          department: aiQuestions?.candidate_context?.department || 'DECK',
-          mode: interviewMode,
-          assessmentId,
-        },
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setMcqCorrect(!!data?.is_correct);
-      const entry = { question: currentQ.question, answer: selected.toString(), score: data?.score || 0, redFlag: data?.red_flag || false, redFlagCategory: data?.red_flag_category || null, followUp: data?.follow_up_question || null };
+      const d = await submitToLedger(currentQ.id, selected.toString());
+      if (!d) { setMcqSubmitted(false); setTimerActive(true); return; }
+      setMcqCorrect(!!d.is_correct);
+      const entry = { question: currentQ.question, answer: selected.toString(), score: Number(d.score) || 0, redFlag: false, redFlagCategory: null, followUp: null };
       setTranscript(prev => [...prev, entry]);
-      void persistAnswer({ question: currentQ.question, answer: selected.toString(), question_type: 'mcq', is_followup: false, ai_score: entry.score, red_flag: entry.redFlag, red_flag_category: entry.redFlagCategory });
-      if (data?.red_flag && data?.red_flag_evidence) {
-        setRedFlags(prev => [...prev, { category: data.red_flag_category, evidence: data.red_flag_evidence, question: currentQ.question, answer: selected.toString() }]);
-      }
-      if (data?.follow_up_question) {
-        setPendingFollowUp(data.follow_up_question);
-      }
-    } catch { /* silent */ }
-    finally { setEvaluating(false); }
+      void persistAnswer({ question: currentQ.question, answer: selected.toString(), question_type: 'mcq', is_followup: false, ai_score: entry.score, red_flag: false, red_flag_category: null });
+    } finally { setEvaluating(false); }
+  };
+
+  // Idempotent write-first submit (safe to retry; first answer always wins on the server)
+  const submitToLedger = async (paperItemId: string, answer: string): Promise<any | null> => {
+    for (let i = 0; i < 4; i++) {
+      const { data, error } = await supabase.rpc('submit_paper_answer' as any, { p_assessment_id: assessmentId, p_paper_item_id: paperItemId, p_answer: answer });
+      const d: any = data;
+      if (!error && d?.ok) return d;
+      if (d?.error_code && d.error_code !== 'RATE_LIMITED') break;
+      await new Promise((r) => setTimeout(r, 1500 * (i + 1)));
+    }
+    toast.error("Couldn't save your answer — check your connection and press submit again.");
+    return null;
   };
 
   const submitAnswer = async (question: string, answer: string, currentQ: FlatQuestion) => {
     setEvaluating(true);
     setTimerActive(false);
     try {
-      const token = accessToken;
-      const { data } = await supabase.functions.invoke('evaluate-answer', {
-        body: {
-          question,
-          answer,
-          question_type: currentQ.type,
-          paper_item_id: currentQ.id,
-          rank,
-          experience_tier: aiQuestions?.candidate_context?.experience_tier || 'MID',
-          department: aiQuestions?.candidate_context?.department || 'DECK',
-          mode: interviewMode,
-          assessmentId,
-        },
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const entry = { question, answer, score: data?.score || 0, redFlag: data?.red_flag || false, redFlagCategory: data?.red_flag_category || null, followUp: data?.follow_up_question || null };
-      setTranscript(prev => [...prev, entry]);
-      void persistAnswer({ question, answer, question_type: currentQ.type, is_followup: false, ai_score: entry.score, red_flag: entry.redFlag, red_flag_category: entry.redFlagCategory });
-      if (data?.red_flag && data?.red_flag_evidence) {
-        setRedFlags(prev => [...prev, { category: data.red_flag_category, evidence: data.red_flag_evidence, question, answer }]);
-      }
-      if (data?.follow_up_question) {
-        setPendingFollowUp(data.follow_up_question);
-        setEvaluating(false);
-        return;
-      }
-    } catch { /* silent */ }
-    finally { setEvaluating(false); }
+      const d = await submitToLedger(currentQ.id, answer);
+      if (!d) { setTimerActive(true); return; }
+      // Scoring runs asynchronously and is retried on failure; it never blocks or zeroes the answer.
+      void supabase.functions.invoke('score-paper-answers', { body: { assessmentId }, headers: { Authorization: `Bearer ${accessToken}` } }).catch(() => null);
+      setTranscript(prev => [...prev, { question, answer, score: 0, redFlag: false, redFlagCategory: null, followUp: null }]);
+      void persistAnswer({ question, answer, question_type: currentQ.type, is_followup: false, ai_score: null, red_flag: false, red_flag_category: null });
+    } finally { setEvaluating(false); }
     advanceQuestion();
   };
 

@@ -77,17 +77,26 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
       const authHeaders = { Authorization: `Bearer ${accessToken}` };
 
       // Server owns scoring — it writes the protected fields with the service role.
-      await supabase.functions.invoke("score-assessment", {
-        body: {
-          assessmentId,
-          rank,
-          firstName,
-          transcript: transcript || [],
-          redFlags: redFlags || [],
-          candidateContext: candidateContext || {},
-        },
-        headers: authHeaders,
-      }).catch(() => null);
+      // R3: if answers are still being scored, the server answers SCORING_PENDING; keep the
+      // saved answers, nudge the scoring queue and try again instead of finalising early.
+      for (let attempt = 0; attempt < 18 && !cancelled; attempt++) {
+        const res = await supabase.functions.invoke("score-assessment", {
+          body: {
+            assessmentId,
+            rank,
+            firstName,
+            transcript: transcript || [],
+            redFlags: redFlags || [],
+            candidateContext: candidateContext || {},
+          },
+          headers: authHeaders,
+        }).catch(() => null);
+        let code: string | undefined;
+        try { code = (await (res as any)?.error?.context?.json?.())?.error_code; } catch { /* not JSON */ }
+        if (code !== "SCORING_PENDING") break;
+        await supabase.functions.invoke("score-paper-answers", { body: { assessmentId }, headers: authHeaders }).catch(() => null);
+        await new Promise(r => setTimeout(r, 10000));
+      }
 
       // Read back what the server stored, polling up to ~60s
       let stored = null;

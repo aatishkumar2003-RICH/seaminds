@@ -16,9 +16,9 @@ Deno.serve(async (req) => {
 
   // ── Rate limiting ──
 
-  const rateLimitKey = `score-assessment:${clientIP}`;
+  const rateLimitKey = gate.isWorker ? `score-assessment:worker` : `score-assessment:user:${gate.userId}`; // R3: per-candidate, not shared IP
   const windowMs = 10 * 60 * 1000;
-  const maxAttempts = 5;
+  const maxAttempts = gate.isWorker ? 100000 : 30;
   const { data: rl } = await adminClient.from('auth_rate_limits').select('*').eq('ip_address', rateLimitKey).maybeSingle();
   const now = Date.now();
   if (rl) {
@@ -39,7 +39,27 @@ Deno.serve(async (req) => {
 
   const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 
-  const { rank, firstName, transcript, candidateContext, assessmentId, redFlags } = await req.json();
+  let { rank, firstName, transcript, candidateContext, assessmentId, redFlags } = await req.json();
+
+  // ── R3: issued-paper assessments are scored only from the server answer ledger ──
+  if (assessmentId) {
+    const { data: paper } = await adminClient.from('issued_papers').select('id, items, crew_profile_id').eq('assessment_id', assessmentId).eq('status', 'ISSUED').maybeSingle();
+    if (paper) {
+      if (!gate.isWorker && (paper as any).crew_profile_id !== gate.userId) return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: { ...cors, "Content-Type": "application/json" } });
+      const { data: led } = await adminClient.from('answer_ledger').select('paper_item_id, answer, scoring_state, score, result').eq('paper_id', (paper as any).id);
+      const rows = (led as any[]) || [];
+      const pending = rows.filter(r => r.scoring_state === 'PENDING' || r.scoring_state === 'RETRY_REQUIRED');
+      if (pending.length) {
+        return new Response(JSON.stringify({ error_code: 'SCORING_PENDING', pending: pending.length }), { status: 409, headers: { ...cors, "Content-Type": "application/json" } });
+      }
+      const byId = new Map(rows.map(r => [r.paper_item_id, r]));
+      // Unanswered items are genuine candidate non-responses (0); technical failures never reach here.
+      transcript = ((paper as any).items as any[]).map((it: any) => {
+        const r: any = byId.get(it.paper_item_id);
+        return { question: it.question, answer: r?.answer ?? '', score: Number(r?.score ?? 0), redFlag: !!r?.result?.red_flag, redFlagCategory: r?.result?.red_flag_category ?? null, followUp: null, type: it.type, domain: it.domain };
+      });
+    }
+  }
 
   const hasTranscript = Array.isArray(transcript) && transcript.length > 0;
 
