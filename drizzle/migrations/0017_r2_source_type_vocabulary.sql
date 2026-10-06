@@ -1,0 +1,3 @@
+ALTER TABLE public.assessment_items ADD CONSTRAINT assessment_items_source_type_chk CHECK (source_type IN ('STCW','SOLAS','MARPOL','ISM','MLC','COLREG','IMDG','FLAG_RULE','CLASS_RULE','COMPANY_PROCEDURE','MAKER_MANUAL','INDUSTRY_GUIDANCE','OTHER_GOVERNED','LEGACY_QUESTION_BANK','TEST_FIXTURE','AI_DRAFT'));
+ALTER TABLE public.assessment_items ADD CONSTRAINT assessment_items_ai_never_approved CHECK (NOT (approval_status = 'SME_APPROVED' AND source_type IN ('AI_DRAFT','LEGACY_QUESTION_BANK','TEST_FIXTURE')));
+ALTER TABLE public.assessment_items ADD CONSTRAINT assessment_items_sme_needs_domain CHECK (approval_status <> 'SME_APPROVED' OR (domain IS NOT NULL AND array_length(rank_scope,1) > 0));
