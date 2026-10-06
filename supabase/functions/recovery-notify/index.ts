@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
           method: "POST",
           headers: { Authorization: `Bearer ${RESEND_KEY}`, "Content-Type": "application/json", "Idempotency-Key": `recovery-${d.case_id}-${d.reminder}` },
           body: JSON.stringify({
-            from: "SeaMinds <crew@seaminds.life>", to: [d.email],
+            from: "SeaMinds <crew@seaminds.life>", to: [d.email], ...(d.support_email ? { reply_to: d.support_email } : {}),
             subject: d.is_test ? "[TEST] Your SeaMinds assessment is ready to resume" : "Your SeaMinds assessment is ready to resume",
             html: emailHtml(d.first_name, link, d.support_email),
           }),

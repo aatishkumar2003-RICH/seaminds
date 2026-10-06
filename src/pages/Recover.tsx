@@ -58,7 +58,8 @@ const Recover = () => {
           )}
           {state === "error" && (
             <>
-              <p className="text-foreground mb-5">{err}</p>
+              <p className="text-foreground mb-2">{err}</p>
+              <p className="text-xs text-muted-foreground mb-5">Need help? Contact support@seaminds.life</p>
               <button onClick={() => navigate("/app")} className="px-6 py-3 rounded-xl font-bold" style={{ background: "#D4AF37", color: "#0D1B2A" }}>
                 Open SeaMinds
               </button>
