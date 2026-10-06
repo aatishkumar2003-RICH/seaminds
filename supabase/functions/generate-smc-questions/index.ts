@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
   const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
   const { rank: _rank, vesselType: _vesselType, yearsExperience: _yearsExperience, department: _department, assessmentId: _assessmentId, mode: _mode } = await req.json();
   const sanitize = (str: string, maxLen: number) => (str || '').toString().substring(0, maxLen).trim();
-  const rank = sanitize(_rank, 100);
+  let rank = sanitize(_rank, 100);
   let vesselType = sanitize(_vesselType, 100);
   let department = sanitize(_department, 100);
   let yearsExperience = Math.min(Math.max(Number(_yearsExperience) || 0, 0), 60);
@@ -81,6 +81,62 @@ Deno.serve(async (req) => {
   const isCompanyMode = interviewMode === 'company';
   if (_assessmentId) {
     await adminClient.from('smc_assessments').update({ interview_mode: interviewMode }).eq('id', _assessmentId);
+  }
+
+  // ── R0 SAFETY GUARD: exact rank or fail closed; persistent backoff after a failed paper ──
+  const jsonH = { ...corsHeaders, "Content-Type": "application/json" };
+  const assessmentKey = sanitize((_assessmentId as string) || '', 60);
+  const backoffKey = assessmentKey ? `smc_backoff:${assessmentKey}` : '';
+  const BACKOFF_MS = 30 * 60 * 1000;
+  const unavailable = (reason: string) => new Response(JSON.stringify({
+    status: 'unavailable', error_code: 'POOL_UNAVAILABLE', reason, attempt_preserved: true,
+  }), { headers: jsonH });
+  if (backoffKey) {
+    try {
+      const { data: b } = await adminClient.from('admin_settings').select('value').eq('key', backoffKey).maybeSingle();
+      const bv = (b as any)?.value ? JSON.parse((b as any).value) : null;
+      if (bv?.until && Date.now() < Number(bv.until)) return unavailable(bv.reason || 'paper_unavailable');
+    } catch (_e) { /* ignore */ }
+  }
+  let taxonomy: string[] = [];
+  try {
+    const { data: tx } = await adminClient.from('rank_taxonomy').select('rank_pattern');
+    taxonomy = ((tx as any[]) || []).map((r) => String(r.rank_pattern || '').toLowerCase().trim()).filter(Boolean);
+  } catch (_e) { taxonomy = []; }
+  const norm = (r: string) => ' ' + (r || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() + ' ';
+  const isSupported = (r: string) => {
+    const n = norm(r);
+    return n.trim().length > 0 && taxonomy.some((p) => n.includes(' ' + p.replace(/[^a-z0-9]+/g, ' ').trim() + ' '));
+  };
+  const rankSource: string[] = [];
+  if (!isSupported(rank) && !isCompanyMode && gate.userId) {
+    // Resolve from what SeaMinds already holds — never ask the candidate again.
+    const candidates: { v: string; src: string }[] = [];
+    try {
+      const { data: cp } = await adminClient.from('crew_profiles').select('rank, role').eq('id', gate.userId).maybeSingle();
+      candidates.push({ v: (cp as any)?.rank || '', src: 'crew_profiles.rank' }, { v: (cp as any)?.role || '', src: 'crew_profiles.role' });
+    } catch (_e) { /* ignore */ }
+    try {
+      const { data: cvr } = await adminClient.from('crew_cv_data').select('sea_service').eq('user_id', gate.userId).maybeSingle();
+      const ss = Array.isArray((cvr as any)?.sea_service) ? (cvr as any).sea_service : [];
+      const first = ss[0] || {};
+      candidates.push({ v: first.rank || first.rankOnBoard || first.position || '', src: 'crew_cv_data.sea_service[0]' });
+    } catch (_e) { /* ignore */ }
+    const hit = candidates.find((c) => isSupported(c.v));
+    if (hit) { rankSource.push(hit.src); rank = sanitize(hit.v, 100); }
+  }
+  if (!isSupported(rank)) {
+    try {
+      await adminClient.from('app_events').insert({
+        event_type: 'smc_unresolved_rank', severity: 'warn', user_id: gate.userId,
+        message: `rank could not be confirmed: "${rank}"`,
+        metadata: { assessment_id: assessmentKey || null, incoming_rank: rank, mode: interviewMode },
+      });
+    } catch (_e) { /* ignore */ }
+    return new Response(JSON.stringify({
+      status: 'unresolved', error_code: 'UNRESOLVED_RANK', attempt_preserved: true,
+      message: 'We could not confirm your exact rank.',
+    }), { status: 422, headers: jsonH });
   }
 
   // ── RESOLVE CANDIDATE CONTEXT SERVER-SIDE (canonical DB helpers only) ──
@@ -678,6 +734,14 @@ Return ONLY valid JSON: {"pool":[{"id":"q1","domain":"safety|security|management
     try { await adminClient.from('admin_settings').delete().eq('key', lockKey); } catch (_e) { /* ignore */ }
   };
 
+  const specBackoffKey = `pool_backoff:${poolKey}|${experience_tier}`;
+  const setBackoff = async (reason: string) => {
+    const value = JSON.stringify({ until: Date.now() + BACKOFF_MS, reason });
+    try {
+      await adminClient.from('admin_settings').upsert({ key: specBackoffKey, value }, { onConflict: 'key' });
+      if (backoffKey) await adminClient.from('admin_settings').upsert({ key: backoffKey, value }, { onConflict: 'key' });
+    } catch (_e) { /* ignore */ }
+  };
   const buildPool = async (): Promise<void> => {
     try {
       const [recall, application, judgment] = await Promise.all([
@@ -698,8 +762,9 @@ Return ONLY valid JSON: {"pool":[{"id":"q1","domain":"safety|security|management
           message: `only ${pool.length}/40 validated questions (recall ${recall.length}, application ${application.length}, judgment ${judgment.length})`,
           severity: 'error',
           user_id: gate.userId,
-          metadata: { spec_key: poolKey, tier: experience_tier, rank, vessel_type: vesselType, built: pool.length },
+          metadata: { spec_key: poolKey, tier: experience_tier, rank, vessel_type: vesselType, built: pool.length, assessment_id: assessmentKey || null },
         });
+        await setBackoff('insufficient_pool');
       }
     } catch (e: any) {
       try {
@@ -708,9 +773,10 @@ Return ONLY valid JSON: {"pool":[{"id":"q1","domain":"safety|security|management
           message: (e?.message || 'pool generation threw').toString().slice(0, 400),
           severity: 'error',
           user_id: gate.userId,
-          metadata: { spec_key: poolKey, tier: experience_tier, rank, vessel_type: vesselType },
+          metadata: { spec_key: poolKey, tier: experience_tier, rank, vessel_type: vesselType, assessment_id: assessmentKey || null },
         });
       } catch (_e) { /* ignore */ }
+      await setBackoff('build_error');
     } finally {
       await releaseLock();
     }
@@ -740,6 +806,16 @@ Return ONLY valid JSON: {"pool":[{"id":"q1","domain":"safety|security|management
         const { data: lockRow } = await adminClient.from('admin_settings').select('value').eq('key', lockKey).maybeSingle();
         const ts = (lockRow as any)?.value ? Date.parse((lockRow as any).value) : 0;
         if (ts && Date.now() - ts < LOCK_MS) alreadyBuilding = true;
+      } catch (_e) { /* ignore */ }
+    }
+    if (!alreadyBuilding) {
+      try {
+        const { data: sb } = await adminClient.from('admin_settings').select('value').eq('key', specBackoffKey).maybeSingle();
+        const sv = (sb as any)?.value ? JSON.parse((sb as any).value) : null;
+        if (sv?.until && Date.now() < Number(sv.until)) {
+          if (backoffKey) await adminClient.from('admin_settings').upsert({ key: backoffKey, value: (sb as any).value }, { onConflict: 'key' });
+          return unavailable(sv.reason || 'paper_unavailable');
+        }
       } catch (_e) { /* ignore */ }
     }
     if (!alreadyBuilding) {
