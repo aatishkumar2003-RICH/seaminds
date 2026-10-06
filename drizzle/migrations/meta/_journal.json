@@ -36,6 +36,13 @@
       "when": 1791287206087,
       "tag": "0004_market_indices_include_direct_postings",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791299991083,
+      "tag": "0005_r1_rank_taxonomy_preflight",
+      "breakpoints": true
     }
   ]
 }

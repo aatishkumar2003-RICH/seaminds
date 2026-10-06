@@ -3100,17 +3100,26 @@ export type Database = {
       }
       rank_taxonomy: {
         Row: {
+          canonical_rank: string | null
           department: string
+          department_label: string | null
+          level: string | null
           rank_group: string
           rank_pattern: string
         }
         Insert: {
+          canonical_rank?: string | null
           department: string
+          department_label?: string | null
+          level?: string | null
           rank_group: string
           rank_pattern: string
         }
         Update: {
+          canonical_rank?: string | null
           department?: string
+          department_label?: string | null
+          level?: string | null
           rank_group?: string
           rank_pattern?: string
         }
@@ -3358,6 +3367,9 @@ export type Database = {
           judgment_score: number | null
           level_profile: Json | null
           overall_score: number | null
+          preflight_confirmed_at: string | null
+          preflight_context: Json | null
+          preflight_source: string | null
           probed_claims: Json | null
           recommendation: string | null
           red_flags: Json | null
@@ -3384,6 +3396,9 @@ export type Database = {
           judgment_score?: number | null
           level_profile?: Json | null
           overall_score?: number | null
+          preflight_confirmed_at?: string | null
+          preflight_context?: Json | null
+          preflight_source?: string | null
           probed_claims?: Json | null
           recommendation?: string | null
           red_flags?: Json | null
@@ -3410,6 +3425,9 @@ export type Database = {
           judgment_score?: number | null
           level_profile?: Json | null
           overall_score?: number | null
+          preflight_confirmed_at?: string | null
+          preflight_context?: Json | null
+          preflight_source?: string | null
           probed_claims?: Json | null
           recommendation?: string | null
           red_flags?: Json | null
@@ -4046,6 +4064,7 @@ export type Database = {
         Args: { p_assessment_id: string; p_invite_id: string }
         Returns: Json
       }
+      confirm_preflight: { Args: { p_assessment_id: string }; Returns: Json }
       contracts_midpoint: { Args: { p_band: string }; Returns: number }
       count_matching_vacancies: {
         Args: { p_families?: string[]; p_rank?: string }
@@ -4163,6 +4182,10 @@ export type Database = {
         Returns: boolean
       }
       placement_release_scan: { Args: never; Returns: string }
+      preflight_assessment: {
+        Args: { p_assessment_id: string; p_rank?: string }
+        Returns: Json
+      }
       process_scoring_jobs: { Args: never; Returns: string }
       rank_group_of: { Args: { p_rank: string }; Returns: string }
       record_referral: { Args: { p_code: string }; Returns: Json }
@@ -4171,6 +4194,11 @@ export type Database = {
         Args: { post_id: string; reason?: string }
         Returns: boolean
       }
+      report_rank_mismatch: {
+        Args: { p_assessment_id: string; p_note?: string }
+        Returns: Json
+      }
+      resolve_canonical_rank: { Args: { p_rank: string }; Returns: Json }
       resolve_interview_spec: {
         Args: { p_rank: string; p_vessel: string; p_years_in_rank: number }
         Returns: Json
