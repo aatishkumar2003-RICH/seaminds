@@ -304,7 +304,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
           }
           if (data?.error_code === 'UNRESOLVED_RANK' || data?.error_code === 'POOL_UNAVAILABLE') {
             // Terminal for this attempt: stop polling, keep the attempt, no raw error.
-            await logEvent(data.error_code === 'UNRESOLVED_RANK' ? 'smc_unresolved_rank' : 'smc_paper_unavailable', data.reason || data.error_code, 'warn');
+            await logEvent(data.error_code === 'UNRESOLVED_RANK' ? 'smc_unresolved_rank' : 'smc_paper_unavailable', data.reason || data.error_code, 'warning');
             setPaperBlocked(data.error_code);
             return;
           }
