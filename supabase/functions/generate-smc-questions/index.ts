@@ -112,18 +112,27 @@ Deno.serve(async (req) => {
     rank = String(ctx.canonical_rank);
     if (ctx.vessel_context && ctx.vessel_context !== 'General') vesselType = sanitize(String(ctx.vessel_context), 100);
   }
-  let taxonomy: string[] = [];
-  try {
-    const { data: tx } = await adminClient.from('rank_taxonomy').select('rank_pattern');
-    taxonomy = ((tx as any[]) || []).map((r) => String(r.rank_pattern || '').toLowerCase().trim()).filter(Boolean);
-  } catch (_e) { taxonomy = []; }
-  const norm = (r: string) => ' ' + (r || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() + ' ';
-  const isSupported = (r: string) => {
-    const n = norm(r);
-    return n.trim().length > 0 && taxonomy.some((p) => n.includes(' ' + p.replace(/[^a-z0-9]+/g, ' ').trim() + ' '));
+  // R1: single canonical resolver (DB). Ambiguous/unknown => fail closed.
+  const resolvedCache = new Map<string, string | null>();
+  const resolveCanon = async (r: string): Promise<string | null> => {
+    const k = (r || '').trim();
+    if (!k) return null;
+    if (resolvedCache.has(k)) return resolvedCache.get(k)!;
+    let out: string | null = null;
+    try {
+      const { data } = await adminClient.rpc('resolve_canonical_rank', { p_rank: k });
+      if ((data as any)?.ok && (data as any)?.canonical_rank) out = String((data as any).canonical_rank);
+    } catch (_e) { out = null; }
+    resolvedCache.set(k, out);
+    return out;
   };
+  let rankOk = false;
+  {
+    const c = await resolveCanon(rank);
+    if (c) { rank = c; rankOk = true; }
+  }
   const rankSource: string[] = [];
-  if (!isSupported(rank) && !isCompanyMode && gate.userId) {
+  if (!rankOk && !isCompanyMode && gate.userId) {
     // Resolve from what SeaMinds already holds — never ask the candidate again.
     // R0: only the current profile rank is authoritative. role and CV history are never used.
     const candidates: { v: string; src: string }[] = [];
@@ -131,10 +140,12 @@ Deno.serve(async (req) => {
       const { data: cp } = await adminClient.from('crew_profiles').select('rank').eq('id', gate.userId).maybeSingle();
       candidates.push({ v: (cp as any)?.rank || '', src: 'crew_profiles.rank' });
     } catch (_e) { /* ignore */ }
-    const hit = candidates.find((c) => isSupported(c.v));
-    if (hit) { rankSource.push(hit.src); rank = sanitize(hit.v, 100); }
+    for (const c of candidates) {
+      const canon = await resolveCanon(c.v);
+      if (canon) { rankSource.push(c.src); rank = canon; rankOk = true; break; }
+    }
   }
-  if (!isSupported(rank)) {
+  if (!rankOk) {
     try {
       await adminClient.from('app_events').insert({
         event_type: 'smc_unresolved_rank', severity: 'warn', user_id: gate.userId,
