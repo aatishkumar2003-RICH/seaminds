@@ -575,7 +575,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
               <p className="text-base font-bold" style={{ color: '#fff' }}>Your attempt is saved</p>
               <p className="text-[13px] leading-relaxed" style={{ color: '#94A3B8' }}>
                 {isCompany
-                  ? 'The rank set for this interview could not be confirmed, so no paper has been created. Nothing has been scored. Please contact the company or SeaMinds support.'
+                  ? 'The rank set for this interview could not be confirmed, so no paper has been created. Nothing has been scored. Please contact the company or SeaMinds support at support@seaminds.life.'
                   : 'We could not confirm your exact rank from your profile, so no paper has been created. Nothing has been scored. Please update your rank in your Profile.'}
               </p>
               {!isCompany && <button onClick={editProfile} className="w-full py-3 rounded-xl font-bold text-sm" style={{ background: '#D4AF37', color: '#0b1929' }}>Edit Profile</button>}
@@ -761,8 +761,8 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
             <p className="text-base font-bold" style={{ color: '#fff' }}>Your attempt is saved</p>
             <p className="text-[13px] leading-relaxed" style={{ color: '#94A3B8' }}>
               {paperBlocked === 'UNRESOLVED_RANK'
-                ? 'We could not confirm your exact rank, so we have not started a paper. Nothing has been scored and this does not count against you. Please contact SeaMinds support.'
-                : 'The question paper for your rank is temporarily unavailable. Nothing has been scored and this does not count against you. Please come back later or contact SeaMinds support.'}
+                ? 'We could not confirm your exact rank, so we have not started a paper. Nothing has been scored and this does not count against you. Please contact SeaMinds support at support@seaminds.life.'
+                : 'The question paper for your rank is temporarily unavailable. Nothing has been scored and this does not count against you. Please come back later or contact SeaMinds support at support@seaminds.life.'}
             </p>
             {onExit && (
               <button onClick={onExit} className="w-full py-3 rounded-xl font-bold text-sm"
