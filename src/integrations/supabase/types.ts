@@ -230,6 +230,161 @@ export type Database = {
         }
         Relationships: []
       }
+      answer_ledger: {
+        Row: {
+          answer: string
+          answer_state: string
+          answered_at: string
+          assessment_id: string
+          crew_profile_id: string
+          evaluated_at: string | null
+          id: string
+          is_correct: boolean | null
+          item_type: string
+          last_scoring_error: string | null
+          paper_id: string
+          paper_item_id: string
+          result: Json | null
+          score: number | null
+          scoring_attempts: number
+          scoring_state: string
+          submit_ip: string | null
+        }
+        Insert: {
+          answer: string
+          answer_state?: string
+          answered_at?: string
+          assessment_id: string
+          crew_profile_id: string
+          evaluated_at?: string | null
+          id?: string
+          is_correct?: boolean | null
+          item_type: string
+          last_scoring_error?: string | null
+          paper_id: string
+          paper_item_id: string
+          result?: Json | null
+          score?: number | null
+          scoring_attempts?: number
+          scoring_state: string
+          submit_ip?: string | null
+        }
+        Update: {
+          answer?: string
+          answer_state?: string
+          answered_at?: string
+          assessment_id?: string
+          crew_profile_id?: string
+          evaluated_at?: string | null
+          id?: string
+          is_correct?: boolean | null
+          item_type?: string
+          last_scoring_error?: string | null
+          paper_id?: string
+          paper_item_id?: string
+          result?: Json | null
+          score?: number | null
+          scoring_attempts?: number
+          scoring_state?: string
+          submit_ip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "answer_ledger_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "smc_assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "answer_ledger_paper_id_fkey"
+            columns: ["paper_id"]
+            isOneToOne: false
+            referencedRelation: "issued_papers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      answer_scoring_audit: {
+        Row: {
+          attempt: number | null
+          created_at: string
+          id: number
+          job_id: string | null
+          ledger_id: string
+          model: string | null
+          outcome: string
+          reason: string | null
+        }
+        Insert: {
+          attempt?: number | null
+          created_at?: string
+          id?: number
+          job_id?: string | null
+          ledger_id: string
+          model?: string | null
+          outcome: string
+          reason?: string | null
+        }
+        Update: {
+          attempt?: number | null
+          created_at?: string
+          id?: number
+          job_id?: string | null
+          ledger_id?: string
+          model?: string | null
+          outcome?: string
+          reason?: string | null
+        }
+        Relationships: []
+      }
+      answer_scoring_jobs: {
+        Row: {
+          assessment_id: string
+          attempts: number
+          created_at: string
+          id: string
+          last_error: string | null
+          ledger_id: string
+          max_attempts: number
+          next_attempt_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assessment_id: string
+          attempts?: number
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          ledger_id: string
+          max_attempts?: number
+          next_attempt_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assessment_id?: string
+          attempts?: number
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          ledger_id?: string
+          max_attempts?: number
+          next_attempt_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "answer_scoring_jobs_ledger_id_fkey"
+            columns: ["ledger_id"]
+            isOneToOne: true
+            referencedRelation: "answer_ledger"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_events: {
         Row: {
           created_at: string | null
@@ -517,6 +672,33 @@ export type Database = {
           key?: string
           updated_at?: string | null
           value?: Json | null
+        }
+        Relationships: []
+      }
+      candidate_rate_limits: {
+        Row: {
+          action: string
+          candidate_id: string
+          hits: number
+          last_ip: string | null
+          scope_id: string
+          window_start: string
+        }
+        Insert: {
+          action: string
+          candidate_id: string
+          hits?: number
+          last_ip?: string | null
+          scope_id: string
+          window_start?: string
+        }
+        Update: {
+          action?: string
+          candidate_id?: string
+          hits?: number
+          last_ip?: string | null
+          scope_id?: string
+          window_start?: string
         }
         Relationships: []
       }
@@ -4309,6 +4491,38 @@ export type Database = {
           whatsapp: string
         }[]
       }
+      candidate_rate_ok: {
+        Args: {
+          p_action: string
+          p_candidate: string
+          p_ip?: string
+          p_max: number
+          p_scope: string
+          p_window: string
+        }
+        Returns: boolean
+      }
+      claim_answer_scoring_jobs: {
+        Args: { p_assessment_id?: string; p_limit?: number }
+        Returns: {
+          assessment_id: string
+          attempts: number
+          created_at: string
+          id: string
+          last_error: string | null
+          ledger_id: string
+          max_attempts: number
+          next_attempt_at: string
+          status: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "answer_scoring_jobs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       claim_interview: {
         Args: { p_assessment_id?: string; p_token: string }
         Returns: Json
@@ -4511,6 +4725,14 @@ export type Database = {
           p_rank?: string
           p_vacancy_id?: string
           p_vessel?: string
+        }
+        Returns: Json
+      }
+      submit_paper_answer: {
+        Args: {
+          p_answer: string
+          p_assessment_id: string
+          p_paper_item_id: string
         }
         Returns: Json
       }
