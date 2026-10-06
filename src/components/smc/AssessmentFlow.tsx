@@ -267,86 +267,51 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     return () => { cancelled = true; };
   }, [assessmentId, rank]);
 
+  // R2: papers are issued server-side from governed inventory only (no live AI generation).
+  // The response is a sanitized immutable snapshot — it never contains answer keys.
   useEffect(() => {
     if (preflight.status !== 'confirmed') return;
     let cancelled = false;
-
-    const callOnce = async (poll: boolean) => {
-      const { data, error } = await supabase.functions.invoke('generate-smc-questions', {
-        body: {
-          rank,
-          assessmentId,
-          mode: interviewMode,
-          ...(vesselType ? { vesselType } : {}),
-          ...(yearsExperience ? { yearsExperience } : {}),
-        },
-        headers: poll
-          ? { Authorization: `Bearer ${accessToken}`, 'x-pool-poll': '1' }
-          : { Authorization: `Bearer ${accessToken}` },
-      });
-      if (error) {
-        // R0: structured fail-closed responses arrive as non-2xx with a JSON body
-        try {
-          const body = await (error as any)?.context?.json?.();
-          if (body?.error_code) return body;
-        } catch { /* not JSON */ }
-        throw error;
-      }
-      return data as any;
-    };
-
-    const fetchQuestions = async () => {
+    (async () => {
       setLoadingQuestions(true);
       setQuestionError(null);
-      const deadline = Date.now() + 6 * 60 * 1000;
-      let poll = false;
-      let netFails = 0;
       setPaperBlocked(null);
+      let netFails = 0;
       try {
         // eslint-disable-next-line no-constant-condition
         while (true) {
-          let data: any;
-          try { data = await callOnce(poll); netFails = 0; }
-          catch (e) {
-            // Transient network drop while waiting: retry a few times before giving up
-            if (++netFails <= 3 && Date.now() < deadline) { await new Promise((r) => setTimeout(r, 5000 * netFails)); poll = true; continue; }
-            throw e;
-          }
+          const { data, error } = await supabase.rpc('issue_paper' as any, { p_assessment_id: assessmentId });
           if (cancelled) return;
-          if (data?.mcq || data?.scenario || data?.behavioural) {
-            setAiQuestions(data);
+          if (error) {
+            if (++netFails <= 3) { await new Promise((r) => setTimeout(r, 4000 * netFails)); continue; }
+            throw error;
+          }
+          const d: any = data;
+          if (d?.ok && Array.isArray(d.items)) {
+            const pick = (t: string) => d.items.filter((q: any) => q.type === t).map((q: any) => ({ ...q, id: q.paper_item_id }));
+            setAiQuestions({
+              mcq: pick('mcq'), scenario: pick('scenario'),
+              behavioural: [...pick('behavioural'), ...pick('professional')],
+              candidate_context: { department: d.context?.department_code || 'DECK', experience_tier: 'MID' },
+            });
             return;
           }
-          if (data?.error_code === 'UNRESOLVED_RANK' || data?.error_code === 'POOL_UNAVAILABLE') {
-            // Terminal for this attempt: stop polling, keep the attempt, no raw error.
-            await logEvent(data.error_code === 'UNRESOLVED_RANK' ? 'smc_unresolved_rank' : 'smc_paper_unavailable', data.reason || data.error_code, 'warning');
-            setPaperBlocked(data.error_code);
-            return;
-          }
-          if (data?.status === 'building') {
-            if (Date.now() >= deadline) {
-              throw new Error('Your question paper is still being built. Please try again in a few minutes.');
-            }
-            poll = true;
-            await new Promise((r) => setTimeout(r, 5000));
-            continue;
-          }
-          throw new Error(data?.error || 'The assessment came back empty. Please try again.');
+          const code = d?.error_code || 'PAPER_NOT_READY';
+          await logEvent(code === 'UNRESOLVED_RANK' ? 'smc_unresolved_rank' : 'smc_paper_unavailable', code, 'warning');
+          setPaperBlocked(code === 'UNRESOLVED_RANK' ? 'UNRESOLVED_RANK' : 'POOL_UNAVAILABLE');
+          return;
         }
       } catch (error: any) {
         if (cancelled) return;
-        console.error('Failed to generate questions:', error);
-        const msg = error?.message || 'Could not load assessment questions.';
-        await logEvent('smc_stuck', msg, 'error');
+        const msg = 'Could not load your question paper. Your attempt is saved — please try again.';
+        await logEvent('smc_stuck', error?.message || msg, 'error');
         setQuestionError(msg);
       } finally {
         if (!cancelled) setLoadingQuestions(false);
       }
-    };
-
-    fetchQuestions();
+    })();
     return () => { cancelled = true; };
-  }, [rank, fetchAttempt, preflight.status]);
+  }, [fetchAttempt, preflight.status, assessmentId]);
 
 
   const handlePreFormSubmit = async () => {
