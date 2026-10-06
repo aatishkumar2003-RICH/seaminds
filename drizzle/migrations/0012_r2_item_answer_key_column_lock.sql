@@ -1,0 +1,3 @@
+REVOKE SELECT ON public.assessment_items FROM authenticated;
+GRANT SELECT (id, item_key, question_version, question_type, rank_scope, legacy_rank_group, department, level, vessel_scope, domain, cognitive_level, prompt, source_type, source_reference, source_version, approval_status, approval_basis, reviewed_by, reviewed_at, is_active, exposure_count, legacy_question_bank_id, created_at, updated_at) ON public.assessment_items TO authenticated;
+NOTIFY pgrst, 'reload schema';
