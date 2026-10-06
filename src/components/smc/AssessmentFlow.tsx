@@ -55,6 +55,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   const [flatQuestions, setFlatQuestions] = useState<FlatQuestion[]>([]);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
   const [questionError, setQuestionError] = useState<string | null>(null);
+  const [preflight, setPreflight] = useState<{ status: 'loading' | 'ready' | 'blocked' | 'confirmed'; ctx?: any; code?: string; reported?: boolean; busy?: boolean }>({ status: 'loading' });
   const [paperBlocked, setPaperBlocked] = useState<null | 'UNRESOLVED_RANK' | 'POOL_UNAVAILABLE'>(null);
   const [fetchAttempt, setFetchAttempt] = useState(0);
   const [qIndex, setQIndex] = useState(0);
@@ -253,7 +254,21 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
 
   // Fetch questions — the first paper for a rank/vessel is built in the background,
   // so we poll every 5 seconds for up to 6 minutes instead of timing out.
+  // R1 pre-flight: resolve canonical rank context server-side before any paper is generated
   useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase.rpc('preflight_assessment' as any, { p_assessment_id: assessmentId, p_rank: rank || null });
+      if (cancelled) return;
+      const d: any = data;
+      if (error || !d?.ok) { setPreflight({ status: 'blocked', code: d?.error_code || 'UNRESOLVED_RANK', ctx: d }); return; }
+      setPreflight({ status: d.confirmed ? 'confirmed' : 'ready', ctx: d });
+    })();
+    return () => { cancelled = true; };
+  }, [assessmentId, rank]);
+
+  useEffect(() => {
+    if (preflight.status !== 'confirmed') return;
     let cancelled = false;
 
     const callOnce = async (poll: boolean) => {
@@ -331,7 +346,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
 
     fetchQuestions();
     return () => { cancelled = true; };
-  }, [rank, fetchAttempt]);
+  }, [rank, fetchAttempt, preflight.status]);
 
 
   const handlePreFormSubmit = async () => {
@@ -535,6 +550,77 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   const timerMax = currentQ?.type === 'mcq' ? 60 : currentQ?.type === 'scenario' ? (currentQ.time_seconds || 180) : 90;
 
   // ── PRE-FORM ──
+  if (preflight.status !== 'confirmed') {
+    const c = preflight.ctx || {};
+    const isCompany = interviewMode === 'company';
+    const row = (k: string, v: string) => (
+      <div className="flex justify-between gap-3 py-2" style={{ borderBottom: '1px solid rgba(212,175,55,0.15)' }}>
+        <span className="text-[12px]" style={{ color: '#94A3B8' }}>{k}</span>
+        <span className="text-[13px] font-bold text-right" style={{ color: '#fff' }}>{v}</span>
+      </div>
+    );
+    const confirm = async () => {
+      setPreflight((p) => ({ ...p, busy: true }));
+      const { data } = await supabase.rpc('confirm_preflight' as any, { p_assessment_id: assessmentId });
+      if ((data as any)?.ok) setPreflight((p) => ({ ...p, status: 'confirmed', busy: false }));
+      else { setPreflight((p) => ({ ...p, busy: false })); toast.error('Could not confirm. Please try again.'); }
+    };
+    const report = async () => {
+      setPreflight((p) => ({ ...p, busy: true }));
+      const { data } = await supabase.rpc('report_rank_mismatch' as any, { p_assessment_id: assessmentId, p_note: null });
+      setPreflight((p) => ({ ...p, busy: false, reported: !!(data as any)?.ok }));
+      if ((data as any)?.ok) toast.success('Reported. The company target rank is unchanged.');
+    };
+    const editProfile = () => { toast('Open your Profile and correct your rank, then start again.'); onExit?.(); };
+    return (
+      <div className="flex flex-col h-full px-6 py-6 overflow-y-auto" style={{ background: '#0b1929' }}>
+        {onExit && (
+          <button onClick={onExit} className="flex items-center gap-1 text-sm mb-4 self-start" style={{ color: '#D4AF37' }}>
+            <ArrowLeft size={16} /> Back
+          </button>
+        )}
+        <div className="max-w-sm w-full mx-auto space-y-4">
+          {preflight.status === 'loading' ? (
+            <div className="text-center pt-10"><Loader2 size={28} className="animate-spin mx-auto" style={{ color: '#D4AF37' }} /></div>
+          ) : preflight.status === 'blocked' ? (
+            <div className="text-center space-y-3 pt-6">
+              <p className="text-3xl">⚓</p>
+              <p className="text-base font-bold" style={{ color: '#fff' }}>Your attempt is saved</p>
+              <p className="text-[13px] leading-relaxed" style={{ color: '#94A3B8' }}>
+                {isCompany
+                  ? 'The rank set for this interview could not be confirmed, so no paper has been created. Nothing has been scored. Please contact the company or SeaMinds support.'
+                  : 'We could not confirm your exact rank from your profile, so no paper has been created. Nothing has been scored. Please update your rank in your Profile.'}
+              </p>
+              {!isCompany && <button onClick={editProfile} className="w-full py-3 rounded-xl font-bold text-sm" style={{ background: '#D4AF37', color: '#0b1929' }}>Edit Profile</button>}
+            </div>
+          ) : (
+            <>
+              <p className="text-[10px] font-extrabold tracking-widest" style={{ color: '#D4AF37' }}>BEFORE YOU START</p>
+              <p className="text-base font-bold" style={{ color: '#fff' }}>{isCompany ? 'This interview is set for:' : 'Your assessment will be for:'}</p>
+              <div className="rounded-xl px-4 py-2" style={{ background: '#112240', border: '1px solid rgba(212,175,55,0.3)' }}>
+                {row('Rank', c.canonical_rank)}
+                {row('Department', c.department)}
+                {row('Level', c.level)}
+                {row('Vessel', c.vessel_context || 'General')}
+              </div>
+              <p className="text-[11px]" style={{ color: '#94A3B8' }}>
+                {isCompany ? 'Set by the company for this interview.' : 'Taken from your SeaMinds profile.'}
+              </p>
+              <button disabled={preflight.busy} onClick={confirm} className="w-full py-3 rounded-xl font-bold text-sm" style={{ background: '#D4AF37', color: '#0b1929', opacity: preflight.busy ? 0.6 : 1 }}>Proceed</button>
+              {isCompany ? (
+                <button disabled={preflight.busy || preflight.reported} onClick={report} className="w-full py-3 rounded-xl font-bold text-sm" style={{ background: 'transparent', color: '#D4AF37', border: '1px solid #D4AF37' }}>
+                  {preflight.reported ? 'Mismatch reported' : 'This assessment does not match my rank'}
+                </button>
+              ) : (
+                <button onClick={editProfile} className="w-full py-3 rounded-xl font-bold text-sm" style={{ background: 'transparent', color: '#D4AF37', border: '1px solid #D4AF37' }}>Edit Profile</button>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   if (flowStep === 'preform') {
     return (
       <div className="flex flex-col h-full overflow-y-auto" style={{ background: '#0b1929' }}>
