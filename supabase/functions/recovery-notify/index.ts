@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
   if (!gate.isWorker) {
     const { data: isAdm } = await admin.rpc("is_admin", { _user_id: gate.userId });
     if (!isAdm || !assessmentId) return json({ error: "Forbidden" }, 403);
-    const { data: c } = await admin.from("recovery_cases").select("is_test").eq("assessment_id", assessmentId).eq("is_test", true).limit(1);
+    const { data: c } = await admin.from("recovery_cases").select("is_test").eq("assessment_id", assessmentId).eq("is_test", true).eq("crew_profile_id", gate.userId).limit(1); // R6: TEST sends only to the calling admin's own account
     if (!c?.length) return json({ error: "TEST_CASE_REQUIRED" }, 403);
   } else if (assessmentId) {
     assessmentId = null; // cron drains due cases only
