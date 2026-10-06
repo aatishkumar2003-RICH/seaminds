@@ -4734,6 +4734,10 @@ export type Database = {
         Returns: Json
       }
       admin_ops_readiness: { Args: never; Returns: Json }
+      admin_ops_test_simulate: {
+        Args: { p_assessment_id: string }
+        Returns: Json
+      }
       admin_ops_timeline: { Args: { p_assessment_id: string }; Returns: Json }
       admin_reissue_paper: {
         Args: { p_assessment_id: string; p_policy?: string; p_reason: string }
