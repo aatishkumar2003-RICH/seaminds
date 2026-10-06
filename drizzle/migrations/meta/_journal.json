@@ -78,6 +78,34 @@
       "when": 1791300273653,
       "tag": "0010_r1_preflight_profile_authority",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791300593982,
+      "tag": "0011_r2_governed_inventory_issued_papers",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1791300678737,
+      "tag": "0012_r2_item_answer_key_column_lock",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1791300728848,
+      "tag": "0013_r2_issue_paper_test_vessel_relax",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1791300799419,
+      "tag": "0014_r2_issue_paper_strip_option_letters",
+      "breakpoints": true
     }
   ]
 }

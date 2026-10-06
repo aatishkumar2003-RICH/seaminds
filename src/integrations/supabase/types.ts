@@ -281,6 +281,132 @@ export type Database = {
         }
         Relationships: []
       }
+      assessment_blueprints: {
+        Row: {
+          blueprint_version: number
+          canonical_rank: string
+          created_at: string
+          department: string
+          id: string
+          is_test: boolean
+          level: string
+          notes: string | null
+          requirements: Json
+          status: string
+          vessel_context: string
+        }
+        Insert: {
+          blueprint_version?: number
+          canonical_rank: string
+          created_at?: string
+          department: string
+          id?: string
+          is_test?: boolean
+          level: string
+          notes?: string | null
+          requirements: Json
+          status?: string
+          vessel_context?: string
+        }
+        Update: {
+          blueprint_version?: number
+          canonical_rank?: string
+          created_at?: string
+          department?: string
+          id?: string
+          is_test?: boolean
+          level?: string
+          notes?: string | null
+          requirements?: Json
+          status?: string
+          vessel_context?: string
+        }
+        Relationships: []
+      }
+      assessment_items: {
+        Row: {
+          answer_key: Json
+          approval_basis: string | null
+          approval_status: string
+          cognitive_level: string | null
+          created_at: string
+          department: string | null
+          domain: string | null
+          exposure_count: number
+          id: string
+          is_active: boolean
+          item_key: string
+          legacy_question_bank_id: string | null
+          legacy_rank_group: string | null
+          level: string | null
+          prompt: Json
+          question_type: string
+          question_version: number
+          rank_scope: string[]
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source_reference: string | null
+          source_type: string
+          source_version: string | null
+          updated_at: string
+          vessel_scope: string[]
+        }
+        Insert: {
+          answer_key?: Json
+          approval_basis?: string | null
+          approval_status?: string
+          cognitive_level?: string | null
+          created_at?: string
+          department?: string | null
+          domain?: string | null
+          exposure_count?: number
+          id?: string
+          is_active?: boolean
+          item_key: string
+          legacy_question_bank_id?: string | null
+          legacy_rank_group?: string | null
+          level?: string | null
+          prompt: Json
+          question_type: string
+          question_version?: number
+          rank_scope?: string[]
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_reference?: string | null
+          source_type: string
+          source_version?: string | null
+          updated_at?: string
+          vessel_scope?: string[]
+        }
+        Update: {
+          answer_key?: Json
+          approval_basis?: string | null
+          approval_status?: string
+          cognitive_level?: string | null
+          created_at?: string
+          department?: string | null
+          domain?: string | null
+          exposure_count?: number
+          id?: string
+          is_active?: boolean
+          item_key?: string
+          legacy_question_bank_id?: string | null
+          legacy_rank_group?: string | null
+          level?: string | null
+          prompt?: Json
+          question_type?: string
+          question_version?: number
+          rank_scope?: string[]
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_reference?: string | null
+          source_type?: string
+          source_version?: string | null
+          updated_at?: string
+          vessel_scope?: string[]
+        }
+        Relationships: []
+      }
       auth_rate_limits: {
         Row: {
           attempt_count: number
@@ -2211,6 +2337,102 @@ export type Database = {
         }
         Relationships: []
       }
+      issued_paper_keys: {
+        Row: {
+          answer_key: Json
+          item_id: string
+          item_version: number
+          paper_id: string
+          paper_item_id: string
+        }
+        Insert: {
+          answer_key: Json
+          item_id: string
+          item_version: number
+          paper_id: string
+          paper_item_id: string
+        }
+        Update: {
+          answer_key?: Json
+          item_id?: string
+          item_version?: number
+          paper_id?: string
+          paper_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "issued_paper_keys_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "issued_paper_keys_paper_id_fkey"
+            columns: ["paper_id"]
+            isOneToOne: false
+            referencedRelation: "issued_papers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      issued_papers: {
+        Row: {
+          assessment_id: string
+          blueprint_id: string
+          blueprint_version: number
+          context: Json
+          crew_profile_id: string
+          id: string
+          is_test: boolean
+          issued_at: string
+          items: Json
+          paper_version: number
+          status: string
+        }
+        Insert: {
+          assessment_id: string
+          blueprint_id: string
+          blueprint_version: number
+          context: Json
+          crew_profile_id: string
+          id?: string
+          is_test?: boolean
+          issued_at?: string
+          items: Json
+          paper_version?: number
+          status?: string
+        }
+        Update: {
+          assessment_id?: string
+          blueprint_id?: string
+          blueprint_version?: number
+          context?: Json
+          crew_profile_id?: string
+          id?: string
+          is_test?: boolean
+          issued_at?: string
+          items?: Json
+          paper_version?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "issued_papers_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "smc_assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "issued_papers_blueprint_id_fkey"
+            columns: ["blueprint_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_blueprints"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_applications: {
         Row: {
           apply_method: string
@@ -2840,6 +3062,38 @@ export type Database = {
           score?: number
         }
         Relationships: []
+      }
+      paper_item_responses: {
+        Row: {
+          answer: string | null
+          created_at: string
+          is_correct: boolean | null
+          paper_id: string
+          paper_item_id: string
+        }
+        Insert: {
+          answer?: string | null
+          created_at?: string
+          is_correct?: boolean | null
+          paper_id: string
+          paper_item_id: string
+        }
+        Update: {
+          answer?: string | null
+          created_at?: string
+          is_correct?: boolean | null
+          paper_id?: string
+          paper_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paper_item_responses_paper_id_fkey"
+            columns: ["paper_id"]
+            isOneToOne: false
+            referencedRelation: "issued_papers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       post_engagement: {
         Row: {
@@ -4156,6 +4410,7 @@ export type Database = {
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_marketing_member: { Args: never; Returns: boolean }
+      issue_paper: { Args: { p_assessment_id: string }; Returns: Json }
       log_marketing_action: {
         Args: { p_action: string; p_details?: Json }
         Returns: undefined
