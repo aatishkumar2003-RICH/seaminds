@@ -120,6 +120,13 @@
       "when": 1791301265746,
       "tag": "0016_r3_answer_scoring_backstop",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1791302268854,
+      "tag": "0017_r2_source_type_vocabulary",
+      "breakpoints": true
     }
   ]
 }
