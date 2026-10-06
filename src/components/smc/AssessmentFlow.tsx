@@ -352,8 +352,6 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     const selected = autoSubmit && selectedOption === null ? -1 : selectedOption;
     if (selected === null) return;
 
-    const isCorrect = selected === currentQ.correct_index;
-    setMcqCorrect(isCorrect);
     setMcqSubmitted(true);
     setTimerActive(false);
 
@@ -366,9 +364,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
           question: currentQ.question,
           answer: selected.toString(),
           question_type: 'mcq',
-          correct_index: currentQ.correct_index,
-          correct_letter: currentQ.correct_letter,
-          explanation: currentQ.explanation,
+          paper_item_id: currentQ.id,
           rank,
           experience_tier: aiQuestions?.candidate_context?.experience_tier || 'MID',
           department: aiQuestions?.candidate_context?.department || 'DECK',
@@ -377,6 +373,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
         },
         headers: { Authorization: `Bearer ${token}` },
       });
+      setMcqCorrect(!!data?.is_correct);
       const entry = { question: currentQ.question, answer: selected.toString(), score: data?.score || 0, redFlag: data?.red_flag || false, redFlagCategory: data?.red_flag_category || null, followUp: data?.follow_up_question || null };
       setTranscript(prev => [...prev, entry]);
       void persistAnswer({ question: currentQ.question, answer: selected.toString(), question_type: 'mcq', is_followup: false, ai_score: entry.score, red_flag: entry.redFlag, red_flag_category: entry.redFlagCategory });
@@ -400,8 +397,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
           question,
           answer,
           question_type: currentQ.type,
-          key_steps: currentQ.key_steps,
-          critical_step: currentQ.critical_step,
+          paper_item_id: currentQ.id,
           rank,
           experience_tier: aiQuestions?.candidate_context?.experience_tier || 'MID',
           department: aiQuestions?.candidate_context?.department || 'DECK',
@@ -477,8 +473,8 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
           question: fuQuestion,
           answer: fuAnswer,
           question_type: currentQ?.type === 'mcq' ? 'behavioural' : (currentQ?.type || 'behavioural'),
-          key_steps: currentQ?.key_steps,
-          critical_step: currentQ?.critical_step,
+          paper_item_id: currentQ?.id,
+          is_followup: true,
           rank,
           experience_tier: aiQuestions?.candidate_context?.experience_tier || 'MID',
           department: aiQuestions?.candidate_context?.department || 'DECK',
@@ -963,7 +959,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
                   <div className="flex items-center gap-2">
                     {mcqCorrect ? <CheckCircle size={16} style={{ color: '#22c55e' }} /> : <XCircle size={16} style={{ color: '#ef4444' }} />}
                     <span className="text-sm font-bold" style={{ color: mcqCorrect ? '#22c55e' : '#ef4444' }}>
-                      {mcqCorrect ? '✓ Correct!' : `✗ Incorrect — Correct answer: ${currentQ.correct_letter}`}
+                      {mcqCorrect ? '✓ Correct!' : (currentQ.correct_letter ? `✗ Incorrect — Correct answer: ${currentQ.correct_letter}` : '✗ Incorrect')}
                     </span>
                   </div>
                   {!mcqCorrect && currentQ.explanation && (
