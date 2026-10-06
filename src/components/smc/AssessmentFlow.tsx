@@ -55,6 +55,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   const [flatQuestions, setFlatQuestions] = useState<FlatQuestion[]>([]);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
   const [questionError, setQuestionError] = useState<string | null>(null);
+  const [paperBlocked, setPaperBlocked] = useState<null | 'UNRESOLVED_RANK' | 'POOL_UNAVAILABLE'>(null);
   const [fetchAttempt, setFetchAttempt] = useState(0);
   const [qIndex, setQIndex] = useState(0);
 
@@ -268,7 +269,14 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
           ? { Authorization: `Bearer ${accessToken}`, 'x-pool-poll': '1' }
           : { Authorization: `Bearer ${accessToken}` },
       });
-      if (error) throw error;
+      if (error) {
+        // R0: structured fail-closed responses arrive as non-2xx with a JSON body
+        try {
+          const body = await (error as any)?.context?.json?.();
+          if (body?.error_code) return body;
+        } catch { /* not JSON */ }
+        throw error;
+      }
       return data as any;
     };
 
@@ -277,13 +285,27 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
       setQuestionError(null);
       const deadline = Date.now() + 6 * 60 * 1000;
       let poll = false;
+      let netFails = 0;
+      setPaperBlocked(null);
       try {
         // eslint-disable-next-line no-constant-condition
         while (true) {
-          const data = await callOnce(poll);
+          let data: any;
+          try { data = await callOnce(poll); netFails = 0; }
+          catch (e) {
+            // Transient network drop while waiting: retry a few times before giving up
+            if (++netFails <= 3 && Date.now() < deadline) { await new Promise((r) => setTimeout(r, 5000 * netFails)); poll = true; continue; }
+            throw e;
+          }
           if (cancelled) return;
           if (data?.mcq || data?.scenario || data?.behavioural) {
             setAiQuestions(data);
+            return;
+          }
+          if (data?.error_code === 'UNRESOLVED_RANK' || data?.error_code === 'POOL_UNAVAILABLE') {
+            // Terminal for this attempt: stop polling, keep the attempt, no raw error.
+            await logEvent(data.error_code === 'UNRESOLVED_RANK' ? 'smc_unresolved_rank' : 'smc_paper_unavailable', data.reason || data.error_code, 'warning');
+            setPaperBlocked(data.error_code);
             return;
           }
           if (data?.status === 'building') {
@@ -658,6 +680,27 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
 
   // ── QUESTION FLOW ──
   if (flowStep === 'questions') {
+    if (paperBlocked && !loadingQuestions) {
+      return (
+        <div className="flex items-center justify-center h-full px-6" style={{ background: '#0b1929' }}>
+          <div className="text-center max-w-sm w-full space-y-4">
+            <p className="text-3xl">⚓</p>
+            <p className="text-base font-bold" style={{ color: '#fff' }}>Your attempt is saved</p>
+            <p className="text-[13px] leading-relaxed" style={{ color: '#94A3B8' }}>
+              {paperBlocked === 'UNRESOLVED_RANK'
+                ? 'We could not confirm your exact rank, so we have not started a paper. Nothing has been scored and this does not count against you. Please contact SeaMinds support.'
+                : 'The question paper for your rank is temporarily unavailable. Nothing has been scored and this does not count against you. Please come back later or contact SeaMinds support.'}
+            </p>
+            {onExit && (
+              <button onClick={onExit} className="w-full py-3 rounded-xl font-bold text-sm"
+                style={{ background: 'transparent', color: '#D4AF37', border: '1px solid #D4AF37' }}>
+                Go back
+              </button>
+            )}
+          </div>
+        </div>
+      );
+    }
     if (!flatQuestions.length || loadingQuestions || questionError) {
       const showError = !!questionError && !loadingQuestions;
       return (
