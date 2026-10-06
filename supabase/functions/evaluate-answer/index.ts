@@ -15,7 +15,8 @@ Deno.serve(async (req) => {
   if (!gate.ok) return gate.response;
 
   // ── Rate limiting ──
-  const rateLimitKey = `evaluate-answer:${clientIP}`;
+  // R3: keyed on the authenticated candidate, never on shared ship/NAT IP (IP kept only in other telemetry)
+  const rateLimitKey = gate.isWorker ? `evaluate-answer:worker:${crypto.randomUUID()}` : `evaluate-answer:user:${gate.userId}`;
 
   const windowMs = 10 * 60 * 1000;
   const maxAttempts = 30;
@@ -38,42 +39,13 @@ Deno.serve(async (req) => {
   const body = await req.json();
   let { question, answer, question_type, correct_index, correct_letter, explanation, key_steps, critical_step, rank, experience_tier, department, mode, assessmentId } = body;
 
-  // ── R2: issued papers carry keys server-side only; client key fields are ignored ──
-  let paperCtx: { paperId: string; itemId: string } | null = null;
+  // ── R2/R3: issued-paper items are submitted via submit_paper_answer (write-first ledger) only.
   if (assessmentId && !gate.isWorker) {
     const { data: paper } = await adminClient.from('issued_papers')
-      .select('id, crew_profile_id').eq('assessment_id', assessmentId).eq('status', 'ISSUED').maybeSingle();
-    if (paper) {
-      if ((paper as any).crew_profile_id !== gate.userId) return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: corsHeaders });
-      const pid = typeof body.paper_item_id === 'string' ? body.paper_item_id.slice(0, 20) : '';
-      const { data: k } = pid ? await adminClient.from('issued_paper_keys').select('answer_key')
-        .eq('paper_id', (paper as any).id).eq('paper_item_id', pid).maybeSingle() : { data: null } as any;
-      const key: any = (k as any)?.answer_key || {};
-      correct_index = key.correct_index; correct_letter = undefined; explanation = undefined;
-      key_steps = key.key_steps; critical_step = key.critical_step;
-      if (pid && !body.is_followup) paperCtx = { paperId: (paper as any).id, itemId: pid };
-      if (question_type === 'mcq') {
-        if (!pid || !k) return new Response(JSON.stringify({ error: 'Unknown paper item' }), { status: 400, headers: corsHeaders });
-        // First answer locks the item: prevents probing the key by resubmitting.
-        const sel = parseInt(String(answer));
-        const isCorrect = sel === key.correct_index;
-        const { error: insErr } = await adminClient.from('paper_item_responses')
-          .insert({ paper_id: (paper as any).id, paper_item_id: pid, answer: String(answer).slice(0, 10), is_correct: isCorrect });
-        let finalCorrect = isCorrect;
-        if (insErr) {
-          const { data: prev } = await adminClient.from('paper_item_responses').select('is_correct')
-            .eq('paper_id', (paper as any).id).eq('paper_item_id', pid).maybeSingle();
-          finalCorrect = !!(prev as any)?.is_correct;
-        }
-        return new Response(JSON.stringify({
-          score: finalCorrect ? 10 : 0, strength_level: finalCorrect ? 'STRONG' : 'WEAK', is_correct: finalCorrect,
-          red_flag: !finalCorrect, red_flag_category: !finalCorrect ? 'KNOWLEDGE_GAP' : null,
-          red_flag_evidence: !finalCorrect ? 'Incorrect answer on issued paper MCQ' : null, follow_up_question: null,
-        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      }
-    }
+      .select('id').eq('assessment_id', assessmentId).eq('status', 'ISSUED').maybeSingle();
+    if (paper) return new Response(JSON.stringify({ error_code: 'USE_SUBMIT_PAPER_ANSWER' }), { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
-  void paperCtx;
+  const strictFailures = gate.isWorker && body.strict_failures === true;
 
   // ── PRIVACY MODE: company interviews never emit wellbeing red flags ──
   let interviewMode: 'self' | 'company' = mode === 'company' ? 'company' : 'self';
@@ -183,7 +155,10 @@ NEVER return WELLNESS_CONCERN or any wellbeing/mental-health category.
     })
   });
 
-  const result = await completion.json();
+  const result = await completion.json().catch(() => ({}));
+  if (strictFailures && !completion.ok) {
+    return new Response(JSON.stringify({ error: `model_http_${completion.status}` }), { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  }
   await meterAi(adminClient, { userId: gate.userId, feature: "evaluate-answer", model: "gpt-4o-mini", usage: result?.usage, success: completion.ok, latencyMs: Date.now() - _t0 });
 
   const text = (result.choices?.[0]?.message?.content || '{}').replace(/```json|```/g, '').trim();
@@ -191,6 +166,7 @@ NEVER return WELLNESS_CONCERN or any wellbeing/mental-health category.
     const parsed = scrubWellness(JSON.parse(text));
     return new Response(JSON.stringify(parsed), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch {
+    if (strictFailures) return new Response(JSON.stringify({ error: 'model_unparseable' }), { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     return new Response(JSON.stringify({ score: 0, strength_level: 'WEAK', red_flag: false, red_flag_category: null, red_flag_evidence: null, follow_up_question: null }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });
