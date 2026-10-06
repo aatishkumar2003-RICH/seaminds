@@ -34,3 +34,32 @@ Queued stages (~2 credits each). Execute in order, on user's go-ahead.
 - [x] Step 2 — Front-space Sign In + staff access requests (/fleet/login)
 - [x] Step 3 — Admin approvals & authority limits console
 - [x] M1 — Admin-issued Staff IDs + module access control
+- [x] W1 — Fleet & PMS Workspace as parent (/management/fleet tabs) + admin entry
+- [x] Security — cached stats and interview matrix reads locked down; scan clear of criticals
+
+## Fleet Track v5 — Architecture Freeze (decisions locked 2026-10-06)
+Frozen: manager-first (we hold DOC) then software; device-only offline, no onboard box;
+Flag acceptance required for e-recordbooks; accounts = operational subledger only;
+first ship is one we manage; scope = generators + auxiliaries (~30 assets);
+DPA signs auto-accept policy and KPI targets; crew use shared ship tablets/laptops.
+
+Slices are ~3 credits each, one vertical per turn, stop and report after each.
+No slice starts without a written instruction naming it.
+
+- [ ] S1 — Identity, membership, assignment + shared-device session, per-person offline partition
+- [ ] S2 — Policy engine (minimal) + action registry with authority source on every type
+- [ ] S3 — Event and provenance store + device queue, idempotent upload
+- [ ] S4 — Asset register onboarding + import with confidence flags (generators/auxiliaries)
+- [ ] S5 — Job library and due logic + running-hour inheritance from one daily reading
+- [ ] S6 — Crew Today list: Done / Problem / Couldn't, one photo, voice note
+- [ ] S7 — C/E decisions box + RED/AMBER/GREEN exceptions with sampled assurance
+- [ ] S8 — Superintendent cockpit, own vessel only
+- [ ] S9 — Record books, first book: Flag format, sequential entries, supersession
+
+### Open gates before S1 (need answers from owner)
+- Ship name + IMO number, and the chief engineer who will champion it
+- Make, OS and browser of the ship tablets/laptops (decides if a browser app is enough offline)
+- Flag administration: accepted electronic record-book format and acceptance route
+- DPA-signed policy v1: which job types may be auto-accepted, sampling %, KPI targets
+- Baseline on the ship: touches and time a routine job takes today
+- Marketplace stages 4 and 5 are complete; nothing queued there.
