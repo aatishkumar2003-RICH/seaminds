@@ -88,6 +88,13 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   const [preForm, setPreForm] = useState<{reasonForLeaving:string,expectedSalary:string,availabilityDate:string,medicalFit:boolean,accidentHistory:string,pscDetention:boolean,nearMiss:boolean,safetyViolation:boolean,pscDetentionDetail:string,nearMissDetail:string,safetyViolationDetail:string}>({ reasonForLeaving:'', expectedSalary:'', availabilityDate:'', medicalFit:true, accidentHistory:'', pscDetention:false, nearMiss:false, safetyViolation:false, pscDetentionDetail:'', nearMissDetail:'', safetyViolationDetail:'' });
 
   const [cvSummary, setCvSummary] = useState<{certs:number; service:number; hasCv:boolean} | null>(null);
+  const offlineSinceRef = useRef<number | null>(null);
+  const flowStepRef = useRef(flowStep);
+  flowStepRef.current = flowStep;
+  const reportInterruption = (kind: string, reason: string) => {
+    if (!assessmentId || flowStepRef.current === 'score') return;
+    void supabase.rpc('record_interruption' as any, { p_assessment_id: assessmentId, p_kind: kind, p_reason: reason }).then(() => {}, () => {});
+  };
 
   // ── Resilience: persistence + resume ──
   const seqRef = useRef(0);
@@ -138,9 +145,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
           redFlagCategory: r.red_flag_category || null,
           followUp: null,
         })));
-        resumeIndexRef.current = rows.filter(r => !r.is_followup).length;
-        setFlowStep('questions');
-        toast('Resumed — your previous answers are safe ⚓');
+        // R4: resume position now comes only from the server ledger for the active paper (see issue_paper load).
       } catch (e) {
         console.log('resume load failed (non-blocking):', e);
       }
@@ -205,6 +210,37 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
       setTimeout(() => setSectionCard(null), 4000);
     }
   }, [flowStep, flatQuestions]);
+
+  // R4: deterministic checkpoint as the candidate advances
+  useEffect(() => {
+    if (flowStep !== 'questions' || !flatQuestions.length) return;
+    void supabase.rpc('save_checkpoint' as any, { p_assessment_id: assessmentId, p_current_index: qIndex }).then(() => {}, () => {});
+  }, [qIndex, flowStep, flatQuestions.length, assessmentId]);
+
+  // R4: interruption attribution — voluntary exit vs connectivity; never blame the system without evidence
+  useEffect(() => {
+    if (flowStep !== 'questions') return;
+    const onHide = () => { if (document.visibilityState === 'hidden') reportInterruption('USER_PAUSED', 'tab_hidden'); };
+    const onPageHide = () => reportInterruption('USER_PAUSED', 'page_closed');
+    const onOffline = () => { offlineSinceRef.current = Date.now(); };
+    const onOnline = () => {
+      if (offlineSinceRef.current) {
+        reportInterruption('CONNECTIVITY_INTERRUPTED', 'browser_offline');
+        offlineSinceRef.current = null;
+        void supabase.rpc('save_checkpoint' as any, { p_assessment_id: assessmentId, p_current_index: qIndex }).then(() => {}, () => {});
+      }
+    };
+    document.addEventListener('visibilitychange', onHide);
+    window.addEventListener('pagehide', onPageHide);
+    window.addEventListener('offline', onOffline);
+    window.addEventListener('online', onOnline);
+    return () => {
+      document.removeEventListener('visibilitychange', onHide);
+      window.removeEventListener('pagehide', onPageHide);
+      window.removeEventListener('offline', onOffline);
+      window.removeEventListener('online', onOnline);
+    };
+  }, [flowStep, assessmentId, qIndex]);
 
   // Tab switch detection
   useEffect(() => {
@@ -294,6 +330,18 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
               behavioural: [...pick('behavioural'), ...pick('professional')],
               candidate_context: { department: d.context?.department_code || 'DECK', experience_tier: 'MID' },
             });
+            // R4: resume the SAME frozen paper from the server ledger (authoritative position)
+            try {
+              const { data: rs } = await supabase.rpc('get_resume_state' as any, { p_assessment_id: assessmentId });
+              const r: any = rs;
+              if (r?.ok && Number(r.next_index) > 0) {
+                resumeIndexRef.current = Number(r.next_index);
+                resumeApplied.current = false;
+                setFlowStep('questions');
+                toast('Resumed — your previous answers are safe ⚓');
+              }
+              await supabase.rpc('save_checkpoint' as any, { p_assessment_id: assessmentId, p_current_index: Number(r?.next_index) || 0 });
+            } catch { /* non-blocking */ }
             return;
           }
           const code = d?.error_code || 'PAPER_NOT_READY';
@@ -369,13 +417,19 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
 
   // Idempotent write-first submit (safe to retry; first answer always wins on the server)
   const submitToLedger = async (paperItemId: string, answer: string): Promise<any | null> => {
+    let lastErr: any = null;
     for (let i = 0; i < 4; i++) {
       const { data, error } = await supabase.rpc('submit_paper_answer' as any, { p_assessment_id: assessmentId, p_paper_item_id: paperItemId, p_answer: answer });
       const d: any = data;
       if (!error && d?.ok) return d;
+      lastErr = error;
       if (d?.error_code && d.error_code !== 'RATE_LIMITED') break;
       await new Promise((r) => setTimeout(r, 1500 * (i + 1)));
     }
+    // R4: classify only what we can observe; uncertain => neutral
+    const status = Number((lastErr as any)?.status || (lastErr as any)?.code || 0);
+    const kind = !navigator.onLine ? 'CONNECTIVITY_INTERRUPTED' : status >= 500 ? 'SYSTEM_INTERRUPTED' : 'UNATTRIBUTED_INTERRUPTION';
+    reportInterruption(kind, !navigator.onLine ? 'offline_on_submit' : status >= 500 ? 'http_5xx' : 'submit_failed');
     toast.error("Couldn't save your answer — check your connection and press submit again.");
     return null;
   };
@@ -848,7 +902,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
             </div>
             {onExit && (
               <button onClick={() => {
-                if (window.confirm('Exit assessment? Your progress will be lost.')) onExit();
+                if (window.confirm('Pause and exit? Your answers are saved — you can resume the same paper later.')) onExit();
               }} style={{ background:'transparent', border:'1px solid #444', color:'#888', padding:'4px 12px', borderRadius:'6px', fontSize:'11px', cursor:'pointer' }}>
                 ✕ Exit
               </button>
