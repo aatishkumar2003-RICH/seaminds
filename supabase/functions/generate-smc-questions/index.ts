@@ -126,13 +126,13 @@ Deno.serve(async (req) => {
     resolvedCache.set(k, out);
     return out;
   };
+  let rankOk = false;
   {
     const c = await resolveCanon(rank);
-    if (c) rank = c;
+    if (c) { rank = c; rankOk = true; }
   }
-  const isSupported = (r: string) => !!r && resolvedCache.get(r.trim()) != null && resolvedCache.get(r.trim()) === r.trim();
   const rankSource: string[] = [];
-  if (!isSupported(rank) && !isCompanyMode && gate.userId) {
+  if (!rankOk && !isCompanyMode && gate.userId) {
     // Resolve from what SeaMinds already holds — never ask the candidate again.
     // R0: only the current profile rank is authoritative. role and CV history are never used.
     const candidates: { v: string; src: string }[] = [];
@@ -140,10 +140,12 @@ Deno.serve(async (req) => {
       const { data: cp } = await adminClient.from('crew_profiles').select('rank').eq('id', gate.userId).maybeSingle();
       candidates.push({ v: (cp as any)?.rank || '', src: 'crew_profiles.rank' });
     } catch (_e) { /* ignore */ }
-    const hit = candidates.find((c) => isSupported(c.v));
-    if (hit) { rankSource.push(hit.src); rank = sanitize(hit.v, 100); }
+    for (const c of candidates) {
+      const canon = await resolveCanon(c.v);
+      if (canon) { rankSource.push(c.src); rank = canon; rankOk = true; break; }
+    }
   }
-  if (!isSupported(rank)) {
+  if (!rankOk) {
     try {
       await adminClient.from('app_events').insert({
         event_type: 'smc_unresolved_rank', severity: 'warn', user_id: gate.userId,
