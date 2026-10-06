@@ -4720,6 +4720,25 @@ export type Database = {
         Args: { p_activate: boolean; p_email: string }
         Returns: string
       }
+      admin_ops_action: {
+        Args: { p_action: string; p_assessment_id: string; p_reason?: string }
+        Returns: Json
+      }
+      admin_ops_list: {
+        Args: {
+          p_limit?: number
+          p_mode?: string
+          p_search?: string
+          p_status?: string
+        }
+        Returns: Json
+      }
+      admin_ops_readiness: { Args: never; Returns: Json }
+      admin_ops_test_simulate: {
+        Args: { p_assessment_id: string }
+        Returns: Json
+      }
+      admin_ops_timeline: { Args: { p_assessment_id: string }; Returns: Json }
       admin_reissue_paper: {
         Args: { p_assessment_id: string; p_policy?: string; p_reason: string }
         Returns: Json
