@@ -4655,6 +4655,7 @@ export type Database = {
         Args: { p_assessment_id: string; p_rank?: string }
         Returns: Json
       }
+      process_answer_scoring_queue: { Args: never; Returns: string }
       process_scoring_jobs: { Args: never; Returns: string }
       rank_group_of: { Args: { p_rank: string }; Returns: string }
       record_referral: { Args: { p_code: string }; Returns: Json }

@@ -113,6 +113,13 @@
       "when": 1791301112065,
       "tag": "0015_r3_answer_ledger_scoring_state",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1791301265746,
+      "tag": "0016_r3_answer_scoring_backstop",
+      "breakpoints": true
     }
   ]
 }
