@@ -456,3 +456,30 @@ Role screens (Rating/Officer/C/E/Master/Supt)   Findings/defects ──> Stores 
 3. Pilot offline scope: is single-device offline acceptable, or is an onboard edge node required from day one?
 4. Will the first customers require Flag acceptance of e-record books in phase 1? This is a yes/no scoping question.
 5. Accounting stance confirmed: operational subledger feeding an external ERP, not a full general ledger?
+
+---
+
+## O. Build Budget & Review Protocol
+
+Binding on every future Build-mode turn. It controls *how* work is executed; it never expands the frozen scope in N1–N6.
+
+1. **Small reviewable slices.** Every build implements one coherent vertical capability only, sized to land in roughly a 3-credit turn where practical. Multiple major domains are never combined in one build.
+2. **No credit guarantee.** "~3 credits" is a design target, not a promise — actual use varies with complexity. Each slice is deliberately kept small so it is *likely* to stay near that budget, and the build stops rather than expanding scope.
+3. **Stop after each slice.** No automatic continuation to the next slice. Each build ends with a report: what changed; files, tables, functions and migrations touched; tests run and their result; known limitations; and exactly what the user should check by hand in Preview.
+4. **Wait for instruction.** The next build happens only on the user's explicit instruction. No chained, background or "while I'm here" continuation.
+5. **Too big → split first.** If a requested slice looks too large for one small turn, break it into sub-slices and ask the user to choose or start the first one. Do not silently attempt the whole thing.
+6. **Acceptance criteria before editing.** Each slice states its pass/fail acceptance criteria up front; the build is judged against those, not against ambition.
+7. **No Max mode** unless the user explicitly asks for it.
+8. **Scope restated before every build.** In and out of scope are written down at the start of the turn so work cannot silently grow. Anything discovered outside scope is logged for a later slice, not built now.
+9. **Frozen architecture preserved.** Every slice upholds the N1 principles: authority classes O/S/J/X; office-versus-ship data ownership and discrepancy-not-edit; immutable events with provenance and supersession; one policy engine with no self-approval and no simulated external sign-off; offline safety with no last-write-wins for consequential records; the AI source hierarchy (Approved versus Unapproved, cited values only); tenant and vessel isolation in DB, cache, search, export and AI paths; and no hard-coded maritime authority assumptions (pay triggers, preferred sensor sources, complaint channels, DPA-as-default-approver, fixed currency limits).
+10. **Gated domains stay shut.** Payroll, bank and vendor master, medical, confidential grievance, ISPS/SSP and statutory e-recordbooks are not implemented until their stated security, legal, Flag and Class gates are satisfied (N6, and the compartment and penetration-test requirements in I).
+
+**Slice report template (end of every build turn):**
+```text
+Scope done / Out of scope held
+Files · tables · functions · migrations affected
+Tests run + result
+Known limitations
+Check in Preview: (specific clicks, expected result)
+Next candidate slice (not started)
+```
