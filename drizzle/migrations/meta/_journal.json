@@ -29,6 +29,13 @@
       "when": 1791175239941,
       "tag": "0003_vacancy_expiry_45_days",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791287206087,
+      "tag": "0004_market_indices_include_direct_postings",
+      "breakpoints": true
     }
   ]
 }

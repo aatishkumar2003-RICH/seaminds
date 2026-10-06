@@ -25,10 +25,10 @@ export default function LiveTicker() {
     const load = async () => {
       try {
         const [vacancies, j] = await Promise.all([
-          supabase.from('external_vacancies').select('id', { count: 'exact', head: true }).gt('expires_at', new Date().toISOString()),
+          supabase.rpc('get_market_indices'),
           supabase.from('external_vacancies').select('rank_required,vessel_type,salary_max,joining_port').gt('expires_at', new Date().toISOString()).order('created_at',{ascending:false}).limit(10),
         ]);
-        setTotalVacancies(vacancies.count || 0);
+        setTotalVacancies(Number((vacancies.data as any)?.total) || 0);
         setJobs((j.data||[]).map((v:any)=>({rank:v.rank_required||'Officer',vessel:v.vessel_type||'Various',salary:v.salary_max?`$${Number(v.salary_max).toLocaleString()}`:'Competitive',port:v.joining_port||'Worldwide'})));
       } catch(e) { console.error(e); }
     };

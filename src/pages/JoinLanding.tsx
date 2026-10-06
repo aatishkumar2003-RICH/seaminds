@@ -18,10 +18,8 @@ const JoinLanding = () => {
   useEffect(() => {
     (async () => {
       try {
-        const [{ count: jobCount }] = await Promise.all([
-          supabase.from("external_vacancies").select("*", { count: "exact", head: true }).gt("expires_at", new Date().toISOString()),
-        ]);
-        setJobs(jobCount ?? null);
+        const { data } = await supabase.rpc("get_market_indices");
+        setJobs(Number((data as any)?.total) || null);
       } catch { /* show without numbers */ }
     })();
   }, []);
