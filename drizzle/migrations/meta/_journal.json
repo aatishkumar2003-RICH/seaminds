@@ -197,6 +197,13 @@
       "when": 1791364841754,
       "tag": "0027_leaderboard_tier_cv_request",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1791365144800,
+      "tag": "0028_migration",
+      "breakpoints": true
     }
   ]
 }
