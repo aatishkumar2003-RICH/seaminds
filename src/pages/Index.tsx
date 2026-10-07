@@ -44,6 +44,7 @@ const VesselOnboardingCard = lazy(() => import("@/components/VesselOnboardingCar
 const OnboardingTour = lazy(() => import("@/components/OnboardingTour"));
 const MarketPulseButton = lazy(() => import("@/components/MarketPulseButton"));
 const WelcomeScreens = lazy(() => import("@/components/WelcomeScreens"));
+const SupportCenter = lazy(() => import("@/components/SupportCenter"));
 const NameEntry = lazy(() => import("@/components/NameEntry"));
 
 
@@ -64,6 +65,7 @@ const TAB_TO_SCREEN: Record<string, Screen> = {
   certs: "certs", certificates: "certs",
   resthours: "resthours",
   vesselrating: "vesselrating",
+  support: "support", help: "support",
 };
 
 /** internal screen key → canonical URL ?tab= value */
@@ -71,7 +73,7 @@ const SCREEN_TO_TAB: Record<Screen, string> = {
   home: "home", chat: "chat", dashboard: "dashboard", opportunities: "jobs",
   news: "news", academy: "academy", bridge: "bridge", community: "community",
   smc: "smc", resume: "cv", certs: "certs", resthours: "resthours",
-  vesselrating: "vesselrating",
+  vesselrating: "vesselrating", support: "support",
 };
 
 const Index = () => {
@@ -206,6 +208,7 @@ const Index = () => {
       community: "SeaMinds | Community", smc: "SeaMinds | SeaMinds Score",
       resume: "SeaMinds | CV Builder", certs: "SeaMinds | Certificates",
       resthours: "SeaMinds | Rest Hours", vesselrating: "SeaMinds | Vessel Rating",
+      support: "SeaMinds | Support",
     };
     document.title = appState === "main" ? titles[screen] : "SeaMinds";
   }, [screen, appState]);
@@ -873,6 +876,8 @@ const Index = () => {
                 <ScreenErrorBoundary screenName="Certificates"><CertWallet profileId={profileId} /></ScreenErrorBoundary>
               ) : screen === "smc" ? (
                 <ScreenErrorBoundary screenName="SeaMinds Score"><SMCScoreTab profileId={profileId} firstName={firstName} lastName={lastName} rank={role} shipName={shipName} /></ScreenErrorBoundary>
+              ) : screen === "support" ? (
+                <ScreenErrorBoundary screenName="Help & Support"><SupportCenter sourceScreen={prevScreen && prevScreen !== "support" ? prevScreen : "home"} onBack={() => setScreen(prevScreen && prevScreen !== "support" ? prevScreen : "home")} /></ScreenErrorBoundary>
               ) : null}
               </Suspense>
             </div>

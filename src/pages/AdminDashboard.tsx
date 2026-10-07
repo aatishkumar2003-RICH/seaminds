@@ -28,6 +28,7 @@ import ActivityFullTab from "@/components/admin/ActivityTab";
 import ContentStudioTab from "@/components/admin/ContentStudioTab";
 import CompanyApprovalTab from "@/components/admin/CompanyApprovalTab";
 import AssessmentOpsTab from "@/components/admin/AssessmentOpsTab";
+import SupportIncidentsTab from "@/components/admin/SupportIncidentsTab";
 import PasswordInput from "@/components/PasswordInput";
 
 // Admin = the SeaMinds owner account. The browser only checks that this exact
@@ -1457,7 +1458,7 @@ function ApplicationsTab() {
 /* ─── Main Dashboard ─── */
 export default function AdminDashboard() {
   const [authed, setAuthed] = useState<boolean | null>(null);
-  const [tab, setTab] = useState<"content_studio" | "company_approval" | "crew" | "activity" | "activity_full" | "cv_database" | "mobile_verify" | "pricing" | "discount" | "country_pricing" | "sub_admins" | "dpa" | "blog_images" | "agents" | "vacancy_intel" | "company_dir" | "company_posts" | "marketing" | "applications" | "referrals" | "assessment_ops">("crew");
+  const [tab, setTab] = useState<"content_studio" | "company_approval" | "crew" | "activity" | "activity_full" | "cv_database" | "mobile_verify" | "pricing" | "discount" | "country_pricing" | "sub_admins" | "dpa" | "blog_images" | "agents" | "vacancy_intel" | "company_dir" | "company_posts" | "marketing" | "applications" | "referrals" | "assessment_ops" | "support_incidents">("crew");
 
   useEffect(() => {
     let active = true;
@@ -1504,6 +1505,7 @@ export default function AdminDashboard() {
     { id: "marketing" as const, label: "📣 Marketing" },
     { id: "referrals" as const, label: "📣 Referrals" },
     { id: "assessment_ops" as const, label: "🧭 Assessment Ops" },
+    { id: "support_incidents" as const, label: "🛟 Support & Incidents" },
   ];
 
   return (
@@ -1586,6 +1588,7 @@ export default function AdminDashboard() {
       {tab === "applications" && <ApplicationsTab />}
       {tab === "referrals" && <ReferralsTab />}
       {tab === "assessment_ops" && <AssessmentOpsTab />}
+      {tab === "support_incidents" && <SupportIncidentsTab onOpenAssessmentOps={() => setTab("assessment_ops")} />}
     </div>
   );
 }
