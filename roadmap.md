@@ -66,6 +66,6 @@ No slice starts without a written instruction naming it.
 
 ## Two-tier scoring (CV optional)
 - [x] Slice 1: tier columns + server trigger; candidate chooses Quick Profile or CV-Verified without penalty copy
-- [ ] Slice 2: tier badge on score/certificate; rescoring options (retake quick / upgrade to CV)
+- [x] Slice 2: tier badge on score/certificate; rescoring options (retake quick / upgrade to CV)
 - [ ] Slice 3: manager "Request CV & Round 2" on interview board
 - [ ] Next build: Yes/No chips for "Available for work now?" on Quick Sea Profile
