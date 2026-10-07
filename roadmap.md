@@ -63,3 +63,9 @@ No slice starts without a written instruction naming it.
 - DPA-signed policy v1: which job types may be auto-accepted, sampling %, KPI targets
 - Baseline on the ship: touches and time a routine job takes today
 - Marketplace stages 4 and 5 are complete; nothing queued there.
+
+## Two-tier scoring (CV optional)
+- [x] Slice 1: tier columns + server trigger; candidate chooses Quick Profile or CV-Verified without penalty copy
+- [ ] Slice 2: tier badge on score/certificate; rescoring options (retake quick / upgrade to CV)
+- [ ] Slice 3: manager "Request CV & Round 2" on interview board
+- [ ] Next build: Yes/No chips for "Available for work now?" on Quick Sea Profile
