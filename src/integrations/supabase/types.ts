@@ -615,6 +615,65 @@ export type Database = {
         }
         Relationships: []
       }
+      assessment_start_incidents: {
+        Row: {
+          assessment_id: string
+          category: string
+          client_build: string | null
+          context: Json | null
+          correlation_id: string | null
+          crew_profile_id: string
+          error_code: string
+          first_at: string
+          fn_path: string | null
+          id: string
+          last_at: string
+          occurrences: number
+          resolved_at: string | null
+          status: string
+        }
+        Insert: {
+          assessment_id: string
+          category: string
+          client_build?: string | null
+          context?: Json | null
+          correlation_id?: string | null
+          crew_profile_id: string
+          error_code: string
+          first_at?: string
+          fn_path?: string | null
+          id?: string
+          last_at?: string
+          occurrences?: number
+          resolved_at?: string | null
+          status?: string
+        }
+        Update: {
+          assessment_id?: string
+          category?: string
+          client_build?: string | null
+          context?: Json | null
+          correlation_id?: string | null
+          crew_profile_id?: string
+          error_code?: string
+          first_at?: string
+          fn_path?: string | null
+          id?: string
+          last_at?: string
+          occurrences?: number
+          resolved_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_start_incidents_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "smc_assessments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assessment_state_log: {
         Row: {
           actor: string | null
@@ -3718,6 +3777,7 @@ export type Database = {
           last_health: Json | null
           mode: string
           next_action_at: string | null
+          phase: string
           reminders_sent: number
           status: string
           updated_at: string
@@ -3732,6 +3792,7 @@ export type Database = {
           last_health?: Json | null
           mode?: string
           next_action_at?: string | null
+          phase?: string
           reminders_sent?: number
           status?: string
           updated_at?: string
@@ -3746,6 +3807,7 @@ export type Database = {
           last_health?: Json | null
           mode?: string
           next_action_at?: string | null
+          phase?: string
           reminders_sent?: number
           status?: string
           updated_at?: string
@@ -3785,6 +3847,80 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "recovery_events_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "recovery_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recovery_outbox: {
+        Row: {
+          accepted_at: string | null
+          attempts: number
+          case_id: string
+          created_at: string
+          delivery_status: string
+          id: string
+          last_error: string | null
+          lease_until: string | null
+          link_token: string | null
+          max_attempts: number
+          message_key: string
+          next_attempt_at: string
+          payload: Json
+          phase: string
+          provider_message_id: string | null
+          reminder_no: number
+          status: string
+          token_hash: string | null
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          attempts?: number
+          case_id: string
+          created_at?: string
+          delivery_status?: string
+          id?: string
+          last_error?: string | null
+          lease_until?: string | null
+          link_token?: string | null
+          max_attempts?: number
+          message_key: string
+          next_attempt_at?: string
+          payload?: Json
+          phase?: string
+          provider_message_id?: string | null
+          reminder_no: number
+          status?: string
+          token_hash?: string | null
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          attempts?: number
+          case_id?: string
+          created_at?: string
+          delivery_status?: string
+          id?: string
+          last_error?: string | null
+          lease_until?: string | null
+          link_token?: string | null
+          max_attempts?: number
+          message_key?: string
+          next_attempt_at?: string
+          payload?: Json
+          phase?: string
+          provider_message_id?: string | null
+          reminder_no?: number
+          status?: string
+          token_hash?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recovery_outbox_case_id_fkey"
             columns: ["case_id"]
             isOneToOne: false
             referencedRelation: "recovery_cases"
@@ -3956,36 +4092,51 @@ export type Database = {
       }
       scoring_jobs: {
         Row: {
+          ai_result: Json | null
+          ai_result_paper: string | null
           assessment_id: string
           attempts: number
           completed_at: string | null
           created_at: string
+          final_failures: number
           id: string
           last_error: string | null
+          lease_until: string | null
           next_attempt_at: string
           payload: Json
+          retry_at: string | null
           status: string
         }
         Insert: {
+          ai_result?: Json | null
+          ai_result_paper?: string | null
           assessment_id: string
           attempts?: number
           completed_at?: string | null
           created_at?: string
+          final_failures?: number
           id?: string
           last_error?: string | null
+          lease_until?: string | null
           next_attempt_at?: string
           payload: Json
+          retry_at?: string | null
           status?: string
         }
         Update: {
+          ai_result?: Json | null
+          ai_result_paper?: string | null
           assessment_id?: string
           attempts?: number
           completed_at?: string | null
           created_at?: string
+          final_failures?: number
           id?: string
           last_error?: string | null
+          lease_until?: string | null
           next_attempt_at?: string
           payload?: Json
+          retry_at?: string | null
           status?: string
         }
         Relationships: []
@@ -4711,6 +4862,18 @@ export type Database = {
       }
     }
     Functions: {
+      _start_incident_upsert: {
+        Args: {
+          p_assessment: string
+          p_build: string
+          p_category: string
+          p_code: string
+          p_corr: string
+          p_path: string
+          p_uid: string
+        }
+        Returns: string
+      }
       add_interview_invites: {
         Args: { p_campaign_id: string; p_people: Json }
         Returns: Json
@@ -4753,6 +4916,27 @@ export type Database = {
         Returns: Json
       }
       ai_spend_sentinel: { Args: never; Returns: string }
+      answer_scoring_complete: {
+        Args: {
+          p_attempt: number
+          p_job: string
+          p_ledger: string
+          p_model: string
+          p_result: Json
+          p_score: number
+        }
+        Returns: Json
+      }
+      answer_scoring_fail: {
+        Args: {
+          p_attempt: number
+          p_error: string
+          p_job: string
+          p_ledger: string
+          p_model: string
+        }
+        Returns: Json
+      }
       apply_to_job: {
         Args: {
           p_company?: string
@@ -4764,6 +4948,14 @@ export type Database = {
         Returns: Json
       }
       band_years_midpoint: { Args: { p_band: string }; Returns: number }
+      blueprint_coverage: {
+        Args: { p_ctx: Json; p_include_test: boolean }
+        Returns: Json
+      }
+      blueprint_coverage_for: {
+        Args: { p_bp: string; p_rank: string }
+        Returns: Json
+      }
       build_daily_notifications: { Args: never; Returns: string }
       build_post: {
         Args: { p_audience?: string; p_id?: string; p_kind?: string }
@@ -4831,6 +5023,10 @@ export type Database = {
         Returns: Json
       }
       confirm_preflight: { Args: { p_assessment_id: string }; Returns: Json }
+      confirm_resume: {
+        Args: { p_assessment_id: string; p_paper_id: string }
+        Returns: Json
+      }
       contracts_midpoint: { Args: { p_band: string }; Returns: number }
       count_matching_vacancies: {
         Args: { p_families?: string[]; p_rank?: string }
@@ -4866,6 +5062,22 @@ export type Database = {
       }
       enqueue_scoring: { Args: { p_assessment_id: string }; Returns: Json }
       expire_old_vacancies: { Args: never; Returns: string }
+      final_scoring_lease: {
+        Args: {
+          p_assessment_id: string
+          p_is_worker: boolean
+          p_paper_id: string
+        }
+        Returns: Json
+      }
+      final_scoring_release: {
+        Args: { p_assessment_id: string; p_error: string }
+        Returns: undefined
+      }
+      final_scoring_save_ai: {
+        Args: { p_assessment_id: string; p_dims: Json; p_paper_id: string }
+        Returns: boolean
+      }
       finalize_assessment_commit: {
         Args: {
           p_assessment_id: string
@@ -4980,6 +5192,17 @@ export type Database = {
         Returns: Json
       }
       record_referral: { Args: { p_code: string }; Returns: Json }
+      record_start_incident: {
+        Args: {
+          p_assessment_id: string
+          p_build?: string
+          p_correlation?: string
+          p_error_code: string
+          p_kind: string
+          p_path?: string
+        }
+        Returns: Json
+      }
       record_system_interruption: {
         Args: { p_assessment_id: string; p_reason: string }
         Returns: undefined
@@ -4999,6 +5222,29 @@ export type Database = {
       recovery_mark_sent: {
         Args: { p_case: string; p_error?: string; p_ok: boolean }
         Returns: undefined
+      }
+      recovery_outbox_lease: {
+        Args: { p_case?: string; p_limit?: number }
+        Returns: {
+          attempts: number
+          case_id: string
+          id: string
+          link_token: string
+          message_key: string
+          payload: Json
+          phase: string
+          reminder_no: number
+        }[]
+      }
+      recovery_outbox_result: {
+        Args: {
+          p_attempt: number
+          p_error: string
+          p_id: string
+          p_ok: boolean
+          p_provider_id: string
+        }
+        Returns: Json
       }
       recovery_policy: { Args: never; Returns: Json }
       recovery_test_simulate: {
