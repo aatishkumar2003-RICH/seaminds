@@ -72,8 +72,8 @@ Deno.serve(async (req) => {
             assessmentId: L.assessment_id, strict_failures: true,
           }),
         });
+        const j = await r.json().catch(() => null); // body read stays under the timeout
         clearTimeout(t);
-        const j = await r.json().catch(() => null);
         if (!r.ok || !j || typeof j.score !== "number") failure = `HTTP_${r.status}${j?.error ? ":" + String(j.error).slice(0, 60) : ""}`;
         else result = j;
       } catch (e) {
