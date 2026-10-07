@@ -73,6 +73,17 @@ const InterviewExam = () => {
           yearsExperience: Number((profile as any)?.years_at_sea) || 5,
           company: res.company,
         });
+        // Reopen after scoring: confirm the saved, scored result without restarting the exam.
+        if ((existing as any)?.assessment_id) {
+          const { data: a } = await supabase.from("smc_assessments").select("status, overall_score").eq("id", assessmentId).maybeSingle();
+          if ((a as any)?.status === "completed") {
+            const { data: cr, error: ce } = await supabase.rpc("complete_interview" as any, { p_invite_id: claim.invite_id, p_assessment_id: assessmentId });
+            if (!ce && (cr as any)?.ok) { setState("done"); return; }
+            if ((cr as any)?.error_code === "SCORING_PENDING" || ce) { setState("pending"); return; }
+            setError("We couldn't confirm this interview. Your answers are saved. Need help? Contact support@seaminds.life");
+            setState("error"); return;
+          }
+        }
         setState("ready");
       } catch (e: any) {
         setError(e?.message || "Could not load the interview.");

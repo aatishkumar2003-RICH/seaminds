@@ -49,9 +49,9 @@ const Recover = () => {
             <>
               <h1 className="text-lg font-bold text-foreground mb-2">Sign in to resume</h1>
               <p className="text-sm text-muted-foreground mb-5">
-                Your attempt is saved. Sign in to SeaMinds with the same account you used for the assessment, then open this link again.
+                Your attempt is saved. Sign in to SeaMinds with the same account you used for the assessment and you will come straight back here.
               </p>
-              <button onClick={() => navigate("/app")} className="px-6 py-3 rounded-xl font-bold" style={{ background: "#D4AF37", color: "#0D1B2A" }}>
+              <button onClick={() => navigate(`/join?next=${encodeURIComponent(`/recover/${token}`)}`)} className="px-6 py-3 rounded-xl font-bold" style={{ background: "#D4AF37", color: "#0D1B2A" }}>
                 Sign in
               </button>
             </>

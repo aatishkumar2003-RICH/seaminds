@@ -89,6 +89,13 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
 
   const [cvSummary, setCvSummary] = useState<{certs:number; service:number; hasCv:boolean} | null>(null);
   const offlineSinceRef = useRef<number | null>(null);
+  // D: verified resume + timer continuity
+  const paperIdRef = useRef<string | null>(null);
+  const pendingResumeRef = useRef(false);
+  const resumeElapsedRef = useRef<{ index: number; elapsed: number } | null>(null);
+  const [netDown, setNetDown] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
+  const timerMaxRef = useRef(60);
+  const timeLeftRef = useRef(60);
   const flowStepRef = useRef(flowStep);
   flowStepRef.current = flowStep;
   const reportInterruption = (kind: string, reason: string) => {
@@ -191,11 +198,18 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     setFollowUpInput("");
     // Set timer based on question type
     const currentQ = flatQuestions[qIndex];
+    // Timer policy: restore elapsed time for the same question after reload; never below 10s after a technical interruption.
+    const restore = (max: number) => {
+      timerMaxRef.current = max;
+      const r = resumeElapsedRef.current;
+      resumeElapsedRef.current = null;
+      return r && r.index === qIndex && r.elapsed > 0 ? Math.max(max - r.elapsed, 10) : max;
+    };
     if (currentQ?.type === 'mcq') {
-      setTimeLeft(60);
+      setTimeLeft(restore(60));
       setTimerActive(true);
     } else if (currentQ?.type === 'scenario') {
-      setTimeLeft(currentQ.time_seconds || 180);
+      setTimeLeft(restore(currentQ.time_seconds || 180));
       setTimerActive(true);
     } else if (currentQ?.type === 'behavioural') {
       setTimerActive(false);
@@ -214,20 +228,29 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   // R4: deterministic checkpoint as the candidate advances
   useEffect(() => {
     if (flowStep !== 'questions' || !flatQuestions.length) return;
-    void supabase.rpc('save_checkpoint' as any, { p_assessment_id: assessmentId, p_current_index: qIndex }).then(() => {}, () => {});
+    // Checkpoint/heartbeat only — it never clears an interruption (that needs confirm_resume).
+    const beat = () => supabase.rpc('save_checkpoint' as any, { p_assessment_id: assessmentId, p_current_index: qIndex,
+        p_elapsed_seconds: Math.max(0, timerMaxRef.current - timeLeftRef.current) })
+      .then(({ data, error }: any) => { if (error || !data?.ok) console.warn('checkpoint not saved', error?.message || data?.error_code); }, () => {});
+    void beat();
+    const hb = setInterval(() => { if (navigator.onLine) void beat(); }, 15000);
+    return () => clearInterval(hb);
   }, [qIndex, flowStep, flatQuestions.length, assessmentId]);
+  timeLeftRef.current = timeLeft;
 
   // R4: interruption attribution — voluntary exit vs connectivity; never blame the system without evidence
   useEffect(() => {
     if (flowStep !== 'questions') return;
     const onHide = () => { if (document.visibilityState === 'hidden') reportInterruption('USER_PAUSED', 'tab_hidden'); };
     const onPageHide = () => reportInterruption('USER_PAUSED', 'page_closed');
-    const onOffline = () => { offlineSinceRef.current = Date.now(); };
+    const onOffline = () => { offlineSinceRef.current = Date.now(); setNetDown(true); };
     const onOnline = () => {
+      setNetDown(false);
       if (offlineSinceRef.current) {
         reportInterruption('CONNECTIVITY_INTERRUPTED', 'browser_offline');
         offlineSinceRef.current = null;
-        void supabase.rpc('save_checkpoint' as any, { p_assessment_id: assessmentId, p_current_index: qIndex }).then(() => {}, () => {});
+        // Recovery is cleared only after the next answer is durably saved on the same paper.
+        pendingResumeRef.current = true;
       }
     };
     document.addEventListener('visibilitychange', onHide);
@@ -246,11 +269,8 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   useEffect(() => {
     const handleVisibility = () => {
       if (document.visibilityState === 'hidden') {
-        setTabSwitches(prev => {
-          const count = prev + 1;
-          setRedFlags(f => [...f, { category: 'INTEGRITY', evidence: `Tab switched ${count} time(s) during assessment`, severity: count >= 3 ? 'HIGH' : 'MEDIUM' }]);
-          return count;
-        });
+        // Counted only; leaving the tab is a user pause, never an automatic integrity accusation.
+        setTabSwitches(prev => prev + 1);
       }
     };
     document.addEventListener('visibilitychange', handleVisibility);
@@ -259,7 +279,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
 
   // Countdown timer
   useEffect(() => {
-    if (!timerActive || flowStep !== 'questions') return;
+    if (!timerActive || flowStep !== 'questions' || netDown) return; // paused while offline: never expire as candidate failure
     const interval = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
@@ -271,7 +291,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [qIndex, timerActive, flowStep]);
+  }, [qIndex, timerActive, flowStep, netDown]);
 
   // Paste detection
   const handlePaste = () => {
@@ -324,6 +344,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
           }
           const d: any = data;
           if (d?.ok && Array.isArray(d.items)) {
+            paperIdRef.current = d.paper_id || null;
             const pick = (t: string) => d.items.filter((q: any) => q.type === t).map((q: any) => ({ ...q, id: q.paper_item_id }));
             setAiQuestions({
               mcq: pick('mcq'), scenario: pick('scenario'),
@@ -334,13 +355,16 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
             try {
               const { data: rs } = await supabase.rpc('get_resume_state' as any, { p_assessment_id: assessmentId });
               const r: any = rs;
+              if (r?.ok && r.paper_id === paperIdRef.current) {
+                if (r.interruption_state) pendingResumeRef.current = true;
+                if (Number(r.elapsed_seconds) > 0) resumeElapsedRef.current = { index: Number(r.checkpoint_index) || 0, elapsed: Number(r.elapsed_seconds) };
+              }
               if (r?.ok && Number(r.next_index) > 0) {
                 resumeIndexRef.current = Number(r.next_index);
                 resumeApplied.current = false;
                 setFlowStep('questions');
                 toast('Resumed — your previous answers are safe ⚓');
               }
-              await supabase.rpc('save_checkpoint' as any, { p_assessment_id: assessmentId, p_current_index: Number(r?.next_index) || 0 });
             } catch { /* non-blocking */ }
             return;
           }
@@ -351,6 +375,13 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
         }
       } catch (error: any) {
         if (cancelled) return;
+        // A: owner-bound startup incident (no paper/checkpoint is faked). Category is decided server-side.
+        const st = Number((error as any)?.status || 0);
+        const kind = !navigator.onLine ? 'CONNECTIVITY' : st >= 500 || !st ? 'BACKEND_FAILURE' : 'UNATTRIBUTED';
+        const code = !navigator.onLine ? 'OFFLINE' : st ? `HTTP_${st}` : 'RPC_SERVER_ERROR';
+        const build = (document.querySelector('script[type="module"][src]') as HTMLScriptElement | null)?.src.split('/').pop() || 'dev';
+        void supabase.rpc('record_start_incident' as any, { p_assessment_id: assessmentId, p_kind: kind, p_error_code: code,
+          p_path: 'rpc:issue_paper', p_correlation: crypto.randomUUID?.() || String(Date.now()), p_build: build }).then(() => {}, () => {});
         const msg = 'Could not load your question paper. Your attempt is saved — please try again.';
         await logEvent('smc_stuck', error?.message || msg, 'error');
         setQuestionError(msg);
@@ -421,7 +452,14 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     for (let i = 0; i < 4; i++) {
       const { data, error } = await supabase.rpc('submit_paper_answer' as any, { p_assessment_id: assessmentId, p_paper_item_id: paperItemId, p_answer: answer });
       const d: any = data;
-      if (!error && d?.ok) return d;
+      if (!error && d?.ok) {
+        // Verified continuation: same paper fetched + this answer durably saved → clear the interruption.
+        if (pendingResumeRef.current && paperIdRef.current) {
+          const { data: cr, error: ce } = await supabase.rpc('confirm_resume' as any, { p_assessment_id: assessmentId, p_paper_id: paperIdRef.current });
+          if (!ce && (cr as any)?.ok) pendingResumeRef.current = false;
+        }
+        return d;
+      }
       lastErr = error;
       if (d?.error_code && d.error_code !== 'RATE_LIMITED') break;
       await new Promise((r) => setTimeout(r, 1500 * (i + 1)));

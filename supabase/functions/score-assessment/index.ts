@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { authGate, aiPaused, aiPausedResponse, meterAi } from "../_shared/aiGuard.ts";
+import { authGate, aiPaused, meterAi } from "../_shared/aiGuard.ts";
+import { callFinalAi, validateDims } from "../_shared/finalAi.ts";
 const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-worker-secret" };
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -54,7 +55,13 @@ Deno.serve(async (req) => {
     return J({ error_code: code, ...(P.pending ? { pending: P.pending } : {}), ...(P.missing ? { missing: P.missing } : {}) }, status);
   }
 
-  if (await aiPaused(adminClient)) return aiPausedResponse(cors);
+  // Single-flight: one bounded lease per assessment; failures back off instead of re-calling the AI every poll.
+  const { data: lease, error: leaseErr } = await adminClient.rpc('final_scoring_lease', { p_assessment_id: assessmentId, p_paper_id: P.paper_id, p_is_worker: !!gate.isWorker });
+  const L: any = lease;
+  if (leaseErr || !L) return J({ error_code: 'PREPARE_FAILED' }, 503);
+  if (L.state === 'DEAD') return J({ error_code: 'FINALIZATION_MANUAL_REVIEW' }, 409);
+  if (L.state === 'IN_PROGRESS') return J({ error_code: 'FINAL_SCORING_IN_PROGRESS', retry_after: L.retry_after }, 409);
+  if (L.state === 'BACKOFF') return J({ error_code: 'FINAL_SCORING_RETRY', reason: 'backoff', retry_after: L.retry_after }, 503);
   const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
   const rank: string = P.rank;
   const firstName: string = P.first_name;
@@ -63,9 +70,12 @@ Deno.serve(async (req) => {
   const candidateContext = { experience_tier: P.level || 'MID', ship_specialisation: P.vessel_context || 'GENERAL' };
   const retry = async (reason: string) => {
     try { await adminClient.from('app_events').insert({ event_type: 'final_scoring_retry', message: reason, severity: 'warning', metadata: { assessment_id: assessmentId } }); } catch (_) { /* observability only */ }
+    try { await adminClient.rpc('final_scoring_release', { p_assessment_id: assessmentId, p_error: reason }); } catch (_) { /* lease expires anyway */ }
     return J({ error_code: 'FINAL_SCORING_RETRY', reason }, 503);
   };
-  if (!OPENAI_API_KEY) return retry('ai_unconfigured');
+  const storedDims = L.ai_result ? validateDims(L.ai_result) : null;
+  if (!storedDims && await aiPaused(adminClient)) return retry('ai_paused');
+  if (!storedDims && !OPENAI_API_KEY) return retry('ai_unconfigured');
 
   const hasTranscript = Array.isArray(transcript) && transcript.length > 0;
 
@@ -152,33 +162,19 @@ RULES:
 Return ONLY valid JSON, no markdown:
 { "technical": 0.00, "judgment": 0.00, "english": 0.00, "behaviour": 0.00 }`;
 
-  const _t0 = Date.now();
-  let data: any = null; let resOk = false;
-  try {
-    const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 30000);
-    const res = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST", signal: ctl.signal,
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${OPENAI_API_KEY}` },
-      body: JSON.stringify({ model: "gpt-4o", messages: [{ role: "user", content: prompt }], max_tokens: 300, temperature: 0.2 }),
-    });
-    clearTimeout(tm);
-    resOk = res.ok;
-    data = await res.json().catch(() => null);
-  } catch (e) {
-    await meterAi(adminClient, { userId: gate.userId, feature: "score-assessment", model: "gpt-4o", usage: null, success: false, latencyMs: Date.now() - _t0 });
-    return retry((e as any)?.name === 'AbortError' ? 'ai_timeout' : 'ai_network');
+  let dims: any;
+  if (storedDims) {
+    dims = { ...storedDims }; // AI already answered for this exact paper; persistence is being retried — never regenerate.
+    if (weightedTechnical !== null) dims.technical = weightedTechnical;
+  } else {
+    const _t0 = Date.now();
+    const ai = await callFinalAi({ fetchImpl: fetch, apiKey: OPENAI_API_KEY!, prompt, timeoutMs: 30000, model: "gpt-4o", technicalOverride: weightedTechnical });
+    await meterAi(adminClient, { userId: gate.userId, feature: "score-assessment", model: "gpt-4o", usage: (ai as any).usage ?? null, success: ai.ok, latencyMs: Date.now() - _t0 });
+    if (!ai.ok) return retry(ai.reason);
+    dims = ai.dims;
+    const { data: saved } = await adminClient.rpc('final_scoring_save_ai', { p_assessment_id: assessmentId, p_paper_id: P.paper_id, p_dims: dims });
+    if (saved !== true) console.warn('final AI result not cached; a retry would need a new AI call');
   }
-  await meterAi(adminClient, { userId: gate.userId, feature: "score-assessment", model: "gpt-4o", usage: data?.usage, success: resOk, latencyMs: Date.now() - _t0 });
-  if (!resOk) return retry('ai_http_error');
-
-  const text = String(data?.choices?.[0]?.message?.content || "").replace(/```json|```/g, "").trim();
-  const strict = (n: any) => (typeof n === 'number' && isFinite(n) && n >= 0 && n <= 5) ? Math.round(n * 100) / 100 : null;
-  let parsed: any;
-  try { parsed = JSON.parse(text); } catch { return retry('ai_malformed_json'); }
-  const dims: any = { technical: strict(parsed?.technical), judgment: strict(parsed?.judgment), english: strict(parsed?.english), behaviour: strict(parsed?.behaviour) };
-  // Technical is measured from the frozen ledger when available
-  if (weightedTechnical !== null) dims.technical = weightedTechnical;
-  if ([dims.technical, dims.judgment, dims.english, dims.behaviour].some((v) => v === null)) return retry('ai_invalid_dimensions');
 
   // Scoring v1.1 — wellness removed from employment scoring entirely.
   // Personal wellbeing is private to the seafarer and never influences hiring.
@@ -218,7 +214,8 @@ Return ONLY valid JSON, no markdown:
     "Chief Engineer": "CE", "Second Engineer": "2E", "3rd Engineer": "3E",
     "AB": "AB", "Bosun": "BO", "Cook": "CK", "Motorman": "MM", "Electrician": "EL",
   };
-  const certCandidate = `SMC-${String(Math.round(overall * 100)).padStart(3, "0")}-${abbrevMap[rank] || "CR"}-${new Date().getFullYear()}`;
+  // Unique per assessment (score/rank/year alone could collide); existing certificates keep their old IDs.
+  const certCandidate = `SMC-${String(Math.round(overall * 100)).padStart(3, "0")}-${abbrevMap[rank] || "CR"}-${new Date().getFullYear()}-${assessmentId.replace(/-/g, "").slice(0, 8).toUpperCase()}`;
   const { data: cm, error: cmErr } = await adminClient.rpc('finalize_assessment_commit', {
     p_assessment_id: assessmentId, p_paper_id: P.paper_id, p_caller: caller,
     p_scores: scores, p_level_profile: levelProfile, p_red_flags: redFlags, p_certificate_id: certCandidate,
@@ -226,7 +223,9 @@ Return ONLY valid JSON, no markdown:
   const C: any = cm;
   if (cmErr || !C?.ok) {
     console.error("score commit failed", cmErr?.message || C?.error_code);
-    return J({ error_code: 'PERSIST_FAILED', detail: C?.error_code || null }, 503);
+    const terminal = ['STALE_PREPARE', 'PAPER_REQUIRED', 'FORBIDDEN', 'NOT_FOUND', 'CERTIFICATE_COLLISION'].includes(C?.error_code);
+    try { await adminClient.rpc('final_scoring_release', { p_assessment_id: assessmentId, p_error: terminal ? null : 'persist_failed' }); } catch (_) { /* lease expires */ }
+    return J({ error_code: terminal ? String(C.error_code) : 'PERSIST_FAILED', detail: C?.detail || C?.error_code || null }, terminal ? 409 : 503);
   }
   if (C.already_completed) return J({ scores: { ...C.scores, certificate_id: C.certificate_id }, write_ok: true, already_completed: true });
   const certificateId: string = C.certificate_id;

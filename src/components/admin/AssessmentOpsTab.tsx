@@ -129,7 +129,21 @@ export default function AssessmentOpsTab() {
             <Stat label="Support contact" value={ready.support_contact_verified ? "Verified" : ready.support_contact_configured ? "Not verified" : "Not configured"} bad={!ready.support_contact_verified} />
             <Stat label="Last email provider error" value={ready.recovery_email_last_error || "None recorded"} bad={!!ready.recovery_email_last_error} />
             <Stat label="Active paper backoffs" value={ready.active_backoffs} bad={ready.active_backoffs > 0} />
+            <Stat label="Production-ready rank contexts (full coverage)" value={`${ready.production_ready_contexts ?? 0} · ${ready.production_ranks_without_ready_paper ?? "?"} ranks without a paper`} bad={!ready.production_ready_contexts} />
+            <Stat label="TEST-ready contexts" value={ready.test_ready_contexts ?? 0} />
+            <Stat label="Open start incidents (no paper)" value={ready.open_start_incidents ?? 0} bad={ready.open_start_incidents > 0} />
+            <Stat label="Finalisation failed" value={ready.finalization_failed ?? 0} bad={ready.finalization_failed > 0} />
+            <Stat label="Email outbox pending / dead" value={`${ready.outbox_pending ?? 0} / ${ready.outbox_dead ?? 0}`} bad={ready.outbox_dead > 0} />
+            <Stat label="Email delivery tracking" value={ready.email_delivery_tracking === "CONFIGURED" ? "Configured" : "Not configured (provider-accepted only)"} bad={ready.email_delivery_tracking !== "CONFIGURED"} />
           </div>
+          {ready.health_recheck_schedule && <p className="text-xs mt-2" style={{ color: "#94A3B8" }}>{ready.health_recheck_schedule}</p>}
+          {Array.isArray(ready.context_readiness) && ready.context_readiness.length > 0 && (
+            <div className="text-xs mt-2" style={{ color: "#94A3B8" }}>
+              {ready.context_readiness.map((c: any, i: number) => (
+                <div key={i}>{c.is_test ? "[TEST] " : ""}{c.canonical_rank} · {c.vessel_context} · v{c.blueprint_version}: {c.coverage_ok ? "full coverage" : `short — ${(c.shortfalls || []).map((s: any) => `${s.item_type} ${s.available}/${s.required}`).join(", ")}`}</div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
