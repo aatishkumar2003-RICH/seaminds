@@ -1,5 +1,5 @@
 export type AppState = "loading" | "landing" | "name-entry" | "welcome" | "main" | "voyage-report";
-export type Screen = "home" | "chat" | "dashboard" | "opportunities" | "news" | "academy" | "bridge" | "community" | "smc" | "resume" | "certs" | "resthours" | "vesselrating";
+export type Screen = "home" | "chat" | "dashboard" | "opportunities" | "news" | "academy" | "bridge" | "community" | "smc" | "resume" | "certs" | "resthours" | "vesselrating" | "support";
 
 export interface NavItem {
   icon: string;
@@ -20,6 +20,7 @@ export const NAV_ITEMS: NavItem[] = [
 
   { icon: "👥", label: "Community", screen: "community", gated: true },
   { icon: "📰", label: "News", screen: "news" },
+  { icon: "🛟", label: "Help & Support", screen: "support" },
 ];
 
 export const NATIONALITY_FLAGS: Record<string, string> = {
