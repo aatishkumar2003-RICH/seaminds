@@ -190,6 +190,13 @@
       "when": 1791364534858,
       "tag": "0026_two_tier_scoring",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1791364841754,
+      "tag": "0027_leaderboard_tier_cv_request",
+      "breakpoints": true
     }
   ]
 }
