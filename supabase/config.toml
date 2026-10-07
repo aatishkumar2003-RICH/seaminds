@@ -125,3 +125,6 @@ verify_jwt = false
 
 [functions.admin-create-staff]
 verify_jwt = true
+
+[functions.support-submit]
+verify_jwt = false
