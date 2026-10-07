@@ -5087,6 +5087,15 @@ export type Database = {
         Args: { p_assessment_id: string; p_policy?: string; p_reason: string }
         Returns: Json
       }
+      admin_support_set_status: {
+        Args: {
+          p_entity: string
+          p_id: string
+          p_resolved_by_version?: string
+          p_status: string
+        }
+        Returns: Json
+      }
       admin_upsert_referral_code: {
         Args: {
           p_channel: string
