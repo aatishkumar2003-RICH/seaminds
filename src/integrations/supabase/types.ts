@@ -2429,6 +2429,7 @@ export type Database = {
           completed_at: string | null
           created_at: string
           crew_profile_id: string | null
+          cv_request_status: string
           id: string
           invited_email: string | null
           invited_name: string | null
@@ -2445,6 +2446,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           crew_profile_id?: string | null
+          cv_request_status?: string
           id?: string
           invited_email?: string | null
           invited_name?: string | null
@@ -2461,6 +2463,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           crew_profile_id?: string | null
+          cv_request_status?: string
           id?: string
           invited_email?: string | null
           invited_name?: string | null
@@ -4215,6 +4218,7 @@ export type Database = {
       }
       smc_assessments: {
         Row: {
+          assessment_round: number
           behavioural_score: number | null
           certificate_id: string | null
           completed_at: string | null
@@ -4229,6 +4233,7 @@ export type Database = {
           judgment_score: number | null
           level_profile: Json | null
           overall_score: number | null
+          parent_assessment_id: string | null
           preflight_confirmed_at: string | null
           preflight_context: Json | null
           preflight_source: string | null
@@ -4237,6 +4242,7 @@ export type Database = {
           red_flags: Json | null
           report: Json | null
           score_band: string | null
+          scoring_tier: string
           scoring_version: string | null
           started_at: string
           status: string
@@ -4244,6 +4250,7 @@ export type Database = {
           wellness_score: number | null
         }
         Insert: {
+          assessment_round?: number
           behavioural_score?: number | null
           certificate_id?: string | null
           completed_at?: string | null
@@ -4258,6 +4265,7 @@ export type Database = {
           judgment_score?: number | null
           level_profile?: Json | null
           overall_score?: number | null
+          parent_assessment_id?: string | null
           preflight_confirmed_at?: string | null
           preflight_context?: Json | null
           preflight_source?: string | null
@@ -4266,6 +4274,7 @@ export type Database = {
           red_flags?: Json | null
           report?: Json | null
           score_band?: string | null
+          scoring_tier?: string
           scoring_version?: string | null
           started_at?: string
           status?: string
@@ -4273,6 +4282,7 @@ export type Database = {
           wellness_score?: number | null
         }
         Update: {
+          assessment_round?: number
           behavioural_score?: number | null
           certificate_id?: string | null
           completed_at?: string | null
@@ -4287,6 +4297,7 @@ export type Database = {
           judgment_score?: number | null
           level_profile?: Json | null
           overall_score?: number | null
+          parent_assessment_id?: string | null
           preflight_confirmed_at?: string | null
           preflight_context?: Json | null
           preflight_source?: string | null
@@ -4295,13 +4306,22 @@ export type Database = {
           red_flags?: Json | null
           report?: Json | null
           score_band?: string | null
+          scoring_tier?: string
           scoring_version?: string | null
           started_at?: string
           status?: string
           technical_score?: number | null
           wellness_score?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "smc_assessments_parent_assessment_id_fkey"
+            columns: ["parent_assessment_id"]
+            isOneToOne: false
+            referencedRelation: "smc_assessments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       smc_payments: {
         Row: {
