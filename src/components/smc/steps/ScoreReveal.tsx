@@ -79,25 +79,16 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
       // Server owns scoring — it writes the protected fields with the service role.
       // R3: if answers are still being scored, the server answers SCORING_PENDING; keep the
       // saved answers, nudge the scoring queue and try again instead of finalising early.
+      // Single-flight on the server: concurrent/duplicate calls get IN_PROGRESS or BACKOFF instead of new AI calls.
       for (let attempt = 0; attempt < 18 && !cancelled; attempt++) {
-        const res = await supabase.functions.invoke("score-assessment", {
-          body: {
-            assessmentId,
-            rank,
-            firstName,
-            transcript: transcript || [],
-            redFlags: redFlags || [],
-            candidateContext: candidateContext || {},
-          },
-          headers: authHeaders,
-        }).catch(() => null);
-        let code: string | undefined;
-        try { code = (await (res as any)?.error?.context?.json?.())?.error_code; } catch { /* not JSON */ }
+        if (attempt > 0 && await readRow()) break; // saved by another request/worker
+        const res = await supabase.functions.invoke("score-assessment", { body: { assessmentId }, headers: authHeaders }).catch(() => null);
+        let code: string | undefined; let retryAfter = 0;
+        try { const j = await (res as any)?.error?.context?.json?.(); code = j?.error_code; retryAfter = Number(j?.retry_after) || 0; } catch { /* not JSON */ }
         if (res && !(res as any).error) break;
-        // Retryable server states: answers still scoring, final AI unavailable, persistence retry
-        if (!["SCORING_PENDING", "FINAL_SCORING_RETRY", "PERSIST_FAILED", "PREPARE_FAILED"].includes(code || "") && res) break;
-        await supabase.functions.invoke("score-paper-answers", { body: { assessmentId }, headers: authHeaders }).catch(() => null);
-        await new Promise(r => setTimeout(r, 10000));
+        if (!["SCORING_PENDING", "FINAL_SCORING_RETRY", "FINAL_SCORING_IN_PROGRESS", "PERSIST_FAILED", "PREPARE_FAILED"].includes(code || "") && res) break;
+        if (code === "SCORING_PENDING") await supabase.functions.invoke("score-paper-answers", { body: { assessmentId }, headers: authHeaders }).catch(() => null);
+        await new Promise(r => setTimeout(r, Math.min(Math.max(retryAfter * 1000, 10000), 60000)));
       }
 
       // Read back what the server stored, polling up to ~60s
