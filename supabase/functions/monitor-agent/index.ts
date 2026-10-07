@@ -76,6 +76,17 @@ Deno.serve(async (req) => {
             </div>
           </div>
 
+          ${escalations.length > 0 ? `
+          <h2 style="color:#f44336;font-size:16px;margin-top:25px;">🚨 Support Incident Escalations</h2>
+          ${escalations.map(e => `
+            <div style="background:#1a2e47;padding:12px;border-radius:8px;margin-bottom:8px;border-left:3px solid #f44336;">
+              <div style="font-weight:bold;font-size:13px;color:#f44336;">${e.metadata?.incident_ref || ''} · ${e.metadata?.severity || ''}</div>
+              <div style="font-size:12px;color:#ccc;margin-top:4px;">${e.metadata?.category || ''} / ${e.metadata?.component || ''} / ${e.metadata?.operation || ''} / ${e.metadata?.error_signature || ''}</div>
+              <div style="font-size:11px;color:#888;margin-top:4px;">${e.metadata?.distinct_reporters_30m ?? 0} distinct reporters (30 min)</div>
+            </div>
+          `).join('')}
+          ` : ''}
+
           ${errors.length > 0 ? `
           <h2 style="color:#f44336;font-size:16px;margin-top:25px;">🔴 Errors Requiring Attention</h2>
           ${errors.slice(0, 10).map(e => `
@@ -126,7 +137,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         from: 'SeaMinds Monitor <crew@seaminds.life>',
         to: ['aatishkumar2003@gmail.com'],
-        subject: `⚓ SeaMinds: ${errors.length > 0 ? `🔴 ${errors.length} errors` : `No new errors reported in this window (${warnings.length} warnings)`} · ${signups.length} new crew · Total: ${totalCrew}`,
+        subject: `⚓ SeaMinds: ${escalations.length > 0 ? `🚨 ${escalations.length} support escalations · ` : ''}${errors.length > 0 ? `🔴 ${errors.length} errors` : `No new errors reported in this window (${warnings.length} warnings)`} · ${signups.length} new crew · Total: ${totalCrew}`,
         html,
       }),
     });
@@ -136,7 +147,7 @@ Deno.serve(async (req) => {
     if (!emailResp.ok || !result?.id) {
       return new Response(JSON.stringify({ sent: false, events: events.length, status: emailResp.status }), { headers: cors });
     }
-    const ids = events.map(e => e.id);
+    const ids = [...escalations, ...errors.slice(0, 10), ...signups.slice(0, 5), ...warnings.slice(0, 5)].map(e => e.id);
     const { error: markErr } = await supabase.from('app_events').update({ emailed: true }).in('id', ids);
     if (markErr) return new Response(JSON.stringify({ sent: true, marked: false }), { status: 500, headers: cors });
     return new Response(JSON.stringify({ sent: emailResp.ok, events: events.length, result }), { headers: cors });
