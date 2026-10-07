@@ -35,31 +35,37 @@ Deno.serve(async (req) => {
     await adminClient.from('auth_rate_limits').insert({ ip_address: rateLimitKey, attempt_count: 1, window_start: new Date().toISOString(), last_attempt: new Date().toISOString() });
   }
 
-  if (await aiPaused(adminClient)) return aiPausedResponse(cors);
 
-  const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+  const J = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
+  let body: any = {};
+  try { body = await req.json(); } catch { return J({ error_code: 'BAD_REQUEST' }, 400); }
+  const assessmentId = typeof body?.assessmentId === 'string' ? body.assessmentId : '';
+  if (!/^[0-9a-f-]{36}$/i.test(assessmentId)) return J({ error_code: 'BAD_REQUEST' }, 400);
+  const caller = gate.isWorker ? null : gate.userId;
 
-  let { rank, firstName, transcript, candidateContext, assessmentId, redFlags } = await req.json();
-
-  // ── R3: issued-paper assessments are scored only from the server answer ledger ──
-  if (assessmentId) {
-    const { data: paper } = await adminClient.from('issued_papers').select('id, items, crew_profile_id').eq('assessment_id', assessmentId).eq('status', 'ISSUED').maybeSingle();
-    if (paper) {
-      if (!gate.isWorker && (paper as any).crew_profile_id !== gate.userId) return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: { ...cors, "Content-Type": "application/json" } });
-      const { data: led } = await adminClient.from('answer_ledger').select('paper_item_id, answer, scoring_state, score, result').eq('paper_id', (paper as any).id);
-      const rows = (led as any[]) || [];
-      const pending = rows.filter(r => r.scoring_state === 'PENDING' || r.scoring_state === 'RETRY_REQUIRED');
-      if (pending.length) {
-        return new Response(JSON.stringify({ error_code: 'SCORING_PENDING', pending: pending.length }), { status: 409, headers: { ...cors, "Content-Type": "application/json" } });
-      }
-      const byId = new Map(rows.map(r => [r.paper_item_id, r]));
-      // Unanswered items are genuine candidate non-responses (0); technical failures never reach here.
-      transcript = ((paper as any).items as any[]).map((it: any) => {
-        const r: any = byId.get(it.paper_item_id);
-        return { question: it.question, answer: r?.answer ?? '', score: Number(r?.score ?? 0), redFlag: !!r?.result?.red_flag, redFlagCategory: r?.result?.red_flag_category ?? null, followUp: null, type: it.type, domain: it.domain };
-      });
-    }
+  // P0: server-authoritative context. Client rank/transcript/flags/weights/context are ignored.
+  const { data: prep, error: prepErr } = await adminClient.rpc('finalize_assessment_prepare', { p_assessment_id: assessmentId, p_caller: caller });
+  if (prepErr || !prep) return J({ error_code: 'PREPARE_FAILED' }, 503);
+  const P: any = prep;
+  if (P.already_completed) return J({ scores: { ...P.scores, certificate_id: P.certificate_id }, write_ok: true, already_completed: true });
+  if (!P.ok) {
+    const code = String(P.error_code || 'UNKNOWN');
+    const status = code === 'FORBIDDEN' ? 403 : code === 'NOT_FOUND' ? 404 : (code === 'SCORING_PENDING' || code === 'SCORING_MANUAL_REVIEW') ? 409 : 422;
+    return J({ error_code: code, ...(P.pending ? { pending: P.pending } : {}), ...(P.missing ? { missing: P.missing } : {}) }, status);
   }
+
+  if (await aiPaused(adminClient)) return aiPausedResponse(cors);
+  const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+  const rank: string = P.rank;
+  const firstName: string = P.first_name;
+  const transcript: any[] = Array.isArray(P.transcript) ? P.transcript : [];
+  const redFlags: any[] = Array.isArray(P.red_flags) ? P.red_flags : [];
+  const candidateContext = { experience_tier: P.level || 'MID', ship_specialisation: P.vessel_context || 'GENERAL' };
+  const retry = async (reason: string) => {
+    try { await adminClient.from('app_events').insert({ event_type: 'final_scoring_retry', message: reason, severity: 'warning', metadata: { assessment_id: assessmentId } }); } catch (_) { /* observability only */ }
+    return J({ error_code: 'FINAL_SCORING_RETRY', reason }, 503);
+  };
+  if (!OPENAI_API_KEY) return retry('ai_unconfigured');
 
   const hasTranscript = Array.isArray(transcript) && transcript.length > 0;
 
@@ -147,48 +153,32 @@ Return ONLY valid JSON, no markdown:
 { "technical": 0.00, "judgment": 0.00, "english": 0.00, "behaviour": 0.00 }`;
 
   const _t0 = Date.now();
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${OPENAI_API_KEY}` },
-    body: JSON.stringify({ model: "gpt-4o", messages: [{ role: "user", content: prompt }], max_tokens: 300, temperature: 0.2 }),
-  });
-  const data = await res.json();
-  await meterAi(adminClient, { userId: gate.userId, feature: "score-assessment", model: "gpt-4o", usage: data?.usage, success: res.ok, latencyMs: Date.now() - _t0 });
-
-  const text = (data.choices?.[0]?.message?.content || "{}").replace(/```json|```/g, "").trim();
-
-  const clamp = (n: any) => {
-    const v = Number(n);
-    if (!isFinite(v)) return null;
-    return Math.max(0, Math.min(5, Math.round(v * 100) / 100));
-  };
-
-  // Fallback derived from the real transcript, never a flat 5
-  const transcriptAvg = hasTranscript
-    ? transcript.reduce((s: number, t: any) => s + (Number(t.score) || 0), 0) / transcript.length / 2
-    : 2.5;
-
-  let dims: any = {};
+  let data: any = null; let resOk = false;
   try {
-    const parsed = JSON.parse(text);
-    dims = {
-      technical: clamp(parsed.technical),
-      judgment: clamp(parsed.judgment),
-      english: clamp(parsed.english),
-      behaviour: clamp(parsed.behaviour),
-    };
-  } catch {
-    dims = {};
+    const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 30000);
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST", signal: ctl.signal,
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${OPENAI_API_KEY}` },
+      body: JSON.stringify({ model: "gpt-4o", messages: [{ role: "user", content: prompt }], max_tokens: 300, temperature: 0.2 }),
+    });
+    clearTimeout(tm);
+    resOk = res.ok;
+    data = await res.json().catch(() => null);
+  } catch (e) {
+    await meterAi(adminClient, { userId: gate.userId, feature: "score-assessment", model: "gpt-4o", usage: null, success: false, latencyMs: Date.now() - _t0 });
+    return retry((e as any)?.name === 'AbortError' ? 'ai_timeout' : 'ai_network');
   }
+  await meterAi(adminClient, { userId: gate.userId, feature: "score-assessment", model: "gpt-4o", usage: data?.usage, success: resOk, latencyMs: Date.now() - _t0 });
+  if (!resOk) return retry('ai_http_error');
 
-  // Any missing dimension falls back to the transcript average, not a fixed number
-  const fb = Math.max(0, Math.min(5, Math.round(transcriptAvg * 100) / 100));
-  // Technical is measured, not opined: weighted correct / weighted total when available
-  dims.technical = weightedTechnical ?? dims.technical ?? fb;
-  dims.judgment  = dims.judgment  ?? fb;
-  dims.english   = dims.english   ?? fb;
-  dims.behaviour = dims.behaviour ?? fb;
-  
+  const text = String(data?.choices?.[0]?.message?.content || "").replace(/```json|```/g, "").trim();
+  const strict = (n: any) => (typeof n === 'number' && isFinite(n) && n >= 0 && n <= 5) ? Math.round(n * 100) / 100 : null;
+  let parsed: any;
+  try { parsed = JSON.parse(text); } catch { return retry('ai_malformed_json'); }
+  const dims: any = { technical: strict(parsed?.technical), judgment: strict(parsed?.judgment), english: strict(parsed?.english), behaviour: strict(parsed?.behaviour) };
+  // Technical is measured from the frozen ledger when available
+  if (weightedTechnical !== null) dims.technical = weightedTechnical;
+  if ([dims.technical, dims.judgment, dims.english, dims.behaviour].some((v) => v === null)) return retry('ai_invalid_dimensions');
 
   // Scoring v1.1 — wellness removed from employment scoring entirely.
   // Personal wellbeing is private to the seafarer and never influences hiring.
@@ -222,77 +212,34 @@ Return ONLY valid JSON, no markdown:
     level_profile: levelProfile,
   };
 
-  // ── Canonical write: only the service role may write scores (tamper trigger) ──
-  let certificateId: string | null = null;
-  let writeOk = true;
-  let writeError: string | null = null;
-  if (assessmentId) {
-    const abbrevMap: Record<string, string> = {
-      "Master": "MA", "Chief Officer": "CO", "2nd Officer": "2O", "3rd Officer": "3O",
-      "Chief Engineer": "CE", "Second Engineer": "2E", "3rd Engineer": "3E",
-      "AB": "AB", "Bosun": "BO", "Cook": "CK", "Motorman": "MM", "Electrician": "EL",
-    };
-    const abbrev = abbrevMap[rank] || "CR";
-    certificateId = `SMC-${String(Math.round(overall * 100)).padStart(3, "0")}-${abbrev}-${new Date().getFullYear()}`;
-    const { data: written, error: writeErr } = await adminClient.from("smc_assessments").update({
-      technical_score: dims.technical,
-      judgment_score: dims.judgment,
-      english_score: dims.english,
-      behavioural_score: dims.behaviour,
-      overall_score: overall,
-      level_profile: levelProfile,
-      score_band: band,
-      recommendation,
-      scoring_version: "v1.1",
-      certificate_id: certificateId,
-      dimension_scores: {
-        technical: dims.technical,
-        judgment: dims.judgment,
-        maritime_english: dims.english,
-        professional_behaviour: dims.behaviour,
-      },
-      red_flags: Array.isArray(redFlags) ? redFlags : [],
-      status: "completed",
-      completed_at: new Date().toISOString(),
-    }).eq("id", assessmentId).select("id");
-    if (writeErr) {
-      writeOk = false;
-      writeError = writeErr.message;
-      console.error("score write failed", writeErr.message);
-    } else if (!written || written.length === 0) {
-      writeOk = false;
-      writeError = "Assessment row not found or not updated (0 rows affected)";
-      console.error("score write affected 0 rows for", assessmentId);
-    }
-    if (writeOk) {
-      try {
-        const { data: arow } = await adminClient
-          .from("smc_assessments")
-          .select("crew_profile_id, probed_claims")
-          .eq("id", assessmentId)
-          .maybeSingle();
-        const crewId = (arow as any)?.crew_profile_id;
-        const probedRaw = (arow as any)?.probed_claims;
-        const probed: string[] = Array.isArray(probedRaw)
-          ? probedRaw.map((k: any) => String(k)).filter(Boolean)
-          : [];
-        // Only claims the interview actually probed get promoted to ASSESSED
-        if (crewId && probed.length) {
-          await adminClient
-            .from("crew_claims")
-            .update({ status: "ASSESSED", assessed_at: new Date().toISOString() })
-            .eq("crew_id", crewId)
-            .eq("status", "CLAIMED")
-            .in("claim_key", probed);
-        }
-      } catch (_e) { /* claim promotion never blocks scoring */ }
-    }
+  // ── Canonical write: atomic, idempotent, row-locked commit (service role only) ──
+  const abbrevMap: Record<string, string> = {
+    "Master": "MA", "Chief Officer": "CO", "2nd Officer": "2O", "3rd Officer": "3O",
+    "Chief Engineer": "CE", "Second Engineer": "2E", "3rd Engineer": "3E",
+    "AB": "AB", "Bosun": "BO", "Cook": "CK", "Motorman": "MM", "Electrician": "EL",
+  };
+  const certCandidate = `SMC-${String(Math.round(overall * 100)).padStart(3, "0")}-${abbrevMap[rank] || "CR"}-${new Date().getFullYear()}`;
+  const { data: cm, error: cmErr } = await adminClient.rpc('finalize_assessment_commit', {
+    p_assessment_id: assessmentId, p_paper_id: P.paper_id, p_caller: caller,
+    p_scores: scores, p_level_profile: levelProfile, p_red_flags: redFlags, p_certificate_id: certCandidate,
+  });
+  const C: any = cm;
+  if (cmErr || !C?.ok) {
+    console.error("score commit failed", cmErr?.message || C?.error_code);
+    return J({ error_code: 'PERSIST_FAILED', detail: C?.error_code || null }, 503);
   }
+  if (C.already_completed) return J({ scores: { ...C.scores, certificate_id: C.certificate_id }, write_ok: true, already_completed: true });
+  const certificateId: string = C.certificate_id;
+  try {
+    const { data: arow } = await adminClient.from("smc_assessments").select("crew_profile_id, probed_claims").eq("id", assessmentId).maybeSingle();
+    const crewId = (arow as any)?.crew_profile_id;
+    const probedRaw = (arow as any)?.probed_claims;
+    const probed: string[] = Array.isArray(probedRaw) ? probedRaw.map((k: any) => String(k)).filter(Boolean) : [];
+    if (crewId && probed.length) {
+      await adminClient.from("crew_claims").update({ status: "ASSESSED", assessed_at: new Date().toISOString() })
+        .eq("crew_id", crewId).eq("status", "CLAIMED").in("claim_key", probed);
+    }
+  } catch (_e) { /* claim promotion never blocks scoring */ }
 
-  return new Response(JSON.stringify({
-    scores: { ...scores, certificate_id: certificateId },
-    write_ok: writeOk,
-    ...(writeOk ? {} : { write_error: writeError }),
-  }), { headers: { ...cors, "Content-Type": "application/json" } });
+  return J({ scores: { ...scores, certificate_id: certificateId }, write_ok: true });
 });
-

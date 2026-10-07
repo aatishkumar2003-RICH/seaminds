@@ -4866,6 +4866,22 @@ export type Database = {
       }
       enqueue_scoring: { Args: { p_assessment_id: string }; Returns: Json }
       expire_old_vacancies: { Args: never; Returns: string }
+      finalize_assessment_commit: {
+        Args: {
+          p_assessment_id: string
+          p_caller: string
+          p_certificate_id: string
+          p_level_profile: Json
+          p_paper_id: string
+          p_red_flags: Json
+          p_scores: Json
+        }
+        Returns: Json
+      }
+      finalize_assessment_prepare: {
+        Args: { p_assessment_id: string; p_caller: string }
+        Returns: Json
+      }
       fleet_add_crew: { Args: { p_crew_email: string }; Returns: Json }
       fleet_gate_open: {
         Args: { p_mp: Database["public"]["Tables"]["manager_profiles"]["Row"] }

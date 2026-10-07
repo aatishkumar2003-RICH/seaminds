@@ -9,7 +9,7 @@ const NAVY = "#0b1929";
 const InterviewExam = () => {
   const { token } = useParams();
   const navigate = useNavigate();
-  const [state, setState] = useState<"loading" | "ready" | "error" | "done">("loading");
+  const [state, setState] = useState<"loading" | "ready" | "error" | "done" | "pending">("loading");
   const [error, setError] = useState("");
   const [ctx, setCtx] = useState<any>(null);
 
@@ -82,14 +82,20 @@ const InterviewExam = () => {
   }, [token, navigate]);
 
   const finish = async () => {
+    // Only a server-confirmed, scored completion shows "Interview complete".
+    let res: any = null;
     try {
       if (ctx?.inviteId && ctx?.assessmentId) {
-        await supabase.rpc("complete_interview" as any, {
+        const { data, error } = await supabase.rpc("complete_interview" as any, {
           p_invite_id: ctx.inviteId, p_assessment_id: ctx.assessmentId,
         });
+        res = error ? { ok: false, error_code: "NETWORK" } : data;
       }
-    } catch { /* ignore */ }
-    setState("done");
+    } catch { res = { ok: false, error_code: "NETWORK" }; }
+    if (res?.ok) { setState("done"); return; }
+    if (res?.error_code === "SCORING_PENDING" || res?.error_code === "NETWORK") { setState("pending"); return; }
+    setError("We couldn't confirm this interview. Your answers are saved. Need help? Contact support@seaminds.life");
+    setState("error");
   };
 
   if (state === "loading") {
@@ -109,6 +115,24 @@ const InterviewExam = () => {
           <button onClick={() => navigate("/feed")}
             style={{ background: GOLD, color: "#0D1B2A", border: "none", borderRadius: 12, padding: "12px 22px", fontWeight: 800, cursor: "pointer" }}>
             See live jobs
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (state === "pending") {
+    return (
+      <div style={{ minHeight: "100vh", background: NAVY, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+        <div style={{ textAlign: "center", maxWidth: 340 }}>
+          <p style={{ fontSize: 40, marginBottom: 12 }}>⏳</p>
+          <h1 style={{ color: "#fff", fontSize: 19, fontWeight: 800, marginBottom: 10 }}>Answers saved — scoring in progress</h1>
+          <p style={{ color: "#94a3b8", fontSize: 13, lineHeight: 1.6, marginBottom: 20 }}>
+            Nothing is lost and this is not a fail. Open your interview link again later to finish sending your result to {ctx?.company}.
+          </p>
+          <button onClick={() => navigate("/app")}
+            style={{ background: GOLD, color: "#0D1B2A", border: "none", borderRadius: 12, padding: "13px 24px", fontWeight: 800, cursor: "pointer" }}>
+            Open SeaMinds
           </button>
         </div>
       </div>
