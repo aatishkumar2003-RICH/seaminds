@@ -6,3 +6,4 @@
 - Pre-paper start failures are recorded in `assessment_start_incidents` (owner-bound, server-classified); no fake checkpoint or paper. Why: failures before issuance must be visible and recoverable without bypassing readiness.
 - Readiness and recovery health are computed per exact rank/context blueprint coverage (`blueprint_coverage*`), never global counts. Why: a row existing does not prove a paper can be issued.
 - Pure AI/email provider adapters live in `supabase/functions/_shared/finalAi.ts` with no imports so vitest can test them. Why: deterministic mocked-fetch tests without a new test runtime.
+- Assessment `scoring_tier` (QUICK_PROFILE / CV_VERIFIED) and `assessment_round` are set server-side by trigger `trg_set_assessment_scoring_tier` at creation; clients never choose them. Why: a score's evidence basis must not be forgeable.

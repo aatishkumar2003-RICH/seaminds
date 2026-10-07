@@ -750,20 +750,27 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
 
           {cvSummary && !cvSummary.hasCv && (
             <>
-              <div className="rounded-xl p-4" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.35)' }}>
-                <p className="text-sm font-bold mb-1" style={{ color: '#f59e0b' }}>⚠ No CV on your profile yet</p>
+              <p className="text-sm font-bold" style={{ color: '#fff' }}>Choose how you want to be scored</p>
+              <div className="rounded-xl p-4" style={{ background: '#132238', border: '1px solid rgba(212,175,55,0.3)' }}>
+                <p className="text-sm font-bold mb-1" style={{ color: '#D4AF37' }}>🟡 Quick Profile Score</p>
                 <p className="text-[12.5px] leading-relaxed" style={{ color: '#cbd5e1' }}>
-                  Companies decide from your CV and certificates. Build it once in SeaMinds and it is used for
-                  every interview and every job — you never have to upload it again.
+                  Start now — no CV needed. Scored on your rank and Quick Sea Profile. You can upgrade to a CV-verified score later,
+                  or a company may invite you to a Round 2.
                 </p>
+                <button onClick={() => setFlowStep('questions')} className="w-full mt-3 py-3 rounded-xl font-bold text-sm" style={{ background: '#D4AF37', color: '#0b1929' }}>
+                  Start Quick Profile Score
+                </button>
               </div>
-              <a href="/app" target="_blank" rel="noopener noreferrer"
-                className="w-full py-3 rounded-xl font-bold text-sm text-center" style={{ background: '#D4AF37', color: '#0b1929' }}>
-                Build my CV now (opens SeaMinds)
-              </a>
-              <button onClick={() => setFlowStep('questions')} className="text-xs text-center py-2" style={{ color: '#888' }}>
-                Continue without a CV — my result will be weaker
-              </button>
+              <div className="rounded-xl p-4" style={{ background: '#132238', border: '1px solid #1a2e47' }}>
+                <p className="text-sm font-bold mb-1" style={{ color: '#22c55e' }}>🟢 CV-Verified Score</p>
+                <p className="text-[12.5px] leading-relaxed" style={{ color: '#cbd5e1' }}>
+                  Add your CV and certificates first. Your score is backed by your documented sea service.
+                </p>
+                <a href="/app" target="_blank" rel="noopener noreferrer"
+                  className="block w-full mt-3 py-3 rounded-xl font-bold text-sm text-center" style={{ background: 'transparent', color: '#D4AF37', border: '1px solid #D4AF37' }}>
+                  Add my CV first (opens SeaMinds)
+                </a>
+              </div>
             </>
           )}
         </div>
