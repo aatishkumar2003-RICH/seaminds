@@ -169,6 +169,13 @@
       "when": 1791352763263,
       "tag": "0023_r0_r6_p0_finalization_integrity",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1791353060748,
+      "tag": "0024_fix_timeout_disposition_empty_answer",
+      "breakpoints": true
     }
   ]
 }
