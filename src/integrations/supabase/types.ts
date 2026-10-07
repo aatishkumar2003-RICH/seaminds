@@ -4395,6 +4395,162 @@ export type Database = {
         }
         Relationships: []
       }
+      support_incidents: {
+        Row: {
+          category: string
+          component: string
+          error_signature: string
+          fingerprint: string
+          first_seen_at: string
+          id: string
+          incident_ref: string
+          last_escalated_at: string | null
+          last_seen_at: string
+          operation: string
+          resolved_by_version: string | null
+          severity: string
+          status: string
+          total_reports: number
+        }
+        Insert: {
+          category: string
+          component: string
+          error_signature: string
+          fingerprint: string
+          first_seen_at?: string
+          id?: string
+          incident_ref: string
+          last_escalated_at?: string | null
+          last_seen_at?: string
+          operation: string
+          resolved_by_version?: string | null
+          severity?: string
+          status?: string
+          total_reports?: number
+        }
+        Update: {
+          category?: string
+          component?: string
+          error_signature?: string
+          fingerprint?: string
+          first_seen_at?: string
+          id?: string
+          incident_ref?: string
+          last_escalated_at?: string | null
+          last_seen_at?: string
+          operation?: string
+          resolved_by_version?: string | null
+          severity?: string
+          status?: string
+          total_reports?: number
+        }
+        Relationships: []
+      }
+      support_rate_limits: {
+        Row: {
+          action: string
+          hits: number
+          rate_key: string
+          window_start: string
+        }
+        Insert: {
+          action: string
+          hits?: number
+          rate_key: string
+          window_start?: string
+        }
+        Update: {
+          action?: string
+          hits?: number
+          rate_key?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
+      support_tickets: {
+        Row: {
+          assessment_id: string | null
+          assessment_start_incident_id: string | null
+          category: string
+          client_build: string | null
+          component: string | null
+          contact_email: string | null
+          contact_whatsapp: string | null
+          created_at: string
+          description: string
+          error_signature: string | null
+          id: string
+          incident_id: string | null
+          operation: string | null
+          reporter_key: string
+          route_pathname: string | null
+          status: string
+          subject: string
+          submission_id: string
+          ticket_ref: string
+          user_id: string | null
+        }
+        Insert: {
+          assessment_id?: string | null
+          assessment_start_incident_id?: string | null
+          category: string
+          client_build?: string | null
+          component?: string | null
+          contact_email?: string | null
+          contact_whatsapp?: string | null
+          created_at?: string
+          description: string
+          error_signature?: string | null
+          id?: string
+          incident_id?: string | null
+          operation?: string | null
+          reporter_key: string
+          route_pathname?: string | null
+          status?: string
+          subject: string
+          submission_id: string
+          ticket_ref: string
+          user_id?: string | null
+        }
+        Update: {
+          assessment_id?: string | null
+          assessment_start_incident_id?: string | null
+          category?: string
+          client_build?: string | null
+          component?: string | null
+          contact_email?: string | null
+          contact_whatsapp?: string | null
+          created_at?: string
+          description?: string
+          error_signature?: string | null
+          id?: string
+          incident_id?: string | null
+          operation?: string | null
+          reporter_key?: string
+          route_pathname?: string | null
+          status?: string
+          subject?: string
+          submission_id?: string
+          ticket_ref?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_assessment_start_incident_id_fkey"
+            columns: ["assessment_start_incident_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_start_incidents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_tickets_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "support_incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       takeover_answers: {
         Row: {
           author_id: string
@@ -4882,6 +5038,7 @@ export type Database = {
       }
     }
     Functions: {
+      _gen_public_ref: { Args: { p_prefix: string }; Returns: string }
       _start_incident_upsert: {
         Args: {
           p_assessment: string
@@ -4896,6 +5053,10 @@ export type Database = {
       }
       add_interview_invites: {
         Args: { p_campaign_id: string; p_people: Json }
+        Returns: Json
+      }
+      admin_get_incident_diagnostic_bundle: {
+        Args: { p_incident_id: string }
         Returns: Json
       }
       admin_growth_pulse: { Args: never; Returns: Json }
@@ -5315,6 +5476,25 @@ export type Database = {
       }
       resolve_rank: { Args: { p_rank: string }; Returns: Json }
       reveal_contact: { Args: { p_crew_id: string }; Returns: Json }
+      rpc_submit_support_ticket: {
+        Args: {
+          p_assessment_id: string
+          p_category: string
+          p_client_build: string
+          p_component: string
+          p_contact_email: string
+          p_contact_whatsapp: string
+          p_description: string
+          p_error_signature: string
+          p_operation: string
+          p_reporter_key: string
+          p_route_pathname: string
+          p_subject: string
+          p_submission_id: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       save_checkpoint: {
         Args: {
           p_assessment_id: string
@@ -5359,6 +5539,15 @@ export type Database = {
           p_paper_item_id: string
         }
         Returns: Json
+      }
+      support_rate_ok: {
+        Args: {
+          p_action: string
+          p_key: string
+          p_max: number
+          p_window: string
+        }
+        Returns: boolean
       }
       takeover_add_member: {
         Args: { p_email: string; p_inspection_id: string; p_role: string }
