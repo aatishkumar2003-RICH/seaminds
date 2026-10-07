@@ -2,7 +2,7 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-worker-secret',
 };
 
 Deno.serve(async (req) => {
@@ -15,21 +15,34 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-    // Get unprocessed events from last 30 minutes
-    const since = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+    // Worker-secret-only authentication (cron). Users and public keys are rejected.
+    const workerSecret = req.headers.get('x-worker-secret') || '';
+    const { data: secretRow } = await supabase.from('admin_settings').select('value').eq('key', 'scoring_worker_secret').maybeSingle();
+    const expected = (secretRow?.value ?? '').toString();
+    if (!expected || !workerSecret || workerSecret !== expected) {
+      return new Response(JSON.stringify({ error: 'worker_auth_required' }), { status: 401, headers: cors });
+    }
+
+    // Durable drain: every unemailed monitor-worthy event, oldest first (no time-window drops).
     const { data: events } = await supabase
       .from('app_events')
       .select('*')
       .eq('emailed', false)
-      .gte('created_at', since)
-      .order('created_at', { ascending: false });
+      .or('severity.in.(error,warning),event_type.in.(support_incident_escalated,crew_signup)')
+      .order('created_at', { ascending: true })
+      .limit(100);
+
+    // Retire informational events so they never accumulate in the unemailed queue.
+    await supabase.from('app_events').update({ emailed: true })
+      .eq('emailed', false).eq('severity', 'info').not('event_type', 'in', '(support_incident_escalated,crew_signup)');
 
     if (!events || events.length === 0) {
       return new Response(JSON.stringify({ message: 'No new events' }), { headers: cors });
     }
 
     // Group by type
-    const errors = events.filter(e => e.severity === 'error');
+    const escalations = events.filter(e => e.event_type === 'support_incident_escalated');
+    const errors = events.filter(e => e.severity === 'error' && e.event_type !== 'support_incident_escalated');
     const signups = events.filter(e => e.event_type === 'crew_signup');
     const warnings = events.filter(e => e.severity === 'warning');
 
