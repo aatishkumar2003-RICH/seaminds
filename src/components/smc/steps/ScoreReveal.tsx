@@ -93,7 +93,9 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
         }).catch(() => null);
         let code: string | undefined;
         try { code = (await (res as any)?.error?.context?.json?.())?.error_code; } catch { /* not JSON */ }
-        if (code !== "SCORING_PENDING") break;
+        if (res && !(res as any).error) break;
+        // Retryable server states: answers still scoring, final AI unavailable, persistence retry
+        if (!["SCORING_PENDING", "FINAL_SCORING_RETRY", "PERSIST_FAILED", "PREPARE_FAILED"].includes(code || "") && res) break;
         await supabase.functions.invoke("score-paper-answers", { body: { assessmentId }, headers: authHeaders }).catch(() => null);
         await new Promise(r => setTimeout(r, 10000));
       }
@@ -192,7 +194,7 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
           <Shield size={40} className="text-primary" />
           <p className="text-base font-semibold text-foreground">Scoring is still in progress</p>
           <p className="text-xs text-muted-foreground">Your answers are safely recorded. Your SMC score will appear on your profile shortly.</p>
-          <button onClick={onComplete}
+          <button onClick={onBack}
             style={{ background:'#D4AF37', color:'#0D1B2A', border:'none', padding:'10px 24px', borderRadius:'8px', fontWeight:'bold', cursor:'pointer' }}>
             Back to my profile
           </button>
