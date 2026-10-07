@@ -578,12 +578,20 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
           <>
             <SMCScoreCertificate />
             <div className="px-4 pb-6">
+              <p className="text-xs font-bold mt-4 mb-2" style={{ color: "#D4AF37" }}>Rescore options</p>
               <button
                 onClick={startRetake}
-                className="w-full mt-4 rounded-2xl py-3.5 font-bold text-sm"
+                className="w-full rounded-2xl py-3.5 font-bold text-sm"
                 style={{ background: "transparent", color: "#D4AF37", border: "1px solid #D4AF37", cursor: "pointer" }}
               >
-                🔄 Retake Assessment — Improve My Score
+                🔄 Retake Quick Profile Score
+              </button>
+              <button
+                onClick={() => { window.location.href = "/app?tab=cv"; }}
+                className="w-full mt-2 rounded-2xl py-3.5 font-bold text-sm"
+                style={{ background: "#D4AF37", color: "#0D1B2A", border: "none", cursor: "pointer" }}
+              >
+                🟢 Upgrade to CV-Verified — add my CV, then retake
               </button>
               <ShareResult
                 text="I just got my SeaMinds Competency Score ⚓🏆 Check yours free — it takes 10 minutes."

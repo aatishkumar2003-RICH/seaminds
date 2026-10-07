@@ -88,6 +88,7 @@ export const CalibrationPanel = ({ lp, compact }: { lp: LevelProfile; compact?: 
 
 interface CertRecord extends SMCScoreData {
   band: string;
+  tier: "QUICK_PROFILE" | "CV_VERIFIED";
   levelProfile: LevelProfile | null;
 }
 
@@ -134,7 +135,7 @@ const SMCScoreCertificate = ({ data: hint, onImproveScore }: SMCScoreCertificate
       try {
         let q = supabase
           .from("smc_assessments")
-          .select("id, crew_profile_id, overall_score, technical_score, judgment_score, english_score, behavioural_score, score_band, certificate_id, completed_at, status, report, level_profile")
+          .select("id, crew_profile_id, overall_score, technical_score, judgment_score, english_score, behavioural_score, score_band, certificate_id, completed_at, status, report, level_profile, scoring_tier")
           .eq("status", "completed")
           .not("completed_at", "is", null)
           .order("completed_at", { ascending: false })
@@ -196,6 +197,7 @@ const SMCScoreCertificate = ({ data: hint, onImproveScore }: SMCScoreCertificate
           expiryDate: expiry.toISOString(),
           certificateId: a.certificate_id || a.id,
           band: a.score_band || "",
+          tier: a.scoring_tier === "CV_VERIFIED" ? "CV_VERIFIED" : "QUICK_PROFILE",
           levelProfile: (a.level_profile && typeof a.level_profile === "object") ? (a.level_profile as LevelProfile) : null,
         });
         setLoading(false);
@@ -376,6 +378,10 @@ const SMCScoreCertificate = ({ data: hint, onImproveScore }: SMCScoreCertificate
                 </div>
                 <div style={{ fontSize: '12px', color: '#cbd5e1', marginTop: '4px' }}>
                   {[cert.rank, cert.vesselType].filter(Boolean).join(" • ")}
+                </div>
+                <div style={{ display: 'inline-block', marginTop: '8px', padding: '3px 10px', borderRadius: '999px', fontSize: '10px', fontWeight: 700, letterSpacing: '0.08em',
+                  color: cert.tier === 'CV_VERIFIED' ? '#22c55e' : '#D4AF37', border: `1px solid ${cert.tier === 'CV_VERIFIED' ? '#22c55e' : '#D4AF37'}` }}>
+                  {cert.tier === 'CV_VERIFIED' ? 'CV-VERIFIED SCORE · documented sea service' : 'QUICK PROFILE SCORE · declared profile'}
                 </div>
               </div>
 
