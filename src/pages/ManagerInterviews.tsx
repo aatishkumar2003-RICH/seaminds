@@ -112,6 +112,20 @@ const ManagerInterviews = () => {
     setBoard((s) => ({ ...s, [id]: (data as any[]) || [] }));
   };
 
+  const requestRound2 = async (campaignId: string, inviteId: string) => {
+    setBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("request-cv-round2", { body: { invite_id: inviteId } });
+      const res: any = data;
+      if (error || !res?.ok) throw new Error(res?.error || "Could not send the request");
+      toast.success(res?.skipped ? "Already requested" : "CV & Round 2 request emailed to the candidate");
+      const { data: rows } = await supabase.rpc("campaign_leaderboard" as any, { p_campaign_id: campaignId });
+      setBoard((s) => ({ ...s, [campaignId]: (rows as any[]) || [] }));
+    } catch (e: any) {
+      toast.error(e?.message || "Could not send the request");
+    } finally { setBusy(false); }
+  };
+
   const linkFor = (token: string) => `${window.location.origin}/interview/${token}`;
 
   const copyLink = (token: string) => {
@@ -335,6 +349,21 @@ const ManagerInterviews = () => {
                               {r.band && <p style={{ color: "#94a3b8", fontSize: 9.5 }}>{r.band}</p>}
                             </div>
                           </div>
+                          {r.status === "completed" && (
+                            <p style={{ marginTop: 7, fontSize: 10.5, fontWeight: 700, color: r.scoring_tier === "CV_VERIFIED" ? "#22c55e" : GOLD }}>
+                              {r.scoring_tier === "CV_VERIFIED" ? "🟢 CV-Verified score" : "🟡 Quick Profile score"}
+                            </p>
+                          )}
+                          {r.status === "completed" && r.scoring_tier !== "CV_VERIFIED" && (
+                            (r.cv_request_status && r.cv_request_status !== "NONE") ? (
+                              <p style={{ marginTop: 7, textAlign: "center", color: "#94a3b8", fontSize: 11.5, fontWeight: 700 }}>✓ CV & Round 2 requested</p>
+                            ) : (
+                              <button onClick={() => requestRound2(c.id, r.invite_id)} disabled={busy}
+                                style={{ display: "block", width: "100%", marginTop: 7, background: "transparent", color: GOLD, border: `1px solid ${GOLD}`, borderRadius: 9, padding: "8px 0", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+                                Request CV & Round 2
+                              </button>
+                            )
+                          )}
                           {r.whatsapp && r.status === "completed" && (
                             <a href={`https://wa.me/${String(r.whatsapp).replace(/[^\d]/g, "")}`} target="_blank" rel="noopener noreferrer"
                               style={{ display: "block", marginTop: 9, textAlign: "center", background: "#25D366", color: "#fff", borderRadius: 9, padding: "8px 0", fontSize: 12, fontWeight: 700, textDecoration: "none" }}>
