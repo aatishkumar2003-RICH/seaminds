@@ -211,6 +211,13 @@
       "when": 1791370480795,
       "tag": "0029_support_incident_triage",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1791371050788,
+      "tag": "0030_support_triage_hardening",
+      "breakpoints": true
     }
   ]
 }
