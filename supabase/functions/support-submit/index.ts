@@ -30,10 +30,22 @@ function decodeJwtRole(token: string): string | null {
 }
 
 // Strip origin/query/hash, then redact dynamic identifiers into templates.
+const ROUTE_TEMPLATES: Array<[RegExp, string]> = [
+  [/^\/interview\/[^/]+\/exam(\/.*)?$/i, "/interview/:token/exam"],
+  [/^\/interview\/[^/]+(\/.*)?$/i, "/interview/:token"],
+  [/^\/crew\/view\/[^/]+(\/.*)?$/i, "/crew/view/:token"],
+  [/^\/crew\/[^/]+(\/.*)?$/i, "/crew/:token"],
+  [/^\/recover\/[^/]+(\/.*)?$/i, "/recover/:token"],
+  [/^\/verify\/[^/]+(\/.*)?$/i, "/verify/:id"],
+  [/^\/management\/inspections\/[^/]+(\/.*)?$/i, "/management/inspections/:id"],
+];
+
 function normalizeRoute(raw: unknown): string | null {
   if (typeof raw !== "string" || !raw) return null;
   let p = raw.trim();
   try { p = new URL(p, "https://x.invalid").pathname; } catch { return null; }
+  p = p.replace(/\/{2,}/g, "/");
+  for (const [re, tpl] of ROUTE_TEMPLATES) if (re.test(p)) return tpl;
   const segs = p.split("/").filter(Boolean).slice(0, 12).map((s) => {
     if (UUID_RE.test(s) || /^[0-9a-f-]{32,}$/i.test(s)) return ":id";
     if (/^\d{3,}$/.test(s)) return ":n";
