@@ -107,6 +107,10 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error_code: 'NOT_FOUND' }), { status: 404, headers: jsonH });
     }
     if (!ctx?.canonical_rank || !(pf as any)?.preflight_confirmed_at) {
+      // Old cached clients land here: record a structured, owner-bound incident (never generate a paper).
+      if (!gate.isWorker && gate.userId) {
+        try { await adminClient.rpc('_start_incident_upsert', { p_uid: gate.userId, p_assessment: assessmentKey, p_category: 'CLIENT_OUTDATED', p_code: 'PREFLIGHT_REQUIRED', p_path: 'fn:generate-smc-questions', p_corr: req.headers.get('x-request-id'), p_build: req.headers.get('x-client-info') }); } catch (_e) { /* diagnostics only */ }
+      }
       return new Response(JSON.stringify({ status: 'preflight_required', error_code: 'PREFLIGHT_REQUIRED', attempt_preserved: true }), { status: 409, headers: jsonH });
     }
     rank = String(ctx.canonical_rank);

@@ -113,16 +113,19 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         from: 'SeaMinds Monitor <crew@seaminds.life>',
         to: ['aatishkumar2003@gmail.com'],
-        subject: `⚓ SeaMinds: ${errors.length > 0 ? `🔴 ${errors.length} errors` : '✅ All good'} · ${signups.length} new crew · Total: ${totalCrew}`,
+        subject: `⚓ SeaMinds: ${errors.length > 0 ? `🔴 ${errors.length} errors` : `No new errors reported in this window (${warnings.length} warnings)`} · ${signups.length} new crew · Total: ${totalCrew}`,
         html,
       }),
     });
 
-    // Mark events as emailed
+    const result = await emailResp.json().catch(() => null);
+    // Only mark events emailed once the provider actually accepted the message (has an id).
+    if (!emailResp.ok || !result?.id) {
+      return new Response(JSON.stringify({ sent: false, events: events.length, status: emailResp.status }), { headers: cors });
+    }
     const ids = events.map(e => e.id);
-    await supabase.from('app_events').update({ emailed: true }).in('id', ids);
-
-    const result = await emailResp.json();
+    const { error: markErr } = await supabase.from('app_events').update({ emailed: true }).in('id', ids);
+    if (markErr) return new Response(JSON.stringify({ sent: true, marked: false }), { status: 500, headers: cors });
     return new Response(JSON.stringify({ sent: emailResp.ok, events: events.length, result }), { headers: cors });
   } catch (e) {
     console.error('Monitor agent crash:', e);

@@ -81,24 +81,20 @@ Deno.serve(async (req) => {
       }
     }
 
-    const now = new Date().toISOString();
+    // Conditional, fenced persistence: the job becomes done only when the valid score is durably saved.
     if (result) {
-      const score = Math.max(0, Math.min(10, Number(result.score)));
-      await admin.from("answer_ledger").update({
-        scoring_state: "EVALUATED", score, evaluated_at: now, scoring_attempts: job.attempts, last_scoring_error: null,
-        result: { strength_level: result.strength_level, red_flag: !!result.red_flag, red_flag_category: result.red_flag_category ?? null, red_flag_evidence: result.red_flag_evidence ?? null, method: "ai", model },
-      }).eq("id", L.id).neq("scoring_state", "EVALUATED");
-      await admin.from("answer_scoring_jobs").update({ status: "done", last_error: null, updated_at: now }).eq("id", job.id);
-      await admin.from("answer_scoring_audit").insert({ ledger_id: L.id, job_id: job.id, attempt: job.attempts, outcome: "EVALUATED", model });
-      out.push({ ledger_id: L.id, state: "EVALUATED" });
-    } else {
-      const dead = job.attempts >= job.max_attempts;
-      await admin.from("answer_ledger").update({ scoring_state: "RETRY_REQUIRED", scoring_attempts: job.attempts, last_scoring_error: failure }).eq("id", L.id).neq("scoring_state", "EVALUATED");
-      await admin.from("answer_scoring_jobs").update({ status: dead ? "dead" : "pending", last_error: failure, updated_at: now }).eq("id", job.id);
-      await admin.from("answer_scoring_audit").insert({ ledger_id: L.id, job_id: job.id, attempt: job.attempts, outcome: dead ? "DEAD_LETTER" : "RETRY_SCHEDULED", reason: failure, model });
-      if (dead) await admin.from("app_events").insert({ event_type: "answer_scoring_dead_letter", message: "Answer scoring exhausted retries — manual review", severity: "error", metadata: { ledger_id: L.id, job_id: job.id, assessment_id: L.assessment_id, reason: failure } });
-      out.push({ ledger_id: L.id, state: "RETRY_REQUIRED", reason: failure });
+      const score = Number(result.score);
+      const { data: cr, error: ce } = await admin.rpc("answer_scoring_complete", {
+        p_job: job.id, p_ledger: L.id, p_attempt: job.attempts, p_score: Number.isFinite(score) ? score : null, p_model: model,
+        p_result: { strength_level: result.strength_level, red_flag: !!result.red_flag, red_flag_category: result.red_flag_category ?? null, red_flag_evidence: result.red_flag_evidence ?? null, method: "ai", model },
+      });
+      if (!ce && (cr as any)?.ok) { out.push({ ledger_id: L.id, state: "EVALUATED" }); continue; }
+      failure = ce ? "PERSIST_FAILED" : `PERSIST_${(cr as any)?.error_code || "UNKNOWN"}`;
+      if ((cr as any)?.error_code === "STALE_LEASE") { out.push({ ledger_id: L.id, state: "STALE_LEASE" }); continue; }
     }
+    const { data: fr } = await admin.rpc("answer_scoring_fail", { p_job: job.id, p_ledger: L.id, p_attempt: job.attempts, p_error: failure || "UNKNOWN", p_model: model });
+    // If even this write fails, the job stays RUNNING until its lease expires and is retried or dead-lettered visibly.
+    out.push({ ledger_id: L.id, state: (fr as any)?.dead ? "DEAD_LETTER" : "RETRY_REQUIRED", reason: failure });
   }
   return json({ processed: out.length, results: out });
 });
