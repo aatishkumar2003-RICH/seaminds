@@ -1856,6 +1856,132 @@ export type Database = {
         }
         Relationships: []
       }
+      dora_articles: {
+        Row: {
+          body: string
+          created_at: string
+          domain: string
+          id: string
+          intents: string[]
+          language: string
+          search_tsv: unknown
+          slug: string
+          status: string
+          tags: string[]
+          title: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          domain: string
+          id?: string
+          intents?: string[]
+          language?: string
+          search_tsv?: unknown
+          slug: string
+          status?: string
+          tags?: string[]
+          title: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          domain?: string
+          id?: string
+          intents?: string[]
+          language?: string
+          search_tsv?: unknown
+          slug?: string
+          status?: string
+          tags?: string[]
+          title?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      dora_interactions: {
+        Row: {
+          account_tool_used: string | null
+          articles_used: string[]
+          created_at: string
+          est_cost_usd: number | null
+          id: string
+          intent: string | null
+          latency_ms: number | null
+          model: string | null
+          outcome: string
+          route_template: string | null
+          screenshot_used: boolean
+          user_id: string | null
+        }
+        Insert: {
+          account_tool_used?: string | null
+          articles_used?: string[]
+          created_at?: string
+          est_cost_usd?: number | null
+          id?: string
+          intent?: string | null
+          latency_ms?: number | null
+          model?: string | null
+          outcome: string
+          route_template?: string | null
+          screenshot_used?: boolean
+          user_id?: string | null
+        }
+        Update: {
+          account_tool_used?: string | null
+          articles_used?: string[]
+          created_at?: string
+          est_cost_usd?: number | null
+          id?: string
+          intent?: string | null
+          latency_ms?: number | null
+          model?: string | null
+          outcome?: string
+          route_template?: string | null
+          screenshot_used?: boolean
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      dora_unanswered_clusters: {
+        Row: {
+          cluster_key: string
+          domain: string | null
+          first_seen: string
+          hit_count: number
+          id: string
+          last_seen: string
+          status: string
+          summary: string
+        }
+        Insert: {
+          cluster_key: string
+          domain?: string | null
+          first_seen?: string
+          hit_count?: number
+          id?: string
+          last_seen?: string
+          status?: string
+          summary: string
+        }
+        Update: {
+          cluster_key?: string
+          domain?: string | null
+          first_seen?: string
+          hit_count?: number
+          id?: string
+          last_seen?: string
+          status?: string
+          summary?: string
+        }
+        Relationships: []
+      }
       dpa_contacts: {
         Row: {
           active: boolean | null
@@ -5246,6 +5372,17 @@ export type Database = {
       cv_interview_readiness: {
         Args: { p_crew_id: string; p_target_rank?: string }
         Returns: Json
+      }
+      dora_get_my_context: { Args: never; Returns: Json }
+      dora_search_articles: {
+        Args: { p_domain?: string; p_limit?: number; p_query: string }
+        Returns: {
+          body: string
+          domain: string
+          rank: number
+          slug: string
+          title: string
+        }[]
       }
       enforce_retention: { Args: never; Returns: string }
       engage_company_post: {
