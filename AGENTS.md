@@ -7,3 +7,5 @@
 - Readiness and recovery health are computed per exact rank/context blueprint coverage (`blueprint_coverage*`), never global counts. Why: a row existing does not prove a paper can be issued.
 - Pure AI/email provider adapters live in `supabase/functions/_shared/finalAi.ts` with no imports so vitest can test them. Why: deterministic mocked-fetch tests without a new test runtime.
 - Assessment `scoring_tier` (QUICK_PROFILE / CV_VERIFIED) and `assessment_round` are set server-side by trigger `trg_set_assessment_scoring_tier` at creation; clients never choose them. Why: a score's evidence basis must not be forgeable.
+
+- DORA help knowledge lives in `dora_articles` (Postgres FTS via `dora_search_articles`, max 4 published hits); own-user context only via `dora_get_my_context()` keyed by auth.uid(); metrics/gaps store no raw conversation text. Why: cheap grounded retrieval without vectors and zero cross-user/PII leakage.
