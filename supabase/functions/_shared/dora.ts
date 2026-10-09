@@ -5,7 +5,7 @@ const EXAM_PATTERNS: RegExp[] = [
   /\bwhich\s+(option|answer|choice)\b/i,
   /\bwhat\s+is\s+the\s+answer\b/i,
   /\banswer\s+(to|for|of)\s+(this|the|my|that)\s+(question|q\d*)\b/i,
-  /\b(exam|test|assessment|interview|quiz)\s+answers?\b/i,
+  /\b(exam|test|assessment|interview|quiz)\s+answers?\b(?!\s+(were\s+|are\s+|got\s+)?(saved|lost|missing|gone|protected|deleted|stored|submitted|not))/i,
   /\bgive\s+me\s+(the\s+)?answers?\b/i,
   /\bsolve\s+(this|the|my)\b/i,
   /\boption\s+[a-d]\b/i,
