@@ -128,3 +128,6 @@ verify_jwt = true
 
 [functions.support-submit]
 verify_jwt = false
+
+[functions.dora-assist]
+verify_jwt = false

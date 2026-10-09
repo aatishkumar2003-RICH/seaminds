@@ -72,7 +72,6 @@ Deno.serve(async (req) => {
   }
   const articles = (arts ?? []) as { slug: string; title: string; body: string }[];
   if (!articles.length) {
-    await admin.rpc("dora_note_unanswered" as any, {}).then(() => {}, () => {});
     await log({ outcome: "UNANSWERED" });
     return onceStream({ type: "meta", label: "unconfirmed", articles: [] }, UNANSWERED_REPLY);
   }
