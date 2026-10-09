@@ -26,12 +26,13 @@ Deno.serve(async (req) => {
 
 
   try {
-    // Gather stats
+    // Gather stats — job counts use the same "live" definition as the website.
+    const nowIso = new Date().toISOString();
     const [crew, avail, jobs, ext, events] = await Promise.all([
       supabase.from('crew_profiles').select('*', { count: 'exact', head: true }),
       supabase.from('crew_profiles').select('*', { count: 'exact', head: true }).eq('is_available', true),
-      supabase.from('job_vacancies').select('*', { count: 'exact', head: true }),
-      supabase.from('external_vacancies').select('*', { count: 'exact', head: true }),
+      supabase.from('job_postings').select('*', { count: 'exact', head: true }).eq('status', 'active').gt('expires_at', nowIso),
+      supabase.from('external_vacancies').select('*', { count: 'exact', head: true }).eq('is_scam_flagged', false).gt('expires_at', nowIso),
       supabase.from('app_events').select('metadata').eq('event_type', 'vacancy_agent_run').order('created_at', { ascending: false }).limit(1),
     ]);
 
