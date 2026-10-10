@@ -4,6 +4,7 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { VitePWA } from "vite-plugin-pwa";
 import { mcpPlugin } from "@lovable.dev/mcp-js/stacks/supabase/vite";
+import { runtimeCachingRules } from "./src/lib/pwaCacheRules";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
