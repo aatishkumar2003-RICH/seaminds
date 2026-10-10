@@ -83,6 +83,7 @@ import Marketing from "./pages/Marketing";
 import OAuthConsent from "./pages/OAuthConsent";
 import CookieConsent from "./components/CookieConsent";
 import InstallPrompt from "./components/InstallPrompt";
+import UpdateNotice from "./components/UpdateNotice";
 import { AuthProvider } from "./contexts/AuthContext";
 import { initMetaPixel, captureAdSource, trackPixel } from "@/lib/metaPixel";
 
@@ -209,6 +210,7 @@ const App = () => (
           <RecoveryBanner />
           <CookieConsent />
           <InstallPrompt />
+          <UpdateNotice />
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>

@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import AboutSeaMinds from "@/components/AboutSeaMinds";
 import { LogOut, HelpCircle } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import SOSButton from "@/components/SOSButton";
@@ -21,6 +22,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   screen, streakCount, jobBadgeCount, firstName, shipName, tourActiveScreen,
   onNavClick, onReplayTour, onSignOut,
 }) => {
+  const [aboutOpen, setAboutOpen] = useState(false);
   return (
     <aside className="hidden h-screen w-48 flex-shrink-0 flex-col items-center border-r border-border/60 bg-background/95 px-[2px] py-3 backdrop-blur-sm lg:flex">
       <div className="mb-3">
@@ -68,6 +70,10 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
           <HelpCircle size={14} />
           <span>Replay Tour</span>
         </button>
+        <button onClick={() => setAboutOpen(true)} className="flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground">
+          <span>ⓘ</span><span>About SeaMinds</span>
+        </button>
+        {aboutOpen && <AboutSeaMinds onClose={() => setAboutOpen(false)} />}
         <button onClick={onSignOut} className="flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground">
           <LogOut size={14} />
           <span>Sign Out</span>

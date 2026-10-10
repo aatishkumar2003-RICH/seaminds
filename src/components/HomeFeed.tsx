@@ -10,6 +10,7 @@ import { formatSalaryText, formatSalaryRange } from "@/lib/salary";
 import { toast } from "sonner";
 import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, recordApplication, openHandoffTab, completeHandoff, CrewCardInfo } from "@/lib/applyMessage";
 import JobCard from "@/components/JobCard";
+import ReleaseBadge from "@/components/ReleaseBadge";
 import { loadVacancyPage, loadMyApplicationTargets, onAppResume, START_CURSOR, UnifiedVacancy, VacancyCursor, vacancySalary } from "@/lib/vacancyFeed";
 import ApplyGateSheet from "@/components/ApplyGateSheet";
 import CrewOffers from "@/components/CrewOffers";
@@ -475,6 +476,7 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
 
   return (
     <div className="pb-4">
+      <ReleaseBadge className="pt-1 pb-2" />
       <div className="flex items-center justify-between px-4 pt-3 pb-2">
         <div>
           <h1 className="text-lg font-bold" style={{ color: GOLD }}>Your Feed</h1>

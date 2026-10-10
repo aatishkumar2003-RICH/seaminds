@@ -47,6 +47,7 @@ export default defineConfig(({ mode }) => ({
         skipWaiting: true,
         clientsClaim: true,
         globPatterns: ["**/*.{js,css,html,ico,png,svg,jpg,jpeg,woff,woff2}"],
+        globIgnores: ["**/version.json"],
         cleanupOutdatedCaches: true,
         navigateFallbackDenylist: [/^\/~oauth/, /^\/\.lovable\/oauth/],
         // Personal data (auth, profiles, applications, takeover) is never cached; see src/lib/pwaCacheRules.ts
