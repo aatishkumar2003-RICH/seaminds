@@ -1,5 +1,6 @@
 import { applyToVacancy } from "@/lib/applicationRouter";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { singleFlight, watchSentinel } from "@/lib/infiniteSentinel";
 import ApplyDialog, { ApplyTarget } from "@/components/ApplyDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { MessageCircle, ExternalLink, RefreshCw } from "lucide-react";
@@ -9,7 +10,7 @@ import { formatSalaryText, formatSalaryRange } from "@/lib/salary";
 import { toast } from "sonner";
 import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, recordApplication, openHandoffTab, completeHandoff, CrewCardInfo } from "@/lib/applyMessage";
 import JobCard from "@/components/JobCard";
-import { loadVacancies, loadMyApplicationTargets, UnifiedVacancy, vacancySalary } from "@/lib/vacancyFeed";
+import { loadVacancyPage, loadMyApplicationTargets, onAppResume, START_CURSOR, UnifiedVacancy, VacancyCursor, vacancySalary } from "@/lib/vacancyFeed";
 import ApplyGateSheet from "@/components/ApplyGateSheet";
 import CrewOffers from "@/components/CrewOffers";
 
@@ -96,6 +97,15 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
   const [appliedIds, setAppliedIds] = useState<Set<string>>(new Set());
   const [cardInfo, setCardInfo] = useState<CrewCardInfo | null>(null);
   const [news, setNews] = useState<NewsItem[]>([]);
+  // Infinite feed: real next pages from the database, mixed into the same card rhythm.
+  const [hasMore, setHasMore] = useState(true);
+  const [moreError, setMoreError] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const poolRef = useRef<any>(null);
+  const cursorRef = useRef<VacancyCursor>(START_CURSOR);
+  const seenRef = useRef<Set<string>>(new Set());
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const liveRef = useRef({ visible: 8, len: 0, hasMore: true, error: false });
 
   useEffect(() => {
     if (!profileId) return;
@@ -187,14 +197,66 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
 
 
 
-  useEffect(() => { loadMyApplicationTargets().then(setAppliedIds); }, [profileId]);
+  useEffect(() => {
+    loadMyApplicationTargets().then(setAppliedIds);
+    // Returning to the app re-reads applications and recruiter-email delivery.
+    return onAppResume(() => { loadMyApplicationTargets().then(setAppliedIds); });
+  }, [profileId]);
+
+  /** Sorts a page rank-relevant first and drops vacancies already shown. */
+  const preparePage = useCallback((page: UnifiedVacancy[]) => {
+    const dept = deptOf(rank);
+    const fresh = page.filter((v) => !seenRef.current.has(`${v.kind}:${v.id}`));
+    fresh.forEach((v) => seenRef.current.add(`${v.kind}:${v.id}`));
+    return fresh.sort((a, b) => {
+      const am = deptOf(a.rank) === dept ? 1 : 0;
+      const bm = deptOf(b.rank) === dept ? 1 : 0;
+      if (am !== bm) return bm - am;
+      return +new Date(b.postedAt || 0) - +new Date(a.postedAt || 0);
+    });
+  }, [rank]);
+
+  /** Interleave: vacancy · ship/salary · vacancy · quiz · article · vacancy · article · nudge */
+  const makeCycles = (vacancies: UnifiedVacancy[], first: boolean): Card[] => {
+    const P = poolRef.current;
+    if (!P) return [];
+    const out: Card[] = [];
+    let vi = 0;
+    const pushVac = () => { if (vacancies[vi]) { out.push({ kind: "vacancy", id: vacancies[vi].id, data: vacancies[vi] }); vi++; } };
+    const pushArt = () => { if (P.articles[P.ai]) { out.push({ kind: "article", id: `a-${P.articles[P.ai].id}`, data: P.articles[P.ai] }); P.ai++; } };
+    const cycles = Math.max(first ? 10 : 0, Math.ceil(vacancies.length / 3));
+    for (let k = 0; k < cycles; k++) {
+      const cycle = P.cycle++;
+      pushVac();
+      if (P.companyPosts[P.ci]) { out.push({ kind: "company", id: `c-${P.companyPosts[P.ci].id}`, data: P.companyPosts[P.ci] }); P.ci++; }
+      if (cycle === 0) out.push({ kind: "stats", id: "stats", data: { items: P.statItems } });
+      if (cycle % 2 === 0) {
+        if (P.ships.length) {
+          const sp = P.ships[P.si % P.ships.length];
+          out.push({ kind: "ship", id: `s-${P.si}`, data: { photo: sp.photo_url, caption: sp.caption || "Life at sea" } });
+          P.si++;
+        } else if (P.salaryRows.length) {
+          out.push({ kind: "salary", id: `sal-${cycle}`, data: { rows: P.salaryRows } });
+        }
+      } else if (P.salaryRows.length) {
+        out.push({ kind: "salary", id: `sal-${cycle}`, data: { rows: P.salaryRows } });
+      }
+      if (cycle === 0) out.push({ kind: "channels", id: "ch-1", data: {} });
+      pushVac();
+      if (P.quizzes[P.qi]) { out.push({ kind: "quiz", id: `q-${P.quizzes[P.qi].id}`, data: P.quizzes[P.qi] }); P.qi++; }
+      pushArt();
+      pushVac();
+      pushArt();
+      if (P.nudges[P.ni]) { out.push(P.nudges[P.ni]); P.ni++; }
+    }
+    return out;
+  };
 
   const build = useCallback(async () => {
     const lang = LANG_BY_NATIONALITY[nationality] || "en";
-    const dept = deptOf(rank);
 
     const [allVacancies, cpostRes, artRes, quizRes, profRes, shipRes, streakRes, scoreRes] = await Promise.all([
-      loadVacancies({ limitDirect: 20, limitExternal: 40 }),
+      loadVacancyPage(START_CURSOR, { pageSize: 30 }),
       supabase.from("company_posts" as any)
         .select("id, company_name, post_type, caption, image_url, whatsapp, link_url, verified, created_at")
         .eq("status", "live")
@@ -234,15 +296,11 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
       articles = [...articles, ...((en.data as any[]) || [])];
     }
 
-    const vacancies: UnifiedVacancy[] = [...allVacancies];
-
-    // Rank-relevant vacancies first
-    vacancies.sort((a, b) => {
-      const am = deptOf(a.rank) === dept ? 1 : 0;
-      const bm = deptOf(b.rank) === dept ? 1 : 0;
-      if (am !== bm) return bm - am;
-      return +new Date(b.postedAt || 0) - +new Date(a.postedAt || 0);
-    });
+    seenRef.current = new Set();
+    cursorRef.current = allVacancies.cursor;
+    setHasMore(!allVacancies.done);
+    setMoreError(false);
+    const vacancies = preparePage(allVacancies.items);
 
     const salaryRows = vacancies
       .map((v) => ({ rank: v.rank || "Crew", salary: vacancySalary(v) }))
@@ -266,46 +324,61 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
       data: { icon: "📄", title: "Keep your CV current", text: "A complete CV gets seen first when a company searches.", cta: "Open My CV", screen: "resume" },
     });
 
-    // Interleave: vacancy · ship/salary · vacancy · quiz · article · vacancy · article · nudge
-    const out: Card[] = [];
-    let vi = 0, ai = 0, qi = 0, ni = 0, si = 0, ci = 0;
-    const pushVac = () => { if (vacancies[vi]) out.push({ kind: "vacancy", id: vacancies[vi].id, data: vacancies[vi++] }); };
-    const pushArt = () => { if (articles[ai]) out.push({ kind: "article", id: `a-${articles[ai].id}`, data: articles[ai++] }); };
-
-    for (let cycle = 0; cycle < 10; cycle++) {
-      pushVac();
-      if (companyPosts[ci]) out.push({ kind: "company", id: `c-${companyPosts[ci].id}`, data: companyPosts[ci++] });
-      if (cycle === 0) out.push({ kind: "stats", id: "stats", data: { items: statItems } });
-      if (cycle % 2 === 0) {
-        if (ships.length) {
-          const sp = ships[si % ships.length];
-          out.push({ kind: "ship", id: `s-${si}`, data: { photo: sp.photo_url, caption: sp.caption || "Life at sea" } });
-          si++;
-        } else if (salaryRows.length) {
-          out.push({ kind: "salary", id: `sal-${cycle}`, data: { rows: salaryRows } });
-        }
-      } else if (salaryRows.length) {
-        out.push({ kind: "salary", id: `sal-${cycle}`, data: { rows: salaryRows } });
-      }
-      if (cycle === 0) out.push({ kind: "channels", id: "ch-1", data: {} });
-      pushVac();
-      if (quizzes[qi]) out.push({ kind: "quiz", id: `q-${quizzes[qi].id}`, data: quizzes[qi++] });
-      pushArt();
-      pushVac();
-      pushArt();
-      if (nudges[ni]) out.push(nudges[ni++]);
-    }
-
-    setCards(out.filter(Boolean));
+    poolRef.current = {
+      companyPosts, ships, salaryRows, quizzes, articles, nudges, statItems,
+      ai: 0, qi: 0, ni: 0, si: 0, ci: 0, cycle: 0,
+    };
+    setCards(makeCycles(vacancies, true).filter(Boolean));
 
     // Count one view per company post shown
     companyPosts.slice(0, 6).forEach((p: any) => {
       supabase.rpc("engage_company_post" as any, { p_post_id: p.id, p_action: "view" }).then(() => {}, () => {});
     });
 
-  }, [profileId, rank, nationality]);
+  }, [profileId, rank, nationality, preparePage]);
 
   useEffect(() => { build().finally(() => setLoading(false)); }, [build]);
+
+  liveRef.current = { visible, len: cards.length, hasMore, error: moreError };
+
+  /** Next real page from the database, appended in the same card rhythm (deduplicated). */
+  const fetchNextPage = async () => {
+    setLoadingMore(true);
+    try {
+      for (let tries = 0; tries < 3; tries++) {
+        const page = await loadVacancyPage(cursorRef.current, { pageSize: 20 });
+        cursorRef.current = page.cursor;
+        const fresh = preparePage(page.items);
+        if (fresh.length) setCards((prev) => [...prev, ...makeCycles(fresh, false)]);
+        if (page.done) { setHasMore(false); break; }
+        if (fresh.length) break;
+      }
+      setMoreError(false);
+    } catch {
+      setMoreError(true);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+  const fetchNextRef = useRef(fetchNextPage);
+  fetchNextRef.current = fetchNextPage;
+
+  /** Reveal more cards; fetch the next page when few hidden cards remain. One run at a time. */
+  const loadMoreRef = useRef(singleFlight(async () => {
+    const s0 = liveRef.current;
+    if (s0.visible < s0.len) setVisible((x) => x + 8);
+    if (!s0.hasMore || s0.error || s0.len - s0.visible > 16) return;
+    await fetchNextRef.current();
+    setVisible((x) => x + 8);
+  }));
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (loading || !el) return;
+    return watchSentinel(el, () => { loadMoreRef.current(); });
+  }, [loading, cards.length, visible, moreError]);
+
+  const retryMore = () => { setMoreError(false); liveRef.current.error = false; loadMoreRef.current(); };
 
 
 
@@ -350,6 +423,7 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
   const refresh = async () => {
     setRefreshing(true);
     setVisible(8);
+    setHasMore(true);
     await build();
     setRefreshing(false);
   };
@@ -803,12 +877,26 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
           ];
         })}
 
-        {visible < cards.length && (
-          <button onClick={() => setVisible((v) => v + 8)}
-            className="w-full rounded-xl py-3 text-[13px] font-bold"
-            style={{ background: CARD, color: GOLD, border: `1px solid ${BORDER}`, cursor: "pointer" }}>
-            Load more
-          </button>
+        <div ref={sentinelRef} aria-hidden="true" style={{ height: 1 }} />
+        {loadingMore && (
+          <div className="space-y-3" aria-live="polite" aria-label="Loading more">
+            {[0, 1].map((i) => (
+              <div key={i} className="rounded-2xl animate-pulse" style={{ background: CARD, height: 120, border: `1px solid ${BORDER}` }} />
+            ))}
+          </div>
+        )}
+        {moreError && !loadingMore && (
+          <div className="text-center py-3">
+            <p className="text-[12px] mb-2" style={{ color: "#94a3b8" }}>Could not load more — check your connection.</p>
+            <button onClick={retryMore}
+              className="rounded-xl px-5 py-2 text-[13px] font-bold"
+              style={{ background: "transparent", color: GOLD, border: `1px solid ${GOLD}`, cursor: "pointer" }}>
+              Retry
+            </button>
+          </div>
+        )}
+        {!hasMore && !loadingMore && visible >= cards.length && cards.length > 0 && (
+          <p className="text-center text-[11px] py-3" style={{ color: "#94a3b8" }}>You're all caught up ⚓</p>
         )}
       </div>
 
