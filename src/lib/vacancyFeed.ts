@@ -137,6 +137,13 @@ export const loadVacancies = async (opts: LoadVacanciesOpts = {}): Promise<Unifi
 /** Vacancy ids whose recruiter email was accepted by the provider (own applications only). */
 const deliveredTargets = new Set<string>();
 export const isEmailDelivered = (id: string) => deliveredTargets.has(id);
+// Never let one account's delivery state show for another on the same device.
+let deliveryOwner: string | null = null;
+supabase.auth.onAuthStateChange((_e, session) => {
+  const uid = session?.user?.id ?? null;
+  if (uid !== deliveryOwner) { deliveredTargets.clear(); deliveryOwner = uid; }
+});
+export const resetEmailDelivery = () => { deliveredTargets.clear(); };
 export const markEmailDelivered = (id: string) => { deliveredTargets.add(id); };
 
 /** Refreshes delivery state from the server; best-effort, never throws. */
