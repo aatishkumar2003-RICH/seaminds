@@ -65,6 +65,9 @@ export const routeToast = (
       ? { title: "Opened", description: "Could not record this on SeaMinds, but the application window opened.", tone: "warning" }
       : { title: "Error", description: "Could not send application. Try again.", tone: "error" };
   }
+  if (r.duplicate && route.channel === "email" && !r.emailSent) {
+    return { title: "Not sent yet", description: "Your application is saved, but the email could not be sent. Try again.", tone: "warning" };
+  }
   if (r.duplicate) return { title: "Already applied ✓", description: `You already applied to ${company}.`, tone: "success" };
   switch (route.channel) {
     case "whatsapp":
