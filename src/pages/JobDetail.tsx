@@ -5,10 +5,9 @@ import { ChevronLeft, MapPin, Ship, BadgeCheck, MessageCircle, ExternalLink, Cal
 import { supabase } from "@/integrations/supabase/client";
 import { formatSalaryText } from "@/lib/salary";
 import { trackPixel } from "@/lib/metaPixel";
-import {
-  fetchCrewCardInfo, getCachedCrewCardInfo, waApplyLink, recordApplication,
-  openHandoffTab, completeHandoff, fetchQuickProfileDone, CrewCardInfo,
-} from "@/lib/applyMessage";
+import { fetchCrewCardInfo, getCachedCrewCardInfo, fetchQuickProfileDone, CrewCardInfo } from "@/lib/applyMessage";
+import { applyToVacancy, applyByEmail, reopenWhatsApp, resolveApplyRoute, hasSecondaryEmail } from "@/lib/applicationRouter";
+import type { UnifiedVacancy } from "@/lib/vacancyFeed";
 import ApplyGateSheet from "@/components/ApplyGateSheet";
 import NotFound from "@/pages/NotFound";
 import { jobPath, idFromSlug, RANK_HUBS, rankMatches } from "@/lib/jobSlug";
@@ -35,6 +34,7 @@ interface Job {
   email: string | null;
   applyUrl: string | null;
   verified: boolean;
+  publisher: string | null;
   posted: string | null;
   expires: string | null;
 }
@@ -99,7 +99,7 @@ const JobDetail = () => {
           port: pr.joining_port, duration: pr.contract_duration, joiningDate: pr.joining_date,
           notes: pr.additional_notes, flier: pr.flier_url,
           whatsapp: pr.contact_whatsapp, email: pr.contact_email || null, applyUrl: null,
-          verified: !!pr.verified, posted: pr.created_at, expires: pr.expires_at,
+          verified: !!pr.verified, publisher: pr.company_name || null, posted: pr.created_at, expires: pr.expires_at,
         };
       } else {
         const { data: e } = await supabase.from("external_vacancies" as any)
@@ -114,7 +114,7 @@ const JobDetail = () => {
             port: er.joining_port, duration: er.contract_duration, joiningDate: er.joining_date || null,
             notes: er.description, flier: null,
             whatsapp: er.contact_whatsapp, email: er.contact_email || null, applyUrl: er.apply_url,
-            verified: !!er.is_verified, posted: er.fetched_at, expires: er.expires_at,
+            verified: !!er.is_verified, publisher: null, posted: er.fetched_at, expires: er.expires_at,
           };
         }
       }
@@ -140,7 +140,7 @@ const JobDetail = () => {
           id: r.id, kind: r.kind, rank: r.rank_required || "Crew", vessel: r.vessel_type || "—",
           company: r.company_name || "Maritime Company", salary: null, port: r.joining_port,
           duration: null, joiningDate: null, notes: null, flier: null, whatsapp: null,
-          email: null, applyUrl: null, verified: false, posted: null, expires: null,
+          email: null, applyUrl: null, verified: false, publisher: null, posted: null, expires: null,
         })) as Job[];
         if (alive) setSimilar(merge);
       }
@@ -150,56 +150,54 @@ const JobDetail = () => {
 
   const hub = useMemo(() => (job ? RANK_HUBS.find((h) => rankMatches(h, job.rank)) : null), [job]);
 
+  const unified: UnifiedVacancy | null = useMemo(() => job ? {
+    id: job.id, kind: job.kind, rank: job.rank, vessel: job.vessel, port: job.port,
+    joiningDate: job.joiningDate, contractDuration: job.duration, salaryText: job.salary,
+    company: job.company, publisherName: job.publisher, verified: job.verified, qualityScore: null,
+    postedAt: job.posted, expiresAt: job.expires, notes: job.notes, email: job.email,
+    whatsapp: job.whatsapp, applyUrl: job.applyUrl, positions: 1, flierUrl: job.flier,
+    postingBatchId: null, source: null, isNew: false,
+  } : null, [job]);
+
+  const [applied, setApplied] = useState(false);
+  const show = (t: { title: string; description: string; tone: string }) =>
+    (t.tone === "error" ? toast.error : t.tone === "warning" ? toast.warning : toast.success)(`${t.title} — ${t.description}`);
+
+  const gate = () => {
+    if (!job) return false;
+    if (!signedIn) { navigate(`/join?next=${encodeURIComponent(jobPath({ id: job.id, rank: job.rank, vessel: job.vessel, port: job.port }))}`); return false; }
+    if (needsQuickProfile) { setGateOpen(true); return false; }
+    return true;
+  };
+
   const apply = async () => {
-    if (!job) return;
-    if (!signedIn) { navigate(`/join?next=${encodeURIComponent(jobPath({ id: job.id, rank: job.rank, vessel: job.vessel, port: job.port }))}`); return; }
-    if (needsQuickProfile) { setGateOpen(true); return; }
+    if (!unified || !gate()) return;
+    const card = cardInfo || getCachedCrewCardInfo();
+    const route = resolveApplyRoute(unified, card);
+    if (applied && route.channel === "whatsapp") { reopenWhatsApp(unified, card); return; }
+    if (route.channel === "flyer") { window.open(unified.flierUrl!, "_blank", "noopener,noreferrer"); toast("Check the flyer for the recruiter's contact details"); return; }
     setApplying(true);
     try {
       trackPixel("Contact", { content_name: "job_apply_detail" });
-      const base = {
-        vacancyId: job.kind === "external" ? job.id : null,
-        jobPostingId: job.kind === "direct" ? job.id : null,
-        companyPostId: null,
-        company: job.company || null,
-        rank: job.rank || null,
-        vessel: job.vessel || null,
-      };
-      const say = (r: any, okMsg: string) => {
-        if (r.ok && r.duplicate) toast.success("Already applied ✓");
-        else if (r.ok) toast.success(okMsg);
-        else toast.error("Could not record the application on SeaMinds");
-      };
-
-      if (job.whatsapp) {
-        const url = waApplyLink(job.whatsapp, cardInfo || getCachedCrewCardInfo(), { rank: job.rank, vessel: job.vessel, port: job.port });
-        if (url) {
-          const win = openHandoffTab();
-          const r = await recordApplication({ ...base, externalUrl: url });
-          say(r, `WhatsApp opened ✓ — tap Send to deliver your Sea Profile to ${job.company}`);
-          completeHandoff(win, url);
-          return;
-        }
-      }
-      if (job.email) {
-        const r = await recordApplication({ ...base, externalUrl: null });
-        if (r.ok && !r.duplicate && r.emailSent === false) toast.warning("Saved in My Applications, but the email could not be sent. Try again later.");
-        else say(r, `Emailed ✓ — your Sea Profile was sent to ${job.company}`);
-        return;
-      }
-      if (job.applyUrl) {
-        const win = openHandoffTab();
-        const r = await recordApplication({ ...base, externalUrl: job.applyUrl });
-        say(r, "Company website opened — finish your application there");
-        completeHandoff(win, job.applyUrl);
-        return;
-      }
-      if (job.flier) { window.open(job.flier, "_blank", "noopener,noreferrer"); toast("Check the flyer for the recruiter's contact details"); return; }
-      toast.warning("This vacancy has no contact listed yet");
-      return;
-      navigate("/app?tab=jobs");
+      const out = await applyToVacancy(unified, card);
+      show(out.toast);
+      if (out.ok) setApplied(true);
     } catch {
-      navigate("/app?tab=jobs");
+      toast.error("Could not send application");
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  const sendEmail = async () => {
+    if (!unified || !gate()) return;
+    setApplying(true);
+    try {
+      const out = await applyByEmail(unified);
+      show(out.toast);
+      if (out.ok) setApplied(true);
+    } catch {
+      toast.error("Could not send email. Try again.");
     } finally {
       setApplying(false);
     }
@@ -305,19 +303,37 @@ const JobDetail = () => {
             </a>
           )}
 
-          <button onClick={apply} disabled={applying || !authResolved} style={{
-            marginTop: 18, width: "100%", padding: 13, borderRadius: 12, border: "none",
-            cursor: applying || !authResolved ? "default" : "pointer",
-            opacity: applying || !authResolved ? 0.5 : 1,
-            background: GOLD, color: NAVY, fontWeight: 800, fontSize: 14,
-            display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
-          }}>
-            {job.whatsapp ? <><MessageCircle size={16} /> Apply via WhatsApp</>
-              : job.email ? <>✉️ Send my Sea Profile by email</>
-              : job.applyUrl ? <><ExternalLink size={16} /> Apply on company website</>
-              : job.flier ? <>📄 View flyer to apply</>
-              : <>No contact listed</>}
-          </button>
+          {(() => {
+            const ch = unified ? resolveApplyRoute(unified, null).channel : "none";
+            const reopen = applied && ch === "whatsapp";
+            const off = applying || !authResolved || ch === "none" || (applied && !reopen);
+            return (
+              <>
+                <button onClick={apply} disabled={off} style={{
+                  marginTop: 18, width: "100%", padding: 13, borderRadius: 12, border: "none",
+                  cursor: off ? "default" : "pointer",
+                  opacity: off ? 0.5 : 1,
+                  background: GOLD, color: NAVY, fontWeight: 800, fontSize: 14,
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+                }}>
+                  {reopen ? <><MessageCircle size={16} /> Re-open WhatsApp</>
+                    : applied ? <>Applied ✓</>
+                    : ch === "whatsapp" ? <><MessageCircle size={16} /> Apply via WhatsApp</>
+                    : ch === "seaminds" ? <>Apply on SeaMinds →</>
+                    : ch === "email" ? <>✉️ Send my Sea Profile by email</>
+                    : ch === "portal" ? <><ExternalLink size={16} /> Apply on company website</>
+                    : ch === "flyer" ? <>📄 View flyer to apply</>
+                    : <>No contact listed</>}
+                </button>
+                {reopen && <p style={{ textAlign: "center", fontSize: 11.5, color: "#94A3B8", marginTop: 6 }}>WhatsApp opened ✓ — not sent yet? Tap to re-open.</p>}
+                {unified && hasSecondaryEmail(unified) && !applied && (
+                  <button onClick={sendEmail} disabled={applying} style={{ marginTop: 10, width: "100%", background: "transparent", border: "none", color: GOLD, fontSize: 13, fontWeight: 700, textDecoration: "underline", cursor: "pointer" }}>
+                    ✉️ Or let SeaMinds email my Sea Profile
+                  </button>
+                )}
+              </>
+            );
+          })()}
         </article>
 
         {hub && (

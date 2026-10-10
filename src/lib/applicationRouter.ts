@@ -114,3 +114,32 @@ export const applyToVacancy = async (v: UnifiedVacancy, card: CrewCardInfo | nul
   if (route.url) completeHandoff(win, route.url);
   return { route, ok: r.ok, duplicate: r.duplicate, emailSent: r.emailSent, toast: routeToast(route, v.company, r) };
 };
+
+/** Re-open the recruiter's WhatsApp chat (crew may have closed it without pressing Send). No new record. */
+export const reopenWhatsApp = (v: UnifiedVacancy, card: CrewCardInfo | null): boolean => {
+  const url = waApplyLink(v.whatsapp, card, { rank: v.rank, vessel: v.vessel, port: v.port });
+  if (!url) return false;
+  window.open(url, "_blank", "noopener,noreferrer");
+  return true;
+};
+
+/** True when a tracked SeaMinds email can be offered next to a WhatsApp/portal primary. */
+export const hasSecondaryEmail = (v: UnifiedVacancy) => {
+  const c = resolveApplyRoute(v, null).channel;
+  return !!v.email && (c === "whatsapp" || c === "portal");
+};
+
+/** Secondary option: SeaMinds emails the Sea Profile to the recruiter (tracked, no mail app needed). */
+export const applyByEmail = async (v: UnifiedVacancy): Promise<ApplyOutcome> => {
+  const route: ApplyRoute = { channel: "email", url: null, record: true };
+  if (!v.email) {
+    return { route, ok: false, duplicate: false, toast: { title: "No email", description: "This advert has no recruiter email.", tone: "warning" } };
+  }
+  const r = await recordApplication({
+    vacancyId: v.kind === "external" ? v.id : null,
+    jobPostingId: v.kind === "direct" ? v.id : null,
+    company: v.company || null, rank: v.rank || null, vessel: v.vessel || null,
+    externalUrl: null,
+  });
+  return { route, ok: r.ok, duplicate: r.duplicate, emailSent: r.emailSent, toast: routeToast(route, v.company, r) };
+};

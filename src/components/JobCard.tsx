@@ -3,8 +3,9 @@ import { BadgeCheck, MapPin, Ship, Calendar, X } from "lucide-react";
 import type { UnifiedVacancy } from "@/lib/vacancyFeed";
 import { vacancySalary } from "@/lib/vacancyFeed";
 import { jobPath } from "@/lib/jobSlug";
-import { routeLabel, resolveApplyRoute, emailApplyLink, isSeaMindsPublished } from "@/lib/applicationRouter";
+import { routeLabel, resolveApplyRoute, isSeaMindsPublished, hasSecondaryEmail, applyByEmail, reopenWhatsApp } from "@/lib/applicationRouter";
 import { getCachedCrewCardInfo } from "@/lib/applyMessage";
+import { toast } from "sonner";
 
 const GOLD = "#D4AF37";
 const NAVY = "#0D1B2A";
@@ -62,17 +63,36 @@ export const shareVacancyOnWhatsApp = (v: UnifiedVacancy, href?: string) => {
 
 
 /** One vacancy, rendered identically (data + channel + applied state) on every surface. */
-const JobCard = ({ vacancy: v, variant, applied, busy, href, match, onApply }: JobCardProps) => {
+const JobCard = ({ vacancy: v, variant, applied: appliedProp, busy, href, match, onApply }: JobCardProps) => {
   const [flierOpen, setFlierOpen] = useState(false);
+  const [emailState, setEmailState] = useState<"idle" | "busy" | "done">("idle");
   const salary = vacancySalary(v);
   const compact = variant === "row";
   const route = resolveApplyRoute(v, null);
   const house = isSeaMindsPublished(v);
   const noContact = route.channel === "none";
-  const disabled = !!applied || !!busy || noContact;
-  const secondaryEmail = route.channel === "whatsapp" || route.channel === "portal" ? emailApplyLink(v, getCachedCrewCardInfo()) : null;
+  const applied = appliedProp || (emailState === "done" ? "ok" : undefined);
+  // WhatsApp can't confirm Send — keep the chat re-openable after applying.
+  const canReopen = !!applied && route.channel === "whatsapp" && emailState !== "done";
+  const disabled = (!!applied && !canReopen) || !!busy || noContact;
+  const secondaryEmail = hasSecondaryEmail(v);
 
-  const label = applied === "dup"
+  const sendEmail = async () => {
+    setEmailState("busy");
+    try {
+      const out = await applyByEmail(v);
+      const t = out.toast;
+      (t.tone === "error" ? toast.error : t.tone === "warning" ? toast.warning : toast.success)(`${t.title} — ${t.description}`);
+      setEmailState(out.ok ? "done" : "idle");
+    } catch {
+      toast.error("Could not send email. Try again.");
+      setEmailState("idle");
+    }
+  };
+
+  const label = canReopen
+    ? "💬 RE-OPEN WHATSAPP"
+    : applied === "dup"
     ? "Already applied ✓"
     : applied === "ok"
       ? "Applied ✓"
@@ -178,7 +198,7 @@ const JobCard = ({ vacancy: v, variant, applied, busy, href, match, onApply }: J
       )}
 
       <button
-        onClick={route.channel === "flyer" ? () => setFlierOpen(true) : onApply}
+        onClick={canReopen ? () => reopenWhatsApp(v, getCachedCrewCardInfo()) : route.channel === "flyer" ? () => setFlierOpen(true) : onApply}
         disabled={disabled}
         style={{
           marginTop: 2, width: "100%", padding: compact ? "10px 0" : "12px 0", borderRadius: 12,
@@ -192,14 +212,20 @@ const JobCard = ({ vacancy: v, variant, applied, busy, href, match, onApply }: J
       >
         {label}
       </button>
+      {canReopen && (
+        <p style={{ textAlign: "center", fontSize: 11, color: "#94A3B8", margin: 0 }}>
+          WhatsApp opened ✓ — not sent yet? Tap to re-open.
+        </p>
+      )}
 
-      {secondaryEmail && !applied && (
-        <a
-          href={secondaryEmail}
-          style={{ textAlign: "center", fontSize: 12, fontWeight: 700, color: GOLD, textDecoration: "underline" }}
+      {secondaryEmail && emailState !== "done" && appliedProp !== "dup" && (
+        <button
+          onClick={sendEmail}
+          disabled={emailState === "busy"}
+          style={{ background: "transparent", border: "none", textAlign: "center", fontSize: 12, fontWeight: 700, color: GOLD, textDecoration: "underline", cursor: "pointer" }}
         >
-          ✉️ Or send my Sea Profile by email
-        </a>
+          {emailState === "busy" ? "Sending…" : "✉️ Or let SeaMinds email my Sea Profile"}
+        </button>
       )}
 
       <button
