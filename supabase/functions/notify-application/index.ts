@@ -182,13 +182,20 @@ async function emailOf(userId?: string | null) {
 }
 
 /** Authoritative manager recipient + owning manager user id for an application. */
-async function resolveManager(app: any): Promise<{ email: string; userId: string | null; company: string | null }> {
+async function resolveManager(app: any): Promise<{ email: string; userId: string | null; company: string | null; imported?: boolean }> {
   if (app.job_posting_id) {
     const { data: jp } = await svc.from("job_postings")
-      .select("manager_id, contact_email, company_name").eq("id", app.job_posting_id).maybeSingle();
+      .select("manager_id, contact_email, company_name, recruiter_name").eq("id", app.job_posting_id).maybeSingle();
     if (jp) {
-      const email = (jp as any).contact_email || await emailOf(jp.manager_id);
-      return { email, userId: (jp as any).manager_id ?? null, company: (jp as any).company_name ?? null };
+      // Adverts published by SeaMinds on behalf of another agency: the recruiter is the
+      // contact on the advert. Never fall back to the publishing (SeaMinds) account.
+      const imported = /^seaminds/i.test(String((jp as any).company_name || "").trim());
+      const email = (jp as any).contact_email || (imported ? "" : await emailOf(jp.manager_id));
+      return {
+        email, userId: imported ? null : ((jp as any).manager_id ?? null),
+        company: (jp as any).recruiter_name || (imported ? null : (jp as any).company_name) || null,
+        imported,
+      };
     }
   }
   if (app.company_post_id) {
@@ -351,7 +358,9 @@ Deno.serve(async (req) => {
           <p>Position: ${esc(rank)}${app.vessel_type ? ` — ${esc(app.vessel_type)}` : ""}</p>
           <p>Applied on: ${esc(appliedOn)}</p>
           ${teaser}${scoreLine}${profileBtn}
-          ${goldBtn(managerLink, "Open your Applicants")}
+          ${mgr.imported
+            ? `<p style="color:#94a3b8;font-size:13px">You received this because your contact appears on a vacancy advertised on SeaMinds. Reply to the candidate directly. Want applicants in one dashboard? <a href="${SITE}/manager" style="color:#D4AF37">Post vacancies free on SeaMinds</a>.</p>`
+            : goldBtn(managerLink, "Open your Applicants")}
         `),
       }));
 
@@ -369,7 +378,9 @@ Deno.serve(async (req) => {
         `),
       }));
 
-      return json({ ok: true, sent: attempts.some((a) => a.sent), attempts });
+      // "sent" reflects delivery to the recruiter only — the crew acknowledgement does not count.
+      const toRecruiter = attempts.find((a) => a.role === "manager");
+      return json({ ok: true, sent: !!toRecruiter?.sent, recruiter_email: !!mgr.email, attempts });
     }
 
     // ---------------------------------------------------------- shortlisted / declined
