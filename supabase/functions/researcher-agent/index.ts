@@ -307,7 +307,7 @@ async function saveVacancies(items: any[], source: string, companyName?: string)
       is_scam_flagged: false,
       scam_flags: [],
       fetched_at: new Date().toISOString(),
-      expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      expires_at: new Date(Date.now() + 183 * 24 * 60 * 60 * 1000).toISOString(),
       raw_data: item,
     }, { onConflict: 'source,external_id', ignoreDuplicates: true });
     if (!error) saved++;

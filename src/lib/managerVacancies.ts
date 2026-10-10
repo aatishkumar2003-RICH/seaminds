@@ -284,7 +284,7 @@ const toRow = (
 };
 
 /**
- * Publish a batch. One posting_batch_id for the whole action, 14-day expiry,
+ * Publish a batch. One posting_batch_id for the whole action, 183-day expiry,
  * exact duplicates skipped, real errors returned.
  */
 export const publishVacancyBatch = async (
@@ -328,7 +328,7 @@ export const publishVacancyBatch = async (
   }
 
   const batchId = crypto.randomUUID();
-  const expiresAt = new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString();
+  const expiresAt = new Date(Date.now() + 183 * 24 * 60 * 60 * 1000).toISOString();
   const payload = toPublish.map((v) => toRow(v, identity, sourceType, batchId, expiresAt, opts?.flierUrl));
 
   const { data, error } = await supabase.from("job_postings").insert(payload as never).select("id");

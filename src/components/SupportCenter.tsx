@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import DoraChat from "@/components/DoraChat";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const CATEGORIES = [
@@ -112,6 +113,18 @@ export default function SupportCenter({ sourceScreen, onBack }: Props) {
         Never send passwords, OTP codes, or wellness chat messages here. For an urgent safety problem or emergency, use the SOS button.
       </div>
 
+      {user && (
+        <DoraChat
+          sourceScreen={sourceScreen}
+          onEscalate={(q) => {
+            setTicketRef(null);
+            if (!subject) setSubject(q.slice(0, 200));
+            if (!description) setDescription(`I asked DORA: "${q.slice(0, 500)}" — it did not solve my problem.\n\n`);
+            document.getElementById("support-form")?.scrollIntoView({ behavior: "smooth" });
+          }}
+        />
+      )}
+
       {ticketRef && (
         <div className="space-y-2 rounded-xl border border-primary/40 bg-card p-4 text-center">
           <p className="text-sm text-foreground">Your report was received. Keep this reference:</p>
@@ -124,7 +137,7 @@ export default function SupportCenter({ sourceScreen, onBack }: Props) {
       )}
 
       {!ticketRef && (
-        <div className="space-y-3 rounded-xl border border-border bg-card p-4">
+        <div id="support-form" className="space-y-3 rounded-xl border border-border bg-card p-4">
           <div className="space-y-1">
             <Label>What is it about?</Label>
             <Select value={category} onValueChange={setCategory}>

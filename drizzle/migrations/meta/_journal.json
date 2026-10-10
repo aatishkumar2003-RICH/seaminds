@@ -232,6 +232,13 @@
       "when": 1791455875729,
       "tag": "0032_dora_knowledge_context_foundation",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1791597900120,
+      "tag": "0033_vacancy_cleanup_183_days",
+      "breakpoints": true
     }
   ]
 }

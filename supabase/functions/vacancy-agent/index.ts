@@ -386,7 +386,7 @@ async function saveVacancies(items: any[], source: string) {
       fetched_at: new Date().toISOString(),
       source_posted_at: /^\d{4}-\d{2}-\d{2}$/.test(item.source_posted_at || '') ? item.source_posted_at : null,
       dedup_key: dedupKey,
-      // expires_at is owned by the database freshness trigger (14 days from source posting date)
+      // expires_at is owned by the database freshness trigger (183 days from source posting date)
       raw_data: item,
     }, { onConflict: 'source,external_id', ignoreDuplicates: true });
     // A unique-index violation just means another run already saved this vacancy.
