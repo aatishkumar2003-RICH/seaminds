@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Anchor, BadgeCheck } from "lucide-react";
 import { trackPixel } from "@/lib/metaPixel";
 import JobCard from "@/components/JobCard";
-import { loadVacancies, loadMyApplicationTargets, UnifiedVacancy } from "@/lib/vacancyFeed";
+import { loadVacancies, loadMyApplicationTargets, onAppResume, UnifiedVacancy } from "@/lib/vacancyFeed";
 import { fetchCrewCardInfo, getCachedCrewCardInfo, waApplyLink, recordApplication, openHandoffTab, completeHandoff, fetchQuickProfileDone, CrewCardInfo } from "@/lib/applyMessage";
 import { jobPath, RANK_HUBS } from "@/lib/jobSlug";
 import ApplyGateSheet from "@/components/ApplyGateSheet";
@@ -146,6 +146,7 @@ const JobFeed = () => {
   useEffect(() => {
     if (!signedIn) { setAppliedIds(new Set()); return; }
     loadMyApplicationTargets().then(setAppliedIds);
+    return onAppResume(() => { loadMyApplicationTargets().then(setAppliedIds); });
   }, [signedIn]);
 
   const shown = useMemo(() => {

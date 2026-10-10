@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, recordApplication, openHandoffTab, completeHandoff, fetchQuickProfileDone, CrewCardInfo } from "@/lib/applyMessage";
 import ApplyGateSheet from "@/components/ApplyGateSheet";
 import JobCard from "@/components/JobCard";
-import { loadVacancies, loadMyApplicationTargets, UnifiedVacancy } from "@/lib/vacancyFeed";
+import { loadVacancies, loadMyApplicationTargets, onAppResume, UnifiedVacancy } from "@/lib/vacancyFeed";
 import CrewOffers from "@/components/CrewOffers";
 import { smartMatches, matchVacancy } from "@/lib/smartMatch";
 import { useSearchParams } from "react-router-dom";
@@ -221,6 +221,8 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
       .maybeSingle();
     if (!error && data) applyRow(data);
   };
+
+  useEffect(() => onAppResume(() => { loadMyApplicationTargets().then(setAppliedIds); }), []);
 
   useEffect(() => {
     if (!crewId) return;

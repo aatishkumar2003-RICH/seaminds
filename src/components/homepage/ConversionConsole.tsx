@@ -6,11 +6,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 import { useT, LANGS, type LangCode } from "@/i18n";
-import { fetchCrewCardInfo, waApplyLink, getCachedCrewCardInfo, recordApplication, openHandoffTab, completeHandoff, fetchQuickProfileDone, type CrewCardInfo } from "@/lib/applyMessage";
+import { fetchCrewCardInfo, getCachedCrewCardInfo, fetchQuickProfileDone, type CrewCardInfo } from "@/lib/applyMessage";
+import { applyToVacancy } from "@/lib/applicationRouter";
 import ApplyGateSheet from "@/components/ApplyGateSheet";
 import { jobPath } from "@/lib/jobSlug";
 import JobCard from "@/components/JobCard";
-import { loadVacancies, loadMyApplicationTargets, type UnifiedVacancy } from "@/lib/vacancyFeed";
+import { loadVacancies, loadMyApplicationTargets, onAppResume, type UnifiedVacancy } from "@/lib/vacancyFeed";
 import SignInSheet from "@/components/homepage/SignInSheet";
 
 
@@ -121,13 +122,15 @@ const ConversionConsole = () => {
     if (!user?.id) { setCardInfo(null); setNeedsQuickProfile(false); return; }
     fetchCrewCardInfo(user.id).then(setCardInfo);
     fetchQuickProfileDone(user.id).then((done) => setNeedsQuickProfile(!done));
-    loadMyApplicationTargets().then((ids) => {
+    const sync = () => loadMyApplicationTargets().then((ids) => {
       setApplied((prev) => {
         const next = { ...prev };
         ids.forEach((id) => { if (!next[id]) next[id] = "ok"; });
         return next;
       });
     });
+    sync();
+    return onAppResume(sync);
   }, [user?.id]);
 
   const reducedMotion = useMemo(
@@ -255,32 +258,14 @@ const ConversionConsole = () => {
     if (needsQuickProfile) { setGateOpen(true); return; }
     setApplyBusy(true);
     try {
-      // WhatsApp first for every listing that has one; never route to the SeaMinds admin.
-      const wa = v.kind === "direct"
-        ? waApplyLink(v.whatsapp, cardInfo || getCachedCrewCardInfo(), { rank: v.rank, vessel: v.vessel, port: v.port })
-        : waApplyLink(v.whatsapp, cardInfo || getCachedCrewCardInfo(), { rank: v.rank, vessel: v.vessel, port: v.port })
-          || v.applyUrl
-          || waApplyLink(v.whatsapp, cardInfo || getCachedCrewCardInfo(), { rank: v.rank, vessel: v.vessel, port: v.port });
-      const win = wa ? openHandoffTab() : null;
-      const r = await recordApplication({
-        vacancyId: v.kind === "direct" ? null : v.id,
-        jobPostingId: v.kind === "direct" ? v.id : null,
-        company: v.company || v.source || null,
-        rank: v.rank || null,
-        vessel: v.vessel || null,
-        externalUrl: wa,
-      });
-      setApplyBusy(false);
-      if (!r.ok) { completeHandoff(win, wa); toast.error(wa ? "Opened — could not record on SeaMinds" : "Could not send application"); return; }
-      setApplied((s) => ({ ...s, [v.id]: r.duplicate ? "dup" : "ok" }));
-      if (r.duplicate) toast.success("Already applied ✓ — the company already has your application");
-      else if (wa && wa.startsWith("https://wa.me")) toast.success("WhatsApp opened ✓ — tap Send to deliver your Sea Profile");
-      else if (wa) toast.success("Company website opened — finish your application there");
-      else if (r.emailSent) toast.success("Emailed ✓ — your Sea Profile was sent to the recruiter");
-      else toast.warning("Saved in My Applications — this recruiter has no email; check the listing for contact details");
-      completeHandoff(win, wa);
+      // Shared router: opens WhatsApp/portal synchronously from this tap (mobile-safe), never the SeaMinds admin.
+      const out = await applyToVacancy(v, cardInfo || getCachedCrewCardInfo());
+      const t = out.toast;
+      (t.tone === "error" ? toast.error : t.tone === "warning" ? toast.warning : toast.success)(`${t.title} — ${t.description}`);
+      if (out.ok) setApplied((s) => ({ ...s, [v.id]: out.duplicate ? "dup" : "ok" }));
     } catch {
       toast.error("Could not send application");
+    } finally {
       setApplyBusy(false);
     }
   }, [user, navigate, cardInfo, needsQuickProfile]);
