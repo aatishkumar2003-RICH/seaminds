@@ -44,6 +44,7 @@ Deno.serve(async (req) => {
   try { body = await req.json(); } catch { return json({ error: "invalid_json" }, 400); }
   const question = typeof body?.question === "string" ? body.question.trim().slice(0, 600) : "";
   if (question.length < 2) return json({ error: "question_required" }, 400);
+  const lang = ["en","id","tl","hi","vi"].includes(body?.language) ? body.language : "en";
   const route = typeof body?.route_template === "string" ? body.route_template.slice(0, 120) : null;
   const history = Array.isArray(body?.history) ? body.history.slice(-4)
     .filter((m: any) => (m?.role === "user" || m?.role === "assistant") && typeof m?.content === "string")
@@ -65,14 +66,16 @@ Deno.serve(async (req) => {
   if ((count ?? 0) >= DAILY_CAP) return json({ error: "daily_limit", message: "You've reached today's DORA limit. Please use Help & Support or try again tomorrow." }, 429);
 
   // Retrieval: strict, then loose.
-  let { data: arts } = await admin.rpc("dora_search_articles", { p_query: question, p_domain: null, p_limit: 4 });
+  let { data: arts } = await admin.rpc("dora_search_articles_lang", { p_query: question, p_language: lang, p_limit: 4 });
   if (!arts?.length) {
     const orq = buildOrQuery(question);
-    if (orq) ({ data: arts } = await admin.rpc("dora_search_articles", { p_query: orq, p_domain: null, p_limit: 3 }));
+    if (orq) ({ data: arts } = await admin.rpc("dora_search_articles_lang", { p_query: orq, p_language: lang, p_limit: 3 }));
   }
   const articles = (arts ?? []) as { slug: string; title: string; body: string }[];
   if (!articles.length) {
     await log({ outcome: "UNANSWERED" });
+    const kw = buildOrQuery(question).split(" or ").filter(Boolean).sort().slice(0, 6);
+    if (kw.length) await admin.rpc("dora_log_unanswered", { p_key: kw.join("-"), p_summary: kw.join(" ") }).then(() => {}, () => {});
     return onceStream({ type: "meta", label: "unconfirmed", articles: [] }, UNANSWERED_REPLY);
   }
 

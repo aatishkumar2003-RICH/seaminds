@@ -31,7 +31,7 @@ export default function DoraChat({ sourceScreen, onEscalate }: Props) {
       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/dora-assist`, {
         method: "POST",
         headers: await authedFunctionHeaders(),
-        body: JSON.stringify({ question, history, route_template: `/app/${sourceScreen.replace(/[^a-z]/gi, "")}` }),
+        body: JSON.stringify({ question, history, language: localStorage.getItem("sm_lang") || "en", route_template: `/app/${sourceScreen.replace(/[^a-z]/gi, "")}` }),
       });
       if (!res.ok || !res.body) {
         let msg = "DORA is unavailable right now. Please raise a support request below.";
