@@ -84,7 +84,7 @@ const JobDetail = () => {
       const nowIso = new Date().toISOString();
 
       const { data: p } = await supabase.from("job_postings" as any)
-        .select("id, rank_required, vessel_type, monthly_salary, joining_port, joining_date, contract_duration, company_name, additional_notes, contact_whatsapp, contact_email, verified, flier_url, created_at, expires_at, status")
+        .select("id, rank_required, vessel_type, monthly_salary, joining_port, joining_date, contract_duration, company_name, recruiter_name, additional_notes, contact_whatsapp, contact_email, verified, flier_url, created_at, expires_at, status")
         .eq("id", id).eq("status", "active").maybeSingle();
 
       let found: Job | null = null;
@@ -93,7 +93,9 @@ const JobDetail = () => {
         found = {
           id: pr.id, kind: "direct",
           rank: pr.rank_required || "Crew", vessel: pr.vessel_type || "—",
-          company: pr.company_name || "Maritime Company", salary: pr.monthly_salary,
+          company: pr.recruiter_name
+            || (/^seaminds/i.test(String(pr.company_name || "")) ? "Agency shown on flyer" : (pr.company_name || "Maritime Company")),
+          salary: pr.monthly_salary,
           port: pr.joining_port, duration: pr.contract_duration, joiningDate: pr.joining_date,
           notes: pr.additional_notes, flier: pr.flier_url,
           whatsapp: pr.contact_whatsapp, email: pr.contact_email || null, applyUrl: null,

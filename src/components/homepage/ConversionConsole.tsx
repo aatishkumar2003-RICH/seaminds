@@ -255,9 +255,11 @@ const ConversionConsole = () => {
     if (needsQuickProfile) { setGateOpen(true); return; }
     setApplyBusy(true);
     try {
+      // WhatsApp first for every listing that has one; never route to the SeaMinds admin.
       const wa = v.kind === "direct"
-        ? null
-        : v.applyUrl
+        ? waApplyLink(v.whatsapp, cardInfo || getCachedCrewCardInfo(), { rank: v.rank, vessel: v.vessel, port: v.port })
+        : waApplyLink(v.whatsapp, cardInfo || getCachedCrewCardInfo(), { rank: v.rank, vessel: v.vessel, port: v.port })
+          || v.applyUrl
           || waApplyLink(v.whatsapp, cardInfo || getCachedCrewCardInfo(), { rank: v.rank, vessel: v.vessel, port: v.port });
       const win = wa ? openHandoffTab() : null;
       const r = await recordApplication({
@@ -269,11 +271,13 @@ const ConversionConsole = () => {
         externalUrl: wa,
       });
       setApplyBusy(false);
-      if (!r.ok) { completeHandoff(win, wa); toast.error("Sent on WhatsApp — could not record on SeaMinds"); return; }
+      if (!r.ok) { completeHandoff(win, wa); toast.error(wa ? "Opened — could not record on SeaMinds" : "Could not send application"); return; }
       setApplied((s) => ({ ...s, [v.id]: r.duplicate ? "dup" : "ok" }));
       if (r.duplicate) toast.success("Already applied ✓ — the company already has your application");
-      else if (r.emailSent === false) toast.warning("Applied ✓ — saved on SeaMinds, but the email notification failed");
-      else toast.success("Applied ✓ — recorded on SeaMinds");
+      else if (wa && wa.startsWith("https://wa.me")) toast.success("WhatsApp opened ✓ — tap Send to deliver your Sea Profile");
+      else if (wa) toast.success("Company website opened — finish your application there");
+      else if (r.emailSent) toast.success("Emailed ✓ — your Sea Profile was sent to the recruiter");
+      else toast.warning("Saved in My Applications — this recruiter has no email; check the listing for contact details");
       completeHandoff(win, wa);
     } catch {
       toast.error("Could not send application");
