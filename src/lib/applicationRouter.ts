@@ -114,7 +114,7 @@ export const applyToVacancy = async (v: UnifiedVacancy, card: CrewCardInfo | nul
     company: v.company || null, rank: v.rank || null, vessel: v.vessel || null,
     externalUrl: route.url,
     // WhatsApp/portal handoffs never email the recruiter; email is a separate deliberate action.
-    notify: route.channel === "email" || route.channel === "seaminds",
+    notify: route.channel === "seaminds",
   });
   if (route.url) completeHandoff(win, route.url);
   return { route, ok: r.ok, duplicate: r.duplicate, emailSent: r.emailSent, toast: routeToast(route, v.company, r) };
