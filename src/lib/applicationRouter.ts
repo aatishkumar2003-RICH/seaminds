@@ -1,7 +1,7 @@
 // One application routing decision shared by every Apply button.
 // Publisher (who posted) is kept separate from the recruiter (who hires).
 import type { UnifiedVacancy } from "@/lib/vacancyFeed";
-import { normalizeWaNumber, waApplyLink, buildApplyMessage, type CrewCardInfo } from "@/lib/applyMessage";
+import { normalizeWaNumber, waApplyLink, buildApplyMessage, recordApplication, openHandoffTab, completeHandoff, type CrewCardInfo } from "@/lib/applyMessage";
 
 /** House accounts that publish imported adverts on behalf of other agencies. */
 export const isSeaMindsPublished = (v: Pick<UnifiedVacancy, "kind" | "publisherName">) =>
@@ -81,8 +81,6 @@ export const routeToast = (
       return { title: "Saved", description: "Saved in My Applications.", tone: "success" };
   }
 };
-
-import { recordApplication, openHandoffTab, completeHandoff } from "@/lib/applyMessage";
 
 export interface ApplyOutcome {
   route: ApplyRoute;

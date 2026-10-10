@@ -289,30 +289,11 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     if (appliedIds.has(v.id) || directApplied[v.id] || directBusy[v.id]) return;
     setDirectBusy((s0) => ({ ...s0, [v.id]: true }));
     try {
-      const url = v.kind === "direct"
-        ? null
-        : v.applyUrl
-          || waApplyLink(v.whatsapp, cardInfo || getCachedCrewCardInfo(), { rank: v.rank, vessel: v.vessel, port: v.port });
-      const win = url ? openHandoffTab() : null;
-
-      const r = await recordApplication({
-        vacancyId: v.kind === "external" ? v.id : null,
-        jobPostingId: v.kind === "direct" ? v.id : null,
-        company: v.company, rank: v.rank, vessel: v.vessel,
-        externalUrl: url,
-      });
+      const out = await applyToVacancy(v, cardInfo || getCachedCrewCardInfo());
       setDirectBusy((s0) => ({ ...s0, [v.id]: false }));
-
-      if (!r.ok) {
-        toast({ title: "Error", description: url ? "Sent — could not record on SeaMinds." : "Could not send application. Try again.", variant: "destructive" });
-      } else {
-        setDirectApplied((s0) => ({ ...s0, [v.id]: r.duplicate ? "dup" : "ok" }));
-        if (r.duplicate) toast({ title: "Already applied ✓", description: "The company already has your application." });
-        else if (r.emailSent === false) toast({ title: "Applied ✓", description: "Saved on SeaMinds, but the email notification failed." });
-        else if (v.kind === "direct") toast({ title: "Applied ✓", description: "The company can now see your application in SeaMinds." });
-        else toast({ title: "Applied ✓", description: "Recorded on SeaMinds." });
-      }
-      if (url) completeHandoff(win, url);
+      if (out.ok) setDirectApplied((s0) => ({ ...s0, [v.id]: out.duplicate ? "dup" : "ok" }));
+      if (out.route.channel === "email" && out.ok) { const m = emailApplyLink(v, cardInfo || getCachedCrewCardInfo()); void m; }
+      toast({ title: out.toast.title, description: out.toast.description, variant: out.toast.tone === "error" ? "destructive" : undefined });
       loadMyApplications();
     } catch {
       setDirectBusy((s0) => ({ ...s0, [v.id]: false }));
