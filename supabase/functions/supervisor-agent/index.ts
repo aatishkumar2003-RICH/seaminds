@@ -46,18 +46,18 @@ Deno.serve(async (req) => {
 
     // Auto-fix: remove expired vacancies
     const actions: string[] = [];
-    // History is data: only purge rows more than 60 days past expiry.
-    const purgeBefore = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString();
+    // History is data: only purge rows more than 183 days past expiry.
+    const purgeBefore = new Date(Date.now() - 183 * 24 * 60 * 60 * 1000).toISOString();
     const { count: expired } = await supabase
       .from('external_vacancies').select('*', { count: 'exact', head: true })
       .lt('expires_at', purgeBefore);
     if (expired && expired > 0) {
       await supabase.from('external_vacancies').delete().lt('expires_at', purgeBefore);
-      actions.push(`✅ Removed ${expired} vacancies expired over 60 days ago`);
+      actions.push(`✅ Removed ${expired} vacancies expired over 183 days ago`);
     }
 
-    // Auto-fix: remove no-contact jobs older than 30 days
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    // Auto-fix: remove no-contact jobs older than 183 days
+    const thirtyDaysAgo = new Date(Date.now() - 183 * 24 * 60 * 60 * 1000).toISOString();
     const { count: noContactOld } = await supabase
       .from('external_vacancies')
       .select('*', { count: 'exact', head: true })
@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
         .is('contact_email', null)
         .is('contact_whatsapp', null)
         .lt('fetched_at', thirtyDaysAgo);
-      actions.push(`🧹 Removed ${noContactOld} no-contact jobs older than 30 days`);
+      actions.push(`🧹 Removed ${noContactOld} no-contact jobs older than 183 days`);
     }
 
     // Check low quality

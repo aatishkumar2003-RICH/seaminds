@@ -914,7 +914,7 @@ const ManagerDashboard = () => {
   const reopenVacancy = async (jp: MyPosting) => {
     const patch: Record<string, unknown> = { status: "active" };
     const cur = jp.expires_at ? new Date(jp.expires_at).getTime() : 0;
-    if (!cur || cur < Date.now()) patch.expires_at = new Date(Date.now() + 45 * 86400000).toISOString();
+    if (!cur || cur < Date.now()) patch.expires_at = new Date(Date.now() + 183 * 86400000).toISOString();
     const { error } = await supabase.from("job_postings").update(patch as never).eq("id", jp.id);
     if (error) { toast.error(error.message); return; }
     toast.success("Vacancy reopened ✓");
@@ -923,10 +923,10 @@ const ManagerDashboard = () => {
 
   const extendVacancy = async (jp: MyPosting) => {
     const base = Math.max(jp.expires_at ? new Date(jp.expires_at).getTime() : 0, Date.now());
-    const next = new Date(base + 45 * 86400000).toISOString();
+    const next = new Date(base + 183 * 86400000).toISOString();
     const { error } = await supabase.from("job_postings").update({ expires_at: next } as never).eq("id", jp.id);
     if (error) { toast.error(error.message); return; }
-    toast.success("Extended by 14 days ✓");
+    toast.success("Extended by 183 days ✓");
     loadApplicants();
   };
 
