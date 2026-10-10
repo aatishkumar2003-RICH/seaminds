@@ -104,6 +104,9 @@ export const applyToVacancy = async (v: UnifiedVacancy, card: CrewCardInfo | nul
         : { title: "No contact listed", description: "This vacancy has no way to apply yet.", tone: "warning" },
     };
   }
+  // Email-only: success means the recruiter email was accepted, so Apply stays retryable
+  // (also when the application record already exists).
+  if (route.channel === "email") return applyByEmail(v);
   const win = route.url ? openHandoffTab() : null;
   const r = await recordApplication({
     vacancyId: v.kind === "external" ? v.id : null,
@@ -111,7 +114,7 @@ export const applyToVacancy = async (v: UnifiedVacancy, card: CrewCardInfo | nul
     company: v.company || null, rank: v.rank || null, vessel: v.vessel || null,
     externalUrl: route.url,
     // WhatsApp/portal handoffs never email the recruiter; email is a separate deliberate action.
-    notify: route.channel === "email" || route.channel === "seaminds",
+    notify: route.channel === "seaminds",
   });
   if (route.url) completeHandoff(win, route.url);
   return { route, ok: r.ok, duplicate: r.duplicate, emailSent: r.emailSent, toast: routeToast(route, v.company, r) };
