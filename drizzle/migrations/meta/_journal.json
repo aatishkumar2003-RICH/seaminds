@@ -239,6 +239,13 @@
       "when": 1791597900120,
       "tag": "0033_vacancy_cleanup_183_days",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1791601588891,
+      "tag": "0034_dora_multilang_and_clusters",
+      "breakpoints": true
     }
   ]
 }

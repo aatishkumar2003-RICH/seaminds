@@ -5374,11 +5374,26 @@ export type Database = {
         Returns: Json
       }
       dora_get_my_context: { Args: never; Returns: Json }
+      dora_log_unanswered: {
+        Args: { p_key: string; p_summary: string }
+        Returns: undefined
+      }
       dora_search_articles: {
         Args: { p_domain?: string; p_limit?: number; p_query: string }
         Returns: {
           body: string
           domain: string
+          rank: number
+          slug: string
+          title: string
+        }[]
+      }
+      dora_search_articles_lang: {
+        Args: { p_language?: string; p_limit?: number; p_query: string }
+        Returns: {
+          body: string
+          domain: string
+          language: string
           rank: number
           slug: string
           title: string
