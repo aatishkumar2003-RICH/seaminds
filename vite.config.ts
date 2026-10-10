@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
@@ -35,7 +35,7 @@ export default defineConfig(({ mode }) => ({
       generateBundle() {
         this.emitFile({ type: "asset", fileName: "version.json", source: JSON.stringify(RELEASE) });
       },
-    },
+    } satisfies Plugin,
     mcpPlugin(),
     mode === "development" && componentTagger(),
     VitePWA({

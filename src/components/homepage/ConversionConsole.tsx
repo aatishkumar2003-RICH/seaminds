@@ -13,6 +13,7 @@ import { jobPath } from "@/lib/jobSlug";
 import JobCard from "@/components/JobCard";
 import { loadVacancies, loadMyApplicationTargets, onAppResume, type UnifiedVacancy } from "@/lib/vacancyFeed";
 import SignInSheet from "@/components/homepage/SignInSheet";
+import ReleaseBadge from "@/components/ReleaseBadge";
 
 
 const GOLD = "#D4AF37";
@@ -510,6 +511,7 @@ const ConversionConsole = () => {
 
       {/* 4. SPLIT HERO — crew + companies */}
       <div className="max-w-6xl mx-auto px-4 pt-6 pb-4 relative">
+        <ReleaseBadge className="relative mb-3" />
         <div
           aria-hidden
           className="sm-aurora pointer-events-none absolute left-1/2 -translate-x-1/2"
