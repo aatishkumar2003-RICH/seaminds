@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import DoraChat from "@/components/DoraChat";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const CATEGORIES = [
@@ -136,7 +137,7 @@ export default function SupportCenter({ sourceScreen, onBack }: Props) {
       )}
 
       {!ticketRef && (
-        <div className="space-y-3 rounded-xl border border-border bg-card p-4">
+        <div id="support-form" className="space-y-3 rounded-xl border border-border bg-card p-4">
           <div className="space-y-1">
             <Label>What is it about?</Label>
             <Select value={category} onValueChange={setCategory}>
