@@ -12,6 +12,8 @@ export interface UnifiedVacancy {
   contractDuration: string | null;
   salaryText: string | null;
   company: string;
+  /** Who published the listing on SeaMinds (may differ from the hiring company). */
+  publisherName: string | null;
   verified: boolean;
   qualityScore: number | null;
   postedAt: string | null;
@@ -44,7 +46,9 @@ const mapDirect = (r: Record<string, any>): UnifiedVacancy => ({
   joiningDate: r.joining_date || null,
   contractDuration: r.contract_duration || null,
   salaryText: r.monthly_salary ?? null,
-  company: r.company_name || "Maritime Company",
+  company: r.recruiter_name
+    || (/^seaminds/i.test(String(r.company_name || "")) ? "Agency shown on flyer" : (r.company_name || "Maritime Company")),
+  publisherName: r.company_name || null,
   verified: !!r.verified,
   qualityScore: null,
   postedAt: r.created_at || null,
@@ -70,6 +74,7 @@ const mapExternal = (r: Record<string, any>): UnifiedVacancy => ({
   contractDuration: r.contract_duration || null,
   salaryText: r.salary_text ?? null,
   company: r.company_name || "Maritime Company",
+  publisherName: null,
   verified: r.is_verified === undefined || r.is_verified === null ? false : !!r.is_verified,
   qualityScore: r.quality_score ?? null,
   postedAt: r.created_at || null,
@@ -108,7 +113,7 @@ export const loadVacancies = async (opts: LoadVacanciesOpts = {}): Promise<Unifi
     supabase
       .from("job_postings")
       .select(
-        "id, rank_required, vessel_type, joining_port, joining_date, contract_duration, monthly_salary, company_name, verified, created_at, expires_at, additional_notes, contact_email, contact_whatsapp, positions, flier_url, posting_batch_id"
+        "id, rank_required, vessel_type, joining_port, joining_date, contract_duration, monthly_salary, company_name, verified, created_at, expires_at, additional_notes, contact_email, contact_whatsapp, positions, flier_url, posting_batch_id, recruiter_name"
       )
       .eq("status", "active")
       .gt("expires_at", nowIso)
