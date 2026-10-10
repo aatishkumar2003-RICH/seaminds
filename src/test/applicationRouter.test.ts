@@ -28,3 +28,16 @@ describe("application routing", () => {
     expect(resolveApplyRoute({ ...base, kind: "external", publisherName: null, applyUrl: "https://agg", whatsapp: "+6281234567890" }, null).channel).toBe("whatsapp");
   });
 });
+
+import { hasSecondaryEmail } from "@/lib/applicationRouter";
+describe("secondary email option", () => {
+  it("offered when WhatsApp is primary and an email exists", () => {
+    expect(hasSecondaryEmail({ ...base, whatsapp: "+6281234567890", email: "hr@abc.co.id" })).toBe(true);
+  });
+  it("not offered when email is already the primary channel", () => {
+    expect(hasSecondaryEmail({ ...base, email: "hr@abc.co.id" })).toBe(false);
+  });
+  it("not offered for registered employers (SeaMinds dashboard)", () => {
+    expect(hasSecondaryEmail({ ...base, publisherName: "Synergy Marine", whatsapp: "+6512345678", email: "a@b.c" })).toBe(false);
+  });
+});

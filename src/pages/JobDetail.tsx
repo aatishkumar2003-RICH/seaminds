@@ -34,6 +34,7 @@ interface Job {
   email: string | null;
   applyUrl: string | null;
   verified: boolean;
+  publisher: string | null;
   posted: string | null;
   expires: string | null;
 }
@@ -98,7 +99,7 @@ const JobDetail = () => {
           port: pr.joining_port, duration: pr.contract_duration, joiningDate: pr.joining_date,
           notes: pr.additional_notes, flier: pr.flier_url,
           whatsapp: pr.contact_whatsapp, email: pr.contact_email || null, applyUrl: null,
-          verified: !!pr.verified, posted: pr.created_at, expires: pr.expires_at,
+          verified: !!pr.verified, publisher: pr.company_name || null, posted: pr.created_at, expires: pr.expires_at,
         };
       } else {
         const { data: e } = await supabase.from("external_vacancies" as any)
@@ -113,7 +114,7 @@ const JobDetail = () => {
             port: er.joining_port, duration: er.contract_duration, joiningDate: er.joining_date || null,
             notes: er.description, flier: null,
             whatsapp: er.contact_whatsapp, email: er.contact_email || null, applyUrl: er.apply_url,
-            verified: !!er.is_verified, posted: er.fetched_at, expires: er.expires_at,
+            verified: !!er.is_verified, publisher: null, posted: er.fetched_at, expires: er.expires_at,
           };
         }
       }
@@ -139,7 +140,7 @@ const JobDetail = () => {
           id: r.id, kind: r.kind, rank: r.rank_required || "Crew", vessel: r.vessel_type || "—",
           company: r.company_name || "Maritime Company", salary: null, port: r.joining_port,
           duration: null, joiningDate: null, notes: null, flier: null, whatsapp: null,
-          email: null, applyUrl: null, verified: false, posted: null, expires: null,
+          email: null, applyUrl: null, verified: false, publisher: null, posted: null, expires: null,
         })) as Job[];
         if (alive) setSimilar(merge);
       }
