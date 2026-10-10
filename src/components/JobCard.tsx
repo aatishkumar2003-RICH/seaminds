@@ -82,7 +82,9 @@ const JobCard = ({ vacancy: v, variant, applied: appliedProp, busy, href, match,
   const canReopen = !!applied && route.channel === "whatsapp" ;
   // A saved record doesn't prove the recruiter email was accepted (e.g. after reload) —
   // keep email-only retryable; the server never re-sends an accepted email.
-  const canRetryEmail = !!applied && route.channel === "email";
+  // Server-confirmed recruiter delivery (survives reload) settles the email action.
+  const emailDelivered = emailState === "done" || isEmailDelivered(v.id);
+  const canRetryEmail = !!applied && route.channel === "email" && !emailDelivered;
   const disabled = (!!applied && !canReopen && !canRetryEmail) || !!busy || noContact;
   const secondaryEmail = hasSecondaryEmail(v);
 
@@ -98,6 +100,7 @@ const JobCard = ({ vacancy: v, variant, applied: appliedProp, busy, href, match,
       const out = await applyByEmail(v);
       const t = out.toast;
       (t.tone === "error" ? toast.error : t.tone === "warning" ? toast.warning : toast.success)(`${t.title} — ${t.description}`);
+      if (out.emailSent) markEmailDelivered(v.id);
       setEmailState(out.emailSent ? "done" : "idle");
     } catch {
       toast.error("Could not send email. Try again.");
@@ -109,6 +112,8 @@ const JobCard = ({ vacancy: v, variant, applied: appliedProp, busy, href, match,
     ? "💬 RE-OPEN WHATSAPP"
     : canRetryEmail
     ? (emailState === "busy" ? "Sending…" : emailState === "done" ? "Emailed ✓" : "✉️ RESEND SEA PROFILE BY EMAIL")
+    : applied && route.channel === "email" && emailDelivered
+    ? "Emailed to recruiter ✓"
     : applied === "dup"
     ? "Already applied ✓"
     : applied === "ok"
@@ -235,10 +240,10 @@ const JobCard = ({ vacancy: v, variant, applied: appliedProp, busy, href, match,
         </p>
       )}
 
-      {secondaryEmail && emailState === "done" && (
+      {secondaryEmail && emailDelivered && (
         <p style={{ textAlign: "center", fontSize: 11.5, color: "#22c55e", margin: 0 }}>✉️ Sea Profile emailed to recruiter ✓</p>
       )}
-      {secondaryEmail && emailState !== "done" && (
+      {secondaryEmail && !emailDelivered && (
         <button
           onClick={sendEmail}
           disabled={emailState === "busy"}
