@@ -111,7 +111,7 @@ const JobCard = ({ vacancy: v, variant, applied: appliedProp, busy, href, match,
   const label = canReopen
     ? "💬 RE-OPEN WHATSAPP"
     : canRetryEmail
-    ? (emailState === "busy" ? "Sending…" : emailState === "done" ? "Emailed ✓" : "✉️ RESEND SEA PROFILE BY EMAIL")
+    ? (emailState === "busy" ? "Sending…" : "✉️ RESEND SEA PROFILE BY EMAIL")
     : applied && route.channel === "email" && emailDelivered
     ? "Emailed to recruiter ✓"
     : applied === "dup"

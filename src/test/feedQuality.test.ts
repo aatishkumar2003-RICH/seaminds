@@ -97,7 +97,7 @@ describe("application delivery state after reload", () => {
     expect(isEmailDelivered("job-2")).toBe(false);
   });
   it("keeps last known state when the network fails", async () => {
-    invoke.mockRejectedValue(new Error("offline"));
+    invoke.mockResolvedValue({ data: null, error: { message: "offline" } });
     await loadMyEmailDelivery();
     expect(isEmailDelivered("job-1")).toBe(true);
   });
