@@ -7,7 +7,7 @@ import { formatSalaryText } from "@/lib/salary";
 import { trackPixel } from "@/lib/metaPixel";
 import { fetchCrewCardInfo, getCachedCrewCardInfo, fetchQuickProfileDone, CrewCardInfo } from "@/lib/applyMessage";
 import { applyToVacancy, applyByEmail, reopenWhatsApp, resolveApplyRoute, hasSecondaryEmail } from "@/lib/applicationRouter";
-import type { UnifiedVacancy } from "@/lib/vacancyFeed";
+import { loadMyApplicationTargets, isEmailDelivered, type UnifiedVacancy } from "@/lib/vacancyFeed";
 import ApplyGateSheet from "@/components/ApplyGateSheet";
 import NotFound from "@/pages/NotFound";
 import { jobPath, idFromSlug, RANK_HUBS, rankMatches } from "@/lib/jobSlug";
@@ -161,6 +161,17 @@ const JobDetail = () => {
 
   const [applied, setApplied] = useState(false);
   const [emailDone, setEmailDone] = useState(false);
+  useEffect(() => {
+    setApplied(false); setEmailDone(false);
+    if (!unified || !signedIn) return;
+    let live = true;
+    loadMyApplicationTargets().then((ids) => {
+      if (!live) return;
+      setApplied(ids.has(unified.id));
+      setEmailDone(isEmailDelivered(unified.id));
+    });
+    return () => { live = false; };
+  }, [unified?.id, signedIn]);
   const show = (t: { title: string; description: string; tone: string }) =>
     (t.tone === "error" ? toast.error : t.tone === "warning" ? toast.warning : toast.success)(`${t.title} — ${t.description}`);
 
@@ -182,7 +193,8 @@ const JobDetail = () => {
       trackPixel("Contact", { content_name: "job_apply_detail" });
       const out = await applyToVacancy(unified, card);
       show(out.toast);
-      if (out.ok) setApplied(true);
+      if (out.ok || out.toast.tone === "warning") setApplied(true);
+      if (route.channel === "email" && out.ok) setEmailDone(true);
     } catch {
       toast.error("Could not send application");
     } finally {
@@ -307,7 +319,8 @@ const JobDetail = () => {
           {(() => {
             const ch = unified ? resolveApplyRoute(unified, null).channel : "none";
             const reopen = applied && ch === "whatsapp";
-            const off = applying || !authResolved || ch === "none" || (applied && !reopen);
+            const retryEmail = applied && ch === "email" && !emailDone;
+            const off = applying || !authResolved || ch === "none" || (applied && !reopen && !retryEmail);
             return (
               <>
                 <button onClick={apply} disabled={off} style={{
@@ -318,6 +331,8 @@ const JobDetail = () => {
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
                 }}>
                   {reopen ? <><MessageCircle size={16} /> Re-open WhatsApp</>
+                    : retryEmail ? <>✉️ Resend Sea Profile by email</>
+                    : applied && ch === "email" ? <>Emailed to recruiter ✓</>
                     : applied ? <>Applied ✓</>
                     : ch === "whatsapp" ? <><MessageCircle size={16} /> Apply via WhatsApp</>
                     : ch === "seaminds" ? <>Apply on SeaMinds →</>
