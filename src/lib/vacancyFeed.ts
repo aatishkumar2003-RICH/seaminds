@@ -117,6 +117,7 @@ export const loadVacancies = async (opts: LoadVacanciesOpts = {}): Promise<Unifi
       )
       .eq("status", "active")
       .gt("expires_at", nowIso)
+      .or(`joining_date.is.null,joining_date.gte.${new Date(Date.now() - STALE_JOINING_DAYS * DAY).toISOString().slice(0, 10)}`)
       .order("created_at", { ascending: false })
       .limit(opts.limitDirect ?? 20),
     extQuery.order("created_at", { ascending: false }).limit(opts.limitExternal ?? 50),
@@ -124,7 +125,7 @@ export const loadVacancies = async (opts: LoadVacanciesOpts = {}): Promise<Unifi
 
   const rows = [
     ...(((directRes.data as any[]) || []).map(mapDirect)),
-    ...(((extRes.data as any[]) || []).map(mapExternal)),
+    ...(((extRes.data as any[]) || []).map(mapExternal).filter((v) => !isStaleJoiningDate(v.joiningDate))),
   ];
   return rows.sort(
     (a, b) => new Date(b.postedAt || 0).getTime() - new Date(a.postedAt || 0).getTime()
@@ -211,7 +212,7 @@ export const parseJoiningDate = (raw: string | null | undefined): Date | null =>
   let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
   if (m) return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
   m = s.match(/^(\d{1,2})(?:st|nd|rd|th)?[\s\-./]+([a-z]{3,9})\.?[\s\-./,]+(\d{4})\b/i);
-  if (m && MONTHS[m[2].slice(0, 4).toLowerCase()] ?? MONTHS[m?.[2]?.slice(0, 3).toLowerCase() ?? ""]) {
+  if (m) {
     const mo = MONTHS[m[2].slice(0, 4).toLowerCase()] ?? MONTHS[m[2].slice(0, 3).toLowerCase()];
     if (mo !== undefined) return new Date(Date.UTC(+m[3], mo, +m[1]));
   }
