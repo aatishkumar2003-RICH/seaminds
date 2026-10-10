@@ -80,7 +80,10 @@ const JobCard = ({ vacancy: v, variant, applied: appliedProp, busy, href, match,
   const applied = appliedProp;
   // WhatsApp can't confirm Send — keep the chat re-openable after applying.
   const canReopen = !!applied && route.channel === "whatsapp" ;
-  const disabled = (!!applied && !canReopen) || !!busy || noContact;
+  // A saved record doesn't prove the recruiter email was accepted (e.g. after reload) —
+  // keep email-only retryable; the server never re-sends an accepted email.
+  const canRetryEmail = !!applied && route.channel === "email";
+  const disabled = (!!applied && !canReopen && !canRetryEmail) || !!busy || noContact;
   const secondaryEmail = hasSecondaryEmail(v);
 
   const sendEmail = async () => {
@@ -104,6 +107,8 @@ const JobCard = ({ vacancy: v, variant, applied: appliedProp, busy, href, match,
 
   const label = canReopen
     ? "💬 RE-OPEN WHATSAPP"
+    : canRetryEmail
+    ? (emailState === "busy" ? "Sending…" : emailState === "done" ? "Emailed ✓" : "✉️ RESEND SEA PROFILE BY EMAIL")
     : applied === "dup"
     ? "Already applied ✓"
     : applied === "ok"
