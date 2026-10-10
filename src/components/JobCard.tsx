@@ -4,8 +4,11 @@ import type { UnifiedVacancy } from "@/lib/vacancyFeed";
 import { vacancySalary } from "@/lib/vacancyFeed";
 import { jobPath } from "@/lib/jobSlug";
 import { routeLabel, resolveApplyRoute, isSeaMindsPublished, hasSecondaryEmail, applyByEmail, reopenWhatsApp } from "@/lib/applicationRouter";
-import { getCachedCrewCardInfo } from "@/lib/applyMessage";
+import { getCachedCrewCardInfo, fetchQuickProfileDone } from "@/lib/applyMessage";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import ApplyGateSheet from "@/components/ApplyGateSheet";
 
 const GOLD = "#D4AF37";
 const NAVY = "#0D1B2A";
@@ -66,6 +69,9 @@ export const shareVacancyOnWhatsApp = (v: UnifiedVacancy, href?: string) => {
 const JobCard = ({ vacancy: v, variant, applied: appliedProp, busy, href, match, onApply }: JobCardProps) => {
   const [flierOpen, setFlierOpen] = useState(false);
   const [emailState, setEmailState] = useState<"idle" | "busy" | "done">("idle");
+  const [gateOpen, setGateOpen] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const salary = vacancySalary(v);
   const compact = variant === "row";
   const route = resolveApplyRoute(v, null);
@@ -78,6 +84,12 @@ const JobCard = ({ vacancy: v, variant, applied: appliedProp, busy, href, match,
   const secondaryEmail = hasSecondaryEmail(v);
 
   const sendEmail = async () => {
+    // Same gates as the primary Apply: sign in first, then Quick Sea Profile.
+    if (!user) {
+      navigate(`/join?next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
+      return;
+    }
+    if (!(await fetchQuickProfileDone(user.id))) { setGateOpen(true); return; }
     setEmailState("busy");
     try {
       const out = await applyByEmail(v);
