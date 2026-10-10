@@ -160,6 +160,7 @@ const JobDetail = () => {
   } : null, [job]);
 
   const [applied, setApplied] = useState(false);
+  const [emailDone, setEmailDone] = useState(false);
   const show = (t: { title: string; description: string; tone: string }) =>
     (t.tone === "error" ? toast.error : t.tone === "warning" ? toast.warning : toast.success)(`${t.title} — ${t.description}`);
 
@@ -195,7 +196,7 @@ const JobDetail = () => {
     try {
       const out = await applyByEmail(unified);
       show(out.toast);
-      if (out.ok) setApplied(true);
+      if (out.emailSent) { setEmailDone(true); setApplied(true); }
     } catch {
       toast.error("Could not send email. Try again.");
     } finally {
@@ -326,7 +327,10 @@ const JobDetail = () => {
                     : <>No contact listed</>}
                 </button>
                 {reopen && <p style={{ textAlign: "center", fontSize: 11.5, color: "#94A3B8", marginTop: 6 }}>WhatsApp opened ✓ — not sent yet? Tap to re-open.</p>}
-                {unified && hasSecondaryEmail(unified) && !applied && (
+                {unified && hasSecondaryEmail(unified) && emailDone && (
+                  <p style={{ textAlign: "center", fontSize: 12, color: "#22c55e", marginTop: 8 }}>✉️ Sea Profile emailed to recruiter ✓</p>
+                )}
+                {unified && hasSecondaryEmail(unified) && !emailDone && (
                   <button onClick={sendEmail} disabled={applying} style={{ marginTop: 10, width: "100%", background: "transparent", border: "none", color: GOLD, fontSize: 13, fontWeight: 700, textDecoration: "underline", cursor: "pointer" }}>
                     ✉️ Or let SeaMinds email my Sea Profile
                   </button>

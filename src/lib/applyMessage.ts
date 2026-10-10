@@ -107,6 +107,25 @@ export const waApplyLink = (
   return `https://wa.me/${digits}?text=${encodeURIComponent(buildApplyMessage(info, v))}`;
 };
 
+/**
+ * Attempts the recruiter email for an existing application. Safe to retry:
+ * the server skips recipients already accepted and reports them as sent.
+ */
+export const sendApplicationEmail = async (applicationId: string): Promise<{ emailSent: boolean; emailReason?: string }> => {
+  try {
+    const { data, error } = await supabase.functions.invoke("notify-application", {
+      body: { application_id: applicationId, kind: "application" },
+    });
+    if (error) return { emailSent: false, emailReason: String(error.message || "send_failed").slice(0, 120) };
+    const r = data as { ok?: boolean; sent?: boolean; attempts?: { skipped?: string; error?: string }[] } | null;
+    if (r?.ok && r?.sent === true) return { emailSent: true };
+    const at = r?.attempts?.[0];
+    return { emailSent: false, emailReason: at?.skipped || at?.error || "not_sent" };
+  } catch {
+    return { emailSent: false, emailReason: "network_error" };
+  }
+};
+
 export interface RecordApplyArgs {
   vacancyId?: string | null;
   jobPostingId?: string | null;
@@ -115,6 +134,8 @@ export interface RecordApplyArgs {
   rank?: string | null;
   vessel?: string | null;
   externalUrl?: string | null;
+  /** Send the recruiter email now. False for WhatsApp/portal handoffs (email is a separate, deliberate action). */
+  notify?: boolean;
 }
 
 export interface RecordApplyResult {
@@ -138,20 +159,7 @@ export const recordApplication = async (
 ): Promise<RecordApplyResult> => {
   const done = (r: RecordApplyResult) => { try { cb?.(r); } catch { /* noop */ } return r; };
 
-  const notify = async (applicationId: string): Promise<{ emailSent: boolean; emailReason?: string }> => {
-    try {
-      const { data, error } = await supabase.functions.invoke("notify-application", {
-        body: { application_id: applicationId, kind: "application" },
-      });
-      if (error) return { emailSent: false, emailReason: String(error.message || "send_failed").slice(0, 120) };
-      const r = data as { ok?: boolean; sent?: boolean; attempts?: { skipped?: string; error?: string }[] } | null;
-      if (r?.ok && r?.sent === true) return { emailSent: true };
-      const at = r?.attempts?.[0];
-      return { emailSent: false, emailReason: at?.skipped || at?.error || "not_sent" };
-    } catch {
-      return { emailSent: false, emailReason: "network_error" };
-    }
-  };
+  const notify = sendApplicationEmail;
 
   let res: any;
   try {
@@ -171,7 +179,7 @@ export const recordApplication = async (
   const r: any = res?.data || {};
   if (res?.error || !r?.ok) return done({ ok: false, duplicate: false });
 
-  if (r.application_id && !r.duplicate) {
+  if (r.application_id && !r.duplicate && a.notify !== false) {
     const e = await notify(r.application_id);
     return done({ ok: true, duplicate: false, applicationId: r.application_id, ...e });
   }

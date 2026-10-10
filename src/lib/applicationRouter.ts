@@ -1,7 +1,7 @@
 // One application routing decision shared by every Apply button.
 // Publisher (who posted) is kept separate from the recruiter (who hires).
 import type { UnifiedVacancy } from "@/lib/vacancyFeed";
-import { normalizeWaNumber, waApplyLink, buildApplyMessage, recordApplication, openHandoffTab, completeHandoff, type CrewCardInfo } from "@/lib/applyMessage";
+import { normalizeWaNumber, waApplyLink, buildApplyMessage, recordApplication, sendApplicationEmail, openHandoffTab, completeHandoff, type CrewCardInfo } from "@/lib/applyMessage";
 
 /** House accounts that publish imported adverts on behalf of other agencies. */
 export const isSeaMindsPublished = (v: Pick<UnifiedVacancy, "kind" | "publisherName">) =>
@@ -110,6 +110,8 @@ export const applyToVacancy = async (v: UnifiedVacancy, card: CrewCardInfo | nul
     jobPostingId: v.kind === "direct" ? v.id : null,
     company: v.company || null, rank: v.rank || null, vessel: v.vessel || null,
     externalUrl: route.url,
+    // WhatsApp/portal handoffs never email the recruiter; email is a separate deliberate action.
+    notify: route.channel === "email" || route.channel === "seaminds",
   });
   if (route.url) completeHandoff(win, route.url);
   return { route, ok: r.ok, duplicate: r.duplicate, emailSent: r.emailSent, toast: routeToast(route, v.company, r) };
@@ -140,6 +142,12 @@ export const applyByEmail = async (v: UnifiedVacancy): Promise<ApplyOutcome> => 
     jobPostingId: v.kind === "direct" ? v.id : null,
     company: v.company || null, rank: v.rank || null, vessel: v.vessel || null,
     externalUrl: null,
+    notify: false,
   });
-  return { route, ok: r.ok, duplicate: r.duplicate, emailSent: r.emailSent, toast: routeToast(route, v.company, r) };
+  if (!r.ok || !r.applicationId) {
+    return { route, ok: false, duplicate: false, toast: routeToast(route, v.company, { ok: false, duplicate: false }) };
+  }
+  // Same application record (may already exist from WhatsApp); email is attempted explicitly and is retry-safe.
+  const e = await sendApplicationEmail(r.applicationId);
+  return { route, ok: e.emailSent, duplicate: false, emailSent: e.emailSent, toast: routeToast(route, v.company, { ok: true, duplicate: false, emailSent: e.emailSent }) };
 };
