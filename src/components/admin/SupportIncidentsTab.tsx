@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import DoraGapsPanel from "./DoraGapsPanel";
 
 interface Incident {
   id: string; incident_ref: string; category: string; component: string; operation: string; error_signature: string;
@@ -112,6 +113,7 @@ export default function SupportIncidentsTab({ onOpenAssessmentOps }: { onOpenAss
 
   return (
     <div className="mt-4 space-y-4 text-white">
+      <DoraGapsPanel />
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {[["Open incidents", summary.open], ["Active P0/P1", summary.p0p1], ["New tickets 24h", summary.new24], ["Unlinked open tickets", summary.unlinked]].map(([l, v]) => (
           <div key={l as string} className="rounded-xl p-3" style={card}>
