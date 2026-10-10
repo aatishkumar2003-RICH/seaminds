@@ -1,14 +1,33 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const invoke = vi.fn();
+const authState = vi.hoisted(() => ({
+  user: null as { id: string } | null,
+  listeners: [] as ((e: string, s: { user: { id: string } } | null) => void)[],
+  apps: [] as { vacancy_id: string | null; job_posting_id: string | null }[],
+}));
+const emitAuth = (uid: string | null) => {
+  authState.user = uid ? { id: uid } : null;
+  authState.listeners.forEach((cb) => cb(uid ? "SIGNED_IN" : "SIGNED_OUT", uid ? { user: { id: uid } } : null));
+};
 vi.mock("@/integrations/supabase/client", () => ({
-  supabase: { functions: { invoke: (...a: unknown[]) => invoke(...a) }, auth: { getUser: async () => ({ data: { user: null } }) } },
+  supabase: {
+    functions: { invoke: (...a: unknown[]) => invoke(...a) },
+    auth: {
+      getUser: async () => ({ data: { user: authState.user } }),
+      onAuthStateChange: (cb: (e: string, s: { user: { id: string } } | null) => void) => {
+        authState.listeners.push(cb);
+        return { data: { subscription: { unsubscribe: () => {} } } };
+      },
+    },
+    from: () => ({ select: () => ({ eq: async () => ({ data: authState.apps }) }) }),
+  },
 }));
 
 import { cacheHandlerFor, purgeLegacyCaches, LEGACY_CACHE_NAMES } from "@/lib/pwaCacheRules";
 import {
   isStaleJoiningDate, parseJoiningDate, mergeVacancyPage, START_CURSOR,
-  loadMyEmailDelivery, isEmailDelivered, type UnifiedVacancy,
+  loadMyEmailDelivery, isEmailDelivered, loadMyApplicationTargets, type UnifiedVacancy,
 } from "@/lib/vacancyFeed";
 import { singleFlight, watchSentinel } from "@/lib/infiniteSentinel";
 
@@ -100,6 +119,53 @@ describe("application delivery state after reload", () => {
     invoke.mockResolvedValue({ data: null, error: { message: "offline" } });
     await loadMyEmailDelivery();
     expect(isEmailDelivered("job-1")).toBe(true);
+  });
+});
+
+describe("account switching clears email-delivery state", () => {
+  beforeEach(() => { invoke.mockReset(); authState.apps = []; });
+  it("forgets account A's delivered emails when account B signs in", async () => {
+    emitAuth("user-a");
+    invoke.mockResolvedValue({ data: { ok: true, emailed: ["job-a"] } });
+    await loadMyEmailDelivery();
+    expect(isEmailDelivered("job-a")).toBe(true);
+    emitAuth("user-b");
+    expect(isEmailDelivered("job-a")).toBe(false);
+  });
+  it("forgets delivered emails on sign-out", async () => {
+    emitAuth("user-a");
+    invoke.mockResolvedValue({ data: { ok: true, emailed: ["job-a"] } });
+    await loadMyEmailDelivery();
+    emitAuth(null);
+    expect(isEmailDelivered("job-a")).toBe(false);
+  });
+  it("keeps state when the same account's session refreshes", async () => {
+    emitAuth("user-a");
+    invoke.mockResolvedValue({ data: { ok: true, emailed: ["job-a"] } });
+    await loadMyEmailDelivery();
+    emitAuth("user-a");
+    expect(isEmailDelivered("job-a")).toBe(true);
+  });
+});
+
+describe("Job Detail existing application status", () => {
+  beforeEach(() => invoke.mockReset());
+  it("reports applied + emailed for an already-emailed job", async () => {
+    emitAuth("user-c");
+    authState.apps = [{ vacancy_id: "ext-1", job_posting_id: null }, { vacancy_id: null, job_posting_id: "dir-1" }];
+    invoke.mockResolvedValue({ data: { ok: true, emailed: ["dir-1"] } });
+    const ids = await loadMyApplicationTargets();
+    expect(ids.has("dir-1")).toBe(true);
+    expect(isEmailDelivered("dir-1")).toBe(true);
+    // applied but email not accepted -> Resend stays available
+    expect(ids.has("ext-1")).toBe(true);
+    expect(isEmailDelivered("ext-1")).toBe(false);
+  });
+  it("reports nothing applied when signed out", async () => {
+    emitAuth(null);
+    const ids = await loadMyApplicationTargets();
+    expect(ids.size).toBe(0);
+    expect(invoke).not.toHaveBeenCalled();
   });
 });
 
