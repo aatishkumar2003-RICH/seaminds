@@ -1,3 +1,4 @@
+import { applyToVacancy } from "@/lib/applicationRouter";
 import { useEffect, useState, useCallback } from "react";
 import ApplyDialog, { ApplyTarget } from "@/components/ApplyDialog";
 import { supabase } from "@/integrations/supabase/client";

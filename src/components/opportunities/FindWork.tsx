@@ -1,3 +1,4 @@
+import { applyToVacancy } from "@/lib/applicationRouter";
 import { useState, useEffect } from "react";
 import { format, formatDistanceToNow, startOfToday } from "date-fns";
 import { CalendarIcon, Ship, Globe, Check, Award } from "lucide-react";
@@ -292,7 +293,6 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
       const out = await applyToVacancy(v, cardInfo || getCachedCrewCardInfo());
       setDirectBusy((s0) => ({ ...s0, [v.id]: false }));
       if (out.ok) setDirectApplied((s0) => ({ ...s0, [v.id]: out.duplicate ? "dup" : "ok" }));
-      if (out.route.channel === "email" && out.ok) { const m = emailApplyLink(v, cardInfo || getCachedCrewCardInfo()); void m; }
       toast({ title: out.toast.title, description: out.toast.description, variant: out.toast.tone === "error" ? "destructive" : undefined });
       loadMyApplications();
     } catch {
