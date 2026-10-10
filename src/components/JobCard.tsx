@@ -276,6 +276,7 @@ const JobCard = ({ vacancy: v, variant, applied: appliedProp, busy, href, match,
           />
         </div>
       )}
+      <ApplyGateSheet open={gateOpen} onClose={() => setGateOpen(false)} next={typeof window !== "undefined" ? window.location.pathname : undefined} />
     </article>
   );
 };
