@@ -380,7 +380,9 @@ Deno.serve(async (req) => {
 
       // "sent" reflects delivery to the recruiter only — the crew acknowledgement does not count.
       const toRecruiter = attempts.find((a) => a.role === "manager");
-      return json({ ok: true, sent: !!toRecruiter?.sent, recruiter_email: !!mgr.email, attempts });
+      // A recruiter copy accepted earlier counts as delivered (retry-safe, never re-sent).
+      const recruiterSent = !!toRecruiter?.sent || toRecruiter?.skipped === "already_sent";
+      return json({ ok: true, sent: recruiterSent, recruiter_email: !!mgr.email, attempts });
     }
 
     // ---------------------------------------------------------- shortlisted / declined

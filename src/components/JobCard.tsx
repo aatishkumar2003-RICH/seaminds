@@ -71,9 +71,9 @@ const JobCard = ({ vacancy: v, variant, applied: appliedProp, busy, href, match,
   const route = resolveApplyRoute(v, null);
   const house = isSeaMindsPublished(v);
   const noContact = route.channel === "none";
-  const applied = appliedProp || (emailState === "done" ? "ok" : undefined);
+  const applied = appliedProp;
   // WhatsApp can't confirm Send — keep the chat re-openable after applying.
-  const canReopen = !!applied && route.channel === "whatsapp" && emailState !== "done";
+  const canReopen = !!applied && route.channel === "whatsapp" ;
   const disabled = (!!applied && !canReopen) || !!busy || noContact;
   const secondaryEmail = hasSecondaryEmail(v);
 
@@ -83,7 +83,7 @@ const JobCard = ({ vacancy: v, variant, applied: appliedProp, busy, href, match,
       const out = await applyByEmail(v);
       const t = out.toast;
       (t.tone === "error" ? toast.error : t.tone === "warning" ? toast.warning : toast.success)(`${t.title} — ${t.description}`);
-      setEmailState(out.ok ? "done" : "idle");
+      setEmailState(out.emailSent ? "done" : "idle");
     } catch {
       toast.error("Could not send email. Try again.");
       setEmailState("idle");
@@ -218,7 +218,10 @@ const JobCard = ({ vacancy: v, variant, applied: appliedProp, busy, href, match,
         </p>
       )}
 
-      {secondaryEmail && emailState !== "done" && appliedProp !== "dup" && (
+      {secondaryEmail && emailState === "done" && (
+        <p style={{ textAlign: "center", fontSize: 11.5, color: "#22c55e", margin: 0 }}>✉️ Sea Profile emailed to recruiter ✓</p>
+      )}
+      {secondaryEmail && emailState !== "done" && (
         <button
           onClick={sendEmail}
           disabled={emailState === "busy"}
