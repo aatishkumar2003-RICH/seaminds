@@ -38,7 +38,7 @@ export const cacheHandlerFor = (url: string): string | null => {
 };
 
 /** Removes caches from older service workers that may hold personal responses. */
-export const purgeLegacyCaches = async (cs: Pick<CacheStorage, "delete"> | undefined = (globalThis as any).caches) => {
+export const purgeLegacyCaches = async (cs: { delete(name: string): Promise<boolean> } | undefined = (globalThis as any).caches) => {
   if (!cs) return;
   await Promise.allSettled(LEGACY_CACHE_NAMES.map((n) => cs.delete(n)));
 };
