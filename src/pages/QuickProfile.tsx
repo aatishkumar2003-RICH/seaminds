@@ -436,8 +436,10 @@ const QuickProfile = () => {
 
             <Q title={t("qpQAvailable")}>
               <Row>
-                <Chip label={available ? t("qpAvailableYes") : t("qpAvailableNo")} on={available}
-                  onClick={() => { const v = !available; setAvailable(v); saveProfile({ is_available: v }); }} />
+                <Chip label={t("yes")} on={available}
+                  onClick={() => { setAvailable(true); saveProfile({ is_available: true }); }} />
+                <Chip label={t("no")} on={!available}
+                  onClick={() => { setAvailable(false); setAvailableFrom(""); saveProfile({ is_available: false, available_from: null }); }} />
               </Row>
               {available && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
