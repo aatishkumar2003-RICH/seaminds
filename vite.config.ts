@@ -27,22 +27,10 @@ export default defineConfig(({ mode }) => ({
         skipWaiting: true,
         clientsClaim: true,
         globPatterns: ["**/*.{js,css,html,ico,png,svg,jpg,jpeg,woff,woff2}"],
+        cleanupOutdatedCaches: true,
         navigateFallbackDenylist: [/^\/~oauth/, /^\/\.lovable\/oauth/],
-        runtimeCaching: [
-          {
-            // Private takeover inspection data and evidence must never be cached
-            urlPattern: /^https:\/\/.*\.supabase\.co\/.*(takeover|takeover-evidence).*/i,
-            handler: "NetworkOnly",
-          },
-          {
-            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
-            handler: "NetworkFirst",
-            options: {
-              cacheName: "supabase-api",
-              expiration: { maxEntries: 50, maxAgeSeconds: 300 },
-            },
-          },
-        ],
+        // Personal data (auth, profiles, applications, takeover) is never cached; see src/lib/pwaCacheRules.ts
+        runtimeCaching: runtimeCachingRules,
       },
     }),
   ].filter(Boolean),
