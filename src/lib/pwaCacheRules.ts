@@ -16,6 +16,11 @@ const publicPattern = new RegExp(
 
 export const runtimeCachingRules = [
   {
+    // Release metadata must always come from the network (update detection).
+    urlPattern: /\/version\.json(\?|$)/i,
+    handler: "NetworkOnly" as const,
+  },
+  {
     urlPattern: publicPattern,
     handler: "NetworkFirst" as const,
     options: {

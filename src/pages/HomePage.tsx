@@ -1,3 +1,4 @@
+import ReleaseBadge from "@/components/ReleaseBadge";
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
@@ -135,6 +136,7 @@ const HomePage = () => {
       <OceanBackground timeOfDay={timeOfDay} />
       <div className="relative z-10">
         <ConversionConsole />
+        <ReleaseBadge className="py-1" />
         <HomeBento />
 
 

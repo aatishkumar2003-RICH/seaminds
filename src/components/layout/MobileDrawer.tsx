@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import AboutSeaMinds from "@/components/AboutSeaMinds";
 import { LogOut, HelpCircle } from "lucide-react";
 import SOSButton from "@/components/SOSButton";
 import seamindsLogo from "@/assets/seaminds-logo.png";
@@ -37,6 +38,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
   screen, appState, firstName, lastName, nationality, role,
   streakCount, jobBadgeCount, onNavClick, onReplayTour, onSignOut, onOpenChat, shipName, tourActiveScreen,
 }) => {
+  const [aboutOpen, setAboutOpen] = useState(false);
   return (
     <div
       className={`fixed top-0 left-0 z-50 h-full w-44 border-r border-border/40 bg-background/95 px-2.5 py-5 backdrop-blur-sm lg:hidden ${!isSwiping && !isEdgeSwiping ? "transition-transform duration-300 ease-in-out" : ""}`}
@@ -105,6 +107,10 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
         <button onClick={onReplayTour} className="flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground">
           <HelpCircle size={14} /> Replay Tour
         </button>
+        <button onClick={() => setAboutOpen(true)} className="flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground">
+          ⓘ About SeaMinds
+        </button>
+        {aboutOpen && <AboutSeaMinds onClose={() => setAboutOpen(false)} />}
         <button onClick={onSignOut} className="flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground">
           <LogOut size={14} /> Sign Out
         </button>
