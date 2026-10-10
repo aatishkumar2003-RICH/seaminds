@@ -287,8 +287,30 @@ Deno.serve(async (req) => {
     if (!user) return json({ ok: false, error: "unauthorized" }, 401);
 
     const body = await req.json().catch(() => ({}));
-    const applicationId = String(body?.application_id || "");
     const kind = String(body?.kind || "application");
+
+    // Read-only: which of the caller's OWN applications had the recruiter email accepted.
+    // Returns target ids only — no recipients, events or other users' data.
+    if (kind === "delivery_status") {
+      const { data: apps } = await svc.from("job_applications")
+        .select("id, vacancy_id, job_posting_id").eq("crew_id", user.id).limit(1000);
+      const rows = (apps || []) as { id: string; vacancy_id: string | null; job_posting_id: string | null }[];
+      const ids = rows.map((r) => r.id);
+      const delivered = new Set<string>();
+      for (let i = 0; i < ids.length; i += 200) {
+        const { data: ev } = await svc.from("app_events").select("metadata")
+          .eq("event_type", "application_email")
+          .filter("metadata->>kind", "eq", "application")
+          .filter("metadata->>ok", "eq", "true")
+          .in("metadata->>application_id", ids.slice(i, i + 200));
+        (ev || []).forEach((e: any) => delivered.add(String(e?.metadata?.application_id)));
+      }
+      const emailed = rows.filter((r) => delivered.has(r.id))
+        .map((r) => r.vacancy_id || r.job_posting_id).filter(Boolean);
+      return json({ ok: true, emailed });
+    }
+
+    const applicationId = String(body?.application_id || "");
     const manual = body?.force_resend === true;
     if (!applicationId) return json({ ok: false, error: "missing_application_id" }, 400);
 
@@ -373,7 +395,9 @@ Deno.serve(async (req) => {
             app.company_name ? ` with ${esc(app.company_name)}` : ""
           }.</p>
           <p>Current status: <strong>Submitted</strong></p>
-          <p>You will be notified in the app and by email when the company updates your application.</p>
+          ${mgr.imported
+            ? `<p>Your Sea Profile was sent to the recruiter by email. This recruiter does not use SeaMinds, so they will contact you directly by WhatsApp, phone or email if interested.</p>`
+            : `<p>You will be notified in the app and by email when the company updates your application.</p>`}
           ${goldBtn(crewJobsLink, "View my applications")}
         `),
       }));
