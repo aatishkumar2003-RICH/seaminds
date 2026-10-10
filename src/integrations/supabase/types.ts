@@ -3000,6 +3000,7 @@ export type Database = {
           positions: number
           posting_batch_id: string | null
           rank_required: string
+          recruiter_name: string | null
           source_type: string
           status: string
           telegram_posted: boolean | null
@@ -3025,6 +3026,7 @@ export type Database = {
           positions?: number
           posting_batch_id?: string | null
           rank_required: string
+          recruiter_name?: string | null
           source_type?: string
           status?: string
           telegram_posted?: boolean | null
@@ -3050,6 +3052,7 @@ export type Database = {
           positions?: number
           posting_batch_id?: string | null
           rank_required?: string
+          recruiter_name?: string | null
           source_type?: string
           status?: string
           telegram_posted?: boolean | null
