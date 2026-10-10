@@ -112,6 +112,18 @@ export default function SupportCenter({ sourceScreen, onBack }: Props) {
         Never send passwords, OTP codes, or wellness chat messages here. For an urgent safety problem or emergency, use the SOS button.
       </div>
 
+      {user && (
+        <DoraChat
+          sourceScreen={sourceScreen}
+          onEscalate={(q) => {
+            setTicketRef(null);
+            if (!subject) setSubject(q.slice(0, 200));
+            if (!description) setDescription(`I asked DORA: "${q.slice(0, 500)}" — it did not solve my problem.\n\n`);
+            document.getElementById("support-form")?.scrollIntoView({ behavior: "smooth" });
+          }}
+        />
+      )}
+
       {ticketRef && (
         <div className="space-y-2 rounded-xl border border-primary/40 bg-card p-4 text-center">
           <p className="text-sm text-foreground">Your report was received. Keep this reference:</p>
