@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { ChevronLeft } from "lucide-react";
 import { CURRENT_RELEASE, fetchRemoteRelease, formatWib, isNewerRelease } from "@/lib/releaseInfo";
 
@@ -17,11 +18,11 @@ const AboutSeaMinds = ({ onClose }: { onClose: () => void }) => {
       <span style={{ color: "#94A3B8" }}>{k}</span><span className="text-right break-all">{v || "—"}</span>
     </div>
   );
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
-      <div className="w-full max-w-sm rounded-xl p-4 text-xs" style={{ background: "#112240", border: "1px solid rgba(212,175,55,0.3)", color: "#E2E8F0" }} onClick={(e) => e.stopPropagation()}>
+  return createPortal(
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-background/80 sm:p-4" onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-labelledby="about-seaminds-title" className="h-full w-full overflow-y-auto bg-card p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] text-xs text-foreground sm:h-auto sm:max-h-[90dvh] sm:max-w-sm sm:rounded-xl sm:border sm:border-primary/30" onClick={(e) => e.stopPropagation()}>
         <button onClick={onClose} className="mb-2 flex items-center gap-1" style={{ color: "#D4AF37" }}><ChevronLeft size={16} /> Back</button>
-        <h2 className="mb-3 text-base font-bold" style={{ color: "#D4AF37" }}>About SeaMinds</h2>
+        <h2 id="about-seaminds-title" className="mb-3 text-base font-bold" style={{ color: "#D4AF37" }}>About SeaMinds</h2>
         <Row k="Build ID" v={r.buildId} />
         <Row k="Code revision" v={r.commit} />
         <Row k="Built (WIB)" v={formatWib(r.buildTime)} />
@@ -32,7 +33,8 @@ const AboutSeaMinds = ({ onClose }: { onClose: () => void }) => {
           <p className="mt-2 text-center">{status}{status.startsWith("New") && <> — <button className="underline" style={{ color: "#D4AF37" }} onClick={() => window.location.reload()}>Refresh</button></>}</p>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
