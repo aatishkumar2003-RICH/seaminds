@@ -10,3 +10,4 @@
 
 - DORA help knowledge lives in `dora_articles` (Postgres FTS via `dora_search_articles`, max 4 published hits); own-user context only via `dora_get_my_context()` keyed by auth.uid(); metrics/gaps store no raw conversation text. Why: cheap grounded retrieval without vectors and zero cross-user/PII leakage.
 - DORA answers go through `dora-assist`: deterministic exam-integrity block and no-article fallback before any AI call; AI sees only retrieved published articles + `dora_get_my_context`. Why: no invented procedures, no exam leakage, minimal AI cost.
+- Every Apply button routes through `src/lib/applicationRouter.ts` (WhatsApp → recruiter email → official site → flyer); SeaMinds-published adverts keep the agency in `job_postings.recruiter_name` and `notify-application` never falls back to the publishing account's email. Why: applications must reach the actual recruiter, and toasts must only claim what SeaMinds actually did.

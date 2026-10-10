@@ -268,6 +268,7 @@ const PostVacancy = () => {
                 </button>
               </div>
               <div className="grid grid-cols-2 gap-2">
+                {field("Recruiting agency", v.recruiter_name, (x) => update(i, "recruiter_name", x), "As printed on the flyer")}
                 {field("Rank", v.rank_required, (x) => update(i, "rank_required", x), "e.g. Chief Officer")}
                 {field("Vessel", v.vessel_type, (x) => update(i, "vessel_type", x), "e.g. Bulk Carrier")}
                 {field("Positions", String(v.positions), (x) => update(i, "positions", x))}

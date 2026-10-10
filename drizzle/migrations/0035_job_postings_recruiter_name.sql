@@ -1,0 +1,2 @@
+ALTER TABLE public.job_postings ADD COLUMN IF NOT EXISTS recruiter_name text;
+COMMENT ON COLUMN public.job_postings.recruiter_name IS 'Actual hiring/recruiting agency named on the source advert (publisher stays in company_name/manager_id).';

@@ -3,6 +3,8 @@ import { BadgeCheck, MapPin, Ship, Calendar, X } from "lucide-react";
 import type { UnifiedVacancy } from "@/lib/vacancyFeed";
 import { vacancySalary } from "@/lib/vacancyFeed";
 import { jobPath } from "@/lib/jobSlug";
+import { routeLabel, resolveApplyRoute, emailApplyLink, isSeaMindsPublished } from "@/lib/applicationRouter";
+import { getCachedCrewCardInfo } from "@/lib/applyMessage";
 
 const GOLD = "#D4AF37";
 const NAVY = "#0D1B2A";
@@ -23,13 +25,8 @@ export interface JobCardProps {
 }
 
 /** Button label for a vacancy, decided only by its channel. */
-export const applyLabel = (v: UnifiedVacancy) => {
-  if (v.kind === "direct") return "APPLY WITH SEA PROFILE →";
-  if (v.applyUrl) return "APPLY →";
-  if (v.whatsapp) return "APPLY VIA WHATSAPP";
-  if (v.email) return "✉️ APPLY BY EMAIL";
-  return "APPLY →";
-};
+/** Button label for a vacancy, decided only by its route. */
+export const applyLabel = (v: UnifiedVacancy) => routeLabel(v);
 
 const timeAgo = (iso: string | null) => {
   if (!iso) return "";
@@ -69,7 +66,11 @@ const JobCard = ({ vacancy: v, variant, applied, busy, href, match, onApply }: J
   const [flierOpen, setFlierOpen] = useState(false);
   const salary = vacancySalary(v);
   const compact = variant === "row";
-  const disabled = !!applied || !!busy;
+  const route = resolveApplyRoute(v, null);
+  const house = isSeaMindsPublished(v);
+  const noContact = route.channel === "none";
+  const disabled = !!applied || !!busy || noContact;
+  const secondaryEmail = route.channel === "whatsapp" || route.channel === "portal" ? emailApplyLink(v, getCachedCrewCardInfo()) : null;
 
   const label = applied === "dup"
     ? "Already applied ✓"
@@ -111,7 +112,7 @@ const JobCard = ({ vacancy: v, variant, applied, busy, href, match, onApply }: J
             background: "rgba(212,175,55,0.12)", color: GOLD, border: "1px solid rgba(212,175,55,0.35)",
           }}
         >
-          DIRECT — POSTED ON SEAMINDS
+          {house ? "ADVERTISED ON SEAMINDS" : "DIRECT — POSTED ON SEAMINDS"}
         </span>
       )}
 
@@ -177,7 +178,7 @@ const JobCard = ({ vacancy: v, variant, applied, busy, href, match, onApply }: J
       )}
 
       <button
-        onClick={onApply}
+        onClick={route.channel === "flyer" ? () => setFlierOpen(true) : onApply}
         disabled={disabled}
         style={{
           marginTop: 2, width: "100%", padding: compact ? "10px 0" : "12px 0", borderRadius: 12,
@@ -191,6 +192,15 @@ const JobCard = ({ vacancy: v, variant, applied, busy, href, match, onApply }: J
       >
         {label}
       </button>
+
+      {secondaryEmail && !applied && (
+        <a
+          href={secondaryEmail}
+          style={{ textAlign: "center", fontSize: 12, fontWeight: 700, color: GOLD, textDecoration: "underline" }}
+        >
+          ✉️ Or send my Sea Profile by email
+        </a>
+      )}
 
       <button
         onClick={() => shareVacancyOnWhatsApp(v, href)}

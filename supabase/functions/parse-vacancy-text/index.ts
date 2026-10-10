@@ -7,7 +7,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const EXTRACTION_RULES = `Each vacancy object: {rank_required, vessel_type, contract_duration, monthly_salary, joining_port, joining_date, contact_whatsapp, contact_email, additional_notes, positions}.
+const EXTRACTION_RULES = `Each vacancy object: {recruiter_company, rank_required, vessel_type, contract_duration, monthly_salary, joining_port, joining_date, contact_whatsapp, contact_email, additional_notes, positions}.
 
 RULES:
 1. ONE vacancy object PER RANK. If the advert lists Master, Chief Officer, 2/O, 3/O, Chief Engineer, 2/E, ETO you MUST return 7 objects. NEVER merge ranks into one object. Repeat the shared vessel / port / contract details on every object.
@@ -16,6 +16,7 @@ RULES:
 4. HEADCOUNT: "C/O x 2", "2 nos Chief Officer", "3 AB" → positions = 2, 2, 3. Otherwise positions = 1 (integer).
 5. JOINING DATE: joining_date MUST be strict "YYYY-MM-DD" and ONLY when the source states an unambiguous calendar date (e.g. "Joining 2 September 2026" -> "2026-09-02"). Never output natural-language text in joining_date: "Immediate", "ASAP", "TBA", "urgent", "early September", "first week September" -> joining_date = null, and preserve that wording inside additional_notes instead. Never invent or guess a year or a date.
 6. Use null (not empty strings or guesses) for anything the advert does not state. Keep rank names and vessel types in standard English maritime terms.
+6b. recruiter_company: the hiring company or crewing/manning agency name EXACTLY as printed on the advert (e.g. "PT Aslan Marine Pratama"). Repeat it on every object. null if no company name is printed. Never use "SeaMinds".
 7. ranks_found: a top-level array listing every rank you saw in the source advert.
 8. PRODUCING COUNTRY: top-level "producing_country_dial_code" = the dial code digits (e.g. "63","62","91","84","880","95","380") of the country that produced this advert, inferred from company address, licence body (POEA/DMW=63, RPSL/DG Shipping=91, Dirjen Hubla/SIUPPAK=62), ports, currency or phone formats. null if unclear.
 RISK: flag 'high' if the advert asks seafarers for payment, placement fees or deposits; flag 'medium' if there is no company name, or only a personal email/phone with no company, or the salary is far outside normal maritime ranges. List the specific reasons in flags.`;

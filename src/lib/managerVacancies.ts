@@ -17,6 +17,8 @@ export type PreviewVacancy = {
   contact_email: string;
   additional_notes: string;
   positions: number;
+  /** Hiring/recruiting agency named on the advert (optional). */
+  recruiter_name: string;
 };
 
 export type SimilarVacancy = {
@@ -58,6 +60,7 @@ export const toPreviewVacancy = (v: Record<string, unknown>): PreviewVacancy => 
     contact_whatsapp: str(v.contact_whatsapp),
     contact_email: str(v.contact_email),
     additional_notes: str(v.additional_notes),
+    recruiter_name: str(v.recruiter_name ?? v.recruiter_company).replace(/^seaminds.*$/i, ""),
     positions: Number.isFinite(p) && p >= 1 ? Math.floor(p) : 1,
   };
 };
@@ -273,6 +276,7 @@ const toRow = (
     additional_notes: notes,
     // verified company identity — never a typed company name
     company_name: identity.companyName,
+    recruiter_name: v.recruiter_name || null,
     manager_id: identity.userId,
     status: "active",
     plan: "founding",

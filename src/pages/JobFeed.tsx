@@ -1,3 +1,4 @@
+import { applyToVacancy } from "@/lib/applicationRouter";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
@@ -165,29 +166,10 @@ const JobFeed = () => {
     setApplying(v.id);
     try {
       trackPixel("Contact", { content_name: "job_apply_public" });
-      const url = v.kind === "direct"
-        ? null
-        : v.applyUrl
-          || waApplyLink(v.whatsapp, cardInfo || getCachedCrewCardInfo(), { rank: v.rank, vessel: v.vessel, port: v.port });
-      const win = url ? openHandoffTab() : null;
-
-      const r = await recordApplication({
-        vacancyId: v.kind === "external" ? v.id : null,
-        jobPostingId: v.kind === "direct" ? v.id : null,
-        company: v.company || null,
-        rank: v.rank || null,
-        vessel: v.vessel || null,
-        externalUrl: url,
-      });
-
-      if (!r.ok) toast.error(url ? "Sent — could not record on SeaMinds" : "Could not record your application");
-      else if (r.duplicate) toast.success("Already applied ✓ — the company already has your application");
-      else if (r.emailSent === false) toast.warning("Applied ✓ — saved on SeaMinds, but the email notification failed");
-      else if (v.kind === "direct") toast.success("Applied ✓ — the company can now see your application in SeaMinds");
-      else toast.success("Applied ✓ — recorded on SeaMinds");
-
-      if (r.ok) setAppliedIds((s0) => new Set(s0).add(v.id));
-      if (url) completeHandoff(win, url);
+      const out = await applyToVacancy(v, cardInfo || getCachedCrewCardInfo());
+      const t = out.toast;
+      (t.tone === "error" ? toast.error : t.tone === "warning" ? toast.warning : toast.success)(`${t.title} — ${t.description}`);
+      if (out.ok) setAppliedIds((s0) => new Set(s0).add(v.id));
     } catch {
       toast.error("Could not send application");
     } finally {

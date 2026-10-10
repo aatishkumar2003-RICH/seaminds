@@ -84,7 +84,7 @@ const JobDetail = () => {
       const nowIso = new Date().toISOString();
 
       const { data: p } = await supabase.from("job_postings" as any)
-        .select("id, rank_required, vessel_type, monthly_salary, joining_port, joining_date, contract_duration, company_name, additional_notes, contact_whatsapp, contact_email, verified, flier_url, created_at, expires_at, status")
+        .select("id, rank_required, vessel_type, monthly_salary, joining_port, joining_date, contract_duration, company_name, recruiter_name, additional_notes, contact_whatsapp, contact_email, verified, flier_url, created_at, expires_at, status")
         .eq("id", id).eq("status", "active").maybeSingle();
 
       let found: Job | null = null;
@@ -93,7 +93,9 @@ const JobDetail = () => {
         found = {
           id: pr.id, kind: "direct",
           rank: pr.rank_required || "Crew", vessel: pr.vessel_type || "—",
-          company: pr.company_name || "Maritime Company", salary: pr.monthly_salary,
+          company: pr.recruiter_name
+            || (/^seaminds/i.test(String(pr.company_name || "")) ? "Agency shown on flyer" : (pr.company_name || "Maritime Company")),
+          salary: pr.monthly_salary,
           port: pr.joining_port, duration: pr.contract_duration, joiningDate: pr.joining_date,
           notes: pr.additional_notes, flier: pr.flier_url,
           whatsapp: pr.contact_whatsapp, email: pr.contact_email || null, applyUrl: null,
@@ -164,34 +166,37 @@ const JobDetail = () => {
         vessel: job.vessel || null,
       };
       const say = (r: any, okMsg: string) => {
-        if (r.ok && r.duplicate) toast.success("Already applied ✓ — the company already has your application");
-        else if (r.ok && r.emailSent === false) toast.warning("Applied ✓ — saved on SeaMinds, but the email notification failed");
+        if (r.ok && r.duplicate) toast.success("Already applied ✓");
         else if (r.ok) toast.success(okMsg);
         else toast.error("Could not record the application on SeaMinds");
       };
 
-      if (job.email) {
-        const r = await recordApplication({ ...base, externalUrl: null });
-        say(r, "Applied ✓ — your application has been emailed to the company");
-        return;
-      }
       if (job.whatsapp) {
         const url = waApplyLink(job.whatsapp, cardInfo || getCachedCrewCardInfo(), { rank: job.rank, vessel: job.vessel, port: job.port });
         if (url) {
           const win = openHandoffTab();
           const r = await recordApplication({ ...base, externalUrl: url });
-          say(r, "Applied ✓ — recorded on SeaMinds");
+          say(r, `WhatsApp opened ✓ — tap Send to deliver your Sea Profile to ${job.company}`);
           completeHandoff(win, url);
           return;
         }
       }
+      if (job.email) {
+        const r = await recordApplication({ ...base, externalUrl: null });
+        if (r.ok && !r.duplicate && r.emailSent === false) toast.warning("Saved in My Applications, but the email could not be sent. Try again later.");
+        else say(r, `Emailed ✓ — your Sea Profile was sent to ${job.company}`);
+        return;
+      }
       if (job.applyUrl) {
         const win = openHandoffTab();
         const r = await recordApplication({ ...base, externalUrl: job.applyUrl });
-        say(r, "Applied ✓ — recorded on SeaMinds");
+        say(r, "Company website opened — finish your application there");
         completeHandoff(win, job.applyUrl);
         return;
       }
+      if (job.flier) { window.open(job.flier, "_blank", "noopener,noreferrer"); toast("Check the flyer for the recruiter's contact details"); return; }
+      toast.warning("This vacancy has no contact listed yet");
+      return;
       navigate("/app?tab=jobs");
     } catch {
       navigate("/app?tab=jobs");
@@ -271,7 +276,7 @@ const JobDetail = () => {
           </div>
           <p style={{ color: job.kind === "direct" ? "#22c55e" : "#f59e0b", fontSize: 12, marginTop: 5, lineHeight: 1.5 }}>
             {job.kind === "direct"
-              ? "Posted on SeaMinds by a verified company"
+              ? (job.company === "Agency shown on flyer" || job.flier ? "Advertised on SeaMinds · applications go to the recruiter" : "Posted on SeaMinds by a verified company")
               : "Aggregated from a public source — SeaMinds has not verified this employer"}
           </p>
 
@@ -307,9 +312,11 @@ const JobDetail = () => {
             background: GOLD, color: NAVY, fontWeight: 800, fontSize: 14,
             display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
           }}>
-            {job.email ? <>✉️ Apply — sent to company email</>
-              : job.whatsapp ? <><MessageCircle size={16} /> Apply via WhatsApp</>
-              : <><ExternalLink size={16} /> View & Apply</>}
+            {job.whatsapp ? <><MessageCircle size={16} /> Apply via WhatsApp</>
+              : job.email ? <>✉️ Send my Sea Profile by email</>
+              : job.applyUrl ? <><ExternalLink size={16} /> Apply on company website</>
+              : job.flier ? <>📄 View flyer to apply</>
+              : <>No contact listed</>}
           </button>
         </article>
 
