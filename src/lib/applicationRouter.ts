@@ -81,3 +81,38 @@ export const routeToast = (
       return { title: "Saved", description: "Saved in My Applications.", tone: "success" };
   }
 };
+
+import { recordApplication, openHandoffTab, completeHandoff } from "@/lib/applyMessage";
+
+export interface ApplyOutcome {
+  route: ApplyRoute;
+  ok: boolean;
+  duplicate: boolean;
+  emailSent?: boolean;
+  toast: ReturnType<typeof routeToast>;
+}
+
+/**
+ * The single apply action used by every page. Must be called directly from a click
+ * (the handoff tab is opened synchronously before any await).
+ */
+export const applyToVacancy = async (v: UnifiedVacancy, card: CrewCardInfo | null): Promise<ApplyOutcome> => {
+  const route = resolveApplyRoute(v, card);
+  if (!route.record) {
+    return {
+      route, ok: false, duplicate: false,
+      toast: route.channel === "flyer"
+        ? { title: "Check the flyer", description: "This advert has no contact we could read. Open the original flyer for the recruiter's details.", tone: "warning" }
+        : { title: "No contact listed", description: "This vacancy has no way to apply yet.", tone: "warning" },
+    };
+  }
+  const win = route.url ? openHandoffTab() : null;
+  const r = await recordApplication({
+    vacancyId: v.kind === "external" ? v.id : null,
+    jobPostingId: v.kind === "direct" ? v.id : null,
+    company: v.company || null, rank: v.rank || null, vessel: v.vessel || null,
+    externalUrl: route.url,
+  });
+  if (route.url) completeHandoff(win, route.url);
+  return { route, ok: r.ok, duplicate: r.duplicate, emailSent: r.emailSent, toast: routeToast(route, v.company, r) };
+};
