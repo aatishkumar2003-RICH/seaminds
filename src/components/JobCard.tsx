@@ -215,8 +215,8 @@ const JobCard = ({ vacancy: v, variant, applied: appliedProp, busy, href, match,
       )}
 
       <button
-        onClick={canReopen ? () => reopenWhatsApp(v, getCachedCrewCardInfo()) : route.channel === "flyer" ? () => setFlierOpen(true) : onApply}
-        disabled={disabled}
+        onClick={canReopen ? () => reopenWhatsApp(v, getCachedCrewCardInfo()) : canRetryEmail ? sendEmail : route.channel === "flyer" ? () => setFlierOpen(true) : onApply}
+        disabled={disabled || (canRetryEmail && emailState !== "idle")}
         style={{
           marginTop: 2, width: "100%", padding: compact ? "10px 0" : "12px 0", borderRadius: 12,
           background: applied ? "rgba(34,197,94,0.15)" : GOLD,

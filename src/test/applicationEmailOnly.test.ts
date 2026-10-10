@@ -47,4 +47,18 @@ describe("email-only vacancy apply", () => {
     expect(retry.ok).toBe(true);
     expect(retry.emailSent).toBe(true);
   });
+
+  it("after reload (record already exists from an earlier session) email is attempted again", async () => {
+    exists = true; // application saved in a previous session, email never delivered
+    invoke.mockResolvedValueOnce({ data: { ok: true, sent: false }, error: null });
+    const failed = await applyToVacancy(v, null);
+    expect(failed.duplicate).toBe(true);
+    expect(failed.ok).toBe(false);
+    expect(failed.toast.tone).toBe("warning");
+    invoke.mockResolvedValueOnce({ data: { ok: true, sent: true }, error: null });
+    const retry = await applyToVacancy(v, null);
+    expect(invoke).toHaveBeenCalledTimes(2);
+    expect(retry.ok).toBe(true);
+    expect(rpc).toHaveBeenCalledTimes(2);
+  });
 });
