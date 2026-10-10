@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { BadgeCheck, MapPin, Ship, Calendar, X } from "lucide-react";
 import type { UnifiedVacancy } from "@/lib/vacancyFeed";
-import { vacancySalary } from "@/lib/vacancyFeed";
+import { vacancySalary, isEmailDelivered, markEmailDelivered } from "@/lib/vacancyFeed";
 import { jobPath } from "@/lib/jobSlug";
 import { routeLabel, resolveApplyRoute, isSeaMindsPublished, hasSecondaryEmail, applyByEmail, reopenWhatsApp } from "@/lib/applicationRouter";
 import { getCachedCrewCardInfo, fetchQuickProfileDone } from "@/lib/applyMessage";
