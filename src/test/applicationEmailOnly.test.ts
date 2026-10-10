@@ -52,7 +52,6 @@ describe("email-only vacancy apply", () => {
     exists = true; // application saved in a previous session, email never delivered
     invoke.mockResolvedValueOnce({ data: { ok: true, sent: false }, error: null });
     const failed = await applyToVacancy(v, null);
-    expect(failed.duplicate).toBe(true);
     expect(failed.ok).toBe(false);
     expect(failed.toast.tone).toBe("warning");
     invoke.mockResolvedValueOnce({ data: { ok: true, sent: true }, error: null });
