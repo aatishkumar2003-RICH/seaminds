@@ -11,6 +11,21 @@
 -- Excludes all medical / wellness data from evidence snapshots.
 -- =====================================================================
 
+-- DEPLOYMENT SEQUENCE (approved order):
+--   1. Publish the frontend containing src/lib/assessmentGateway.ts.
+--      Before Stage A it falls back to the legacy server paths only
+--      when open_assessment_v2 does not exist.
+--   2. Apply Stage A (this file). From that moment:
+--      - open_assessment_v2 exists, so the client fallback never runs;
+--      - stale cached bundles that insert directly get
+--        ASSESSMENT_GATEWAY_REQUIRED (refresh prompt) instead of creating
+--        an untracked or wrongly-typed assessment;
+--      - stale "start over" calls cannot abandon manager interviews.
+--   3. After all sessions are on the new bundle, remove the client
+--      fallback in a follow-up commit.
+--   4. Stage B (grant tidy-up) separately approved.
+-- =====================================================================
+
 BEGIN;
 
 -- ---------------------------------------------------------------------
@@ -132,12 +147,26 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_smc_active_crew_mode_context
 -- ---------------------------------------------------------------------
 -- 4. Evidence snapshot builder (internal; no medical / wellness fields)
 -- ---------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION public.build_evidence_snapshot(p_uid uuid, p_mode text, p_target_rank text)
+--    The snapshot IS the immutable versioned evidence record: it copies
+--    approved professional fields only (whitelists below). Never read:
+--    crew_cv_data.medical, crew_cv_data.education, passport/DOB/contact,
+--    chat, mood or any wellness table.
+CREATE OR REPLACE FUNCTION public.build_evidence_snapshot(
+  p_uid uuid, p_mode text, p_target_rank text, p_target_vessel text DEFAULT NULL)
 RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $$
-DECLARE p record; cv record; v_rank jsonb; v_fam jsonb; v_claims jsonb; v_cv jsonb := NULL; v_hash text := NULL;
+DECLARE
+  p record; cv record; v_rank jsonb; v_fam jsonb; v_claims jsonb; v_cv jsonb := NULL;
+  v_certs jsonb := '[]'::jsonb; v_sea jsonb := '[]'::jsonb;
+  -- Approved professional claim keys (competence declarations only)
+  c_claim_keys text[] := ARRAY[
+    'ecdis_experience','ecdis_types','psc_experience','rightship_experience','sire_experience',
+    'hv_certified','watchkeeping_lookout','helmsman','cargo_ops_watch','ums_experience',
+    'mooring_experience','propulsion_experience','dp_qualification','dp_vessel_experience',
+    'haccp_trained','multicultural_menus','hazardous_area_ex','automation_systems',
+    'crew_size_cooked','tanker_deck_ops','provisioning_budget','lashing_securing','cargo_pumping_systems'];
 BEGIN
-  SELECT rank, role, vessel_type, preferred_vessel_types, years_at_sea, total_sea_service_band,
-         years_in_rank_band, contracts_in_rank_band, nationality, quick_profile_completed_at
+  SELECT rank, vessel_type, preferred_vessel_types, years_at_sea, total_sea_service_band,
+         years_in_rank_band, contracts_in_rank_band, quick_profile_completed_at
     INTO p FROM crew_profiles WHERE id = p_uid;
 
   v_rank := resolve_canonical_rank(coalesce(p_target_rank, p.rank));
@@ -147,19 +176,38 @@ BEGIN
     INTO v_fam FROM crew_vessel_experience WHERE crew_id = p_uid;
 
   SELECT coalesce(jsonb_object_agg(claim_key, value), '{}'::jsonb)
-    INTO v_claims FROM crew_claims WHERE crew_id = p_uid;
+    INTO v_claims FROM crew_claims WHERE crew_id = p_uid AND claim_key = ANY (c_claim_keys);
 
   IF p_mode = 'CV_BASED' THEN
-    -- medical and education deliberately NOT read
     SELECT certificates, sea_service, updated_at INTO cv FROM crew_cv_data WHERE user_id = p_uid
      ORDER BY updated_at DESC NULLS LAST LIMIT 1;
     IF FOUND THEN
-      v_hash := md5(coalesce(cv.certificates::text,'') || '|' || coalesce(cv.sea_service::text,''));
+      -- Professional certificates: name/authority/dates only (no numbers, no medical)
+      IF jsonb_typeof(cv.certificates) = 'array' THEN
+        SELECT coalesce(jsonb_agg(jsonb_strip_nulls(jsonb_build_object(
+                 'name',              left(e->>'name', 200),
+                 'issuing_authority', left(e->>'issuing_authority', 200),
+                 'issue_date',        left(e->>'issue_date', 40),
+                 'expiry_date',       left(e->>'expiry_date', 40)))), '[]'::jsonb)
+          INTO v_certs FROM jsonb_array_elements(cv.certificates) e
+         WHERE jsonb_typeof(e) = 'object';
+      END IF;
+      -- Sea service: vessel/rank/company/dates/technical type only
+      IF jsonb_typeof(cv.sea_service) = 'array' THEN
+        SELECT coalesce(jsonb_agg(jsonb_strip_nulls(jsonb_build_object(
+                 'vessel_name', left(e->>'vessel_name', 200), 'vessel_type', left(e->>'vessel_type', 100),
+                 'flag', left(e->>'flag', 100), 'grt', left(e->>'grt', 40), 'rank', left(e->>'rank', 100),
+                 'company', left(e->>'company', 200), 'sign_on', left(e->>'sign_on', 40),
+                 'sign_off', left(e->>'sign_off', 40), 'engine_type', left(e->>'engine_type', 100),
+                 'cargo_type', left(e->>'cargo_type', 100)))), '[]'::jsonb)
+          INTO v_sea FROM jsonb_array_elements(cv.sea_service) e
+         WHERE jsonb_typeof(e) = 'object';
+      END IF;
       v_cv := jsonb_build_object(
-        'cv_version_hash', v_hash,
+        'cv_version_hash', md5(v_certs::text || '|' || v_sea::text),
         'cv_updated_at', cv.updated_at,
-        'certificate_count', CASE WHEN jsonb_typeof(cv.certificates) = 'array' THEN jsonb_array_length(cv.certificates) ELSE 0 END,
-        'sea_service_count', CASE WHEN jsonb_typeof(cv.sea_service) = 'array' THEN jsonb_array_length(cv.sea_service) ELSE 0 END,
+        'certificates', v_certs,
+        'sea_service', v_sea,
         'verification', 'not_independently_verified');
     END IF;
   END IF;
@@ -169,29 +217,35 @@ BEGIN
     'captured_at', now(),
     'mode', p_mode,
     'profile_rank_input', p.rank,
-    'target_rank_input', p_target_rank,
+    'target', CASE WHEN p_target_rank IS NULL THEN NULL
+                   ELSE jsonb_build_object('rank_input', p_target_rank, 'vessel_type', p_target_vessel) END,
     'rank', v_rank,
     'profile', jsonb_build_object(
        'vessel_type', p.vessel_type, 'preferred_vessel_types', p.preferred_vessel_types,
        'years_at_sea', p.years_at_sea, 'total_sea_service_band', p.total_sea_service_band,
        'years_in_rank_band', p.years_in_rank_band, 'contracts_in_rank_band', p.contracts_in_rank_band,
-       'nationality', p.nationality, 'quick_profile_completed_at', p.quick_profile_completed_at),
+       'quick_profile_completed_at', p.quick_profile_completed_at),
     'vessel_experience', v_fam,
     'claims', v_claims,
     'cv', v_cv);
 END $$;
-REVOKE ALL ON FUNCTION public.build_evidence_snapshot(uuid, text, text) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.build_evidence_snapshot(uuid, text, text, text) FROM PUBLIC, anon, authenticated;
 
 -- ---------------------------------------------------------------------
 -- 5. Triggers
 -- ---------------------------------------------------------------------
--- 5a. Insert sanitizer: keep client resets; stop overwriting the trusted
---     gateway's scoring_version (finding 3). Client inserts (transition
---     period only) are forced into PROFILE/self and get a server snapshot.
+-- 5a. Insert sanitizer: stop overwriting the trusted gateway's
+--     scoring_version. After Stage A, ANY direct client insert (e.g. a
+--     stale cached browser bundle) is rejected so nothing can bypass the
+--     gateway or turn a manager interview into a self PROFILE row. This
+--     enforces the gateway immediately; Stage B only tidies grants.
 CREATE OR REPLACE FUNCTION public.smc_assessments_sanitize_insert()
 RETURNS trigger LANGUAGE plpgsql SET search_path = public AS $$
-DECLARE is_client boolean := current_user IN ('authenticated','anon');
 BEGIN
+  IF current_user IN ('authenticated','anon') THEN
+    RAISE EXCEPTION 'ASSESSMENT_GATEWAY_REQUIRED: please refresh the SeaMinds app'
+      USING ERRCODE = '42501';
+  END IF;
   NEW.status := 'in_progress';
   NEW.current_step := 1;
   NEW.doc_upload_status := 'pending';
@@ -200,16 +254,7 @@ BEGIN
   NEW.overall_score := NULL; NEW.score_band := NULL; NEW.certificate_id := NULL;
   NEW.recommendation := NULL; NEW.dimension_scores := NULL; NEW.red_flags := '[]'::jsonb;
   NEW.report := NULL; NEW.completed_at := NULL;
-  IF is_client THEN
-    NEW.scoring_version := NULL;
-    NEW.assessment_mode := 'PROFILE';
-    NEW.context_id := 'self';
-    NEW.invite_id := NULL; NEW.campaign_id := NULL; NEW.parent_assessment_id := NULL;
-    NEW.cv_version_hash := NULL;
-    NEW.evidence_snapshot := public.build_evidence_snapshot(NEW.crew_profile_id, 'PROFILE', NULL);
-  ELSE
-    NEW.scoring_version := coalesce(NEW.scoring_version, 'v1.1');
-  END IF;
+  NEW.scoring_version := coalesce(NEW.scoring_version, 'v1.1');
   RETURN NEW;
 END $$;
 
@@ -247,6 +292,11 @@ BEGIN
     OR NEW.crew_profile_id      IS DISTINCT FROM OLD.crew_profile_id THEN
       RAISE EXCEPTION 'IMMUTABLE_ASSESSMENT_FIELD' USING ERRCODE = '42501';
     END IF;
+    -- Stale clients' blanket "start over" must never abandon a manager
+    -- interview (or a preserved legacy duplicate) — only own self rows.
+    IF NEW.status = 'abandoned' AND OLD.status IS DISTINCT FROM 'abandoned' AND OLD.context_id <> 'self' THEN
+      RAISE EXCEPTION 'CANNOT_ABANDON_MANAGED_ASSESSMENT' USING ERRCODE = '42501';
+    END IF;
   ELSIF OLD.evidence_snapshot IS NOT NULL
     AND NEW.evidence_snapshot IS DISTINCT FROM OLD.evidence_snapshot THEN
     RAISE EXCEPTION 'EVIDENCE_SNAPSHOT_FROZEN' USING ERRCODE = '42501';
@@ -271,8 +321,8 @@ DECLARE
   v_uid uuid := auth.uid();
   v_mode text := upper(coalesce(p_mode, ''));
   v_ctx text := 'self'; v_round int := 1; v_parent uuid := NULL;
-  v_campaign uuid := NULL; v_invite uuid := NULL; v_target_rank text := NULL;
-  inv record; camp record; parent record; v_email text; v_confirmed timestamptz;
+  v_campaign uuid := NULL; v_invite uuid := NULL; v_target_rank text := NULL; v_target_vessel text := NULL;
+  inv record; camp record; parent record; linked record; v_email text; v_confirmed timestamptz;
   v_rank jsonb; v_has_cv boolean; v_snap jsonb; v_id uuid;
 BEGIN
   IF v_uid IS NULL THEN RETURN jsonb_build_object('ok', false, 'error', 'AUTH_REQUIRED'); END IF;
@@ -281,7 +331,7 @@ BEGIN
   END IF;
 
   IF p_invite_id IS NOT NULL THEN
-    -- Lock the invite first; authorize; then derive context (finding 6)
+    -- Lock the invite first; authorize; then derive context
     SELECT * INTO inv FROM interview_invites WHERE id = p_invite_id FOR UPDATE;
     IF inv.id IS NULL THEN RETURN jsonb_build_object('ok', false, 'error', 'INVITE_NOT_FOUND'); END IF;
 
@@ -295,11 +345,12 @@ BEGIN
       RETURN jsonb_build_object('ok', false, 'error', 'INVITE_NOT_YOURS');
     END IF;
 
-    SELECT id, status, rank_required INTO camp FROM interview_campaigns WHERE id = inv.campaign_id;
+    SELECT id, status, rank_required, vessel_type INTO camp FROM interview_campaigns WHERE id = inv.campaign_id;
     IF camp.id IS NULL THEN RETURN jsonb_build_object('ok', false, 'error', 'CAMPAIGN_NOT_FOUND'); END IF;
-    v_campaign := camp.id; v_invite := inv.id; v_target_rank := camp.rank_required;
+    v_campaign := camp.id; v_invite := inv.id;
+    v_target_rank := camp.rank_required; v_target_vessel := nullif(trim(coalesce(camp.vessel_type,'')), '');
 
-    -- Round 2 ONLY with an explicit manager CV request (finding 2)
+    -- Round 2 ONLY with an explicit manager CV request + completed Round 1
     IF inv.cv_request_status IN ('REQUESTED','SUBMITTED') AND inv.assessment_id IS NOT NULL THEN
       SELECT id, status INTO parent FROM smc_assessments WHERE id = inv.assessment_id;
       IF parent.id IS NOT NULL AND parent.status = 'completed' THEN
@@ -310,6 +361,34 @@ BEGIN
       END IF;
     END IF;
     IF v_round = 1 THEN v_ctx := 'invite:' || inv.id || ':r1'; END IF;
+
+    -- Respect an EXISTING linked assessment for this round: resume it, or
+    -- refuse to create a replacement. Never relink or duplicate history.
+    SELECT NULL::uuid AS id, NULL::text AS status, NULL::uuid AS crew_profile_id INTO linked;
+    IF v_round = 2 AND inv.round_2_assessment_id IS NOT NULL THEN
+      SELECT id, status, crew_profile_id INTO linked FROM smc_assessments WHERE id = inv.round_2_assessment_id;
+    ELSIF v_round = 1 AND inv.assessment_id IS NOT NULL THEN
+      SELECT id, status, crew_profile_id INTO linked FROM smc_assessments WHERE id = inv.assessment_id;
+    END IF;
+    IF linked.id IS NOT NULL THEN
+      IF linked.crew_profile_id <> v_uid THEN
+        RETURN jsonb_build_object('ok', false, 'error', 'INVITE_NOT_YOURS');
+      END IF;
+      IF linked.status = 'in_progress' THEN
+        UPDATE interview_invites SET crew_profile_id = coalesce(crew_profile_id, v_uid) WHERE id = v_invite;
+        IF v_round = 1 THEN
+          INSERT INTO interview_progress (invite_id, crew_id, assessment_id, campaign_id)
+          VALUES (v_invite, v_uid, linked.id, v_campaign)
+          ON CONFLICT (crew_id, invite_id) DO UPDATE
+            SET assessment_id = EXCLUDED.assessment_id WHERE interview_progress.assessment_id IS NULL;
+        END IF;
+        RETURN jsonb_build_object('ok', true, 'action', 'resume', 'assessment_id', linked.id,
+                                  'mode', v_mode, 'context_id', v_ctx, 'round', v_round);
+      END IF;
+      RETURN jsonb_build_object('ok', false, 'error',
+        CASE WHEN v_round = 2 THEN 'ROUND2_ALREADY_EXISTS' ELSE 'ROUND1_ALREADY_EXISTS' END,
+        'assessment_id', linked.id, 'status', linked.status);
+    END IF;
 
     -- A new attempt needs an open campaign; resuming an existing one does not
     IF camp.status <> 'open' AND NOT EXISTS (
@@ -348,7 +427,7 @@ BEGIN
     IF NOT v_has_cv THEN RETURN jsonb_build_object('ok', false, 'error', 'CV_REQUIRED'); END IF;
   END IF;
 
-  v_snap := build_evidence_snapshot(v_uid, v_mode, v_target_rank);
+  v_snap := build_evidence_snapshot(v_uid, v_mode, v_target_rank, v_target_vessel);
 
   INSERT INTO smc_assessments (crew_profile_id, status, current_step, scoring_version, assessment_mode,
                                context_id, campaign_id, invite_id, parent_assessment_id,
@@ -361,15 +440,18 @@ BEGIN
   IF v_invite IS NOT NULL THEN
     UPDATE interview_invites SET crew_profile_id = coalesce(crew_profile_id, v_uid) WHERE id = v_invite;
     IF v_round = 1 THEN
-      UPDATE interview_invites SET assessment_id = coalesce(assessment_id, v_id),
+      UPDATE interview_invites SET assessment_id = v_id,
              status = CASE WHEN status = 'completed' THEN status ELSE 'in_progress' END
-       WHERE id = v_invite;
+       WHERE id = v_invite AND assessment_id IS NULL;
+      -- Fill an empty progress link only; never overwrite an existing one
       INSERT INTO interview_progress (invite_id, crew_id, assessment_id, campaign_id)
       VALUES (v_invite, v_uid, v_id, v_campaign)
-      ON CONFLICT (crew_id, invite_id) DO NOTHING;
+      ON CONFLICT (crew_id, invite_id) DO UPDATE
+        SET assessment_id = EXCLUDED.assessment_id WHERE interview_progress.assessment_id IS NULL;
     ELSE
-      -- Round 1 link (assessment_id) is never overwritten
-      UPDATE interview_invites SET round_2_assessment_id = v_id WHERE id = v_invite;
+      -- Round 1 link (assessment_id) is never overwritten; Round 2 set once
+      UPDATE interview_invites SET round_2_assessment_id = v_id
+       WHERE id = v_invite AND round_2_assessment_id IS NULL;
     END IF;
   END IF;
 
@@ -401,25 +483,30 @@ BEGIN
   SELECT id, crew_profile_id, evidence_snapshot INTO a FROM smc_assessments WHERE id = p_assessment_id;
   IF a.id IS NULL OR a.crew_profile_id <> uid THEN RETURN jsonb_build_object('ok', false, 'error_code', 'NOT_FOUND'); END IF;
 
-  SELECT c.rank_required, c.vessel_type INTO camp
-    FROM interview_progress ip JOIN interview_campaigns c ON c.id = ip.campaign_id
-   WHERE ip.assessment_id = p_assessment_id LIMIT 1;
-  IF NOT FOUND THEN
-    SELECT c.rank_required, c.vessel_type INTO camp
-      FROM interview_invites i JOIN interview_campaigns c ON c.id = i.campaign_id
-     WHERE i.assessment_id = p_assessment_id OR i.round_2_assessment_id = p_assessment_id LIMIT 1;
-  END IF;
-
-  IF FOUND THEN
-    src := 'company_campaign'; input_rank := camp.rank_required; vessel := nullif(trim(coalesce(camp.vessel_type,'')), '');
-  ELSIF a.evidence_snapshot->>'snapshot_type' = 'v1' THEN
-    src := 'evidence_snapshot';
-    input_rank := a.evidence_snapshot->>'profile_rank_input';
-    vessel := nullif(trim(coalesce(a.evidence_snapshot->'profile'->>'vessel_type','')), '');
+  IF a.evidence_snapshot->>'snapshot_type' = 'v1' THEN
+    -- Frozen at creation for BOTH self and manager assessments. A later
+    -- campaign or profile edit can never change the authoritative rank.
+    src := CASE WHEN a.evidence_snapshot ? 'target' AND a.evidence_snapshot->'target'->>'rank_input' IS NOT NULL
+                THEN 'evidence_snapshot.company_target' ELSE 'evidence_snapshot.profile' END;
+    input_rank := coalesce(a.evidence_snapshot->'target'->>'rank_input', a.evidence_snapshot->>'profile_rank_input');
+    vessel := nullif(trim(coalesce(a.evidence_snapshot->'target'->>'vessel_type',
+                                   a.evidence_snapshot->'profile'->>'vessel_type', '')), '');
   ELSE
-    -- Legacy rows without a snapshot keep the previous behaviour
-    src := 'crew_profiles.rank';
-    SELECT rank, nullif(trim(coalesce(vessel_type,'')), '') INTO input_rank, vessel FROM crew_profiles WHERE id = uid;
+    -- Legacy rows without a snapshot keep the previous behaviour unchanged
+    SELECT c.rank_required, c.vessel_type INTO camp
+      FROM interview_progress ip JOIN interview_campaigns c ON c.id = ip.campaign_id
+     WHERE ip.assessment_id = p_assessment_id LIMIT 1;
+    IF NOT FOUND THEN
+      SELECT c.rank_required, c.vessel_type INTO camp
+        FROM interview_invites i JOIN interview_campaigns c ON c.id = i.campaign_id
+       WHERE i.assessment_id = p_assessment_id LIMIT 1;
+    END IF;
+    IF FOUND THEN
+      src := 'company_campaign'; input_rank := camp.rank_required; vessel := nullif(trim(coalesce(camp.vessel_type,'')), '');
+    ELSE
+      src := 'crew_profiles.rank';
+      SELECT rank, nullif(trim(coalesce(vessel_type,'')), '') INTO input_rank, vessel FROM crew_profiles WHERE id = uid;
+    END IF;
   END IF;
   res := resolve_canonical_rank(input_rank);
 
