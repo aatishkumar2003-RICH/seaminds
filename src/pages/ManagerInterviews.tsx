@@ -113,7 +113,8 @@ const ManagerInterviews = () => {
   };
 
   const requestRound2 = async (campaignId: string, inviteId: string) => {
-    setBusy(true);
+    if (r2Busy) return;
+    setR2Busy(inviteId);
     try {
       const { data, error } = await supabase.functions.invoke("request-cv-round2", { body: { invite_id: inviteId } });
       const res: any = data;
@@ -123,7 +124,7 @@ const ManagerInterviews = () => {
       setBoard((s) => ({ ...s, [campaignId]: (rows as any[]) || [] }));
     } catch (e: any) {
       toast.error(e?.message || "Could not send the request");
-    } finally { setBusy(false); }
+    } finally { setR2Busy(null); }
   };
 
   const linkFor = (token: string) => `${window.location.origin}/interview/${token}`;
@@ -358,9 +359,9 @@ const ManagerInterviews = () => {
                             (r.cv_request_status && r.cv_request_status !== "NONE") ? (
                               <p style={{ marginTop: 7, textAlign: "center", color: "#94a3b8", fontSize: 11.5, fontWeight: 700 }}>✓ CV & Round 2 requested</p>
                             ) : (
-                              <button onClick={() => requestRound2(c.id, r.invite_id)} disabled={busy}
+                              <button onClick={() => requestRound2(c.id, r.invite_id)} disabled={!!r2Busy}
                                 style={{ display: "block", width: "100%", marginTop: 7, background: "transparent", color: GOLD, border: `1px solid ${GOLD}`, borderRadius: 9, padding: "8px 0", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
-                                Request CV & Round 2
+                                {r2Busy === r.invite_id ? "Sending request…" : "Request CV & Round 2"}
                               </button>
                             )
                           )}

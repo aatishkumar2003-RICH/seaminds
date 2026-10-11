@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
     if (!/^[0-9a-f-]{36}$/i.test(inviteId)) return json({ ok: false, error: "Missing candidate." }, 400);
 
     const { data: inv } = await svc.from("interview_invites")
-      .select("id, campaign_id, status, crew_profile_id, invited_email, invited_name, cv_request_status")
+      .select("id, token, campaign_id, status, crew_profile_id, invited_email, invited_name, cv_request_status")
       .eq("id", inviteId).maybeSingle();
     if (!inv) return json({ ok: false, error: "Candidate not found." }, 404);
     const { data: camp } = await svc.from("interview_campaigns")
@@ -52,13 +52,15 @@ Deno.serve(async (req) => {
     if (!email) return json({ ok: false, error: "No email on file for this candidate." });
     if (!RESEND_KEY) { await log(inviteId, false, { skipped: "no_provider_key" }); return json({ ok: false, error: "Email service is not configured." }); }
 
-    const link = `${SITE}/app?tab=cv`;
+    const examLink = `${SITE}/interview/${encodeURIComponent(inv.token)}/exam?round=2`;
+    const cvLink = `${SITE}/app?tab=cv`;
     const html = `<div style="background:#0D1B2A;border-radius:14px;padding:24px;color:#fff;font-family:Arial,Helvetica,sans-serif;line-height:1.6">
   <h2 style="color:#D4AF37;font-size:18px;margin:0 0 12px">${esc(camp.company_name)} invites you to Round 2</h2>
   ${inv.invited_name ? `<p>Dear ${esc(inv.invited_name)},</p>` : ""}
-  <p>Thank you for completing your Round 1 interview for <strong>${esc(camp.rank_required)}</strong>. The company would like a CV-verified assessment as the next step.</p>
-  <p>1. Add your CV and certificates on SeaMinds.<br/>2. Retake the assessment — it will be scored as CV-Verified.</p>
-  <p><a href="${link}" style="background:#D4AF37;color:#0D1B2A;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block">Add my CV</a></p>
+  <p>Thank you for completing your Round 1 interview for <strong>${esc(camp.rank_required)}</strong>. The company has requested your Round 2 interview, scored as a <strong>CV-Based Score — CV evidence included, not independently verified</strong>.</p>
+  <p>1. If you have not yet added your CV and certificates, add them first.<br/>2. Then open your Round 2 interview. Your Round 1 result stays unchanged.</p>
+  <p><a href="${examLink}" style="background:#D4AF37;color:#0D1B2A;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block">Start Round 2 interview</a></p>
+  <p><a href="${cvLink}" style="color:#D4AF37;font-weight:bold">Add or update my CV</a></p>
   <p style="color:#94A3B8;font-size:13px">No payment is ever requested. Questions: support@seaminds.life</p>
 </div>`;
 
@@ -69,7 +71,7 @@ Deno.serve(async (req) => {
         method: "POST", signal: ac.signal,
         headers: { Authorization: `Bearer ${RESEND_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({ from: "SeaMinds <crew@seaminds.life>", to: [email], reply_to: "support@seaminds.life",
-          subject: `Round 2 request — ${camp.rank_required}`, html }),
+          subject: `Round 2 interview request — ${camp.rank_required}`, html }),
       }).finally(() => clearTimeout(t));
       const rb: any = await r.json().catch(() => ({}));
       providerId = rb?.id ?? null;
@@ -78,12 +80,12 @@ Deno.serve(async (req) => {
     } catch (e) { error = e instanceof Error ? e.message.slice(0, 200) : "network_error"; }
 
     if (ok) {
-      const { error: upErr } = await svc.from("interview_invites").update({ cv_request_status: "REQUESTED" })
-        .eq("id", inviteId).eq("cv_request_status", "NONE");
-      if (upErr) error = "saved_failed";
+      const { data: upd, error: upErr } = await svc.from("interview_invites").update({ cv_request_status: "REQUESTED" })
+        .eq("id", inviteId).eq("cv_request_status", "NONE").select("id");
+      if (upErr || !upd || upd.length !== 1) { ok = false; error = "The email was sent but the request could not be saved. Please try again."; }
     }
     await log(inviteId, ok, { provider_id: providerId, error });
-    return json(ok ? { ok: true } : { ok: false, error: error || "send_failed" });
+    return json(ok ? { ok: true } : { ok: false, error: error || "The request email could not be sent." });
   } catch (e) {
     return json({ ok: false, error: e instanceof Error ? e.message : "Unexpected error" });
   }
