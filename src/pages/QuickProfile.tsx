@@ -283,7 +283,16 @@ const QuickProfile = () => {
   const finish = async () => {
     // Completion is recorded only after the server confirms a canonical rank is saved
     if (!(await confirmCanonicalRank())) { setStep(1); return toast.error("Please choose your official rank from the list."); }
-    await saveProfile({ quick_profile_completed_at: new Date().toISOString() });
+    if (!uid) return;
+    // Success is shown only after the database confirms the completion was saved
+    const { data: saved, error } = await supabase.from("crew_profiles")
+      .update({ quick_profile_completed_at: new Date().toISOString() } as any)
+      .eq("id", uid)
+      .select("quick_profile_completed_at")
+      .maybeSingle();
+    if (error || !(saved as any)?.quick_profile_completed_at) {
+      return toast.error("Could not save your profile. Please check your connection and try again.");
+    }
     setDone(true);
   };
 
