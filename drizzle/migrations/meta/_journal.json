@@ -274,6 +274,13 @@
       "when": 1791706115756,
       "tag": "0038_manager_leaderboard_four_dimensions",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1791712823609,
+      "tag": "0039_complete_interview_round_2",
+      "breakpoints": true
     }
   ]
 }
