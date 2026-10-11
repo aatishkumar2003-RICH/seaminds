@@ -123,7 +123,7 @@ def run_family(fam):
             a, bb = va.get(i), vb.get(i)
             ok = bool(a and bb and a.get("valid") and bb.get("valid"))
             if ok and kind == "mcq": ok = a.get("answer_index") == it["correct_index"] == bb.get("answer_index")
-            if ok and any(difflib.SequenceMatcher(None, norm(it["question"]), norm(k["question"])).ratio() > 0.85 for k in kept): ok = False
+            if ok and any(difflib.SequenceMatcher(None, norm(str(it.get("situation") or "") + it["question"]), norm(str(k.get("situation") or "") + k["question"])).ratio() > 0.85 for k in kept): ok = False
             if ok: it["kind"] = kind; kept.append(it)
             else:
                 log["rejected"] += 1
