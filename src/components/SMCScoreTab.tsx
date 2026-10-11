@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Upload, RefreshCw, Check, FileText, Anchor, Award, HeartPulse, X } from "lucide-react";
 import { toast } from "sonner";
+import { openAssessmentV2, gatewayErrorMessage } from "@/lib/assessmentGateway";
 import CrewPaymentGate from "@/components/smc/CrewPaymentGate";
 import SMCScoreCertificate from "@/components/smc/SMCScoreCertificate";
 import AssessmentFlow from "@/components/smc/AssessmentFlow";

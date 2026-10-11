@@ -47,17 +47,15 @@ const InterviewExam = () => {
         assessmentId = (existing as any)?.assessment_id || null;
 
         if (!assessmentId) {
-          const { data: created, error: cErr } = await supabase
-            .from("smc_assessments")
-            .insert({ crew_profile_id: user.id, status: "in_progress", current_step: 1 } as any)
-            .select("id")
-            .single();
-          if (cErr) throw cErr;
-          assessmentId = created.id;
-          await supabase.from("interview_progress" as any).insert({
+          // Server gateway: authorizes the invite, derives context, links invite + progress
+          const opened = await openAssessmentV2("PROFILE", { inviteId: claim.invite_id, crewId: user.id });
+          if (!opened.ok || !opened.assessment_id) throw new Error(gatewayErrorMessage(opened.error));
+          assessmentId = opened.assessment_id;
+          // Legacy (pre-migration) path only: the gateway already writes interview_progress
+          await supabase.from("interview_progress" as any).upsert({
             invite_id: claim.invite_id, crew_id: user.id,
             assessment_id: assessmentId, campaign_id: claim.campaign_id,
-          });
+          }, { onConflict: "crew_id,invite_id", ignoreDuplicates: true });
         }
 
         setCtx({
