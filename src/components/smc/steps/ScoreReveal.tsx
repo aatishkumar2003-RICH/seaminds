@@ -91,7 +91,8 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
         try { const j = await (res as any)?.error?.context?.json?.(); code = j?.error_code; retryAfter = Number(j?.retry_after) || 0; } catch { /* not JSON */ }
         lastCode = code || null;
         if (res && !(res as any).error) break;
-        if (code === "ANSWERS_INCOMPLETE" || code === "MANUAL_REVIEW") break;
+        if (code === "SCORING_MANUAL_REVIEW" || code === "FINALIZATION_MANUAL_REVIEW") lastCode = code = "MANUAL_REVIEW";
+        if (code === "ANSWERS_INCOMPLETE" || code === "MANUAL_REVIEW" || code === "LEDGER_INVALID") break;
         if (!["SCORING_PENDING", "FINAL_SCORING_RETRY", "FINAL_SCORING_IN_PROGRESS", "PERSIST_FAILED", "PREPARE_FAILED"].includes(code || "") && res) break;
         if (code === "SCORING_PENDING") await supabase.functions.invoke("score-paper-answers", { body: { assessmentId }, headers: authHeaders }).catch(() => null);
         await new Promise(r => setTimeout(r, Math.min(Math.max(retryAfter * 1000, 10000), 60000)));
