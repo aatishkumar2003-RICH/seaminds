@@ -139,7 +139,7 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
     };
     run();
     return () => { cancelled = true; };
-  }, []);
+  }, [retryKey]);
 
   const overall = scores?.overall ?? 0;
   const finalScore = Math.round(overall * 100) / 100;
