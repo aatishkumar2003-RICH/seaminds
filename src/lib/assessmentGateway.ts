@@ -68,6 +68,7 @@ export function gatewayErrorMessage(code?: string): string {
     case "INVITE_NOT_YOURS": return "This invitation belongs to a different account.";
     case "CAMPAIGN_CLOSED": return "This interview is closed.";
     case "ROUND2_REQUIRES_CV_BASED": return "This round is a CV-Based assessment.";
+    case "ROUND2_NOT_AUTHORIZED": return "Round 2 opens only after you finish Round 1 and the company requests your CV-Based round.";
     case "ROUND1_ALREADY_EXISTS":
     case "ROUND2_ALREADY_EXISTS": return "This interview has already been taken. Your saved result is kept.";
     case "RESTART_UNAVAILABLE": return "Starting over is paused during an update. Your current assessment is kept — tap Resume.";

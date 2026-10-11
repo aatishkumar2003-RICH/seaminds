@@ -52,6 +52,13 @@ const InterviewExam = () => {
         if (round2) {
           // Manager-requested CV-Based Round 2: separate record; Round 1 is never touched.
           const opened = await openAssessmentV2("CV_BASED", { inviteId: claim.invite_id, crewId: user.id });
+          if (opened.error === "ROUND2_ALREADY_EXISTS" && opened.assessment_id) {
+            // Reopen after Round 2 scoring: confirm the result to the company without restarting.
+            setCtx({ company: res.company });
+            const { data: cr, error: ce } = await supabase.rpc("complete_interview" as any, { p_invite_id: claim.invite_id, p_assessment_id: opened.assessment_id });
+            if (!ce && (cr as any)?.ok) { setState("done"); return; }
+            if ((cr as any)?.error_code === "SCORING_PENDING" || ce) { setState("pending"); return; }
+          }
           if (!opened.ok || !opened.assessment_id) throw new Error(gatewayErrorMessage(opened.error));
           assessmentId = opened.assessment_id;
         } else if (!assessmentId) {
