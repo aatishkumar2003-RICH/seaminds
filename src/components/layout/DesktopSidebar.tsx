@@ -70,6 +70,9 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
           <HelpCircle size={14} />
           <span>Replay Tour</span>
         </button>
+        <a href="/profile" className="flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-xs font-semibold text-primary hover:bg-secondary/70">
+          <span>👤</span><span>My Sea Profile</span>
+        </a>
         <button onClick={() => setAboutOpen(true)} className="flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground">
           <span>ⓘ</span><span>About SeaMinds</span>
         </button>
