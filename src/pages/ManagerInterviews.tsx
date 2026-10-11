@@ -333,7 +333,7 @@ const ManagerInterviews = () => {
                               </p>
                               <p style={{ color: "#94a3b8", fontSize: 10.5, marginTop: 2 }}>
                                 {r.status === "completed"
-                                  ? `Tech ${r.technical ?? "—"} · Eng ${r.english ?? "—"} · Behav ${r.behavioural ?? "—"}`
+                                  ? `Tech ${r.technical ?? "—"} · Judg ${r.judgment ?? "—"} · Eng ${r.english ?? "—"} · Behav ${r.behavioural ?? "—"}`
                                   : r.status === "in_progress" ? "In progress" : "Invited, not started"}
                               </p>
                               {r.red_flag_count > 0 && (
@@ -351,7 +351,7 @@ const ManagerInterviews = () => {
                           </div>
                           {r.status === "completed" && (
                             <p style={{ marginTop: 7, fontSize: 10.5, fontWeight: 700, color: r.scoring_tier === "CV_VERIFIED" ? "#22c55e" : GOLD }}>
-                              {r.scoring_tier === "CV_VERIFIED" ? "🟢 CV-Verified score" : "🟡 Quick Profile score"}
+                              {r.scoring_tier === "CV_VERIFIED" ? `🟢 CV-Based score — CV evidence included, not independently verified${r.round === 2 ? " · Round 2" : ""}` : "🟡 Sea Profile score"}
                             </p>
                           )}
                           {r.status === "completed" && r.scoring_tier !== "CV_VERIFIED" && (
