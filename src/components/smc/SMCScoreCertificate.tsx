@@ -381,7 +381,7 @@ const SMCScoreCertificate = ({ data: hint, onImproveScore }: SMCScoreCertificate
                 </div>
                 <div style={{ display: 'inline-block', marginTop: '8px', padding: '3px 10px', borderRadius: '999px', fontSize: '10px', fontWeight: 700, letterSpacing: '0.08em',
                   color: cert.tier === 'CV_VERIFIED' ? '#22c55e' : '#D4AF37', border: `1px solid ${cert.tier === 'CV_VERIFIED' ? '#22c55e' : '#D4AF37'}` }}>
-                  {cert.tier === 'CV_VERIFIED' ? 'CV-VERIFIED SCORE · documented sea service' : 'QUICK PROFILE SCORE · declared profile'}
+                  {cert.tier === 'CV_VERIFIED' ? 'CV-BASED SCORE · CV evidence included, not independently verified' : 'QUICK PROFILE SCORE · declared profile'}
                 </div>
               </div>
 

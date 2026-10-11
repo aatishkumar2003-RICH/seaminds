@@ -780,7 +780,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
                 </button>
               </div>
               <div className="rounded-xl p-4" style={{ background: '#132238', border: '1px solid #1a2e47' }}>
-                <p className="text-sm font-bold mb-1" style={{ color: '#22c55e' }}>🟢 CV-Verified Score</p>
+                <p className="text-sm font-bold mb-1" style={{ color: '#22c55e' }}>🟢 CV-Based Score (CV evidence included)</p>
                 <p className="text-[12.5px] leading-relaxed" style={{ color: '#cbd5e1' }}>
                   Add your CV and certificates first. Your score is backed by your documented sea service.
                 </p>
