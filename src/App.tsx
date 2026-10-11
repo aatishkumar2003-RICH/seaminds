@@ -45,6 +45,7 @@ const RecoveryRedirect = () => {
 import HomePage from "./pages/HomePage";
 import ForCompanies from "./pages/ForCompanies";
 import Index from "./pages/Index";
+import SeaProfile from "./pages/SeaProfile";
 import QuickProfile from "./pages/QuickProfile";
 import ProfileStart from "./pages/ProfileStart";
 import ManagerAuth from "./pages/ManagerAuth";
@@ -168,6 +169,7 @@ const App = () => (
             <Route path="/app" element={<Index />} />
             <Route path="/quick-profile" element={<QuickProfile />} />
             <Route path="/profile-start" element={<ProfileStart />} />
+            <Route path="/profile" element={<SeaProfile />} />
             <Route path="/feed" element={<JobFeed />} />
             <Route path="/interview/:token" element={<InterviewInvite />} />
             <Route path="/interview/:token/exam" element={<InterviewExam />} />
