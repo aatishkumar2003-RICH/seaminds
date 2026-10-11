@@ -70,13 +70,13 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
         <img src={seamindsLogo} alt="SeaMinds" className="h-6 w-6 rounded object-contain" />
         <span className="text-sm font-bold text-foreground/80">SeaMinds</span>
       </div>
-      <div className="mb-6 flex items-center gap-2 px-1">
+      <a href="/profile" onClick={() => setDrawerOpen(false)} aria-label="My Sea Profile" className="mb-6 flex items-center gap-2 rounded-lg px-1 py-1 transition-colors hover:bg-secondary/60">
         <span className="text-lg">{NATIONALITY_FLAGS[nationality] || "🌊"}</span>
         <div className="flex flex-col">
           <span className="text-sm font-medium text-foreground">{firstName || "Seafarer"} {lastName}</span>
           {role && <span className="text-xs text-muted-foreground">{role}</span>}
         </div>
-      </div>
+      </a>
       <nav className="flex flex-1 flex-col gap-1">
         {NAV_ITEMS.map((item) => {
           const active = screen === item.screen && appState === "main";
