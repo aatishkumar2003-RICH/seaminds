@@ -186,20 +186,26 @@ BEGIN
       IF jsonb_typeof(cv.certificates) = 'array' THEN
         SELECT coalesce(jsonb_agg(jsonb_strip_nulls(jsonb_build_object(
                  'name',              left(e->>'name', 200),
-                 'issuing_authority', left(e->>'issuing_authority', 200),
-                 'issue_date',        left(e->>'issue_date', 40),
-                 'expiry_date',       left(e->>'expiry_date', 40)))), '[]'::jsonb)
+                 'issuing_authority', left(coalesce(e->>'issuing_authority', e->>'issuingAuthority'), 200),
+                 'issue_date',        left(coalesce(e->>'issue_date', e->>'issueDate'), 40),
+                 'expiry_date',       left(coalesce(e->>'expiry_date', e->>'expiryDate'), 40)))), '[]'::jsonb)
           INTO v_certs FROM jsonb_array_elements(cv.certificates) e
          WHERE jsonb_typeof(e) = 'object';
       END IF;
       -- Sea service: vessel/rank/company/dates/technical type only
       IF jsonb_typeof(cv.sea_service) = 'array' THEN
         SELECT coalesce(jsonb_agg(jsonb_strip_nulls(jsonb_build_object(
-                 'vessel_name', left(e->>'vessel_name', 200), 'vessel_type', left(e->>'vessel_type', 100),
-                 'flag', left(e->>'flag', 100), 'grt', left(e->>'grt', 40), 'rank', left(e->>'rank', 100),
-                 'company', left(e->>'company', 200), 'sign_on', left(e->>'sign_on', 40),
-                 'sign_off', left(e->>'sign_off', 40), 'engine_type', left(e->>'engine_type', 100),
-                 'cargo_type', left(e->>'cargo_type', 100)))), '[]'::jsonb)
+                 -- explicit mapping: snake_case (new parser) OR camelCase (existing records)
+                 'vessel_name', left(coalesce(e->>'vessel_name', e->>'vesselName'), 200),
+                 'vessel_type', left(coalesce(e->>'vessel_type', e->>'vesselType'), 100),
+                 'flag',        left(coalesce(e->>'flag', e->>'flagState'), 100),
+                 'grt',         left(coalesce(e->>'grt', e->>'grtDwt'), 40),
+                 'rank',        left(coalesce(e->>'rank', e->>'rankOnBoard'), 100),
+                 'company',     left(e->>'company', 200),
+                 'sign_on',     left(coalesce(e->>'sign_on', e->>'fromDate'), 40),
+                 'sign_off',    left(coalesce(e->>'sign_off', e->>'toDate'), 40),
+                 'engine_type', left(coalesce(e->>'engine_type', e->>'engineType'), 100),
+                 'cargo_type',  left(coalesce(e->>'cargo_type', e->>'cargoType'), 100)))), '[]'::jsonb)
           INTO v_sea FROM jsonb_array_elements(cv.sea_service) e
          WHERE jsonb_typeof(e) = 'object';
       END IF;
@@ -398,13 +404,6 @@ BEGIN
     END IF;
   END IF;
 
-  -- Canonical rank (server taxonomy) — manager target rank for invites
-  v_rank := resolve_canonical_rank(coalesce(v_target_rank, (SELECT rank FROM crew_profiles WHERE id = v_uid)));
-  IF NOT coalesce((v_rank->>'ok')::boolean, false) THEN
-    RETURN jsonb_build_object('ok', false, 'error', CASE WHEN v_target_rank IS NULL THEN 'NEED_RANK' ELSE 'CAMPAIGN_RANK_UNRESOLVED' END,
-                              'rank_error', v_rank->>'error_code');
-  END IF;
-
   PERFORM pg_advisory_xact_lock(hashtext(v_uid::text || ':' || v_mode || ':' || v_ctx));
 
   IF p_restart AND v_ctx = 'self' THEN
@@ -418,6 +417,16 @@ BEGIN
   IF v_id IS NOT NULL THEN
     RETURN jsonb_build_object('ok', true, 'action', 'resume', 'assessment_id', v_id,
                               'mode', v_mode, 'context_id', v_ctx, 'round', v_round);
+  END IF;
+
+  -- Genuinely NEW assessment only: validate the CURRENT rank here. An existing
+  -- active attempt resumed above keeps its frozen snapshot rank, even if the
+  -- profile was edited since. Preflight confirmation remains mandatory.
+  -- Canonical rank (server taxonomy) — manager target rank for invites
+  v_rank := resolve_canonical_rank(coalesce(v_target_rank, (SELECT rank FROM crew_profiles WHERE id = v_uid)));
+  IF NOT coalesce((v_rank->>'ok')::boolean, false) THEN
+    RETURN jsonb_build_object('ok', false, 'error', CASE WHEN v_target_rank IS NULL THEN 'NEED_RANK' ELSE 'CAMPAIGN_RANK_UNRESOLVED' END,
+                              'rank_error', v_rank->>'error_code');
   END IF;
 
   IF v_mode = 'CV_BASED' THEN
