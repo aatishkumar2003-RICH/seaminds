@@ -36,7 +36,9 @@ export async function openAssessmentV2(
   if (!error) return parse(data) ?? { ok: false, error: "EMPTY_RESPONSE" };
   if (!isMissingFn(error)) return { ok: false, error: error.message };
 
-  // ---- legacy fallback (pre-migration) ----
+  // ---- legacy fallback: ONLY reachable before Stage A exists ----
+  // After Stage A the function exists (so this never runs) and the database
+  // rejects any direct client insert with ASSESSMENT_GATEWAY_REQUIRED.
   if (opts.inviteId) {
     if (!opts.crewId) return { ok: false, error: "AUTH_REQUIRED" };
     const { data: created, error: cErr } = await supabase
@@ -45,7 +47,7 @@ export async function openAssessmentV2(
       .select("id")
       .single();
     if (cErr) return { ok: false, error: cErr.message };
-    return { ok: true, action: "start", assessment_id: created.id, mode: "PROFILE" };
+    return { ok: true, action: "start", assessment_id: created.id };
   }
   if (opts.restart && opts.crewId) {
     await supabase.from("smc_assessments").update({ status: "abandoned" })
@@ -64,6 +66,10 @@ export function gatewayErrorMessage(code?: string): string {
     case "INVITE_NOT_YOURS": return "This invitation belongs to a different account.";
     case "CAMPAIGN_CLOSED": return "This interview is closed.";
     case "ROUND2_REQUIRES_CV_BASED": return "This round is a CV-Based assessment.";
-    default: return code || "Could not start the assessment";
+    case "ROUND1_ALREADY_EXISTS":
+    case "ROUND2_ALREADY_EXISTS": return "This interview has already been taken. Your saved result is kept.";
+    default:
+      if (code && code.includes("ASSESSMENT_GATEWAY_REQUIRED")) return "Please refresh the SeaMinds app and try again.";
+      return code || "Could not start the assessment";
   }
 }
