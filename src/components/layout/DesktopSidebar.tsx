@@ -64,7 +64,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
       </nav>
 
       <div className="mt-auto flex flex-col items-start gap-1 w-full px-2">
-        <div className="text-xs font-semibold text-foreground truncate w-full">{firstName || "Seafarer"}</div>
+        <a href="/profile" aria-label="My Sea Profile" className="text-xs font-semibold text-foreground truncate w-full hover:text-primary">{firstName || "Seafarer"}</a>
         <div className="text-[11px] text-muted-foreground">🔥 {streakCount} day streak</div>
         <button onClick={onReplayTour} className="flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground">
           <HelpCircle size={14} />

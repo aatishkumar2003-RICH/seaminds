@@ -45,9 +45,9 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
       </div>
       <div className="flex items-center gap-1">
         {headerRight}
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary">
+        <a href="/profile" aria-label="My Sea Profile" className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary transition-transform active:scale-95">
           <span className="text-base">{flag}</span>
-        </div>
+        </a>
       </div>
     </div>
   );

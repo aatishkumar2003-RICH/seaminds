@@ -45,6 +45,7 @@ const ManagerInterviews = () => {
   const [openId, setOpenId] = useState<string | null>(null);
   const [board, setBoard] = useState<Record<string, any[]>>({});
   const [busy, setBusy] = useState(false);
+  const [r2Busy, setR2Busy] = useState<string | null>(null);
 
   // email invite dialog
   const [inviteFor, setInviteFor] = useState<Campaign | null>(null);
