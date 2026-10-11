@@ -161,7 +161,8 @@ const QuickProfile = () => {
       if (!active) return;
       const p: any = prof || {};
       setFirstName(p.first_name || "Sailor");
-      setRank(p.rank || p.role || "");
+      // Generic "role" (e.g. "Seafarer") is never treated as a professional rank
+      setRank(p.rank || "");
       setYearsBand(p.years_in_rank_band || "");
       setContractsBand(p.contracts_in_rank_band || "");
       setSeaBand(p.total_sea_service_band || "");
@@ -219,6 +220,18 @@ const QuickProfile = () => {
     try { await supabase.from("crew_profiles").update(patch as any).eq("id", uid); } catch { /* silent */ }
   };
 
+  /** Server taxonomy is the authority: the SAVED rank must resolve to one canonical rank. */
+  const confirmCanonicalRank = async (): Promise<boolean> => {
+    if (!uid) return false;
+    const { data: saved } = await supabase.from("crew_profiles").select("rank").eq("id", uid).maybeSingle();
+    const savedRank = (saved as any)?.rank as string | null;
+    if (!savedRank || savedRank !== rank) return false;
+    const { data, error } = await (supabase.rpc as any)("resolve_canonical_rank", { p_rank: savedRank });
+    if (error) return false;
+    const r = (typeof data === "string" ? JSON.parse(data) : data) as { ok?: boolean } | null;
+    return !!r?.ok;
+  };
+
   const setFamily = async (key: string, band: string) => {
     if (!uid) return;
     setFamilies((s) => ({ ...s, [key]: band }));
@@ -268,6 +281,8 @@ const QuickProfile = () => {
     (claims[key] || "").split(",").map((s) => s.trim()).includes(option);
 
   const finish = async () => {
+    // Completion is recorded only after the server confirms a canonical rank is saved
+    if (!(await confirmCanonicalRank())) { setStep(1); return toast.error("Please choose your official rank from the list."); }
     await saveProfile({ quick_profile_completed_at: new Date().toISOString() });
     setDone(true);
   };
@@ -456,7 +471,11 @@ const QuickProfile = () => {
 
             <button
               style={{ ...goldBtn, opacity: step1Done ? 1 : 0.5 }}
-              onClick={() => { if (!step1Done) return toast(t("qpNeedFour")); setStep(2); }}
+              onClick={async () => {
+                if (!step1Done) return toast(t("qpNeedFour"));
+                if (!(await confirmCanonicalRank())) return toast.error("Please choose your official rank from the list.");
+                setStep(2);
+              }}
             >
               {t("qpContinue")}
             </button>

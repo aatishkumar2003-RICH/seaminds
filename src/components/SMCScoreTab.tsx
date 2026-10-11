@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Upload, RefreshCw, Check, FileText, Anchor, Award, HeartPulse, X } from "lucide-react";
 import { toast } from "sonner";
+import { openAssessmentV2, gatewayErrorMessage } from "@/lib/assessmentGateway";
 import CrewPaymentGate from "@/components/smc/CrewPaymentGate";
 import SMCScoreCertificate from "@/components/smc/SMCScoreCertificate";
 import AssessmentFlow from "@/components/smc/AssessmentFlow";
@@ -177,13 +178,9 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
       if (payErr) { console.error('SMC payment query error:', payErr); setView("payment"); return; }
 
       if (payment) {
-        const { data: newAssessment } = await supabase
-          .from("smc_assessments")
-          .insert({ crew_profile_id: profileId, status: "in_progress", current_step: 1 })
-          .select("id")
-          .single();
-        if (newAssessment) {
-          setAssessmentId(newAssessment.id);
+        const res = await openAssessmentV2("PROFILE", { crewId: profileId });
+        if (res.ok && res.assessment_id) {
+          setAssessmentId(res.assessment_id);
           setView("assessment");
         }
         return;
@@ -198,34 +195,19 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
 
   const handlePaymentSuccess = async () => {
     trackPixel("StartTrial", { content_name: "smc_assessment" });
-    const { data } = await supabase
-      .from("smc_assessments")
-      .insert({ crew_profile_id: profileId, status: "in_progress", current_step: 1 })
-      .select("id")
-      .single();
-    if (data) {
-      setAssessmentId(data.id);
-      setView("assessment");
-    } else {
-      setAssessmentId("temp-" + Date.now());
-      setView("assessment");
-    }
+    const res = await openAssessmentV2("PROFILE", { crewId: profileId });
+    if (!res.ok || !res.assessment_id) { toast.error(gatewayErrorMessage(res.error)); return; }
+    setAssessmentId(res.assessment_id);
+    setView("assessment");
     trackEvent("smc_assessment_start", { rank });
   };
 
   const startRetake = async () => {
     trackPixel("StartTrial", { content_name: "smc_assessment" });
+    const res = await openAssessmentV2("PROFILE", { crewId: profileId });
+    if (!res.ok || !res.assessment_id) { toast.error(gatewayErrorMessage(res.error)); return; }
     setStarted(true);
-    const { data } = await supabase
-      .from("smc_assessments")
-      .insert({ crew_profile_id: profileId, status: "in_progress", current_step: 1 })
-      .select("id")
-      .single();
-    if (data) {
-      setAssessmentId(data.id);
-    } else {
-      setAssessmentId("temp-" + Date.now());
-    }
+    setAssessmentId(res.assessment_id);
     setView("assessment");
     trackEvent("smc_assessment_retake", { rank });
   };
@@ -235,21 +217,8 @@ const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScor
     if (startBusy) return;
     setStartBusy(true);
     try {
-      if (fresh) {
-        const { error: abErr } = await supabase
-          .from("smc_assessments")
-          .update({ status: "abandoned" })
-          .eq("crew_profile_id", profileId)
-          .eq("status", "in_progress");
-        if (abErr) throw abErr;
-      }
-
-      const { data, error } = await (supabase.rpc as any)("start_or_resume_assessment");
-      if (error) throw error;
-      const res = (typeof data === "string" ? JSON.parse(data) : data) as
-        | { ok: boolean; action?: string; assessment_id?: string; error?: string }
-        | null;
-      if (!res?.ok || !res.assessment_id) throw new Error(res?.error || "Could not start the assessment");
+      const res = await openAssessmentV2("PROFILE", { restart: fresh, crewId: profileId });
+      if (!res?.ok || !res.assessment_id) throw new Error(gatewayErrorMessage(res?.error));
 
       setAssessmentId(res.assessment_id);
       setHasInProgress(true);
