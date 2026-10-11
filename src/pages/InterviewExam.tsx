@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import AssessmentFlow from "@/components/smc/AssessmentFlow";
+import { openAssessmentV2, gatewayErrorMessage } from "@/lib/assessmentGateway";
 
 const GOLD = "#D4AF37";
 const NAVY = "#0b1929";
