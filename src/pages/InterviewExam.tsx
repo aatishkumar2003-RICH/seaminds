@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import AssessmentFlow from "@/components/smc/AssessmentFlow";
 import { openAssessmentV2, gatewayErrorMessage } from "@/lib/assessmentGateway";
@@ -10,6 +10,8 @@ const NAVY = "#0b1929";
 const InterviewExam = () => {
   const { token } = useParams();
   const navigate = useNavigate();
+  const [search] = useSearchParams();
+  const round2 = search.get("round") === "2";
   const [state, setState] = useState<"loading" | "ready" | "error" | "done" | "pending">("loading");
   const [error, setError] = useState("");
   const [ctx, setCtx] = useState<any>(null);
@@ -45,9 +47,14 @@ const InterviewExam = () => {
           .eq("crew_id", user.id)
           .eq("invite_id", claim.invite_id)
           .maybeSingle();
-        assessmentId = (existing as any)?.assessment_id || null;
+        assessmentId = round2 ? null : ((existing as any)?.assessment_id || null);
 
-        if (!assessmentId) {
+        if (round2) {
+          // Manager-requested CV-Based Round 2: separate record; Round 1 is never touched.
+          const opened = await openAssessmentV2("CV_BASED", { inviteId: claim.invite_id, crewId: user.id });
+          if (!opened.ok || !opened.assessment_id) throw new Error(gatewayErrorMessage(opened.error));
+          assessmentId = opened.assessment_id;
+        } else if (!assessmentId) {
           // Server gateway: authorizes the invite, derives context, links invite + progress
           const opened = await openAssessmentV2("PROFILE", { inviteId: claim.invite_id, crewId: user.id });
           if (!opened.ok || !opened.assessment_id) throw new Error(gatewayErrorMessage(opened.error));
@@ -73,7 +80,7 @@ const InterviewExam = () => {
           company: res.company,
         });
         // Reopen after scoring: confirm the saved, scored result without restarting the exam.
-        if ((existing as any)?.assessment_id) {
+        if (!round2 && (existing as any)?.assessment_id) {
           const { data: a } = await supabase.from("smc_assessments").select("status, overall_score").eq("id", assessmentId).maybeSingle();
           if ((a as any)?.status === "completed") {
             const { data: cr, error: ce } = await supabase.rpc("complete_interview" as any, { p_invite_id: claim.invite_id, p_assessment_id: assessmentId });
@@ -89,7 +96,7 @@ const InterviewExam = () => {
         setState("error");
       }
     })();
-  }, [token, navigate]);
+  }, [token, navigate, round2]);
 
   const finish = async () => {
     // Only a server-confirmed, scored completion shows "Interview complete".
