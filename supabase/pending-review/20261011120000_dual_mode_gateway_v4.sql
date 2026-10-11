@@ -552,8 +552,32 @@ NOTIFY pgrst, 'reload schema';
 -- NOTIFY pgrst, 'reload schema';
 
 -- =====================================================================
--- RECOVERY (forward-fix, not drop): if the gateway misbehaves after
--- Stage A, redefine open_assessment_v2 in place with a fix. Do NOT drop it
--- (start_or_resume_assessment depends on it) and do NOT re-grant client
--- INSERT once Stage B has run. Columns/index are additive and harmless.
+-- STALE-CLIENT IMPACT (honest): after Stage A, any browser still running
+-- an old cached bundle that inserts directly is REJECTED with
+-- ASSESSMENT_GATEWAY_REQUIRED. This is a real, brief disruption for those
+-- users. Recovery path: the app shows "Please refresh the SeaMinds app";
+-- the network-only /version.json check offers a one-tap Refresh; after
+-- refresh the new bundle resumes the same in-progress assessment.
+--
+-- RECOVERY IF STAGE A FAILS DURING APPLY: the whole file runs in one
+-- transaction (BEGIN ... COMMIT). Any error rolls back everything; the
+-- database stays exactly as before. Nothing else to do.
+--
+-- RECOVERY IF A PROBLEM APPEARS AFTER COMMIT (forward-fix only):
+--   * NEVER DROP open_assessment_v2 — start_or_resume_assessment()
+--     delegates to it; dropping it breaks every assessment start.
+--   * Never drop the new columns, index or triggers; never delete or
+--     rewrite assessment rows, answers, papers, checkpoints or scores.
+--   * Fix by CREATE OR REPLACE of the faulty function in place
+--     (open_assessment_v2, build_evidence_snapshot, preflight_assessment,
+--     or a trigger function), via a new reviewed migration.
+--   * If direct-insert rejection blocks users unexpectedly, replace only
+--     smc_assessments_sanitize_insert() to remove the RAISE (keep the
+--     score-nulling lines). This restores old-bundle starts.
+--   * Do NOT re-grant client INSERT once Stage B has run.
+--
+-- LAST RESORT: Cloud → Database → Backups → "Restore to this backup"
+-- (daily snapshot, ~14 days retained). Restores schema + data to that
+-- day; anything created after the snapshot is LOST, storage files are not
+-- included. Confirm a snapshot from the same day exists BEFORE applying.
 -- =====================================================================
