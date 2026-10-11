@@ -49,9 +49,11 @@ export async function openAssessmentV2(
     if (cErr) return { ok: false, error: cErr.message };
     return { ok: true, action: "start", assessment_id: created.id };
   }
-  if (opts.restart && opts.crewId) {
-    await supabase.from("smc_assessments").update({ status: "abandoned" })
-      .eq("crew_profile_id", opts.crewId).eq("status", "in_progress");
+  // Restart is DISABLED during the transition: legacy rows carry no
+  // context_id, so a client-side abandon could hit manager interviews.
+  // Never abandon anything here; just resume via the legacy RPC.
+  if (opts.restart) {
+    return { ok: false, error: "RESTART_UNAVAILABLE" };
   }
   const legacy = await (supabase.rpc as any)("start_or_resume_assessment");
   if (legacy.error) return { ok: false, error: legacy.error.message };
@@ -68,6 +70,7 @@ export function gatewayErrorMessage(code?: string): string {
     case "ROUND2_REQUIRES_CV_BASED": return "This round is a CV-Based assessment.";
     case "ROUND1_ALREADY_EXISTS":
     case "ROUND2_ALREADY_EXISTS": return "This interview has already been taken. Your saved result is kept.";
+    case "RESTART_UNAVAILABLE": return "Starting over is paused during an update. Your current assessment is kept — tap Resume.";
     default:
       if (code && code.includes("ASSESSMENT_GATEWAY_REQUIRED")) return "Please refresh the SeaMinds app and try again.";
       return code || "Could not start the assessment";
