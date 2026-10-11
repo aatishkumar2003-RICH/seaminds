@@ -2562,6 +2562,7 @@ export type Database = {
           invited_whatsapp: string | null
           manager_note: string | null
           overall_score: number | null
+          round_2_assessment_id: string | null
           shortlisted: boolean | null
           status: string
           token: string
@@ -2579,6 +2580,7 @@ export type Database = {
           invited_whatsapp?: string | null
           manager_note?: string | null
           overall_score?: number | null
+          round_2_assessment_id?: string | null
           shortlisted?: boolean | null
           status?: string
           token: string
@@ -2596,6 +2598,7 @@ export type Database = {
           invited_whatsapp?: string | null
           manager_note?: string | null
           overall_score?: number | null
+          round_2_assessment_id?: string | null
           shortlisted?: boolean | null
           status?: string
           token?: string
@@ -4347,18 +4350,24 @@ export type Database = {
       }
       smc_assessments: {
         Row: {
+          assessment_mode: string
           assessment_round: number
           behavioural_score: number | null
+          campaign_id: string | null
           certificate_id: string | null
           completed_at: string | null
+          context_id: string
           crew_profile_id: string
           current_step: number
+          cv_version_hash: string | null
           dimension_scores: Json | null
           doc_upload_status: string
           english_score: number | null
+          evidence_snapshot: Json | null
           experience_score: number | null
           id: string
           interview_mode: string | null
+          invite_id: string | null
           judgment_score: number | null
           level_profile: Json | null
           overall_score: number | null
@@ -4379,18 +4388,24 @@ export type Database = {
           wellness_score: number | null
         }
         Insert: {
+          assessment_mode?: string
           assessment_round?: number
           behavioural_score?: number | null
+          campaign_id?: string | null
           certificate_id?: string | null
           completed_at?: string | null
+          context_id?: string
           crew_profile_id: string
           current_step?: number
+          cv_version_hash?: string | null
           dimension_scores?: Json | null
           doc_upload_status?: string
           english_score?: number | null
+          evidence_snapshot?: Json | null
           experience_score?: number | null
           id?: string
           interview_mode?: string | null
+          invite_id?: string | null
           judgment_score?: number | null
           level_profile?: Json | null
           overall_score?: number | null
@@ -4411,18 +4426,24 @@ export type Database = {
           wellness_score?: number | null
         }
         Update: {
+          assessment_mode?: string
           assessment_round?: number
           behavioural_score?: number | null
+          campaign_id?: string | null
           certificate_id?: string | null
           completed_at?: string | null
+          context_id?: string
           crew_profile_id?: string
           current_step?: number
+          cv_version_hash?: string | null
           dimension_scores?: Json | null
           doc_upload_status?: string
           english_score?: number | null
+          evidence_snapshot?: Json | null
           experience_score?: number | null
           id?: string
           interview_mode?: string | null
+          invite_id?: string | null
           judgment_score?: number | null
           level_profile?: Json | null
           overall_score?: number | null
@@ -5276,6 +5297,15 @@ export type Database = {
         Returns: Json
       }
       build_daily_notifications: { Args: never; Returns: string }
+      build_evidence_snapshot: {
+        Args: {
+          p_mode: string
+          p_target_rank: string
+          p_target_vessel?: string
+          p_uid: string
+        }
+        Returns: Json
+      }
       build_post: {
         Args: { p_audience?: string; p_id?: string; p_kind?: string }
         Returns: Json
@@ -5520,6 +5550,10 @@ export type Database = {
         Returns: Json
       }
       marketing_pack_daily: { Args: never; Returns: string }
+      open_assessment_v2: {
+        Args: { p_invite_id?: string; p_mode: string; p_restart?: boolean }
+        Returns: Json
+      }
       outreach_digest_scan: { Args: never; Returns: string }
       owns_crew_profile: {
         Args: { _crew_profile_id: string }
