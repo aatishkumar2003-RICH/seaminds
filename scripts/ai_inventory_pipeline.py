@@ -47,7 +47,8 @@ def call(model, messages, tries=4):
         if r.status_code == 200:
             txt = r.json()["choices"][0]["message"]["content"]
             txt = re.sub(r"^```(json)?|```$", "", txt.strip()).strip()
-            return json.loads(txt)
+            v = json.loads(txt)
+            return v if isinstance(v, dict) else {"items": v, "results": v}
         if r.status_code in (429,) or r.status_code >= 500: time.sleep(5 * (i + 1)); continue
         raise RuntimeError(f"{model} {r.status_code} {r.text[:200]}")
     raise RuntimeError(f"{model} retries exhausted")
@@ -88,7 +89,7 @@ def validate(model, fam, kind, items):
             "trivial, or touches wellness/health/family/personal life. ")
     task += ('For MCQs, independently choose the correct option index yourself. Return {"results":[{"id":int,"valid":bool,"answer_index":int|null,"issue":str}]}.'
              if kind == "mcq" else 'For open items also fail if key_steps are not a sound scoring rubric. Return {"results":[{"id":int,"valid":bool,"issue":str}]}.')
-    res = call(model, [{"role": "system", "content": RULES}, {"role": "user", "content": task + "\nItems:\n" + json.dumps(blind)}])
+    res = call(model, [{"role": "system", "content": RULES}, {"role": "user", "content": task + " Respond in JSON.\nItems:\n" + json.dumps(blind)}])
     return {r["id"]: r for r in res.get("results", []) if isinstance(r, dict) and "id" in r}
 
 def norm(s): return re.sub(r"[^a-z0-9 ]", "", (s or "").lower())
