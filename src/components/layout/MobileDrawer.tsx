@@ -107,6 +107,9 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
         <button onClick={onReplayTour} className="flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground">
           <HelpCircle size={14} /> Replay Tour
         </button>
+        <a href="/profile" className="flex items-center justify-center gap-1.5 py-2 text-xs font-semibold text-primary">
+          👤 My Sea Profile
+        </a>
         <button onClick={() => setAboutOpen(true)} className="flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground">
           ⓘ About SeaMinds
         </button>

@@ -42,6 +42,8 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
   const [report, setReport] = useState<any>(null);
   const [reportLoading, setReportLoading] = useState(false);
   const [scoringFailed, setScoringFailed] = useState(false);
+  const [failCode, setFailCode] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
   const [levelProfile, setLevelProfile] = useState<LevelProfile | null>(null);
   const { accessToken } = useAuth();
 
@@ -80,12 +82,17 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
       // R3: if answers are still being scored, the server answers SCORING_PENDING; keep the
       // saved answers, nudge the scoring queue and try again instead of finalising early.
       // Single-flight on the server: concurrent/duplicate calls get IN_PROGRESS or BACKOFF instead of new AI calls.
-      for (let attempt = 0; attempt < 18 && !cancelled; attempt++) {
+      const deadline = Date.now() + 4 * 60 * 1000; // bounded wait; never an endless spinner
+      let lastCode: string | null = null;
+      for (let attempt = 0; attempt < 18 && !cancelled && Date.now() < deadline; attempt++) {
         if (attempt > 0 && await readRow()) break; // saved by another request/worker
         const res = await supabase.functions.invoke("score-assessment", { body: { assessmentId }, headers: authHeaders }).catch(() => null);
         let code: string | undefined; let retryAfter = 0;
         try { const j = await (res as any)?.error?.context?.json?.(); code = j?.error_code; retryAfter = Number(j?.retry_after) || 0; } catch { /* not JSON */ }
+        lastCode = code || null;
         if (res && !(res as any).error) break;
+        if (code === "SCORING_MANUAL_REVIEW" || code === "FINALIZATION_MANUAL_REVIEW") lastCode = code = "MANUAL_REVIEW";
+        if (code === "ANSWERS_INCOMPLETE" || code === "MANUAL_REVIEW" || code === "LEDGER_INVALID") break;
         if (!["SCORING_PENDING", "FINAL_SCORING_RETRY", "FINAL_SCORING_IN_PROGRESS", "PERSIST_FAILED", "PREPARE_FAILED"].includes(code || "") && res) break;
         if (code === "SCORING_PENDING") await supabase.functions.invoke("score-paper-answers", { body: { assessmentId }, headers: authHeaders }).catch(() => null);
         await new Promise(r => setTimeout(r, Math.min(Math.max(retryAfter * 1000, 10000), 60000)));
@@ -101,6 +108,7 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
       if (cancelled) return;
 
       if (!stored) {
+        setFailCode(lastCode);
         setScoringFailed(true);
         return;
       }
@@ -132,7 +140,7 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
     };
     run();
     return () => { cancelled = true; };
-  }, []);
+  }, [retryKey]);
 
   const overall = scores?.overall ?? 0;
   const finalScore = Math.round(overall * 100) / 100;
@@ -183,8 +191,22 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
       return (
         <div className="flex flex-col items-center justify-center h-full gap-4 px-6 text-center">
           <Shield size={40} className="text-primary" />
-          <p className="text-base font-semibold text-foreground">Scoring is still in progress</p>
-          <p className="text-xs text-muted-foreground">Your answers are safely recorded. Your SMC score will appear on your profile shortly.</p>
+          <p className="text-base font-semibold text-foreground">
+            {failCode === "ANSWERS_INCOMPLETE" ? "Some answers are missing" : failCode === "MANUAL_REVIEW" ? "Your result needs a manual check" : "Scoring is being processed safely"}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {failCode === "ANSWERS_INCOMPLETE"
+              ? "Not every answer reached our server. Go back and resume the assessment — you will be taken to the missing question. Nothing is scored until all answers are saved."
+              : failCode === "MANUAL_REVIEW"
+              ? "Your saved answers are kept. SeaMinds will finish the check; your score will appear in My Score. Questions: support@seaminds.life"
+              : "Your answers are saved. No score is shown until it is fully calculated and saved. You can try again now or come back later — it will appear in My Score."}
+          </p>
+          {failCode !== "ANSWERS_INCOMPLETE" && failCode !== "MANUAL_REVIEW" && (
+            <button onClick={() => { setScoringFailed(false); setRetryKey((k) => k + 1); }}
+              style={{ background:'transparent', color:'#D4AF37', border:'1px solid #D4AF37', padding:'10px 24px', borderRadius:'8px', fontWeight:'bold', cursor:'pointer' }}>
+              Try again now
+            </button>
+          )}
           <button onClick={onBack}
             style={{ background:'#D4AF37', color:'#0D1B2A', border:'none', padding:'10px 24px', borderRadius:'8px', fontWeight:'bold', cursor:'pointer' }}>
             Back to my profile

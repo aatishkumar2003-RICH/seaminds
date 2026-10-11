@@ -260,6 +260,20 @@
       "when": 1791700520311,
       "tag": "0036_dual_mode_gateway_v4_stage_a",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1791705956111,
+      "tag": "0037_ai_validated_screening_tier",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1791706115756,
+      "tag": "0038_manager_leaderboard_four_dimensions",
+      "breakpoints": true
     }
   ]
 }

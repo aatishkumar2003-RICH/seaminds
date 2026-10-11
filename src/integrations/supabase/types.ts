@@ -447,6 +447,7 @@ export type Database = {
           level: string
           notes: string | null
           requirements: Json
+          requirements_by_mode: Json | null
           status: string
           vessel_context: string
         }
@@ -460,6 +461,7 @@ export type Database = {
           level: string
           notes?: string | null
           requirements: Json
+          requirements_by_mode?: Json | null
           status?: string
           vessel_context?: string
         }
@@ -473,6 +475,7 @@ export type Database = {
           level?: string
           notes?: string | null
           requirements?: Json
+          requirements_by_mode?: Json | null
           status?: string
           vessel_context?: string
         }
@@ -5319,16 +5322,17 @@ export type Database = {
           cv_request_status: string
           english: number
           invite_id: string
+          judgment: number
           name: string
           nationality: string
           overall: number
           red_flag_count: number
+          round: number
           scoring_tier: string
           shortlisted: boolean
           status: string
           technical: number
           token: string
-          wellness: number
           whatsapp: string
         }[]
       }
@@ -5503,6 +5507,7 @@ export type Database = {
       }
       get_interview_by_token: { Args: { p_token: string }; Returns: Json }
       get_market_indices: { Args: never; Returns: Json }
+      get_missing_answers: { Args: { p_assessment_id: string }; Returns: Json }
       get_my_applicants: { Args: never; Returns: Json }
       get_my_applications: { Args: never; Returns: Json }
       get_my_credit_balance: { Args: never; Returns: Json }
