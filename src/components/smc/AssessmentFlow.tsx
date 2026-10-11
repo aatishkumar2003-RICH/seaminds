@@ -507,11 +507,26 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
         setQIndex(prev => prev + 1);
       }
     } else {
-      // Durable scoring: queue first, ScoreReveal still runs the fast direct path
-      supabase.rpc('enqueue_scoring' as any, { p_assessment_id: assessmentId })
-        .then(({ error }: any) => { if (error) console.log('enqueue_scoring failed (non-blocking):', error.message); });
-      setFlowStep('score');
+      void finishPaper();
     }
+  };
+
+  // Server-verified finish: every issued item must have a durably saved answer before scoring starts.
+  const finishPaper = async () => {
+    const { data, error } = await supabase.rpc('get_missing_answers' as any, { p_assessment_id: assessmentId });
+    const r: any = data;
+    if (error || !r?.ok) { toast.error("Couldn't confirm your answers are saved. Check your connection and press submit again."); return; }
+    const missing: string[] = r.missing || [];
+    if (missing.length > 0) {
+      const idx = flatQuestions.findIndex((q) => q.id === missing[0]);
+      toast.error(`${missing.length} answer${missing.length > 1 ? 's were' : ' was'} not saved. Please answer question ${idx + 1} again.`);
+      if (idx >= 0) { setMcqSubmitted(false); setSelectedOption(null); setTextAnswer(''); setQIndex(idx); setTimerActive(true); }
+      return;
+    }
+    const { error: qe } = await supabase.rpc('enqueue_scoring' as any, { p_assessment_id: assessmentId });
+    if (qe) console.log('enqueue_scoring failed (ScoreReveal retries):', qe.message);
+    void supabase.functions.invoke('score-paper-answers', { body: { assessmentId }, headers: { Authorization: `Bearer ${accessToken}` } }).catch(() => null);
+    setFlowStep('score');
   };
 
   const handleTextSubmit = () => {
