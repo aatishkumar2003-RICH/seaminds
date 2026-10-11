@@ -570,7 +570,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
 
   const currentQ = flatQuestions[qIndex];
   const totalQuestions = flatQuestions.length;
-  const behaviourLabel = sealed ? '🧭 Professional Behaviour' : '💬 Personal Wellbeing';
+  const behaviourLabel = '🧭 Professional Behaviour';
   const sectionLabel = currentQ?.type === 'mcq' ? '📋 Knowledge Assessment' : currentQ?.type === 'scenario' ? '🚨 Situational Judgment' : behaviourLabel;
   const sectionNum = currentQ?.type === 'mcq' ? 'Section 1' : currentQ?.type === 'scenario' ? 'Section 2' : 'Section 3';
 
@@ -599,7 +599,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
       setPreflight((p) => ({ ...p, busy: false, reported: !!(data as any)?.ok }));
       if ((data as any)?.ok) toast.success('Reported. The company target rank is unchanged.');
     };
-    const editProfile = () => { toast('Open your Profile and correct your rank, then start again.'); onExit?.(); };
+    const editProfile = () => { window.location.assign(`/profile?return=${encodeURIComponent('/app?tab=smc')}`); };
     return (
       <div className="flex flex-col h-full px-6 py-6 overflow-y-auto" style={{ background: '#0b1929' }}>
         {onExit && (
