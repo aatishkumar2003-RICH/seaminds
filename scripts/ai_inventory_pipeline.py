@@ -92,7 +92,11 @@ def validate(model, fam, kind, items):
     task += ('For MCQs, independently choose the correct option index yourself. Return {"results":[{"id":int,"valid":bool,"answer_index":int|null,"issue":str}]}.'
              if kind == "mcq" else 'For open items also fail if key_steps are not a sound scoring rubric. Return {"results":[{"id":int,"valid":bool,"issue":str}]}.')
     res = call(model, [{"role": "system", "content": RULES}, {"role": "user", "content": task + " Respond in JSON.\nItems:\n" + json.dumps(blind)}])
-    return {r["id"]: r for r in res.get("results", []) if isinstance(r, dict) and "id" in r}
+    out = {}
+    for r in res.get("results", []) or []:
+        try: out[int(r["id"])] = r
+        except Exception: pass
+    return out
 
 def norm(s): return re.sub(r"[^a-z0-9 ]", "", (s or "").lower())
 
@@ -121,7 +125,9 @@ def run_family(fam):
             if ok and kind == "mcq": ok = a.get("answer_index") == it["correct_index"] == bb.get("answer_index")
             if ok and any(difflib.SequenceMatcher(None, norm(it["question"]), norm(k["question"])).ratio() > 0.85 for k in kept): ok = False
             if ok: it["kind"] = kind; kept.append(it)
-            else: log["rejected"] += 1
+            else:
+                log["rejected"] += 1
+                if kind != "mcq": print(fam, kind, "REJECT", (a or {}).get("issue"), "|", (bb or {}).get("issue"), flush=True)
         print(fam, kind, "kept so far", len(kept), flush=True)
     json.dump({"family": fam, "ranks": FAMILIES[fam][0], "items": kept, "log": log,
                "models": {"draft": DRAFT, "validator_a": VAL_A, "validator_b": VAL_B}}, open(f"{OUT}/{fam}.json", "w"))
