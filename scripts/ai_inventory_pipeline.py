@@ -38,6 +38,8 @@ FAMILIES = {
     ["food safety & HACCP", "galley fire safety", "MLC 2006 food & catering standards", "provisions & storage", "hygiene & sanitation", "garbage management MARPOL Annex V", "allergen & menu planning", "emergency duties"]),
 }
 PLAN = [("mcq", 13)] * 4 + [("scenario", 8), ("behavioural", 6)]  # overgenerate; validators prune
+if os.environ.get("PLAN"):  # top-up runs, e.g. PLAN="scenario:8:3,behavioural:6:2" (kind:size:batches); merges into existing file
+    PLAN = [(k, int(n)) for part in os.environ["PLAN"].split(",") for k, n, b in [part.split(":")] for _ in range(int(b))]
 
 def call(model, messages, tries=4):
     body = {"model": model, "messages": messages, "response_format": {"type": "json_object"}}
@@ -95,10 +97,11 @@ def validate(model, fam, kind, items):
 def norm(s): return re.sub(r"[^a-z0-9 ]", "", (s or "").lower())
 
 def run_family(fam):
-    kept, log = [], {"drafted": 0, "rejected": 0}
+    prev = json.load(open(f"{OUT}/{fam}.json")) if os.environ.get("PLAN") and os.path.exists(f"{OUT}/{fam}.json") else None
+    kept, log = (prev["items"], prev["log"]) if prev else ([], {"drafted": 0, "rejected": 0})
     for b, (kind, n) in enumerate(PLAN):
         try:
-            items = [x for x in draft(fam, kind, n, b) if isinstance(x, dict) and x.get("question")]
+            items = [x for x in draft(fam, kind, n, b + (100 if prev else 0)) if isinstance(x, dict) and x.get("question")]
         except Exception as e:
             print(fam, kind, "draft failed", e, flush=True); continue
         if kind == "mcq":
