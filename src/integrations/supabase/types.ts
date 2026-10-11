@@ -5322,16 +5322,17 @@ export type Database = {
           cv_request_status: string
           english: number
           invite_id: string
+          judgment: number
           name: string
           nationality: string
           overall: number
           red_flag_count: number
+          round: number
           scoring_tier: string
           shortlisted: boolean
           status: string
           technical: number
           token: string
-          wellness: number
           whatsapp: string
         }[]
       }
