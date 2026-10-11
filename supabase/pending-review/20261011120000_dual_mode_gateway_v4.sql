@@ -11,6 +11,21 @@
 -- Excludes all medical / wellness data from evidence snapshots.
 -- =====================================================================
 
+-- DEPLOYMENT SEQUENCE (approved order):
+--   1. Publish the frontend containing src/lib/assessmentGateway.ts.
+--      Before Stage A it falls back to the legacy server paths only
+--      when open_assessment_v2 does not exist.
+--   2. Apply Stage A (this file). From that moment:
+--      - open_assessment_v2 exists, so the client fallback never runs;
+--      - stale cached bundles that insert directly get
+--        ASSESSMENT_GATEWAY_REQUIRED (refresh prompt) instead of creating
+--        an untracked or wrongly-typed assessment;
+--      - stale "start over" calls cannot abandon manager interviews.
+--   3. After all sessions are on the new bundle, remove the client
+--      fallback in a follow-up commit.
+--   4. Stage B (grant tidy-up) separately approved.
+-- =====================================================================
+
 BEGIN;
 
 -- ---------------------------------------------------------------------
@@ -349,6 +364,7 @@ BEGIN
 
     -- Respect an EXISTING linked assessment for this round: resume it, or
     -- refuse to create a replacement. Never relink or duplicate history.
+    SELECT NULL::uuid AS id, NULL::text AS status, NULL::uuid AS crew_profile_id INTO linked;
     IF v_round = 2 AND inv.round_2_assessment_id IS NOT NULL THEN
       SELECT id, status, crew_profile_id INTO linked FROM smc_assessments WHERE id = inv.round_2_assessment_id;
     ELSIF v_round = 1 AND inv.assessment_id IS NOT NULL THEN
