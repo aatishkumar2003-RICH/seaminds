@@ -475,15 +475,18 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   const submitAnswer = async (question: string, answer: string, currentQ: FlatQuestion) => {
     setEvaluating(true);
     setTimerActive(false);
+    let saved = false;
     try {
       const d = await submitToLedger(currentQ.id, answer);
       if (!d) { setTimerActive(true); return; }
+      saved = true;
       // Scoring runs asynchronously and is retried on failure; it never blocks or zeroes the answer.
       void supabase.functions.invoke('score-paper-answers', { body: { assessmentId }, headers: { Authorization: `Bearer ${accessToken}` } }).catch(() => null);
       setTranscript(prev => [...prev, { question, answer, score: 0, redFlag: false, redFlagCategory: null, followUp: null }]);
       void persistAnswer({ question, answer, question_type: currentQ.type, is_followup: false, ai_score: null, red_flag: false, red_flag_category: null });
     } finally { setEvaluating(false); }
-    advanceQuestion();
+    // Only move on once the answer is durably saved; a failed save keeps the candidate on this question.
+    if (saved) advanceQuestion();
   };
 
   const advanceQuestion = () => {
@@ -492,7 +495,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
       const currQ = flatQuestions[qIndex];
       // Show section title card when switching sections
       if (nextQ && currQ && nextQ.type !== currQ.type) {
-        const label = nextQ.type === 'scenario' ? '🚨 Situational Judgment' : (sealed ? '🧭 Professional Behaviour' : '💬 Personal Wellbeing');
+        const label = nextQ.type === 'scenario' ? '🚨 Situational Judgment' : '🧭 Professional Behaviour';
         const num = nextQ.type === 'scenario' ? 'Section 2' : 'Section 3';
         const icon = nextQ.type === 'scenario' ? '🚨' : '💬';
         setSectionCard({ type: nextQ.type, label, num, icon });
