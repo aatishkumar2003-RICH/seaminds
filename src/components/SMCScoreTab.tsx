@@ -1,697 +1,167 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { trackEvent } from "@/lib/analytics";
-import { trackPixel } from "@/lib/metaPixel";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { Upload, RefreshCw, Check, FileText, Anchor, Award, HeartPulse, X } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { openAssessmentV2, gatewayErrorMessage } from "@/lib/assessmentGateway";
-import CrewPaymentGate from "@/components/smc/CrewPaymentGate";
-import SMCScoreCertificate from "@/components/smc/SMCScoreCertificate";
+import { supabase } from "@/integrations/supabase/client";
+import { trackEvent } from "@/lib/analytics";
+import { openAssessmentV2, gatewayErrorMessage, type AssessmentMode } from "@/lib/assessmentGateway";
+import { EXAM_CONTRACT, SCREENING_LABEL, CV_EVIDENCE_LABEL } from "@/lib/examContract";
 import AssessmentFlow from "@/components/smc/AssessmentFlow";
-import MyDocumentsSection from "@/components/smc/MyDocumentsSection";
-import SalaryBenchmark from "@/components/SalaryBenchmark";
-import CvUpload from "@/components/CvUpload";
-import ShareResult from "@/components/ShareResult";
 
-interface SMCScoreTabProps {
-  profileId: string;
-  firstName: string;
-  lastName: string;
-  rank: string;
-  shipName: string;
-}
+interface SMCScoreTabProps { profileId: string; firstName: string; lastName: string; rank: string; shipName: string }
 
-type View = "loading" | "payment" | "assessment" | "certificate";
-type CvStatus = "idle" | "reading" | "done" | "error";
+type Row = {
+  id: string; status: string; assessment_mode: AssessmentMode; context_id: string; overall_score: number | null;
+  score_band: string | null; certificate_id: string | null; completed_at: string | null; started_at: string | null;
+  evidence_snapshot: any;
+};
+type Invite = { id: string; token: string; cv_request_status: string | null; round_2_assessment_id: string | null; status: string | null };
 
+const GOLD = "#D4AF37", NAVY = "#0D1B2A", CARD = "#112240", MUTED = "#94A3B8";
+const btnPrimary = { background: GOLD, color: NAVY } as const;
+const btnSecondary = { background: "transparent", color: GOLD, border: `1px solid ${GOLD}` } as const;
+
+const fmtDate = (d: string | null) => (d ? new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "");
+const badgeFor = (r: Row) =>
+  r.evidence_snapshot?.snapshot_type === "historical_legacy" ? "Historical / test" : null;
+
+/** My Score hub — two independent tracks (PROFILE, CV_BASED) + manager Round 2 requests. */
 const SMCScoreTab = ({ profileId, firstName, lastName, rank, shipName }: SMCScoreTabProps) => {
-  const { accessToken } = useAuth();
-  const [view, setView] = useState<View>("loading");
-  const [assessmentId, setAssessmentId] = useState("");
-  const [salaryOpen, setSalaryOpen] = useState(false);
-  const [crewUniqueId, setCrewUniqueId] = useState<string | null>(null);
-  const [showCvUpload, setShowCvUpload] = useState(false);
-  const [selfPrice, setSelfPrice] = useState(0);
-  const [jobAlertsEnabled, setJobAlertsEnabled] = useState(true);
-  const [started, setStarted] = useState(false);
-  const [scoreValue, setScoreValue] = useState<number | null>(null);
-  const [scoreBand, setScoreBand] = useState<string | null>(null);
-  const [flowOpen, setFlowOpen] = useState(false);
-  const [startBusy, setStartBusy] = useState(false);
-  const [hasInProgress, setHasInProgress] = useState(false);
+  const navigate = useNavigate();
+  const [rows, setRows] = useState<Row[] | null>(null);
+  const [invites, setInvites] = useState<Invite[]>([]);
+  const [hasCv, setHasCv] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [open, setOpen] = useState<{ id: string; mode: AssessmentMode } | null>(null);
 
-  // CV parse state
-  const [cvStatus, setCvStatus] = useState<CvStatus>("idle");
-  const [cvError, setCvError] = useState("");
-  const fileRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const init = async () => {
-      try {
-        await checkStatus();
-        await checkExistingCvData();
-        const { data } = await supabase.from("crew_profiles").select("crew_unique_id, job_alerts_enabled").eq("id", profileId).maybeSingle();
-        if (data?.crew_unique_id) setCrewUniqueId(data.crew_unique_id);
-        if (data) setJobAlertsEnabled(data.job_alerts_enabled !== false);
-      } catch (e) {
-        console.error('SMCScoreTab init error:', e);
-        setView("payment");
-      }
-    };
-    init();
+  const load = useCallback(async () => {
+    if (!profileId) return;
+    const [{ data: a }, { data: inv }, { data: cv }] = await Promise.all([
+      supabase.from("smc_assessments")
+        .select("id, status, assessment_mode, context_id, overall_score, score_band, certificate_id, completed_at, started_at, evidence_snapshot" as any)
+        .eq("crew_profile_id", profileId).order("started_at", { ascending: false }),
+      supabase.from("interview_invites").select("id, token, cv_request_status, round_2_assessment_id, status" as any)
+        .eq("crew_profile_id", profileId).in("cv_request_status", ["REQUESTED", "SUBMITTED"]),
+      supabase.from("crew_cv_data").select("certificates, sea_service").eq("user_id", profileId).maybeSingle(),
+    ]);
+    setRows(((a as any[]) || []) as Row[]);
+    setInvites(((inv as any[]) || []) as Invite[]);
+    const c: any = cv;
+    setHasCv(!!c && ((Array.isArray(c.certificates) && c.certificates.length > 0) || (Array.isArray(c.sea_service) && c.sea_service.length > 0)));
   }, [profileId]);
 
-  useEffect(() => {
-    supabase.rpc('get_admin_settings', { p_keys: ['price_self_assessment'] })
-      .then(({ data }) => { if (data?.[0]?.value) setSelfPrice(Number(data[0].value)); });
-  }, []);
+  useEffect(() => { load(); }, [load]);
 
-  const checkExistingCvData = async () => {
-    const { data } = await supabase
-      .from("crew_cv_data")
-      .select("id")
-      .eq("user_id", profileId)
-      .maybeSingle();
-    if (data) setCvStatus("done");
-  };
-
-  const handleCvParse = async (file: File) => {
-    console.log("SMCScoreTab CV parse: file selected", file.name, file.type, file.size);
-    setCvStatus("reading");
-    setCvError("");
-
+  const start = async (mode: AssessmentMode, restart = false) => {
+    if (busy) return;
+    if (mode === "CV_BASED" && !hasCv) { toast.error(gatewayErrorMessage("CV_REQUIRED")); return; }
+    setBusy(mode);
     try {
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const result = reader.result as string;
-          resolve(result.split(",")[1]);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-
-      console.log("SMCScoreTab CV parse: calling parse-cv-documents, base64 length:", base64.length);
-      const response = await supabase.functions.invoke("parse-cv-documents", {
-        body: { file_base64: base64, mime_type: file.type },
-        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
-      });
-
-      console.log("CV parse response:", JSON.stringify(response));
-
-      // supabase.functions.invoke returns { data, error }
-      // data is the parsed JSON body from the edge function
-      const payload = response.data;
-      
-      // Handle case where payload might be a string (double-encoded)
-      const resolved = typeof payload === "string" ? JSON.parse(payload) : payload;
-
-      if (response.error || !resolved?.success) {
-        throw new Error(resolved?.error || response.error?.message || "Could not read CV");
+      const res = await openAssessmentV2(mode, { restart, crewId: profileId });
+      if (!res.ok || !res.assessment_id) {
+        if (res.error === "NEED_RANK") { navigate(`/profile?return=${encodeURIComponent("/app?tab=smc")}`); }
+        toast.error(gatewayErrorMessage(res.error)); return;
       }
-
-      const parsed = resolved.data;
-
-      // Upsert into crew_cv_data
-      const { error: dbError } = await supabase
-        .from("crew_cv_data")
-        .upsert(
-          {
-            user_id: profileId,
-            certificates: parsed.certificates || [],
-            sea_service: parsed.sea_service || [],
-            medical: parsed.medical || [],
-            education: parsed.education || [],
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "user_id" }
-        );
-
-      if (dbError) throw dbError;
-
-      setCvStatus("done");
-      toast.success("CV parsed — certificates & sea service extracted");
-    } catch (e) {
-      console.error("CV parse error:", e);
-      setCvError(e instanceof Error ? e.message : "Could not read CV");
-      setCvStatus("error");
-      toast.error("Failed to parse CV");
-    }
+      trackEvent(res.action === "resume" ? "smc_assessment_resume" : "smc_assessment_start", { rank, mode });
+      setOpen({ id: res.assessment_id, mode });
+    } finally { setBusy(null); }
   };
 
-  const checkStatus = async () => {
-    try {
-      if (!profileId) { setView("payment"); return; }
-      const { data: assessment, error: assessErr } = await supabase
-        .from("smc_assessments")
-        .select("*")
-        .eq("crew_profile_id", profileId)
-        .order("started_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (assessErr) { console.error('SMC assessment query error:', assessErr); setView("payment"); return; }
-
-      if (assessment?.status === "completed") {
-        setAssessmentId(assessment.id);
-        setScoreValue(assessment.overall_score != null ? Number(assessment.overall_score) : null);
-        setScoreBand((assessment as any).score_band || null);
-        setView("certificate");
-        return;
-      }
-
-      if (assessment?.status === "in_progress") {
-        setAssessmentId(assessment.id);
-        setHasInProgress(true);
-        setView("assessment");
-        return;
-      }
-
-      const { data: payment, error: payErr } = await supabase
-        .from("smc_payments")
-        .select("*")
-        .eq("crew_profile_id", profileId)
-        .eq("assessment_unlocked", true)
-        .maybeSingle();
-
-      if (payErr) { console.error('SMC payment query error:', payErr); setView("payment"); return; }
-
-      if (payment) {
-        const res = await openAssessmentV2("PROFILE", { crewId: profileId });
-        if (res.ok && res.assessment_id) {
-          setAssessmentId(res.assessment_id);
-          setView("assessment");
-        }
-        return;
-      }
-
-      setView("payment");
-    } catch (e) {
-      console.error('SMC checkStatus crash:', e);
-      setView("payment");
-    }
-  };
-
-  const handlePaymentSuccess = async () => {
-    trackPixel("StartTrial", { content_name: "smc_assessment" });
-    const res = await openAssessmentV2("PROFILE", { crewId: profileId });
-    if (!res.ok || !res.assessment_id) { toast.error(gatewayErrorMessage(res.error)); return; }
-    setAssessmentId(res.assessment_id);
-    setView("assessment");
-    trackEvent("smc_assessment_start", { rank });
-  };
-
-  const startRetake = async () => {
-    trackPixel("StartTrial", { content_name: "smc_assessment" });
-    const res = await openAssessmentV2("PROFILE", { crewId: profileId });
-    if (!res.ok || !res.assessment_id) { toast.error(gatewayErrorMessage(res.error)); return; }
-    setStarted(true);
-    setAssessmentId(res.assessment_id);
-    setView("assessment");
-    trackEvent("smc_assessment_retake", { rank });
-  };
-
-  // Single entry point: resolve the assessment server-side, then mount the flow full-screen.
-  const openAssessment = async (fresh = false) => {
-    if (startBusy) return;
-    setStartBusy(true);
-    try {
-      const res = await openAssessmentV2("PROFILE", { restart: fresh, crewId: profileId });
-      if (!res?.ok || !res.assessment_id) throw new Error(gatewayErrorMessage(res?.error));
-
-      setAssessmentId(res.assessment_id);
-      setHasInProgress(true);
-      setStarted(true);
-      setView("assessment");
-      setFlowOpen(true);
-      trackEvent(res.action === "resume" ? "smc_assessment_resume" : "smc_assessment_start", { rank });
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : JSON.stringify(e);
-      console.error("openAssessment failed:", e);
-      toast.error(msg || "Could not start the assessment");
-    } finally {
-      setStartBusy(false);
-    }
-  };
-
-
-
-  if (view === "loading") {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-primary pulse-dot" style={{ animationDelay: "0s" }} />
-          <span className="w-2 h-2 rounded-full bg-primary pulse-dot" style={{ animationDelay: "0.3s" }} />
-          <span className="w-2 h-2 rounded-full bg-primary pulse-dot" style={{ animationDelay: "0.6s" }} />
-        </div>
-      </div>
-    );
-  }
-
-  const CvCard = () => (
-    <div className="mx-4 mt-2 mb-2">
-      <input
-        ref={fileRef}
-        type="file"
-        accept=".pdf,image/*"
-        className="hidden"
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) handleCvParse(f);
-          if (fileRef.current) fileRef.current.value = "";
-        }}
-      />
-
-      {cvStatus === "reading" ? (
-        <div className="bg-card rounded-2xl border border-border p-5 flex flex-col items-center gap-3">
-          <div
-            className="w-10 h-10 rounded-full border-[3px] border-muted"
-            style={{ borderTopColor: "hsl(var(--primary))", animation: "spin 0.8s linear infinite" }}
-          />
-          <p className="text-sm font-semibold text-primary">🤖 AI is reading your document...</p>
-          <p className="text-[10px] text-muted-foreground">Extracting certificates, sea service & more</p>
-        </div>
-      ) : cvStatus === "done" ? (
-        <div className="bg-card rounded-2xl border border-border p-4 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
-            <Check size={16} className="text-primary" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-foreground">CV Parsed</p>
-            <p className="text-[10px] text-muted-foreground">Certificates & sea service extracted</p>
-          </div>
-          <button
-            onClick={() => fileRef.current?.click()}
-            className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors"
-            title="Re-scan CV"
-          >
-            <RefreshCw size={14} className="text-muted-foreground" />
-          </button>
-        </div>
-      ) : cvStatus === "error" ? (
-        <button
-          onClick={(e) => { e.stopPropagation(); e.preventDefault(); fileRef.current?.click(); }}
-          className="w-full bg-card rounded-2xl border border-dashed border-destructive/50 p-4 flex items-center gap-3 hover:border-destructive transition-colors"
-        >
-          <div className="w-9 h-9 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
-            <FileText size={16} className="text-destructive" />
-          </div>
-          <div className="text-left">
-            <p className="text-sm font-medium text-destructive">{cvError || "Failed to read CV"}</p>
-            <p className="text-[10px] text-muted-foreground">Tap to try again</p>
-          </div>
-        </button>
-      ) : (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            setShowCvUpload(true);
-          }}
-          className="w-full bg-card rounded-2xl border border-dashed border-border p-4 flex items-center gap-3 hover:border-primary/50 transition-colors"
-        >
-          <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center shrink-0">
-            <Upload size={16} className="text-primary" />
-          </div>
-          <div className="text-left">
-            <p className="text-sm font-medium text-foreground">Upload Your CV</p>
-            <p className="text-[10px] text-muted-foreground">PDF or photo — AI extracts certificates & sea service</p>
-          </div>
-        </button>
-      )}
-    </div>
-  );
-
-  const ScoreHero = () => {
-    return (
-      <div className="flex flex-col h-full overflow-y-auto px-5 py-6">
-        <div className="rounded-3xl p-6 text-center" style={{ background: "linear-gradient(160deg, rgba(212,175,55,0.18), rgba(13,27,42,0.4))", border: "1px solid rgba(212,175,55,0.45)" }}>
-          <div className="text-5xl mb-3">🏆</div>
-          <h1 className="text-2xl font-extrabold mb-2" style={{ color: "#D4AF37" }}>What's Your Competency Score?</h1>
-          <p className="text-sm mb-1" style={{ color: "#e2e8f0" }}>The SeaMinds Score rates you from</p>
-          <p className="text-3xl font-black mb-4" style={{ color: "#D4AF37" }}>0.00 → 5.00 ⭐</p>
-          <p className="text-xs" style={{ color: "#94a3b8" }}>Technical · Judgment · Maritime English · Professional Behaviour</p>
-        </div>
-        <div className="mt-5 space-y-3">
-          {[
-            { icon: "🚀", title: "Be seen first", text: "Companies sort crew by score. Higher score, higher in the list." },
-            { icon: "⚓", title: "Reach prime jobs", text: "Better vessels and contracts ask for proven competency." },
-            { icon: "💰", title: "Negotiate stronger", text: "A verified score is evidence when you discuss salary." },
-            { icon: "📜", title: "Get your certificate", text: "A shareable certificate with a QR code employers can verify." },
-          ].map((b) => (
-            <div key={b.title} className="flex gap-3 rounded-2xl p-3.5" style={{ background: "#112240", border: "1px solid #1e3a5f" }}>
-              <span className="text-xl shrink-0">{b.icon}</span>
-              <div>
-                <p className="text-sm font-bold" style={{ color: "#fff" }}>{b.title}</p>
-                <p className="text-[11px] leading-snug" style={{ color: "#94a3b8" }}>{b.text}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-        <button onClick={() => setStarted(true)} className="w-full mt-6 rounded-2xl py-4 font-extrabold text-base" style={{ background: "#D4AF37", color: "#0D1B2A", border: "none", cursor: "pointer" }}>
-          ⚡ Check My Score
-        </button>
-        <p className="text-center text-[11px] mt-3" style={{ color: "#64748b" }}>
-          {selfPrice > 0 ? `$${selfPrice} · about 10 minutes` : "Free for now · about 10 minutes"}
-        </p>
-        <p className="text-center text-[11px] mt-1" style={{ color: "#64748b" }}>You'll be asked for your CV and certificates next.</p>
-        <div className="h-6" />
-      </div>
-    );
-  };
-
-  const ScoreDoorCard = () => {
-    const completed = view === "certificate";
-    
-    return (
-      <div className="mx-4 mt-3 rounded-2xl p-4" style={{ background: "linear-gradient(160deg, rgba(212,175,55,0.18), rgba(13,27,42,0.5))", border: "1px solid rgba(212,175,55,0.45)" }}>
-        {completed ? (
-          <>
-            <p className="text-xs font-semibold" style={{ color: "#94A3B8" }}>Your SeaMinds Score</p>
-            <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-4xl font-black" style={{ color: "#D4AF37" }}>{scoreValue != null ? scoreValue.toFixed(2) : "—"}</span>
-              {scoreBand && <span className="text-sm font-bold" style={{ color: "#D4AF37" }}>{scoreBand}</span>}
-            </div>
-            <div className="flex gap-2 mt-4">
-              <button onClick={() => setView("certificate")} className="flex-1 rounded-xl py-3 font-bold text-sm"
-                style={{ background: "#D4AF37", color: "#0D1B2A", border: "none", cursor: "pointer" }}>
-                View certificate
-              </button>
-              <button onClick={startRetake} className="flex-1 rounded-xl py-3 font-bold text-sm"
-                style={{ background: "transparent", color: "#D4AF37", border: "1px solid #D4AF37", cursor: "pointer" }}>
-                Retake assessment
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            <h2 className="text-lg font-extrabold" style={{ color: "#D4AF37" }}>Get your SeaMinds Score</h2>
-            <p className="text-xs mt-1 leading-snug" style={{ color: "#94A3B8" }}>
-              A 15-minute maritime competency assessment for your rank — scored 0.00–5.00, verifiable by companies
-            </p>
-            <button
-              onClick={() => openAssessment(false)}
-              disabled={startBusy}
-              className="w-full mt-4 rounded-xl py-3.5 font-extrabold text-sm disabled:opacity-60"
-              style={{ background: "#D4AF37", color: "#0D1B2A", border: "none", cursor: startBusy ? "wait" : "pointer" }}>
-              {startBusy ? "Opening…" : hasInProgress ? "Continue my assessment →" : "Start my assessment →"}
-            </button>
-            <button
-              onClick={() => openAssessment(true)}
-              disabled={startBusy}
-              className="w-full mt-2 text-[11px] font-semibold underline"
-              style={{ background: "transparent", border: "none", color: "#94A3B8", cursor: "pointer" }}>
-              Having trouble? Start a fresh assessment
-            </button>
-
-          </>
-        )}
-      </div>
-    );
-  };
-
-  // Assessment opened from the primary button — render the flow on its own screen.
-  if (flowOpen && assessmentId) {
+  if (open) {
     return (
       <div className="flex flex-col h-full overflow-y-auto">
-        <AssessmentFlow
-          profileId={profileId}
-          firstName={firstName}
-          lastName={lastName}
-          rank={rank}
-          shipName={shipName}
-          assessmentId={assessmentId}
-          onComplete={() => { setFlowOpen(false); setHasInProgress(false); setView("certificate"); }}
-          onExit={() => setFlowOpen(false)}
-        />
+        <AssessmentFlow profileId={profileId} firstName={firstName} lastName={lastName} rank={rank} shipName={shipName}
+          assessmentId={open.id}
+          onComplete={() => { setOpen(null); load(); }}
+          onExit={() => { setOpen(null); load(); }} />
       </div>
     );
   }
 
+  if (!rows) return <div className="flex items-center justify-center h-full text-sm" style={{ color: MUTED }}>Loading your scores…</div>;
 
-  if (view === "payment" && !started) return (
-    <div className="flex flex-col h-full overflow-y-auto">
-      <ScoreDoorCard />
-      {ScoreHero()}
-    </div>
-  );
-
-  return (
-    <div className="flex flex-col h-full overflow-y-auto">
-      {(started || view !== "payment") && (
-        <button onClick={() => { if (view === "payment") setStarted(false); else window.history.back(); }}
-          style={{ background:'transparent', border:'none', color:'#D4AF37', fontSize:'13px', cursor:'pointer', marginBottom:'8px', marginLeft:'16px', marginTop:'8px', display:'flex', alignItems:'center', gap:'4px' }}>
-          ← Back
-        </button>
-      )}
-      {/* CV Upload Modal */}
-      {showCvUpload && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={() => setShowCvUpload(false)}>
-          <div className="relative w-[90%] max-w-md rounded-2xl p-6" style={{ background: "#0D1B2A", border: "1px solid rgba(212,175,55,0.3)" }} onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setShowCvUpload(false)} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-secondary flex items-center justify-center hover:bg-secondary/80">
-              <X size={16} className="text-muted-foreground" />
-            </button>
-            <h3 className="text-base font-bold text-foreground mb-4">Upload Your CV</h3>
-            <CvUpload
-              onParsed={(data) => {
-                setCvStatus("done");
-                setShowCvUpload(false);
-                toast.success("CV parsed — certificates & sea service extracted");
-              }}
-            />
-          </div>
+  const Track = ({ mode }: { mode: AssessmentMode }) => {
+    const mine = rows.filter((r) => r.assessment_mode === mode && r.context_id === "self");
+    const active = mine.find((r) => r.status === "in_progress");
+    const done = mine.filter((r) => r.status === "completed" && r.overall_score != null);
+    const latest = done[0];
+    const spec = EXAM_CONTRACT[mode];
+    const title = mode === "PROFILE" ? "Sea Profile Score" : "CV-Based Score";
+    const sub = mode === "PROFILE" ? "Based on your declared rank and experience. No CV needed." : CV_EVIDENCE_LABEL;
+    const cvBlocked = mode === "CV_BASED" && !hasCv;
+    return (
+      <section aria-label={title} className="rounded-2xl p-4 space-y-3" style={{ background: CARD, border: "1px solid rgba(212,175,55,0.3)" }}>
+        <div>
+          <h2 className="text-base font-extrabold" style={{ color: GOLD }}>{title}</h2>
+          <p className="text-[11px] mt-0.5" style={{ color: MUTED }}>{sub}</p>
+          <p className="text-[11px]" style={{ color: MUTED }}>{spec.total} questions · about {spec.minutes} min (estimate)</p>
         </div>
-      )}
-      {(view !== "payment" || started) && (
-        <>
-          <ScoreDoorCard />
-          {crewUniqueId && (
-            <div className="mx-4 mt-3 mb-1 rounded-xl border px-4 py-3 flex items-center gap-3" style={{ background: 'rgba(212,175,55,0.08)', borderColor: '#D4AF37' }}>
-              <span className="text-xs font-semibold" style={{ color: '#D4AF37' }}>Your SeaMinds ID</span>
-              <span className="text-sm font-bold tracking-wide" style={{ color: '#D4AF37' }}>{crewUniqueId}</span>
-            </div>
-          )}
-          {/* Availability lives on the Jobs tab */}
-          <div className="mx-4 mt-2 mb-1 rounded-xl border p-3 flex items-center justify-between"
-            style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(212,175,55,0.3)' }}>
-            <div>
-              <div className="text-[13px] font-semibold" style={{ color: '#D4AF37' }}>Availability</div>
-              <div className="text-[11px] mt-0.5" style={{ color: '#666' }}>Manage when companies can find you</div>
-            </div>
-            <a href="/app?tab=jobs" className="text-xs font-semibold" style={{ color: '#D4AF37' }}>
-              Set availability →
-            </a>
+        {latest ? (
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-black" style={{ color: GOLD }}>{Number(latest.overall_score).toFixed(2)}</span>
+            <span className="text-xs" style={{ color: MUTED }}>/ 5.00 {latest.score_band ? `· ${latest.score_band}` : ""} · {fmtDate(latest.completed_at)}</span>
+            {badgeFor(latest) && <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.15)", color: "#f59e0b" }}>{badgeFor(latest)}</span>}
           </div>
-          {/* Job Alert Email Preference */}
-          <div className="mx-4 mt-2 mb-1 rounded-xl border p-3 flex items-center justify-between"
-            style={{ background: jobAlertsEnabled ? 'rgba(96,165,250,0.1)' : 'rgba(255,255,255,0.05)', borderColor: jobAlertsEnabled ? 'rgba(96,165,250,0.3)' : 'rgba(255,255,255,0.1)' }}>
-            <div>
-              <div className="text-[13px] font-semibold" style={{ color: jobAlertsEnabled ? '#60a5fa' : '#888' }}>
-                {jobAlertsEnabled ? '📧 Job Alerts On' : '🔕 Job Alerts Off'}
-              </div>
-              <div className="text-[11px] mt-0.5" style={{ color: '#666' }}>
-                {jobAlertsEnabled ? 'You\'ll get email alerts for matching jobs' : 'No email alerts when new jobs are found'}
-              </div>
-            </div>
-            <button
-              onClick={() => {
-                const newVal = !jobAlertsEnabled;
-                setJobAlertsEnabled(newVal);
-                supabase.from('crew_profiles').update({ job_alerts_enabled: newVal }).eq('id', profileId);
-              }}
-              className="rounded-full px-4 py-1.5 text-xs font-semibold text-white border-none cursor-pointer"
-              style={{ background: jobAlertsEnabled ? '#60a5fa' : '#333' }}>
-              {jobAlertsEnabled ? 'Turn Off' : 'Turn On'}
-            </button>
-          </div>
-          <CvCard />
-          {/* Salary Check Button */}
-          <div className="px-4 py-2">
-            <button
-              onClick={() => setSalaryOpen(true)}
-              className="w-full py-3 rounded-xl font-bold text-sm transition-all"
-              style={{
-                background: "rgba(212,175,55,0.1)",
-                border: "1.5px solid #D4AF37",
-                color: "#D4AF37",
-              }}
-            >
-              💰 Salary Check
-            </button>
-          </div>
-        </>
-      )}
-      <SalaryBenchmark open={salaryOpen} onClose={() => setSalaryOpen(false)} />
-      {view === "certificate" && (
-        <div className="pt-1">
-          <MyDocumentsSection profileId={profileId} />
-        </div>
-      )}
-      <DigitalCvSummary profileId={profileId} cvStatus={cvStatus} />
-      <div className="flex-1 min-h-0">
-        {view === "payment" ? (
-          <CrewPaymentGate profileId={profileId} onPaymentSuccess={handlePaymentSuccess} />
-        ) : view === "assessment" ? (
-          <AssessmentFlow
-            profileId={profileId}
-            firstName={firstName}
-            lastName={lastName}
-            rank={rank}
-            shipName={shipName}
-            assessmentId={assessmentId}
-            onComplete={() => setView("certificate")}
-            onExit={() => setView("payment")}
-          />
         ) : (
-          <>
-            <SMCScoreCertificate />
-            <div className="px-4 pb-6">
-              <p className="text-xs font-bold mt-4 mb-2" style={{ color: "#D4AF37" }}>Rescore options</p>
-              <button
-                onClick={startRetake}
-                className="w-full rounded-2xl py-3.5 font-bold text-sm"
-                style={{ background: "transparent", color: "#D4AF37", border: "1px solid #D4AF37", cursor: "pointer" }}
-              >
-                🔄 Retake Quick Profile Score
-              </button>
-              <button
-                onClick={() => { window.location.href = "/app?tab=cv"; }}
-                className="w-full mt-2 rounded-2xl py-3.5 font-bold text-sm"
-                style={{ background: "#D4AF37", color: "#0D1B2A", border: "none", cursor: "pointer" }}
-              >
-                🟢 Upgrade to CV-Verified — add my CV, then retake
-              </button>
-              <ShareResult
-                text="I just got my SeaMinds Competency Score ⚓🏆 Check yours free — it takes 10 minutes."
-              />
-              <p className="text-center text-[11px] mt-2" style={{ color: "#64748b" }}>
-                You can retake the assessment as many times as you like. Your latest score is the one companies see.
-              </p>
-            </div>
-          </>
+          <p className="text-xs" style={{ color: MUTED }}>No completed score yet.</p>
         )}
-      </div>
-    </div>
-  );
-};
+        {cvBlocked ? (
+          <button onClick={() => navigate("/app?tab=cv")} className="w-full py-3 rounded-xl font-bold text-sm" style={btnSecondary}>Add your CV to unlock</button>
+        ) : (
+          <button onClick={() => start(mode)} disabled={!!busy} className="w-full py-3 rounded-xl font-bold text-sm disabled:opacity-60" style={btnPrimary}>
+            {busy === mode ? "Opening…" : active ? "Resume assessment" : latest ? "Retake" : "Start assessment"}
+          </button>
+        )}
+        {active && !cvBlocked && (
+          <button onClick={() => start(mode, true)} disabled={!!busy} className="w-full text-[11px] underline" style={{ color: MUTED }}>
+            Start over (your unfinished attempt is closed; finished scores are kept)
+          </button>
+        )}
+        {latest?.certificate_id && (
+          <button onClick={() => navigate(`/verify/${latest.certificate_id}`)} className="w-full py-2.5 rounded-xl font-bold text-sm" style={btnSecondary}>View certificate</button>
+        )}
+        {done.length > 1 && (
+          <details>
+            <summary className="text-xs font-semibold cursor-pointer" style={{ color: GOLD }}>History ({done.length})</summary>
+            <ul className="mt-2 space-y-1">
+              {done.map((r) => (
+                <li key={r.id} className="flex justify-between text-xs" style={{ color: "#e2e8f0" }}>
+                  <span>{fmtDate(r.completed_at)} {badgeFor(r) ? `· ${badgeFor(r)}` : ""}</span>
+                  <span style={{ color: GOLD }}>{Number(r.overall_score).toFixed(2)}</span>
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
+      </section>
+    );
+  };
 
-interface CvData {
-  certificates?: { id?: string; name?: string; expiryDate?: string; expiry_date?: string; issueDate?: string; issue_date?: string; certNumber?: string; number?: string; [key: string]: any }[];
-  sea_service?: { vessel_name?: string; vesselName?: string; rank?: string; rankOnBoard?: string; duration?: string; from?: string; to?: string; fromDate?: string; toDate?: string; [key: string]: any }[];
-  medical?: { name?: string; status?: string; expiryDate?: string; [key: string]: any }[];
-}
-
-const ensureArray = <T,>(value: unknown): T[] => Array.isArray(value) ? value as T[] : [];
-
-const DigitalCvSummary = ({ profileId, cvStatus }: { profileId: string; cvStatus: CvStatus }) => {
-  const [cvData, setCvData] = useState<CvData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const fetchData = useCallback(async () => {
-    if (!profileId) return;
-    const { data } = await supabase
-      .from("crew_cv_data")
-      .select("certificates, sea_service, medical")
-      .eq("user_id", profileId)
-      .maybeSingle();
-    if (data) setCvData(data as unknown as CvData);
-    else setCvData(null);
-    setLoading(false);
-  }, [profileId]);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
-
-  // Re-fetch when CV parse completes
-  useEffect(() => {
-    if (cvStatus === "done") { setLoading(true); fetchData(); }
-  }, [cvStatus, fetchData]);
-
-  if (loading) return null;
-
-  const certificates = ensureArray<CvData["certificates"] extends (infer U)[] ? U : never>(cvData?.certificates);
-  const seaService = ensureArray<CvData["sea_service"] extends (infer U)[] ? U : never>(cvData?.sea_service);
-  const medical = ensureArray<CvData["medical"] extends (infer U)[] ? U : never>(cvData?.medical);
-
-  const hasCerts = certificates.length > 0;
-  const hasService = seaService.length > 0;
-  const hasMedical = medical.length > 0;
-  const hasData = hasCerts || hasService || hasMedical;
+  const round2 = invites.filter((i) => {
+    const r2 = i.round_2_assessment_id ? rows.find((r) => r.id === i.round_2_assessment_id) : null;
+    return !r2 || r2.status === "in_progress";
+  });
 
   return (
-    <div className="mx-4 my-3 rounded-2xl p-4" style={{ background: "#0D1B2A", border: "1px solid rgba(212,175,55,0.2)" }}>
-      <h3 className="text-sm font-bold mb-3 flex items-center gap-2" style={{ color: "#D4AF37" }}>
-        <FileText size={15} /> Digital CV Summary
-      </h3>
-
-      {!hasData ? (
-        <p className="text-xs text-center py-4" style={{ color: "#64748B" }}>
-          Upload your CV above to see your Digital CV summary here.
-        </p>
-      ) : (
-        <div className="space-y-4">
-          {hasCerts && (
-            <div>
-              <h4 className="text-xs font-semibold mb-2 flex items-center gap-1.5" style={{ color: "#D4AF37" }}>
-                <Award size={13} /> Certificates
-              </h4>
-              <div className="space-y-1.5">
-                {certificates.map((c, i) => (
-                  <div key={c.id || i} className="flex items-center justify-between rounded-lg px-3 py-2" style={{ background: "rgba(255,255,255,0.03)" }}>
-                    <span className="text-xs text-foreground truncate mr-2">{c.name || "Unnamed"}</span>
-                    {(c.expiryDate || c.expiry_date) && (
-                      <span className="text-[10px] shrink-0" style={{ color: "#94A3B8" }}>
-                        Exp: {new Date(c.expiryDate || c.expiry_date || "").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {hasService && (
-            <div>
-              <h4 className="text-xs font-semibold mb-2 flex items-center gap-1.5" style={{ color: "#D4AF37" }}>
-                <Anchor size={13} /> Sea Service
-              </h4>
-              <div className="space-y-1.5">
-                {seaService.map((s, i) => (
-                  <div key={i} className="flex items-center justify-between rounded-lg px-3 py-2" style={{ background: "rgba(255,255,255,0.03)" }}>
-                    <div className="min-w-0 mr-2">
-                      <span className="text-xs text-foreground truncate block">{s.vessel_name || s.vesselName || "Unknown vessel"}</span>
-                      {(s.rank || s.rankOnBoard) && <span className="text-[10px]" style={{ color: "#94A3B8" }}>{s.rank || s.rankOnBoard}</span>}
-                    </div>
-                    {(s.duration || (s.from && s.to) || (s.fromDate && s.toDate)) && (
-                      <span className="text-[10px] shrink-0" style={{ color: "#94A3B8" }}>
-                        {s.duration || (s.from && s.to ? `${s.from} – ${s.to}` : `${s.fromDate} – ${s.toDate}`)}
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {hasMedical && (
-            <div>
-              <h4 className="text-xs font-semibold mb-2 flex items-center gap-1.5" style={{ color: "#D4AF37" }}>
-                <HeartPulse size={13} /> Medical
-              </h4>
-              <div className="space-y-1.5">
-                {medical.map((m, i) => (
-                  <div key={i} className="flex items-center justify-between rounded-lg px-3 py-2" style={{ background: "rgba(255,255,255,0.03)" }}>
-                    <span className="text-xs text-foreground truncate mr-2">{m.name || "Medical Certificate"}</span>
-                    <span className="text-[10px] shrink-0" style={{ color: m.status === "Expired" ? "#ef4444" : "#22c55e" }}>
-                      {m.status || (m.expiryDate ? `Exp: ${new Date(m.expiryDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}` : "Valid")}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+    <div className="flex flex-col h-full overflow-y-auto px-4 py-4 space-y-4">
+      <div>
+        <p className="text-[10px] font-extrabold tracking-widest" style={{ color: GOLD }}>MY SCORE</p>
+        <p className="text-[11px] mt-1" style={{ color: MUTED }}>{SCREENING_LABEL}. Technical 30% · Judgment 30% · Maritime English 25% · Professional Behaviour 15%.</p>
+      </div>
+      {round2.map((i) => (
+        <section key={i.id} className="rounded-2xl p-4 space-y-2" style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.4)" }}>
+          <p className="text-sm font-bold text-white">A company requested a CV-Based interview round</p>
+          <p className="text-[11px]" style={{ color: MUTED }}>Round 2 · {EXAM_CONTRACT.MANAGER.total} questions · about {EXAM_CONTRACT.MANAGER.minutes} min. Your Round 1 result stays unchanged.</p>
+          <button onClick={() => navigate(`/interview/${i.token}/exam?round=2`)} className="w-full py-3 rounded-xl font-bold text-sm" style={btnPrimary}>
+            {i.round_2_assessment_id ? "Resume Round 2" : "Review and start Round 2"}
+          </button>
+        </section>
+      ))}
+      <Track mode="PROFILE" />
+      <Track mode="CV_BASED" />
+      <button onClick={() => navigate(`/profile?return=${encodeURIComponent("/app?tab=smc")}`)} className="w-full py-3 rounded-xl font-bold text-sm" style={btnSecondary}>
+        👤 My Sea Profile
+      </button>
+      <div className="h-6" />
     </div>
   );
 };
