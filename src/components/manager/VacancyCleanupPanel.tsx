@@ -46,6 +46,7 @@ export default function VacancyCleanupPanel({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [pending, setPending] = useState<Pending | null>(null);
   const [busy, setBusy] = useState(false);
+  const [limit, setLimit] = useState(50);
 
   const customDays = parseCustomDays(custom);
   const minAge = custom ? customDays : age;
@@ -144,7 +145,7 @@ export default function VacancyCleanupPanel({
         <p className="text-xs text-muted-foreground">No vacancies match these filters.</p>
       ) : (
         <ul className="space-y-2">
-          {rows.map((p) => {
+          {rows.slice(0, limit).map((p) => {
             const st = p.status || "active";
             const apps = applicantCount(p.id);
             return (
@@ -171,6 +172,9 @@ export default function VacancyCleanupPanel({
             );
           })}
         </ul>
+      )}
+      {rows.length > limit && (
+        <button className={`${btn} w-full`} onClick={() => setLimit((n) => n + 50)}>Show more ({rows.length - limit} remaining)</button>
       )}
 
       {pending && (
