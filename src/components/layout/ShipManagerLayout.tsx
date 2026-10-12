@@ -105,7 +105,9 @@ const ShipManagerLayout = () => {
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex fixed inset-y-0 left-0 w-64 flex-col gap-6 border-r border-border bg-card px-4 py-5 overflow-y-auto z-40">
         {brand}
+        {identityCard}
         {links}
+        <ReleaseBadge className="mt-auto" />
       </aside>
 
       {/* Mobile top bar */}
@@ -123,7 +125,9 @@ const ShipManagerLayout = () => {
               {brand}
               <button onClick={() => setOpen(false)} aria-label="Close menu" className="w-11 h-11 flex items-center justify-center rounded-xl text-muted-foreground"><X size={20} /></button>
             </div>
+            <div className="mb-4">{identityCard}</div>
             {links}
+            <ReleaseBadge className="mt-6" />
           </div>
         </div>
       )}

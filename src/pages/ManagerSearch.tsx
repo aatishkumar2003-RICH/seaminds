@@ -432,12 +432,6 @@ const ManagerSearch = () => {
               </div>
             )}
           </div>
-          <button
-            onClick={async () => { await supabase.auth.signOut(); navigate("/manager"); }}
-            style={ghostBtn}
-          >
-            Sign out
-          </button>
         </header>
 
         {pending ? (
