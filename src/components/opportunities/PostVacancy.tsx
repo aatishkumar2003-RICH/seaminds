@@ -365,7 +365,7 @@ const PostVacancy = () => {
               <p className="text-[11px] text-muted-foreground">The original request may still finish. We will only check this same batch — nothing is sent again.</p>
               <div className="flex flex-col sm:flex-row gap-2">
                 <Button className="h-11 flex-1" onClick={recheck} disabled={publishing}>{publishing ? "Checking…" : "Re-check database"}</Button>
-                <Button asChild variant="outline" className="h-11 flex-1"><Link to="/manager/dashboard?tab=vacancies">Open My Posts</Link></Button>
+                <Button asChild variant="outline" className="h-11 flex-1"><Link to="/manager/dashboard?tab=applicants">Open My Posts</Link></Button>
               </div>
             </div>
           ) : scan ? (
