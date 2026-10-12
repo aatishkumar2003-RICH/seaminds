@@ -98,10 +98,10 @@ describe("pagination across direct + external", () => {
     const p = mergeVacancyPage([vac("d1", "direct", "2026-10-01T00:00:00Z")], [], 5, START_CURSOR, NOW);
     expect(p.done).toBe(true);
   });
-  it("drops stale external jobs but still moves past them", () => {
+  it("keeps external jobs with past joining dates (no age hiding) and moves past them", () => {
     const e = [vac("old", "external", "2026-10-08T00:00:00Z", "2023-05-31")];
     const p = mergeVacancyPage([], e, 5, START_CURSOR, NOW);
-    expect(p.items).toHaveLength(0);
+    expect(p.items).toHaveLength(1);
     expect(p.cursor.external?.id).toBe("old");
   });
 });

@@ -203,13 +203,25 @@ export type ActiveRow = {
 };
 
 /** Manager-scoped: only the signed-in manager's own active postings (RLS/visibility). Not a global check. */
-const loadActivePostings = async (managerId: string): Promise<ActiveRow[]> => {
-  const { data } = await supabase
-    .from("job_postings")
-    .select("id, rank_required, vessel_type, joining_port, joining_date, contract_duration, monthly_salary, positions, recruiter_name, contact_whatsapp, contact_email, created_at")
-    .eq("manager_id", managerId)
-    .eq("status", "active");
-  return (data || []) as unknown as ActiveRow[];
+/** Reads EVERY active posting of the manager in 1,000-row pages; any database error throws (never a silent empty scan). */
+export const DUP_SCAN_PAGE = 1000;
+export const loadActivePostings = async (managerId: string): Promise<ActiveRow[]> => {
+  const out: ActiveRow[] = [];
+  for (let from = 0; from < 200_000; from += DUP_SCAN_PAGE) {
+    const { data, error } = await supabase
+      .from("job_postings")
+      .select("id, rank_required, vessel_type, joining_port, joining_date, contract_duration, monthly_salary, positions, recruiter_name, contact_whatsapp, contact_email, created_at")
+      .eq("manager_id", managerId)
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(from, from + DUP_SCAN_PAGE - 1);
+    if (error) throw new Error("Could not complete the duplicate check. Nothing was published — try again.");
+    const rows = (data || []) as unknown as ActiveRow[];
+    out.push(...rows);
+    if (rows.length < DUP_SCAN_PAGE) break;
+  }
+  return out;
 };
 
 /** Recruiter actually stored for a row (own vacancy → publisher company). */
@@ -584,6 +596,9 @@ export const publishVacancyBatch = async (
   const expiresAt = NO_EXPIRY_COMPAT;
   const payload = toPublish.map((v) => toRow(v, identity, sourceType, batchId, expiresAt, opts?.flierUrl));
 
+  // Marker is written BEFORE the INSERT so a crash/refresh mid-request still leaves a recoverable record.
+  saveUncertainMarker({ batchId, managerId: identity.userId, expected: payload.length, at: new Date().toISOString() });
+
   let data: { id: string }[] | null = null;
   let error: { code?: string; message?: string; name?: string } | null = null;
   try {
@@ -602,15 +617,17 @@ export const publishVacancyBatch = async (
   if (error) {
     if (isAmbiguousError(error)) {
       uncertainBatches.set(batchId, payload.length);
-      saveUncertainMarker({ batchId, managerId: identity.userId, expected: payload.length, at: new Date().toISOString() });
       return {
         ...base, duplicatesSkipped, batchId, status: "uncertain",
         failures: ["Connection lost — we can't confirm whether the vacancies were published. Check the batch before retrying."],
       };
     }
+    // Definite database rejection: the atomic INSERT committed nothing.
+    clearUncertainMarker(identity.userId, batchId);
     return { ...base, duplicatesSkipped, failures: [error.message || "Publish failed"], batchId, status: "failed" };
   }
   uncertainBatches.delete(batchId);
+  clearUncertainMarker(identity.userId, batchId);
   return { ...base, published: (data || []).length, duplicatesSkipped, failures: [], batchId, status: "published" };
 };
 

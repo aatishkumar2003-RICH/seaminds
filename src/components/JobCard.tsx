@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { BadgeCheck, MapPin, Ship, Calendar, X } from "lucide-react";
 import type { UnifiedVacancy } from "@/lib/vacancyFeed";
-import { vacancySalary, isEmailDelivered, markEmailDelivered } from "@/lib/vacancyFeed";
+import { vacancySalary, isEmailDelivered, markEmailDelivered, isHistoricalListing } from "@/lib/vacancyFeed";
 import { jobPath } from "@/lib/jobSlug";
 import { routeLabel, resolveApplyRoute, isSeaMindsPublished, hasSecondaryEmail, applyByEmail, reopenWhatsApp } from "@/lib/applicationRouter";
 import { getCachedCrewCardInfo, fetchQuickProfileDone } from "@/lib/applyMessage";
@@ -173,7 +173,10 @@ const JobCard = ({ vacancy: v, variant, applied: appliedProp, busy, href, match,
             {v.verified && <BadgeCheck size={13} style={{ color: "#3B82F6", flexShrink: 0 }} />}
           </div>
         </div>
-        <span style={{ fontSize: 10, color: "#94a3b8", whiteSpace: "nowrap" }}>{timeAgo(v.postedAt)}</span>
+        <span style={{ fontSize: 10, color: "#94a3b8", whiteSpace: "nowrap", textAlign: "right" }}>
+          {timeAgo(v.postedAt)}
+          {isHistoricalListing(v.postedAt) && <span style={{ display: "block", color: "#f59e0b" }}>Hiring not confirmed</span>}
+        </span>
       </div>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, fontSize: 11.5, color: "#cbd5e1" }}>

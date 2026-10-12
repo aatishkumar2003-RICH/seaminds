@@ -82,7 +82,8 @@ const mapExternal = (r: Record<string, any>): UnifiedVacancy => ({
   verified: r.is_verified === undefined || r.is_verified === null ? false : !!r.is_verified,
   qualityScore: r.quality_score ?? null,
   postedAt: r.created_at || null,
-  expiresAt: r.expires_at || null,
+  // Aggregator expiry is not a hiring signal; vacancies are archived manually only.
+  expiresAt: null,
   notes: r.description || null,
   email: r.contact_email || null,
   whatsapp: r.contact_whatsapp || null,
@@ -102,15 +103,13 @@ export interface LoadVacanciesOpts {
 
 /** Loads live direct + external vacancies, merged and sorted newest first. */
 export const loadVacancies = async (opts: LoadVacanciesOpts = {}): Promise<UnifiedVacancy[]> => {
-  const nowIso = new Date().toISOString();
 
   let extQuery = supabase
     .from("external_vacancies")
     .select(
       "id, title, rank_required, vessel_type, joining_port, joining_date, contract_duration, salary_text, company_name, company_website, is_verified, quality_score, created_at, expires_at, description, contact_email, contact_whatsapp, apply_url, source"
     )
-    .eq("is_scam_flagged", false)
-    .gt("expires_at", nowIso);
+    .eq("is_scam_flagged", false); // no age/expiry hiding — archival is manual
   if (opts.minQuality !== undefined) extQuery = extQuery.gte("quality_score", opts.minQuality);
 
   const [directRes, extRes] = await Promise.all([
@@ -127,7 +126,7 @@ export const loadVacancies = async (opts: LoadVacanciesOpts = {}): Promise<Unifi
 
   const rows = [
     ...(((directRes.data as any[]) || []).map(mapDirect)),
-    ...(((extRes.data as any[]) || []).map(mapExternal).filter((v) => !isStaleJoiningDate(v.joiningDate))),
+    ...(((extRes.data as any[]) || []).map(mapExternal)),
   ];
   return rows.sort(
     (a, b) => new Date(b.postedAt || 0).getTime() - new Date(a.postedAt || 0).getTime()
@@ -240,6 +239,11 @@ export const parseJoiningDate = (raw: string | null | undefined): Date | null =>
 
 export const STALE_JOINING_DAYS = 90;
 
+/** Older than this, a listing is shown as historical: hiring not confirmed. */
+export const HISTORICAL_DAYS = 45;
+export const isHistoricalListing = (postedAt: string | null | undefined, now = Date.now()) =>
+  !!postedAt && now - new Date(postedAt).getTime() > HISTORICAL_DAYS * DAY;
+
 /** True only when the joining date is reliably parsed and more than `days` in the past. */
 export const isStaleJoiningDate = (raw: string | null | undefined, now = new Date(), days = STALE_JOINING_DAYS) => {
   const d = parseJoiningDate(raw);
@@ -290,7 +294,8 @@ export const mergeVacancyPage = (
     directDone: cursor.directDone || (direct.length < limit && usedD === direct.length),
     externalDone: cursor.externalDone || (external.length < limit && usedE === external.length),
   };
-  const items = merged.filter((v) => v.kind !== "external" || !isStaleJoiningDate(v.joiningDate, now));
+  void now; // vacancies are never hidden by age; historical ones are labelled instead
+  const items = merged;
   return { items, cursor: next, done: next.directDone && next.externalDone };
 };
 
@@ -307,7 +312,6 @@ export const loadVacancyPage = async (
   opts: { pageSize?: number; minQuality?: number } = {},
 ): Promise<{ items: UnifiedVacancy[]; cursor: VacancyCursor; done: boolean }> => {
   const limit = opts.pageSize ?? 20;
-  const nowIso = new Date().toISOString();
 
   // Direct vacancies: status = 'active' only — no joining-date or age exclusion.
   const fetchDirect = async () => {
@@ -322,7 +326,7 @@ export const loadVacancyPage = async (
   const fetchExternal = async () => {
     if (cursor.externalDone) return [] as UnifiedVacancy[];
     let q = supabase.from("external_vacancies").select(EXTERNAL_COLS)
-      .eq("is_scam_flagged", false).gt("expires_at", nowIso);
+      .eq("is_scam_flagged", false);
     if (opts.minQuality !== undefined) q = q.gte("quality_score", opts.minQuality);
     if (cursor.external) q = q.or(afterKey(cursor.external));
     const { data, error } = await q.order("created_at", { ascending: false }).order("id", { ascending: false }).limit(limit);

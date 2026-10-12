@@ -11,7 +11,7 @@ const state: {
 vi.mock("@/integrations/supabase/client", () => {
   const selectChain = () => {
     const c: Record<string, unknown> = {};
-    ["eq", "gt"].forEach((k) => (c[k] = () => c));
+    ["eq", "gt", "order", "range"].forEach((k) => (c[k] = () => c));
     c.then = (res: (v: unknown) => unknown) => { state.selectCalls++; return Promise.resolve({ data: state.selectRows, error: null }).then(res); };
     return c;
   };
