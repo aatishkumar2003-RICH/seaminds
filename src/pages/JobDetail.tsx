@@ -41,6 +41,8 @@ interface Job {
   /** Raw job_postings.recruiter_name (routing only). */
   recruiterName?: string | null;
   posted: string | null;
+  /** External only: date SeaMinds collected the vacancy. */
+  collected?: string | null;
   expires: string | null;
 }
 
