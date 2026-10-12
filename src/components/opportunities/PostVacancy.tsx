@@ -173,7 +173,7 @@ const PostVacancy = () => {
     if (!identity || !engineRows.length || problems.length) return;
     setChecking(true);
     try { setScan(await scanDuplicates(identity.userId, engineRows, identity.companyName)); }
-    catch { toast({ title: "Could not check duplicates", description: "Try again.", variant: "destructive" }); }
+    catch (e) { toast({ title: "Could not check duplicates", description: (e as Error)?.message || "Nothing was published. Try again.", variant: "destructive" }); }
     finally { setChecking(false); }
   };
 
