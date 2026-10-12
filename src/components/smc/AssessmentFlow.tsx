@@ -991,7 +991,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
         </div>
 
         {/* Question content */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 pb-4">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 pb-20 w-full max-w-2xl mx-auto" style={{ paddingBottom: 'max(5rem, env(safe-area-inset-bottom))' }}>
           <AnimatePresence mode="wait">
           <motion.div
             key={`q-${qIndex}`}
@@ -1011,8 +1011,9 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
                 {(currentQ.options || []).map((opt, i) => {
                   const letter = String.fromCharCode(65 + i);
                   const isSelected = selectedOption === i;
-                  const isCorrectOpt = !sealed && mcqSubmitted && i === currentQ.correct_index;
-                  const isWrongSelected = !sealed && mcqSubmitted && isSelected && !mcqCorrect;
+                  // Scored exam: correct answers are never revealed while the exam is active.
+                  const isCorrectOpt = false;
+                  const isWrongSelected = false;
                   return (
                     <motion.button
                       key={i}
@@ -1036,32 +1037,6 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
                 })}
               </div>
 
-              {/* MCQ result banner */}
-              {mcqSubmitted && !sealed && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.3 }}
-                  className="rounded-xl px-4 py-3 space-y-1"
-                  style={{ background: mcqCorrect ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', border: `1px solid ${mcqCorrect ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}` }}
-                >
-                  <div className="flex items-center gap-2">
-                    {mcqCorrect ? <CheckCircle size={16} style={{ color: '#22c55e' }} /> : <XCircle size={16} style={{ color: '#ef4444' }} />}
-                    <span className="text-sm font-bold" style={{ color: mcqCorrect ? '#22c55e' : '#ef4444' }}>
-                      {mcqCorrect ? '✓ Correct!' : (currentQ.correct_letter ? `✗ Incorrect — Correct answer: ${currentQ.correct_letter}` : '✗ Incorrect')}
-                    </span>
-                  </div>
-                  {!mcqCorrect && currentQ.explanation && (
-                    <p style={{ fontSize: '12px', color: '#aaa', marginTop: '4px' }}>{currentQ.explanation}</p>
-                  )}
-                </motion.div>
-              )}
-
-              {mcqSubmitted && sealed && (
-                <div className="rounded-xl px-4 py-3" style={{ background: 'rgba(212,175,55,0.06)', border: '1px solid rgba(212,175,55,0.2)' }}>
-                  <p className="text-sm" style={{ color: '#cbd5e1' }}>Answer recorded.</p>
-                </div>
-              )}
 
               {/* Follow-up question after MCQ */}
               {pendingFollowUp && mcqSubmitted && (
