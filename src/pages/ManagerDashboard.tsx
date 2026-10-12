@@ -1048,7 +1048,7 @@ const ManagerDashboard = () => {
         {/* Tab switcher */}
         <div className="flex gap-1 bg-secondary rounded-xl p-1">
           <button
-            onClick={() => setDashTab("crew")}
+            onClick={() => navigate("/manager/dashboard?tab=crew", { replace: true })}
             className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors ${
               dashTab === "crew" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
             }`}
@@ -1056,7 +1056,7 @@ const ManagerDashboard = () => {
             Crew Overview
           </button>
           <button
-            onClick={() => setDashTab("applicants")}
+            onClick={() => navigate("/manager/dashboard?tab=applicants", { replace: true })}
             className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors ${
               dashTab === "applicants" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
             }`}
@@ -1064,7 +1064,7 @@ const ManagerDashboard = () => {
             👥 Applicants{awaitingCount > 0 ? ` (${awaitingCount})` : ""}
           </button>
           <button
-            onClick={() => setDashTab("payments")}
+            onClick={() => navigate("/manager/dashboard?tab=payments", { replace: true })}
             className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1.5 ${
               dashTab === "payments" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
             }`}
