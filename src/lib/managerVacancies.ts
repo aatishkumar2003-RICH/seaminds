@@ -556,15 +556,17 @@ export const publishVacancyBatch = async (
   const warnings = checks.flatMap((c) => c.warnings);
   if (warnings.length) return { ...base, failures: warnings, batchId: null, status: "blocked" };
 
-  // Retry of an uncertain batch: reconcile first, never blind-resubmit.
-  if (opts?.batchId && uncertainBatches.has(opts.batchId)) {
-    const rec = await reconcileBatch(opts.batchId, identity.userId, uncertainBatches.get(opts.batchId) || requested);
-    if (rec.state === "complete" || rec.state === "partial") {
-      return { ...base, published: rec.committed, failures: rec.state === "partial" ? [rec.message] : [], batchId: opts.batchId, status: "published" };
+  // Any unresolved batch for this manager (in memory or saved across refresh) blocks new inserts.
+  const saved = loadUncertainMarker(identity.userId);
+  const pendingId = opts?.batchId && uncertainBatches.has(opts.batchId) ? opts.batchId : saved?.batchId;
+  if (pendingId) {
+    const expected = uncertainBatches.get(pendingId) || (saved?.batchId === pendingId ? saved.expected : requested);
+    const rec = await reconcileBatch(pendingId, identity.userId, expected);
+    if (rec.state === "complete") {
+      return { ...base, published: rec.committed, failures: [], batchId: pendingId, status: "published" };
     }
-    // "absent" or "error": the original request may still land. Stay unresolved —
-    // never resubmit, never mint a fresh batch id automatically.
-    return { ...base, failures: [rec.message], batchId: opts.batchId, status: "uncertain" };
+    // partial / absent / error: stay unresolved — never resubmit, never mint a fresh batch id.
+    return { ...base, published: rec.committed, failures: [rec.message], batchId: pendingId, status: "uncertain" };
   }
 
   let toPublish = rows;
@@ -598,6 +600,7 @@ export const publishVacancyBatch = async (
   if (error) {
     if (isAmbiguousError(error)) {
       uncertainBatches.set(batchId, payload.length);
+      saveUncertainMarker({ batchId, managerId: identity.userId, expected: payload.length, at: new Date().toISOString() });
       return {
         ...base, duplicatesSkipped, batchId, status: "uncertain",
         failures: ["Connection lost — we can't confirm whether the vacancies were published. Check the batch before retrying."],
