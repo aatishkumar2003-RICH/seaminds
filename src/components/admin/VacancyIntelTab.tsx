@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
 import VacancyManagementPanel from './VacancyManagementPanel';
+import { toast } from 'sonner';
+import { requestLifecycleAction, LIFECYCLE_BACKEND, PENDING_LABEL } from '@/lib/vacancyLifecycle';
 
 interface VacancyStats {
   total: number;
@@ -306,16 +308,15 @@ export default function VacancyIntelTab() {
               <Button
                 variant="destructive"
                 size="sm"
+                disabled={!LIFECYCLE_BACKEND.adminActions}
+                title={LIFECYCLE_BACKEND.adminActions ? undefined : PENDING_LABEL}
                 onClick={async () => {
                   if (!confirm(`Delete all ${noContactJobs.length} no-contact jobs?`)) return;
-                  const ids = noContactJobs.map(j => j.id);
-                  for (let i = 0; i < ids.length; i += 20) {
-                    await supabase.from('external_vacancies').delete().in('id', ids.slice(i, i + 20));
-                  }
-                  setNoContactJobs([]);
+                  const r = await requestLifecycleAction('admin', 'external', noContactJobs.map(j => j.id), 'delete');
+                  if (r.ok) setNoContactJobs([]); else toast.message(r.message);
                 }}
               >
-                🗑️ Delete All ({noContactJobs.length})
+                🗑️ Delete All ({noContactJobs.length}){LIFECYCLE_BACKEND.adminActions ? '' : ' · pending'}
               </Button>
             )}
             <Button variant="outline" size="sm" onClick={loadNoContact} disabled={loadingNoContact}>
@@ -338,9 +339,12 @@ export default function VacancyIntelTab() {
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    disabled={!LIFECYCLE_BACKEND.adminActions}
+                    title={LIFECYCLE_BACKEND.adminActions ? 'Delete' : PENDING_LABEL}
+                    aria-label={LIFECYCLE_BACKEND.adminActions ? 'Delete' : `Delete — ${PENDING_LABEL}`}
                     onClick={async () => {
-                      await supabase.from('external_vacancies').delete().eq('id', v.id);
-                      setNoContactJobs(prev => prev?.filter(j => j.id !== v.id) || null);
+                      const r = await requestLifecycleAction('admin', 'external', [v.id], 'delete');
+                      if (r.ok) setNoContactJobs(prev => prev?.filter(j => j.id !== v.id) || null); else toast.message(r.message);
                     }}
                   >
                     <Trash2 size={14} />

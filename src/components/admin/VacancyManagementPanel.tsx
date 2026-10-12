@@ -39,7 +39,7 @@ export const toAdminRow = (kind: Kind, r: Record<string, unknown>): AdminVacancy
 
 const DIRECT_STATUSES = ["active", "filled", "archived", "expired"];
 const EXTERNAL_STATUSES = ["listed", "scam_flagged"];
-const DIRECT_SOURCES = ["manual", "text", "flier", "csv"];
+const DIRECT_SOURCES = ["manual", "text", "flier"];
 const EXTERNAL_SOURCES = ["google_jobs", "rss_feed", "telegram", "internal"];
 
 const chip = (on: boolean) => `text-[11px] px-2.5 py-1.5 rounded-full border ${on ? "border-[#D4AF37] bg-[#D4AF37]/15 text-[#D4AF37]" : "border-border text-muted-foreground"}`;
