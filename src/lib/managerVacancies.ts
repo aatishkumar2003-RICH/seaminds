@@ -596,6 +596,9 @@ export const publishVacancyBatch = async (
   const expiresAt = NO_EXPIRY_COMPAT;
   const payload = toPublish.map((v) => toRow(v, identity, sourceType, batchId, expiresAt, opts?.flierUrl));
 
+  // Marker is written BEFORE the INSERT so a crash/refresh mid-request still leaves a recoverable record.
+  saveUncertainMarker({ batchId, managerId: identity.userId, expected: payload.length, at: new Date().toISOString() });
+
   let data: { id: string }[] | null = null;
   let error: { code?: string; message?: string; name?: string } | null = null;
   try {
@@ -614,15 +617,17 @@ export const publishVacancyBatch = async (
   if (error) {
     if (isAmbiguousError(error)) {
       uncertainBatches.set(batchId, payload.length);
-      saveUncertainMarker({ batchId, managerId: identity.userId, expected: payload.length, at: new Date().toISOString() });
       return {
         ...base, duplicatesSkipped, batchId, status: "uncertain",
         failures: ["Connection lost — we can't confirm whether the vacancies were published. Check the batch before retrying."],
       };
     }
+    // Definite database rejection: the atomic INSERT committed nothing.
+    clearUncertainMarker(identity.userId, batchId);
     return { ...base, duplicatesSkipped, failures: [error.message || "Publish failed"], batchId, status: "failed" };
   }
   uncertainBatches.delete(batchId);
+  clearUncertainMarker(identity.userId, batchId);
   return { ...base, published: (data || []).length, duplicatesSkipped, failures: [], batchId, status: "published" };
 };
 
