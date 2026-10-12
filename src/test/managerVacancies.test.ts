@@ -32,7 +32,8 @@ vi.mock("@/integrations/supabase/client", () => {
 });
 
 import {
-  classifyDuplicates, findIntraBatchDuplicates, computeExpiresAt, toRow, publishVacancyBatch,
+  classifyDuplicates, findIntraBatchDuplicates, computeExpiresAt, NO_EXPIRY_COMPAT, isValidEmail,
+  decidePermanentDelete, canTransition, filterByMinAge, parseCustomDays, postingAgeLabel, AGE_PRESETS, DAY_MS, toRow, publishVacancyBatch,
   reconcileBatch, isBatchUncertain, _resetUncertainBatches, toPreviewVacancy, validateAttribution,
   type PreviewVacancy, type ActiveRow, type ManagerIdentity,
 } from "@/lib/managerVacancies";
@@ -143,19 +144,82 @@ describe("per-row provenance", () => {
   });
 });
 
-describe("expiry", () => {
-  const now = Date.UTC(2026, 9, 12);
-  it.each([[30], [45], [60]])("%i days", (d) => {
-    expect(computeExpiresAt(d, now)).toBe(new Date(now + d * 86400000).toISOString());
+describe("no automatic expiry", () => {
+  it("computeExpiresAt only returns the compatibility value", () => {
+    expect(computeExpiresAt()).toBe(NO_EXPIRY_COMPAT);
+    expect(NO_EXPIRY_COMPAT.startsWith("2099-")).toBe(true);
   });
-  it("defaults to 30 days and rejects other values", () => {
-    expect(computeExpiresAt(undefined, now)).toBe(new Date(now + 30 * 86400000).toISOString());
-    expect(computeExpiresAt(183, now)).toBe(new Date(now + 30 * 86400000).toISOString());
-  });
-  it("publisher sends an explicit 30-day expiry", async () => {
+  it("publisher writes the compatibility value, not a 30-day expiry", async () => {
     await publishVacancyBatch([row()], identity, "text", { skipDuplicateScan: true });
-    const exp = new Date((state.inserted[0][0] as { expires_at: string }).expires_at).getTime();
-    expect(Math.round((exp - Date.now()) / 86400000)).toBe(30);
+    expect((state.inserted[0][0] as { expires_at: string }).expires_at).toBe(NO_EXPIRY_COMPAT);
+  });
+});
+
+describe("Turn 2 safeguards", () => {
+  it("retry when reconcile finds zero rows stays uncertain and never inserts again", async () => {
+    state.insertResult = async () => { throw new TypeError("Failed to fetch"); };
+    const r = await publishVacancyBatch([row()], identity, "text", { skipDuplicateScan: true });
+    state.selectRows = [];
+    const retry = await publishVacancyBatch([row()], identity, "text", { skipDuplicateScan: true, batchId: r.batchId! });
+    expect(retry.status).toBe("uncertain");
+    expect(retry.batchId).toBe(r.batchId);
+    expect(state.inserted).toHaveLength(1);
+    expect(isBatchUncertain(r.batchId!)).toBe(true);
+  });
+  it("partial reconciliation reports committed rows and never resubmits", async () => {
+    state.insertResult = async () => { throw new TypeError("Failed to fetch"); };
+    const r = await publishVacancyBatch([row(), row({ rank_required: "Bosun" })], identity, "text", { skipDuplicateScan: true });
+    state.selectRows = [{ id: "one" }];
+    const retry = await publishVacancyBatch([row(), row({ rank_required: "Bosun" })], identity, "text", { skipDuplicateScan: true, batchId: r.batchId! });
+    expect(retry.published).toBe(1);
+    expect(retry.failures.join(" ")).toMatch(/Do not resubmit/);
+    expect(state.inserted).toHaveLength(1);
+  });
+  it("engine blocks a bad email even if the UI let it through", async () => {
+    const r = await publishVacancyBatch([row({ contact_email: "not-an-email" })], identity, "text", { skipDuplicateScan: true });
+    expect(r.status).toBe("blocked");
+    expect(state.inserted).toHaveLength(0);
+  });
+  it("engine blocks a domestic WhatsApp number", async () => {
+    const r = await publishVacancyBatch([row({ contact_whatsapp: "08123456789" })], identity, "text", { skipDuplicateScan: true });
+    expect(r.status).toBe("blocked");
+  });
+  it("valid email formats pass, empty is allowed", () => {
+    expect(isValidEmail("hr@agency.ph")).toBe(true);
+    expect(isValidEmail("")).toBe(true);
+    expect(isValidEmail("a@b")).toBe(false);
+  });
+  it("deletion is blocked with applications and archive is only offered", () => {
+    expect(decidePermanentDelete(0)).toEqual({ allowed: true });
+    expect(decidePermanentDelete(3)).toEqual({ allowed: false, reason: "has_applications", applications: 3, archiveOffered: true });
+  });
+  it("manual transitions", () => {
+    expect(canTransition("active", "archived")).toBe(true);
+    expect(canTransition("archived", "active")).toBe(true);
+    expect(canTransition("filled", "active")).toBe(true);
+    expect(canTransition("archived", "filled")).toBe(false);
+    expect(canTransition("expired", "active")).toBe(false);
+  });
+  it("age filters: 30/40/60/70/90 and custom days", () => {
+    const now = Date.UTC(2026, 9, 12);
+    const at = (d: number) => ({ created_at: new Date(now - d * DAY_MS).toISOString() });
+    const rows = [at(5), at(35), at(45), at(65), at(75), at(95)];
+    expect(AGE_PRESETS).toEqual([30, 40, 60, 70, 90]);
+    expect(filterByMinAge(rows, 30, now)).toHaveLength(5);
+    expect(filterByMinAge(rows, 40, now)).toHaveLength(4);
+    expect(filterByMinAge(rows, 60, now)).toHaveLength(3);
+    expect(filterByMinAge(rows, 90, now)).toHaveLength(1);
+    expect(filterByMinAge(rows, null, now)).toHaveLength(6);
+    expect(parseCustomDays("120")).toBe(120);
+    expect(parseCustomDays("12a")).toBeNull();
+  });
+  it("posting age label never claims active hiring", () => {
+    const now = Date.UTC(2026, 9, 12);
+    expect(postingAgeLabel(new Date(now - 3 * DAY_MS).toISOString(), now)).toEqual({ text: "Posted 3 days ago", recurring: false });
+    const old = postingAgeLabel(new Date(now - 60 * DAY_MS).toISOString(), now);
+    expect(old.recurring).toBe(true);
+    expect(old.text).toMatch(/confirm with recruiter/);
+    expect(old.text).not.toMatch(/actively hiring/i);
   });
 });
 
