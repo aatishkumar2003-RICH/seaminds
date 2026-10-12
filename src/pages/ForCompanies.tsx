@@ -53,8 +53,8 @@ const benefits = [
 ];
 
 const planFeatures = [
-  "Unlimited crew onboarding",
-  "SMC score access for all crew",
+  "Vacancy posting and applicant management",
+  "AI crew interviews with four-part scores",
   "MLC rest hours compliance reports",
   "Fleet wellness dashboard",
   "Certificate expiry tracking",
