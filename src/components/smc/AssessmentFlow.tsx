@@ -414,23 +414,48 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     setFlowStep('cvCheck');
   };
 
+  // One submission at a time per question: timeout, answer and skip can never race into conflicting states.
+  const submittingRef = useRef(false);
+
   const handleAutoSubmit = () => {
     const currentQ = flatQuestions[qIndex];
-    if (!currentQ) return;
+    if (!currentQ || saved || submittingRef.current) return;
+    // Timer expiry is recorded as TIMED_OUT, separate from an intentional skip.
     if (currentQ.type === 'mcq') {
-      handleMcqConfirm(true);
+      void handleMcqConfirm(true);
     } else {
-      const answer = textAnswer.trim() || '[No answer — time expired]';
-      submitAnswer(currentQ.question, answer, currentQ);
+      void submitAnswer(currentQ.question, '[No answer — time expired]', currentQ);
     }
+  };
+
+  const applyOutcome = (d: any): boolean => {
+    const o = saveOutcome(d);
+    if (!o) return false;
+    setSaved(o);
+    return true;
+  };
+
+  const handleSkip = async () => {
+    const currentQ = flatQuestions[qIndex];
+    if (!currentQ || saved || submittingRef.current) return;
+    submittingRef.current = true;
+    setTimerActive(false);
+    setEvaluating(true);
+    try {
+      const d = await submitToLedger(currentQ.id, SKIP_ANSWER);
+      // A failed save is never a skip — the candidate stays on this question.
+      if (!applyOutcome(d)) { setTimerActive(true); return; }
+      setMcqSubmitted(true);
+      setTranscript(prev => [...prev, { question: currentQ.question, answer: '[Skipped]', score: 0, redFlag: false, redFlagCategory: null, followUp: null }]);
+    } finally { setEvaluating(false); submittingRef.current = false; }
   };
 
   const handleMcqConfirm = async (autoSubmit = false) => {
     const currentQ = flatQuestions[qIndex];
-    if (!currentQ) return;
+    if (!currentQ || saved || submittingRef.current) return;
     const selected = autoSubmit && selectedOption === null ? -1 : selectedOption;
     if (selected === null) return;
-
+    submittingRef.current = true;
     setMcqSubmitted(true);
     setTimerActive(false);
 
@@ -438,12 +463,12 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     setEvaluating(true);
     try {
       const d = await submitToLedger(currentQ.id, selected.toString());
-      if (!d) { setMcqSubmitted(false); setTimerActive(true); return; }
+      if (!applyOutcome(d)) { setMcqSubmitted(false); setTimerActive(true); return; }
       setMcqCorrect(!!d.is_correct);
       const entry = { question: currentQ.question, answer: selected.toString(), score: Number(d.score) || 0, redFlag: false, redFlagCategory: null, followUp: null };
       setTranscript(prev => [...prev, entry]);
-      void persistAnswer({ question: currentQ.question, answer: selected.toString(), question_type: 'mcq', is_followup: false, ai_score: entry.score, red_flag: false, red_flag_category: null });
-    } finally { setEvaluating(false); }
+      if (!d.original_answer_kept) void persistAnswer({ question: currentQ.question, answer: selected.toString(), question_type: 'mcq', is_followup: false, ai_score: entry.score, red_flag: false, red_flag_category: null });
+    } finally { setEvaluating(false); submittingRef.current = false; }
   };
 
   // Idempotent write-first submit (safe to retry; first answer always wins on the server)
