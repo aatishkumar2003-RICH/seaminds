@@ -35,6 +35,8 @@ interface Job {
   applyUrl: string | null;
   verified: boolean;
   publisher: string | null;
+  /** Raw job_postings.recruiter_name (routing only). */
+  recruiterName?: string | null;
   posted: string | null;
   expires: string | null;
 }
@@ -99,7 +101,7 @@ const JobDetail = () => {
           port: pr.joining_port, duration: pr.contract_duration, joiningDate: pr.joining_date,
           notes: pr.additional_notes, flier: pr.flier_url,
           whatsapp: pr.contact_whatsapp, email: pr.contact_email || null, applyUrl: null,
-          verified: !!pr.verified, publisher: pr.company_name || null, posted: pr.created_at, expires: pr.expires_at,
+          verified: !!pr.verified, publisher: pr.company_name || null, recruiterName: pr.recruiter_name || null, posted: pr.created_at, expires: pr.expires_at,
         };
       } else {
         const { data: e } = await supabase.from("external_vacancies" as any)
@@ -153,7 +155,7 @@ const JobDetail = () => {
   const unified: UnifiedVacancy | null = useMemo(() => job ? {
     id: job.id, kind: job.kind, rank: job.rank, vessel: job.vessel, port: job.port,
     joiningDate: job.joiningDate, contractDuration: job.duration, salaryText: job.salary,
-    company: job.company, publisherName: job.publisher, verified: job.verified, qualityScore: null,
+    company: job.company, publisherName: job.publisher, recruiterName: job.recruiterName ?? null, verified: job.verified, qualityScore: null,
     postedAt: job.posted, expiresAt: job.expires, notes: job.notes, email: job.email,
     whatsapp: job.whatsapp, applyUrl: job.applyUrl, positions: 1, flierUrl: job.flier,
     postingBatchId: null, source: null, isNew: false,

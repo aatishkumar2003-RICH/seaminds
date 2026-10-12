@@ -7,6 +7,20 @@ import { normalizeWaNumber, waApplyLink, buildApplyMessage, recordApplication, s
 export const isSeaMindsPublished = (v: Pick<UnifiedVacancy, "kind" | "publisherName">) =>
   v.kind === "direct" && /^seaminds/i.test(String(v.publisherName || "").trim());
 
+const normName = (s: unknown) => String(s ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+
+/**
+ * Third-party advert: a direct posting whose stored recruiter_name is present and
+ * differs from the publisher's company name. Own-company postings store
+ * recruiter_name = company_name; legacy NULL rows keep their previous behaviour.
+ * Uses the raw database recruiter, never the display label.
+ */
+export const isThirdPartyAdvert = (v: Pick<UnifiedVacancy, "kind" | "publisherName" | "recruiterName">) => {
+  if (v.kind !== "direct") return false;
+  const r = normName(v.recruiterName);
+  return !!r && r !== normName(v.publisherName);
+};
+
 export type ApplyChannel = "whatsapp" | "portal" | "email" | "seaminds" | "flyer" | "none";
 
 export interface ApplyRoute {
@@ -23,7 +37,7 @@ export const resolveApplyRoute = (v: UnifiedVacancy, card: CrewCardInfo | null):
   const wa = waApplyLink(v.whatsapp, card, info);
   const house = isSeaMindsPublished(v);
 
-  if (v.kind === "direct" && !house) return { channel: "seaminds", url: null, record: true };
+  if (v.kind === "direct" && !house && !isThirdPartyAdvert(v)) return { channel: "seaminds", url: null, record: true };
   if (wa) return { channel: "whatsapp", url: wa, record: true };
   if (v.email) return { channel: "email", url: null, record: true };
   if (v.applyUrl) return { channel: "portal", url: v.applyUrl, record: true };
