@@ -119,7 +119,6 @@ export const loadVacancies = async (opts: LoadVacanciesOpts = {}): Promise<Unifi
         "id, rank_required, vessel_type, joining_port, joining_date, contract_duration, monthly_salary, company_name, verified, created_at, expires_at, additional_notes, contact_email, contact_whatsapp, positions, flier_url, posting_batch_id, recruiter_name"
       )
       .eq("status", "active")
-      .gt("expires_at", nowIso)
       .or(`joining_date.is.null,joining_date.gte.${new Date(Date.now() - STALE_JOINING_DAYS * DAY).toISOString().slice(0, 10)}`)
       .order("created_at", { ascending: false })
       .limit(opts.limitDirect ?? 20),
@@ -314,7 +313,7 @@ export const loadVacancyPage = async (
   const fetchDirect = async () => {
     if (cursor.directDone) return [] as UnifiedVacancy[];
     let q = supabase.from("job_postings").select(DIRECT_COLS)
-      .eq("status", "active").gt("expires_at", nowIso)
+      .eq("status", "active")
       .or(`joining_date.is.null,joining_date.gte.${cutoff}`);
     if (cursor.direct) q = q.or(afterKey(cursor.direct));
     const { data, error } = await q.order("created_at", { ascending: false }).order("id", { ascending: false }).limit(limit);

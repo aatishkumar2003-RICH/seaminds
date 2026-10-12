@@ -91,7 +91,7 @@ const JobDetail = () => {
 
       let found: Job | null = null;
       const pr: any = p;
-      if (pr && (!pr.expires_at || pr.expires_at > nowIso)) {
+      if (pr && pr.status === "active") {
         found = {
           id: pr.id, kind: "direct",
           rank: pr.rank_required || "Crew", vessel: pr.vessel_type || "—",
