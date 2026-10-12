@@ -36,8 +36,11 @@ export const resolveApplyRoute = (v: UnifiedVacancy, card: CrewCardInfo | null):
   const info = { rank: v.rank, vessel: v.vessel, port: v.port };
   const wa = waApplyLink(v.whatsapp, card, info);
   const house = isSeaMindsPublished(v);
+  // SeaMinds-owned posting: stored recruiter matches the publisher → internal flow.
+  // Legacy NULL-recruiter SeaMinds adverts keep external contacts.
+  const houseOwned = house && !!normName(v.recruiterName) && normName(v.recruiterName) === normName(v.publisherName);
 
-  if (v.kind === "direct" && !house && !isThirdPartyAdvert(v)) return { channel: "seaminds", url: null, record: true };
+  if (v.kind === "direct" && (houseOwned || (!house && !isThirdPartyAdvert(v)))) return { channel: "seaminds", url: null, record: true };
   if (wa) return { channel: "whatsapp", url: wa, record: true };
   if (v.email) return { channel: "email", url: null, record: true };
   if (v.applyUrl) return { channel: "portal", url: v.applyUrl, record: true };

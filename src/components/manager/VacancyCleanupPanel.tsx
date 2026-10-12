@@ -5,8 +5,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { logEvent } from "@/lib/logEvent";
 import {
-  AGE_PRESETS, ageInDays, canTransition, decidePermanentDelete, filterByMinAge, parseCustomDays,
+  AGE_PRESETS, ageInDays, canTransition, filterByMinAge, parseCustomDays,
 } from "@/lib/managerVacancies";
+
+/** Permanent deletion is disabled until the secure backend RPC is approved. */
+export const DELETE_PENDING = "Pending secure backend activation";
+export const PERMANENT_DELETE_ENABLED = false;
 
 export type CleanupPosting = {
   id: string;
@@ -64,11 +68,6 @@ export default function VacancyCleanupPanel({
     if (!ok.length) { toast.error(`None of the selected vacancies can be changed to "${to}".`); return; }
     setPending({ kind: "status", to, ids: ok });
   };
-  const requestDelete = (ids: string[]) => {
-    const apps = ids.reduce((n, id) => n + applicantCount(id), 0);
-    const d = decidePermanentDelete(apps);
-    setPending(d.allowed ? { kind: "delete", ids } : { kind: "blocked", ids, apps });
-  };
 
   const run = async () => {
     if (!pending || pending.kind === "blocked" || busy) return;
@@ -80,14 +79,9 @@ export default function VacancyCleanupPanel({
         await logEvent("vacancy_cleanup", `${VERB[pending.to]}: ${pending.ids.length}`, "info", { action: pending.to, ids: pending.ids, scope: "manager" });
         toast.success(`${pending.ids.length} vacanc${pending.ids.length === 1 ? "y" : "ies"} updated`);
       } else {
-        // Re-check applications right before deleting (defence in depth).
-        const { count, error: cErr } = await supabase.from("job_applications").select("id", { count: "exact", head: true }).in("job_posting_id", pending.ids);
-        if (cErr) { toast.error("Could not confirm there are no applications. Nothing was deleted."); return; }
-        if ((count || 0) > 0) { setPending({ kind: "blocked", ids: pending.ids, apps: count || 0 }); return; }
-        const { error } = await supabase.from("job_postings").delete().in("id", pending.ids);
-        if (error) { toast.error(error.message); return; }
-        await logEvent("vacancy_cleanup", `Deleted: ${pending.ids.length}`, "warning", { action: "delete", ids: pending.ids, scope: "manager" });
-        toast.success(`${pending.ids.length} vacanc${pending.ids.length === 1 ? "y" : "ies"} permanently deleted`);
+        // Permanent deletion has no client execution path until the secure backend RPC is activated.
+        toast.error(DELETE_PENDING);
+        return;
       }
       setSelected(new Set());
       setPending(null);

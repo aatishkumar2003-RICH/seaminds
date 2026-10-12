@@ -79,12 +79,13 @@ export default function VacancyManagementPanel() {
       </div>
       <div className="rounded-lg border border-[#f59e0b]/40 bg-[#f59e0b]/10 p-2 text-[11px] text-[#f59e0b]">
         Pending backend activation: archive, restore and delete need reviewed database permissions and audit logging. Direct vacancies shown are limited to what admin can currently read (public, verified, active).
+        <br /><strong>Limited sample:</strong> up to 1,000 most recent records per source. These counts are NOT a complete platform-wide inventory.
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
         {[
-          ["Shown", shown.length], ["Direct", shown.filter((r) => r.kind === "direct").length],
-          ["External", shown.filter((r) => r.kind === "external").length], ["Selected", selCount],
+          ["Shown (sample)", shown.length], ["Direct (sample)", shown.filter((r) => r.kind === "direct").length],
+          ["External (sample)", shown.filter((r) => r.kind === "external").length], ["Selected", selCount],
         ].map(([l, v]) => (
           <div key={String(l)} className="rounded-lg border border-[#D4AF37]/30 bg-[#0D1B2A] px-2 py-2">
             <p className="text-lg font-bold text-[#D4AF37] leading-none">{v}</p>
