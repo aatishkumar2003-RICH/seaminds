@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
+import VacancyManagementPanel from './VacancyManagementPanel';
 
 interface VacancyStats {
   total: number;
@@ -138,6 +139,7 @@ export default function VacancyIntelTab() {
 
   return (
     <div className="space-y-6">
+      <VacancyManagementPanel />
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold text-foreground">📊 Vacancy Intelligence</h2>
         <div className="flex gap-2">
