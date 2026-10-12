@@ -11,6 +11,7 @@ import {
   type PreviewVacancy, type ManagerIdentity, type Ownership, type DuplicateScan, type PublishResult,
   toPreviewVacancy, emptyPreviewVacancy, loadManagerIdentity, checkWhatsapp, isValidEmail,
   scanDuplicates, publishVacancyBatch, publishSummary, uploadOriginalFlier, validateJoiningDates,
+  reconcileBatch, loadUncertainMarker,
   validateContactFormats, validateAttribution, ACCEPTED_FLIER_TYPES as ACCEPTED,
 } from "@/lib/managerVacancies";
 
@@ -69,11 +70,17 @@ const PostVacancy = () => {
   const [scan, setScan] = useState<DuplicateScan | null>(null);
   const [checking, setChecking] = useState(false);
   const [publishing, setPublishing] = useState(false);
-  const [uncertain, setUncertain] = useState<{ batchId: string; rows: PreviewVacancy[]; message: string } | null>(null);
+  const [uncertain, setUncertain] = useState<{ batchId: string; expected: number; message: string } | null>(null);
   const [lastResult, setLastResult] = useState<PublishResult | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { loadManagerIdentity().then(setIdentity); }, []);
+  // Restore an unresolved batch after refresh (minimal marker only).
+  useEffect(() => {
+    if (!identity) return;
+    const m = loadUncertainMarker(identity.userId);
+    if (m) setUncertain({ batchId: m.batchId, expected: m.expected, message: "An earlier publication was not confirmed. Re-check before publishing anything new." });
+  }, [identity]);
 
   const fliersUsed = sources.filter((s) => s.kind === "flier").length;
   const patch = (id: string, fn: (s: Source) => Source) => { setScan(null); setSources((prev) => prev.map((s) => (s.id === id ? fn(s) : s))); };
@@ -173,7 +180,8 @@ const PostVacancy = () => {
   const applyResult = (res: PublishResult, rows: PreviewVacancy[]) => {
     setLastResult(res);
     if (res.status === "uncertain" && res.batchId) {
-      setUncertain({ batchId: res.batchId, rows, message: res.failures[0] || "Publication not confirmed." });
+      const saved = identity ? loadUncertainMarker(identity.userId) : null;
+      setUncertain({ batchId: res.batchId, expected: saved?.batchId === res.batchId ? saved.expected : rows.length, message: res.failures[0] || "Publication not confirmed." });
       return;
     }
     setUncertain(null);
@@ -196,12 +204,20 @@ const PostVacancy = () => {
     } finally { setPublishing(false); }
   };
 
-  // Re-check ONLY reconciles the same batch id — it never mints a new one or resubmits blindly.
+  // Re-check is READ-ONLY: it calls reconcileBatch() directly and never publishVacancyBatch().
   const recheck = async () => {
     if (!identity || !uncertain || publishing) return;
     setPublishing(true);
-    try { applyResult(await publishVacancyBatch(uncertain.rows, identity, "manual", { batchId: uncertain.batchId, skipDuplicateScan: true }), uncertain.rows); }
-    finally { setPublishing(false); }
+    try {
+      const rec = await reconcileBatch(uncertain.batchId, identity.userId, uncertain.expected);
+      if (rec.state === "complete") {
+        setUncertain(null);
+        toast({ title: rec.message });
+        setSources([]); setScan(null);
+      } else {
+        setUncertain({ ...uncertain, message: rec.message });
+      }
+    } finally { setPublishing(false); }
   };
 
   const field = (label: string, value: string, onChange: (v: string) => void, placeholder?: string, warn?: string | null) => (
