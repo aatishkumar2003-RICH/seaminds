@@ -99,23 +99,6 @@ const ForCompanies = () => {
       });
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.company_name || !formData.contact_name || !formData.email) {
-      toast.error("Please fill in all required fields.");
-      return;
-    }
-    setSubmitting(true);
-    const { error } = await supabase.from("company_demo_requests").insert([formData]);
-    setSubmitting(false);
-    if (error) {
-      toast.error("Something went wrong. Please try again.");
-    } else {
-      setSubmitted(true);
-      toast.success("Demo request received! We'll be in touch within 24 hours.");
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Helmet>
@@ -309,92 +292,23 @@ const ForCompanies = () => {
           <div className="text-center mb-10">
             <h2 className="text-2xl md:text-3xl font-bold mb-3">Request a Demo</h2>
             <p className="text-muted-foreground text-sm">
-              Tell us about your fleet and we'll show you how SeaMinds can help. Response within 24 hours.
+              Tell us about your fleet and we'll show you how ShipManager by SeaMinds can help.
             </p>
           </div>
 
-          {submitted ? (
-            <div className="rounded-2xl p-8 text-center" style={{ background: "hsl(var(--secondary))", border: "1px solid hsl(var(--primary) / 0.3)" }}>
-              <div className="w-14 h-14 rounded-full bg-primary/15 flex items-center justify-center mx-auto mb-4">
-                <Check className="w-7 h-7 text-primary" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Demo Request Received</h3>
-              <p className="text-muted-foreground text-sm mb-6">
-                Our team will contact you at <strong className="text-foreground">{formData.email}</strong> within 24 hours.
-              </p>
-              <Button variant="outline" onClick={() => navigate("/")}>
-                Back to Home
-              </Button>
-            </div>
-          ) : (
-            <form
-              onSubmit={handleSubmit}
-              className="rounded-2xl p-6 md:p-8 space-y-5"
-              style={{ background: "hsl(var(--secondary))", border: "1px solid hsl(var(--border))" }}
+          <div className="rounded-2xl p-6 md:p-8 text-center space-y-4" style={{ background: "hsl(var(--secondary))", border: "1px solid hsl(var(--border))" }}>
+            <p className="text-sm text-muted-foreground">
+              Email us your company name, fleet size and the ranks you recruit. Our team replies from the same mailbox.
+            </p>
+            <a
+              href="mailto:info@indossol.com?subject=ShipManager%20by%20SeaMinds%20%E2%80%94%20demo%20request"
+              className="inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 font-bold"
+              style={{ background: "linear-gradient(90deg, #D4AF37, #C5941F)", color: "#0D1B2A" }}
             >
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1.5 block">Company Name *</label>
-                  <Input
-                    required
-                    maxLength={100}
-                    value={formData.company_name}
-                    onChange={(e) => setFormData((p) => ({ ...p, company_name: e.target.value }))}
-                    placeholder="Acme Shipping"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1.5 block">Your Name *</label>
-                  <Input
-                    required
-                    maxLength={100}
-                    value={formData.contact_name}
-                    onChange={(e) => setFormData((p) => ({ ...p, contact_name: e.target.value }))}
-                    placeholder="James Chen"
-                  />
-                </div>
-              </div>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1.5 block">Email *</label>
-                  <Input
-                    required
-                    type="email"
-                    maxLength={255}
-                    value={formData.email}
-                    onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value }))}
-                    placeholder="james@acmeshipping.com"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1.5 block">Fleet Size</label>
-                  <Input
-                    maxLength={50}
-                    value={formData.fleet_size}
-                    onChange={(e) => setFormData((p) => ({ ...p, fleet_size: e.target.value }))}
-                    placeholder="e.g. 12 vessels"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground mb-1.5 block">Message</label>
-                <Textarea
-                  maxLength={1000}
-                  value={formData.message}
-                  onChange={(e) => setFormData((p) => ({ ...p, message: e.target.value }))}
-                  placeholder="Tell us what you're looking for…"
-                  rows={4}
-                />
-              </div>
-              <Button type="submit" size="lg" className="w-full" disabled={submitting}>
-                {submitting ? "Sending…" : (
-                  <>
-                    Send Demo Request <Send className="ml-2 w-4 h-4" />
-                  </>
-                )}
-              </Button>
-            </form>
-          )}
+              Email SeaMinds <Send className="w-4 h-4" />
+            </a>
+            <p className="text-xs text-muted-foreground">Prefer to start now? <button type="button" className="underline text-primary" onClick={() => navigate("/manager?mode=signup")}>Create a free ShipManager account</button></p>
+          </div>
         </div>
       </section>
 
