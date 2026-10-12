@@ -73,6 +73,7 @@ import Join from "./pages/Join";
 import ResetPassword from "./pages/ResetPassword";
 import CompanyPost from "./pages/CompanyPost";
 import ManagerInterviews from "./pages/ManagerInterviews";
+import ShipManagerLayout from "./components/layout/ShipManagerLayout";
 import InterviewInvite from "./pages/InterviewInvite";
 import InterviewExam from "./pages/InterviewExam";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -176,10 +177,12 @@ const App = () => (
             <Route path="/join" element={<Join />} />
             <Route path="/join-free" element={<JoinLanding />} />
             <Route path="/manager" element={<ManagerAuth />} />
-            <Route path="/manager/dashboard" element={<ManagerDashboard />} />
-            <Route path="/manager/interviews" element={<ManagerInterviews />} />
-           <Route path="/manager-search" element={<ManagerSearch />} />
-            <Route path="/post-vacancy" element={<PostVacancyPage />} />
+            <Route element={<ShipManagerLayout />}>
+              <Route path="/manager/dashboard" element={<ManagerDashboard />} />
+              <Route path="/manager/interviews" element={<ManagerInterviews />} />
+              <Route path="/manager-search" element={<ManagerSearch />} />
+              <Route path="/post-vacancy" element={<PostVacancyPage />} />
+            </Route>
             <Route path="/company-post" element={<CompanyPost />} />
             <Route path="/terms" element={<TermsOfService />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
