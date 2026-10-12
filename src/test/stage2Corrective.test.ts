@@ -6,7 +6,7 @@ const calls: { table: string; op: string; args: unknown[] }[] = [];
 vi.mock("@/integrations/supabase/client", () => {
   const chain = (table: string) => {
     const c: Record<string, unknown> = {};
-    ["select", "eq", "gt", "gte", "or", "order", "limit"].forEach((k) => {
+    ["select", "eq", "gt", "gte", "or", "order", "limit", "is"].forEach((k) => {
       c[k] = (...args: unknown[]) => { calls.push({ table, op: k, args }); return c; };
     });
     c.then = (res: (v: unknown) => unknown) => Promise.resolve({ data: [], error: null }).then(res);
@@ -51,9 +51,9 @@ describe("direct feed has no joining-date exclusion", () => {
   });
 });
 
-describe("manager permanent deletion is disabled", () => {
-  it("flag is off and the panel has no client delete call", () => {
-    expect(PERMANENT_DELETE_ENABLED).toBe(false);
+describe("manager permanent deletion goes through the secure RPC", () => {
+  it("flag is on and the panel has no client delete call", () => {
+    expect(PERMANENT_DELETE_ENABLED).toBe(true);
     expect(DELETE_PENDING).toBe("Pending secure backend activation");
     const src = readFileSync(resolve(__dirname, "../components/manager/VacancyCleanupPanel.tsx"), "utf8");
     expect(src).not.toMatch(/\.delete\(\)/);
