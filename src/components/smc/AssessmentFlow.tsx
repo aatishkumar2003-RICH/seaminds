@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { logEvent } from "@/lib/logEvent";
 import ScoreReveal from "./steps/ScoreReveal";
+import { saveOutcome, SKIP_ANSWER, type SaveOutcome } from "@/lib/examContract";
 
 interface AssessmentFlowProps {
   profileId: string;
@@ -64,6 +65,9 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [mcqSubmitted, setMcqSubmitted] = useState(false);
   const [mcqCorrect, setMcqCorrect] = useState<boolean | null>(null);
+  // Durable save state for the current question (answer, skip, timeout or server-kept earlier answer)
+  const [saved, setSaved] = useState<SaveOutcome | null>(null);
+  const advancingRef = useRef(false);
 
   // Evaluation state
   const [transcript, setTranscript] = useState<Array<{question:string,answer:string,score:number,redFlag:boolean,redFlagCategory:string|null,followUp:string|null}>>([]);
@@ -193,6 +197,8 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     setSelectedOption(null);
     setMcqSubmitted(false);
     setMcqCorrect(null);
+    setSaved(null);
+    advancingRef.current = false;
     setTextAnswer("");
     setPendingFollowUp(null);
     setFollowUpInput("");
@@ -414,23 +420,48 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     setFlowStep('cvCheck');
   };
 
+  // One submission at a time per question: timeout, answer and skip can never race into conflicting states.
+  const submittingRef = useRef(false);
+
   const handleAutoSubmit = () => {
     const currentQ = flatQuestions[qIndex];
-    if (!currentQ) return;
+    if (!currentQ || saved || submittingRef.current) return;
+    // Timer expiry is recorded as TIMED_OUT, separate from an intentional skip.
     if (currentQ.type === 'mcq') {
-      handleMcqConfirm(true);
+      void handleMcqConfirm(true);
     } else {
-      const answer = textAnswer.trim() || '[No answer — time expired]';
-      submitAnswer(currentQ.question, answer, currentQ);
+      void submitAnswer(currentQ.question, '[No answer — time expired]', currentQ);
     }
+  };
+
+  const applyOutcome = (d: any): boolean => {
+    const o = saveOutcome(d);
+    if (!o) return false;
+    setSaved(o);
+    return true;
+  };
+
+  const handleSkip = async () => {
+    const currentQ = flatQuestions[qIndex];
+    if (!currentQ || saved || submittingRef.current) return;
+    submittingRef.current = true;
+    setTimerActive(false);
+    setEvaluating(true);
+    try {
+      const d = await submitToLedger(currentQ.id, SKIP_ANSWER);
+      // A failed save is never a skip — the candidate stays on this question.
+      if (!applyOutcome(d)) { setTimerActive(true); return; }
+      setMcqSubmitted(true);
+      setTranscript(prev => [...prev, { question: currentQ.question, answer: '[Skipped]', score: 0, redFlag: false, redFlagCategory: null, followUp: null }]);
+    } finally { setEvaluating(false); submittingRef.current = false; }
   };
 
   const handleMcqConfirm = async (autoSubmit = false) => {
     const currentQ = flatQuestions[qIndex];
-    if (!currentQ) return;
+    if (!currentQ || saved || submittingRef.current) return;
     const selected = autoSubmit && selectedOption === null ? -1 : selectedOption;
     if (selected === null) return;
-
+    submittingRef.current = true;
     setMcqSubmitted(true);
     setTimerActive(false);
 
@@ -438,12 +469,12 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     setEvaluating(true);
     try {
       const d = await submitToLedger(currentQ.id, selected.toString());
-      if (!d) { setMcqSubmitted(false); setTimerActive(true); return; }
+      if (!applyOutcome(d)) { setMcqSubmitted(false); setTimerActive(true); return; }
       setMcqCorrect(!!d.is_correct);
       const entry = { question: currentQ.question, answer: selected.toString(), score: Number(d.score) || 0, redFlag: false, redFlagCategory: null, followUp: null };
       setTranscript(prev => [...prev, entry]);
-      void persistAnswer({ question: currentQ.question, answer: selected.toString(), question_type: 'mcq', is_followup: false, ai_score: entry.score, red_flag: false, red_flag_category: null });
-    } finally { setEvaluating(false); }
+      if (!d.original_answer_kept) void persistAnswer({ question: currentQ.question, answer: selected.toString(), question_type: 'mcq', is_followup: false, ai_score: entry.score, red_flag: false, red_flag_category: null });
+    } finally { setEvaluating(false); submittingRef.current = false; }
   };
 
   // Idempotent write-first submit (safe to retry; first answer always wins on the server)
@@ -473,20 +504,19 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   };
 
   const submitAnswer = async (question: string, answer: string, currentQ: FlatQuestion) => {
+    if (saved || submittingRef.current) return;
+    submittingRef.current = true;
     setEvaluating(true);
     setTimerActive(false);
-    let saved = false;
     try {
       const d = await submitToLedger(currentQ.id, answer);
-      if (!d) { setTimerActive(true); return; }
-      saved = true;
+      // Only a durably saved answer unlocks Next; a failed save keeps the candidate on this question.
+      if (!applyOutcome(d)) { setTimerActive(true); return; }
       // Scoring runs asynchronously and is retried on failure; it never blocks or zeroes the answer.
       void supabase.functions.invoke('score-paper-answers', { body: { assessmentId }, headers: { Authorization: `Bearer ${accessToken}` } }).catch(() => null);
       setTranscript(prev => [...prev, { question, answer, score: 0, redFlag: false, redFlagCategory: null, followUp: null }]);
-      void persistAnswer({ question, answer, question_type: currentQ.type, is_followup: false, ai_score: null, red_flag: false, red_flag_category: null });
-    } finally { setEvaluating(false); }
-    // Only move on once the answer is durably saved; a failed save keeps the candidate on this question.
-    if (saved) advanceQuestion();
+      if (!d.original_answer_kept) void persistAnswer({ question, answer, question_type: currentQ.type, is_followup: false, ai_score: null, red_flag: false, red_flag_category: null });
+    } finally { setEvaluating(false); submittingRef.current = false; }
   };
 
   const advanceQuestion = () => {
@@ -515,12 +545,13 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   const finishPaper = async () => {
     const { data, error } = await supabase.rpc('get_missing_answers' as any, { p_assessment_id: assessmentId });
     const r: any = data;
-    if (error || !r?.ok) { toast.error("Couldn't confirm your answers are saved. Check your connection and press submit again."); return; }
+    if (error || !r?.ok) { advancingRef.current = false; toast.error("Couldn't confirm your answers are saved. Check your connection and press submit again."); return; }
     const missing: string[] = r.missing || [];
     if (missing.length > 0) {
       const idx = flatQuestions.findIndex((q) => q.id === missing[0]);
       toast.error(`${missing.length} answer${missing.length > 1 ? 's were' : ' was'} not saved. Please answer question ${idx + 1} again.`);
-      if (idx >= 0) { setMcqSubmitted(false); setSelectedOption(null); setTextAnswer(''); setQIndex(idx); setTimerActive(true); }
+      advancingRef.current = false;
+      if (idx >= 0) { setSaved(null); setMcqSubmitted(false); setSelectedOption(null); setTextAnswer(''); setQIndex(idx); setTimerActive(true); }
       return;
     }
     const { error: qe } = await supabase.rpc('enqueue_scoring' as any, { p_assessment_id: assessmentId });
@@ -533,10 +564,13 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     if (!textAnswer.trim()) return;
     const currentQ = flatQuestions[qIndex];
     if (!currentQ) return;
-    submitAnswer(currentQ.question, textAnswer.trim(), currentQ);
+    void submitAnswer(currentQ.question, textAnswer.trim(), currentQ);
   };
 
+  // Next is available only after a durable save; guarded against double taps.
   const handleMcqNext = () => {
+    if (!saved || advancingRef.current) return;
+    advancingRef.current = true;
     setPendingFollowUp(null);
     advanceQuestion();
   };
@@ -991,7 +1025,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
         </div>
 
         {/* Question content */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 pb-4">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 pb-20 w-full max-w-2xl mx-auto" style={{ paddingBottom: 'max(5rem, env(safe-area-inset-bottom))' }}>
           <AnimatePresence mode="wait">
           <motion.div
             key={`q-${qIndex}`}
@@ -1011,8 +1045,9 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
                 {(currentQ.options || []).map((opt, i) => {
                   const letter = String.fromCharCode(65 + i);
                   const isSelected = selectedOption === i;
-                  const isCorrectOpt = !sealed && mcqSubmitted && i === currentQ.correct_index;
-                  const isWrongSelected = !sealed && mcqSubmitted && isSelected && !mcqCorrect;
+                  // Scored exam: correct answers are never revealed while the exam is active.
+                  const isCorrectOpt = false;
+                  const isWrongSelected = false;
                   return (
                     <motion.button
                       key={i}
@@ -1036,32 +1071,6 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
                 })}
               </div>
 
-              {/* MCQ result banner */}
-              {mcqSubmitted && !sealed && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.3 }}
-                  className="rounded-xl px-4 py-3 space-y-1"
-                  style={{ background: mcqCorrect ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', border: `1px solid ${mcqCorrect ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}` }}
-                >
-                  <div className="flex items-center gap-2">
-                    {mcqCorrect ? <CheckCircle size={16} style={{ color: '#22c55e' }} /> : <XCircle size={16} style={{ color: '#ef4444' }} />}
-                    <span className="text-sm font-bold" style={{ color: mcqCorrect ? '#22c55e' : '#ef4444' }}>
-                      {mcqCorrect ? '✓ Correct!' : (currentQ.correct_letter ? `✗ Incorrect — Correct answer: ${currentQ.correct_letter}` : '✗ Incorrect')}
-                    </span>
-                  </div>
-                  {!mcqCorrect && currentQ.explanation && (
-                    <p style={{ fontSize: '12px', color: '#aaa', marginTop: '4px' }}>{currentQ.explanation}</p>
-                  )}
-                </motion.div>
-              )}
-
-              {mcqSubmitted && sealed && (
-                <div className="rounded-xl px-4 py-3" style={{ background: 'rgba(212,175,55,0.06)', border: '1px solid rgba(212,175,55,0.2)' }}>
-                  <p className="text-sm" style={{ color: '#cbd5e1' }}>Answer recorded.</p>
-                </div>
-              )}
 
               {/* Follow-up question after MCQ */}
               {pendingFollowUp && mcqSubmitted && (
@@ -1154,49 +1163,59 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
               )}
             </div>
           )}
-          </motion.div>
-          </AnimatePresence>
-        </div>
 
-        {/* Bottom action bar */}
-        <div className="p-4 border-t" style={{ borderColor: '#1a2e47' }}>
-          {currentQ?.type === 'mcq' && !mcqSubmitted && (
-            <button
-              onClick={() => handleMcqConfirm()}
-              disabled={selectedOption === null || evaluating}
-              className="w-full py-3 rounded-xl font-bold text-sm transition-all disabled:opacity-40"
-              style={{ background: '#D4AF37', color: '#0b1929' }}
-            >
-              {evaluating ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'Confirm Answer'}
-            </button>
-          )}
-          {currentQ?.type === 'mcq' && mcqSubmitted && !pendingFollowUp && (
-            <button
-              onClick={handleMcqNext}
-              className="w-full py-3 rounded-xl font-bold text-sm transition-all"
-              style={{ background: '#D4AF37', color: '#0b1929' }}
-            >
-              {qIndex + 1 < totalQuestions ? 'Next Question →' : 'See My Results →'}
-            </button>
-          )}
-          {(currentQ?.type === 'scenario' || currentQ?.type === 'behavioural') && !pendingFollowUp && (
-            <div style={{ display:'flex', alignItems:'center' }}>
-              {currentQ?.type === 'behavioural' && qIndex > 0 && !sealed && (
-                <button onClick={() => setQIndex(s => s - 1)}
-                  style={{ background:'transparent', border:'1px solid #2a4060', color:'#888', padding:'6px 12px', borderRadius:'6px', fontSize:'12px', cursor:'pointer', marginRight:'8px' }}>
-                  ← Previous
-                </button>
+          {/* ── Inline question controls (directly below the options / answer box) ── */}
+          {currentQ && !pendingFollowUp && (
+            <div className="mt-5 space-y-3" data-testid="exam-controls">
+              {!saved ? (
+                <div className="flex flex-col-reverse sm:flex-row gap-3">
+                  <button
+                    onClick={handleSkip}
+                    disabled={evaluating}
+                    className="sm:flex-1 min-h-[48px] rounded-xl text-sm font-semibold transition-all disabled:opacity-40"
+                    style={{ background: 'transparent', border: '1px solid rgba(212,175,55,0.3)', color: '#94A3B8' }}
+                  >
+                    Skip · 0 marks
+                  </button>
+                  <button
+                    onClick={() => (currentQ.type === 'mcq' ? handleMcqConfirm() : handleTextSubmit())}
+                    disabled={evaluating || (currentQ.type === 'mcq' ? selectedOption === null : !textAnswer.trim())}
+                    className="sm:flex-[2] min-h-[48px] rounded-xl font-bold text-sm transition-all disabled:opacity-40"
+                    style={{ background: '#D4AF37', color: '#0b1929' }}
+                  >
+                    {evaluating ? <Loader2 size={16} className="animate-spin mx-auto" /> : currentQ.type === 'mcq' ? 'Confirm Answer →' : 'Submit Answer →'}
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div
+                    role="status"
+                    className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold"
+                    style={{
+                      background: '#112240',
+                      border: `1px solid ${saved === 'answered' ? 'rgba(34,197,94,0.4)' : 'rgba(212,175,55,0.3)'}`,
+                      color: saved === 'answered' ? '#22c55e' : '#D4AF37',
+                    }}
+                  >
+                    <CheckCircle size={16} />
+                    {saved === 'answered' && 'Answer saved ✓'}
+                    {saved === 'skipped' && 'Question skipped · 0 marks recorded ✓'}
+                    {saved === 'timed_out' && 'Time expired · recorded ✓'}
+                    {saved === 'kept' && 'An earlier response for this question was already saved ✓'}
+                  </div>
+                  <button
+                    onClick={handleMcqNext}
+                    className="w-full min-h-[48px] rounded-xl font-bold text-sm transition-all"
+                    style={{ background: '#D4AF37', color: '#0b1929' }}
+                  >
+                    {qIndex + 1 < totalQuestions ? 'Next Question →' : 'See My Results →'}
+                  </button>
+                </>
               )}
-              <button
-                onClick={handleTextSubmit}
-                disabled={!textAnswer.trim() || evaluating}
-                className="flex-1 py-3 rounded-xl font-bold text-sm transition-all disabled:opacity-40"
-                style={{ background: '#D4AF37', color: '#0b1929' }}
-              >
-                {evaluating ? <Loader2 size={16} className="animate-spin mx-auto" /> : qIndex + 1 < totalQuestions ? 'Submit & Continue' : 'Submit & See Results'}
-              </button>
             </div>
           )}
+          </motion.div>
+          </AnimatePresence>
         </div>
       </div>
     );

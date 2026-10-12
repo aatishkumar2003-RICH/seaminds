@@ -25,3 +25,25 @@ describe("frozen exam contract", () => {
     expect(gatewayErrorMessage("CV_REQUIRED")).toMatch(/Upload your CV/);
   });
 });
+
+import { saveOutcome, paperFraction, SKIP_ANSWER } from "@/lib/examContract";
+describe("skip disposition", () => {
+  it("uses the server skip sentinel", () => expect(SKIP_ANSWER).toBe("__SKIPPED__"));
+  it("network failure is never a skip", () => {
+    expect(saveOutcome(null)).toBeNull();
+    expect(saveOutcome({ ok: false, error_code: "RATE_LIMITED" })).toBeNull();
+  });
+  it("classifies saved skip, timeout and answer", () => {
+    expect(saveOutcome({ ok: true, disposition: "SKIPPED" })).toBe("skipped");
+    expect(saveOutcome({ ok: true, disposition: "TIMED_OUT" })).toBe("timed_out");
+    expect(saveOutcome({ ok: true, disposition: null })).toBe("answered");
+  });
+  it("first saved answer wins — no false confirmation", () => {
+    expect(saveOutcome({ ok: true, disposition: "SKIPPED", original_answer_kept: true })).toBe("kept");
+  });
+  it("skips score zero and stay in the 23/27/31 denominator", () => {
+    expect(paperFraction([10, null, 0], 23)).toBeCloseTo(10 / 230);
+    expect(paperFraction(Array(27).fill(0), 27)).toBe(0);
+    expect(paperFraction([10, 10], 31)).toBeCloseTo(20 / 310);
+  });
+});
