@@ -1,4 +1,5 @@
 import { postingAgeLabel } from "@/lib/managerVacancies";
+import { isHistoricalListing } from "@/lib/vacancyFeed";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
@@ -107,7 +108,7 @@ const JobDetail = () => {
       } else {
         const { data: e } = await supabase.from("external_vacancies" as any)
           .select("id, rank_required, title, vessel_type, company_name, salary_text, joining_port, joining_date, contract_duration, description, contact_whatsapp, contact_email, apply_url, is_verified, is_scam_flagged, fetched_at, expires_at")
-          .eq("id", id).gt("expires_at", nowIso).maybeSingle();
+          .eq("id", id).maybeSingle();
         const er: any = e;
         if (er && !er.is_scam_flagged) {
           found = {
@@ -117,7 +118,7 @@ const JobDetail = () => {
             port: er.joining_port, duration: er.contract_duration, joiningDate: er.joining_date || null,
             notes: er.description, flier: null,
             whatsapp: er.contact_whatsapp, email: er.contact_email || null, applyUrl: er.apply_url,
-            verified: !!er.is_verified, publisher: null, posted: er.fetched_at, expires: er.expires_at,
+            verified: !!er.is_verified, publisher: null, posted: er.fetched_at, expires: null,
           };
         }
       }
@@ -134,7 +135,7 @@ const JobDetail = () => {
             .eq("status", "active").ilike("rank_required", `%${rankKey}%`).neq("id", found.id).limit(5),
           supabase.from("external_vacancies" as any)
             .select("id, rank_required, vessel_type, company_name, joining_port")
-            .gt("expires_at", nowIso).ilike("rank_required", `%${rankKey}%`).neq("id", found.id).limit(5),
+            .eq("is_scam_flagged", false).ilike("rank_required", `%${rankKey}%`).neq("id", found.id).limit(5),
         ]);
         const merge = [
           ...(((sp as any).data as any[]) || []).map((r) => ({ ...r, kind: "direct" as const })),
@@ -308,8 +309,10 @@ const JobDetail = () => {
           )}
 
           <p style={{ color: "#94a3b8", fontSize: 11, marginTop: 14 }}>
-            {job.posted && <>Posted {fmtDate(job.posted)}</>}
+            {job.posted && <>{job.kind === "external" ? "Source date" : "Posted"} {fmtDate(job.posted)}</>}
+            {job.kind === "external" && <> · {job.verified ? "Verified source" : "Source not independently verified"}</>}
             {job.posted && job.kind === "direct" && postingAgeLabel(job.posted).recurring && <> · Recurring opportunity — confirm with recruiter</>}
+            {job.posted && job.kind === "external" && isHistoricalListing(job.posted) && <> · Historical listing — current hiring not confirmed, check with the recruiter</>}
             {job.expires && <> · Closes {fmtDate(job.expires)}</>}
           </p>
 
