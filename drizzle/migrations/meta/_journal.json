@@ -309,6 +309,13 @@
       "when": 1791800306002,
       "tag": "0043_neutralize_expire_old_vacancies",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1791824357652,
+      "tag": "0044_stage2_vacancy_lifecycle_v2",
+      "breakpoints": true
     }
   ]
 }
