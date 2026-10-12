@@ -175,7 +175,7 @@ const JobCard = ({ vacancy: v, variant, applied: appliedProp, busy, href, match,
         </div>
         <span style={{ fontSize: 10, color: "#94a3b8", whiteSpace: "nowrap", textAlign: "right" }}>
           {timeAgo(v.postedAt)}
-          {isHistoricalListing(v.postedAt) && <span style={{ display: "block", color: "#f59e0b" }}>Hiring not confirmed</span>}
+          {isHistoricalListing(v.sourcePostedAt || v.postedAt) && <span style={{ display: "block", color: "#f59e0b" }}>Hiring not confirmed</span>}
         </span>
       </div>
 
