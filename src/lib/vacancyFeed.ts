@@ -55,7 +55,8 @@ const mapDirect = (r: Record<string, any>): UnifiedVacancy => ({
   verified: !!r.verified,
   qualityScore: null,
   postedAt: r.created_at || null,
-  expiresAt: r.expires_at || null,
+  // Direct vacancies have no automatic expiry; expires_at is a compatibility value only.
+  expiresAt: null,
   notes: r.additional_notes || null,
   email: r.contact_email || null,
   whatsapp: r.contact_whatsapp || null,
