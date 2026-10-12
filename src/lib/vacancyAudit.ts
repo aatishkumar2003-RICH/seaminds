@@ -30,3 +30,21 @@ export const removeConfirmed = <T extends { id: string }>(list: T[], affectedIds
   const gone = new Set(affectedIds || []);
   return list.filter((j) => !gone.has(j.id));
 };
+
+export type DeleteOutcome =
+  | { status: "cancelled" }
+  | { status: "rejected"; message: string }
+  | { status: "done"; affectedIds: string[]; blockedIds: string[] };
+
+/** One confirmation, then the lifecycle request; success only on server ok. */
+export const confirmAndDelete = async (
+  ids: string[], prompt: string, confirmFn: (m: string) => boolean,
+  request: (ids: string[]) => Promise<{ ok: boolean; message?: string; affectedIds?: string[]; blockedIds?: string[]; blocked?: unknown }>,
+  pendingLabel: string,
+): Promise<DeleteOutcome> => {
+  if (!confirmFn(prompt)) return { status: "cancelled" };
+  const r = await request(ids);
+  if (r.ok) return { status: "done", affectedIds: r.affectedIds || [], blockedIds: r.blockedIds || [] };
+  if (r.blockedIds?.length) return { status: "done", affectedIds: r.affectedIds || [], blockedIds: r.blockedIds };
+  return { status: "rejected", message: r.message || pendingLabel };
+};
