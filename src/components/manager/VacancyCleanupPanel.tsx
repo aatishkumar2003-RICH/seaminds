@@ -138,7 +138,7 @@ export default function VacancyCleanupPanel({
         <button className={btn} disabled={!selRows.length} onClick={() => requestStatus("filled", selRows.map((r) => r.id))}>Mark filled</button>
         <button className={btn} disabled={!selRows.length} onClick={() => requestStatus("archived", selRows.map((r) => r.id))}>Archive</button>
         <button className={btn} disabled={!selRows.length} onClick={() => requestStatus("active", selRows.map((r) => r.id))}>Restore / reopen</button>
-        <button className={`${btn} border-red-500/40 text-red-400`} disabled={!selRows.length} onClick={() => requestDelete(selRows.map((r) => r.id))}>Delete permanently</button>
+        <button className={`${btn} opacity-40 cursor-not-allowed`} disabled title={DELETE_PENDING} aria-label={`Delete permanently — ${DELETE_PENDING}`}>Delete permanently · {DELETE_PENDING}</button>
       </div>
 
       {rows.length === 0 ? (
@@ -166,7 +166,7 @@ export default function VacancyCleanupPanel({
                   {canTransition(st, "filled") && <button className={btn} onClick={() => requestStatus("filled", [p.id])}>Mark filled</button>}
                   {canTransition(st, "archived") && <button className={btn} onClick={() => requestStatus("archived", [p.id])}>Archive</button>}
                   {canTransition(st, "active") && <button className={btn} onClick={() => requestStatus("active", [p.id])}>{st === "filled" ? "Reopen" : "Restore"}</button>}
-                  <button className={`${btn} border-red-500/40 text-red-400`} onClick={() => requestDelete([p.id])}>Delete</button>
+                  <button className={`${btn} opacity-40 cursor-not-allowed`} disabled title={DELETE_PENDING} aria-label={`Delete — ${DELETE_PENDING}`}>Delete · {DELETE_PENDING}</button>
                 </div>
               </li>
             );
