@@ -175,7 +175,7 @@ export const loadAdminVacancyPage = async (q: AdminPageQuery): Promise<{ rows: R
   if (cut) query = query.lte("created_at", cut);
   const { data, count, error } = await query.order("created_at", { ascending: false }).order("id", { ascending: false }).range(from, to);
   if (error) throw error;
-  return { rows: (data || []) as Record<string, unknown>[], total: count ?? 0 };
+  return { rows: (data || []) as unknown as Record<string, unknown>[], total: count ?? 0 };
 };
 
 // ---------------- secure lifecycle integration point ----------------
