@@ -481,7 +481,15 @@ export const isBatchUncertain = (batchId: string) => uncertainBatches.has(batchI
 export type UncertainMarker = { batchId: string; managerId: string; expected: number; at: string };
 const markerKey = (managerId: string) => `sm_uncertain_batch:${managerId}`;
 const store = (): Storage | null => { try { return typeof localStorage !== "undefined" ? localStorage : null; } catch { return null; } };
-export const saveUncertainMarker = (m: UncertainMarker) => { try { store()?.setItem(markerKey(m.managerId), JSON.stringify(m)); } catch { /* ignore */ } };
+/** Returns false when the browser cannot persist (and read back) the marker. */
+export const saveUncertainMarker = (m: UncertainMarker): boolean => {
+  try {
+    const st = store();
+    if (!st) return false;
+    st.setItem(markerKey(m.managerId), JSON.stringify(m));
+    return loadUncertainMarker(m.managerId)?.batchId === m.batchId;
+  } catch { return false; }
+};
 export const loadUncertainMarker = (managerId: string): UncertainMarker | null => {
   try {
     const raw = store()?.getItem(markerKey(managerId));
@@ -597,7 +605,10 @@ export const publishVacancyBatch = async (
   const payload = toPublish.map((v) => toRow(v, identity, sourceType, batchId, expiresAt, opts?.flierUrl));
 
   // Marker is written BEFORE the INSERT so a crash/refresh mid-request still leaves a recoverable record.
-  saveUncertainMarker({ batchId, managerId: identity.userId, expected: payload.length, at: new Date().toISOString() });
+  if (!saveUncertainMarker({ batchId, managerId: identity.userId, expected: payload.length, at: new Date().toISOString() })) {
+    return { ...base, duplicatesSkipped, batchId: null, status: "blocked",
+      failures: ["This browser cannot save publishing progress (private mode or storage full), so nothing was sent. Allow site storage or use another browser, then try again."] };
+  }
 
   let data: { id: string }[] | null = null;
   let error: { code?: string; message?: string; name?: string } | null = null;

@@ -1,5 +1,6 @@
 import { postingAgeLabel } from "@/lib/managerVacancies";
 import { isHistoricalListing } from "@/lib/vacancyFeed";
+import { withoutArchivedExternal } from "@/lib/vacancyLifecycle";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
@@ -40,6 +41,8 @@ interface Job {
   /** Raw job_postings.recruiter_name (routing only). */
   recruiterName?: string | null;
   posted: string | null;
+  /** External only: date SeaMinds collected the vacancy. */
+  collected?: string | null;
   expires: string | null;
 }
 
@@ -105,9 +108,9 @@ const JobDetail = () => {
           verified: !!pr.verified, publisher: pr.company_name || null, recruiterName: pr.recruiter_name || null, posted: pr.created_at, expires: null,
         };
       } else {
-        const { data: e } = await supabase.from("external_vacancies" as any)
-          .select("id, rank_required, title, vessel_type, company_name, salary_text, joining_port, joining_date, contract_duration, description, contact_whatsapp, contact_email, apply_url, is_verified, is_scam_flagged, fetched_at, expires_at")
-          .eq("id", id).maybeSingle();
+        const { data: e } = await withoutArchivedExternal(supabase.from("external_vacancies" as any)
+          .select("id, rank_required, title, vessel_type, company_name, salary_text, joining_port, joining_date, contract_duration, description, contact_whatsapp, contact_email, apply_url, is_verified, is_scam_flagged, fetched_at, source_posted_at, expires_at")
+          .eq("id", id)).maybeSingle();
         const er: any = e;
         if (er && !er.is_scam_flagged) {
           found = {
@@ -117,7 +120,7 @@ const JobDetail = () => {
             port: er.joining_port, duration: er.contract_duration, joiningDate: er.joining_date || null,
             notes: er.description, flier: null,
             whatsapp: er.contact_whatsapp, email: er.contact_email || null, applyUrl: er.apply_url,
-            verified: !!er.is_verified, publisher: null, posted: er.fetched_at, expires: null,
+            verified: !!er.is_verified, publisher: null, posted: er.source_posted_at || null, collected: er.fetched_at || null, expires: null,
           };
         }
       }
@@ -132,9 +135,9 @@ const JobDetail = () => {
           supabase.from("job_postings" as any)
             .select("id, rank_required, vessel_type, company_name, joining_port")
             .eq("status", "active").ilike("rank_required", `%${rankKey}%`).neq("id", found.id).limit(5),
-          supabase.from("external_vacancies" as any)
+          withoutArchivedExternal(supabase.from("external_vacancies" as any)
             .select("id, rank_required, vessel_type, company_name, joining_port")
-            .eq("is_scam_flagged", false).ilike("rank_required", `%${rankKey}%`).neq("id", found.id).limit(5),
+            .eq("is_scam_flagged", false)).ilike("rank_required", `%${rankKey}%`).neq("id", found.id).limit(5),
         ]);
         const merge = [
           ...(((sp as any).data as any[]) || []).map((r) => ({ ...r, kind: "direct" as const })),
@@ -308,10 +311,12 @@ const JobDetail = () => {
           )}
 
           <p style={{ color: "#94a3b8", fontSize: 11, marginTop: 14 }}>
-            {job.posted && <>{job.kind === "external" ? "Source date" : "Posted"} {fmtDate(job.posted)}</>}
+            {job.kind === "external"
+              ? <>{job.posted ? <>Source posted {fmtDate(job.posted)}</> : <>Source date not stated</>}{job.collected && <> · Collected by SeaMinds {fmtDate(job.collected)}</>}</>
+              : job.posted && <>Posted {fmtDate(job.posted)}</>}
             {job.kind === "external" && <> · {job.verified ? "Verified source" : "Source not independently verified"}</>}
             {job.posted && job.kind === "direct" && postingAgeLabel(job.posted).recurring && <> · Recurring opportunity — confirm with recruiter</>}
-            {job.posted && job.kind === "external" && isHistoricalListing(job.posted) && <> · Historical listing — current hiring not confirmed, check with the recruiter</>}
+            {job.kind === "external" && isHistoricalListing(job.posted || job.collected) && <> · Historical listing — current hiring not confirmed, check with the recruiter</>}
             {job.expires && <> · Closes {fmtDate(job.expires)}</>}
           </p>
 

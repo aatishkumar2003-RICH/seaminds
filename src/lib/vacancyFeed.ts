@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { withoutArchivedExternal } from "@/lib/vacancyLifecycle";
 import { formatSalaryText } from "@/lib/salary";
 
 /** One vacancy shape shared by every SeaMinds surface (feed, home, jobs, homepage). */
@@ -29,6 +30,10 @@ export interface UnifiedVacancy {
   postingBatchId: string | null;
   source: string | null;
   isNew: boolean;
+  /** Date the original source says it was posted (external only, when known). */
+  sourcePostedAt?: string | null;
+  /** Date SeaMinds collected the vacancy (external only). */
+  collectedAt?: string | null;
 }
 
 const DAY = 24 * 3600 * 1000;
@@ -84,6 +89,8 @@ const mapExternal = (r: Record<string, any>): UnifiedVacancy => ({
   postedAt: r.created_at || null,
   // Aggregator expiry is not a hiring signal; vacancies are archived manually only.
   expiresAt: null,
+  sourcePostedAt: r.source_posted_at || null,
+  collectedAt: r.fetched_at || r.created_at || null,
   notes: r.description || null,
   email: r.contact_email || null,
   whatsapp: r.contact_whatsapp || null,
@@ -107,9 +114,10 @@ export const loadVacancies = async (opts: LoadVacanciesOpts = {}): Promise<Unifi
   let extQuery = supabase
     .from("external_vacancies")
     .select(
-      "id, title, rank_required, vessel_type, joining_port, joining_date, contract_duration, salary_text, company_name, company_website, is_verified, quality_score, created_at, expires_at, description, contact_email, contact_whatsapp, apply_url, source"
+      "id, title, rank_required, vessel_type, joining_port, joining_date, contract_duration, salary_text, company_name, company_website, is_verified, quality_score, created_at, expires_at, description, contact_email, contact_whatsapp, apply_url, source, source_posted_at, fetched_at"
     )
     .eq("is_scam_flagged", false); // no age/expiry hiding — archival is manual
+  extQuery = withoutArchivedExternal(extQuery);
   if (opts.minQuality !== undefined) extQuery = extQuery.gte("quality_score", opts.minQuality);
 
   const [directRes, extRes] = await Promise.all([
@@ -302,7 +310,7 @@ export const mergeVacancyPage = (
 const DIRECT_COLS =
   "id, rank_required, vessel_type, joining_port, joining_date, contract_duration, monthly_salary, company_name, verified, created_at, expires_at, additional_notes, contact_email, contact_whatsapp, positions, flier_url, posting_batch_id, recruiter_name";
 const EXTERNAL_COLS =
-  "id, title, rank_required, vessel_type, joining_port, joining_date, contract_duration, salary_text, company_name, company_website, is_verified, quality_score, created_at, expires_at, description, contact_email, contact_whatsapp, apply_url, source";
+  "id, title, rank_required, vessel_type, joining_port, joining_date, contract_duration, salary_text, company_name, company_website, is_verified, quality_score, created_at, expires_at, description, contact_email, contact_whatsapp, apply_url, source, source_posted_at, fetched_at";
 
 const afterKey = (k: SourceKey) => `created_at.lt.${k.createdAt},and(created_at.eq.${k.createdAt},id.lt.${k.id})`;
 
@@ -325,8 +333,8 @@ export const loadVacancyPage = async (
   };
   const fetchExternal = async () => {
     if (cursor.externalDone) return [] as UnifiedVacancy[];
-    let q = supabase.from("external_vacancies").select(EXTERNAL_COLS)
-      .eq("is_scam_flagged", false);
+    let q = withoutArchivedExternal(supabase.from("external_vacancies").select(EXTERNAL_COLS)
+      .eq("is_scam_flagged", false));
     if (opts.minQuality !== undefined) q = q.gte("quality_score", opts.minQuality);
     if (cursor.external) q = q.or(afterKey(cursor.external));
     const { data, error } = await q.order("created_at", { ascending: false }).order("id", { ascending: false }).limit(limit);

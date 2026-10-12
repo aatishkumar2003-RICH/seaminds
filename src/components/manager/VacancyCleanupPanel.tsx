@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { logEvent } from "@/lib/logEvent";
 import { AGE_PRESETS, ageInDays, canTransition, parseCustomDays } from "@/lib/managerVacancies";
 import {
-  loadManagerVacancyPage, loadManagerStatusCounts, loadApplicationCounts, requestLifecycleAction,
+  loadManagerVacancyPage, loadManagerStatusCounts, loadApplicationCounts, requestLifecycleAction, summarizeLifecycle,
   LIFECYCLE_BACKEND, PENDING_LABEL, PAGE_SIZE, totalPages, MANAGER_STATUSES,
 } from "@/lib/vacancyLifecycle";
 
@@ -56,7 +56,8 @@ export default function VacancyCleanupPanel({
   const [rows, setRows] = useState<CleanupPosting[]>([]);
   const [total, setTotal] = useState(0);
   const [counts, setCounts] = useState<Record<string, number>>({});
-  const [apps, setApps] = useState<Record<string, number>>({});
+  // null = counts unavailable (pending secure backend) — never shown as a false zero.
+  const [apps, setApps] = useState<Record<string, number> | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -78,7 +79,7 @@ export default function VacancyCleanupPanel({
         loadManagerStatusCounts(managerId),
       ]);
       setRows(pg.rows); setTotal(pg.total); setCounts(c);
-      try { setApps(await loadApplicationCounts(pg.rows.map((r) => r.id))); } catch { setApps({}); }
+      try { setApps(await loadApplicationCounts(pg.rows.map((r) => r.id))); } catch { setApps(null); }
     } catch {
       setLoadError("Could not load your vacancies. Check your connection and try again.");
     } finally { setLoading(false); }
@@ -105,18 +106,31 @@ export default function VacancyCleanupPanel({
     setBusy(true);
     try {
       if (pending.kind === "status") {
-        const { error } = await supabase.from("job_postings").update({ status: pending.to } as never).in("id", pending.ids).eq("manager_id", managerId);
-        if (error) { toast.error(error.message); return; }
-        await logEvent("vacancy_cleanup", `${VERB[pending.to]}: ${pending.ids.length}`, "info", { action: pending.to, ids: pending.ids, scope: "manager" });
-        toast.success(`${pending.ids.length} vacanc${pending.ids.length === 1 ? "y" : "ies"} updated`);
+        if (LIFECYCLE_BACKEND.managerStatus) {
+          // Secure cutover: single audited backend action.
+          const action = pending.to === "archived" ? "archive" : pending.to === "filled" ? "filled" : "restore";
+          const r = await requestLifecycleAction("manager", "direct", pending.ids, action);
+          if (!r.ok) { toast.error(r.message || "Not updated."); return; }
+          toast.success(`${r.affected ?? 0} vacanc${r.affected === 1 ? "y" : "ies"} updated`);
+        } else {
+          // Current working path (owner RLS) until the secure cutover.
+          const { error } = await supabase.from("job_postings").update({ status: pending.to } as never).in("id", pending.ids).eq("manager_id", managerId);
+          if (error) { toast.error(error.message); return; }
+          await logEvent("vacancy_cleanup", `${VERB[pending.to]}: ${pending.ids.length}`, "info", { action: pending.to, ids: pending.ids, scope: "manager" });
+          toast.success(`${pending.ids.length} vacanc${pending.ids.length === 1 ? "y" : "ies"} updated`);
+        }
       } else {
         // Single secure path: server enforces ownership, application protection and audit.
         const r = await requestLifecycleAction("manager", "direct", pending.ids, "delete");
-        if (!r.ok) {
-          if (!r.pending && r.blocked) { setPending({ kind: "blocked", ids: pending.ids, apps: r.blocked.applications }); return; }
-          toast.error(r.message || "Not deleted."); return;
+        const protectedIds = r.blockedIds || [];
+        if (!r.ok && !protectedIds.length) { toast.error(r.message || "Not deleted."); return; }
+        if ((r.affected ?? 0) > 0) toast.success(summarizeLifecycle(r));
+        if (protectedIds.length) {
+          // Mixed or fully blocked: report the real deletions, offer Archive for protected ones.
+          setPending({ kind: "blocked", ids: protectedIds, apps: r.blocked?.applications ?? 0 });
+          await load(); onChanged();
+          return;
         }
-        toast.success(`${r.affected ?? 0} vacanc${r.affected === 1 ? "y" : "ies"} permanently deleted`);
       }
       setSelected(new Set());
       setPending(null);
@@ -197,7 +211,7 @@ export default function VacancyCleanupPanel({
         <ul className="space-y-2">
           {rows.map((p) => {
             const st = p.status || "active";
-            const n = apps[p.id] ?? 0;
+            const n = apps ? apps[p.id] ?? 0 : null;
             return (
               <li key={p.id} className="rounded-lg border border-border/50 bg-secondary/50 px-3 py-2 space-y-2">
                 <div className="flex items-start gap-2">
@@ -205,7 +219,7 @@ export default function VacancyCleanupPanel({
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-bold text-foreground truncate">{[p.rank_required, p.vessel_type].filter(Boolean).join(" · ") || "Vacancy"}</p>
                     <p className="text-[11px] text-muted-foreground">
-                      {ageInDays(p.created_at)} days old · {Math.max(Number(p.positions) || 1, 1)} position(s) · {n} applicant{n === 1 ? "" : "s"}
+                      {ageInDays(p.created_at)} days old · {Math.max(Number(p.positions) || 1, 1)} position(s) · {n === null ? <span title="Applicant count available after secure backend activation">applicants: pending</span> : <>{n} applicant{n === 1 ? "" : "s"}</>}
                     </p>
                   </div>
                   <span className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground capitalize">{st}</span>
@@ -239,7 +253,7 @@ export default function VacancyCleanupPanel({
               <>
                 <p className="text-sm font-bold text-foreground">This vacancy can't be deleted</p>
                 <p className="text-xs text-muted-foreground">
-                  {pending.apps} seafarer application{pending.apps === 1 ? " is" : "s are"} linked to it. Deleting would erase their application history, so nothing was deleted.
+                  {pending.ids.length} vacanc{pending.ids.length === 1 ? "y has" : "ies have"} seafarer applications{pending.apps ? ` (${pending.apps})` : ""}. Deleting would erase their application history, so these were kept.
                 </p>
                 <p className="text-xs text-muted-foreground">Archive instead: it disappears from seafarers' search and every application is kept.</p>
                 <div className="flex gap-2">
