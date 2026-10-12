@@ -320,6 +320,11 @@ const PostVacancy = () => {
             <button aria-label="Remove source" onClick={() => { setScan(null); setSources((p) => p.filter((x) => x.id !== s.id)); }} className="p-2 text-muted-foreground hover:text-destructive"><Trash2 size={14} /></button>
           </div>
 
+          {s.boundary && (
+            <p className="text-[11px] rounded-lg p-2 border border-[#f59e0b]/40 bg-[#f59e0b]/10 text-[#f59e0b] flex items-start gap-1">
+              <AlertTriangle size={12} className="mt-0.5 shrink-0" /> Check advert boundary: {s.boundary} Its vacancies are not selected until you tick them.
+            </p>
+          )}
           {s.status === "reading" && <p className="text-xs text-muted-foreground flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> AI is reading this advert…</p>}
           {s.status === "error" && <p className="text-xs text-[#f59e0b] flex items-center gap-1"><AlertTriangle size={12} /> {s.error}</p>}
 
@@ -403,7 +408,8 @@ const PostVacancy = () => {
       {/* ---------- Step 3: Preflight ---------- */}
       {/* Shown whenever a batch is unresolved — even after refresh with no adverts in memory. */}
       {(sources.length > 0 || uncertain) && (
-        <section className="rounded-xl border border-[#D4AF37]/30 bg-[#D4AF37]/5 p-4 space-y-2 sticky bottom-2" aria-label="Publish readiness">
+        <section className="rounded-xl border border-[#D4AF37]/30 bg-[#0D1B2A] p-4 space-y-2 sticky bottom-2" aria-label="Publish readiness">
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">3. Publish selected</h3>
           {sources.length > 0 && <p className="text-sm font-semibold text-[#D4AF37]">{engineRows.length} vacanc{engineRows.length === 1 ? "y" : "ies"} selected</p>}
           <p className="text-[11px] text-muted-foreground">Vacancies stay live until you mark them filled or archive them. Duplicate check covers your company's active listings only.</p>
           {problems.length > 0 && (
@@ -443,6 +449,8 @@ const PostVacancy = () => {
           {lastResult?.status === "published" && <p className="text-[11px] text-[#22c55e]">{publishSummary(lastResult)}</p>}
         </section>
       )}
+      </div>
+      </div>
     </div>
   );
 };
