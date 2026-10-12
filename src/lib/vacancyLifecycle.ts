@@ -134,8 +134,10 @@ export const loadApplicationCounts = async (ids: string[]): Promise<Record<strin
 };
 
 /** Applies the manual-archive filter only once archived_at exists (never queried before activation). */
-export const withoutArchivedExternal = <Q extends { is: (c: string, v: null) => Q }>(q: Q): Q =>
-  LIFECYCLE_BACKEND.externalArchive ? q.is("archived_at", null) : q;
+type Filterable = { is: (c: string, v: null) => unknown; not: (c: string, op: string, v: null) => unknown };
+export const withoutArchivedExternal = <Q,>(q: Q): Q =>
+  LIFECYCLE_BACKEND.externalArchive ? ((q as unknown as Filterable).is("archived_at", null) as Q) : q;
+const onlyArchivedExternal = <Q,>(q: Q): Q => ((q as unknown as Filterable).not("archived_at", "is", null) as Q);
 
 // ---------------- admin inventory ----------------
 
@@ -168,8 +170,8 @@ export const loadAdminVacancyPage = async (q: AdminPageQuery): Promise<{ rows: R
   if (sanitizeSearch(q.vessel)) query = query.ilike("vessel_type", ilike(q.vessel));
   if (q.source) query = query.eq("source", q.source);
   if (q.status === "scam_flagged") query = query.eq("is_scam_flagged", true);
-  else if (q.status === "listed") { query = query.eq("is_scam_flagged", false); if (LIFECYCLE_BACKEND.externalArchive) query = query.is("archived_at", null); }
-  else if (q.status === "archived" && LIFECYCLE_BACKEND.externalArchive) query = query.not("archived_at", "is", null);
+  else if (q.status === "listed") { query = query.eq("is_scam_flagged", false); query = withoutArchivedExternal(query); }
+  else if (q.status === "archived" && LIFECYCLE_BACKEND.externalArchive) query = onlyArchivedExternal(query);
   if (cut) query = query.lte("created_at", cut);
   const { data, count, error } = await query.order("created_at", { ascending: false }).order("id", { ascending: false }).range(from, to);
   if (error) throw error;
