@@ -56,7 +56,7 @@ const sections = [
 • Row-level security ensuring users can only access their own data.
 • Regular security reviews and access controls.
 • Minimal data retention — CV documents are processed and immediately discarded; only structured data is stored.
-• Retention period — your data is retained while your account is active and is deleted when you request account deletion at info@indossol.com.`,
+• Retention period — your data is retained while your account is active and is deleted when you request account deletion at support@seaminds.life.`,
   },
   {
     title: "7. Your Rights",
@@ -90,7 +90,7 @@ To exercise any of these rights, contact us at the address below.`,
     title: "11. Contact",
     body: `For privacy-related enquiries, data requests or complaints:
 
-Email: privacy@seaminds.life
+Email: support@seaminds.life
 Website: seaminds.life/contact
 
 This policy is governed by the laws of the Republic of Indonesia.`,

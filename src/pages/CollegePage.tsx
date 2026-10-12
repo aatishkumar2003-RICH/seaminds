@@ -10,7 +10,7 @@ const benefits = [
 ];
 
 const steps = [
-  "Email us your institution details — we set up a college code in 24 hours",
+  "Email us your institution details — we set up a dedicated college code",
   "Share the code with your batch via WhatsApp or notice board",
   "Students register free, complete SMC, download certificates",
 ];
@@ -41,7 +41,7 @@ const CollegePage = () => {
         <Button
           size="lg"
           className="bg-primary text-primary-foreground hover:bg-primary/90 px-8"
-          onClick={() => window.location.href = "mailto:info@indossol.com?subject=College Partnership - SeaMinds"}
+          onClick={() => window.location.href = "mailto:admin@seaminds.life?subject=College%20Partnership%20-%20SeaMinds"}
         >
           Partner With SeaMinds — Free
         </Button>
@@ -95,11 +95,11 @@ const CollegePage = () => {
         <Button
           size="lg"
           className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 mb-3"
-          onClick={() => window.location.href = "mailto:info@indossol.com?subject=College Partnership - SeaMinds"}
+          onClick={() => window.location.href = "mailto:admin@seaminds.life?subject=College%20Partnership%20-%20SeaMinds"}
         >
-          info@indossol.com
+          admin@seaminds.life
         </Button>
-        <p className="text-xs text-muted-foreground">We respond within 24 hours</p>
+        <p className="text-xs text-muted-foreground">Contact our team to get started</p>
       </section>
 
       <HomeFooter />

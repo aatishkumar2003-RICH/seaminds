@@ -238,7 +238,7 @@ const ManagerAuth = () => {
           <li>• Fleet inspection tools are available to approved fleet staff</li>
         </ul>
         <DemoWalkthrough />
-        <a href="mailto:info@indossol.com?subject=ShipManager%20by%20SeaMinds%20%E2%80%94%20company%20enquiry" className="inline-flex items-center justify-center min-h-[44px] px-5 rounded-xl text-sm font-bold border border-primary/50 text-primary">
+        <a href="mailto:admin@seaminds.life?subject=ShipManager%20by%20SeaMinds%20%E2%80%94%20company%20enquiry" className="inline-flex items-center justify-center min-h-[44px] px-5 rounded-xl text-sm font-bold border border-primary/50 text-primary">
           Talk to SeaMinds by email
         </a>
       </section>
@@ -341,7 +341,7 @@ const ManagerAuth = () => {
           </p>
         )}
 
-        <a href="mailto:info@indossol.com?subject=Manager portal login help" className="block text-center text-[11px] text-muted-foreground hover:text-primary">Trouble signing in? Contact SeaMinds support</a>
+        <a href="mailto:support@seaminds.life?subject=Manager%20portal%20login%20help" className="block text-center text-[11px] text-muted-foreground hover:text-primary">Trouble signing in? Contact SeaMinds support</a>
       </div>
       </div>
     </div>

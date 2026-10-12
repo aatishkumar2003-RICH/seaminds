@@ -301,7 +301,7 @@ const ForCompanies = () => {
               Email us your company name, fleet size and the ranks you recruit. Our team replies from the same mailbox.
             </p>
             <a
-              href="mailto:info@indossol.com?subject=ShipManager%20by%20SeaMinds%20%E2%80%94%20demo%20request"
+              href="mailto:admin@seaminds.life?subject=ShipManager%20by%20SeaMinds%20%E2%80%94%20demo%20request"
               className="inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 font-bold"
               style={{ background: "linear-gradient(90deg, #D4AF37, #C5941F)", color: "#0D1B2A" }}
             >

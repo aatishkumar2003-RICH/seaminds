@@ -1331,7 +1331,7 @@ const ManagerDashboard = () => {
                     See your crew's MLC rest hours, certificate expiry warnings and CVs in one audit-ready view. Contact SeaMinds to activate your fleet subscription.
                   </p>
                   <button
-                    onClick={() => window.open("mailto:info@indossol.com?subject=Fleet subscription")}
+                    onClick={() => window.open("mailto:admin@seaminds.life?subject=Fleet%20subscription")}
                     className="text-xs font-medium px-3 py-2 rounded-lg bg-transparent text-[#D4AF37] border border-[#D4AF37] hover:bg-[#D4AF37]/10 transition-colors"
                   >
                     Contact us
