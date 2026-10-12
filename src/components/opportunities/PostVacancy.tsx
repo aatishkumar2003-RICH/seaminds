@@ -366,9 +366,10 @@ const PostVacancy = () => {
       ))}
 
       {/* ---------- Step 3: Preflight ---------- */}
-      {sources.length > 0 && (
+      {/* Shown whenever a batch is unresolved — even after refresh with no adverts in memory. */}
+      {(sources.length > 0 || uncertain) && (
         <section className="rounded-xl border border-[#D4AF37]/30 bg-[#D4AF37]/5 p-4 space-y-2 sticky bottom-2" aria-label="Publish readiness">
-          <p className="text-sm font-semibold text-[#D4AF37]">{engineRows.length} vacanc{engineRows.length === 1 ? "y" : "ies"} selected</p>
+          {sources.length > 0 && <p className="text-sm font-semibold text-[#D4AF37]">{engineRows.length} vacanc{engineRows.length === 1 ? "y" : "ies"} selected</p>}
           <p className="text-[11px] text-muted-foreground">Vacancies stay live until you mark them filled or archive them. Duplicate check covers your company's active listings only.</p>
           {problems.length > 0 && (
             <ul className="text-[11px] text-[#f59e0b] list-disc pl-4 space-y-0.5 max-h-32 overflow-y-auto">{problems.map((p, i) => <li key={i}>{p}</li>)}</ul>
