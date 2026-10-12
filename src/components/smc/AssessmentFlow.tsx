@@ -498,20 +498,19 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   };
 
   const submitAnswer = async (question: string, answer: string, currentQ: FlatQuestion) => {
+    if (saved || submittingRef.current) return;
+    submittingRef.current = true;
     setEvaluating(true);
     setTimerActive(false);
-    let saved = false;
     try {
       const d = await submitToLedger(currentQ.id, answer);
-      if (!d) { setTimerActive(true); return; }
-      saved = true;
+      // Only a durably saved answer unlocks Next; a failed save keeps the candidate on this question.
+      if (!applyOutcome(d)) { setTimerActive(true); return; }
       // Scoring runs asynchronously and is retried on failure; it never blocks or zeroes the answer.
       void supabase.functions.invoke('score-paper-answers', { body: { assessmentId }, headers: { Authorization: `Bearer ${accessToken}` } }).catch(() => null);
       setTranscript(prev => [...prev, { question, answer, score: 0, redFlag: false, redFlagCategory: null, followUp: null }]);
-      void persistAnswer({ question, answer, question_type: currentQ.type, is_followup: false, ai_score: null, red_flag: false, red_flag_category: null });
-    } finally { setEvaluating(false); }
-    // Only move on once the answer is durably saved; a failed save keeps the candidate on this question.
-    if (saved) advanceQuestion();
+      if (!d.original_answer_kept) void persistAnswer({ question, answer, question_type: currentQ.type, is_followup: false, ai_score: null, red_flag: false, red_flag_category: null });
+    } finally { setEvaluating(false); submittingRef.current = false; }
   };
 
   const advanceQuestion = () => {
@@ -540,12 +539,13 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   const finishPaper = async () => {
     const { data, error } = await supabase.rpc('get_missing_answers' as any, { p_assessment_id: assessmentId });
     const r: any = data;
-    if (error || !r?.ok) { toast.error("Couldn't confirm your answers are saved. Check your connection and press submit again."); return; }
+    if (error || !r?.ok) { advancingRef.current = false; toast.error("Couldn't confirm your answers are saved. Check your connection and press submit again."); return; }
     const missing: string[] = r.missing || [];
     if (missing.length > 0) {
       const idx = flatQuestions.findIndex((q) => q.id === missing[0]);
       toast.error(`${missing.length} answer${missing.length > 1 ? 's were' : ' was'} not saved. Please answer question ${idx + 1} again.`);
-      if (idx >= 0) { setMcqSubmitted(false); setSelectedOption(null); setTextAnswer(''); setQIndex(idx); setTimerActive(true); }
+      advancingRef.current = false;
+      if (idx >= 0) { setSaved(null); setMcqSubmitted(false); setSelectedOption(null); setTextAnswer(''); setQIndex(idx); setTimerActive(true); }
       return;
     }
     const { error: qe } = await supabase.rpc('enqueue_scoring' as any, { p_assessment_id: assessmentId });
@@ -558,10 +558,13 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     if (!textAnswer.trim()) return;
     const currentQ = flatQuestions[qIndex];
     if (!currentQ) return;
-    submitAnswer(currentQ.question, textAnswer.trim(), currentQ);
+    void submitAnswer(currentQ.question, textAnswer.trim(), currentQ);
   };
 
+  // Next is available only after a durable save; guarded against double taps.
   const handleMcqNext = () => {
+    if (!saved || advancingRef.current) return;
+    advancingRef.current = true;
     setPendingFollowUp(null);
     advanceQuestion();
   };
