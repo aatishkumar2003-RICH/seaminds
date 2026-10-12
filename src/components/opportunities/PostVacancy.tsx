@@ -247,17 +247,20 @@ const PostVacancy = () => {
 
   const step = sources.length === 0 ? 1 : scan ? 3 : 2;
 
+  const detected = pasteText.trim() ? splitAdverts(pasteText) : [];
+
   return (
     <div className="space-y-4 pt-3">
-      <ol className="flex gap-2 text-[11px]" aria-label="Studio steps">
-        {["Add adverts", "Review", "Publish"].map((t, i) => (
+      <ol className="flex gap-2 text-[11px] sm:text-xs" aria-label="Studio steps">
+        {["Add adverts", "Review vacancies", "Publish selected"].map((t, i) => (
           <li key={t} className={`flex-1 rounded-full px-3 py-1.5 text-center border ${step === i + 1 ? "border-[#D4AF37] text-[#D4AF37] bg-[#D4AF37]/10" : "border-border text-muted-foreground"}`}>{i + 1}. {t}</li>
         ))}
       </ol>
 
+      <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-5 lg:items-start">
       {/* ---------- Step 1: Intake ---------- */}
-      <section className="rounded-xl bg-card border border-border p-4 space-y-3" aria-label="Add adverts">
-        <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Vacancy Studio</h3>
+      <section className="rounded-xl bg-card border border-border p-4 space-y-3 lg:col-span-5 lg:sticky lg:top-4" aria-label="Add adverts">
+        <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">1. Add adverts</h3>
         <p className="text-[11px] text-muted-foreground">Publishing as <span className="text-foreground font-medium">{identity?.companyName || "—"}</span> (from your approved company profile).</p>
 
         <button
@@ -273,20 +276,35 @@ const PostVacancy = () => {
         <input ref={fileRef} type="file" multiple accept="image/jpeg,image/png,image/webp" className="hidden" onChange={addFliers} />
 
         <div className="space-y-2">
-          <label htmlFor="studio-paste" className="text-[11px] text-muted-foreground">Paste one advert at a time (WhatsApp / Telegram text)</label>
+          <label htmlFor="studio-paste" className="text-[11px] text-muted-foreground block">
+            Paste one or many adverts (WhatsApp / Telegram / email). Put a line with <strong className="text-foreground">---</strong> between adverts for the most reliable split.
+          </label>
           <textarea
-            id="studio-paste" value={pasteText} onChange={(e) => setPasteText(e.target.value)} rows={3}
+            id="studio-paste" value={pasteText} onChange={(e) => setPasteText(e.target.value)} rows={8}
             className="w-full bg-background text-foreground text-sm rounded-xl px-3 py-2 border border-border outline-none focus:ring-1 focus:ring-primary"
-            placeholder="Paste the advert text here…"
+            placeholder={"First advert…\n---\nSecond advert…\n---\nThird advert…"}
           />
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Button className="h-11 flex-1" onClick={addText} disabled={!pasteText.trim()}><FileText size={14} className="mr-1" /> Read this advert</Button>
+          {detected.length > 0 && (
+            <p className="text-[11px] text-muted-foreground">
+              {detected.length} advert{detected.length === 1 ? "" : "s"} detected
+              {detected.some((b) => b.uncertain) && <span className="text-[#f59e0b]"> · {detected.filter((b) => b.uncertain).length} need a boundary check</span>}
+            </p>
+          )}
+          <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-2">
+            <Button className="h-11 flex-1" onClick={addText} disabled={!pasteText.trim()}>
+              <FileText size={14} className="mr-1" /> {detected.length > 1 ? `Read ${detected.length} adverts` : "Read this advert"}
+            </Button>
             <Button variant="outline" className="h-11 flex-1" onClick={addManual}><Plus size={14} className="mr-1" /> Type a vacancy manually</Button>
           </div>
         </div>
       </section>
 
+      <div className="space-y-4 lg:col-span-7">
       {/* ---------- Step 2: Review (grouped by source) ---------- */}
+      {sources.length === 0 && !uncertain && (
+        <p className="hidden lg:block rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">Vacancies read from your adverts and flyers will appear here for review.</p>
+      )}
+      {sources.length > 0 && <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">2. Review vacancies</h3>}
       {sources.map((s) => (
         <section key={s.id} className={`rounded-xl bg-card border p-3 space-y-2 ${s.risk.level === "high" ? "border-[#f59e0b]/60" : "border-border"}`} aria-label={`Source ${s.label}`}>
           <div className="flex items-start gap-2">
