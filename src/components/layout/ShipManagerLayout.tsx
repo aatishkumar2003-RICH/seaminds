@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import ReleaseBadge from "@/components/ReleaseBadge";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, LogOut, LayoutDashboard, Users, Search, GraduationCap, Ship, ShieldCheck, CreditCard, Megaphone, LifeBuoy } from "lucide-react";
 import seamindsLogo from "@/assets/seaminds-logo.png";
@@ -18,13 +19,47 @@ const NAV = [
 
 const HELP_MAILTO = "mailto:info@indossol.com?subject=ShipManager%20by%20SeaMinds%20%E2%80%94%20help";
 
+type Identity = { company: string; approved: boolean; verified: boolean; balance: number | null };
+
 const ShipManagerLayout = () => {
   const { pathname, search } = useLocation();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [identity, setIdentity] = useState<Identity | null>(null);
   const q = new URLSearchParams(search);
 
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth?.user?.id;
+      if (!uid) return;
+      const [{ data: p }, { data: bal }] = await Promise.all([
+        supabase.from("manager_profiles").select("company_name, admin_approved, company_verified").eq("user_id", uid).maybeSingle(),
+        supabase.rpc("get_my_credit_balance" as any),
+      ]);
+      if (!active || !p) return;
+      const b = (bal as any)?.balance;
+      setIdentity({ company: p.company_name, approved: !!p.admin_approved, verified: !!p.company_verified, balance: typeof b === "number" ? b : null });
+    })();
+    return () => { active = false; };
+  }, []);
+
   const logout = async () => { await supabase.auth.signOut(); navigate("/manager"); };
+
+  const status = !identity ? null
+    : identity.approved && identity.verified ? { text: "✓ Verified Employer", cls: "text-emerald-400 border-emerald-400/40" }
+    : identity.approved ? { text: "Approved Account — Verification Pending", cls: "text-primary border-primary/40" }
+    : { text: "Account Approval Pending", cls: "text-amber-400 border-amber-400/40" };
+
+  const identityCard = identity && (
+    <div className="rounded-xl border border-border bg-background/50 p-3 space-y-1.5">
+      <p className="text-sm font-semibold text-foreground truncate">{identity.company}</p>
+      {status && <span className={`inline-block text-[10px] font-semibold border rounded-full px-2 py-0.5 ${status.cls}`}>{status.text}</span>}
+      {identity.balance !== null && <p className="text-[11px] text-muted-foreground">💳 {identity.balance} contact credits</p>}
+      {!identity.approved && <p className="text-[10px] text-muted-foreground leading-snug">Crew contacts and CVs unlock after approval.</p>}
+    </div>
+  );
 
   const links = (
     <nav className="flex flex-col gap-1" aria-label="ShipManager navigation">
