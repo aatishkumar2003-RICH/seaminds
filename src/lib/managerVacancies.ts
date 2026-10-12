@@ -570,10 +570,6 @@ export const publishVacancyBatch = async (
       return { ...base, published: rec.committed, failures: [rec.message], batchId: pendingId, status: "uncertain" };
     }
   }
-  if (pendingId && pendingId === opts?.batchId) {
-    // partial / absent / error: stay unresolved — never resubmit, never mint a fresh batch id.
-    return { ...base, published: rec.committed, failures: [rec.message], batchId: pendingId, status: "uncertain" };
-  }
 
   let toPublish = rows;
   let duplicatesSkipped = 0;
