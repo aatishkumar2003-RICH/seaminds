@@ -3,9 +3,9 @@ import { auditSource, toAuditLine, removeConfirmed, confirmAndDelete } from "@/l
 import { LIFECYCLE_BACKEND } from "@/lib/vacancyLifecycle";
 
 describe("audit source switching", () => {
-  it("uses app_events while adminActions is off and never the V2 table", () => {
+  it("uses app_events only when off; live switch reads the V2 table", () => {
     expect(auditSource(false).table).toBe("app_events");
-    expect(LIFECYCLE_BACKEND.adminActions).toBe(false);
+    expect(auditSource(LIFECYCLE_BACKEND.adminActions).table).toBe("vacancy_cleanup_audit");
   });
   it("uses only real V2 columns when on", () => {
     const s = auditSource(true);

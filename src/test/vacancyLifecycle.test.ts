@@ -9,7 +9,7 @@ let pageResults: { data: unknown[]; error: unknown; count?: number }[] = [];
 vi.mock("@/integrations/supabase/client", () => {
   const chain = (table: string) => {
     const c: Record<string, unknown> = {};
-    ["select", "eq", "gt", "lte", "gte", "or", "ilike", "in", "order", "range", "limit", "insert"].forEach((k) => {
+    ["select", "eq", "gt", "lte", "gte", "or", "ilike", "in", "order", "range", "limit", "insert", "is", "not"].forEach((k) => {
       c[k] = (...args: unknown[]) => { log.push({ table, op: k, args }); return c; };
     });
     c.then = (res: (v: unknown) => unknown, rej?: (e: unknown) => unknown) =>
@@ -103,14 +103,13 @@ describe("uncertain batch marker is written before the INSERT", () => {
 });
 
 describe("secure lifecycle integration point", () => {
-  it("delete and admin actions stay pending and never call the backend", async () => {
-    expect(LIFECYCLE_BACKEND.managerDelete).toBe(false);
-    expect(LIFECYCLE_BACKEND.adminActions).toBe(false);
-    for (const scope of ["manager", "admin"] as const) {
-      const r = await requestLifecycleAction(scope, "direct", ["a"], "delete");
-      expect(r).toEqual({ ok: false, pending: true, message: PENDING_LABEL });
-    }
-    expect(rpc).not.toHaveBeenCalled();
+  it("all five switches are active and delete goes only through the audited RPC", async () => {
+    expect(Object.values(LIFECYCLE_BACKEND).every(Boolean)).toBe(true);
+    rpc.mockResolvedValue({ data: { ok: true, affected: 1, affected_ids: ["a"], blocked_ids: [] }, error: null });
+    const r = await requestLifecycleAction("manager", "direct", ["a"], "delete");
+    expect(r.ok).toBe(true);
+    expect(rpc).toHaveBeenCalledWith("vacancy_lifecycle_action", { p_kind: "direct", p_ids: ["a"], p_action: "delete" });
+    void PENDING_LABEL;
   });
   it("no vacancy UI deletes rows directly from the browser", () => {
     for (const f of ["components/manager/VacancyCleanupPanel.tsx", "components/admin/VacancyManagementPanel.tsx", "components/admin/VacancyIntelTab.tsx"]) {
@@ -156,17 +155,15 @@ describe("backend lifecycle contract", () => {
   });
 });
 
-describe("pending backend features never query missing objects", () => {
-  it("applicant counts are unavailable (null), not zero, and the RPC is not called", async () => {
-    expect(await loadApplicationCounts(["a", "b"])).toBeNull();
-    expect(rpc).not.toHaveBeenCalled();
+describe("activated backend features", () => {
+  it("applicant counts come from the RPC rows (vacancy_id, applications)", async () => {
+    rpc.mockResolvedValue({ data: [{ vacancy_id: "a", applications: 2 }], error: null });
+    expect(await loadApplicationCounts(["a", "b"])).toEqual({ a: 2, b: 0 });
+    expect(rpc).toHaveBeenCalledWith("vacancy_application_counts", { p_ids: ["a", "b"] });
   });
-  it("archived_at is not queried before activation", async () => {
-    const q = { is: vi.fn(), not: vi.fn() };
-    expect(withoutArchivedExternal(q)).toBe(q);
-    expect(q.is).not.toHaveBeenCalled();
+  it("public feed hides manually archived external vacancies", async () => {
     await loadVacancyPage();
-    expect(log.some((l) => l.args.includes("archived_at"))).toBe(false);
+    expect(log).toContainEqual({ table: "external_vacancies", op: "is", args: ["archived_at", null] });
     expect(log).toContainEqual({ table: "external_vacancies", op: "eq", args: ["is_scam_flagged", false] });
   });
   it("feed reads source-posted and collected dates separately", async () => {

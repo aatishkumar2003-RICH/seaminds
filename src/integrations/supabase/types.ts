@@ -2138,6 +2138,8 @@ export type Database = {
       external_vacancies: {
         Row: {
           apply_url: string | null
+          archived_at: string | null
+          archived_by: string | null
           company_name: string | null
           company_website: string | null
           contact_email: string | null
@@ -2170,6 +2172,8 @@ export type Database = {
         }
         Insert: {
           apply_url?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           company_name?: string | null
           company_website?: string | null
           contact_email?: string | null
@@ -2202,6 +2206,8 @@ export type Database = {
         }
         Update: {
           apply_url?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           company_name?: string | null
           company_website?: string | null
           contact_email?: string | null
@@ -2978,6 +2984,13 @@ export type Database = {
           viewed_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "job_applications_external_vacancy_link_fk"
+            columns: ["vacancy_id"]
+            isOneToOne: false
+            referencedRelation: "external_vacancies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "job_applications_job_posting_id_fkey"
             columns: ["job_posting_id"]
@@ -4968,6 +4981,51 @@ export type Database = {
         }
         Relationships: []
       }
+      vacancy_cleanup_audit: {
+        Row: {
+          action: string
+          actor_id: string
+          actor_scope: string
+          affected_count: number
+          affected_ids: string[]
+          blocked_applications: number
+          blocked_ids: string[]
+          created_at: string
+          filters: Json | null
+          id: string
+          requested_ids: string[]
+          vacancy_kind: string
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          actor_scope: string
+          affected_count?: number
+          affected_ids?: string[]
+          blocked_applications?: number
+          blocked_ids?: string[]
+          created_at?: string
+          filters?: Json | null
+          id?: string
+          requested_ids: string[]
+          vacancy_kind: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          actor_scope?: string
+          affected_count?: number
+          affected_ids?: string[]
+          blocked_applications?: number
+          blocked_ids?: string[]
+          created_at?: string
+          filters?: Json | null
+          id?: string
+          requested_ids?: string[]
+          vacancy_kind?: string
+        }
+        Relationships: []
+      }
       vacancy_sources: {
         Row: {
           active: boolean
@@ -5826,6 +5884,22 @@ export type Database = {
           p_whatsapp?: string
         }
         Returns: undefined
+      }
+      vacancy_application_counts: {
+        Args: { p_ids: string[] }
+        Returns: {
+          applications: number
+          vacancy_id: string
+        }[]
+      }
+      vacancy_lifecycle_action: {
+        Args: {
+          p_action: string
+          p_filters?: Json
+          p_ids: string[]
+          p_kind: string
+        }
+        Returns: Json
       }
       validate_discount_code: {
         Args: { input_code: string; product_scope: string }
