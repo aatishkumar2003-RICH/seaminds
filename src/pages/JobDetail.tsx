@@ -1,3 +1,4 @@
+import { postingAgeLabel } from "@/lib/managerVacancies";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
@@ -91,7 +92,7 @@ const JobDetail = () => {
 
       let found: Job | null = null;
       const pr: any = p;
-      if (pr && (!pr.expires_at || pr.expires_at > nowIso)) {
+      if (pr && pr.status === "active") {
         found = {
           id: pr.id, kind: "direct",
           rank: pr.rank_required || "Crew", vessel: pr.vessel_type || "—",
@@ -101,7 +102,7 @@ const JobDetail = () => {
           port: pr.joining_port, duration: pr.contract_duration, joiningDate: pr.joining_date,
           notes: pr.additional_notes, flier: pr.flier_url,
           whatsapp: pr.contact_whatsapp, email: pr.contact_email || null, applyUrl: null,
-          verified: !!pr.verified, publisher: pr.company_name || null, recruiterName: pr.recruiter_name || null, posted: pr.created_at, expires: pr.expires_at,
+          verified: !!pr.verified, publisher: pr.company_name || null, recruiterName: pr.recruiter_name || null, posted: pr.created_at, expires: null,
         };
       } else {
         const { data: e } = await supabase.from("external_vacancies" as any)
@@ -308,6 +309,7 @@ const JobDetail = () => {
 
           <p style={{ color: "#94a3b8", fontSize: 11, marginTop: 14 }}>
             {job.posted && <>Posted {fmtDate(job.posted)}</>}
+            {job.posted && job.kind === "direct" && postingAgeLabel(job.posted).recurring && <> · Recurring opportunity — confirm with recruiter</>}
             {job.expires && <> · Closes {fmtDate(job.expires)}</>}
           </p>
 

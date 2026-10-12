@@ -208,8 +208,7 @@ const loadActivePostings = async (managerId: string): Promise<ActiveRow[]> => {
     .from("job_postings")
     .select("id, rank_required, vessel_type, joining_port, joining_date, contract_duration, monthly_salary, positions, recruiter_name, contact_whatsapp, contact_email, created_at")
     .eq("manager_id", managerId)
-    .eq("status", "active")
-    .gt("expires_at", new Date().toISOString());
+    .eq("status", "active");
   return (data || []) as unknown as ActiveRow[];
 };
 
@@ -328,13 +327,82 @@ export const validateAttribution = (rows: PreviewVacancy[], companyName: string)
 
 // ---------------- expiry ----------------
 
-export const EXPIRY_OPTIONS = [30, 45, 60] as const;
-export type ExpiryDays = (typeof EXPIRY_OPTIONS)[number];
-export const DEFAULT_EXPIRY_DAYS: ExpiryDays = 30;
+/**
+ * Owner policy: vacancies never expire automatically. job_postings.expires_at is
+ * NOT NULL, so new rows carry this far-future value purely as a database
+ * compatibility workaround. Retention is governed by status (active/filled/archived)
+ * and manual cleanup — never by this timestamp.
+ */
+export const NO_EXPIRY_COMPAT = "2099-12-31T00:00:00.000Z";
 
-export const computeExpiresAt = (days: number = DEFAULT_EXPIRY_DAYS, now: number = Date.now()): string => {
-  const d = (EXPIRY_OPTIONS as readonly number[]).includes(days) ? days : DEFAULT_EXPIRY_DAYS;
-  return new Date(now + d * 24 * 60 * 60 * 1000).toISOString();
+/** @deprecated kept for legacy callers; always returns the compatibility value. */
+export const computeExpiresAt = (): string => NO_EXPIRY_COMPAT;
+
+// ---------------- email + preflight ----------------
+
+export const isValidEmail = (raw: string): boolean => {
+  const v = str(raw);
+  return !v || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
+};
+
+/** Engine-level contact check (defence in depth — not only UI inputs). */
+export const validateContactFormats = (rows: PreviewVacancy[]): { ok: boolean; warnings: string[] } => {
+  const warnings: string[] = [];
+  rows.forEach((r, i) => {
+    const label = `Vacancy ${i + 1} (${r.rank_required || "rank"})`;
+    const c = checkWhatsapp(r.contact_whatsapp);
+    if (!c.ok) warnings.push(`${label}: ${c.warning}`);
+    if (!isValidEmail(r.contact_email)) warnings.push(`${label}: email address is not valid.`);
+  });
+  return { ok: warnings.length === 0, warnings };
+};
+
+// ---------------- lifecycle / manual cleanup (pure helpers) ----------------
+
+export type LifecycleStatus = "active" | "filled" | "archived" | "expired" | string;
+export const DAY_MS = 24 * 60 * 60 * 1000;
+export const AGE_PRESETS = [30, 40, 60, 70, 90] as const;
+
+export const ageInDays = (createdAt: string, now: number = Date.now()): number =>
+  Math.max(0, Math.floor((now - new Date(createdAt).getTime()) / DAY_MS));
+
+/** Rows at least `minDays` old. null/invalid minDays = no age filter. */
+export const filterByMinAge = <T extends { created_at: string }>(rows: T[], minDays: number | null, now: number = Date.now()): T[] => {
+  if (minDays === null || !Number.isFinite(minDays) || minDays < 0) return rows;
+  return rows.filter((r) => ageInDays(r.created_at, now) >= Math.floor(minDays));
+};
+
+/** Parse a custom-days input. Returns null when not a whole non-negative number. */
+export const parseCustomDays = (raw: string): number | null => {
+  const v = str(raw);
+  if (!/^\d{1,4}$/.test(v)) return null;
+  return parseInt(v, 10);
+};
+
+export type DeleteDecision =
+  | { allowed: true }
+  | { allowed: false; reason: "has_applications"; applications: number; archiveOffered: true };
+
+/**
+ * Permanent deletion is blocked when applications are linked. Archive is OFFERED
+ * as a separate, explicitly confirmed action — the delete is never converted.
+ */
+export const decidePermanentDelete = (applications: number): DeleteDecision =>
+  applications > 0 ? { allowed: false, reason: "has_applications", applications, archiveOffered: true } : { allowed: true };
+
+/** Allowed manual transitions. */
+export const canTransition = (from: LifecycleStatus, to: "active" | "filled" | "archived"): boolean => {
+  if (from === to) return false;
+  if (to === "active") return from === "filled" || from === "archived";
+  if (to === "filled") return from === "active";
+  return from === "active" || from === "filled";
+};
+
+/** Truthful posting-age label. Never claims "actively hiring" from age alone. */
+export const postingAgeLabel = (createdAt: string, now: number = Date.now()): { text: string; recurring: boolean } => {
+  const d = ageInDays(createdAt, now);
+  const text = d === 0 ? "Posted today" : d === 1 ? "Posted 1 day ago" : `Posted ${d} days ago`;
+  return d > 45 ? { text: `${text} · Recurring opportunity — confirm with recruiter`, recurring: true } : { text, recurring: false };
 };
 
 // ---------------- publishing ----------------
@@ -436,7 +504,7 @@ export const reconcileBatch = async (batchId: string, managerId: string, expecte
 
 /**
  * Publish a batch as ONE atomic INSERT. Stable posting_batch_id per attempt,
- * explicit expiry (default 30 days), exact/intra-batch duplicates skipped.
+ * no automatic expiry (compatibility timestamp only), exact/intra-batch duplicates skipped.
  * After an ambiguous network failure the batch is "uncertain": a retry with the
  * same batchId first reconciles and never resubmits rows that already exist.
  * Client-side checks are not database-level idempotency.
@@ -448,7 +516,6 @@ export const publishVacancyBatch = async (
   opts?: {
     skipDuplicateScan?: boolean;
     flierUrl?: string | null;
-    expiryDays?: ExpiryDays;
     /** Reuse a batch id (retry after reconciliation). */
     batchId?: string;
     timeoutMs?: number;
@@ -466,7 +533,7 @@ export const publishVacancyBatch = async (
     return { ...base, failures: ["Original flyer is missing — upload the flyer again before publishing."], batchId: null, status: "blocked" };
   }
 
-  const checks = [validateJoiningDates(rows), validateAttribution(rows, identity.companyName)];
+  const checks = [validateJoiningDates(rows), validateContactFormats(rows), validateAttribution(rows, identity.companyName)];
   const warnings = checks.flatMap((c) => c.warnings);
   if (warnings.length) return { ...base, failures: warnings, batchId: null, status: "blocked" };
 
@@ -476,7 +543,9 @@ export const publishVacancyBatch = async (
     if (rec.state === "complete" || rec.state === "partial") {
       return { ...base, published: rec.committed, failures: rec.state === "partial" ? [rec.message] : [], batchId: opts.batchId, status: "published" };
     }
-    if (rec.state === "error") return { ...base, failures: [rec.message], batchId: opts.batchId, status: "uncertain" };
+    // "absent" or "error": the original request may still land. Stay unresolved —
+    // never resubmit, never mint a fresh batch id automatically.
+    return { ...base, failures: [rec.message], batchId: opts.batchId, status: "uncertain" };
   }
 
   let toPublish = rows;
@@ -489,7 +558,7 @@ export const publishVacancyBatch = async (
   if (toPublish.length === 0) return { ...base, duplicatesSkipped, failures: [], batchId: null, status: "nothing" };
 
   const batchId = opts?.batchId || crypto.randomUUID();
-  const expiresAt = computeExpiresAt(opts?.expiryDays ?? DEFAULT_EXPIRY_DAYS);
+  const expiresAt = NO_EXPIRY_COMPAT;
   const payload = toPublish.map((v) => toRow(v, identity, sourceType, batchId, expiresAt, opts?.flierUrl));
 
   let data: { id: string }[] | null = null;

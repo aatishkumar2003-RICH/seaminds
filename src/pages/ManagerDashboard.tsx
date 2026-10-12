@@ -1,3 +1,4 @@
+import VacancyCleanupPanel from "@/components/manager/VacancyCleanupPanel";
 import { useState, useEffect, useMemo, useRef } from "react";
 import MyPostsPanel from "@/components/manager/MyPostsPanel";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -794,7 +795,8 @@ const ManagerDashboard = () => {
   const sourceLabel = (s?: string | null) =>
     s === "text" ? "Text Import" : s === "flier" ? "Flyer" : "Manual";
 
-  const isExpired = (jp: MyPosting) => !!jp.expires_at && new Date(jp.expires_at).getTime() < Date.now();
+  // No automatic expiry: only an explicit "expired" status counts (legacy rows).
+  const isExpired = (jp: MyPosting) => jp.status === "expired";
 
   const appsFor = (id: string) => applicants.filter((a) => a.job_posting_id === id);
 
@@ -817,7 +819,6 @@ const ManagerDashboard = () => {
   const consoleStats = (() => {
     const activeVacancies = myPostings.filter((jp) => jp.status === "active" && !isExpired(jp));
     const linked = applicants.filter((a) => !!a.job_posting_id);
-    const in3 = Date.now() + 3 * 86400000;
     return {
       active: activeVacancies.length,
       openPositions: activeVacancies.reduce((sum, jp) => {
@@ -829,10 +830,7 @@ const ManagerDashboard = () => {
       shortlisted: linked.filter((a) => a.outcome === "shortlisted").length,
       offers: linked.filter((a) => a.outcome === "offered").length,
       placed: linked.filter((a) => a.outcome === "placed").length,
-      expiring: activeVacancies.filter((jp) => {
-        const t = jp.expires_at ? new Date(jp.expires_at).getTime() : 0;
-        return t > 0 && t >= Date.now() && t <= in3;
-      }).length,
+      archived: myPostings.filter((jp) => jp.status === "archived").length,
     };
   })();
 
@@ -911,47 +909,6 @@ const ManagerDashboard = () => {
     setEditVacancy(null);
     loadApplicants();
   };
-
-  const markFilled = async (jp: MyPosting) => {
-    const { error } = await supabase.from("job_postings").update({ status: "filled" } as never).eq("id", jp.id);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Marked as filled ✓");
-    loadApplicants();
-  };
-
-  const reopenVacancy = async (jp: MyPosting) => {
-    const patch: Record<string, unknown> = { status: "active" };
-    const cur = jp.expires_at ? new Date(jp.expires_at).getTime() : 0;
-    if (!cur || cur < Date.now()) patch.expires_at = new Date(Date.now() + 183 * 86400000).toISOString();
-    const { error } = await supabase.from("job_postings").update(patch as never).eq("id", jp.id);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Vacancy reopened ✓");
-    loadApplicants();
-  };
-
-  const extendVacancy = async (jp: MyPosting) => {
-    const base = Math.max(jp.expires_at ? new Date(jp.expires_at).getTime() : 0, Date.now());
-    const next = new Date(base + 183 * 86400000).toISOString();
-    const { error } = await supabase.from("job_postings").update({ expires_at: next } as never).eq("id", jp.id);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Extended by 183 days ✓");
-    loadApplicants();
-  };
-
-  const deleteVacancy = async (jp: MyPosting) => {
-    if (appsFor(jp.id).length > 0) {
-      toast.error("This vacancy has applications and cannot be deleted. Mark it filled instead.");
-      return;
-    }
-    if (!window.confirm("Delete this vacancy? This cannot be undone.")) return;
-    const { error } = await supabase.from("job_postings").delete().eq("id", jp.id);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Vacancy deleted ✓");
-    loadApplicants();
-  };
-
-
-
 
   return (
     <div className="min-h-screen bg-background">
@@ -1099,7 +1056,7 @@ const ManagerDashboard = () => {
                 { label: "Shortlisted", value: consoleStats.shortlisted },
                 { label: "Offers", value: consoleStats.offers },
                 { label: "Placed", value: consoleStats.placed },
-                { label: "Expiring 3d", value: consoleStats.expiring },
+                { label: "Archived", value: consoleStats.archived },
               ].map((s) => (
                 <div key={s.label} className="rounded-lg border border-[#D4AF37]/30 bg-[#0D1B2A] px-3 py-2">
                   <p className="text-lg font-bold text-[#D4AF37] leading-none">{s.value}</p>
@@ -1111,54 +1068,13 @@ const ManagerDashboard = () => {
             {myPostings.length === 0 ? (
               <p className="text-xs text-muted-foreground">You have not posted any vacancies yet.</p>
             ) : (
-              <div className="space-y-4">
-                {vacancyGroups.map((grp) => (
-                  <div key={grp.key} className="space-y-2">
-                    {grp.batch && (
-                      <p className="text-[11px] font-semibold uppercase tracking-wider text-[#D4AF37]">
-                        Campaign · {grp.items.length} vacancies
-                      </p>
-                    )}
-                    {grp.items.map((jp) => {
-                      const m = vacancyMetrics(jp);
-                      return (
-                        <div key={jp.id} className="rounded-lg border border-border/50 bg-secondary/50 px-3 py-2 space-y-2">
-                          <div className="flex flex-wrap items-start justify-between gap-2">
-                            <div className="min-w-0">
-                              <p className="text-sm font-bold text-foreground truncate">
-                                {[jp.rank_required, jp.vessel_type].filter(Boolean).join(" · ") || "Vacancy"}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {m.positions} position{m.positions === 1 ? "" : "s"} · {m.open} open · 👥 {m.applicantCount} applicants
-                              </p>
-                              <p className="text-[11px] text-muted-foreground/80">
-                                {sourceLabel(jp.source_type)} · {jp.expires_at ? `expires ${new Date(jp.expires_at).toLocaleDateString()}` : "no expiry"}
-                              </p>
-                              {m.full && <p className="text-[11px] font-semibold text-green-500">All positions filled</p>}
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                              <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{m.displayStatus}</span>
-                            </div>
-                          </div>
-                          <div className="flex flex-wrap gap-1.5">
-                            {jp.flier_url && (
-                              <button onClick={() => setFlierView(jp.flier_url!)} className="text-[11px] px-2 py-1 rounded-lg border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/10">View Flyer</button>
-                            )}
-                            <button onClick={() => openEditVacancy(jp)} className="text-[11px] px-2 py-1 rounded-lg border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/10">Edit</button>
-                            {jp.status === "filled" ? (
-                              <button onClick={() => reopenVacancy(jp)} className="text-[11px] px-2 py-1 rounded-lg border border-border text-muted-foreground hover:text-foreground">Reopen</button>
-                            ) : (
-                              <button onClick={() => markFilled(jp)} className="text-[11px] px-2 py-1 rounded-lg border border-border text-muted-foreground hover:text-foreground">Mark Filled</button>
-                            )}
-                            <button onClick={() => extendVacancy(jp)} className="text-[11px] px-2 py-1 rounded-lg border border-border text-muted-foreground hover:text-foreground">Extend 14 Days</button>
-                            <button onClick={() => deleteVacancy(jp)} className="text-[11px] px-2 py-1 rounded-lg border border-red-500/40 text-red-400 hover:bg-red-500/10">Delete</button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
-              </div>
+              <VacancyCleanupPanel
+                postings={myPostings}
+                applicantCount={(id) => appsFor(id).length}
+                onEdit={(id) => { const jp = myPostings.find((x) => x.id === id); if (jp) openEditVacancy(jp); }}
+                onViewFlier={(url) => setFlierView(url)}
+                onChanged={loadApplicants}
+              />
             )}
           </div>
 
