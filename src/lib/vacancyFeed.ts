@@ -103,7 +103,6 @@ export interface LoadVacanciesOpts {
 
 /** Loads live direct + external vacancies, merged and sorted newest first. */
 export const loadVacancies = async (opts: LoadVacanciesOpts = {}): Promise<UnifiedVacancy[]> => {
-  const nowIso = new Date().toISOString();
 
   let extQuery = supabase
     .from("external_vacancies")
@@ -313,7 +312,6 @@ export const loadVacancyPage = async (
   opts: { pageSize?: number; minQuality?: number } = {},
 ): Promise<{ items: UnifiedVacancy[]; cursor: VacancyCursor; done: boolean }> => {
   const limit = opts.pageSize ?? 20;
-  const nowIso = new Date().toISOString();
 
   // Direct vacancies: status = 'active' only — no joining-date or age exclusion.
   const fetchDirect = async () => {
