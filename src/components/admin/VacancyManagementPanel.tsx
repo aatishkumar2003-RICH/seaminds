@@ -16,6 +16,8 @@ type Kind = VacancyKind;
 export type AdminVacancyRow = {
   id: string; kind: Kind; company: string; recruiter: string; rank: string; vessel: string;
   source: string; status: string; created_at: string;
+  /** External: original source date (when stated) and SeaMinds collection date. */
+  source_posted_at?: string | null; collected_at?: string | null;
 };
 type AuditRow = { id: string; message: string; created_at: string; metadata: Record<string, unknown> | null };
 
@@ -35,12 +37,14 @@ export const toAdminRow = (kind: Kind, r: Record<string, unknown>): AdminVacancy
   ? { id: s(r.id), kind, company: s(r.company_name), recruiter: s(r.recruiter_name) || s(r.company_name), rank: s(r.rank_required),
       vessel: s(r.vessel_type), source: s(r.source_type) || "manual", status: s(r.status) || "active", created_at: s(r.created_at) }
   : { id: s(r.id), kind, company: s(r.company_name), recruiter: s(r.company_name), rank: s(r.rank_required), vessel: s(r.vessel_type),
-      source: s(r.source) || "external", status: r.is_scam_flagged ? "scam_flagged" : "listed", created_at: s(r.created_at) };
+      source: s(r.source) || "external", status: r.archived_at ? "archived" : r.is_scam_flagged ? "scam_flagged" : "listed", created_at: s(r.created_at),
+      source_posted_at: (r.source_posted_at as string) || null, collected_at: (r.fetched_at as string) || s(r.created_at) || null };
 
 const DIRECT_STATUSES = ["active", "filled", "archived", "expired"];
-const EXTERNAL_STATUSES = ["listed", "scam_flagged"];
+const EXTERNAL_STATUSES = ["listed", "scam_flagged", ...(LIFECYCLE_BACKEND.externalArchive ? ["archived"] : [])];
 const DIRECT_SOURCES = ["manual", "text", "flier"];
-const EXTERNAL_SOURCES = ["google_jobs", "rss_feed", "telegram", "internal"];
+// Scraper sources currently present plus older aggregator values.
+export const EXTERNAL_SOURCES = ["career_page", "rss_feed", "telegram", "google_jobs", "internal"];
 
 const chip = (on: boolean) => `text-[11px] px-2.5 py-1.5 rounded-full border ${on ? "border-[#D4AF37] bg-[#D4AF37]/15 text-[#D4AF37]" : "border-border text-muted-foreground"}`;
 const inp = "h-9 rounded-lg border border-border bg-background px-2 text-xs text-foreground";
@@ -156,7 +160,10 @@ export default function VacancyManagementPanel() {
                   <td className="p-2 hidden sm:table-cell text-muted-foreground">{r.company || "—"}{r.recruiter && r.recruiter !== r.company ? ` / ${r.recruiter}` : ""}</td>
                   <td className="p-2 hidden sm:table-cell text-muted-foreground">{r.source}</td>
                   <td className="p-2 text-muted-foreground">{r.status}</td>
-                  <td className="p-2 text-right text-muted-foreground">{ageInDays(r.created_at)}d</td>
+                  <td className="p-2 text-right text-muted-foreground" title={r.kind === "external" ? `Source posted: ${r.source_posted_at ? new Date(r.source_posted_at).toLocaleDateString() : "not stated"} · Collected: ${r.collected_at ? new Date(r.collected_at).toLocaleDateString() : "—"}` : undefined}>
+                    {ageInDays(r.created_at)}d
+                    {r.kind === "external" && <span className="block text-[10px]">{r.source_posted_at ? `src ${new Date(r.source_posted_at).toLocaleDateString()}` : "src date n/a"}</span>}
+                  </td>
                 </tr>
               ))}
               {!loading && rows.length === 0 && <tr><td colSpan={6} className="p-3 text-center text-muted-foreground">No vacancies match these filters.</td></tr>}
