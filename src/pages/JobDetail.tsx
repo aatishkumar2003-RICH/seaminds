@@ -85,7 +85,6 @@ const JobDetail = () => {
     (async () => {
       if (!id) { setLoading(false); return; }
       setLoading(true);
-      const nowIso = new Date().toISOString();
 
       const { data: p } = await supabase.from("job_postings" as any)
         .select("id, rank_required, vessel_type, monthly_salary, joining_port, joining_date, contract_duration, company_name, recruiter_name, additional_notes, contact_whatsapp, contact_email, verified, flier_url, created_at, expires_at, status")
