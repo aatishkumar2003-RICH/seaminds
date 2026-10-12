@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ageInDays, filterByMinAge, parseCustomDays, AGE_PRESETS } from "@/lib/managerVacancies";
 import {
-  loadAdminVacancyPage, requestLifecycleAction, LIFECYCLE_BACKEND, PENDING_LABEL, PAGE_SIZE, totalPages,
+  loadAdminVacancyPage, requestLifecycleAction, summarizeLifecycle, LIFECYCLE_BACKEND, PENDING_LABEL, PAGE_SIZE, totalPages,
   type VacancyKind, type LifecycleAction,
 } from "@/lib/vacancyLifecycle";
 
@@ -90,7 +90,11 @@ export default function VacancyManagementPanel() {
     if (!selIds.length) return;
     if (a === "delete" && LIFECYCLE_BACKEND.adminActions && !window.confirm(`Delete ${selIds.length} vacancies permanently? Vacancies with applications are protected.`)) return;
     const r = await requestLifecycleAction("admin", kind, selIds, a);
-    if (r.ok) { toast.success(`${r.affected} updated`); setSelected(new Set()); load(); }
+    if (r.ok) {
+      const verb = a === "delete" ? "deleted" : a === "archive" ? "archived" : "restored";
+      (r.blockedIds?.length ? toast.warning : toast.success)(summarizeLifecycle(r, verb) + (r.blockedIds?.length ? " — archive those instead." : ""));
+      setSelected(new Set(r.blockedIds || [])); load();
+    }
     else if (!r.pending && r.blocked) toast.error(`${r.blocked.applications} applications are linked — archive instead.`);
     else toast.message(r.message || PENDING_LABEL);
   };
