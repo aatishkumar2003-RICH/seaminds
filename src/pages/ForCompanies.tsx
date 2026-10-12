@@ -145,22 +145,22 @@ const ForCompanies = () => {
             interviews, and evidence-based shortlists — from one dashboard.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <a
-              href="mailto:info@indossol.com?subject=Founding%20Company%20Access"
+            <button
+              onClick={() => navigate("/manager?mode=signup")}
               className="sm-cta-gold inline-flex items-center justify-center h-12 px-6 rounded-xl text-sm font-bold"
             >
-              Request Founding Company Access
-            </a>
+              Create Free ShipManager Account
+            </button>
             <button
               onClick={() => navigate("/manager")}
               className="inline-flex items-center justify-center h-12 px-6 rounded-xl text-sm font-bold"
               style={{ background: "transparent", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.5)" }}
             >
-              Company Login
+              ShipManager Login
             </button>
           </div>
           <p className="text-xs mt-4" style={{ color: "rgba(212,175,55,0.75)" }}>
-            Founding companies: full access, free during launch, direct founder support.
+            Free registration during launch. Crew contact access requires approval and credits.
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12">
             {stats.map((s) => (
@@ -270,8 +270,9 @@ const ForCompanies = () => {
           >
             <h2 className="text-2xl md:text-3xl font-bold mb-3" style={{ color: "#D4AF37" }}>Founding Company Access</h2>
             <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-              SeaMinds is onboarding a limited group of founding companies during launch — full platform access, free,
-              with direct founder support. Pricing will be announced after the founding period.
+              Free company registration during launch, with direct founder support. Crew search and contact details
+              require company approval and credits; fleet tools are available to approved fleet staff. Pricing will be
+              announced after the founding period.
             </p>
             <ul className="space-y-3 mb-8 text-left">
               {planFeatures.map((f) => (
@@ -281,32 +282,24 @@ const ForCompanies = () => {
                 </li>
               ))}
             </ul>
-            <a href="mailto:info@indossol.com?subject=Founding Company Access" className="block">
-              <Button
-                size="lg"
-                className="w-full font-bold border-0"
-                style={{ background: "linear-gradient(90deg, #D4AF37, #C5941F)", color: "#0D1B2A" }}
-              >
-                Request Access
-              </Button>
-            </a>
+            <Button
+              size="lg"
+              onClick={() => navigate("/manager?mode=signup")}
+              className="w-full font-bold border-0"
+              style={{ background: "linear-gradient(90deg, #D4AF37, #C5941F)", color: "#0D1B2A" }}
+            >
+              Create Free ShipManager Account
+            </Button>
           </div>
         </div>
       </section>
 
-      {/* Social Proof */}
+      {/* Positioning (no client endorsements claimed) */}
       <section className="py-12" style={{ background: "hsl(var(--secondary))" }}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
-          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-6">
-            Trusted by crew from leading companies
+          <p className="text-sm text-muted-foreground">
+            Built for manning agencies, ship managers and owners recruiting officers and ratings worldwide.
           </p>
-          <div className="flex flex-wrap justify-center gap-x-8 gap-y-3">
-            {trustedBy.map((name) => (
-              <span key={name} className="text-sm text-muted-foreground/70 font-medium">
-                {name}
-              </span>
-            ))}
-          </div>
         </div>
       </section>
 

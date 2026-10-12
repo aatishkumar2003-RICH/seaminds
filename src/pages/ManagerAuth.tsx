@@ -21,7 +21,8 @@ const labelClass = "text-xs text-muted-foreground uppercase tracking-wide";
 
 const ManagerAuth = () => {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [mode, setMode] = useState<"login" | "signup">(() =>
+    new URLSearchParams(window.location.search).get("mode") === "signup" ? "signup" : "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [companyName, setCompanyName] = useState("");
@@ -47,7 +48,7 @@ const ManagerAuth = () => {
     }
   };
 
-  useEffect(() => { document.title = "SeaMinds Manager Login"; }, []);
+  useEffect(() => { document.title = "ShipManager Login — ShipManager by SeaMinds"; }, []);
 
   const overLimit = async (key: string) => {
     const windowStart = new Date(Date.now() - 10 * 60 * 1000).toISOString();
@@ -146,18 +147,55 @@ const ManagerAuth = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen max-w-md mx-auto bg-background px-6 py-10">
-      <div className="w-full max-w-sm space-y-6">
-        <button onClick={() => navigate("/")} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft size={14} /> Back to SeaMinds
+    <div className="min-h-screen bg-background">
+      <div className="max-w-6xl mx-auto px-5 sm:px-8 py-6 lg:py-12 grid gap-10 lg:grid-cols-2 lg:items-start">
+      {/* Value column — order 2 on mobile so the form comes first */}
+      <section className="order-2 lg:order-1 space-y-6">
+        <div className="hidden lg:flex items-center gap-3">
+          <span className="w-12 h-12 rounded-2xl bg-secondary flex items-center justify-center overflow-hidden">
+            <img src={seamindsLogo} alt="SeaMinds" className="w-9 h-9 object-contain" />
+          </span>
+          <div>
+            <p className="text-lg font-bold text-primary leading-tight">ShipManager</p>
+            <p className="text-xs text-muted-foreground">by SeaMinds</p>
+          </div>
+        </div>
+        <div className="space-y-3">
+          <h2 className="text-2xl lg:text-4xl font-bold text-foreground leading-tight">Recruit, assess and manage crew from one workspace.</h2>
+          <p className="text-sm lg:text-base text-muted-foreground">Post vacancies, run AI crew interviews and review structured Sea Profiles — built for manning agencies, ship managers and owners.</p>
+        </div>
+        <ul className="space-y-2 text-sm text-foreground">
+          <li>• Free company registration during launch — vacancy posting and AI interviews</li>
+          <li>• Crew search and contact details need company approval and credits</li>
+          <li>• Fleet inspection tools are available to approved fleet staff</li>
+        </ul>
+        <div className="rounded-2xl border border-primary/30 bg-card p-5 space-y-3" aria-label="Sample candidate card">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Sample · demo only — not real crew data</span>
+          </div>
+          <p className="text-sm font-semibold text-foreground">Chief Officer · Bulk Carrier</p>
+          <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+            <span>Technical 3.6 / 5</span><span>Judgment 3.4 / 5</span>
+            <span>Maritime English 4.0 / 5</span><span>Behaviour 3.8 / 5</span>
+          </div>
+          <p className="text-xs text-muted-foreground">Flyer → structured vacancy → AI interview → four-part score → shortlist.</p>
+        </div>
+        <a href="mailto:info@indossol.com?subject=ShipManager%20by%20SeaMinds%20%E2%80%94%20company%20enquiry" className="inline-flex items-center justify-center min-h-[44px] px-5 rounded-xl text-sm font-bold border border-primary/50 text-primary">
+          Talk to SeaMinds by email
+        </a>
+      </section>
+
+      <div className="order-1 lg:order-2 w-full max-w-sm mx-auto lg:max-w-md lg:rounded-2xl lg:border lg:border-border lg:bg-card lg:p-8 space-y-6">
+        <button onClick={() => navigate("/for-companies")} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+          <ArrowLeft size={14} /> Back
         </button>
 
         <div className="text-center space-y-3">
-          <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center mx-auto overflow-hidden">
+          <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center mx-auto overflow-hidden lg:hidden">
             <img src={seamindsLogo} alt="SeaMinds" className="w-10 h-10 object-contain" />
           </div>
-          <h1 className="text-xl font-semibold text-foreground">Manager Portal</h1>
-          <p className="text-sm text-muted-foreground">Free crew access for manning companies</p>
+          <h1 className="text-xl font-semibold text-foreground">ShipManager Login</h1>
+          <p className="text-sm text-muted-foreground">ShipManager by SeaMinds — for maritime employers</p>
         </div>
 
         {mode === "signup" && (
@@ -241,13 +279,13 @@ const ManagerAuth = () => {
 
         {mode === "signup" && (
           <p className="text-[11px] text-center text-muted-foreground leading-relaxed">
-            Free for manning companies during launch — no credit card. By registering you agree to use crew data for genuine recruitment only.
+            Free registration during launch — no credit card. Crew contact access depends on company approval and credits. By registering you agree to use crew data for genuine recruitment only.
           </p>
         )}
 
         <a href="mailto:info@indossol.com?subject=Manager portal login help" className="block text-center text-[11px] text-muted-foreground hover:text-primary">Trouble signing in? Contact SeaMinds support</a>
       </div>
-
+      </div>
     </div>
   );
 };
