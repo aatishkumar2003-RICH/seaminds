@@ -88,7 +88,7 @@ export default function VacancyManagementPanel() {
     const r = await requestLifecycleAction("admin", kind, selIds, a);
     if (r.ok) { toast.success(`${r.affected} updated`); setSelected(new Set()); load(); }
     else if (!r.pending && r.blocked) toast.error(`${r.blocked.applications} applications are linked — archive instead.`);
-    else toast.message(r.message);
+    else toast.message(r.message || PENDING_LABEL);
   };
 
   return (

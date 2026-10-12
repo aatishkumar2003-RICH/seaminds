@@ -13,10 +13,14 @@ export const PAGE_SIZE = 50;
 
 export type VacancyKind = "direct" | "external";
 export type LifecycleAction = "delete" | "archive" | "restore" | "filled" | "reopen";
-export type LifecycleResult =
-  | { ok: true; affected: number }
-  | { ok: false; pending: true; message: string }
-  | { ok: false; pending: false; blocked?: { applications: number }; message: string };
+export type LifecycleResult = {
+  ok: boolean;
+  affected?: number;
+  /** True while the secure backend is not yet activated (no write performed). */
+  pending?: boolean;
+  blocked?: { applications: number };
+  message?: string;
+};
 
 export const pageRange = (page: number, size = PAGE_SIZE): [number, number] => {
   const p = Math.max(0, Math.floor(page));

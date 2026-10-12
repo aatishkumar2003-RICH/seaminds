@@ -114,9 +114,9 @@ export default function VacancyCleanupPanel({
         const r = await requestLifecycleAction("manager", "direct", pending.ids, "delete");
         if (!r.ok) {
           if (!r.pending && r.blocked) { setPending({ kind: "blocked", ids: pending.ids, apps: r.blocked.applications }); return; }
-          toast.error(r.message); return;
+          toast.error(r.message || "Not deleted."); return;
         }
-        toast.success(`${r.affected} vacanc${r.affected === 1 ? "y" : "ies"} permanently deleted`);
+        toast.success(`${r.affected ?? 0} vacanc${r.affected === 1 ? "y" : "ies"} permanently deleted`);
       }
       setSelected(new Set());
       setPending(null);

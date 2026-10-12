@@ -313,7 +313,7 @@ export default function VacancyIntelTab() {
                 onClick={async () => {
                   if (!confirm(`Delete all ${noContactJobs.length} no-contact jobs?`)) return;
                   const r = await requestLifecycleAction('admin', 'external', noContactJobs.map(j => j.id), 'delete');
-                  if (r.ok) setNoContactJobs([]); else toast.message(r.message);
+                  if (r.ok) setNoContactJobs([]); else toast.message(r.message || PENDING_LABEL);
                 }}
               >
                 🗑️ Delete All ({noContactJobs.length}){LIFECYCLE_BACKEND.adminActions ? '' : ' · pending'}
@@ -344,7 +344,7 @@ export default function VacancyIntelTab() {
                     aria-label={LIFECYCLE_BACKEND.adminActions ? 'Delete' : `Delete — ${PENDING_LABEL}`}
                     onClick={async () => {
                       const r = await requestLifecycleAction('admin', 'external', [v.id], 'delete');
-                      if (r.ok) setNoContactJobs(prev => prev?.filter(j => j.id !== v.id) || null); else toast.message(r.message);
+                      if (r.ok) setNoContactJobs(prev => prev?.filter(j => j.id !== v.id) || null); else toast.message(r.message || PENDING_LABEL);
                     }}
                   >
                     <Trash2 size={14} />
