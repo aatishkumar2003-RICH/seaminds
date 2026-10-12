@@ -14,6 +14,8 @@ export interface UnifiedVacancy {
   company: string;
   /** Who published the listing on SeaMinds (may differ from the hiring company). */
   publisherName: string | null;
+  /** Raw recruiter_name from job_postings (routing only; never a display fallback). */
+  recruiterName?: string | null;
   verified: boolean;
   qualityScore: number | null;
   postedAt: string | null;
@@ -49,6 +51,7 @@ const mapDirect = (r: Record<string, any>): UnifiedVacancy => ({
   company: r.recruiter_name
     || (/^seaminds/i.test(String(r.company_name || "")) ? "Agency shown on flyer" : (r.company_name || "Maritime Company")),
   publisherName: r.company_name || null,
+  recruiterName: r.recruiter_name || null,
   verified: !!r.verified,
   qualityScore: null,
   postedAt: r.created_at || null,
