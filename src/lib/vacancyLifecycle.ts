@@ -6,8 +6,19 @@
 import { supabase } from "@/integrations/supabase/client";
 import { DAY_MS } from "@/lib/managerVacancies";
 
-/** Flip only after the secure backend (application protection + audit log) is live. */
-export const LIFECYCLE_BACKEND = { managerDelete: false, adminActions: false } as const;
+/**
+ * Activation switches. Flip only after the reviewed backend is applied:
+ * managerDelete/managerStatus/adminActions → vacancy_lifecycle_action RPC,
+ * appCounts → vacancy_application_counts RPC, externalArchive → external_vacancies.archived_at.
+ * While a switch is off, the matching column/RPC is never queried.
+ */
+export const LIFECYCLE_BACKEND = {
+  managerDelete: false,
+  managerStatus: false,
+  adminActions: false,
+  appCounts: false,
+  externalArchive: false,
+} as const;
 export const PENDING_LABEL = "Pending secure backend activation";
 export const PAGE_SIZE = 50;
 
@@ -16,10 +27,40 @@ export type LifecycleAction = "delete" | "archive" | "restore" | "filled" | "reo
 export type LifecycleResult = {
   ok: boolean;
   affected?: number;
+  affectedIds?: string[];
+  /** Vacancies protected because seafarer applications are linked. */
+  blockedIds?: string[];
   /** True while the secure backend is not yet activated (no write performed). */
   pending?: boolean;
   blocked?: { applications: number };
+  reason?: string;
   message?: string;
+};
+
+/** Strict parser for the backend contract: ok, affected, affected_ids, blocked_ids, blocked_applications, reason. */
+export const parseLifecycleResponse = (raw: unknown): LifecycleResult => {
+  const d = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  const ids = (v: unknown) => (Array.isArray(v) ? v.map(String) : []);
+  const affectedIds = ids(d.affected_ids);
+  const blockedIds = ids(d.blocked_ids);
+  const affected = Number.isFinite(Number(d.affected)) ? Number(d.affected) : affectedIds.length;
+  const apps = Number(d.blocked_applications ?? d.applications) || 0;
+  const reason = d.reason != null ? String(d.reason) : undefined;
+  const blocked = apps > 0 || blockedIds.length > 0 ? { applications: apps } : undefined;
+  // Never report success unless the backend explicitly says ok: true.
+  if (d.ok !== true) {
+    return { ok: false, pending: false, affected, affectedIds, blockedIds, blocked, reason,
+      message: blocked ? "Applications are linked to these vacancies, so they were not deleted." : (reason || "The action was not completed.") };
+  }
+  return { ok: true, affected, affectedIds, blockedIds, blocked, reason };
+};
+
+/** Human summary for a (possibly mixed) bulk result. */
+export const summarizeLifecycle = (r: LifecycleResult, verb = "deleted"): string => {
+  const n = r.affected ?? 0;
+  const b = r.blockedIds?.length ?? 0;
+  const head = `${n} vacanc${n === 1 ? "y" : "ies"} ${verb}`;
+  return b ? `${head} · ${b} protected because seafarers have applied` : head;
 };
 
 export const pageRange = (page: number, size = PAGE_SIZE): [number, number] => {
@@ -74,15 +115,27 @@ export const loadManagerStatusCounts = async (managerId: string): Promise<Record
   return out;
 };
 
-/** Application counts for one page of vacancy ids. */
-export const loadApplicationCounts = async (ids: string[]): Promise<Record<string, number>> => {
+/**
+ * Application counts for one page of vacancy ids via the vacancy_application_counts RPC.
+ * Returns null (= unavailable) until activated, so RLS-hidden rows never show as a false zero.
+ */
+export const loadApplicationCounts = async (ids: string[]): Promise<Record<string, number> | null> => {
+  if (!LIFECYCLE_BACKEND.appCounts) return null;
   if (!ids.length) return {};
-  const { data, error } = await supabase.from("job_applications").select("job_posting_id").in("job_posting_id", ids);
-  if (error) throw error;
+  const { data, error } = await supabase.rpc("vacancy_application_counts" as never, { p_ids: ids } as never);
+  if (error) return null;
   const out: Record<string, number> = {};
-  ((data || []) as { job_posting_id: string | null }[]).forEach((r) => { if (r.job_posting_id) out[r.job_posting_id] = (out[r.job_posting_id] || 0) + 1; });
+  ((data || []) as { job_posting_id?: string; vacancy_id?: string; applications?: number; count?: number }[]).forEach((r) => {
+    const id = r.job_posting_id ?? r.vacancy_id;
+    if (id) out[id] = Number(r.applications ?? r.count) || 0;
+  });
+  ids.forEach((id) => { if (!(id in out)) out[id] = 0; });
   return out;
 };
+
+/** Applies the manual-archive filter only once archived_at exists (never queried before activation). */
+export const withoutArchivedExternal = <Q extends { is: (c: string, v: null) => Q }>(q: Q): Q =>
+  LIFECYCLE_BACKEND.externalArchive ? q.is("archived_at", null) : q;
 
 // ---------------- admin inventory ----------------
 
@@ -109,13 +162,14 @@ export const loadAdminVacancyPage = async (q: AdminPageQuery): Promise<{ rows: R
     return { rows: (data || []) as Record<string, unknown>[], total: count ?? 0 };
   }
   let query = supabase.from("external_vacancies")
-    .select("id, company_name, rank_required, vessel_type, source, is_scam_flagged, is_verified, created_at", { count: "exact" });
+    .select(`id, company_name, rank_required, vessel_type, source, is_scam_flagged, is_verified, created_at, fetched_at, source_posted_at${LIFECYCLE_BACKEND.externalArchive ? ", archived_at" : ""}`, { count: "exact" });
   if (sanitizeSearch(q.company)) query = query.ilike("company_name", ilike(q.company));
   if (sanitizeSearch(q.rank)) query = query.ilike("rank_required", ilike(q.rank));
   if (sanitizeSearch(q.vessel)) query = query.ilike("vessel_type", ilike(q.vessel));
   if (q.source) query = query.eq("source", q.source);
   if (q.status === "scam_flagged") query = query.eq("is_scam_flagged", true);
-  else if (q.status === "listed") query = query.eq("is_scam_flagged", false);
+  else if (q.status === "listed") { query = query.eq("is_scam_flagged", false); if (LIFECYCLE_BACKEND.externalArchive) query = query.is("archived_at", null); }
+  else if (q.status === "archived" && LIFECYCLE_BACKEND.externalArchive) query = query.not("archived_at", "is", null);
   if (cut) query = query.lte("created_at", cut);
   const { data, count, error } = await query.order("created_at", { ascending: false }).order("id", { ascending: false }).range(from, to);
   if (error) throw error;
@@ -136,14 +190,12 @@ export const requestLifecycleAction = async (
   ids: string[],
   action: LifecycleAction,
 ): Promise<LifecycleResult> => {
-  const enabled = scope === "manager" ? action === "delete" && LIFECYCLE_BACKEND.managerDelete : LIFECYCLE_BACKEND.adminActions;
+  const enabled = scope === "manager"
+    ? (action === "delete" ? LIFECYCLE_BACKEND.managerDelete : LIFECYCLE_BACKEND.managerStatus)
+    : LIFECYCLE_BACKEND.adminActions;
   if (!enabled) return { ok: false, pending: true, message: PENDING_LABEL };
   if (!ids.length) return { ok: true, affected: 0 };
   const { data, error } = await supabase.rpc("vacancy_lifecycle_action" as never, { p_kind: kind, p_ids: ids, p_action: action } as never);
   if (error) return { ok: false, pending: false, message: error.message };
-  const d = (data || {}) as { affected?: number; blocked_applications?: number; message?: string };
-  if (d.blocked_applications && d.blocked_applications > 0) {
-    return { ok: false, pending: false, blocked: { applications: d.blocked_applications }, message: d.message || "Applications are linked to these vacancies." };
-  }
-  return { ok: true, affected: d.affected ?? 0 };
+  return parseLifecycleResponse(data);
 };
