@@ -4,7 +4,6 @@ import { ArrowLeft, Search, Award, Megaphone } from "lucide-react";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { checkRateLimit } from "@/lib/rateLimiter";
 import { trackPixel } from "@/lib/metaPixel";
 import PasswordInput from "@/components/PasswordInput";
 
@@ -102,33 +101,10 @@ const ManagerAuth = () => {
   const [resetting, setResetting] = useState(false);
 
 
-  const bumpRateLimit = async (key: string) => {
-    const now = new Date().toISOString();
-    const rl = await supabase.from("auth_rate_limits").select("*").eq("ip_address", key).maybeSingle();
-    if (rl.data) {
-      const stale = new Date(rl.data.window_start).getTime() < Date.now() - 10 * 60 * 1000;
-      await supabase.from("auth_rate_limits").update(
-        stale ? { attempt_count: 1, window_start: now, last_attempt: now }
-              : { attempt_count: rl.data.attempt_count + 1, last_attempt: now }
-      ).eq("ip_address", key);
-    } else {
-      await supabase.from("auth_rate_limits").insert({ ip_address: key, attempt_count: 1, window_start: now, last_attempt: now });
-    }
-  };
-
   useEffect(() => { document.title = "ShipManager Login — ShipManager by SeaMinds"; }, []);
-
-  const overLimit = async (key: string) => {
-    const windowStart = new Date(Date.now() - 10 * 60 * 1000).toISOString();
-    const { count } = await supabase.from("auth_rate_limits").select("*", { count: "exact", head: true }).eq("ip_address", key).gte("last_attempt", windowStart);
-  return (count || 0) >= 5;
-  };
 
   const handleLogin = async () => {
     if (!email.trim() || !password) return;
-    if (!(await checkRateLimit())) return;
-    const key = `login:${email.trim()}`;
-    if (await overLimit(key)) { toast.error("Too many attempts. Please wait 10 minutes."); return; }
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     if (error) {
@@ -146,7 +122,7 @@ const ManagerAuth = () => {
       } else {
         toast.error(error.message);
       }
-      await bumpRateLimit(key); setLoading(false); return;
+      setLoading(false); return;
     }
     navigate("/manager/dashboard");
   };
@@ -167,9 +143,6 @@ const ManagerAuth = () => {
       toast.error("Please fill company, your name, email and password.");
       return;
     }
-    if (!(await checkRateLimit())) return;
-    const key = `login:${email.trim()}`;
-    if (await overLimit(key)) { toast.error("Too many attempts. Please wait 10 minutes."); return; }
     setLoading(true);
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
@@ -185,7 +158,7 @@ const ManagerAuth = () => {
         },
       },
     });
-    if (error) { toast.error(error.message); await bumpRateLimit(key); setLoading(false); return; }
+    if (error) { toast.error(error.message); setLoading(false); return; }
 
     trackPixel("CompleteRegistration", { content_name: "company_signup" });
 

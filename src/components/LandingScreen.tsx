@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { Shield, Heart, Globe, ArrowLeft } from "lucide-react";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 import { supabase } from "@/integrations/supabase/client";
-import { checkRateLimit } from "@/lib/rateLimiter";
 
 interface LandingScreenProps {
   onGetStarted: () => void;
@@ -13,7 +12,6 @@ interface LandingScreenProps {
 const LandingScreen = ({ onGetStarted, onManagerLogin }: LandingScreenProps) => {
   const navigate = useNavigate();
   const handleGoogleLogin = async () => {
-    if (!(await checkRateLimit())) return;
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -28,16 +26,7 @@ const LandingScreen = ({ onGetStarted, onManagerLogin }: LandingScreenProps) => 
   const [error, setError] = useState("");
   const handleEmailLogin = async () => {
     if (!email) return;
-    if (!(await checkRateLimit())) return;
     setError("");
-
-    // Rate limit check
-    const windowStart = new Date(Date.now() - 10 * 60 * 1000).toISOString();
-    const { count } = await supabase.from('auth_rate_limits').select('*', { count: 'exact', head: true }).eq('ip_address', `login:${email}`).gte('last_attempt', windowStart);
-    if ((count || 0) >= 5) {
-      setError('Too many login attempts. Please wait 10 minutes before trying again.');
-      return;
-    }
 
     const { error: authError } = await supabase.auth.signInWithOtp({
       email,
@@ -45,18 +34,6 @@ const LandingScreen = ({ onGetStarted, onManagerLogin }: LandingScreenProps) => 
     });
     if (authError) {
       setError(authError.message);
-      // Log failed attempt
-      const rl = await supabase.from('auth_rate_limits').select('*').eq('ip_address', `login:${email}`).maybeSingle();
-      const now = new Date().toISOString();
-      if (rl.data) {
-        if (new Date(rl.data.window_start).getTime() < Date.now() - 10 * 60 * 1000) {
-          await supabase.from('auth_rate_limits').update({ attempt_count: 1, window_start: now, last_attempt: now }).eq('ip_address', `login:${email}`);
-        } else {
-          await supabase.from('auth_rate_limits').update({ attempt_count: rl.data.attempt_count + 1, last_attempt: now }).eq('ip_address', `login:${email}`);
-        }
-      } else {
-        await supabase.from('auth_rate_limits').insert({ ip_address: `login:${email}`, attempt_count: 1, window_start: now, last_attempt: now });
-      }
       return;
     }
     setEmailSent(true);
