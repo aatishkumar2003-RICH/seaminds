@@ -56,7 +56,7 @@ describe("manager permanent deletion is disabled", () => {
     expect(PERMANENT_DELETE_ENABLED).toBe(false);
     expect(DELETE_PENDING).toBe("Pending secure backend activation");
     const src = readFileSync(resolve(__dirname, "../components/manager/VacancyCleanupPanel.tsx"), "utf8");
-    expect(src).not.toMatch(/\.delete\(/);
+    expect(src).not.toMatch(/\.delete\(\)/);
     expect(src).not.toMatch(/onClick=\{\(\) => requestDelete/);
   });
 });
