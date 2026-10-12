@@ -563,8 +563,14 @@ export const publishVacancyBatch = async (
     const expected = uncertainBatches.get(pendingId) || (saved?.batchId === pendingId ? saved.expected : requested);
     const rec = await reconcileBatch(pendingId, identity.userId, expected);
     if (rec.state === "complete") {
-      return { ...base, published: rec.committed, failures: [], batchId: pendingId, status: "published" };
+      // Retry of this batch: report it. A different, now-resolved earlier batch: continue with the new publish.
+      if (pendingId === opts?.batchId) return { ...base, published: rec.committed, failures: [], batchId: pendingId, status: "published" };
+    } else {
+      // partial / absent / error: stay unresolved — never resubmit, never mint a fresh batch id.
+      return { ...base, published: rec.committed, failures: [rec.message], batchId: pendingId, status: "uncertain" };
     }
+  }
+  if (pendingId && pendingId === opts?.batchId) {
     // partial / absent / error: stay unresolved — never resubmit, never mint a fresh batch id.
     return { ...base, published: rec.committed, failures: [rec.message], batchId: pendingId, status: "uncertain" };
   }
