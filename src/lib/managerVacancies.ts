@@ -208,8 +208,7 @@ const loadActivePostings = async (managerId: string): Promise<ActiveRow[]> => {
     .from("job_postings")
     .select("id, rank_required, vessel_type, joining_port, joining_date, contract_duration, monthly_salary, positions, recruiter_name, contact_whatsapp, contact_email, created_at")
     .eq("manager_id", managerId)
-    .eq("status", "active")
-    .gt("expires_at", new Date().toISOString());
+    .eq("status", "active");
   return (data || []) as unknown as ActiveRow[];
 };
 
@@ -505,7 +504,7 @@ export const reconcileBatch = async (batchId: string, managerId: string, expecte
 
 /**
  * Publish a batch as ONE atomic INSERT. Stable posting_batch_id per attempt,
- * explicit expiry (default 30 days), exact/intra-batch duplicates skipped.
+ * no automatic expiry (compatibility timestamp only), exact/intra-batch duplicates skipped.
  * After an ambiguous network failure the batch is "uncertain": a retry with the
  * same batchId first reconciles and never resubmits rows that already exist.
  * Client-side checks are not database-level idempotency.
@@ -517,7 +516,6 @@ export const publishVacancyBatch = async (
   opts?: {
     skipDuplicateScan?: boolean;
     flierUrl?: string | null;
-    expiryDays?: ExpiryDays;
     /** Reuse a batch id (retry after reconciliation). */
     batchId?: string;
     timeoutMs?: number;
@@ -535,7 +533,7 @@ export const publishVacancyBatch = async (
     return { ...base, failures: ["Original flyer is missing — upload the flyer again before publishing."], batchId: null, status: "blocked" };
   }
 
-  const checks = [validateJoiningDates(rows), validateAttribution(rows, identity.companyName)];
+  const checks = [validateJoiningDates(rows), validateContactFormats(rows), validateAttribution(rows, identity.companyName)];
   const warnings = checks.flatMap((c) => c.warnings);
   if (warnings.length) return { ...base, failures: warnings, batchId: null, status: "blocked" };
 
@@ -545,7 +543,9 @@ export const publishVacancyBatch = async (
     if (rec.state === "complete" || rec.state === "partial") {
       return { ...base, published: rec.committed, failures: rec.state === "partial" ? [rec.message] : [], batchId: opts.batchId, status: "published" };
     }
-    if (rec.state === "error") return { ...base, failures: [rec.message], batchId: opts.batchId, status: "uncertain" };
+    // "absent" or "error": the original request may still land. Stay unresolved —
+    // never resubmit, never mint a fresh batch id automatically.
+    return { ...base, failures: [rec.message], batchId: opts.batchId, status: "uncertain" };
   }
 
   let toPublish = rows;
@@ -558,7 +558,7 @@ export const publishVacancyBatch = async (
   if (toPublish.length === 0) return { ...base, duplicatesSkipped, failures: [], batchId: null, status: "nothing" };
 
   const batchId = opts?.batchId || crypto.randomUUID();
-  const expiresAt = computeExpiresAt(opts?.expiryDays ?? DEFAULT_EXPIRY_DAYS);
+  const expiresAt = NO_EXPIRY_COMPAT;
   const payload = toPublish.map((v) => toRow(v, identity, sourceType, batchId, expiresAt, opts?.flierUrl));
 
   let data: { id: string }[] | null = null;
