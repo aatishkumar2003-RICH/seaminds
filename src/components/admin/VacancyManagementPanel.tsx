@@ -11,6 +11,7 @@ import {
   loadAdminVacancyPage, requestLifecycleAction, summarizeLifecycle, LIFECYCLE_BACKEND, PENDING_LABEL, PAGE_SIZE, totalPages,
   type VacancyKind, type LifecycleAction,
 } from "@/lib/vacancyLifecycle";
+import { auditSource, toAuditLine, type AuditLine } from "@/lib/vacancyAudit";
 
 type Kind = VacancyKind;
 export type AdminVacancyRow = {
@@ -19,7 +20,7 @@ export type AdminVacancyRow = {
   /** External: original source date (when stated) and SeaMinds collection date. */
   source_posted_at?: string | null; collected_at?: string | null;
 };
-type AuditRow = { id: string; message: string; created_at: string; metadata: Record<string, unknown> | null };
+type AuditRow = AuditLine;
 
 const s = (v: unknown) => (v == null ? "" : String(v));
 const has = (hay: string, needle: string) => !needle || hay.toLowerCase().includes(needle.trim().toLowerCase());
@@ -79,8 +80,13 @@ export default function VacancyManagementPanel() {
   }, [kind, page, f, source, status, minAge]);
   useEffect(() => { load(); }, [load]);
   useEffect(() => {
-    supabase.from("app_events").select("id, message, created_at, metadata").eq("event_type", "vacancy_cleanup")
-      .order("created_at", { ascending: false }).limit(20).then(({ data }) => setAudit((data || []) as AuditRow[]));
+    const on = LIFECYCLE_BACKEND.adminActions;
+    const src = auditSource(on);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let q: any = (supabase as any).from(src.table).select(src.columns);
+    if (!on) q = q.eq("event_type", "vacancy_cleanup");
+    q.order("created_at", { ascending: false }).limit(20)
+      .then(({ data }: { data: Record<string, unknown>[] | null }) => setAudit((data || []).map((r) => toAuditLine(on, r))));
   }, []);
 
   const pages = totalPages(total);
@@ -187,7 +193,7 @@ export default function VacancyManagementPanel() {
         <h3 className="text-sm font-semibold text-foreground">Cleanup audit history</h3>
         {audit.length === 0 ? <p className="text-[11px] text-muted-foreground">No manual cleanup actions recorded yet.</p> : (
           <ul className="text-[11px] text-muted-foreground space-y-0.5">
-            {audit.map((a) => <li key={a.id}>{new Date(a.created_at).toLocaleString()} — {a.message} ({s(a.metadata?.scope) || "—"})</li>)}
+            {audit.map((a) => <li key={a.id}>{new Date(a.created_at).toLocaleString()} — {a.text}</li>)}
           </ul>
         )}
       </div>

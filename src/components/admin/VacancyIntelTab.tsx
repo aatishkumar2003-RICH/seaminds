@@ -5,6 +5,7 @@ import { Trash2 } from 'lucide-react';
 import VacancyManagementPanel from './VacancyManagementPanel';
 import { toast } from 'sonner';
 import { requestLifecycleAction, LIFECYCLE_BACKEND, PENDING_LABEL } from '@/lib/vacancyLifecycle';
+import { confirmAndDelete, removeConfirmed } from '@/lib/vacancyAudit';
 
 interface VacancyStats {
   total: number;
@@ -28,6 +29,26 @@ export default function VacancyIntelTab() {
   const [running, setRunning] = useState(false);
   const [runResult, setRunResult] = useState<string | null>(null);
   const [noContactJobs, setNoContactJobs] = useState<any[] | null>(null);
+  const [protectedIds, setProtectedIds] = useState<Set<string>>(new Set());
+  const runDelete = async (ids: string[], prompt: string) => {
+    const o = await confirmAndDelete(ids, prompt, (m) => window.confirm(m),
+      (x) => requestLifecycleAction('admin', 'external', x, 'delete'), PENDING_LABEL);
+    if (o.status === 'cancelled') return;
+    if (o.status === 'rejected') { toast.message(o.message); return; }
+    setNoContactJobs(prev => prev ? removeConfirmed(prev, o.affectedIds) : prev);
+    if (o.blockedIds.length) {
+      setProtectedIds(prev => new Set([...prev, ...o.blockedIds]));
+      toast.warning(`${o.affectedIds.length} deleted · ${o.blockedIds.length} protected by applications — archive those instead.`);
+    } else if (o.affectedIds.length) toast.success(`${o.affectedIds.length} deleted.`);
+    else toast.message('No vacancies were deleted.');
+  };
+  const runArchive = async (id: string) => {
+    const r = await requestLifecycleAction('admin', 'external', [id], 'archive');
+    if (r.ok && r.affectedIds?.includes(id)) {
+      setNoContactJobs(prev => prev ? removeConfirmed(prev, [id]) : prev);
+      toast.success('Archived.');
+    } else toast.message(r.message || PENDING_LABEL);
+  };
   const [loadingNoContact, setLoadingNoContact] = useState(false);
 
   const load = async () => {
@@ -310,11 +331,7 @@ export default function VacancyIntelTab() {
                 size="sm"
                 disabled={!LIFECYCLE_BACKEND.adminActions}
                 title={LIFECYCLE_BACKEND.adminActions ? undefined : PENDING_LABEL}
-                onClick={async () => {
-                  if (!confirm(`Delete all ${noContactJobs.length} no-contact jobs?`)) return;
-                  const r = await requestLifecycleAction('admin', 'external', noContactJobs.map(j => j.id), 'delete');
-                  if (r.ok) setNoContactJobs([]); else toast.message(r.message || PENDING_LABEL);
-                }}
+                onClick={() => runDelete(noContactJobs.map(j => j.id), `Delete all ${noContactJobs.length} no-contact jobs? Vacancies with applications are protected.`)}
               >
                 🗑️ Delete All ({noContactJobs.length}){LIFECYCLE_BACKEND.adminActions ? '' : ' · pending'}
               </Button>
@@ -342,13 +359,13 @@ export default function VacancyIntelTab() {
                     disabled={!LIFECYCLE_BACKEND.adminActions}
                     title={LIFECYCLE_BACKEND.adminActions ? 'Delete' : PENDING_LABEL}
                     aria-label={LIFECYCLE_BACKEND.adminActions ? 'Delete' : `Delete — ${PENDING_LABEL}`}
-                    onClick={async () => {
-                      const r = await requestLifecycleAction('admin', 'external', [v.id], 'delete');
-                      if (r.ok) setNoContactJobs(prev => prev?.filter(j => j.id !== v.id) || null); else toast.message(r.message || PENDING_LABEL);
-                    }}
+                    onClick={() => runDelete([v.id], 'Delete this vacancy permanently? Vacancies with applications are protected.')}
                   >
                     <Trash2 size={14} />
                   </Button>
+                  {protectedIds.has(v.id) && (
+                    <Button variant="outline" size="sm" className="h-7 text-[11px]" onClick={() => runArchive(v.id)}>Archive</Button>
+                  )}
                 </div>
               </div>
             ))}
