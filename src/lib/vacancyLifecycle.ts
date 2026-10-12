@@ -13,11 +13,11 @@ import { DAY_MS } from "@/lib/managerVacancies";
  * While a switch is off, the matching column/RPC is never queried.
  */
 export const LIFECYCLE_BACKEND = {
-  managerDelete: false,
-  managerStatus: false,
-  adminActions: false,
-  appCounts: false,
-  externalArchive: false,
+  managerDelete: true,
+  managerStatus: true,
+  adminActions: true,
+  appCounts: true,
+  externalArchive: true,
 } as const;
 export const PENDING_LABEL = "Pending secure backend activation";
 export const PAGE_SIZE = 50;

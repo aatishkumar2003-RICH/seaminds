@@ -316,6 +316,13 @@
       "when": 1791824357652,
       "tag": "0044_stage2_vacancy_lifecycle_v2",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1791824396860,
+      "tag": "0045_stage2_close_direct_vacancy_delete",
+      "breakpoints": true
     }
   ]
 }
