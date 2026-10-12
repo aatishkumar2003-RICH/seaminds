@@ -17,7 +17,7 @@ const NAV = [
   { to: "/management/inspections", label: "Fleet Inspections", icon: Ship, match: () => false, note: "Fleet staff access" },
 ];
 
-const HELP_MAILTO = "mailto:info@indossol.com?subject=ShipManager%20by%20SeaMinds%20%E2%80%94%20help";
+const HELP_MAILTO = "mailto:support@seaminds.life?subject=ShipManager%20by%20SeaMinds%20%E2%80%94%20help";
 
 type Identity = { company: string; approved: boolean; verified: boolean; balance: number | null };
 

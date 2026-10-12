@@ -33,7 +33,7 @@ const sections = [
   },
   {
     title: "8. Contact",
-    body: "If you have any questions about these Terms of Service, please contact us at legal@seaminds.com. For urgent seafarer welfare matters, use the SOS feature within the app for immediate assistance. We aim to respond to all enquiries within 48 hours.",
+    body: "If you have any questions about these Terms of Service, please contact us at admin@seaminds.life. For urgent seafarer welfare matters, use the SOS feature within the app for immediate assistance.",
   },
 ];
 

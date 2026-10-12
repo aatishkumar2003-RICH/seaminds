@@ -72,10 +72,16 @@ const Contact = () => {
         <h1 className="text-3xl font-bold mb-2" style={{ color: goldColor }}>
           Contact Us
         </h1>
-        <div className="flex items-center gap-2 mb-8">
-          <Mail className="w-4 h-4" style={{ color: goldColor }} />
-          <a href="mailto:info@indossol.com" className="text-sm underline" style={{ color: "#A0AEC0" }}>
-            info@indossol.com
+        <div className="grid gap-3 sm:grid-cols-2 mb-8">
+          <a href="mailto:support@seaminds.life?subject=SeaMinds%20support%20request" className="min-w-0 rounded-lg border border-border bg-card p-4 text-muted-foreground">
+            <span className="flex items-center gap-2 font-semibold text-primary"><Mail className="w-4 h-4 shrink-0" /> Support & Crew</span>
+            <span className="block text-sm underline break-all mt-2">support@seaminds.life</span>
+            <span className="block text-xs mt-2">Technical help, login, privacy and account deletion</span>
+          </a>
+          <a href="mailto:admin@seaminds.life?subject=SeaMinds%20commercial%20enquiry" className="min-w-0 rounded-lg border border-border bg-card p-4 text-muted-foreground">
+            <span className="flex items-center gap-2 font-semibold text-primary"><Mail className="w-4 h-4 shrink-0" /> Corporate & Fleet</span>
+            <span className="block text-sm underline break-all mt-2">admin@seaminds.life</span>
+            <span className="block text-xs mt-2">Companies, credits, partnerships and governance</span>
           </a>
         </div>
         <div className="h-px w-full mb-8" style={{ backgroundColor: goldColor, opacity: 0.25 }} />
@@ -84,7 +90,7 @@ const Contact = () => {
           <div className="text-center py-16">
             <CheckCircle className="w-12 h-12 mx-auto mb-4" style={{ color: goldColor }} />
             <p className="text-lg font-semibold text-white mb-2">Thank you.</p>
-            <p style={{ color: "#A0AEC0" }}>We will respond within 24 hours.</p>
+            <p style={{ color: "#A0AEC0" }}>Your message has been received.</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-5">

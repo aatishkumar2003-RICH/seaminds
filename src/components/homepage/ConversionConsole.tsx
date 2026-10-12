@@ -93,7 +93,7 @@ const MENU_LINKS: { label: string; to: string; external?: boolean }[] = [
   { label: "Pricing", to: "/pricing" },
   { label: "Colleges", to: "/colleges" },
   { label: "Privacy", to: "/privacy" },
-  { label: "Contact", to: "mailto:info@indossol.com", external: true },
+  { label: "Contact", to: "/contact" },
 ];
 
 

@@ -213,7 +213,7 @@ const Pricing = () => {
               SeaMinds is onboarding a limited group of founding companies during launch — full platform access, free,
               with direct founder support. Pricing will be announced after the founding period.
             </p>
-            <a href="mailto:info@indossol.com?subject=Founding Company Access">
+            <a href="mailto:admin@seaminds.life?subject=Founding%20Company%20Access">
               <Button className="w-full font-bold border-0" style={{ background: "linear-gradient(90deg, #D4AF37, #C5941F)", color: "#0D1B2A" }}>
                 Request Access
               </Button>

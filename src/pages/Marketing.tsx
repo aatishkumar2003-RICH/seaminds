@@ -173,7 +173,7 @@ const Marketing = () => {
               style={{ background: "none", border: "none", color: "#94a3b8", fontSize: 11.5, cursor: "pointer", padding: 0 }}>
               ← Back to SeaMinds
             </button>
-            <a href="mailto:info@indossol.com?subject=Marketing portal login help"
+            <a href="mailto:support@seaminds.life?subject=Marketing%20portal%20login%20help"
               style={{ color: "#94a3b8", fontSize: 11, textAlign: "center", textDecoration: "none" }}>
               Trouble signing in? Contact SeaMinds support
             </a>

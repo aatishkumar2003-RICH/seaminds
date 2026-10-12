@@ -58,7 +58,7 @@ interface CrewResult {
   quick_profile_done?: boolean;
 }
 
-const REFILL_MAILTO = "mailto:info@indossol.com?subject=Credit refill request";
+const REFILL_MAILTO = "mailto:admin@seaminds.life?subject=Credit%20refill%20request";
 
 const FAMILY_LABELS: Record<string, string> = {
   OIL_TANKER: "Oil Tanker", CHEM_TANKER: "Chemical Tanker", LPG: "LPG", LNG: "LNG",
@@ -392,7 +392,7 @@ const ManagerSearch = () => {
                 View subscription plans
               </button>
               <a
-                href="mailto:info@indossol.com?subject=SeaMinds%20company%20subscription"
+                href="mailto:admin@seaminds.life?subject=SeaMinds%20company%20subscription"
                 style={{ ...ghostBtn, borderRadius: 12, padding: "12px 16px", textAlign: "center", textDecoration: "none" }}
               >
                 Talk to our team
@@ -445,7 +445,7 @@ const ManagerSearch = () => {
           <p style={{ color: "#94a3b8", fontSize: 12, lineHeight: 1.6 }}>
             You can still post vacancies, create company posts and arrange interviews while you wait.
           </p>
-          <a href="mailto:info@indossol.com?subject=SeaMinds%20company%20approval"
+          <a href="mailto:admin@seaminds.life?subject=SeaMinds%20company%20approval"
             style={{ display: "inline-block", marginTop: 16, background: "#D4AF37", color: "#0D1B2A", borderRadius: 10, padding: "11px 20px", fontWeight: 800, fontSize: 13, textDecoration: "none" }}>
             Request approval
           </a>
