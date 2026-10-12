@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { logEvent } from "@/lib/logEvent";
 import ScoreReveal from "./steps/ScoreReveal";
+import { saveOutcome, SKIP_ANSWER, type SaveOutcome } from "@/lib/examContract";
 
 interface AssessmentFlowProps {
   profileId: string;
@@ -64,6 +65,9 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [mcqSubmitted, setMcqSubmitted] = useState(false);
   const [mcqCorrect, setMcqCorrect] = useState<boolean | null>(null);
+  // Durable save state for the current question (answer, skip, timeout or server-kept earlier answer)
+  const [saved, setSaved] = useState<SaveOutcome | null>(null);
+  const advancingRef = useRef(false);
 
   // Evaluation state
   const [transcript, setTranscript] = useState<Array<{question:string,answer:string,score:number,redFlag:boolean,redFlagCategory:string|null,followUp:string|null}>>([]);
@@ -193,6 +197,8 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     setSelectedOption(null);
     setMcqSubmitted(false);
     setMcqCorrect(null);
+    setSaved(null);
+    advancingRef.current = false;
     setTextAnswer("");
     setPendingFollowUp(null);
     setFollowUpInput("");
