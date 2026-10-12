@@ -465,6 +465,24 @@ const uncertainBatches = new Map<string, number>();
 export const _resetUncertainBatches = () => uncertainBatches.clear();
 export const isBatchUncertain = (batchId: string) => uncertainBatches.has(batchId);
 
+/** Minimal refresh-safe marker (no advert or candidate data). Client-side only — not DB idempotency. */
+export type UncertainMarker = { batchId: string; managerId: string; expected: number; at: string };
+const markerKey = (managerId: string) => `sm_uncertain_batch:${managerId}`;
+const store = (): Storage | null => { try { return typeof localStorage !== "undefined" ? localStorage : null; } catch { return null; } };
+export const saveUncertainMarker = (m: UncertainMarker) => { try { store()?.setItem(markerKey(m.managerId), JSON.stringify(m)); } catch { /* ignore */ } };
+export const loadUncertainMarker = (managerId: string): UncertainMarker | null => {
+  try {
+    const raw = store()?.getItem(markerKey(managerId));
+    if (!raw) return null;
+    const m = JSON.parse(raw) as UncertainMarker;
+    return m && m.managerId === managerId && typeof m.batchId === "string" && Number(m.expected) > 0 ? m : null;
+  } catch { return null; }
+};
+export const clearUncertainMarker = (managerId: string, batchId: string) => {
+  const m = loadUncertainMarker(managerId);
+  if (m && m.batchId === batchId) { try { store()?.removeItem(markerKey(managerId)); } catch { /* ignore */ } }
+};
+
 /** A PostgREST error carries a code; a missing code/abort/fetch failure means the outcome is unknown. */
 const isAmbiguousError = (e: { code?: string; message?: string; name?: string } | null | undefined) =>
   !!e && (!e.code || /abort|timeout|failed to fetch|network|load failed/i.test(`${e.name || ""} ${e.message || ""}`));
@@ -490,10 +508,11 @@ export const reconcileBatch = async (batchId: string, managerId: string, expecte
   const committed = (data || []).length;
   if (committed >= expected && expected > 0) {
     uncertainBatches.delete(batchId);
+    clearUncertainMarker(managerId, batchId);
     return { state: "complete", committed, expected, message: `All ${committed} vacancies were published.` };
   }
   if (committed > 0) {
-    uncertainBatches.delete(batchId);
+    // Partial stays unresolved: never reported as a full publication, marker kept.
     return { state: "partial", committed, expected, message: `${committed} of ${expected} found. Do not resubmit — review My Posts.` };
   }
   return {
