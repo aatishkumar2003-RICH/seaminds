@@ -302,6 +302,13 @@
       "when": 1791794484610,
       "tag": "0042_close_public_contact_submissions_insert",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1791800306002,
+      "tag": "0043_neutralize_expire_old_vacancies",
+      "breakpoints": true
     }
   ]
 }
