@@ -14,6 +14,7 @@ import {
   reconcileBatch, loadUncertainMarker,
   validateContactFormats, validateAttribution, ACCEPTED_FLIER_TYPES as ACCEPTED,
 } from "@/lib/managerVacancies";
+import { splitAdverts, MAX_ADVERTS_PER_PASTE } from "@/lib/advertSplitter";
 
 const MAX_FLIERS = 5;
 type Risk = "low" | "medium" | "high";
@@ -28,6 +29,8 @@ type Source = {
   risk: { level: Risk; flags: string[] };
   ownership?: Ownership;
   rows: Row[];
+  /** Set when the advert boundary was guessed; its vacancies start unselected. */
+  boundary?: string;
 };
 
 const uid = () => crypto.randomUUID();
@@ -97,7 +100,7 @@ const PostVacancy = () => {
     if (error || !res?.ok) { patch(id, (s) => ({ ...s, status: "error", error: error ? parseError(error) : res?.error || "Could not read this advert." })); return; }
     const risk = { level: toRisk(res.risk?.level), flags: (res.risk?.flags || []).map(String) };
     const rows = (res.vacancies || []).map((v) => mkRow(toPreviewVacancy(v), risk.level));
-    patch(id, (s) => ({ ...s, status: rows.length ? "ready" : "error", error: rows.length ? undefined : "No vacancies found in this advert.", risk, rows }));
+    patch(id, (s) => ({ ...s, status: rows.length ? "ready" : "error", error: rows.length ? undefined : "No vacancies found in this advert.", risk, rows: s.boundary ? rows.map((r) => ({ ...r, selected: false })) : rows }));
   };
 
   const addFliers = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -128,16 +131,30 @@ const PostVacancy = () => {
   };
 
   const addText = async () => {
-    const text = pasteText.trim();
-    if (!text || !ready()) return;
-    const id = uid();
-    setSources((p) => [...p, { id, kind: "text", label: text.slice(0, 48) + (text.length > 48 ? "…" : ""), status: "reading", flierUrl: null, risk: { level: "low", flags: [] }, rows: [] }]);
+    if (!pasteText.trim() || !ready()) return;
+    const all = splitAdverts(pasteText);
+    if (all.length > MAX_ADVERTS_PER_PASTE) toast({ title: `Up to ${MAX_ADVERTS_PER_PASTE} adverts per paste`, description: `Only the first ${MAX_ADVERTS_PER_PASTE} were added.`, variant: "destructive" });
+    const blocks = all.slice(0, MAX_ADVERTS_PER_PASTE);
+    const multi = blocks.length > 1;
+    const queued = blocks.map((b, i) => ({
+      b,
+      src: {
+        id: uid(), kind: "text" as const,
+        label: `${multi ? `Advert ${i + 1}: ` : ""}${b.text.slice(0, 48)}${b.text.length > 48 ? "…" : ""}`,
+        status: "reading" as const, flierUrl: null, risk: { level: "low" as Risk, flags: [] }, rows: [],
+        boundary: b.uncertain ? b.reason : undefined,
+      },
+    }));
+    setSources((p) => [...p, ...queued.map((q) => q.src)]);
     setPasteText("");
-    try {
-      const { data, error } = await supabase.functions.invoke("parse-vacancy-text", { body: { text: text.slice(0, 8000) } });
-      finishParse(id, data, error);
-    } catch (err) {
-      patch(id, (s) => ({ ...s, status: "error", error: err instanceof Error ? err.message : "Could not read this advert." }));
+    // Each advert is read on its own so contacts never mix between adverts.
+    for (const { b, src } of queued) {
+      try {
+        const { data, error } = await supabase.functions.invoke("parse-vacancy-text", { body: { text: b.text.slice(0, 8000) } });
+        finishParse(src.id, data, error);
+      } catch (err) {
+        patch(src.id, (s) => ({ ...s, status: "error", error: err instanceof Error ? err.message : "Could not read this advert." }));
+      }
     }
   };
 
