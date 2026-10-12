@@ -1,60 +1,39 @@
 import { useEffect, useState } from "react";
-import { trackEvent } from "@/lib/analytics";
-import { ArrowLeft, Mail, CheckCircle } from "lucide-react";
+import { ArrowLeft, Mail, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
-import { z } from "zod";
+import { toast } from "sonner";
 
-const contactSchema = z.object({
-  name: z.string().trim().min(1, "Name is required").max(100),
-  email: z.string().trim().email("Invalid email address").max(255),
-  subject: z.string().min(1, "Please select a subject"),
-  message: z.string().trim().min(1, "Message is required").max(2000),
-});
-
-const subjects = ["General", "Company Demo", "Technical Support", "Partnership"];
+const contacts = [
+  {
+    title: "Support & Crew",
+    email: "support@seaminds.life",
+    subject: "SeaMinds%20support%20request",
+    note: "Technical help, login, privacy and account deletion",
+  },
+  {
+    title: "Corporate & Fleet",
+    email: "admin@seaminds.life",
+    subject: "SeaMinds%20commercial%20enquiry",
+    note: "Companies, credits, partnerships and governance",
+  },
+];
 
 const Contact = () => {
   useEffect(() => { document.title = "SeaMinds | Contact Us"; }, []);
+  const [copied, setCopied] = useState<string | null>(null);
 
-  const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors({});
-
-    const result = contactSchema.safeParse(form);
-    if (!result.success) {
-      const fieldErrors: Record<string, string> = {};
-      result.error.issues.forEach((i) => { fieldErrors[i.path[0] as string] = i.message; });
-      setErrors(fieldErrors);
-      return;
+  const copyEmail = async (email: string) => {
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error("unavailable");
+      await navigator.clipboard.writeText(email);
+      setCopied(email);
+      toast.success("Email address copied");
+      setTimeout(() => setCopied((c) => (c === email ? null : c)), 2000);
+    } catch {
+      toast.error(`Couldn't copy automatically. Please copy ${email} manually.`);
     }
-
-    setSubmitting(true);
-    const { error } = await supabase.from("contact_submissions" as any).insert([{
-      name: result.data.name,
-      email: result.data.email,
-      subject: result.data.subject,
-      message: result.data.message,
-    }]);
-
-    setSubmitting(false);
-    if (error) {
-      setErrors({ form: "Something went wrong. Please try again." });
-      return;
-    }
-    setSubmitted(true);
-    trackEvent("contact_form_submit", { subject: result.data.subject });
   };
 
-  const labelStyle = { color: "#A0AEC0" };
   const goldColor = "#D4AF37";
 
   return (
@@ -72,89 +51,28 @@ const Contact = () => {
         <h1 className="text-3xl font-bold mb-2" style={{ color: goldColor }}>
           Contact Us
         </h1>
+        <p className="text-sm mb-6" style={{ color: "#A0AEC0" }}>
+          Email us directly using the address that matches your enquiry. If your device has no email app, copy the address and use any email service.
+        </p>
         <div className="grid gap-3 sm:grid-cols-2 mb-8">
-          <a href="mailto:support@seaminds.life?subject=SeaMinds%20support%20request" className="min-w-0 rounded-lg border border-border bg-card p-4 text-muted-foreground">
-            <span className="flex items-center gap-2 font-semibold text-primary"><Mail className="w-4 h-4 shrink-0" /> Support & Crew</span>
-            <span className="block text-sm underline break-all mt-2">support@seaminds.life</span>
-            <span className="block text-xs mt-2">Technical help, login, privacy and account deletion</span>
-          </a>
-          <a href="mailto:admin@seaminds.life?subject=SeaMinds%20commercial%20enquiry" className="min-w-0 rounded-lg border border-border bg-card p-4 text-muted-foreground">
-            <span className="flex items-center gap-2 font-semibold text-primary"><Mail className="w-4 h-4 shrink-0" /> Corporate & Fleet</span>
-            <span className="block text-sm underline break-all mt-2">admin@seaminds.life</span>
-            <span className="block text-xs mt-2">Companies, credits, partnerships and governance</span>
-          </a>
+          {contacts.map((c) => (
+            <div key={c.email} className="min-w-0 rounded-lg border border-border bg-card p-4 text-muted-foreground">
+              <span className="flex items-center gap-2 font-semibold text-primary"><Mail className="w-4 h-4 shrink-0" /> {c.title}</span>
+              <a href={`mailto:${c.email}?subject=${c.subject}`} className="block text-sm underline break-all mt-2">{c.email}</a>
+              <span className="block text-xs mt-2">{c.note}</span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-3 h-10 w-full"
+                onClick={() => copyEmail(c.email)}
+                aria-label={`Copy ${c.email}`}
+              >
+                {copied === c.email ? <><Check className="w-4 h-4 mr-1" /> Copied</> : <><Copy className="w-4 h-4 mr-1" /> Copy email</>}
+              </Button>
+            </div>
+          ))}
         </div>
-        <div className="h-px w-full mb-8" style={{ backgroundColor: goldColor, opacity: 0.25 }} />
-
-        {submitted ? (
-          <div className="text-center py-16">
-            <CheckCircle className="w-12 h-12 mx-auto mb-4" style={{ color: goldColor }} />
-            <p className="text-lg font-semibold text-white mb-2">Thank you.</p>
-            <p style={{ color: "#A0AEC0" }}>Your message has been received.</p>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="block text-sm mb-1.5 font-medium" style={labelStyle}>Name</label>
-              <Input
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
-                placeholder="Your full name"
-              />
-              {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
-            </div>
-
-            <div>
-              <label className="block text-sm mb-1.5 font-medium" style={labelStyle}>Email</label>
-              <Input
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
-                placeholder="your@email.com"
-              />
-              {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email}</p>}
-            </div>
-
-            <div>
-              <label className="block text-sm mb-1.5 font-medium" style={labelStyle}>Subject</label>
-              <Select value={form.subject} onValueChange={(v) => setForm({ ...form, subject: v })}>
-                <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                  <SelectValue placeholder="Select a subject" />
-                </SelectTrigger>
-                <SelectContent>
-                  {subjects.map((s) => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.subject && <p className="text-red-400 text-xs mt-1">{errors.subject}</p>}
-            </div>
-
-            <div>
-              <label className="block text-sm mb-1.5 font-medium" style={labelStyle}>Message</label>
-              <Textarea
-                value={form.message}
-                onChange={(e) => setForm({ ...form, message: e.target.value })}
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/30 min-h-[120px]"
-                placeholder="How can we help?"
-              />
-              {errors.message && <p className="text-red-400 text-xs mt-1">{errors.message}</p>}
-            </div>
-
-            {errors.form && <p className="text-red-400 text-sm">{errors.form}</p>}
-
-            <Button
-              type="submit"
-              disabled={submitting}
-              className="w-full text-sm font-semibold h-11"
-              style={{ backgroundColor: goldColor, color: "#0D1B2A" }}
-            >
-              {submitting ? "Sending..." : "Send Message"}
-            </Button>
-          </form>
-        )}
 
         <div className="h-px w-full my-10" style={{ backgroundColor: goldColor, opacity: 0.25 }} />
         <p className="text-xs text-center" style={{ color: "#8899AA" }}>
