@@ -34,7 +34,7 @@ vi.mock("@/integrations/supabase/client", () => {
 import {
   classifyDuplicates, findIntraBatchDuplicates, computeExpiresAt, NO_EXPIRY_COMPAT, isValidEmail,
   decidePermanentDelete, canTransition, filterByMinAge, parseCustomDays, postingAgeLabel, AGE_PRESETS, DAY_MS, toRow, publishVacancyBatch,
-  reconcileBatch, isBatchUncertain, _resetUncertainBatches, toPreviewVacancy, validateAttribution,
+  reconcileBatch, isBatchUncertain, _resetUncertainBatches, toPreviewVacancy, validateAttribution, loadUncertainMarker,
   type PreviewVacancy, type ActiveRow, type ManagerIdentity,
 } from "@/lib/managerVacancies";
 import { resolveApplyRoute } from "@/lib/applicationRouter";
@@ -66,6 +66,51 @@ beforeEach(() => {
   state.insertResult = async () => ({ data: [{ id: "n1" }], error: null });
   state.inserted = []; state.selectRows = []; state.selectCalls = 0;
   _resetUncertainBatches();
+  localStorage.clear();
+});
+
+describe("Stage 2 corrective: refresh-safe uncertain batches", () => {
+  it("after refresh (memory lost) a new publish is blocked by the saved marker and never inserts", async () => {
+    state.insertResult = async () => { throw new TypeError("Failed to fetch"); };
+    const r = await publishVacancyBatch([row()], identity, "text", { skipDuplicateScan: true });
+    _resetUncertainBatches(); // simulate refresh
+    expect(loadUncertainMarker("mgr-1")?.batchId).toBe(r.batchId);
+    state.insertResult = async () => ({ data: [{ id: "x" }], error: null });
+    const again = await publishVacancyBatch([row({ rank_required: "Bosun" })], identity, "text", { skipDuplicateScan: true });
+    expect(again.status).toBe("uncertain");
+    expect(again.batchId).toBe(r.batchId);
+    expect(state.inserted).toHaveLength(1);
+  });
+  it("marker stores only minimal metadata", async () => {
+    state.insertResult = async () => { throw new TypeError("Failed to fetch"); };
+    await publishVacancyBatch([row()], identity, "text", { skipDuplicateScan: true });
+    expect(Object.keys(loadUncertainMarker("mgr-1")!).sort()).toEqual(["at", "batchId", "expected", "managerId"]);
+  });
+  it("partial reconciliation is not a full publication and keeps the marker", async () => {
+    state.insertResult = async () => { throw new TypeError("Failed to fetch"); };
+    const r = await publishVacancyBatch([row(), row({ rank_required: "Bosun" })], identity, "text", { skipDuplicateScan: true });
+    state.selectRows = [{ id: "one" }];
+    const rec = await reconcileBatch(r.batchId!, "mgr-1", 2);
+    expect(rec.state).toBe("partial");
+    expect(loadUncertainMarker("mgr-1")?.batchId).toBe(r.batchId);
+    const retry = await publishVacancyBatch([row()], identity, "text", { skipDuplicateScan: true, batchId: r.batchId! });
+    expect(retry.status).toBe("uncertain");
+  });
+  it("marker is cleared only after verified full resolution", async () => {
+    state.insertResult = async () => { throw new TypeError("Failed to fetch"); };
+    const r = await publishVacancyBatch([row()], identity, "text", { skipDuplicateScan: true });
+    state.selectRows = [];
+    await reconcileBatch(r.batchId!, "mgr-1", 1);
+    expect(loadUncertainMarker("mgr-1")).not.toBeNull();
+    state.selectRows = [{ id: "landed" }];
+    expect((await reconcileBatch(r.batchId!, "mgr-1", 1)).state).toBe("complete");
+    expect(loadUncertainMarker("mgr-1")).toBeNull();
+  });
+  it("marker is manager-scoped", async () => {
+    state.insertResult = async () => { throw new TypeError("Failed to fetch"); };
+    await publishVacancyBatch([row()], identity, "text", { skipDuplicateScan: true });
+    expect(loadUncertainMarker("mgr-2")).toBeNull();
+  });
 });
 
 describe("routing: own vs third-party", () => {
