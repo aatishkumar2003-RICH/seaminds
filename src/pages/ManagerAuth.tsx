@@ -19,6 +19,74 @@ const DESIGNATIONS = ["Crewing Manager", "Fleet Manager", "HR Manager", "Marine 
 const inputClass = "w-full bg-secondary text-foreground text-sm rounded-xl px-4 py-3 placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary";
 const labelClass = "text-xs text-muted-foreground uppercase tracking-wide";
 
+const DEMO_STEPS = [
+  {
+    tab: "1 · Vacancy",
+    title: "Vacancy extraction & crew matching",
+    body: (
+      <>
+        <p className="text-sm font-semibold text-foreground">Chief Officer · Bulk Carrier (sample advert)</p>
+        <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+          <span>Contract: 6 months</span><span>Joining: Singapore</span>
+          <span>COC: Chief Mate</span><span>Positions: 1</span>
+        </div>
+        <p className="text-xs text-muted-foreground">Fields are read from the flyer or pasted text, then checked by you before publishing. Matching suggests candidates by rank and vessel type; availability is not guaranteed.</p>
+      </>
+    ),
+  },
+  {
+    tab: "2 · Interview",
+    title: "AI competency interview & sample scoring",
+    body: (
+      <>
+        <p className="text-sm font-semibold text-foreground">Sample candidate A · Chief Officer</p>
+        <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+          <span>Technical 3.6 / 5</span><span>Judgment 3.4 / 5</span>
+          <span>Maritime English 4.0 / 5</span><span>Behaviour 3.8 / 5</span>
+        </div>
+        <p className="text-xs text-muted-foreground">Scores are AI-assessed professional screening. CV details are self-declared, not independently verified.</p>
+      </>
+    ),
+  },
+  {
+    tab: "3 · Shortlist",
+    title: "Shortlist, protected contact & application workflow",
+    body: (
+      <>
+        <ul className="space-y-1 text-xs text-muted-foreground">
+          <li>⭐ Sample candidate A — 3.7 overall · shortlisted</li>
+          <li>⭐ Sample candidate B — 3.4 overall · shortlisted</li>
+          <li>Sample candidate C — 2.9 overall · under review</li>
+        </ul>
+        <p className="text-xs text-muted-foreground">Contact details unlock only for approved companies and use credits. WhatsApp messages open prefilled — you press send yourself.</p>
+      </>
+    ),
+  },
+];
+
+const DemoWalkthrough = () => {
+  const [step, setStep] = useState(0);
+  const s = DEMO_STEPS[step];
+  return (
+    <div className="rounded-2xl border border-primary/30 bg-card p-5 space-y-3" aria-label="ShipManager sample walkthrough">
+      <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Sample / demo — not live crew data</span>
+      <div className="flex gap-1.5" role="tablist">
+        {DEMO_STEPS.map((d, i) => (
+          <button key={d.tab} role="tab" aria-selected={i === step} onClick={() => setStep(i)}
+            className={`flex-1 min-h-[36px] rounded-lg text-[11px] font-semibold border ${i === step ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground"}`}>
+            {d.tab}
+          </button>
+        ))}
+      </div>
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">{s.title}</p>
+      {s.body}
+      <button onClick={() => setStep((step + 1) % DEMO_STEPS.length)} className="text-xs font-semibold text-primary">
+        {step < DEMO_STEPS.length - 1 ? "Next step →" : "↺ Start again"}
+      </button>
+    </div>
+  );
+};
+
 const ManagerAuth = () => {
   const navigate = useNavigate();
   const [mode, setMode] = useState<"login" | "signup">(() =>
@@ -169,17 +237,7 @@ const ManagerAuth = () => {
           <li>• Crew search and contact details need company approval and credits</li>
           <li>• Fleet inspection tools are available to approved fleet staff</li>
         </ul>
-        <div className="rounded-2xl border border-primary/30 bg-card p-5 space-y-3" aria-label="Sample candidate card">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Sample · demo only — not real crew data</span>
-          </div>
-          <p className="text-sm font-semibold text-foreground">Chief Officer · Bulk Carrier</p>
-          <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
-            <span>Technical 3.6 / 5</span><span>Judgment 3.4 / 5</span>
-            <span>Maritime English 4.0 / 5</span><span>Behaviour 3.8 / 5</span>
-          </div>
-          <p className="text-xs text-muted-foreground">Flyer → structured vacancy → AI interview → four-part score → shortlist.</p>
-        </div>
+        <DemoWalkthrough />
         <a href="mailto:info@indossol.com?subject=ShipManager%20by%20SeaMinds%20%E2%80%94%20company%20enquiry" className="inline-flex items-center justify-center min-h-[44px] px-5 rounded-xl text-sm font-bold border border-primary/50 text-primary">
           Talk to SeaMinds by email
         </a>
