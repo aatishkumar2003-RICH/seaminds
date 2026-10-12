@@ -7,7 +7,7 @@ const PostVacancyPage = () => {
   return (
     <div style={{ minHeight: "100vh", background: "#0D1B2A" }}>
       <header style={{ borderBottom: "1px solid #1e3a5f", padding: "14px 16px" }}>
-        <div style={{ maxWidth: 640, margin: "0 auto", display: "flex", alignItems: "center", gap: 10 }}>
+        <div className="max-w-2xl lg:max-w-6xl mx-auto" style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <button
             onClick={() => navigate("/manager/dashboard")}
             style={{ background: "transparent", border: "none", color: "#94a3b8", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, fontSize: 13 }}
@@ -15,11 +15,11 @@ const PostVacancyPage = () => {
             <ArrowLeft size={16} /> Dashboard
           </button>
           <div style={{ marginLeft: "auto" }}>
-            <h1 style={{ color: "#D4AF37", fontSize: 16, fontWeight: 800 }}>Post a Vacancy</h1>
+            <h1 style={{ color: "#D4AF37", fontSize: 16, fontWeight: 800 }}>Vacancy Studio</h1>
           </div>
         </div>
       </header>
-      <main style={{ maxWidth: 640, margin: "0 auto", padding: "0 16px 40px" }}>
+      <main className="max-w-2xl lg:max-w-6xl mx-auto" style={{ padding: "0 16px 40px" }}>
         <PostVacancy />
       </main>
     </div>

@@ -985,7 +985,7 @@ const ManagerDashboard = () => {
               ✍️ Create Post
             </button>
             <span className="text-[10px] text-muted-foreground max-w-[240px] leading-snug">
-              (Create Post publishes your flier as an advert. To turn a flier into searchable vacancies, use Paste-to-Post below.)
+              (Create Post publishes your flier as an advert. To turn adverts or flyers into searchable vacancies, use Post Vacancy.)
             </span>
           </div>
 
@@ -1458,160 +1458,18 @@ const ManagerDashboard = () => {
               </div>
             )}
 
-            {/* Paste-to-Post */}
-            <div className="bg-secondary rounded-xl border border-border p-4 space-y-3">
-              <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">⚡ Paste-to-Post — paste text OR upload your flier</h2>
-              <textarea
-                value={pasteText}
-                onChange={(e) => setPasteText(e.target.value)}
-                rows={5}
-                maxLength={8000}
-                placeholder="Paste your WhatsApp vacancy advert here — exactly as you send it to your groups."
-                className="w-full bg-background text-foreground text-sm rounded-xl border border-border p-3 outline-none focus:border-[#D4AF37]/60"
-              />
-              <p className="text-xs text-muted-foreground">This is what SeaMinds read from your flier. Correct anything wrong, then tap Extract vacancies to rebuild — or publish the cards below.</p>
-              <div className="flex flex-wrap gap-2 items-center">
-                <button
-                  onClick={extractVacancies}
-                  disabled={extracting || readingFlier}
-                  className="text-xs font-bold px-4 py-2 rounded-xl bg-[#D4AF37] text-[#0D1B2A] border border-[#D4AF37] hover:opacity-90 transition-opacity disabled:opacity-50"
-                >
-                  {extracting ? "Reading advert…" : "Extract vacancies"}
-                </button>
-                <button
-                  onClick={() => flierInputRef.current?.click()}
-                  disabled={extracting || readingFlier}
-                  className="text-xs font-bold px-4 py-2 rounded-xl bg-[#D4AF37] text-[#0D1B2A] border border-[#D4AF37] hover:opacity-90 transition-opacity disabled:opacity-50"
-                >
-                  {readingFlier ? "Reading your flier…" : "📄 Upload flier image"}
-                </button>
-
-                <input
-                  ref={flierInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  className="hidden"
-                  onChange={handleFlierUpload}
-                />
+            {/* Bulk Paste & Post — entry to the Vacancy Studio (single posting interface) */}
+            <div className="bg-secondary rounded-xl border border-[#D4AF37]/30 p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+              <div className="flex-1 space-y-1">
+                <h2 className="text-sm font-semibold text-[#D4AF37] uppercase tracking-wider">⚡ Bulk Paste & Post Vacancies</h2>
+                <p className="text-xs text-muted-foreground">Paste several WhatsApp, Telegram or email adverts at once, add up to 5 flyers, review every vacancy, then publish the selected ones together.</p>
               </div>
-              <p className="text-xs text-muted-foreground">Have a flier? Upload the image and SeaMinds will read it into vacancies.</p>
-
-
-
-              {risk && (risk.level === "medium" || risk.level === "high") && (
-                <div
-                  className={`rounded-xl border p-3 text-xs ${
-                    risk.level === "high"
-                      ? "border-red-500/50 bg-red-500/10 text-red-300"
-                      : "border-amber-500/50 bg-amber-500/10 text-amber-300"
-                  }`}
-                >
-                  <p className="font-semibold">Please check this advert before publishing.</p>
-                  {risk.flags.length > 0 && (
-                    <ul className="list-disc list-inside mt-1 space-y-0.5">
-                      {risk.flags.map((f, i) => <li key={i}>{f}</li>)}
-                    </ul>
-                  )}
-                </div>
-              )}
-
-              {previews.length > 0 && (
-                <div className="space-y-3">
-                  {previews.map((v, i) => (
-                    <div key={i} className="bg-secondary/50 rounded-xl border border-border/50 p-3 space-y-2 relative">
-                      <button
-                        onClick={() => setPreviews((prev) => prev.filter((_, idx) => idx !== i))}
-                        aria-label="Discard vacancy"
-                        className="absolute top-2 right-2 text-muted-foreground hover:text-foreground text-sm"
-                      >
-                        ×
-                      </button>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pr-6">
-                        {([
-                          ["rank_required", "Rank"],
-                          ["vessel_type", "Vessel type"],
-                          ["positions", "Positions"],
-                          ["joining_port", "Joining port"],
-                          ["joining_date", "Joining date"],
-                          ["contract_duration", "Contract"],
-                          ["monthly_salary", "Salary"],
-                          ["contact_whatsapp", "WhatsApp"],
-                          ["contact_email", "Email"],
-
-                        ] as [keyof PreviewVacancy, string][]).map(([key, label]) => (
-                          <label key={key} className="text-xs text-muted-foreground space-y-1">
-                            {label}
-                            <input
-                              value={String(v[key] ?? "")}
-                              onChange={(e) => updatePreview(i, key, e.target.value)}
-                              className="w-full bg-background text-foreground text-xs rounded-lg border border-border px-2 py-1.5 outline-none focus:border-[#D4AF37]/60"
-                            />
-                            {key === "monthly_salary" && !v.monthly_salary && (
-                              <p className="text-[11px] italic text-muted-foreground/70 leading-tight">
-                                Not stated — SeaMinds never adds a salary you did not write.
-                              </p>
-                            )}
-                            {key === "contact_whatsapp" && !checkWhatsapp(v.contact_whatsapp).ok && (
-                              <p className="text-[11px] text-amber-400 leading-tight">
-                                Country code required — add +XX before publishing.
-                              </p>
-                            )}
-                          </label>
-                        ))}
-                      </div>
-                      <label className="text-xs text-muted-foreground space-y-1 block">
-                        Notes
-                        <textarea
-                          value={v.additional_notes}
-                          onChange={(e) => updatePreview(i, "additional_notes", e.target.value)}
-                          rows={2}
-                          className="w-full bg-background text-foreground text-xs rounded-lg border border-border px-2 py-1.5 outline-none focus:border-[#D4AF37]/60"
-                        />
-                      </label>
-                    </div>
-                  ))}
-
-                  <div className="rounded-xl border border-[#D4AF37]/30 bg-[#D4AF37]/10 p-3 text-xs space-y-0.5">
-                    <p className="font-semibold text-[#D4AF37]">Applications will go to</p>
-                    <p className="text-foreground">Email: {previews.find((p) => p.contact_email)?.contact_email || "—"}</p>
-                    <p className="text-foreground">WhatsApp: {previews.find((p) => p.contact_whatsapp)?.contact_whatsapp || "—"}</p>
-                  </div>
-
-                  {similarPending && (
-                    <div className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-3 text-xs space-y-2">
-                      <p className="font-semibold text-amber-300">Similar active vacancies already exist.</p>
-                      <ul className="list-disc list-inside space-y-0.5 text-amber-200/90">
-                        {similarPending.similar.map((s) => (
-                          <li key={s.id}>{s.rank_required} · {s.vessel_type} · {s.joining_port}</li>
-                        ))}
-                      </ul>
-                      <div className="flex gap-2 pt-1">
-                        <button
-                          onClick={() => setSimilarPending(null)}
-                          className="text-xs font-medium px-3 py-1.5 rounded-lg border border-border text-muted-foreground"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={() => runPublish(similarPending.rows, similarPending.skipped, previews.length)}
-                          disabled={publishing}
-                          className="text-xs font-bold px-3 py-1.5 rounded-lg bg-[#D4AF37] text-[#0D1B2A] disabled:opacity-50"
-                        >
-                          {publishing ? "Publishing…" : "Publish Anyway"}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  <button
-                    onClick={publishPreviews}
-                    disabled={publishing || previews.some((p) => !checkWhatsapp(p.contact_whatsapp).ok)}
-                    className="text-xs font-bold px-4 py-2 rounded-xl bg-[#D4AF37] text-[#0D1B2A] border border-[#D4AF37] hover:opacity-90 transition-opacity disabled:opacity-50"
-                  >
-                    {publishing ? "Publishing…" : "Publish all vacancies"}
-                  </button>
-                </div>
-              )}
+              <button
+                onClick={() => navigate("/post-vacancy")}
+                className="text-sm font-bold px-5 py-3 rounded-xl bg-[#D4AF37] text-[#0D1B2A] hover:opacity-90 transition-opacity min-h-[48px]"
+              >
+                Open Vacancy Studio →
+              </button>
             </div>
 
 
