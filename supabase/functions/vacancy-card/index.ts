@@ -176,15 +176,9 @@ Deno.serve(async (req) => {
     const save = url.searchParams.get("save") === "true";
     const mode = url.searchParams.get("mode") || "single";
 
-    // Cleanup: delete generated cards older than 30 days (called by the nightly cron)
+    // Automatic cleanup is disabled by owner policy: stored cards are never removed by age.
     if (mode === "cleanup") {
-      const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-      const { data: files } = await supabase.storage.from("job-fliers").list("", { limit: 1000 });
-      const stale = (files || [])
-        .filter((f: any) => (f.name.startsWith("external-") || f.name.startsWith("digest-")) && f.created_at < cutoff)
-        .map((f: any) => f.name);
-      if (stale.length) await supabase.storage.from("job-fliers").remove(stale);
-      return new Response(JSON.stringify({ success: true, removed: stale.length }), {
+      return new Response(JSON.stringify({ success: true, removed: 0, disabled: true }), {
         headers: { ...cors, "Content-Type": "application/json" },
       });
     }
