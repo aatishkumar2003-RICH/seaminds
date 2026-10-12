@@ -132,3 +132,67 @@ describe("historical external listings", () => {
     expect(isHistoricalListing("2026-10-01T00:00:00Z", NOW.getTime())).toBe(false);
   });
 });
+
+import { parseLifecycleResponse, summarizeLifecycle, loadApplicationCounts, withoutArchivedExternal } from "@/lib/vacancyLifecycle";
+import { loadVacancyPage } from "@/lib/vacancyFeed";
+
+describe("backend lifecycle contract", () => {
+  it("mixed bulk delete reports real deletions and protected ids", () => {
+    const r = parseLifecycleResponse({ ok: true, affected: 3, affected_ids: ["a", "b", "c"], blocked_ids: ["d", "e"], blocked_applications: 4 });
+    expect(r.ok).toBe(true);
+    expect(r.affected).toBe(3);
+    expect(r.blockedIds).toEqual(["d", "e"]);
+    expect(summarizeLifecycle(r)).toBe("3 vacancies deleted · 2 protected because seafarers have applied");
+  });
+  it("ok:false is never reported as success, even with an affected count", () => {
+    const r = parseLifecycleResponse({ ok: false, affected: 2, reason: "has_applications", blocked_ids: ["x"], blocked_applications: 1 });
+    expect(r.ok).toBe(false);
+    expect(r.blockedIds).toEqual(["x"]);
+    expect(r.reason).toBe("has_applications");
+  });
+  it("a missing ok flag is treated as failure", () => {
+    expect(parseLifecycleResponse({ affected: 5 }).ok).toBe(false);
+    expect(parseLifecycleResponse(null).ok).toBe(false);
+  });
+});
+
+describe("pending backend features never query missing objects", () => {
+  it("applicant counts are unavailable (null), not zero, and the RPC is not called", async () => {
+    expect(await loadApplicationCounts(["a", "b"])).toBeNull();
+    expect(rpc).not.toHaveBeenCalled();
+  });
+  it("archived_at is not queried before activation", async () => {
+    const q = { is: vi.fn(), not: vi.fn() };
+    expect(withoutArchivedExternal(q)).toBe(q);
+    expect(q.is).not.toHaveBeenCalled();
+    await loadVacancyPage();
+    expect(log.some((l) => l.args.includes("archived_at"))).toBe(false);
+    expect(log).toContainEqual({ table: "external_vacancies", op: "eq", args: ["is_scam_flagged", false] });
+  });
+  it("feed reads source-posted and collected dates separately", async () => {
+    await loadVacancyPage();
+    const sel = log.find((l) => l.table === "external_vacancies" && l.op === "select");
+    expect(String(sel?.args[0])).toMatch(/source_posted_at/);
+    expect(String(sel?.args[0])).toMatch(/fetched_at/);
+  });
+});
+
+describe("unpersistable batch marker blocks the INSERT", () => {
+  it("no insert is sent when storage fails", async () => {
+    const spy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("QuotaExceeded"); });
+    const identity = { userId: "m9", companyName: "Acme", approved: true };
+    const row = { ...toPreviewVacancy({ rank_required: "Master", contact_whatsapp: "+6512345678" }), ownership: "own" as const };
+    const r = await publishVacancyBatch([row], identity, "text", { skipDuplicateScan: true });
+    spy.mockRestore();
+    expect(r.status).toBe("blocked");
+    expect(r.failures[0]).toMatch(/nothing was sent/);
+    expect(log.some((l) => l.op === "insert")).toBe(false);
+  });
+});
+
+import { EXTERNAL_SOURCES } from "@/components/admin/VacancyManagementPanel";
+describe("admin source filters", () => {
+  it("include the live scraper sources", () => {
+    for (const src of ["career_page", "rss_feed", "telegram"]) expect(EXTERNAL_SOURCES).toContain(src);
+  });
+});
