@@ -1,9 +1,9 @@
 # SeaMinds — Global Vacancy Growth Roadmap
 
 ## Approved email standardization — Preview only
-- [ ] Update the approved 13 customer-facing files; preserve Contact submissions and all delivery integrations.
-- [ ] Audit remaining obsolete contacts; run full tests and verify desktop/mobile links and Contact success/failure.
-- [ ] Report exact changed files and outstanding issues; do not publish.
+- [x] Update the approved 13 customer-facing files; preserve Contact submissions and all delivery integrations.
+- [x] Audit remaining obsolete contacts; 91 tests passed, both TypeScript checks passed, desktop/mobile links and simulated Contact success/failure verified.
+- [x] Report exact changed files and outstanding issues; Preview only, not published.
 
 Queued stages (~2 credits each). Execute in order, on user's go-ahead.
 
