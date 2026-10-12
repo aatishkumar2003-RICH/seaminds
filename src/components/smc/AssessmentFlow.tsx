@@ -1154,49 +1154,59 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
               )}
             </div>
           )}
-          </motion.div>
-          </AnimatePresence>
-        </div>
 
-        {/* Bottom action bar */}
-        <div className="p-4 border-t" style={{ borderColor: '#1a2e47' }}>
-          {currentQ?.type === 'mcq' && !mcqSubmitted && (
-            <button
-              onClick={() => handleMcqConfirm()}
-              disabled={selectedOption === null || evaluating}
-              className="w-full py-3 rounded-xl font-bold text-sm transition-all disabled:opacity-40"
-              style={{ background: '#D4AF37', color: '#0b1929' }}
-            >
-              {evaluating ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'Confirm Answer'}
-            </button>
-          )}
-          {currentQ?.type === 'mcq' && mcqSubmitted && !pendingFollowUp && (
-            <button
-              onClick={handleMcqNext}
-              className="w-full py-3 rounded-xl font-bold text-sm transition-all"
-              style={{ background: '#D4AF37', color: '#0b1929' }}
-            >
-              {qIndex + 1 < totalQuestions ? 'Next Question →' : 'See My Results →'}
-            </button>
-          )}
-          {(currentQ?.type === 'scenario' || currentQ?.type === 'behavioural') && !pendingFollowUp && (
-            <div style={{ display:'flex', alignItems:'center' }}>
-              {currentQ?.type === 'behavioural' && qIndex > 0 && !sealed && (
-                <button onClick={() => setQIndex(s => s - 1)}
-                  style={{ background:'transparent', border:'1px solid #2a4060', color:'#888', padding:'6px 12px', borderRadius:'6px', fontSize:'12px', cursor:'pointer', marginRight:'8px' }}>
-                  ← Previous
-                </button>
+          {/* ── Inline question controls (directly below the options / answer box) ── */}
+          {currentQ && !pendingFollowUp && (
+            <div className="mt-5 space-y-3" data-testid="exam-controls">
+              {!saved ? (
+                <div className="flex flex-col-reverse sm:flex-row gap-3">
+                  <button
+                    onClick={handleSkip}
+                    disabled={evaluating}
+                    className="sm:flex-1 min-h-[48px] rounded-xl text-sm font-semibold transition-all disabled:opacity-40"
+                    style={{ background: 'transparent', border: '1px solid rgba(212,175,55,0.3)', color: '#94A3B8' }}
+                  >
+                    Skip · 0 marks
+                  </button>
+                  <button
+                    onClick={() => (currentQ.type === 'mcq' ? handleMcqConfirm() : handleTextSubmit())}
+                    disabled={evaluating || (currentQ.type === 'mcq' ? selectedOption === null : !textAnswer.trim())}
+                    className="sm:flex-[2] min-h-[48px] rounded-xl font-bold text-sm transition-all disabled:opacity-40"
+                    style={{ background: '#D4AF37', color: '#0b1929' }}
+                  >
+                    {evaluating ? <Loader2 size={16} className="animate-spin mx-auto" /> : currentQ.type === 'mcq' ? 'Confirm Answer →' : 'Submit Answer →'}
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div
+                    role="status"
+                    className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold"
+                    style={{
+                      background: '#112240',
+                      border: `1px solid ${saved === 'answered' ? 'rgba(34,197,94,0.4)' : 'rgba(212,175,55,0.3)'}`,
+                      color: saved === 'answered' ? '#22c55e' : '#D4AF37',
+                    }}
+                  >
+                    <CheckCircle size={16} />
+                    {saved === 'answered' && 'Answer saved ✓'}
+                    {saved === 'skipped' && 'Question skipped · 0 marks recorded ✓'}
+                    {saved === 'timed_out' && 'Time expired · recorded ✓'}
+                    {saved === 'kept' && 'An earlier response for this question was already saved ✓'}
+                  </div>
+                  <button
+                    onClick={handleMcqNext}
+                    className="w-full min-h-[48px] rounded-xl font-bold text-sm transition-all"
+                    style={{ background: '#D4AF37', color: '#0b1929' }}
+                  >
+                    {qIndex + 1 < totalQuestions ? 'Next Question →' : 'See My Results →'}
+                  </button>
+                </>
               )}
-              <button
-                onClick={handleTextSubmit}
-                disabled={!textAnswer.trim() || evaluating}
-                className="flex-1 py-3 rounded-xl font-bold text-sm transition-all disabled:opacity-40"
-                style={{ background: '#D4AF37', color: '#0b1929' }}
-              >
-                {evaluating ? <Loader2 size={16} className="animate-spin mx-auto" /> : qIndex + 1 < totalQuestions ? 'Submit & Continue' : 'Submit & See Results'}
-              </button>
             </div>
           )}
+          </motion.div>
+          </AnimatePresence>
         </div>
       </div>
     );
