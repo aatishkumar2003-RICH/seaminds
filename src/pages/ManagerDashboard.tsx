@@ -1065,13 +1065,12 @@ const ManagerDashboard = () => {
               ))}
             </div>
 
-            {myPostings.length === 0 ? (
+            {myPostings.length === 0 || !managerUserId ? (
               <p className="text-xs text-muted-foreground">You have not posted any vacancies yet.</p>
             ) : (
               <VacancyCleanupPanel
-                postings={myPostings}
-                applicantCount={(id) => appsFor(id).length}
-                onEdit={(id) => { const jp = myPostings.find((x) => x.id === id); if (jp) openEditVacancy(jp); }}
+                managerId={managerUserId}
+                onEdit={(row) => openEditVacancy(row as unknown as MyPosting)}
                 onViewFlier={(url) => setFlierView(url)}
                 onChanged={loadApplicants}
               />
