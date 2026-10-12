@@ -465,6 +465,24 @@ const uncertainBatches = new Map<string, number>();
 export const _resetUncertainBatches = () => uncertainBatches.clear();
 export const isBatchUncertain = (batchId: string) => uncertainBatches.has(batchId);
 
+/** Minimal refresh-safe marker (no advert or candidate data). Client-side only — not DB idempotency. */
+export type UncertainMarker = { batchId: string; managerId: string; expected: number; at: string };
+const markerKey = (managerId: string) => `sm_uncertain_batch:${managerId}`;
+const store = (): Storage | null => { try { return typeof localStorage !== "undefined" ? localStorage : null; } catch { return null; } };
+export const saveUncertainMarker = (m: UncertainMarker) => { try { store()?.setItem(markerKey(m.managerId), JSON.stringify(m)); } catch { /* ignore */ } };
+export const loadUncertainMarker = (managerId: string): UncertainMarker | null => {
+  try {
+    const raw = store()?.getItem(markerKey(managerId));
+    if (!raw) return null;
+    const m = JSON.parse(raw) as UncertainMarker;
+    return m && m.managerId === managerId && typeof m.batchId === "string" && Number(m.expected) > 0 ? m : null;
+  } catch { return null; }
+};
+export const clearUncertainMarker = (managerId: string, batchId: string) => {
+  const m = loadUncertainMarker(managerId);
+  if (m && m.batchId === batchId) { try { store()?.removeItem(markerKey(managerId)); } catch { /* ignore */ } }
+};
+
 /** A PostgREST error carries a code; a missing code/abort/fetch failure means the outcome is unknown. */
 const isAmbiguousError = (e: { code?: string; message?: string; name?: string } | null | undefined) =>
   !!e && (!e.code || /abort|timeout|failed to fetch|network|load failed/i.test(`${e.name || ""} ${e.message || ""}`));
@@ -490,10 +508,11 @@ export const reconcileBatch = async (batchId: string, managerId: string, expecte
   const committed = (data || []).length;
   if (committed >= expected && expected > 0) {
     uncertainBatches.delete(batchId);
+    clearUncertainMarker(managerId, batchId);
     return { state: "complete", committed, expected, message: `All ${committed} vacancies were published.` };
   }
   if (committed > 0) {
-    uncertainBatches.delete(batchId);
+    // Partial stays unresolved: never reported as a full publication, marker kept.
     return { state: "partial", committed, expected, message: `${committed} of ${expected} found. Do not resubmit — review My Posts.` };
   }
   return {
@@ -537,15 +556,19 @@ export const publishVacancyBatch = async (
   const warnings = checks.flatMap((c) => c.warnings);
   if (warnings.length) return { ...base, failures: warnings, batchId: null, status: "blocked" };
 
-  // Retry of an uncertain batch: reconcile first, never blind-resubmit.
-  if (opts?.batchId && uncertainBatches.has(opts.batchId)) {
-    const rec = await reconcileBatch(opts.batchId, identity.userId, uncertainBatches.get(opts.batchId) || requested);
-    if (rec.state === "complete" || rec.state === "partial") {
-      return { ...base, published: rec.committed, failures: rec.state === "partial" ? [rec.message] : [], batchId: opts.batchId, status: "published" };
+  // Any unresolved batch for this manager (in memory or saved across refresh) blocks new inserts.
+  const saved = loadUncertainMarker(identity.userId);
+  const pendingId = opts?.batchId && uncertainBatches.has(opts.batchId) ? opts.batchId : saved?.batchId;
+  if (pendingId) {
+    const expected = uncertainBatches.get(pendingId) || (saved?.batchId === pendingId ? saved.expected : requested);
+    const rec = await reconcileBatch(pendingId, identity.userId, expected);
+    if (rec.state === "complete") {
+      // Retry of this batch: report it. A different, now-resolved earlier batch: continue with the new publish.
+      if (pendingId === opts?.batchId) return { ...base, published: rec.committed, failures: [], batchId: pendingId, status: "published" };
+    } else {
+      // partial / absent / error: stay unresolved — never resubmit, never mint a fresh batch id.
+      return { ...base, published: rec.committed, failures: [rec.message], batchId: pendingId, status: "uncertain" };
     }
-    // "absent" or "error": the original request may still land. Stay unresolved —
-    // never resubmit, never mint a fresh batch id automatically.
-    return { ...base, failures: [rec.message], batchId: opts.batchId, status: "uncertain" };
   }
 
   let toPublish = rows;
@@ -579,6 +602,7 @@ export const publishVacancyBatch = async (
   if (error) {
     if (isAmbiguousError(error)) {
       uncertainBatches.set(batchId, payload.length);
+      saveUncertainMarker({ batchId, managerId: identity.userId, expected: payload.length, at: new Date().toISOString() });
       return {
         ...base, duplicatesSkipped, batchId, status: "uncertain",
         failures: ["Connection lost — we can't confirm whether the vacancies were published. Check the batch before retrying."],

@@ -120,7 +120,6 @@ export const loadVacancies = async (opts: LoadVacanciesOpts = {}): Promise<Unifi
         "id, rank_required, vessel_type, joining_port, joining_date, contract_duration, monthly_salary, company_name, verified, created_at, expires_at, additional_notes, contact_email, contact_whatsapp, positions, flier_url, posting_batch_id, recruiter_name"
       )
       .eq("status", "active")
-      .or(`joining_date.is.null,joining_date.gte.${new Date(Date.now() - STALE_JOINING_DAYS * DAY).toISOString().slice(0, 10)}`)
       .order("created_at", { ascending: false })
       .limit(opts.limitDirect ?? 20),
     extQuery.order("created_at", { ascending: false }).limit(opts.limitExternal ?? 50),
@@ -309,13 +308,12 @@ export const loadVacancyPage = async (
 ): Promise<{ items: UnifiedVacancy[]; cursor: VacancyCursor; done: boolean }> => {
   const limit = opts.pageSize ?? 20;
   const nowIso = new Date().toISOString();
-  const cutoff = new Date(Date.now() - STALE_JOINING_DAYS * DAY).toISOString().slice(0, 10);
 
+  // Direct vacancies: status = 'active' only — no joining-date or age exclusion.
   const fetchDirect = async () => {
     if (cursor.directDone) return [] as UnifiedVacancy[];
     let q = supabase.from("job_postings").select(DIRECT_COLS)
-      .eq("status", "active")
-      .or(`joining_date.is.null,joining_date.gte.${cutoff}`);
+      .eq("status", "active");
     if (cursor.direct) q = q.or(afterKey(cursor.direct));
     const { data, error } = await q.order("created_at", { ascending: false }).order("id", { ascending: false }).limit(limit);
     if (error) throw error;
