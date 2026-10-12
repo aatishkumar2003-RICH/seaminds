@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import MyPostsPanel from "@/components/manager/MyPostsPanel";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Anchor, ArrowUpDown, Bell, LogOut, FileWarning, CreditCard, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -124,6 +124,7 @@ interface ManagerNotif {
 
 const ManagerDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [companyName, setCompanyName] = useState("");
   const [crewRows, setCrewRows] = useState<CrewRow[]>([]);
 
@@ -646,10 +647,17 @@ const ManagerDashboard = () => {
   }, [fleet]);
 
 
+  // Deep links: ?tab=crew|applicants|payments, &section=safety, &application=<id> (opens Applicants).
   useEffect(() => {
-    const tab = new URLSearchParams(window.location.search).get("tab");
-    if (tab === "applicants") setDashTab("applicants");
-  }, []);
+    const q = new URLSearchParams(location.search);
+    const tab = q.get("tab");
+    const target = q.get("application") ? "applicants" : tab;
+    if (target === "applicants" || target === "payments" || target === "crew") setDashTab(target);
+    else if (!tab) setDashTab("crew");
+    if (loading) return;
+    const anchor = q.get("section") === "safety" ? "safety-section" : target === "applicants" && q.get("application") ? "applicants-section" : null;
+    if (anchor) setTimeout(() => document.getElementById(anchor)?.scrollIntoView({ behavior: "smooth", block: "start" }), 120);
+  }, [location.search, loading]);
 
   if (loading) {
     return (
@@ -947,14 +955,14 @@ const ManagerDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border px-6 py-4 flex items-center justify-between flex-wrap gap-4">
+      {/* Page toolbar (ShipManager shell provides brand + navigation) */}
+      <header className="border-b border-border px-4 sm:px-6 py-4 flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
             <Anchor size={20} className="text-primary" />
           </div>
           <div>
-            <h1 className="text-lg font-semibold text-foreground">Manager Dashboard</h1>
+            <h1 className="text-lg font-semibold text-foreground">ShipManager Dashboard</h1>
             <p className="text-xs text-muted-foreground">{companyName}</p>
           </div>
         </div>
@@ -1040,7 +1048,7 @@ const ManagerDashboard = () => {
         {/* Tab switcher */}
         <div className="flex gap-1 bg-secondary rounded-xl p-1">
           <button
-            onClick={() => setDashTab("crew")}
+            onClick={() => navigate("/manager/dashboard?tab=crew", { replace: true })}
             className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors ${
               dashTab === "crew" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
             }`}
@@ -1048,7 +1056,7 @@ const ManagerDashboard = () => {
             Crew Overview
           </button>
           <button
-            onClick={() => setDashTab("applicants")}
+            onClick={() => navigate("/manager/dashboard?tab=applicants", { replace: true })}
             className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors ${
               dashTab === "applicants" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
             }`}
@@ -1056,7 +1064,7 @@ const ManagerDashboard = () => {
             👥 Applicants{awaitingCount > 0 ? ` (${awaitingCount})` : ""}
           </button>
           <button
-            onClick={() => setDashTab("payments")}
+            onClick={() => navigate("/manager/dashboard?tab=payments", { replace: true })}
             className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1.5 ${
               dashTab === "payments" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
             }`}
@@ -1390,7 +1398,7 @@ const ManagerDashboard = () => {
             </div>
 
             {/* Emergency / DPA contact */}
-            <div className="bg-secondary rounded-xl border border-border p-4 space-y-3">
+            <div id="safety-section" className="bg-secondary rounded-xl border border-border p-4 space-y-3 scroll-mt-20">
               <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">🆘 Emergency / DPA contact</h2>
               <div className="grid gap-2 sm:grid-cols-3">
                 <input
