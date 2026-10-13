@@ -193,20 +193,34 @@ const PostVacancy = () => {
   const fill = contactCandidates.find((c) => c.key === fillKey) || null;
   const [batchCc, setBatchCc] = useState("+62");
   const [batchAgency, setBatchAgency] = useState("");
-  const needsContact = (r: Row) => !r.contact_email?.trim() && !r.contact_whatsapp?.trim();
+  const [view, setView] = useState<"all" | "ready" | "fix">("all");
+  const isPlaceholder = (v?: string) => /^(null|undefined|none|n\/?a|nil|-+)$/i.test((v || "").trim());
+  const blank = (v?: string) => !v?.trim() || isPlaceholder(v);
+  const needsContact = (r: Row) => blank(r.contact_email) && blank(r.contact_whatsapp);
+  const digitsOf = (w?: string) => (w || "").replace(/\D/g, "").replace(/^00/, "");
   const withCc = (w: string) => {
     const c = w.replace(/[\s()\-.]/g, "");
     if (!c || c.startsWith("+") || c.startsWith("00") || !batchCc) return w;
     return /^0\d{6,14}$/.test(c) ? `${batchCc}${c.slice(1)}` : w;
   };
   const effective = (r: Row): Row => {
-    let o: Row = fill && needsContact(r)
-      ? { ...r, contact_email: fill.email, contact_whatsapp: fill.whatsapp, recruiter_name: r.recruiter_name || fill.name }
-      : r;
+    let o: Row = { ...r, contact_email: blank(r.contact_email) ? "" : r.contact_email, contact_whatsapp: blank(r.contact_whatsapp) ? "" : r.contact_whatsapp };
+    if (fill && needsContact(o)) {
+      o = { ...o, contact_email: fill.email, contact_whatsapp: fill.whatsapp, recruiter_name: o.recruiter_name || fill.name };
+    } else {
+      // Same group: one channel matches a detected recruiter → complete the missing channel and name from that group.
+      const em = (o.contact_email || "").trim().toLowerCase();
+      const wd = digitsOf(o.contact_whatsapp);
+      const g = contactCandidates.find((c) => (em && c.email === em) || (wd.length >= 7 && digitsOf(c.whatsapp) === wd));
+      if (g) o = { ...o, contact_email: o.contact_email || g.email, contact_whatsapp: o.contact_whatsapp || g.whatsapp, recruiter_name: o.recruiter_name || g.name };
+    }
     const w = withCc(o.contact_whatsapp || "");
     if (w !== (o.contact_whatsapp || "")) o = { ...o, contact_whatsapp: w };
-    // Either a valid email or a valid WhatsApp is enough: an unusable number is dropped when a valid email exists.
-    if (!checkWhatsapp(o.contact_whatsapp).ok && o.contact_email?.trim() && isValidEmail(o.contact_email)) o = { ...o, contact_whatsapp: "" };
+    // Either a valid email or a valid WhatsApp is enough: the unusable other channel is dropped.
+    const waOk = !!o.contact_whatsapp && checkWhatsapp(o.contact_whatsapp).ok;
+    const emOk = !!o.contact_email && isValidEmail(o.contact_email);
+    if (!waOk && emOk) o = { ...o, contact_whatsapp: "" };
+    if (!emOk && waOk) o = { ...o, contact_email: "" };
     if (!o.recruiter_name?.trim() && batchAgency.trim()) o = { ...o, recruiter_name: batchAgency.trim() };
     return o;
   };
@@ -238,6 +252,12 @@ const PostVacancy = () => {
     if (s.kind === "flier" && !s.flierUrl) return "Flyer image missing — upload again";
     if (s.ownership === "third_party" && !er.contact_email?.trim() && !er.contact_whatsapp?.trim()) return "Needs an email or WhatsApp";
     return validateContactFormats(v).warnings[0] || validateJoiningDates(v).warnings[0] || validateAttribution(v, identity.companyName).warnings[0] || null;
+  };
+  const allRows = sources.flatMap((s) => (s.status === "ready" ? s.rows.map((r) => ({ s, r })) : []));
+  const readyRows = allRows.filter(({ s, r }) => !rowIssue(s, effective(r)));
+  const selectWhere = (on: boolean) => {
+    setScan(null);
+    setSources((p) => p.map((s) => (s.status !== "ready" ? s : { ...s, rows: s.rows.map((r) => ({ ...r, selected: on ? !rowIssue(s, effective(r)) : false })) })));
   };
   // Valid vacancies publish now; the rest stay in the studio to fix or remove.
   const selected = sources.flatMap((s) => (s.status === "ready" ? s.rows.filter((r) => r.selected).map((r) => ({ s, r, er: effective(r) })) : []));
@@ -439,7 +459,20 @@ const PostVacancy = () => {
           </div>
         </section>
       )}
-      {sources.map((s) => (
+      {sources.some((s) => s.status === "ready") && (
+        <section className="rounded-xl border border-border bg-card p-3 space-y-2" aria-label="Quick select">
+          <div className="grid grid-cols-3 gap-2">
+            {([["all", `All (${allRows.length})`], ["ready", `Ready (${readyRows.length})`], ["fix", `Needs fix (${allRows.length - readyRows.length})`]] as ["all" | "ready" | "fix", string][]).map(([v, t]) => (
+              <button key={v} onClick={() => setView(v)} className={`rounded-lg border px-2 py-2 text-[11px] font-semibold min-h-[40px] ${view === v ? "border-[#D4AF37] bg-[#D4AF37]/10 text-[#D4AF37]" : "border-border text-foreground"}`}>{t}</button>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <Button className="h-10 flex-1" onClick={() => selectWhere(true)} disabled={!readyRows.length}>✓ Select all ready ({readyRows.length})</Button>
+            <Button variant="outline" className="h-10 flex-1" onClick={() => selectWhere(false)}>Clear selection</Button>
+          </div>
+        </section>
+      )}
+      {sources.filter((s) => view === "all" || s.status !== "ready" || s.rows.some((r) => (view === "ready") === !rowIssue(s, effective(r)))).map((s) => (
         <section key={s.id} className={`rounded-xl bg-card border p-3 space-y-2 ${s.risk.level === "high" ? "border-[#f59e0b]/60" : "border-border"}`} aria-label={`Source ${s.label}`}>
           <div className="flex items-start gap-2">
             {s.kind === "flier" ? <ImageIcon size={16} className="text-[#D4AF37] mt-0.5" /> : <FileText size={16} className="text-[#D4AF37] mt-0.5" />}
@@ -483,9 +516,9 @@ const PostVacancy = () => {
               )}
 
               <ul className="space-y-1.5">
-                {s.rows.map((r) => {
+                {s.rows.filter((r) => view === "all" || (view === "ready") === !rowIssue(s, effective(r))).map((r) => {
                   const er = effective(r);
-                  const inherited = er !== r;
+                  const inherited = er.contact_email !== r.contact_email || er.contact_whatsapp !== r.contact_whatsapp;
                   const wa = checkWhatsapp(er.contact_whatsapp);
                   const emailOk = isValidEmail(er.contact_email);
                   const missingContact = s.ownership === "third_party" && !er.contact_whatsapp && !er.contact_email;

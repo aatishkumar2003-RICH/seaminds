@@ -51,21 +51,24 @@ export type ManagerIdentity = {
 };
 
 const str = (v: unknown): string => (v === null || v === undefined ? "" : String(v).trim());
+/** AI sometimes returns placeholder words instead of null — treat them as empty. */
+const PLACEHOLDER = /^(null|undefined|none|n\/?a|nil|-+|not stated|not provided)$/i;
+const clean = (v: unknown): string => { const s = str(v); return PLACEHOLDER.test(s) ? "" : s; };
 
 /** Normalize any AI/manual row into a preview vacancy. Never invents values. */
 export const toPreviewVacancy = (v: Record<string, unknown>): PreviewVacancy => {
   const p = Number(v.positions);
   return {
-    rank_required: str(v.rank_required),
-    vessel_type: str(v.vessel_type),
-    contract_duration: str(v.contract_duration),
-    monthly_salary: str(v.monthly_salary),
-    joining_port: str(v.joining_port),
-    joining_date: str(v.joining_date),
-    contact_whatsapp: str(v.contact_whatsapp),
-    contact_email: str(v.contact_email),
-    additional_notes: str(v.additional_notes),
-    recruiter_name: str(v.recruiter_name ?? v.recruiter_company).replace(/^seaminds.*$/i, ""),
+    rank_required: clean(v.rank_required),
+    vessel_type: clean(v.vessel_type),
+    contract_duration: clean(v.contract_duration),
+    monthly_salary: clean(v.monthly_salary),
+    joining_port: clean(v.joining_port),
+    joining_date: clean(v.joining_date),
+    contact_whatsapp: clean(v.contact_whatsapp),
+    contact_email: clean(v.contact_email),
+    additional_notes: clean(v.additional_notes),
+    recruiter_name: clean(v.recruiter_name ?? v.recruiter_company).replace(/^seaminds.*$/i, ""),
     positions: Number.isFinite(p) && p >= 1 ? Math.floor(p) : 1,
   };
 };
