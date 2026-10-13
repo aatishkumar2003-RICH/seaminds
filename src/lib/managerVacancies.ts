@@ -331,8 +331,9 @@ export const validateAttribution = (rows: PreviewVacancy[], companyName: string)
     if (r.ownership !== "third_party") return;
     const label = `Vacancy ${i + 1} (${r.rank_required || "rank"})`;
     const rec = norm(r.recruiter_name);
-    if (!rec || rec === norm(companyName) || /^seaminds/.test(rec)) {
-      warnings.push(`${label}: enter the recruiting agency's own name before publishing.`);
+    // Agency name is optional (many agents don't disclose principals); only block a name that points back to the publisher.
+    if (rec && (rec === norm(companyName) || /^seaminds/.test(rec))) {
+      warnings.push(`${label}: agency name matches your own company — leave it blank or enter the agency's name.`);
     } else if (!str(r.contact_whatsapp) && !str(r.contact_email)) {
       warnings.push(`${label}: add the recruiter's WhatsApp or email so applicants reach them.`);
     }
@@ -422,6 +423,8 @@ export const postingAgeLabel = (createdAt: string, now: number = Date.now()): { 
 
 // ---------------- publishing ----------------
 
+export const UNDISCLOSED_AGENCY = "Recruiting agency (name not disclosed)";
+
 export const toRow = (
   v: PreviewVacancy,
   identity: ManagerIdentity,
@@ -434,7 +437,9 @@ export const toRow = (
   // Notes carry ONLY what the manager / source actually wrote.
   const notes = v.additional_notes || null;
   // own → recruiter_name = verified company; third_party → distinct agency; legacy → unchanged.
-  const recruiter = v.ownership === "own" ? identity.companyName : (v.recruiter_name || null);
+  // Undisclosed agency still needs a distinct recruiter so applications route to the advert's contacts.
+  const recruiter = v.ownership === "own" ? identity.companyName
+    : v.ownership === "third_party" ? (str(v.recruiter_name) || UNDISCLOSED_AGENCY) : (v.recruiter_name || null);
   const rowSource = v.source_type ?? sourceType;
   // Per-row flyer only; a text row never inherits a flyer from another source.
   const rowFlier = v.flier_url !== undefined ? v.flier_url : (v.source_type && v.source_type !== "flier" ? null : flierUrl);
