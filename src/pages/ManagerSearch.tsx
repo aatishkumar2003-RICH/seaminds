@@ -423,31 +423,23 @@ const ManagerSearch = () => {
                 {searched ? "★★★★★ Verified matches · totals remain private" : "★★★★★ Verified maritime network"}
               </p>
             </div>
-            {balance !== null && (
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ background: "rgba(212,175,55,0.15)", border: `1px solid ${GOLD}`, color: GOLD, borderRadius: 999, padding: "5px 12px", fontSize: 12, fontWeight: 800, whiteSpace: "nowrap" }}>
-                  💳 {balance} credits
-                </span>
-                <a href={REFILL_MAILTO} style={{ color: "#94A3B8", fontSize: 11, textDecoration: "underline" }}>Refill</a>
-              </div>
-            )}
           </div>
         </header>
 
         {pending ? (
-        <div style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.35)", borderRadius: 14, padding: 20, textAlign: "center", maxWidth: 460, margin: "40px auto" }}>
+        <div style={{ background: "rgba(212,175,55,0.06)", border: "1px solid rgba(212,175,55,0.35)", borderRadius: 14, padding: 20, textAlign: "center", maxWidth: 460, margin: "40px auto" }}>
           <p style={{ fontSize: 34, marginBottom: 10 }}>🔒</p>
-          <p style={{ color: "#f59e0b", fontSize: 16, fontWeight: 800, marginBottom: 8 }}>Awaiting company approval</p>
+          <p style={{ color: GOLD, fontSize: 16, fontWeight: 800, marginBottom: 8 }}>This feature needs approval</p>
           <p style={{ color: "#cbd5e1", fontSize: 13, lineHeight: 1.6, marginBottom: 14 }}>
-            SeaMinds verifies every company before releasing seafarer contact details and CVs.
-            This protects the crew who trust us with their data.
+            To protect seafarers' personal data, SeaMinds Admin verifies every company before opening Crew Search.
+            Access is free for verified ship managers and manning agencies.
           </p>
           <p style={{ color: "#94a3b8", fontSize: 12, lineHeight: 1.6 }}>
             You can still post vacancies, create company posts and arrange interviews while you wait.
           </p>
-          <a href="mailto:admin@seaminds.life?subject=SeaMinds%20company%20approval"
+          <a href="mailto:admin@seaminds.life?subject=Crew%20Search%20access%20approval%20request&body=Company%20name%3A%0AYour%20name%3A%0APhone%2FWhatsApp%3A%0A"
             style={{ display: "inline-block", marginTop: 16, background: "#D4AF37", color: "#0D1B2A", borderRadius: 10, padding: "11px 20px", fontWeight: 800, fontSize: 13, textDecoration: "none" }}>
-            Request approval
+            Request approval by email
           </a>
         </div>
         ) : (
