@@ -13,15 +13,26 @@ const UpdateNotice = () => {
   useEffect(() => {
     if (!import.meta.env.PROD) return;
     let last = 0;
-    const check = async (force = false) => {
-      if (!force && Date.now() - last < 30_000) return;
+    // On app open / return to foreground, apply a new build automatically when the
+    // user is not mid-task (nothing typed yet). Otherwise show the banner.
+    const check = async (force = false, autoApply = false) => {
+      if (!force && Date.now() - last < 15_000) return;
       last = Date.now();
       const { newer } = await checkPwaUpdate();
-      if (newer) { setAvailable(true); setDismissed(false); }
+      if (!newer) return;
+      const safe = !isUnsafeToInterrupt(window.location.pathname + window.location.search);
+      const key = "sm_auto_upd";
+      if (autoApply && safe && sessionStorage.getItem(key) !== "1") {
+        sessionStorage.setItem(key, "1"); // one auto attempt per session, avoids loops
+        setBusy(true);
+        void forcePwaHardReset();
+        return;
+      }
+      setAvailable(true); setDismissed(false);
     };
-    const onVis = () => { if (document.visibilityState === "visible") check(); };
-    check(true);
-    const retry = setTimeout(() => check(true), 4000); // iOS network often wakes late
+    const onVis = () => { if (document.visibilityState === "visible") check(false, true); };
+    check(true, true);
+    const retry = setTimeout(() => check(true, true), 4000); // iOS network often wakes late
     const t = setInterval(() => check(true), 5 * 60_000);
     document.addEventListener("visibilitychange", onVis);
     window.addEventListener("focus", onVis);
