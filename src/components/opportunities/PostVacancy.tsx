@@ -542,7 +542,7 @@ const PostVacancy = () => {
                           {issue && <p className="text-[11px] text-[#f59e0b] flex items-center gap-1"><AlertTriangle size={12} /> {issue}</p>}
                           {s.ownership === "third_party" ? (
                             <>
-                              {field("Recruiting agency", r.recruiter_name, set("recruiter_name"), "As printed on the advert")}
+                              {field("Recruiting agency (optional)", r.recruiter_name, set("recruiter_name"), "Leave blank if not disclosed")}
                               <p className="text-[10px] text-muted-foreground">Recruiter: Extracted from advert — not independently verified.</p>
                             </>
                           ) : s.ownership === "own" ? (

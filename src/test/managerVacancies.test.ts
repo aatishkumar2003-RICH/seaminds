@@ -135,8 +135,11 @@ describe("routing: own vs third-party", () => {
     expect(toRow(row({ ownership: "own", recruiter_name: "Typo Name" }), identity, "text", "b", "e").recruiter_name).toBe("Synergy Marine");
     expect(toRow(row({ ownership: "third_party" }), identity, "text", "b", "e").recruiter_name).toBe("Agency A");
   });
-  it("third-party without distinct recruiter or contact is blocked", () => {
-    expect(validateAttribution([row({ ownership: "third_party", recruiter_name: "" })], "Synergy Marine").ok).toBe(false);
+  it("third-party agency name is optional; stored as undisclosed so it routes to advert contacts", () => {
+    expect(validateAttribution([row({ ownership: "third_party", recruiter_name: "" })], "Synergy Marine").ok).toBe(true);
+    expect(toRow(row({ ownership: "third_party", recruiter_name: "" }), identity, "text", "b", "e").recruiter_name).toBe("Recruiting agency (name not disclosed)");
+  });
+  it("third-party naming own company or without contact is blocked", () => {
     expect(validateAttribution([row({ ownership: "third_party", recruiter_name: "Synergy Marine" })], "Synergy Marine").ok).toBe(false);
     expect(validateAttribution([row({ ownership: "third_party", contact_whatsapp: "", contact_email: "" })], "Synergy Marine").ok).toBe(false);
     expect(validateAttribution([row({ ownership: "third_party" })], "Synergy Marine").ok).toBe(true);
