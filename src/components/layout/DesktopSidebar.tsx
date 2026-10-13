@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import AboutSeaMinds from "@/components/AboutSeaMinds";
 import { LogOut, HelpCircle } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
 import SOSButton from "@/components/SOSButton";
 import { NAV_ITEMS, type NavItem, type Screen } from "./types";
 import seamindsLogo from "@/assets/seaminds-logo.png";
@@ -19,14 +20,25 @@ interface DesktopSidebarProps {
 }
 
 const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
-  screen, streakCount, jobBadgeCount, firstName, shipName, tourActiveScreen,
+  screen, jobBadgeCount, firstName, shipName, tourActiveScreen,
   onNavClick, onReplayTour, onSignOut,
 }) => {
   const [aboutOpen, setAboutOpen] = useState(false);
   return (
     <aside className="hidden h-screen w-48 flex-shrink-0 flex-col items-center border-r border-border/60 bg-background/95 px-[2px] py-3 backdrop-blur-sm lg:flex">
-      <div className="mb-3">
+      <div className="mb-3 flex w-full items-center justify-between gap-2 px-2">
+        <div className="flex items-center gap-1.5">
         <img src={seamindsLogo} alt="SeaMinds" className="h-7 w-7 rounded object-contain" />
+        <span className="text-sm font-bold text-foreground">SeaMinds</span>
+        </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="outline" size="icon" onClick={onSignOut} aria-label="Sign Out" title="Sign Out" className="h-11 w-11 shrink-0 rounded-full border-primary/40 text-primary hover:bg-primary/10 hover:text-primary">
+              <LogOut aria-hidden="true" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="right">Sign Out</TooltipContent>
+        </Tooltip>
       </div>
 
       <nav className="flex flex-1 flex-col items-center gap-0.5">
@@ -65,7 +77,6 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
 
       <div className="mt-auto flex flex-col items-start gap-1 w-full px-2">
         <a href="/profile" aria-label="My Sea Profile" className="text-xs font-semibold text-foreground truncate w-full hover:text-primary">{firstName || "Seafarer"}</a>
-        <div className="text-[11px] text-muted-foreground">🔥 {streakCount} day streak</div>
         <button onClick={onReplayTour} className="flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground">
           <HelpCircle size={14} />
           <span>Replay Tour</span>
@@ -77,10 +88,6 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
           <span>ⓘ</span><span>About SeaMinds</span>
         </button>
         {aboutOpen && <AboutSeaMinds onClose={() => setAboutOpen(false)} />}
-        <button onClick={onSignOut} className="flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground">
-          <LogOut size={14} />
-          <span>Sign Out</span>
-        </button>
         <div className="w-full">
           <SOSButton onOpenChat={() => onNavClick({ icon: "💬", label: "Chat", screen: "chat", gated: true })} firstName={firstName} shipName={shipName} inline />
         </div>
