@@ -167,7 +167,40 @@ const PostVacancy = () => {
   };
 
   // ---------- staged rows → engine rows ----------
-  const selected = sources.flatMap((s) => (s.status === "ready" ? s.rows.filter((r) => r.selected).map((r) => ({ s, r })) : []));
+  // ---------- batch contact intelligence (derived; toggle off reverts) ----------
+  const contactCandidates = (() => {
+    const m = new Map<string, { key: string; name: string; email: string; whatsapp: string; count: number }>();
+    for (const s of sources) if (s.status === "ready") for (const r of s.rows) {
+      const email = (r.contact_email || "").trim().toLowerCase();
+      const whatsapp = (r.contact_whatsapp || "").replace(/[^\d+]/g, "");
+      if (!email && !whatsapp) continue;
+      const key = `${email}|${whatsapp}`;
+      const c = m.get(key) || { key, name: r.recruiter_name || "", email, whatsapp, count: 0 };
+      c.count++; if (!c.name && r.recruiter_name) c.name = r.recruiter_name;
+      m.set(key, c);
+    }
+    return [...m.values()].sort((a, b) => b.count - a.count);
+  })();
+  const [fillKey, setFillKey] = useState<string | null>(null);
+  const [autoPicked, setAutoPicked] = useState(false);
+  useEffect(() => {
+    if (!autoPicked && contactCandidates.length) { setFillKey(contactCandidates[0].key); setAutoPicked(true); }
+    if (fillKey && !contactCandidates.some((c) => c.key === fillKey)) setFillKey(contactCandidates[0]?.key ?? null);
+  }, [contactCandidates, fillKey, autoPicked]);
+  const fill = contactCandidates.find((c) => c.key === fillKey) || null;
+  const needsContact = (r: Row) => !r.contact_email?.trim() && !r.contact_whatsapp?.trim();
+  const effective = (r: Row): Row => (fill && needsContact(r)
+    ? { ...r, contact_email: fill.email, contact_whatsapp: fill.whatsapp, recruiter_name: r.recruiter_name || fill.name }
+    : r);
+  const missingCount = sources.reduce((n, s) => n + (s.status === "ready" ? s.rows.filter((r) => r.selected && needsContact(r)).length : 0), 0);
+
+  const resetStudio = () => {
+    if (sources.length && !window.confirm(`Discard all ${sources.length} staged source(s) and start fresh?`)) return;
+    setSources([]); setScan(null); setFillKey(null); setAutoPicked(false);
+  };
+  const setAllOwnership = (o: Ownership) => { setScan(null); setSources((p) => p.map((s) => (s.status === "ready" ? { ...s, ownership: o } : s))); };
+
+  const selected = sources.flatMap((s) => (s.status === "ready" ? s.rows.filter((r) => r.selected).map((r) => ({ s, r: effective(r) })) : []));
   const unowned = [...new Set(selected.filter(({ s }) => !s.ownership).map(({ s }) => s.label))];
   const engineRows: PreviewVacancy[] = selected.map(({ s, r }) => {
     const { _key, selected: _sel, open: _o, ...v } = r;
