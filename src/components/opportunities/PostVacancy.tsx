@@ -61,7 +61,7 @@ const downscaleImage = (file: File): Promise<string> =>
 const parseError = (error: unknown) => {
   const status = (error as { context?: { status?: number } })?.context?.status;
   if (status === 403) return "Your company account is pending approval.";
-  if (status === 429) return "Daily reading limit reached. Please try again tomorrow.";
+  if (status === 429) return "Too many adverts at once — wait a few minutes, then retry this one.";
   if (status === 401) return "Please sign in again.";
   return "Could not read this advert.";
 };

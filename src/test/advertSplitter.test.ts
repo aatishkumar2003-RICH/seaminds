@@ -36,3 +36,24 @@ describe("splitAdverts", () => {
     expect(splitAdverts("  \n ")).toEqual([]);
   });
 });
+
+describe("high-volume pastes", () => {
+  it("has no 20-advert cap", () => {
+    const many = Array.from({ length: 35 }, (_, i) => `Oiler ${i}\nContact c${i}@crew.com`).join("\n---\n");
+    expect(splitAdverts(many)).toHaveLength(35);
+  });
+  it("splits Telegram export messages and keeps each contact with its advert", () => {
+    const r = splitAdverts(`[13/10/2026 10:21] Agency One:\n${A}\n[13/10/2026 10:25] Agency Two:\n${B}`);
+    expect(r).toHaveLength(2);
+    expect(r[0].text).toContain("a@one.com");
+    expect(r[1].text).not.toContain("a@one.com");
+  });
+  it("splits at contact envelopes separated by single blank lines, flagged", () => {
+    const r = splitAdverts(`${A}\n\n${B}`);
+    expect(r).toHaveLength(2);
+    expect(r.every((b) => b.uncertain)).toBe(true);
+  });
+  it("keeps email and WhatsApp paragraphs of one advert together", () => {
+    expect(splitAdverts("Master for VLCC\n\nEmail: m@x.com\n\nWA +62 812 3456 7890")).toHaveLength(1);
+  });
+});

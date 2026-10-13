@@ -67,28 +67,27 @@ Deno.serve(async (req) => {
     // --- kill switch ---
     if (await aiPaused(admin)) return aiPausedResponse(corsHeaders);
 
-    // --- daily limit (30/day) — owner/admin accounts are unlimited ---
+    // --- no daily cap (usage is logged in ai_usage for future credit billing).
+    // Burst guard only: max 120 reads per 10 minutes stops runaway loops/abuse.
     const { data: isAdm } = await admin.rpc("is_admin", { _user_id: userId });
-    const UNLIMITED = new Set(["492ee966-e015-4440-a415-6ad6275a4a9b", "1f2bf462-d6c2-420e-b2a8-01717d611444"]);
-    if (!UNLIMITED.has(userId) && isAdm !== true) try {
-      const startOfDay = new Date();
-      startOfDay.setUTCHours(0, 0, 0, 0);
+    if (isAdm !== true) try {
+      const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
       const { count } = await admin
         .from("ai_usage")
         .select("id", { count: "exact", head: true })
         .eq("user_id", userId)
         .eq("feature", "parse-vacancy-text")
-        .gte("created_at", startOfDay.toISOString());
-      if ((count ?? 0) >= 30) {
+        .gte("created_at", since);
+      if ((count ?? 0) >= 120) {
         return new Response(
-          JSON.stringify({ ok: false, error: "daily_limit", message: "Daily limit reached — try again tomorrow." }),
+          JSON.stringify({ ok: false, error: "burst_limit", message: "Too many adverts at once — wait a few minutes and retry the failed ones." }),
           { status: 429, headers: jsonHeaders },
         );
       }
     } catch (_e) { /* never block on limit lookup failure */ }
 
     const body = await req.json().catch(() => ({}));
-    const text = String(body?.text ?? "").slice(0, 8000).trim();
+    const text = String(body?.text ?? "").slice(0, 12000).trim();
     const rawImage = String(body?.image_base64 ?? "").trim();
     if (!text && !rawImage) {
       return new Response(JSON.stringify({ ok: false, error: "empty_text" }), { status: 400, headers: jsonHeaders });
