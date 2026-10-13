@@ -1,3 +1,4 @@
+import { matchApplicantToVacancy } from "@/lib/smartMatch";
 import VacancyCleanupPanel from "@/components/manager/VacancyCleanupPanel";
 import { useState, useEffect, useMemo, useRef } from "react";
 import MyPostsPanel from "@/components/manager/MyPostsPanel";
