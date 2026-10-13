@@ -60,7 +60,6 @@ const HomeFooter = () => {
         { label: "Jobs", action: () => navigate("/app?tab=jobs") },
         { label: "Blog", action: () => navigate("/blog") },
         { label: "Maritime News", action: () => navigate("/blog") },
-        { label: "ShipManager Login", action: () => navigate("/manager") },
         { label: "MLC 2006", action: () => navigate("/app") },
         { label: "Contact", action: () => navigate("/contact") },
       ],
