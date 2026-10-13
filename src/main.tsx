@@ -6,6 +6,7 @@ import { installGlobalAuthErrorHandler } from "./lib/authErrorHandler";
 import { initAnalytics } from "./lib/analytics";
 import { I18nProvider } from "./i18n";
 import { purgeLegacyCaches } from "./lib/pwaCacheRules";
+import { installForegroundUpdateCheck } from "./lib/pwaUpdate";
 
 // Catch infinite auth token refresh loops before they freeze the app
 installGlobalAuthErrorHandler();
@@ -15,6 +16,9 @@ initAnalytics();
 
 // Drop the old service-worker cache that could hold personal backend responses.
 purgeLegacyCaches().catch(() => {});
+
+// iPhone Home Screen apps never check for updates themselves.
+installForegroundUpdateCheck();
 
 createRoot(document.getElementById("root")!).render(
   <HelmetProvider>
