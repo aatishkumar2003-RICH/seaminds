@@ -22,7 +22,7 @@ const contacts = (t: string) => {
 };
 const hasContact = (t: string) => { const k = contacts(t); return k.emails.size + k.phones.size > 0; };
 // A paragraph that is basically just a contact line ("WA +62…", "Email: x@y.com").
-const contactOnly = (t: string) => hasContact(t) && t.replace(EMAIL, "").replace(PHONE, "").replace(/\b(?:e-?mail|wa|whatsapp|tel|phone|hp|contact|cp|mobile|call)\b|[:/|,.\-()+]/gi, "").trim().length < 25;
+const contactOnly = (t: string) => hasContact(t) && t.split("\n").every((l) => l.replace(EMAIL, "").replace(PHONE, "").replace(/\b(?:e-?mail|wa|whatsapp|tel|phone|hp|contact|cp|mobile|call|or)\b|[:/|,.\-()+]/gi, "").trim().length < 4);
 
 const review = (text: string, uncertain: boolean, reason?: string): AdvertBlock => {
   const { emails, phones } = contacts(text);
