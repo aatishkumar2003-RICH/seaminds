@@ -2,7 +2,7 @@ import VacancyCleanupPanel from "@/components/manager/VacancyCleanupPanel";
 import { useState, useEffect, useMemo, useRef } from "react";
 import MyPostsPanel from "@/components/manager/MyPostsPanel";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Anchor, ArrowUpDown, Bell, LogOut, FileWarning, CreditCard, RefreshCw } from "lucide-react";
+import { Anchor, ArrowUpDown, Bell, LogOut, FileWarning, CreditCard, RefreshCw, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import ManagerPaymentHistory from "@/components/smc/ManagerPaymentHistory";
@@ -183,6 +183,8 @@ const ManagerDashboard = () => {
   const [applicantsLoading, setApplicantsLoading] = useState(false);
   const [myPostings, setMyPostings] = useState<MyPosting[]>([]);
   const [flierView, setFlierView] = useState<string | null>(null);
+  const [applicantQuery, setApplicantQuery] = useState("");
+  const [showInventory, setShowInventory] = useState(false);
   const [editVacancy, setEditVacancy] = useState<MyPosting | null>(null);
   const [savingVacancy, setSavingVacancy] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -793,6 +795,12 @@ const ManagerDashboard = () => {
 
   const awaitingCount = applicants.filter((a) => a.outcome === "awaiting").length;
 
+  const aq = applicantQuery.trim().toLowerCase();
+  const visibleGroups = !aq ? applicantGroups : applicantGroups
+    .map((g) => ({ ...g, items: g.items.filter((a) =>
+      [a.crew_name, a.crew_rank, a.rank, a.nationality, a.vessel].some((v) => (v || "").toLowerCase().includes(aq))) }))
+    .filter((g) => g.items.length > 0);
+
   // ---------- Vacancy console ----------
   const sourceLabel = (s?: string | null) =>
     s === "text" ? "Text Import" : s === "flier" ? "Flyer" : "Manual";
@@ -995,7 +1003,7 @@ const ManagerDashboard = () => {
           {[
             { label: "🔍 Search Crew", to: "/manager-search" },
             { label: "🎓 Arrange Interview", to: "/manager/interviews" },
-            { label: "🛠 Inspections", to: "/management/inspections" },
+            { label: "🚢 Fleet Workspace", to: "/management/inspections" },
           ].map((a) => (
             <button key={a.to} onClick={() => navigate(a.to)}
               className="shrink-0 text-xs font-medium px-3 py-2 rounded-xl border border-primary/40 text-primary hover:bg-primary/10 transition-colors min-h-[40px]">
@@ -1026,36 +1034,88 @@ const ManagerDashboard = () => {
 
         {dashTab === "applicants" ? (
           <>
-          {/* Manager Vacancy Console */}
-          <div className="bg-secondary rounded-xl border border-border p-4 space-y-4">
-            <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">📢 Vacancy Console</h2>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
-              {[
-                { label: "Active", value: consoleStats.active },
-                { label: "Open Positions", value: consoleStats.openPositions },
-                { label: "Applicants", value: consoleStats.applicants },
-                { label: "Shortlisted", value: consoleStats.shortlisted },
-                { label: "Offers", value: consoleStats.offers },
-                { label: "Placed", value: consoleStats.placed },
-                { label: "Archived", value: consoleStats.archived },
-              ].map((s) => (
-                <div key={s.label} className="rounded-lg border border-[#D4AF37]/30 bg-[#0D1B2A] px-3 py-2">
-                  <p className="text-lg font-bold text-[#D4AF37] leading-none">{s.value}</p>
-                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground mt-1">{s.label}</p>
-                </div>
-              ))}
+          {/* Candidate-first finder */}
+          <div className="bg-secondary rounded-xl border border-border p-4 space-y-3">
+            <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">🔎 Find Candidates</h2>
+            <div className="relative">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                value={applicantQuery}
+                onChange={(e) => setApplicantQuery(e.target.value)}
+                placeholder="Search my applicants by name, rank or nationality"
+                aria-label="Search applicants by name or rank"
+                className="w-full min-h-[44px] pl-9 pr-9 text-sm bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
+              />
+              {applicantQuery && (
+                <button onClick={() => setApplicantQuery("")} aria-label="Clear search" className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-muted-foreground"><X size={14} /></button>
+              )}
             </div>
+            <div>
+              <p className="text-[11px] text-muted-foreground mb-1.5">Search all SeaMinds crew by rank:</p>
+              <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
+                {[
+                  ["Master", "Captain / Master"], ["Ch. Officer", "Chief Officer"], ["2nd Officer", "2nd Officer"],
+                  ["Ch. Engineer", "Chief Engineer"], ["2nd Engineer", "2nd Engineer"], ["ETO", "ETO / EEO"],
+                  ["Bosun", "Bosun"], ["AB", "AB Seaman"], ["Oiler", "Oiler"], ["Cook", "Cook"],
+                ].map(([label, value]) => (
+                  <button key={value} onClick={() => navigate(`/manager-search?rank=${encodeURIComponent(value)}`)}
+                    className="shrink-0 text-xs font-medium px-3 py-2 rounded-full border border-primary/40 text-primary hover:bg-primary/10 min-h-[36px]">
+                    {label}
+                  </button>
+                ))}
+                <button onClick={() => navigate("/manager-search")}
+                  className="shrink-0 text-xs font-bold px-3 py-2 rounded-full bg-primary text-primary-foreground min-h-[36px]">
+                  All ranks →
+                </button>
+              </div>
+            </div>
+          </div>
 
+          {/* Pipeline summary */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {[
+              { label: "New", value: awaitingCount },
+              { label: "Shortlisted", value: consoleStats.shortlisted },
+              { label: "Offers", value: consoleStats.offers },
+              { label: "Placed", value: consoleStats.placed },
+            ].map((s) => (
+              <button key={s.label} onClick={() => document.getElementById("applicants-section")?.scrollIntoView({ behavior: "smooth" })}
+                className="text-left rounded-xl border border-primary/30 bg-secondary px-3 py-2.5 hover:border-primary transition-colors">
+                <p className="text-xl font-bold text-primary leading-none">{s.value}</p>
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground mt-1">{s.label}</p>
+              </button>
+            ))}
+          </div>
+
+          {/* Compact vacancy inventory */}
+          <div className="bg-secondary rounded-xl border border-border p-4 space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">📢 My Active Vacancies</h2>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {consoleStats.active} active · {consoleStats.openPositions} open positions · {consoleStats.applicants} applicants
+                  {consoleStats.archived > 0 ? ` · ${consoleStats.archived} archived` : ""}
+                </p>
+              </div>
+              <button onClick={() => navigate("/post-vacancy")} className="shrink-0 text-xs font-bold px-3 py-2 rounded-xl bg-primary text-primary-foreground min-h-[40px]">+ Post</button>
+            </div>
             {myPostings.length === 0 || !managerUserId ? (
               <p className="text-xs text-muted-foreground">You have not posted any vacancies yet.</p>
             ) : (
-              <VacancyCleanupPanel
-                managerId={managerUserId}
-                onEdit={(row) => openEditVacancy(row as unknown as MyPosting)}
-                onViewFlier={(url) => setFlierView(url)}
-                onChanged={loadApplicants}
-              />
+              <>
+                <button onClick={() => setShowInventory((v) => !v)} aria-expanded={showInventory}
+                  className="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-primary/40 text-primary hover:bg-primary/10 min-h-[44px]">
+                  {showInventory ? "Hide vacancy inventory ▲" : "Manage vacancy inventory & bulk cleanup →"}
+                </button>
+                {showInventory && (
+                  <VacancyCleanupPanel
+                    managerId={managerUserId}
+                    onEdit={(row) => openEditVacancy(row as unknown as MyPosting)}
+                    onViewFlier={(url) => setFlierView(url)}
+                    onChanged={loadApplicants}
+                  />
+                )}
+              </>
             )}
           </div>
 
@@ -1147,7 +1207,10 @@ const ManagerDashboard = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {applicantGroups.map((g) => {
+                {visibleGroups.length === 0 && (
+                  <p className="text-xs text-muted-foreground text-center py-4">No applicants match "{applicantQuery}".</p>
+                )}
+                {visibleGroups.map((g) => {
                   const expanded = openGroups[g.key] ?? g.items.length > 0;
                   return (
                     <div key={g.key} className="rounded-xl border border-border/50 overflow-hidden">
