@@ -31,9 +31,12 @@ const AboutSeaMinds = ({ onClose }: { onClose: () => void }) => {
         <Row k="Built (UTC)" v={r.buildTime} />
         <p className="mt-2" style={{ color: "#94A3B8" }}>Build time is when this version was prepared, not when it was published.</p>
         <button onClick={check} className="mt-3 w-full rounded-xl py-2 font-bold" style={{ background: "#D4AF37", color: "#0D1B2A" }}>Check for updates</button>
-        {status && (
-          <p className="mt-2 text-center">{status}{status.startsWith("New") && <> — <button className="underline" style={{ color: "#D4AF37" }} onClick={() => window.location.reload()}>Refresh</button></>}</p>
+        {status && <p className="mt-2 text-center">{status}</p>}
+        {status.startsWith("New") && (
+          <button onClick={reset} className="mt-2 w-full rounded-xl py-2 font-bold" style={{ background: "#D4AF37", color: "#0D1B2A" }}>Update now</button>
         )}
+        <button onClick={reset} className="mt-3 w-full rounded-xl py-2 font-bold" style={{ border: "1px solid #D4AF37", color: "#D4AF37" }}>Force refresh app</button>
+        <p className="mt-1 text-center" style={{ color: "#94A3B8" }}>Use this if the app looks out of date. You stay signed in.</p>
       </div>
     </div>,
     document.body
