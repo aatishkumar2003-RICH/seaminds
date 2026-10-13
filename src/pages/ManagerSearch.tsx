@@ -199,7 +199,10 @@ const isAuthError = (msg: string) => /sign in|not registered|session/i.test(msg 
 const ManagerSearch = () => {
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
-  const [rank, setRank] = useState("");
+  const [rank, setRank] = useState(() => {
+    const r = new URLSearchParams(window.location.search).get("rank") || "";
+    return RANKS.includes(r) ? r : "";
+  });
   const [nationality, setNationality] = useState("");
   const [vesselType, setVesselType] = useState("");
   const [availability, setAvailability] = useState<"all" | "available">("all");
