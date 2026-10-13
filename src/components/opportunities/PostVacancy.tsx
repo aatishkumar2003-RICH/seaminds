@@ -193,6 +193,7 @@ const PostVacancy = () => {
   const fill = contactCandidates.find((c) => c.key === fillKey) || null;
   const [batchCc, setBatchCc] = useState("+62");
   const [batchAgency, setBatchAgency] = useState("");
+  const [view, setView] = useState<"all" | "ready" | "fix">("all");
   const isPlaceholder = (v?: string) => /^(null|undefined|none|n\/?a|nil|-+)$/i.test((v || "").trim());
   const blank = (v?: string) => !v?.trim() || isPlaceholder(v);
   const needsContact = (r: Row) => blank(r.contact_email) && blank(r.contact_whatsapp);
@@ -251,6 +252,12 @@ const PostVacancy = () => {
     if (s.kind === "flier" && !s.flierUrl) return "Flyer image missing — upload again";
     if (s.ownership === "third_party" && !er.contact_email?.trim() && !er.contact_whatsapp?.trim()) return "Needs an email or WhatsApp";
     return validateContactFormats(v).warnings[0] || validateJoiningDates(v).warnings[0] || validateAttribution(v, identity.companyName).warnings[0] || null;
+  };
+  const allRows = sources.flatMap((s) => (s.status === "ready" ? s.rows.map((r) => ({ s, r })) : []));
+  const readyRows = allRows.filter(({ s, r }) => !rowIssue(s, effective(r)));
+  const selectWhere = (on: boolean) => {
+    setScan(null);
+    setSources((p) => p.map((s) => (s.status !== "ready" ? s : { ...s, rows: s.rows.map((r) => ({ ...r, selected: on ? !rowIssue(s, effective(r)) : false })) })));
   };
   // Valid vacancies publish now; the rest stay in the studio to fix or remove.
   const selected = sources.flatMap((s) => (s.status === "ready" ? s.rows.filter((r) => r.selected).map((r) => ({ s, r, er: effective(r) })) : []));
