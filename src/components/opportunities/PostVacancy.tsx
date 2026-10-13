@@ -193,20 +193,33 @@ const PostVacancy = () => {
   const fill = contactCandidates.find((c) => c.key === fillKey) || null;
   const [batchCc, setBatchCc] = useState("+62");
   const [batchAgency, setBatchAgency] = useState("");
-  const needsContact = (r: Row) => !r.contact_email?.trim() && !r.contact_whatsapp?.trim();
+  const isPlaceholder = (v?: string) => /^(null|undefined|none|n\/?a|nil|-+)$/i.test((v || "").trim());
+  const blank = (v?: string) => !v?.trim() || isPlaceholder(v);
+  const needsContact = (r: Row) => blank(r.contact_email) && blank(r.contact_whatsapp);
+  const digitsOf = (w?: string) => (w || "").replace(/\D/g, "").replace(/^00/, "");
   const withCc = (w: string) => {
     const c = w.replace(/[\s()\-.]/g, "");
     if (!c || c.startsWith("+") || c.startsWith("00") || !batchCc) return w;
     return /^0\d{6,14}$/.test(c) ? `${batchCc}${c.slice(1)}` : w;
   };
   const effective = (r: Row): Row => {
-    let o: Row = fill && needsContact(r)
-      ? { ...r, contact_email: fill.email, contact_whatsapp: fill.whatsapp, recruiter_name: r.recruiter_name || fill.name }
-      : r;
+    let o: Row = { ...r, contact_email: blank(r.contact_email) ? "" : r.contact_email, contact_whatsapp: blank(r.contact_whatsapp) ? "" : r.contact_whatsapp };
+    if (fill && needsContact(o)) {
+      o = { ...o, contact_email: fill.email, contact_whatsapp: fill.whatsapp, recruiter_name: o.recruiter_name || fill.name };
+    } else {
+      // Same group: one channel matches a detected recruiter → complete the missing channel and name from that group.
+      const em = (o.contact_email || "").trim().toLowerCase();
+      const wd = digitsOf(o.contact_whatsapp);
+      const g = contactCandidates.find((c) => (em && c.email === em) || (wd.length >= 7 && digitsOf(c.whatsapp) === wd));
+      if (g) o = { ...o, contact_email: o.contact_email || g.email, contact_whatsapp: o.contact_whatsapp || g.whatsapp, recruiter_name: o.recruiter_name || g.name };
+    }
     const w = withCc(o.contact_whatsapp || "");
     if (w !== (o.contact_whatsapp || "")) o = { ...o, contact_whatsapp: w };
-    // Either a valid email or a valid WhatsApp is enough: an unusable number is dropped when a valid email exists.
-    if (!checkWhatsapp(o.contact_whatsapp).ok && o.contact_email?.trim() && isValidEmail(o.contact_email)) o = { ...o, contact_whatsapp: "" };
+    // Either a valid email or a valid WhatsApp is enough: the unusable other channel is dropped.
+    const waOk = !!o.contact_whatsapp && checkWhatsapp(o.contact_whatsapp).ok;
+    const emOk = !!o.contact_email && isValidEmail(o.contact_email);
+    if (!waOk && emOk) o = { ...o, contact_whatsapp: "" };
+    if (!emOk && waOk) o = { ...o, contact_email: "" };
     if (!o.recruiter_name?.trim() && batchAgency.trim()) o = { ...o, recruiter_name: batchAgency.trim() };
     return o;
   };
