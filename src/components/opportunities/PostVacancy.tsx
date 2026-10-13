@@ -263,15 +263,24 @@ const PostVacancy = () => {
     }
     setUncertain(null);
     if (res.status === "published") {
-      toast({ title: publishSummary(res), description: res.failures.join(" · ") || undefined });
-      setSources([]); setScan(null);
+      toast({ title: publishSummary(res), description: [heldCount ? `${heldCount} vacanc${heldCount === 1 ? "y" : "ies"} still need attention below.` : "", ...res.failures].filter(Boolean).join(" · ") || undefined });
+      dropPublished();
       return;
     }
     if (res.failures.length) toast({ title: "Not published", description: res.failures.join(" · "), variant: "destructive" });
   };
 
+  // Remove only the vacancies that were sent; vacancies needing attention stay for the manager.
+  const sentKeys = useRef<Set<string>>(new Set());
+  const dropPublished = () => {
+    const keys = sentKeys.current;
+    setScan(null);
+    setSources((p) => p.map((s) => (s.status === "ready" ? { ...s, rows: s.rows.filter((r) => !keys.has(r._key)) } : s)).filter((s) => s.status !== "ready" || s.rows.length > 0));
+  };
+
   const publish = async () => {
     if (!identity || !scan || publishing || uncertain) return;
+    sentKeys.current = new Set(validSel.map(({ r }) => r._key));
     setPublishing(true);
     try {
       const res = await publishVacancyBatch(scan.toPublish, identity, "manual", { skipDuplicateScan: true });
@@ -290,7 +299,7 @@ const PostVacancy = () => {
       if (rec.state === "complete") {
         setUncertain(null);
         toast({ title: rec.message });
-        setSources([]); setScan(null);
+        dropPublished();
       } else {
         setUncertain({ ...uncertain, message: rec.message });
       }
@@ -392,7 +401,7 @@ const PostVacancy = () => {
               <>
                 <div className="mt-1.5 space-y-1.5" role="radiogroup" aria-label="Batch contact">
                   {contactCandidates.slice(0, 4).map((c) => (
-                    <button key={c.key} role="radio" aria-checked={fillKey === c.key} onClick={() => { setScan(null); setFillKey(fillKey === c.key ? null : c.key); }}
+                    <button key={c.key} role="radio" aria-checked={fillKey === c.key} onClick={() => chooseFill(fillKey === c.key ? null : c.key)}
                       className={`w-full rounded-lg border px-3 py-2 text-left ${fillKey === c.key ? "border-[#D4AF37] bg-[#D4AF37]/10" : "border-border"}`}>
                       <span className="block text-xs font-semibold text-foreground truncate">{c.name || "Recruiter (name not stated)"} <span className="font-normal text-muted-foreground">· found in {c.count} vacanc{c.count === 1 ? "y" : "ies"}</span></span>
                       <span className="block text-[11px] text-muted-foreground truncate">{[c.email, c.whatsapp].filter(Boolean).join(" · ")}</span>
@@ -401,8 +410,11 @@ const PostVacancy = () => {
                 </div>
                 <label className="mt-2 flex items-center justify-between gap-3 rounded-lg bg-secondary/40 px-3 py-2">
                   <span className="text-[11px] text-foreground">Fill vacancies with no contact using the selected recruiter</span>
-                  <input type="checkbox" className="h-5 w-5 accent-[#D4AF37]" checked={!!fill} onChange={() => { setScan(null); setFillKey(fill ? null : contactCandidates[0].key); }} />
+                  <input type="checkbox" className="h-5 w-5 accent-[#D4AF37]" checked={!!fill} onChange={() => chooseFill(fill ? null : contactCandidates[0].key)} />
                 </label>
+                {!autoPicked && contactCandidates.length > 1 && (
+                  <p className="mt-1 text-[10px] text-[#f59e0b]">Several recruiters found — fill is off so agencies don't get mixed. Turn it on if all adverts are from one company.</p>
+                )}
                 <p className="mt-1 text-[10px] text-muted-foreground">
                   {fill ? "Only vacancies with no email and no WhatsApp are filled; contacts already in an advert are never changed." : `${missingCount} selected vacanc${missingCount === 1 ? "y has" : "ies have"} no contact.`} Extracted from advert — not independently verified.
                 </p>
@@ -477,7 +489,8 @@ const PostVacancy = () => {
                   const wa = checkWhatsapp(er.contact_whatsapp);
                   const emailOk = isValidEmail(er.contact_email);
                   const missingContact = s.ownership === "third_party" && !er.contact_whatsapp && !er.contact_email;
-                  const tag = !wa.ok || !emailOk ? "Check contact" : missingContact ? "Missing contact" : s.risk.level === "high" ? "High risk" : inherited ? "Batch contact" : "Ready";
+                  const issue = rowIssue(s, er);
+                  const tag = !wa.ok || !emailOk ? "Check contact" : missingContact ? "Missing contact" : issue ? "Needs fix" : s.risk.level === "high" ? "High risk" : inherited ? "Batch contact" : "Ready";
                   const set = (k: keyof PreviewVacancy) => (x: string) => patchRow(s.id, r._key, (o) => (k === "positions" ? { ...o, positions: Math.max(parseInt(x.replace(/\D/g, ""), 10) || 1, 1) } : { ...o, [k]: x }));
                   return (
                     <li key={r._key} className="rounded-lg border border-border/60 bg-secondary/40">
@@ -493,6 +506,7 @@ const PostVacancy = () => {
                       </div>
                       {r.open && (
                         <div className="px-2 pb-3 space-y-2">
+                          {issue && <p className="text-[11px] text-[#f59e0b] flex items-center gap-1"><AlertTriangle size={12} /> {issue}</p>}
                           {s.ownership === "third_party" ? (
                             <>
                               {field("Recruiting agency", r.recruiter_name, set("recruiter_name"), "As printed on the advert")}
@@ -534,7 +548,7 @@ const PostVacancy = () => {
       {(sources.length > 0 || uncertain) && (
         <section className="rounded-xl border border-[#D4AF37]/30 bg-[#0D1B2A] p-4 space-y-2 sticky bottom-2" aria-label="Publish readiness">
           <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">3. Publish selected</h3>
-          {sources.length > 0 && <p className="text-sm font-semibold text-[#D4AF37]">{engineRows.length} vacanc{engineRows.length === 1 ? "y" : "ies"} selected</p>}
+          {sources.length > 0 && <p className="text-sm font-semibold text-[#D4AF37]">{engineRows.length} ready to publish{heldCount > 0 && <span className="text-[#f59e0b] font-normal"> · {heldCount} need attention (stay here to fix or remove)</span>}</p>}
           <p className="text-[11px] text-muted-foreground">Vacancies stay live until you mark them filled or archive them. Duplicate check covers your company's active listings only.</p>
           {problems.length > 0 && (
             <ul className="text-[11px] text-[#f59e0b] list-disc pl-4 space-y-0.5 max-h-32 overflow-y-auto">{problems.map((p, i) => <li key={i}>{p}</li>)}</ul>
@@ -567,7 +581,7 @@ const PostVacancy = () => {
             </div>
           ) : (
             <Button className="w-full h-11" onClick={runCheck} disabled={checking || !engineRows.length || problems.length > 0 || !identity?.approved || sources.some((s) => s.status === "reading")}>
-              {checking ? "Checking…" : "Check & continue →"}
+              {checking ? "Checking…" : heldCount > 0 ? `Check & publish ${engineRows.length} ready →` : "Check & continue →"}
             </Button>
           )}
           {lastResult?.status === "published" && <p className="text-[11px] text-[#22c55e]">{publishSummary(lastResult)}</p>}
