@@ -217,8 +217,8 @@ const ManagerAuth = () => {
       </section>
 
       <div className="order-1 lg:order-2 w-full max-w-sm mx-auto lg:max-w-md lg:rounded-2xl lg:border lg:border-border lg:bg-card lg:p-8 space-y-6">
-        <button onClick={() => navigate("/for-companies")} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft size={14} /> Back
+        <button onClick={() => navigate("/")} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+          <ArrowLeft size={14} /> Back to Home
         </button>
 
         <div className="text-center space-y-3">
