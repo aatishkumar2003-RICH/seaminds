@@ -1,3 +1,4 @@
+import { matchApplicantToVacancy } from "@/lib/smartMatch";
 import VacancyCleanupPanel from "@/components/manager/VacancyCleanupPanel";
 import { useState, useEffect, useMemo, useRef } from "react";
 import MyPostsPanel from "@/components/manager/MyPostsPanel";
@@ -795,6 +796,21 @@ const ManagerDashboard = () => {
 
   const awaitingCount = applicants.filter((a) => a.outcome === "awaiting").length;
 
+  const smartMatches = applicants
+    .filter((a) => a.job_posting_id && (a.outcome === "awaiting" || a.outcome === "shortlisted"))
+    .map((a) => {
+      const jp = myPostings.find((p) => p.id === a.job_posting_id);
+      const m = matchApplicantToVacancy(
+        { crewRank: a.crew_rank, appliedRank: a.rank, availableFrom: a.available_from },
+        { rank: jp?.rank_required || a.rank, vessel: jp?.vessel_type, vesselApplied: a.vessel, joiningDate: jp?.joining_date },
+      );
+      const title = jp ? [jp.rank_required, jp.vessel_type].filter(Boolean).join(" — ") : (a.vacancy_label || a.rank);
+      return { a, m, title };
+    })
+    .filter((x) => x.m.isMatch)
+    .sort((x, y) => y.m.score - x.m.score)
+    .slice(0, 6);
+
   const aq = applicantQuery.trim().toLowerCase();
   const visibleGroups = !aq ? applicantGroups : applicantGroups
     .map((g) => ({ ...g, items: g.items.filter((a) =>
@@ -977,40 +993,29 @@ const ManagerDashboard = () => {
 
       <div className="max-w-6xl lg:max-w-[1400px] mx-auto px-4 sm:px-6 py-5 space-y-5">
         {/* Twin primary actions */}
-        <div className="grid gap-3 md:grid-cols-2">
-          <button
-            onClick={() => navigate("/post-vacancy")}
-            className="text-left rounded-2xl border border-primary/40 bg-secondary p-5 hover:border-primary transition-colors"
-          >
-            <p className="text-2xl">📢</p>
-            <p className="mt-2 text-base font-bold text-primary">Post Vacancies</p>
-            <p className="mt-1 text-xs text-muted-foreground">Paste WhatsApp, Telegram or email adverts, add flyers, review and publish searchable vacancies.</p>
-            <span className="mt-3 inline-block text-xs font-bold px-4 py-2 rounded-xl bg-primary text-primary-foreground">Open Vacancy Studio →</span>
-          </button>
-          <button
-            onClick={() => navigate("/company-post")}
-            className="text-left rounded-2xl border border-primary/40 bg-secondary p-5 hover:border-primary transition-colors"
-          >
-            <p className="text-2xl">✍️</p>
-            <p className="mt-2 text-base font-bold text-primary">Create Post</p>
-            <p className="mt-1 text-xs text-muted-foreground">Broadcast hiring flyers, company updates, fleet news, training and welfare posts to the SeaMinds feed.</p>
-            <span className="mt-3 inline-block text-xs font-bold px-4 py-2 rounded-xl border border-primary text-primary">Open Create Post →</span>
-          </button>
-        </div>
-
-        {/* Secondary quick actions */}
-        <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
+        <div className="grid grid-cols-2 gap-3">
           {[
-            { label: "🔍 Search Crew", to: "/manager-search" },
-            { label: "🎓 Arrange Interview", to: "/manager/interviews" },
-            { label: "🚢 Fleet Workspace", to: "/management/inspections" },
-          ].map((a) => (
-            <button key={a.to} onClick={() => navigate(a.to)}
-              className="shrink-0 text-xs font-medium px-3 py-2 rounded-xl border border-primary/40 text-primary hover:bg-primary/10 transition-colors min-h-[40px]">
-              {a.label}
+            { icon: "📢", title: "Post Vacancies", desc: "Paste adverts & flyers, publish in bulk.", cta: "Vacancy Studio", to: "/post-vacancy", primary: true },
+            { icon: "✍️", title: "Create Post", desc: "Flyers, fleet news & updates to the feed.", cta: "Create Post", to: "/company-post", primary: false },
+            { icon: "🔍", title: "Search Crew", desc: "Find seafarers by rank & readiness.", cta: "Search Crew", to: "/manager-search", primary: false },
+            { icon: "🎓", title: "Arrange Interview", desc: "Invite candidates to AI interviews.", cta: "Interviews", to: "/manager/interviews", primary: true },
+          ].map((c) => (
+            <button key={c.to} onClick={() => navigate(c.to)}
+              className="text-left rounded-2xl border border-primary/40 bg-secondary p-3 sm:p-5 hover:border-primary transition-colors flex flex-col min-h-[150px]">
+              <p className="text-xl sm:text-2xl">{c.icon}</p>
+              <p className="mt-1.5 text-sm sm:text-base font-bold text-primary leading-tight">{c.title}</p>
+              <p className="mt-1 text-[11px] sm:text-xs text-muted-foreground leading-snug flex-1">{c.desc}</p>
+              <span className={`mt-2 self-start text-[11px] sm:text-xs font-bold px-3 py-1.5 rounded-xl ${c.primary ? "bg-primary text-primary-foreground" : "border border-primary text-primary"}`}>{c.cta} →</span>
             </button>
           ))}
         </div>
+
+        {/* Fleet Workspace — thin full-width bar */}
+        <button onClick={() => navigate("/management/inspections")}
+          className="w-full flex items-center justify-between gap-3 rounded-xl border border-primary/40 bg-secondary px-4 py-2.5 hover:border-primary transition-colors min-h-[44px]">
+          <span className="text-sm font-semibold text-primary truncate">🚢 Fleet Workspace <span className="font-normal text-muted-foreground text-xs">· inspections & ship management</span></span>
+          <span className="shrink-0 text-xs font-bold text-primary">Open →</span>
+        </button>
 
         {/* Tabs */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 bg-secondary rounded-xl p-1">
@@ -1036,13 +1041,13 @@ const ManagerDashboard = () => {
           <>
           {/* Candidate-first finder */}
           <div className="bg-secondary rounded-xl border border-border p-4 space-y-3">
-            <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">🔎 Find Candidates</h2>
+            <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">👥 Applicants to your vacancy</h2>
             <div className="relative">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
                 value={applicantQuery}
                 onChange={(e) => setApplicantQuery(e.target.value)}
-                placeholder="Search my applicants by name, rank or nationality"
+                placeholder="Search applicants by name, rank or nationality"
                 aria-label="Search applicants by name or rank"
                 className="w-full min-h-[44px] pl-9 pr-9 text-sm bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
               />
@@ -1186,6 +1191,32 @@ const ManagerDashboard = () => {
             </div>
           )}
 
+
+          {smartMatches.length > 0 && (
+            <div className="rounded-xl border border-primary/50 bg-secondary p-4 space-y-3">
+              <div>
+                <h2 className="text-sm font-semibold text-primary uppercase tracking-wider">🎯 Smart CV Match</h2>
+                <p className="text-xs text-muted-foreground mt-1">
+                  SeaMinds compared applicant CVs with your vacancy requirements. You can choose amongst the best-fit applicants below.
+                </p>
+              </div>
+              <div className="grid gap-2 lg:grid-cols-2">
+                {smartMatches.map(({ a, m, title }) => (
+                  <div key={a.application_id} className="rounded-xl border border-border/60 bg-background/40 p-3 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-foreground truncate">{a.crew_name} <span className="font-normal text-muted-foreground">· {a.nationality}</span></p>
+                        <p className="text-[11px] text-muted-foreground truncate">{a.crew_rank || a.rank} → {title}</p>
+                      </div>
+                      <span className="shrink-0 text-xs font-bold px-2 py-1 rounded-lg bg-primary text-primary-foreground">{m.score}%</span>
+                    </div>
+                    <p className="text-[11px] text-primary">{m.reason}</p>
+                    {renderApplicantActions(a)}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div id="applicants-section" className="bg-secondary rounded-xl border border-border p-4 space-y-4">
             <div className="flex items-center justify-between">

@@ -151,3 +151,39 @@ export const rankVacancies = (list: UnifiedVacancy[], p: MatchProfile): RankedVa
 /** Only the vacancies worth calling a match. */
 export const smartMatches = (list: UnifiedVacancy[], p: MatchProfile, limit = 10): RankedVacancy[] =>
   rankVacancies(list, p).filter((r) => r.match.isMatch).slice(0, limit);
+
+/** Manager side: score one applicant's CV against the vacancy they applied to. */
+export interface ApplicantMatchInput {
+  crewRank?: string | null;
+  appliedRank?: string | null;
+  availableFrom?: string | null;
+}
+export interface VacancyMatchInput {
+  rank?: string | null;
+  vessel?: string | null;
+  vesselApplied?: string | null;
+  joiningDate?: string | null;
+}
+
+export const matchApplicantToVacancy = (a: ApplicantMatchInput, v: VacancyMatchInput): MatchResult => {
+  let score = 0;
+  const reasons: string[] = [];
+  const cr = canonicalRank(a.crewRank || a.appliedRank);
+  const vr = canonicalRank(v.rank);
+  if (cr && vr && cr === vr) { score += 60; reasons.push("Exact rank"); }
+  else {
+    const cf = familyOf(a.crewRank || a.appliedRank);
+    const vf = familyOf(v.rank);
+    if (cf && vf && cf === vf) { score += 30; reasons.push("Same department"); }
+  }
+  if (vesselMatches(v.vesselApplied, v.vessel)) { score += 20; reasons.push("Vessel type"); }
+  else if (!v.vessel) score += 8;
+  if (a.availableFrom) {
+    const avail = new Date(a.availableFrom).getTime();
+    const join = v.joiningDate ? new Date(v.joiningDate).getTime() : Date.now() + 30 * 86400000;
+    if (!Number.isNaN(avail) && avail <= join) { score += 20; reasons.push("Available in time"); }
+    else score += 5;
+  } else score += 8;
+  score = Math.max(0, Math.min(100, Math.round(score)));
+  return { score, reason: reasons.slice(0, 2).join(" · ") || "Partial fit", isMatch: score >= 60 };
+};
