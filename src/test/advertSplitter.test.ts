@@ -57,3 +57,26 @@ describe("high-volume pastes", () => {
     expect(splitAdverts("Master for VLCC\n\nEmail: m@x.com\n\nWA +62 812 3456 7890")).toHaveLength(1);
   });
 });
+
+describe("telegram channel pastes", () => {
+  it("splits channel posts copied without timestamps at post headings", () => {
+    const t = "🚢 URGENT REQUIRED\nMaster for VLCC\nDM @crew_one\n\n🚢 URGENT REQUIRED\nOiler for bulk\nt.me/agency_two\n\n#vacancy\nCook tanker\nEmail cook@three.com";
+    const r = splitAdverts(t);
+    expect(r).toHaveLength(3);
+    expect(r[0].text).toContain("@crew_one");
+    expect(r[1].text).not.toContain("@crew_one");
+  });
+  it("treats a Telegram handle as a contact", () => {
+    expect(splitAdverts("Master VLCC\nContact @crewing_agent")[0].uncertain).toBe(false);
+  });
+  it("splits on ChatGPT PASTE headings", () => {
+    expect(splitAdverts(`========== PASTE 01 ==========\n${A}\n========== PASTE 02 ==========\n${B}`)).toHaveLength(2);
+  });
+  it("slices a very long advert so every part is read, carrying its contact", () => {
+    const body = Array.from({ length: 120 }, (_, i) => `${i + 1}. Rank ${i} for tanker, salary ${i}00 USD`).join("\n");
+    const r = splitAdverts(`${body}\nEmail jobs@one.com`);
+    expect(r.length).toBeGreaterThan(1);
+    expect(r.every((b) => b.text.includes("jobs@one.com"))).toBe(true);
+    expect(r.every((b) => b.text.length <= 4000)).toBe(true);
+  });
+});
