@@ -216,7 +216,8 @@ const ManagerSearch = () => {
   const [revealBusy, setRevealBusy] = useState<string | null>(null);
   const [revealed, setRevealed] = useState<Record<string, { email: string | null; whatsapp: string | null }>>({});
 
-  const subscribed = (balance ?? 0) > 0;
+  // Platform is free during the growth phase: access is gated by admin approval only (server-enforced).
+  const subscribed = true;
 
   const loadBalance = async () => {
     const { data } = await supabase.rpc("get_my_credit_balance" as any);
@@ -304,10 +305,9 @@ const ManagerSearch = () => {
       if (!active) return;
       if (!data?.user) { navigate("/manager"); return; }
       setReady(true);
-      const bal = await loadBalance();
+      await loadBalance();
       if (!active) return;
-      if (bal > 0) search(true);
-      else setPlanOpen(true);
+      search(true);
     })();
     return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
