@@ -184,7 +184,7 @@ const callFn = async (payload: Record<string, unknown>) => {
     throw err;
   }
   if (payloadData?.error === "reveal_required") {
-    const err: any = new Error(payloadData.message || "Reveal this seafarer's contact first (1 credit) to open the full CV.");
+    const err: any = new Error(payloadData.message || "Reveal this seafarer contact first to open the full CV.");
     err.revealRequired = true;
     throw err;
   }
@@ -216,7 +216,8 @@ const ManagerSearch = () => {
   const [revealBusy, setRevealBusy] = useState<string | null>(null);
   const [revealed, setRevealed] = useState<Record<string, { email: string | null; whatsapp: string | null }>>({});
 
-  const subscribed = (balance ?? 0) > 0;
+  // Platform is free during the growth phase: access is gated by admin approval only (server-enforced).
+  const subscribed = true;
 
   const loadBalance = async () => {
     const { data } = await supabase.rpc("get_my_credit_balance" as any);
@@ -283,11 +284,11 @@ const ManagerSearch = () => {
       if (res?.ok) {
         setRevealed((prev) => ({ ...prev, [crewId]: { email: res.email ?? null, whatsapp: res.whatsapp ?? null } }));
         if (typeof res.balance === "number") setBalance(res.balance);
-        toast(res.charged ? "Contact revealed — 1 credit used" : "Already revealed — free");
+        toast("Contact revealed");
       } else if (res?.error === "no_credits") {
-        toast.error("Out of credits", {
-          description: "Monthly free credits refresh on the 1st — or request a refill.",
-          action: { label: "Refill", onClick: () => window.open(REFILL_MAILTO) },
+        toast.error("Monthly reveal limit reached", {
+          description: "Ask SeaMinds Admin to extend your free access.",
+          action: { label: "Email admin", onClick: () => window.open(REFILL_MAILTO) },
         });
       } else {
         toast.error(res?.error || "Could not reveal contact");
@@ -304,10 +305,9 @@ const ManagerSearch = () => {
       if (!active) return;
       if (!data?.user) { navigate("/manager"); return; }
       setReady(true);
-      const bal = await loadBalance();
+      await loadBalance();
       if (!active) return;
-      if (bal > 0) search(true);
-      else setPlanOpen(true);
+      search(true);
     })();
     return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -338,7 +338,7 @@ const ManagerSearch = () => {
       if (e?.pendingApproval) { setPending(true); return; }
       if (e?.revealRequired) {
         toast.error("Reveal required", {
-          description: "Tap 'Reveal contact' (1 credit) on this seafarer to open the full CV.",
+          description: "Tap Reveal contact on this seafarer to open the full CV.",
         });
         return;
       }
@@ -354,7 +354,7 @@ const ManagerSearch = () => {
   const contactWhatsApp = (row: CrewResult) => {
     const crewId = row.crewId || row.user_id;
     const revealedWa = revealed[crewId]?.whatsapp;
-    if (!revealedWa) return toast.error("Reveal the contact first (1 credit)");
+    if (!revealedWa) return toast.error("Reveal the contact first");
     const digits = revealedWa.replace(/[^\d]/g, "");
     if (!digits) return toast.error("No WhatsApp number on file");
     const msg = encodeURIComponent(
@@ -423,31 +423,23 @@ const ManagerSearch = () => {
                 {searched ? "★★★★★ Verified matches · totals remain private" : "★★★★★ Verified maritime network"}
               </p>
             </div>
-            {balance !== null && (
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ background: "rgba(212,175,55,0.15)", border: `1px solid ${GOLD}`, color: GOLD, borderRadius: 999, padding: "5px 12px", fontSize: 12, fontWeight: 800, whiteSpace: "nowrap" }}>
-                  💳 {balance} credits
-                </span>
-                <a href={REFILL_MAILTO} style={{ color: "#94A3B8", fontSize: 11, textDecoration: "underline" }}>Refill</a>
-              </div>
-            )}
           </div>
         </header>
 
         {pending ? (
-        <div style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.35)", borderRadius: 14, padding: 20, textAlign: "center", maxWidth: 460, margin: "40px auto" }}>
+        <div style={{ background: "rgba(212,175,55,0.06)", border: "1px solid rgba(212,175,55,0.35)", borderRadius: 14, padding: 20, textAlign: "center", maxWidth: 460, margin: "40px auto" }}>
           <p style={{ fontSize: 34, marginBottom: 10 }}>🔒</p>
-          <p style={{ color: "#f59e0b", fontSize: 16, fontWeight: 800, marginBottom: 8 }}>Awaiting company approval</p>
+          <p style={{ color: GOLD, fontSize: 16, fontWeight: 800, marginBottom: 8 }}>This feature needs approval</p>
           <p style={{ color: "#cbd5e1", fontSize: 13, lineHeight: 1.6, marginBottom: 14 }}>
-            SeaMinds verifies every company before releasing seafarer contact details and CVs.
-            This protects the crew who trust us with their data.
+            To protect seafarers' personal data, SeaMinds Admin verifies every company before opening Crew Search.
+            Access is free for verified ship managers and manning agencies.
           </p>
           <p style={{ color: "#94a3b8", fontSize: 12, lineHeight: 1.6 }}>
             You can still post vacancies, create company posts and arrange interviews while you wait.
           </p>
-          <a href="mailto:admin@seaminds.life?subject=SeaMinds%20company%20approval"
+          <a href="mailto:admin@seaminds.life?subject=Crew%20Search%20access%20approval%20request&body=Company%20name%3A%0AYour%20name%3A%0APhone%2FWhatsApp%3A%0A"
             style={{ display: "inline-block", marginTop: 16, background: "#D4AF37", color: "#0D1B2A", borderRadius: 10, padding: "11px 20px", fontWeight: 800, fontSize: 13, textDecoration: "none" }}>
-            Request approval
+            Request approval by email
           </a>
         </div>
         ) : (
@@ -507,7 +499,7 @@ const ManagerSearch = () => {
         </div>
 
         <p style={{ color: "#94A3B8", fontSize: 12, lineHeight: 1.6, marginTop: -8 }}>
-          Contacts are protected. Each reveal uses 1 credit (30 free monthly). Interviewing &amp; offering via SeaMinds never needs credits.
+          Contacts are protected for seafarer privacy. Crew Search is free for verified ship managers.
         </p>
 
         {/* Results */}
@@ -572,7 +564,7 @@ const ManagerSearch = () => {
                         disabled={revealBusy === crewId}
                         style={{ ...goldBtn, padding: "8px 10px", opacity: revealBusy === crewId ? 0.6 : 1 }}
                       >
-                        {revealBusy === crewId ? "Revealing…" : "🔓 Reveal contact — 1 credit"}
+                        {revealBusy === crewId ? "Revealing…" : "🔓 Reveal contact"}
                       </button>
                     )}
                   </div>

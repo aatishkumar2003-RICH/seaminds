@@ -96,14 +96,33 @@ export default function TakeoverInspections({ embedded = false }: { embedded?: b
     <div className={embedded ? "" : "min-h-screen bg-[#0D1B2A] pb-16"}>
       <div className={embedded ? "" : "p-4 max-w-4xl mx-auto"}>
         {!embedded && (
-          <button onClick={() => navigate("/management/fleet")} className="flex items-center gap-1 text-[#D4AF37] min-h-[44px]">
-            <ChevronLeft size={20} /> Workspace
+          <button onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/manager/dashboard"))} className="flex items-center gap-1 text-[#D4AF37] min-h-[44px]">
+            <ChevronLeft size={20} /> Back
           </button>
         )}
-        <h1 className="text-xl font-bold text-[#D4AF37] mt-2">Pre-management takeover inspections</h1>
+        <h1 className="text-xl font-bold text-[#D4AF37] mt-2">Fleet Workspace — takeover inspections</h1>
         <p className="text-xs text-[#94A3B8] mb-4">
           {TEMPLATE_NAME} · template v{TEMPLATE_VERSION} · {TOTAL_ITEMS} checklist rows
         </p>
+
+        {!isAdmin && !loading && rows.length === 0 && (
+          <div className="rounded-2xl border border-[#D4AF37]/40 bg-[#112240] p-5 text-center mb-4">
+            <p className="text-3xl mb-2">🔒</p>
+            <p className="text-base font-bold text-[#D4AF37] mb-2">This feature needs approval</p>
+            <p className="text-sm text-[#cbd5e1] leading-relaxed mb-2">
+              Fleet Workspace holds confidential vessel records, so SeaMinds Admin enables it per company.
+              Your fleet data stays private to your company and is never shown to other users.
+            </p>
+            <p className="text-xs text-[#94A3B8] mb-4">Access is free for approved ship managers.</p>
+            <a
+              href="mailto:admin@seaminds.life?subject=Fleet%20Workspace%20access%20approval%20request&body=Company%20name%3A%0AYour%20name%3A%0ANumber%20of%20vessels%3A%0APhone%2FWhatsApp%3A%0A"
+              className="inline-block rounded-xl bg-[#D4AF37] text-[#0D1B2A] font-bold px-5 py-3 text-sm"
+            >
+              Request approval by email
+            </a>
+          </div>
+        )}
+
 
         {isAdmin && !creating && (
           <button
