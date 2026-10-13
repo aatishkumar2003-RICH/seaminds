@@ -182,11 +182,14 @@ const PostVacancy = () => {
     return [...m.values()].sort((a, b) => b.count - a.count);
   })();
   const [fillKey, setFillKey] = useState<string | null>(null);
+  // Until the manager touches the toggle: ON when one recruiter is found, OFF when several (avoids mixing agencies).
   const [autoPicked, setAutoPicked] = useState(false);
+  const singleKey = contactCandidates.length === 1 ? contactCandidates[0].key : null;
   useEffect(() => {
-    if (!autoPicked && contactCandidates.length) { setFillKey(contactCandidates[0].key); setAutoPicked(true); }
-    if (fillKey && !contactCandidates.some((c) => c.key === fillKey)) setFillKey(contactCandidates[0]?.key ?? null);
-  }, [contactCandidates, fillKey, autoPicked]);
+    if (!autoPicked) { if (fillKey !== singleKey) setFillKey(singleKey); return; }
+    if (fillKey && !contactCandidates.some((c) => c.key === fillKey)) setFillKey(null);
+  }, [contactCandidates, fillKey, autoPicked, singleKey]);
+  const chooseFill = (k: string | null) => { setScan(null); setAutoPicked(true); setFillKey(k); };
   const fill = contactCandidates.find((c) => c.key === fillKey) || null;
   const [batchCc, setBatchCc] = useState("+62");
   const [batchAgency, setBatchAgency] = useState("");
