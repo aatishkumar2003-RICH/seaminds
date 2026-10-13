@@ -184,7 +184,7 @@ const callFn = async (payload: Record<string, unknown>) => {
     throw err;
   }
   if (payloadData?.error === "reveal_required") {
-    const err: any = new Error(payloadData.message || "Reveal this seafarer's contact first (1 credit) to open the full CV.");
+    const err: any = new Error(payloadData.message || "Reveal this seafarer contact first to open the full CV.");
     err.revealRequired = true;
     throw err;
   }
@@ -284,7 +284,7 @@ const ManagerSearch = () => {
       if (res?.ok) {
         setRevealed((prev) => ({ ...prev, [crewId]: { email: res.email ?? null, whatsapp: res.whatsapp ?? null } }));
         if (typeof res.balance === "number") setBalance(res.balance);
-        toast(res.charged ? "Contact revealed — 1 credit used" : "Already revealed — free");
+        toast("Contact revealed");
       } else if (res?.error === "no_credits") {
         toast.error("Out of credits", {
           description: "Monthly free credits refresh on the 1st — or request a refill.",
@@ -338,7 +338,7 @@ const ManagerSearch = () => {
       if (e?.pendingApproval) { setPending(true); return; }
       if (e?.revealRequired) {
         toast.error("Reveal required", {
-          description: "Tap 'Reveal contact' (1 credit) on this seafarer to open the full CV.",
+          description: "Tap Reveal contact on this seafarer to open the full CV.",
         });
         return;
       }
@@ -354,7 +354,7 @@ const ManagerSearch = () => {
   const contactWhatsApp = (row: CrewResult) => {
     const crewId = row.crewId || row.user_id;
     const revealedWa = revealed[crewId]?.whatsapp;
-    if (!revealedWa) return toast.error("Reveal the contact first (1 credit)");
+    if (!revealedWa) return toast.error("Reveal the contact first");
     const digits = revealedWa.replace(/[^\d]/g, "");
     if (!digits) return toast.error("No WhatsApp number on file");
     const msg = encodeURIComponent(
@@ -499,7 +499,7 @@ const ManagerSearch = () => {
         </div>
 
         <p style={{ color: "#94A3B8", fontSize: 12, lineHeight: 1.6, marginTop: -8 }}>
-          Contacts are protected. Each reveal uses 1 credit (30 free monthly). Interviewing &amp; offering via SeaMinds never needs credits.
+          Contacts are protected for seafarer privacy. Crew Search is free for verified ship managers.
         </p>
 
         {/* Results */}
@@ -564,7 +564,7 @@ const ManagerSearch = () => {
                         disabled={revealBusy === crewId}
                         style={{ ...goldBtn, padding: "8px 10px", opacity: revealBusy === crewId ? 0.6 : 1 }}
                       >
-                        {revealBusy === crewId ? "Revealing…" : "🔓 Reveal contact — 1 credit"}
+                        {revealBusy === crewId ? "Revealing…" : "🔓 Reveal contact"}
                       </button>
                     )}
                   </div>
