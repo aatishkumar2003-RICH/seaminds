@@ -656,3 +656,18 @@ export const publishSummary = (r: PublishResult): string => {
   if (r.duplicatesSkipped > 0) parts.push(`${r.duplicatesSkipped} exact duplicate${r.duplicatesSkipped > 1 ? "s" : ""} skipped`);
   return parts.join(" · ");
 };
+
+/** Split a multi-vessel string ("Tankers, Gas Carriers / Bulk and Container Vessels") into single vessel types. */
+export const splitVesselTypes = (raw?: string | null): string[] => {
+  const s = (raw || "").trim();
+  if (!s) return [];
+  const parts = s
+    .split(/\s*(?:,|\/|;|\||&|\band\b|\+)\s*/i)
+    .map((p) => p.trim().replace(/\s+/g, " "))
+    .filter(Boolean)
+    .map((p) => p.replace(/\b(vessels?|ships?)$/i, "").trim() || p)
+    .map((p) => p.replace(/\b(Tankers|Carriers|Bulkers|Containers)\b/gi, (w) => w.slice(0, -1)))
+    .map((p) => p.charAt(0).toUpperCase() + p.slice(1));
+  const seen = new Set<string>();
+  return parts.filter((p) => { const k = p.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
+};
