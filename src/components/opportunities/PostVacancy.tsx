@@ -188,10 +188,25 @@ const PostVacancy = () => {
     if (fillKey && !contactCandidates.some((c) => c.key === fillKey)) setFillKey(contactCandidates[0]?.key ?? null);
   }, [contactCandidates, fillKey, autoPicked]);
   const fill = contactCandidates.find((c) => c.key === fillKey) || null;
+  const [batchCc, setBatchCc] = useState("+62");
+  const [batchAgency, setBatchAgency] = useState("");
   const needsContact = (r: Row) => !r.contact_email?.trim() && !r.contact_whatsapp?.trim();
-  const effective = (r: Row): Row => (fill && needsContact(r)
-    ? { ...r, contact_email: fill.email, contact_whatsapp: fill.whatsapp, recruiter_name: r.recruiter_name || fill.name }
-    : r);
+  const withCc = (w: string) => {
+    const c = w.replace(/[\s()\-.]/g, "");
+    if (!c || c.startsWith("+") || c.startsWith("00") || !batchCc) return w;
+    return /^0\d{6,14}$/.test(c) ? `${batchCc}${c.slice(1)}` : w;
+  };
+  const effective = (r: Row): Row => {
+    let o: Row = fill && needsContact(r)
+      ? { ...r, contact_email: fill.email, contact_whatsapp: fill.whatsapp, recruiter_name: r.recruiter_name || fill.name }
+      : r;
+    const w = withCc(o.contact_whatsapp || "");
+    if (w !== (o.contact_whatsapp || "")) o = { ...o, contact_whatsapp: w };
+    // Either a valid email or a valid WhatsApp is enough: an unusable number is dropped when a valid email exists.
+    if (!checkWhatsapp(o.contact_whatsapp).ok && o.contact_email?.trim() && isValidEmail(o.contact_email)) o = { ...o, contact_whatsapp: "" };
+    if (!o.recruiter_name?.trim() && batchAgency.trim()) o = { ...o, recruiter_name: batchAgency.trim() };
+    return o;
+  };
   const missingCount = sources.reduce((n, s) => n + (s.status === "ready" ? s.rows.filter((r) => r.selected && needsContact(r)).length : 0), 0);
 
   const resetStudio = () => {
@@ -384,6 +399,22 @@ const PostVacancy = () => {
                 </p>
               </>
             )}
+          </div>
+          <div className="border-t border-border pt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <label className="block space-y-1">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-[#D4AF37]">WhatsApp country code (all adverts)</span>
+              <select value={batchCc} onChange={(e) => { setScan(null); setBatchCc(e.target.value); }}
+                className="w-full h-11 rounded-xl border border-border bg-background px-3 text-sm text-foreground">
+                {[["+62", "🇮🇩 Indonesia +62"], ["+91", "🇮🇳 India +91"], ["+63", "🇵🇭 Philippines +63"], ["+84", "🇻🇳 Vietnam +84"], ["+60", "🇲🇾 Malaysia +60"], ["+65", "🇸🇬 Singapore +65"], ["+971", "🇦🇪 UAE +971"], ["+380", "🇺🇦 Ukraine +380"], ["+7", "🇷🇺 Russia +7"], ["+86", "🇨🇳 China +86"], ["+880", "🇧🇩 Bangladesh +880"], ["+94", "🇱🇰 Sri Lanka +94"], ["+44", "🇬🇧 UK +44"], ["", "Don't add a code"]].map(([v, t]) => <option key={t} value={v}>{t}</option>)}
+              </select>
+              <span className="block text-[10px] text-muted-foreground">Local numbers like 0813… become {batchCc || "+XX"}813…</span>
+            </label>
+            <label className="block space-y-1">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-[#D4AF37]">Recruiting company (all adverts)</span>
+              <Input value={batchAgency} onChange={(e) => { setScan(null); setBatchAgency(e.target.value); }} placeholder="e.g. PT. Diva Marina Indonesia" className="h-11 text-sm" />
+              <span className="block text-[10px] text-muted-foreground">Used only where an advert has no company name. Optional for your own vacancies.</span>
+            </label>
+            <p className="sm:col-span-2 text-[10px] text-muted-foreground">An email or a WhatsApp number is enough to publish — all other details are optional.</p>
           </div>
         </section>
       )}
