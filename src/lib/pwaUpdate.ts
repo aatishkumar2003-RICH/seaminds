@@ -1,7 +1,7 @@
 // iOS Home Screen apps never poll for a new service worker on their own.
 // These helpers nudge the worker, and offer a clean reload that bypasses stale caches.
-import { toast } from "sonner";
-import { CURRENT_RELEASE, fetchRemoteRelease, isNewerRelease, isUnsafeToInterrupt, type ReleaseMeta } from "./releaseInfo";
+
+import { CURRENT_RELEASE, fetchRemoteRelease, isNewerRelease, type ReleaseMeta } from "./releaseInfo";
 
 /** Ask the browser to re-download sw.js; never throws. */
 export const nudgeServiceWorker = async (): Promise<void> => {
@@ -30,7 +30,7 @@ export const forcePwaHardReset = async (): Promise<void> => {
 };
 
 let lastCheck = 0;
-let prompted = "";
+
 /** When the app returns to the foreground, check for a new release (max once per 5 min). */
 export const installForegroundUpdateCheck = (): void => {
   if (typeof document === "undefined") return;
