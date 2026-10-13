@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { ShieldCheck, BarChart3, Clock, FileCheck, Users, TrendingUp, ChevronRight, Check, Send } from "lucide-react";
+import { ShieldCheck, BarChart3, Clock, FileCheck, Users, TrendingUp, ChevronRight, ChevronLeft, Check, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -116,6 +116,9 @@ const ForCompanies = () => {
       <section className="relative pt-28 pb-14 md:pt-36 md:pb-20 overflow-hidden">
         <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "radial-gradient(circle at 1px 1px, hsl(var(--primary)) 1px, transparent 0)", backgroundSize: "32px 32px" }} />
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 text-center">
+          <button onClick={() => navigate("/")} className="absolute -top-10 left-4 sm:left-6 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground min-h-[44px]" aria-label="Back to main page">
+            <ChevronLeft size={18} /> Main page
+          </button>
           <div className="sm-hero-glow" aria-hidden="true" />
           <p className="text-xs uppercase tracking-[0.3em] text-primary mb-4 font-mono-score">
             For Shipping &amp; Manning Companies

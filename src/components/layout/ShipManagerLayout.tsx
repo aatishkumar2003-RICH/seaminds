@@ -45,7 +45,7 @@ const ShipManagerLayout = () => {
     return () => { active = false; };
   }, []);
 
-  const logout = async () => { await supabase.auth.signOut(); navigate("/manager"); };
+  const logout = async () => { await supabase.auth.signOut(); navigate("/"); };
 
   const status = !identity ? null
     : identity.approved && identity.verified ? { text: "✓ Verified Employer", cls: "text-emerald-400 border-emerald-400/40" }
