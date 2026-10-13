@@ -11,7 +11,7 @@ import {
   type PreviewVacancy, type ManagerIdentity, type Ownership, type DuplicateScan, type PublishResult,
   toPreviewVacancy, emptyPreviewVacancy, loadManagerIdentity, checkWhatsapp, isValidEmail,
   scanDuplicates, publishVacancyBatch, publishSummary, uploadOriginalFlier, validateJoiningDates,
-  reconcileBatch, loadUncertainMarker,
+  reconcileBatch, loadUncertainMarker, splitVesselTypes,
   validateContactFormats, validateAttribution, ACCEPTED_FLIER_TYPES as ACCEPTED,
 } from "@/lib/managerVacancies";
 import { splitAdverts, MAX_PASTE_CHARS, MAX_ADVERT_CHARS } from "@/lib/advertSplitter";
@@ -31,6 +31,8 @@ type Source = {
   rows: Row[];
   /** Set when the advert boundary was guessed; its vacancies start unselected. */
   boundary?: string;
+  /** Rows before "Expand by vessel type", kept so the manager can undo. */
+  collapsed?: Row[];
 };
 
 const uid = () => crypto.randomUUID();
@@ -487,6 +489,21 @@ const PostVacancy = () => {
             <button aria-label={s.kind === "flier" ? "Discard flyer" : "Discard advert"} onClick={() => { setScan(null); setSources((p) => p.filter((x) => x.id !== s.id)); }} className="flex items-center gap-1 rounded-lg border border-destructive/40 px-2 py-1.5 text-[11px] text-destructive hover:bg-destructive/10"><Trash2 size={12} /> Discard</button>
           </div>
 
+          {s.status === "ready" && (s.collapsed || s.rows.some((r) => splitVesselTypes(r.vessel_type).length > 1)) && (
+            <div className="flex flex-wrap items-center gap-2 rounded-lg border border-[#D4AF37]/30 bg-[#D4AF37]/5 p-2 text-[11px]">
+              {s.collapsed ? (
+                <>
+                  <span className="text-muted-foreground flex-1">Split into one vacancy per vessel type.</span>
+                  <button onClick={() => patch(s.id, (x) => ({ ...x, rows: x.collapsed!, collapsed: undefined }))} className="rounded-lg border border-[#D4AF37] px-2 py-1 font-semibold text-[#D4AF37]">Undo expansion</button>
+                </>
+              ) : (
+                <>
+                  <span className="text-muted-foreground flex-1">Some vacancies list several vessel types.</span>
+                  <button onClick={() => patch(s.id, (x) => ({ ...x, collapsed: x.rows, rows: x.rows.flatMap((r) => { const vs = splitVesselTypes(r.vessel_type); return vs.length > 1 ? vs.map((v) => ({ ...r, vessel_type: v, _key: uid(), open: false })) : [r]; }) }))} className="rounded-lg bg-[#D4AF37] px-2 py-1 font-bold text-[#0D1B2A]">Expand by vessel type</button>
+                </>
+              )}
+            </div>
+          )}
           {s.boundary && (
             <p className="text-[11px] rounded-lg p-2 border border-[#f59e0b]/40 bg-[#f59e0b]/10 text-[#f59e0b] flex items-start gap-1">
               <AlertTriangle size={12} className="mt-0.5 shrink-0" /> Check advert boundary: {s.boundary} Its vacancies are not selected until you tick them.
