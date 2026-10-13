@@ -2,7 +2,7 @@ import VacancyCleanupPanel from "@/components/manager/VacancyCleanupPanel";
 import { useState, useEffect, useMemo, useRef } from "react";
 import MyPostsPanel from "@/components/manager/MyPostsPanel";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Anchor, ArrowUpDown, Bell, LogOut, FileWarning, CreditCard, RefreshCw } from "lucide-react";
+import { Anchor, ArrowUpDown, Bell, LogOut, FileWarning, CreditCard, RefreshCw, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import ManagerPaymentHistory from "@/components/smc/ManagerPaymentHistory";
