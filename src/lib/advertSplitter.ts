@@ -58,10 +58,10 @@ function envelopeSplit(text: string): string[] {
   return groups;
 }
 
-function splitPlain(text: string, trusted: boolean): AdvertBlock[] {
+function splitPlain(text: string): AdvertBlock[] {
   const groups = envelopeSplit(text);
   if (groups.length > 1) return groups.map((g) => review(g, true, "Split at a contact line — check this is one complete advert."));
-  return [review(text, !trusted ? false : false)];
+  return [review(text, false)];
 }
 
 export function splitAdverts(input: string): AdvertBlock[] {
@@ -73,12 +73,12 @@ export function splitAdverts(input: string): AdvertBlock[] {
   }
   if (lines.filter((l) => MSG_HEADER.test(l)).length >= 2) {
     // Chat export: each message is its own advert; long messages may still hold several adverts.
-    return splitOn(lines, (l) => MSG_HEADER.test(l), true).flatMap((m) => splitPlain(m, true));
+    return splitOn(lines, (l) => MSG_HEADER.test(l), true).flatMap((m) => splitPlain(m));
   }
   // Triple blank lines with a contact in each piece.
   const chunks = text.split(/\n\s*\n\s*\n+/).map((p) => p.trim()).filter(Boolean);
   if (chunks.length > 1 && chunks.every(hasContact)) {
     return chunks.map((c) => review(c, true, "Split at blank lines — check this is one complete advert."));
   }
-  return splitPlain(text, false);
+  return splitPlain(text);
 }
