@@ -31,8 +31,8 @@ const UpdateNotice = () => {
       setAvailable(true); setDismissed(false);
     };
     const onVis = () => { if (document.visibilityState === "visible") check(false, true); };
-    check(true);
-    const retry = setTimeout(() => check(true), 4000); // iOS network often wakes late
+    check(true, true);
+    const retry = setTimeout(() => check(true, true), 4000); // iOS network often wakes late
     const t = setInterval(() => check(true), 5 * 60_000);
     document.addEventListener("visibilitychange", onVis);
     window.addEventListener("focus", onVis);
