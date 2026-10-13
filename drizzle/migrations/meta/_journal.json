@@ -323,6 +323,13 @@
       "when": 1791824396860,
       "tag": "0045_stage2_close_direct_vacancy_delete",
       "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1791902423032,
+      "tag": "0046_fix_verification_tamper_guard",
+      "breakpoints": true
     }
   ]
 }
