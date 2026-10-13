@@ -40,14 +40,8 @@ export const installForegroundUpdateCheck = (): void => {
   const run = async () => {
     if (document.visibilityState !== "visible" || Date.now() - lastCheck < 5 * 60_000) return;
     lastCheck = Date.now();
-    const { remote, newer } = await checkPwaUpdate();
-    if (!newer || !remote || prompted === remote.buildId) return;
-    if (isUnsafeToInterrupt(window.location.pathname + window.location.search)) return;
-    prompted = remote.buildId;
-    toast("A new SeaMinds version is available", {
-      duration: 15000,
-      action: { label: "Update now", onClick: () => { void forcePwaHardReset(); } },
-    });
+    // Only nudge the service worker; the visible prompt is the UpdateNotice banner.
+    await nudgeServiceWorker();
   };
   document.addEventListener("visibilitychange", run);
   setTimeout(run, 4000);
