@@ -452,7 +452,20 @@ const PostVacancy = () => {
           </div>
         </section>
       )}
-      {sources.map((s) => (
+      {sources.some((s) => s.status === "ready") && (
+        <section className="rounded-xl border border-border bg-card p-3 space-y-2" aria-label="Quick select">
+          <div className="grid grid-cols-3 gap-2">
+            {([["all", `All (${allRows.length})`], ["ready", `Ready (${readyRows.length})`], ["fix", `Needs fix (${allRows.length - readyRows.length})`]] as ["all" | "ready" | "fix", string][]).map(([v, t]) => (
+              <button key={v} onClick={() => setView(v)} className={`rounded-lg border px-2 py-2 text-[11px] font-semibold min-h-[40px] ${view === v ? "border-[#D4AF37] bg-[#D4AF37]/10 text-[#D4AF37]" : "border-border text-foreground"}`}>{t}</button>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <Button className="h-10 flex-1" onClick={() => selectWhere(true)} disabled={!readyRows.length}>✓ Select all ready ({readyRows.length})</Button>
+            <Button variant="outline" className="h-10 flex-1" onClick={() => selectWhere(false)}>Clear selection</Button>
+          </div>
+        </section>
+      )}
+      {sources.filter((s) => view === "all" || s.status !== "ready" || s.rows.some((r) => (view === "ready") === !rowIssue(s, effective(r)))).map((s) => (
         <section key={s.id} className={`rounded-xl bg-card border p-3 space-y-2 ${s.risk.level === "high" ? "border-[#f59e0b]/60" : "border-border"}`} aria-label={`Source ${s.label}`}>
           <div className="flex items-start gap-2">
             {s.kind === "flier" ? <ImageIcon size={16} className="text-[#D4AF37] mt-0.5" /> : <FileText size={16} className="text-[#D4AF37] mt-0.5" />}
@@ -496,9 +509,9 @@ const PostVacancy = () => {
               )}
 
               <ul className="space-y-1.5">
-                {s.rows.map((r) => {
+                {s.rows.filter((r) => view === "all" || (view === "ready") === !rowIssue(s, effective(r))).map((r) => {
                   const er = effective(r);
-                  const inherited = er !== r;
+                  const inherited = er.contact_email !== r.contact_email || er.contact_whatsapp !== r.contact_whatsapp;
                   const wa = checkWhatsapp(er.contact_whatsapp);
                   const emailOk = isValidEmail(er.contact_email);
                   const missingContact = s.ownership === "third_party" && !er.contact_whatsapp && !er.contact_email;
