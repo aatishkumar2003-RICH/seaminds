@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { ChevronLeft } from "lucide-react";
-import { CURRENT_RELEASE, fetchRemoteRelease, formatWib, isNewerRelease } from "@/lib/releaseInfo";
+import { CURRENT_RELEASE, formatWib } from "@/lib/releaseInfo";
+import { checkPwaUpdate, forcePwaHardReset } from "@/lib/pwaUpdate";
 
 /** Full release information (More → About SeaMinds). */
 const AboutSeaMinds = ({ onClose }: { onClose: () => void }) => {
@@ -9,10 +10,11 @@ const AboutSeaMinds = ({ onClose }: { onClose: () => void }) => {
   const r = CURRENT_RELEASE;
   const check = async () => {
     setStatus("Checking…");
-    const remote = await fetchRemoteRelease();
+    const { remote, newer } = await checkPwaUpdate();
     if (!remote) return setStatus("Could not reach SeaMinds. Try again later.");
-    setStatus(isNewerRelease(r, remote) ? `New version available (${remote.buildId})` : "You're on the latest version ✓");
+    setStatus(newer ? `New version available (${remote.buildId})` : "You're on the latest version ✓");
   };
+  const reset = () => { setStatus("Updating…"); void forcePwaHardReset(); };
   const Row = ({ k, v }: { k: string; v: string }) => (
     <div className="flex justify-between gap-3 py-1.5 border-b" style={{ borderColor: "rgba(212,175,55,0.15)" }}>
       <span style={{ color: "#94A3B8" }}>{k}</span><span className="text-right break-all">{v || "—"}</span>
@@ -29,9 +31,12 @@ const AboutSeaMinds = ({ onClose }: { onClose: () => void }) => {
         <Row k="Built (UTC)" v={r.buildTime} />
         <p className="mt-2" style={{ color: "#94A3B8" }}>Build time is when this version was prepared, not when it was published.</p>
         <button onClick={check} className="mt-3 w-full rounded-xl py-2 font-bold" style={{ background: "#D4AF37", color: "#0D1B2A" }}>Check for updates</button>
-        {status && (
-          <p className="mt-2 text-center">{status}{status.startsWith("New") && <> — <button className="underline" style={{ color: "#D4AF37" }} onClick={() => window.location.reload()}>Refresh</button></>}</p>
+        {status && <p className="mt-2 text-center">{status}</p>}
+        {status.startsWith("New") && (
+          <button onClick={reset} className="mt-2 w-full rounded-xl py-2 font-bold" style={{ background: "#D4AF37", color: "#0D1B2A" }}>Update now</button>
         )}
+        <button onClick={reset} className="mt-3 w-full rounded-xl py-2 font-bold" style={{ border: "1px solid #D4AF37", color: "#D4AF37" }}>Force refresh app</button>
+        <p className="mt-1 text-center" style={{ color: "#94A3B8" }}>Use this if the app looks out of date. You stay signed in.</p>
       </div>
     </div>,
     document.body
