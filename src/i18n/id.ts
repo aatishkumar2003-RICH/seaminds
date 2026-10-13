@@ -90,7 +90,7 @@ const id: Dict = {
   joinCreateBtn: "Buat akun gratis ⚓",
   joinForgot: "Lupa kata sandi?",
   joinFreeForCrew: "Gratis untuk anak buah kapal",
-  joinManagerLogin: "Login Manajer",
+  joinManagerLogin: "ShipManager Login",
   joinErrEmailPassword: "Masukkan email dan kata sandi minimal 8 karakter",
   joinErrExists: "Email ini sudah punya akun — silakan masuk saja.",
   joinErrWrong: "Email atau kata sandi salah",

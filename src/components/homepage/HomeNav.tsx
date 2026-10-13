@@ -48,7 +48,7 @@ const HomeNav = () => {
             🎓 Create Interview
           </Button>
           <Button size="sm" variant="outline" className="border-white/10 text-foreground hover:bg-white/5" onClick={() => navigate('/manager')}>
-            Company Login
+            ShipManager Login
           </Button>
           </div>
 
@@ -73,7 +73,7 @@ const HomeNav = () => {
               🎓 Create Interview
             </Button>
             <Button size="sm" variant="outline" className="flex-1 border-white/10 text-foreground hover:bg-white/5" onClick={() => { setMobileOpen(false); navigate('/manager'); }}>
-              Company Login
+              ShipManager Login
             </Button>
           </div>
         </div>

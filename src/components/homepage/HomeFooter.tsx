@@ -50,7 +50,7 @@ const HomeFooter = () => {
       links: [
         { label: "Hire Crew", action: () => navigate("/for-companies") },
         { label: "Bulk Assessments", action: () => navigate("/for-companies") },
-        { label: "Company Login", action: () => navigate("/manager") },
+        { label: "ShipManager Login", action: () => navigate("/manager") },
         { label: "Request Demo", action: () => navigate("/for-companies") },
       ],
     },
@@ -60,7 +60,6 @@ const HomeFooter = () => {
         { label: "Jobs", action: () => navigate("/app?tab=jobs") },
         { label: "Blog", action: () => navigate("/blog") },
         { label: "Maritime News", action: () => navigate("/blog") },
-        { label: "Manager Login", action: () => navigate("/manager") },
         { label: "MLC 2006", action: () => navigate("/app") },
         { label: "Contact", action: () => navigate("/contact") },
       ],

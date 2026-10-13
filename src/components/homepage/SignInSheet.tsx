@@ -17,12 +17,12 @@ export default function SignInSheet({ onClose }: { onClose: () => void }) {
           <p className="text-xs text-[#94A3B8]">Sea Profile, Score, jobs</p>
         </button>
         <button className={tile} onClick={() => go("/fleet/login")}>
-          <p className="font-bold text-slate-100">🚢 Ship Management Staff</p>
+          <p className="font-bold text-slate-100">🛠️ Fleet Staff (Ship Management)</p>
           <p className="text-xs text-[#94A3B8]">Superintendents, office, Master, owners</p>
         </button>
         <button className={tile} onClick={() => go("/manager")}>
-          <p className="font-bold text-slate-100">👔 Recruiting Company</p>
-          <p className="text-xs text-[#94A3B8]">Search crew, interviews, vacancies</p>
+          <p className="font-bold text-slate-100">🚢 ShipManager</p>
+          <p className="text-xs text-[#94A3B8]">Post vacancies, search crew, AI interviews</p>
         </button>
       </div>
     </div>

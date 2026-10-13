@@ -90,7 +90,7 @@ const hi: Dict = {
   joinCreateBtn: "मुफ़्त खाता बनाएँ ⚓",
   joinForgot: "पासवर्ड भूल गए?",
   joinFreeForCrew: "क्रू सदस्यों के लिए मुफ़्त",
-  joinManagerLogin: "Manager लॉगिन",
+  joinManagerLogin: "ShipManager Login",
   joinErrEmailPassword: "अपना ईमेल और कम से कम 8 अक्षरों का पासवर्ड डालें",
   joinErrExists: "इस ईमेल का खाता पहले से है — कृपया साइन इन करें।",
   joinErrWrong: "ईमेल या पासवर्ड ग़लत है",

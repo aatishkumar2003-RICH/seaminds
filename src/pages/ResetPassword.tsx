@@ -103,7 +103,7 @@ const ResetPassword = () => {
                 className="w-full font-medium text-sm rounded-xl py-3"
                 style={{ background: "transparent", color: GOLD, border: `1px solid ${GOLD}` }}
               >
-                Manager Login
+                ShipManager Login
               </button>
             </div>
           ) : !hasSession ? (
