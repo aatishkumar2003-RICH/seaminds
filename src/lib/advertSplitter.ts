@@ -21,6 +21,8 @@ const contacts = (t: string) => {
   return { emails, phones };
 };
 const hasContact = (t: string) => { const k = contacts(t); return k.emails.size + k.phones.size > 0; };
+// A paragraph that is basically just a contact line ("WA +62…", "Email: x@y.com").
+const contactOnly = (t: string) => hasContact(t) && t.replace(EMAIL, "").replace(PHONE, "").replace(/\b(?:e-?mail|wa|whatsapp|tel|phone|hp|contact|cp|mobile|call)\b|[:/|,.\-()+]/gi, "").trim().length < 25;
 
 const review = (text: string, uncertain: boolean, reason?: string): AdvertBlock => {
   const { emails, phones } = contacts(text);
@@ -49,7 +51,7 @@ function envelopeSplit(text: string): string[] {
     cur.push(p);
     const next = paras[i + 1];
     // keep consecutive contact paragraphs ("Email: …" then "WA: …") in the same advert
-    if (hasContact(p) && (!next || !hasContact(next))) { groups.push(cur.join("\n\n")); cur = []; }
+    if (hasContact(p) && (!next || !contactOnly(next))) { groups.push(cur.join("\n\n")); cur = []; }
   });
   if (cur.length) {
     if (groups.length) groups[groups.length - 1] += "\n\n" + cur.join("\n\n");
