@@ -111,7 +111,7 @@ interface ParsedVacancy {
 }
 
 type SortKey = "shipName";
-type DashTab = "crew" | "applicants" | "payments";
+type DashTab = "crew" | "applicants" | "posts" | "payments";
 
 interface ManagerNotif {
   id: string;
@@ -133,7 +133,8 @@ const ManagerDashboard = () => {
   const [sortKey, setSortKey] = useState<SortKey>("shipName");
   const [sortAsc, setSortAsc] = useState(true);
   const [safetyReports, setSafetyReports] = useState<SafetyReport[]>([]);
-  const [dashTab, setDashTab] = useState<DashTab>("crew");
+  const [dashTab, setDashTab] = useState<DashTab>("applicants");
+  const [dpaOpen, setDpaOpen] = useState(false);
   const [managerUserId, setManagerUserId] = useState("");
   const [managerNotifs, setManagerNotifs] = useState<ManagerNotif[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -648,13 +649,14 @@ const ManagerDashboard = () => {
   }, [fleet]);
 
 
-  // Deep links: ?tab=crew|applicants|payments, &section=safety, &application=<id> (opens Applicants).
+  // Deep links: ?tab=applicants|posts|crew|payments (aliases: fleet, billing), &section=safety, &application=<id>.
   useEffect(() => {
     const q = new URLSearchParams(location.search);
-    const tab = q.get("tab");
-    const target = q.get("application") ? "applicants" : tab;
-    if (target === "applicants" || target === "payments" || target === "crew") setDashTab(target);
-    else if (!tab) setDashTab("crew");
+    const raw = q.get("tab");
+    const tab = raw === "fleet" ? "crew" : raw === "billing" ? "payments" : raw;
+    const target = q.get("application") ? "applicants" : q.get("section") === "safety" ? "crew" : tab;
+    if (target === "applicants" || target === "payments" || target === "crew" || target === "posts") setDashTab(target);
+    else setDashTab("applicants");
     if (loading) return;
     const anchor = q.get("section") === "safety" ? "safety-section" : target === "applicants" && q.get("application") ? "applicants-section" : null;
     if (anchor) setTimeout(() => document.getElementById(anchor)?.scrollIntoView({ behavior: "smooth", block: "start" }), 120);
@@ -913,7 +915,7 @@ const ManagerDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Page toolbar (ShipManager shell provides brand + navigation) */}
-      <header className="border-b border-border px-4 sm:px-6 py-4 flex items-center justify-between flex-wrap gap-4">
+      <header className="border-b border-border px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
             <Anchor size={20} className="text-primary" />
@@ -959,88 +961,68 @@ const ManagerDashboard = () => {
             )}
           </div>
 
-          <button
-            onClick={() => navigate("/manager-search")}
-            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-[#0D1B2A] text-[#D4AF37] border border-[#D4AF37]/40 hover:bg-[#D4AF37]/10 transition-colors"
-          >
-            🔍 Search Crew
-          </button>
-          <button
-            onClick={() => navigate("/manager/interviews")}
-            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-[#D4AF37] text-[#0D1B2A] border border-[#D4AF37] hover:opacity-90 transition-opacity"
-          >
-            🎓 Arrange Interview
-          </button>
-          <button
-            onClick={() => navigate("/management/inspections")}
-            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-[#0D1B2A] text-[#D4AF37] border border-[#D4AF37]/40 hover:bg-[#D4AF37]/10 transition-colors"
-          >
-            🛠 Inspections
-          </button>
-          <div className="flex flex-col items-start gap-1">
-            <button
-              onClick={() => navigate("/company-post")}
-              className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-[#D4AF37] text-[#0D1B2A] border border-[#D4AF37] hover:opacity-90 transition-opacity"
-            >
-              ✍️ Create Post
-            </button>
-            <span className="text-[10px] text-muted-foreground max-w-[240px] leading-snug">
-              (Create Post publishes your flier as an advert. To turn adverts or flyers into searchable vacancies, use Post Vacancy.)
-            </span>
-          </div>
-
-          <button
-            onClick={() => navigate("/post-vacancy")}
-            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-[#0D1B2A] text-[#D4AF37] border border-[#D4AF37]/40 hover:bg-[#D4AF37]/10 transition-colors"
-          >
-            📢 Post Vacancy
-          </button>
           <button onClick={handleLogout} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
             <LogOut size={14} /> Logout
           </button>
         </div>
       </header>
 
-      <div className="max-w-6xl lg:max-w-[1400px] mx-auto px-6 py-6 space-y-6">
-        {/* Tab switcher */}
-        <div className="flex gap-1 bg-secondary rounded-xl p-1">
+      <div className="max-w-6xl lg:max-w-[1400px] mx-auto px-4 sm:px-6 py-5 space-y-5">
+        {/* Twin primary actions */}
+        <div className="grid gap-3 md:grid-cols-2">
           <button
-            onClick={() => navigate("/manager/dashboard?tab=crew", { replace: true })}
-            className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors ${
-              dashTab === "crew" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-            }`}
+            onClick={() => navigate("/post-vacancy")}
+            className="text-left rounded-2xl border border-primary/40 bg-secondary p-5 hover:border-primary transition-colors"
           >
-            Crew Overview
+            <p className="text-2xl">📢</p>
+            <p className="mt-2 text-base font-bold text-primary">Post Vacancies</p>
+            <p className="mt-1 text-xs text-muted-foreground">Paste WhatsApp, Telegram or email adverts, add flyers, review and publish searchable vacancies.</p>
+            <span className="mt-3 inline-block text-xs font-bold px-4 py-2 rounded-xl bg-primary text-primary-foreground">Open Vacancy Studio →</span>
           </button>
           <button
-            onClick={() => navigate("/manager/dashboard?tab=applicants", { replace: true })}
-            className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors ${
-              dashTab === "applicants" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-            }`}
+            onClick={() => navigate("/company-post")}
+            className="text-left rounded-2xl border border-primary/40 bg-secondary p-5 hover:border-primary transition-colors"
           >
-            👥 Applicants{awaitingCount > 0 ? ` (${awaitingCount})` : ""}
-          </button>
-          <button
-            onClick={() => navigate("/manager/dashboard?tab=payments", { replace: true })}
-            className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1.5 ${
-              dashTab === "payments" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <CreditCard size={14} /> Credits & Payments
+            <p className="text-2xl">✍️</p>
+            <p className="mt-2 text-base font-bold text-primary">Create Post</p>
+            <p className="mt-1 text-xs text-muted-foreground">Broadcast hiring flyers, company updates, fleet news, training and welfare posts to the SeaMinds feed.</p>
+            <span className="mt-3 inline-block text-xs font-bold px-4 py-2 rounded-xl border border-primary text-primary">Open Create Post →</span>
           </button>
         </div>
 
-        {awaitingCount > 0 && (
-          <button
-            onClick={() => {
-              setDashTab("applicants");
-              setTimeout(() => document.getElementById("applicants-section")?.scrollIntoView({ behavior: "smooth" }), 60);
-            }}
-            className="text-xs font-bold px-3 py-1.5 rounded-full bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/40 hover:bg-[#D4AF37]/25 transition-colors"
-          >
-            👥 {awaitingCount} awaiting
-          </button>
-        )}
+        {/* Secondary quick actions */}
+        <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
+          {[
+            { label: "🔍 Search Crew", to: "/manager-search" },
+            { label: "🎓 Arrange Interview", to: "/manager/interviews" },
+            { label: "🛠 Inspections", to: "/management/inspections" },
+          ].map((a) => (
+            <button key={a.to} onClick={() => navigate(a.to)}
+              className="shrink-0 text-xs font-medium px-3 py-2 rounded-xl border border-primary/40 text-primary hover:bg-primary/10 transition-colors min-h-[40px]">
+              {a.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Tabs */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 bg-secondary rounded-xl p-1">
+          {([
+            ["applicants", `👥 Recruitment${awaitingCount > 0 ? ` (${awaitingCount})` : ""}`],
+            ["posts", "📰 My Posts & Leads"],
+            ["crew", "🚢 Fleet & Safety"],
+            ["payments", "💳 Credits & Billing"],
+          ] as [DashTab, string][]).map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => navigate(`/manager/dashboard?tab=${key}`, { replace: true })}
+              className={`py-2.5 px-2 rounded-lg text-xs sm:text-sm font-medium transition-colors min-h-[44px] ${
+                dashTab === key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
 
         {dashTab === "applicants" ? (
           <>
@@ -1232,6 +1214,16 @@ const ManagerDashboard = () => {
           </>
         ) : dashTab === "payments" ? (
           <ManagerPaymentHistory managerUserId={managerUserId} />
+        ) : dashTab === "posts" ? (
+          <div className="space-y-4">
+            {managerUserId && <MyPostsPanel managerId={managerUserId} />}
+            <button
+              onClick={() => navigate("/company-post")}
+              className="w-full sm:w-auto text-sm font-bold px-5 py-3 rounded-xl bg-primary text-primary-foreground min-h-[48px]"
+            >
+              ✍️ Create a new post
+            </button>
+          </div>
         ) : (
           <>
 
@@ -1312,42 +1304,51 @@ const ManagerDashboard = () => {
               )}
             </div>
 
-            {/* Emergency / DPA contact */}
-            <div id="safety-section" className="bg-secondary rounded-xl border border-border p-4 space-y-3 scroll-mt-20">
-              <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">🆘 Emergency / DPA contact</h2>
-              <div className="grid gap-2 sm:grid-cols-3">
-                <input
-                  value={dpaName}
-                  onChange={(e) => setDpaName(e.target.value)}
-                  placeholder="DPA / contact person name"
-                  className="bg-background text-foreground text-sm rounded-lg px-3 py-2 border border-border"
-                />
-                <input
-                  type="tel"
-                  value={emergencyPhone}
-                  onChange={(e) => setEmergencyPhone(e.target.value)}
-                  placeholder="Emergency phone"
-                  className="bg-background text-foreground text-sm rounded-lg px-3 py-2 border border-border"
-                />
-                <input
-                  type="email"
-                  value={emergencyEmail}
-                  onChange={(e) => setEmergencyEmail(e.target.value)}
-                  placeholder="Emergency email"
-                  className="bg-background text-foreground text-sm rounded-lg px-3 py-2 border border-border"
-                />
+            {/* Emergency / DPA contact — summary card, edit in dialog */}
+            <div id="safety-section" className="bg-secondary rounded-xl border border-border p-4 space-y-2 scroll-mt-20">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">🆘 Emergency / DPA contact</h2>
+                <button
+                  onClick={() => setDpaOpen(true)}
+                  className="text-xs font-semibold px-3 py-2 rounded-xl border border-primary text-primary hover:bg-primary/10 transition-colors min-h-[40px]"
+                >
+                  {dpaName || emergencyPhone || emergencyEmail ? "Edit" : "Add contact"}
+                </button>
               </div>
-              <button
-                onClick={saveEmergencyContact}
-                disabled={savingEmergency}
-                className="text-sm font-bold px-4 py-2 rounded-xl bg-[#D4AF37] text-[#0D1B2A] border border-[#D4AF37] hover:opacity-90 transition-opacity disabled:opacity-50"
-              >
-                {savingEmergency ? "Saving…" : "Save"}
-              </button>
+              {dpaName || emergencyPhone || emergencyEmail ? (
+                <p className="text-sm text-foreground">
+                  <span className="text-green-400 font-semibold">✓ Configured</span>
+                  <span className="text-muted-foreground"> · {[dpaName, emergencyPhone, emergencyEmail].filter(Boolean).join(" · ")}</span>
+                </p>
+              ) : (
+                <p className="text-sm text-amber-400">Not set — your linked crew cannot reach your company from their SOS screen.</p>
+              )}
               <p className="text-xs text-muted-foreground/70">
                 Shown to YOUR linked crew in their SOS screen — per ISM practice, crew must always be able to reach their company.
               </p>
             </div>
+
+            {dpaOpen && (
+              <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => !savingEmergency && setDpaOpen(false)}>
+                <div className="bg-background border border-primary/40 rounded-2xl p-5 max-w-md w-full space-y-3" onClick={(e) => e.stopPropagation()}>
+                  <p className="text-base font-bold text-primary">Emergency / DPA contact</p>
+                  <input value={dpaName} onChange={(e) => setDpaName(e.target.value)} placeholder="DPA / contact person name"
+                    className="w-full bg-secondary text-foreground text-sm rounded-lg px-3 py-2.5 border border-border" />
+                  <input type="tel" value={emergencyPhone} onChange={(e) => setEmergencyPhone(e.target.value)} placeholder="Emergency phone (+country code)"
+                    className="w-full bg-secondary text-foreground text-sm rounded-lg px-3 py-2.5 border border-border" />
+                  <input type="email" value={emergencyEmail} onChange={(e) => setEmergencyEmail(e.target.value)} placeholder="Emergency email"
+                    className="w-full bg-secondary text-foreground text-sm rounded-lg px-3 py-2.5 border border-border" />
+                  <div className="flex gap-2 pt-1">
+                    <button onClick={() => setDpaOpen(false)} disabled={savingEmergency}
+                      className="flex-1 rounded-xl py-2.5 text-sm font-bold border border-primary/50 text-primary">Cancel</button>
+                    <button onClick={async () => { await saveEmergencyContact(); setDpaOpen(false); }} disabled={savingEmergency}
+                      className="flex-1 rounded-xl py-2.5 text-sm font-bold bg-primary text-primary-foreground disabled:opacity-50">
+                      {savingEmergency ? "Saving…" : "Save"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
 
 
@@ -1458,19 +1459,6 @@ const ManagerDashboard = () => {
               </div>
             )}
 
-            {/* Bulk Paste & Post — entry to the Vacancy Studio (single posting interface) */}
-            <div className="bg-secondary rounded-xl border border-[#D4AF37]/30 p-4 flex flex-col sm:flex-row sm:items-center gap-3">
-              <div className="flex-1 space-y-1">
-                <h2 className="text-sm font-semibold text-[#D4AF37] uppercase tracking-wider">⚡ Bulk Paste & Post Vacancies</h2>
-                <p className="text-xs text-muted-foreground">Paste several WhatsApp, Telegram or email adverts at once, add up to 5 flyers, review every vacancy, then publish the selected ones together.</p>
-              </div>
-              <button
-                onClick={() => navigate("/post-vacancy")}
-                className="text-sm font-bold px-5 py-3 rounded-xl bg-[#D4AF37] text-[#0D1B2A] hover:opacity-90 transition-opacity min-h-[48px]"
-              >
-                Open Vacancy Studio →
-              </button>
-            </div>
 
 
             {/* Privacy note */}
@@ -1486,7 +1474,6 @@ const ManagerDashboard = () => {
           </>
         )}
 
-        {managerUserId && <MyPostsPanel managerId={managerUserId} />}
       </div>
 
       {offerFor && (
