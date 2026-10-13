@@ -14,7 +14,7 @@ import {
   reconcileBatch, loadUncertainMarker,
   validateContactFormats, validateAttribution, ACCEPTED_FLIER_TYPES as ACCEPTED,
 } from "@/lib/managerVacancies";
-import { splitAdverts, MAX_ADVERTS_PER_PASTE } from "@/lib/advertSplitter";
+import { splitAdverts, MAX_PASTE_CHARS, MAX_ADVERT_CHARS } from "@/lib/advertSplitter";
 
 const MAX_FLIERS = 5;
 type Risk = "low" | "medium" | "high";
@@ -61,7 +61,7 @@ const downscaleImage = (file: File): Promise<string> =>
 const parseError = (error: unknown) => {
   const status = (error as { context?: { status?: number } })?.context?.status;
   if (status === 403) return "Your company account is pending approval.";
-  if (status === 429) return "Daily reading limit reached. Please try again tomorrow.";
+  if (status === 429) return "Too many adverts at once — wait a few minutes, then retry this one.";
   if (status === 401) return "Please sign in again.";
   return "Could not read this advert.";
 };
@@ -132,9 +132,7 @@ const PostVacancy = () => {
 
   const addText = async () => {
     if (!pasteText.trim() || !ready()) return;
-    const all = splitAdverts(pasteText);
-    if (all.length > MAX_ADVERTS_PER_PASTE) toast({ title: `Up to ${MAX_ADVERTS_PER_PASTE} adverts per paste`, description: `Only the first ${MAX_ADVERTS_PER_PASTE} were added.`, variant: "destructive" });
-    const blocks = all.slice(0, MAX_ADVERTS_PER_PASTE);
+    const blocks = splitAdverts(pasteText);
     const multi = blocks.length > 1;
     const queued = blocks.map((b, i) => ({
       b,
@@ -147,15 +145,20 @@ const PostVacancy = () => {
     }));
     setSources((p) => [...p, ...queued.map((q) => q.src)]);
     setPasteText("");
-    // Each advert is read on its own so contacts never mix between adverts.
-    for (const { b, src } of queued) {
-      try {
-        const { data, error } = await supabase.functions.invoke("parse-vacancy-text", { body: { text: b.text.slice(0, 8000) } });
-        finishParse(src.id, data, error);
-      } catch (err) {
-        patch(src.id, (s) => ({ ...s, status: "error", error: err instanceof Error ? err.message : "Could not read this advert." }));
+    // Each advert is read on its own so contacts never mix between adverts; 4 at a time.
+    let next = 0;
+    const worker = async () => {
+      while (next < queued.length) {
+        const { b, src } = queued[next++];
+        try {
+          const { data, error } = await supabase.functions.invoke("parse-vacancy-text", { body: { text: b.text.slice(0, MAX_ADVERT_CHARS) } });
+          finishParse(src.id, data, error);
+        } catch (err) {
+          patch(src.id, (s) => ({ ...s, status: "error", error: err instanceof Error ? err.message : "Could not read this advert." }));
+        }
       }
-    }
+    };
+    await Promise.all(Array.from({ length: Math.min(4, queued.length) }, worker));
   };
 
   const addManual = () => {
@@ -277,15 +280,16 @@ const PostVacancy = () => {
 
         <div className="space-y-2">
           <label htmlFor="studio-paste" className="text-[11px] text-muted-foreground block">
-            Paste one or many adverts (WhatsApp / Telegram / email). Put a line with <strong className="text-foreground">---</strong> between adverts for the most reliable split.
+            Paste one or many adverts (WhatsApp / Telegram / email). Long Telegram / WhatsApp chat exports work too — each message and each contact block becomes its own advert. A <strong className="text-foreground">---</strong> line between adverts gives the most reliable split.
           </label>
           <textarea
-            id="studio-paste" value={pasteText} onChange={(e) => setPasteText(e.target.value)} rows={8}
+            id="studio-paste" value={pasteText} onChange={(e) => setPasteText(e.target.value.slice(0, MAX_PASTE_CHARS))} rows={10} maxLength={MAX_PASTE_CHARS}
             className="w-full bg-background text-foreground text-sm rounded-xl px-3 py-2 border border-border outline-none focus:ring-1 focus:ring-primary"
             placeholder={"First advert…\n---\nSecond advert…\n---\nThird advert…"}
           />
           {detected.length > 0 && (
             <p className="text-[11px] text-muted-foreground">
+              {pasteText.length.toLocaleString()} / {MAX_PASTE_CHARS.toLocaleString()} characters ·{" "}
               {detected.length} advert{detected.length === 1 ? "" : "s"} detected
               {detected.some((b) => b.uncertain) && <span className="text-[#f59e0b]"> · {detected.filter((b) => b.uncertain).length} need a boundary check</span>}
             </p>
