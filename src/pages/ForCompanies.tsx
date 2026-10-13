@@ -146,7 +146,7 @@ const ForCompanies = () => {
             </button>
           </div>
           <p className="text-xs mt-4" style={{ color: "rgba(212,175,55,0.75)" }}>
-            Free registration during launch. Crew contact access requires approval and credits.
+            Free for ship managers. Crew contact access requires admin approval.
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12">
             {stats.map((s) => (
