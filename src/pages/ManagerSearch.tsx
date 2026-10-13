@@ -286,9 +286,9 @@ const ManagerSearch = () => {
         if (typeof res.balance === "number") setBalance(res.balance);
         toast("Contact revealed");
       } else if (res?.error === "no_credits") {
-        toast.error("Out of credits", {
-          description: "Monthly free credits refresh on the 1st — or request a refill.",
-          action: { label: "Refill", onClick: () => window.open(REFILL_MAILTO) },
+        toast.error("Monthly reveal limit reached", {
+          description: "Ask SeaMinds Admin to extend your free access.",
+          action: { label: "Email admin", onClick: () => window.open(REFILL_MAILTO) },
         });
       } else {
         toast.error(res?.error || "Could not reveal contact");
