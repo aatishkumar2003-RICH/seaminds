@@ -167,7 +167,40 @@ const PostVacancy = () => {
   };
 
   // ---------- staged rows → engine rows ----------
-  const selected = sources.flatMap((s) => (s.status === "ready" ? s.rows.filter((r) => r.selected).map((r) => ({ s, r })) : []));
+  // ---------- batch contact intelligence (derived; toggle off reverts) ----------
+  const contactCandidates = (() => {
+    const m = new Map<string, { key: string; name: string; email: string; whatsapp: string; count: number }>();
+    for (const s of sources) if (s.status === "ready") for (const r of s.rows) {
+      const email = (r.contact_email || "").trim().toLowerCase();
+      const whatsapp = (r.contact_whatsapp || "").replace(/[^\d+]/g, "");
+      if (!email && !whatsapp) continue;
+      const key = `${email}|${whatsapp}`;
+      const c = m.get(key) || { key, name: r.recruiter_name || "", email, whatsapp, count: 0 };
+      c.count++; if (!c.name && r.recruiter_name) c.name = r.recruiter_name;
+      m.set(key, c);
+    }
+    return [...m.values()].sort((a, b) => b.count - a.count);
+  })();
+  const [fillKey, setFillKey] = useState<string | null>(null);
+  const [autoPicked, setAutoPicked] = useState(false);
+  useEffect(() => {
+    if (!autoPicked && contactCandidates.length) { setFillKey(contactCandidates[0].key); setAutoPicked(true); }
+    if (fillKey && !contactCandidates.some((c) => c.key === fillKey)) setFillKey(contactCandidates[0]?.key ?? null);
+  }, [contactCandidates, fillKey, autoPicked]);
+  const fill = contactCandidates.find((c) => c.key === fillKey) || null;
+  const needsContact = (r: Row) => !r.contact_email?.trim() && !r.contact_whatsapp?.trim();
+  const effective = (r: Row): Row => (fill && needsContact(r)
+    ? { ...r, contact_email: fill.email, contact_whatsapp: fill.whatsapp, recruiter_name: r.recruiter_name || fill.name }
+    : r);
+  const missingCount = sources.reduce((n, s) => n + (s.status === "ready" ? s.rows.filter((r) => r.selected && needsContact(r)).length : 0), 0);
+
+  const resetStudio = () => {
+    if (sources.length && !window.confirm(`Discard all ${sources.length} staged source(s) and start fresh?`)) return;
+    setSources([]); setScan(null); setFillKey(null); setAutoPicked(false);
+  };
+  const setAllOwnership = (o: Ownership) => { setScan(null); setSources((p) => p.map((s) => (s.status === "ready" ? { ...s, ownership: o } : s))); };
+
+  const selected = sources.flatMap((s) => (s.status === "ready" ? s.rows.filter((r) => r.selected).map((r) => ({ s, r: effective(r) })) : []));
   const unowned = [...new Set(selected.filter(({ s }) => !s.ownership).map(({ s }) => s.label))];
   const engineRows: PreviewVacancy[] = selected.map(({ s, r }) => {
     const { _key, selected: _sel, open: _o, ...v } = r;
@@ -263,7 +296,12 @@ const PostVacancy = () => {
       <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-5 lg:items-start">
       {/* ---------- Step 1: Intake ---------- */}
       <section className="rounded-xl bg-card border border-border p-4 space-y-3 lg:col-span-5 lg:sticky lg:top-4" aria-label="Add adverts">
-        <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">1. Add adverts</h3>
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">1. Add adverts</h3>
+          {sources.length > 0 && (
+            <button onClick={resetStudio} className="rounded-lg border border-[#D4AF37]/40 px-2.5 py-1.5 text-[11px] text-[#D4AF37] hover:bg-[#D4AF37]/10">↺ Reset studio</button>
+          )}
+        </div>
         <p className="text-[11px] text-muted-foreground">Publishing as <span className="text-foreground font-medium">{identity?.companyName || "—"}</span> (from your approved company profile).</p>
 
         <button
@@ -309,6 +347,46 @@ const PostVacancy = () => {
         <p className="hidden lg:block rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">Vacancies read from your adverts and flyers will appear here for review.</p>
       )}
       {sources.length > 0 && <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">2. Review vacancies</h3>}
+      {sources.some((s) => s.status === "ready") && (
+        <section className="rounded-xl border border-[#D4AF37]/40 bg-[#D4AF37]/5 p-3 space-y-3" aria-label="Batch settings">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-[#D4AF37]">Who is recruiting? (all adverts)</p>
+            <div className="mt-1.5 grid grid-cols-2 gap-2">
+              {([["own", "Our vacancy"], ["third_party", "Third-party advert"]] as [Ownership, string][]).map(([v, t]) => {
+                const on = sources.every((s) => s.status !== "ready" || s.ownership === v);
+                return (
+                  <button key={v} onClick={() => setAllOwnership(v)} className={`rounded-xl border px-3 py-2 text-xs font-semibold min-h-[44px] ${on ? "border-[#D4AF37] bg-[#D4AF37]/10 text-[#D4AF37]" : "border-border text-foreground"}`}>{t}</button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="border-t border-border pt-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-[#D4AF37]">AI-detected contact for this batch</p>
+            {contactCandidates.length === 0 ? (
+              <p className="mt-1 text-[11px] text-muted-foreground">No email or WhatsApp found in any advert yet. Add the agency's flyer to this batch, or type the contact into one vacancy — it will appear here.</p>
+            ) : (
+              <>
+                <div className="mt-1.5 space-y-1.5" role="radiogroup" aria-label="Batch contact">
+                  {contactCandidates.slice(0, 4).map((c) => (
+                    <button key={c.key} role="radio" aria-checked={fillKey === c.key} onClick={() => { setScan(null); setFillKey(fillKey === c.key ? null : c.key); }}
+                      className={`w-full rounded-lg border px-3 py-2 text-left ${fillKey === c.key ? "border-[#D4AF37] bg-[#D4AF37]/10" : "border-border"}`}>
+                      <span className="block text-xs font-semibold text-foreground truncate">{c.name || "Recruiter (name not stated)"} <span className="font-normal text-muted-foreground">· found in {c.count} vacanc{c.count === 1 ? "y" : "ies"}</span></span>
+                      <span className="block text-[11px] text-muted-foreground truncate">{[c.email, c.whatsapp].filter(Boolean).join(" · ")}</span>
+                    </button>
+                  ))}
+                </div>
+                <label className="mt-2 flex items-center justify-between gap-3 rounded-lg bg-secondary/40 px-3 py-2">
+                  <span className="text-[11px] text-foreground">Fill vacancies with no contact using the selected recruiter</span>
+                  <input type="checkbox" className="h-5 w-5 accent-[#D4AF37]" checked={!!fill} onChange={() => { setScan(null); setFillKey(fill ? null : contactCandidates[0].key); }} />
+                </label>
+                <p className="mt-1 text-[10px] text-muted-foreground">
+                  {fill ? "Only vacancies with no email and no WhatsApp are filled; contacts already in an advert are never changed." : `${missingCount} selected vacanc${missingCount === 1 ? "y has" : "ies have"} no contact.`} Extracted from advert — not independently verified.
+                </p>
+              </>
+            )}
+          </div>
+        </section>
+      )}
       {sources.map((s) => (
         <section key={s.id} className={`rounded-xl bg-card border p-3 space-y-2 ${s.risk.level === "high" ? "border-[#f59e0b]/60" : "border-border"}`} aria-label={`Source ${s.label}`}>
           <div className="flex items-start gap-2">
@@ -321,7 +399,7 @@ const PostVacancy = () => {
               </p>
             </div>
             {s.flierUrl && <a href={s.flierUrl} target="_blank" rel="noopener noreferrer" className="text-[11px] text-[#D4AF37] underline">View flyer</a>}
-            <button aria-label="Remove source" onClick={() => { setScan(null); setSources((p) => p.filter((x) => x.id !== s.id)); }} className="p-2 text-muted-foreground hover:text-destructive"><Trash2 size={14} /></button>
+            <button aria-label={s.kind === "flier" ? "Discard flyer" : "Discard advert"} onClick={() => { setScan(null); setSources((p) => p.filter((x) => x.id !== s.id)); }} className="flex items-center gap-1 rounded-lg border border-destructive/40 px-2 py-1.5 text-[11px] text-destructive hover:bg-destructive/10"><Trash2 size={12} /> Discard</button>
           </div>
 
           {s.boundary && (
@@ -354,10 +432,12 @@ const PostVacancy = () => {
 
               <ul className="space-y-1.5">
                 {s.rows.map((r) => {
-                  const wa = checkWhatsapp(r.contact_whatsapp);
-                  const emailOk = isValidEmail(r.contact_email);
-                  const missingContact = s.ownership === "third_party" && !r.contact_whatsapp && !r.contact_email;
-                  const tag = !wa.ok || !emailOk ? "Check contact" : missingContact ? "Missing contact" : s.risk.level === "high" ? "High risk" : "Ready";
+                  const er = effective(r);
+                  const inherited = er !== r;
+                  const wa = checkWhatsapp(er.contact_whatsapp);
+                  const emailOk = isValidEmail(er.contact_email);
+                  const missingContact = s.ownership === "third_party" && !er.contact_whatsapp && !er.contact_email;
+                  const tag = !wa.ok || !emailOk ? "Check contact" : missingContact ? "Missing contact" : s.risk.level === "high" ? "High risk" : inherited ? "Batch contact" : "Ready";
                   const set = (k: keyof PreviewVacancy) => (x: string) => patchRow(s.id, r._key, (o) => (k === "positions" ? { ...o, positions: Math.max(parseInt(x.replace(/\D/g, ""), 10) || 1, 1) } : { ...o, [k]: x }));
                   return (
                     <li key={r._key} className="rounded-lg border border-border/60 bg-secondary/40">
