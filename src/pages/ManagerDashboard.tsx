@@ -1010,7 +1010,7 @@ const ManagerDashboard = () => {
             ["applicants", `👥 Recruitment${awaitingCount > 0 ? ` (${awaitingCount})` : ""}`],
             ["posts", "📰 My Posts & Leads"],
             ["crew", "🚢 Fleet & Safety"],
-            ["payments", "💳 Credits & Billing"],
+            ["payments", "🧾 Account & Usage"],
           ] as [DashTab, string][]).map(([key, label]) => (
             <button
               key={key}
@@ -1235,13 +1235,13 @@ const ManagerDashboard = () => {
                 <div className="bg-secondary/50 rounded-xl border border-[#D4AF37]/30 p-4 space-y-2">
                   <h3 className="text-base font-bold text-[#D4AF37]">Fleet Compliance Dashboard</h3>
                   <p className="text-sm text-muted-foreground">
-                    See your crew's MLC rest hours, certificate expiry warnings and CVs in one audit-ready view. Contact SeaMinds to activate your fleet subscription.
+                    See your crew's MLC rest hours, certificate expiry warnings and CVs in one audit-ready view. This feature needs approval — free for verified ship managers.
                   </p>
                   <button
-                    onClick={() => window.open("mailto:admin@seaminds.life?subject=Fleet%20subscription")}
+                    onClick={() => window.open("mailto:admin@seaminds.life?subject=Fleet%20Dashboard%20access%20approval%20request")}
                     className="text-xs font-medium px-3 py-2 rounded-lg bg-transparent text-[#D4AF37] border border-[#D4AF37] hover:bg-[#D4AF37]/10 transition-colors"
                   >
-                    Contact us
+                    Request approval
                   </button>
                 </div>
               ) : fleet?.ok ? (

@@ -13,8 +13,8 @@ const NAV = [
   { to: "/manager-search", label: "Crew Search", icon: Search, match: (p: string) => p === "/manager-search" },
   { to: "/manager/interviews", label: "AI Interview Studio", icon: GraduationCap, match: (p: string) => p === "/manager/interviews" },
   { to: "/manager/dashboard?tab=crew&section=safety", label: "Safety & Compliance", icon: ShieldCheck, match: (p: string, q: URLSearchParams) => p === "/manager/dashboard" && q.get("section") === "safety" },
-  { to: "/manager/dashboard?tab=payments", label: "Credits & Payments", icon: CreditCard, match: (p: string, q: URLSearchParams) => p === "/manager/dashboard" && q.get("tab") === "payments" },
-  { to: "/management/inspections", label: "Fleet Inspections", icon: Ship, match: () => false, note: "Fleet staff access" },
+  { to: "/management/inspections", label: "Fleet Workspace", icon: Ship, match: (p: string) => p.startsWith("/management/"), note: "" },
+  { to: "/manager/dashboard?tab=payments", label: "Account & Usage", icon: CreditCard, match: (p: string, q: URLSearchParams) => p === "/manager/dashboard" && q.get("tab") === "payments" },
 ];
 
 const HELP_MAILTO = "mailto:support@seaminds.life?subject=ShipManager%20by%20SeaMinds%20%E2%80%94%20help";
@@ -56,8 +56,8 @@ const ShipManagerLayout = () => {
     <div className="rounded-xl border border-border bg-background/50 p-3 space-y-1.5">
       <p className="text-sm font-semibold text-foreground truncate">{identity.company}</p>
       {status && <span className={`inline-block text-[10px] font-semibold border rounded-full px-2 py-0.5 ${status.cls}`}>{status.text}</span>}
-      {identity.balance !== null && <p className="text-[11px] text-muted-foreground">💳 {identity.balance} contact credits</p>}
-      {!identity.approved && <p className="text-[10px] text-muted-foreground leading-snug">Crew contacts and CVs unlock after approval.</p>}
+      <p className="text-[11px] text-emerald-400">Free for verified ship managers</p>
+      {!identity.approved && <p className="text-[10px] text-muted-foreground leading-snug">Crew Search and Fleet Workspace open after admin approval.</p>}
     </div>
   );
 
