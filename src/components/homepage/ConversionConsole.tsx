@@ -85,7 +85,7 @@ const MENU_LINKS: { label: string; to: string; external?: boolean }[] = [
   { label: "Find Crew — For Companies", to: "/for-companies" },
   { label: "Post Vacancy", to: "/post-vacancy" },
   { label: "Create AI Interview", to: "/manager/interviews" },
-  { label: "Manager Login", to: "/manager" },
+  { label: "ShipManager Login", to: "/manager" },
   { label: "🚢 Ship Management Login", to: "/fleet/login" },
   { label: "SeaMinds Score", to: "/app?tab=smc" },
   { label: "Jobs", to: "/app?tab=jobs" },
@@ -344,7 +344,7 @@ const ConversionConsole = () => {
             <div className="hidden md:flex items-center gap-2 mr-1 text-[11px] font-semibold">
               <Link to="/for-companies" className="text-muted-foreground hover:text-foreground no-underline">Find Crew</Link>
               <span className="text-muted-foreground/40">·</span>
-              <Link to="/manager" className="text-muted-foreground hover:text-foreground no-underline">Manager Login</Link>
+              <Link to="/manager" className="text-muted-foreground hover:text-foreground no-underline">ShipManager Login</Link>
             </div>
 
 
@@ -594,7 +594,7 @@ const ConversionConsole = () => {
                 className="rounded-xl px-5 h-12 font-semibold text-sm no-underline inline-flex items-center justify-center"
                 style={{ border: `1px solid ${GOLD}`, color: GOLD }}
               >
-                Manager Login
+                ShipManager Login
               </Link>
             </div>
           </div>

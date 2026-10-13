@@ -90,7 +90,7 @@ const tl: Dict = {
   joinCreateBtn: "Gumawa ng libreng account ⚓",
   joinForgot: "Nakalimutan ang password?",
   joinFreeForCrew: "Libre para sa mga crew member",
-  joinManagerLogin: "Manager Login",
+  joinManagerLogin: "ShipManager Login",
   joinErrEmailPassword: "Ilagay ang email mo at password na hindi bababa sa 8 karakter",
   joinErrExists: "May account na ang email na ito — mag-sign in na lang.",
   joinErrWrong: "Mali ang email o password",

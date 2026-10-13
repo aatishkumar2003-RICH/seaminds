@@ -102,7 +102,7 @@ const en = {
   joinCreateBtn: "Create free account ⚓",
   joinForgot: "Forgot password?",
   joinFreeForCrew: "Free for crew members",
-  joinManagerLogin: "Manager Login",
+  joinManagerLogin: "ShipManager Login",
   joinErrEmailPassword: "Enter your email and a password of at least 8 characters",
   joinErrExists: "This email already has an account — sign in instead.",
   joinErrWrong: "Wrong email or password",

@@ -220,7 +220,7 @@ const CrewCard = () => {
                 display: "block", textAlign: "center", marginTop: 10, color: GOLD, border: `1px solid ${GOLD}`,
                 borderRadius: 12, padding: "12px 0", fontSize: 13, fontWeight: 700,
               }}>
-                Manager login
+                ShipManager Login
               </Link>
             )}
 

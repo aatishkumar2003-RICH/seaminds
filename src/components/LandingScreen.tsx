@@ -138,7 +138,7 @@ const LandingScreen = ({ onGetStarted, onManagerLogin }: LandingScreenProps) => 
         onClick={onManagerLogin}
         className="mt-6 text-xs text-muted-foreground hover:text-primary underline underline-offset-2 transition-colors"
       >
-        Manager Login
+        ShipManager Login
       </button>
     </div>
   );

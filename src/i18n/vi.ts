@@ -90,7 +90,7 @@ const vi: Dict = {
   joinCreateBtn: "Tạo tài khoản miễn phí ⚓",
   joinForgot: "Quên mật khẩu?",
   joinFreeForCrew: "Miễn phí cho thuyền viên",
-  joinManagerLogin: "Đăng nhập Manager",
+  joinManagerLogin: "ShipManager Login",
   joinErrEmailPassword: "Nhập email và mật khẩu ít nhất 8 ký tự",
   joinErrExists: "Email này đã có tài khoản — hãy đăng nhập.",
   joinErrWrong: "Email hoặc mật khẩu không đúng",
