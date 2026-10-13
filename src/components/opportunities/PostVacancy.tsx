@@ -218,9 +218,7 @@ const PostVacancy = () => {
   };
   const setAllOwnership = (o: Ownership) => { setScan(null); setSources((p) => p.map((s) => (s.status === "ready" ? { ...s, ownership: o } : s))); };
 
-  const selected = sources.flatMap((s) => (s.status === "ready" ? s.rows.filter((r) => r.selected).map((r) => ({ s, r: effective(r) })) : []));
-  const unowned = [...new Set(selected.filter(({ s }) => !s.ownership).map(({ s }) => s.label))];
-  const engineRows: PreviewVacancy[] = selected.map(({ s, r }) => {
+  const toEngine = (s: Source, r: Row): PreviewVacancy => {
     const { _key, selected: _sel, open: _o, ...v } = r;
     void _key; void _sel; void _o;
     return {
@@ -231,14 +229,22 @@ const PostVacancy = () => {
       ownership: s.ownership,
       risk_level: s.risk.level,
     };
-  });
-  const problems = identity ? [
-    ...validateJoiningDates(engineRows).warnings,
-    ...validateContactFormats(engineRows).warnings,
-    ...validateAttribution(engineRows, identity.companyName).warnings,
-    ...(engineRows.some((r) => r.source_type === "flier" && !r.flier_url) ? ["A flyer's original image is missing — remove it and upload again."] : []),
-    ...(unowned.length ? [`Choose "Our vacancy" or "Third-party advert" for: ${unowned.join(", ")}`] : []),
-  ] : [];
+  };
+  /** First reason this vacancy cannot be published yet, or null when it is ready. */
+  const rowIssue = (s: Source, er: Row): string | null => {
+    if (!identity) return "Loading account…";
+    if (!s.ownership) return `Choose "Our vacancy" or "Third-party advert"`;
+    const v = [toEngine(s, er)];
+    if (s.kind === "flier" && !s.flierUrl) return "Flyer image missing — upload again";
+    if (s.ownership === "third_party" && !er.contact_email?.trim() && !er.contact_whatsapp?.trim()) return "Needs an email or WhatsApp";
+    return validateContactFormats(v).warnings[0] || validateJoiningDates(v).warnings[0] || validateAttribution(v, identity.companyName).warnings[0] || null;
+  };
+  // Valid vacancies publish now; the rest stay in the studio to fix or remove.
+  const selected = sources.flatMap((s) => (s.status === "ready" ? s.rows.filter((r) => r.selected).map((r) => ({ s, r, er: effective(r) })) : []));
+  const validSel = selected.filter(({ s, er }) => !rowIssue(s, er));
+  const heldCount = selected.length - validSel.length;
+  const engineRows: PreviewVacancy[] = validSel.map(({ s, er }) => toEngine(s, er));
+  const problems: string[] = [];
 
   const runCheck = async () => {
     if (!identity || !engineRows.length || problems.length) return;
