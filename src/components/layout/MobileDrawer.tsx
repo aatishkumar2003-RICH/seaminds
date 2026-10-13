@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import AboutSeaMinds from "@/components/AboutSeaMinds";
-import { LogOut, HelpCircle } from "lucide-react";
+import { LogOut, HelpCircle, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import SOSButton from "@/components/SOSButton";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 import { NAV_ITEMS, NATIONALITY_FLAGS, type NavItem, type Screen, type AppState } from "./types";
@@ -36,7 +38,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
   drawerOpen, setDrawerOpen, isSwiping, isEdgeSwiping,
   touchDelta, edgeSwipeDelta, touchStart, setTouchStart, setTouchDelta, setIsSwiping,
   screen, appState, firstName, lastName, nationality, role,
-  streakCount, jobBadgeCount, onNavClick, onReplayTour, onSignOut, onOpenChat, shipName, tourActiveScreen,
+   jobBadgeCount, onNavClick, onReplayTour, onSignOut, onOpenChat, shipName, tourActiveScreen,
 }) => {
   const [aboutOpen, setAboutOpen] = useState(false);
   return (
@@ -65,18 +67,30 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
         setIsSwiping(false);
       }}
     >
-      <button onClick={() => setDrawerOpen(false)} className="absolute right-4 top-4 text-lg text-muted-foreground transition-colors hover:text-foreground">✕</button>
-      <div className="mb-4 flex items-center gap-2">
+      <div className="mb-3 flex items-center justify-between gap-1">
+        <div className="flex items-center gap-1.5">
         <img src={seamindsLogo} alt="SeaMinds" className="h-6 w-6 rounded object-contain" />
         <span className="text-sm font-bold text-foreground/80">SeaMinds</span>
+        </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="outline" size="icon" onClick={onSignOut} aria-label="Sign Out" title="Sign Out" className="h-11 w-11 shrink-0 rounded-full border-primary/40 text-primary hover:bg-primary/10 hover:text-primary">
+              <LogOut aria-hidden="true" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="right">Sign Out</TooltipContent>
+        </Tooltip>
       </div>
-      <a href="/profile" onClick={() => setDrawerOpen(false)} aria-label="My Sea Profile" className="mb-6 flex items-center gap-2 rounded-lg px-1 py-1 transition-colors hover:bg-secondary/60">
+      <div className="mb-6 flex items-center gap-1">
+      <a href="/profile" onClick={() => setDrawerOpen(false)} aria-label="My Sea Profile" className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-1 py-1 transition-colors hover:bg-secondary/60">
         <span className="text-lg">{NATIONALITY_FLAGS[nationality] || "🌊"}</span>
-        <div className="flex flex-col">
+        <div className="flex min-w-0 flex-col break-words">
           <span className="text-sm font-medium text-foreground">{firstName || "Seafarer"} {lastName}</span>
           {role && <span className="text-xs text-muted-foreground">{role}</span>}
         </div>
       </a>
+      <Button variant="ghost" size="icon" onClick={() => setDrawerOpen(false)} aria-label="Close menu" title="Close menu" className="h-11 w-8 shrink-0 text-muted-foreground"><X aria-hidden="true" /></Button>
+      </div>
       <nav className="flex flex-1 flex-col gap-1">
         {NAV_ITEMS.map((item) => {
           const active = screen === item.screen && appState === "main";
@@ -101,9 +115,6 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
         })}
       </nav>
       <div className="mt-auto flex flex-col gap-2">
-        <div className="flex items-center justify-center gap-2 rounded-full bg-secondary/70 py-1.5 text-xs font-medium text-muted-foreground">
-          🔥 {streakCount} day streak
-        </div>
         <button onClick={onReplayTour} className="flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground">
           <HelpCircle size={14} /> Replay Tour
         </button>
@@ -114,9 +125,6 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
           ⓘ About SeaMinds
         </button>
         {aboutOpen && <AboutSeaMinds onClose={() => setAboutOpen(false)} />}
-        <button onClick={onSignOut} className="flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground">
-          <LogOut size={14} /> Sign Out
-        </button>
         <div className="w-full">
           <SOSButton onOpenChat={onOpenChat} firstName={firstName} shipName={shipName} inline />
         </div>
