@@ -80,3 +80,19 @@ describe("telegram channel pastes", () => {
     expect(r.every((b) => b.text.length <= 4000)).toBe(true);
   });
 });
+
+describe("numbered batch labels", () => {
+  it("trusts BATCH 1 / BATCH 2 labels like ---", () => {
+    const r = splitAdverts(`BATCH 1 : OSM THOME - INDIA RECRUITMENT\n${A}\n\nBATCH 2 : OSM THOME\n${B}`);
+    expect(r).toHaveLength(2);
+    expect(r.every((b) => !b.uncertain)).toBe(true);
+    expect(r[0].text).toContain("BATCH 1");
+    expect(r[1].text).not.toContain("a@one.com");
+  });
+  it("recognises ADVERT / [JOB n] labels", () => {
+    expect(splitAdverts(`ADVERT 1\n${A}\n[JOB 2]\n${B}`)).toHaveLength(2);
+  });
+  it("does not treat a single label or 'Job 1 year contract' as dividers", () => {
+    expect(splitAdverts(`Job 1 year contract\n${A}`)).toHaveLength(1);
+  });
+});

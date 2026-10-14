@@ -523,7 +523,14 @@ const PostVacancy = () => {
             </p>
           )}
           {s.status === "reading" && <p className="text-xs text-muted-foreground flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> AI is reading this advert…</p>}
-          {s.status === "error" && <p className="text-xs text-[#f59e0b] flex items-center gap-1"><AlertTriangle size={12} /> {s.error}</p>}
+          {s.status === "error" && (
+            <div className="flex items-center gap-2">
+              <p className="flex-1 text-xs text-[#f59e0b] flex items-center gap-1"><AlertTriangle size={12} /> {s.error}</p>
+              {s.kind === "text" && s.text && (
+                <button onClick={() => retryText(s)} className="rounded-lg border border-[#D4AF37] px-2 py-1.5 text-[11px] font-semibold text-[#D4AF37] hover:bg-[#D4AF37]/10">Retry reading</button>
+              )}
+            </div>
+          )}
 
           {s.status === "ready" && (
             <>
