@@ -57,7 +57,7 @@ const RankHub = () => {
     <div style={{ minHeight: "100vh", background: NAVY, padding: "16px 16px 70px" }}>
       <Helmet>
         <title>{title}</title>
-        <meta name="description" content={`Live ${hub.name} jobs and maritime vacancies from shipping companies worldwide. Apply free on SeaMinds — no agent fees.`} />
+        <meta name="description" content={`Live ${hub.name} jobs at sea — ship jobs and crew vacancies from shipping companies worldwide. Apply direct to recruiters free on SeaMinds, no agent fees.`} />
         <link rel="canonical" href={canonical} />
         <meta property="og:title" content={title} />
         <meta property="og:url" content={canonical} />
@@ -96,6 +96,18 @@ const RankHub = () => {
             </p>
           )}
         </div>
+
+        <section style={{ marginTop: 24, background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: "14px 16px" }}>
+          <h2 style={{ color: GOLD, fontSize: 15, fontWeight: 800 }}>How to get a {hub.name} job at sea</h2>
+          <p style={{ color: "#cbd5e1", fontSize: 13, lineHeight: 1.65, marginTop: 8 }}>
+            Every {hub.name} vacancy above is a real ship job posted by a shipping company or crewing agency.
+            Open a vacancy and contact the recruiter directly by WhatsApp or email — SeaMinds never charges seafarers.
+            Keep your CV, STCW certificates and sea-service record up to date so recruiters can shortlist you fast.
+          </p>
+          <p style={{ color: "#cbd5e1", fontSize: 13, lineHeight: 1.65, marginTop: 8 }}>
+            New crew jobs are added every day. <a href="/join" style={{ color: GOLD }}>Create your free Sea Profile</a> to receive matching jobs by email.
+          </p>
+        </section>
 
         <div style={{ marginTop: 24 }}>
           <p style={{ color: "#94a3b8", fontSize: 12, fontWeight: 700, marginBottom: 8 }}>Nearby ranks</p>

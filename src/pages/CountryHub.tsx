@@ -56,7 +56,7 @@ const CountryHub = () => {
     <div style={{ minHeight: "100vh", background: NAVY, padding: "16px 16px 70px" }}>
       <Helmet>
         <title>{title}</title>
-        <meta name="description" content={`Live seafarer jobs and maritime vacancies in ${hub.name} — deck, engine and catering ranks. Apply free on SeaMinds, no agent fees.`} />
+        <meta name="description" content={`Live seafarer jobs, ship jobs and crew jobs at sea in ${hub.name} — deck, engine and catering ranks. Apply direct to recruiters free on SeaMinds, no agent fees.`} />
         <link rel="canonical" href={canonical} />
         <meta property="og:title" content={title} />
         <meta property="og:url" content={canonical} />
