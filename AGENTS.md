@@ -1,15 +1,14 @@
 # Architecture rules
 
+- Subdirectories (e.g. `supabase/functions/`) have their own `AGENTS.md`; read it before changing files there.
+
 - Assessment recovery emails go through `recovery_outbox` (one row per reminder, leased, fenced by attempt, stable idempotency key); never send directly from `recovery_claim_due`. Why: a crashed worker must not strand recoverable work or mint new links per retry.
 - Heartbeat `save_checkpoint` never clears an interruption; only `confirm_resume` (same paper + persisted answer) does. Why: a reconnect is not proof of recovery.
 - Final scoring is single-flight via `final_scoring_lease` on `scoring_jobs`; a validated AI result is cached before commit and reused. Why: polling and concurrent requests must not trigger repeated AI calls.
 - Pre-paper start failures are recorded in `assessment_start_incidents` (owner-bound, server-classified); no fake checkpoint or paper. Why: failures before issuance must be visible and recoverable without bypassing readiness.
 - Readiness and recovery health are computed per exact rank/context blueprint coverage (`blueprint_coverage*`), never global counts. Why: a row existing does not prove a paper can be issued.
-- Pure AI/email provider adapters live in `supabase/functions/_shared/finalAi.ts` with no imports so vitest can test them. Why: deterministic mocked-fetch tests without a new test runtime.
 - Assessment `scoring_tier` (QUICK_PROFILE / CV_VERIFIED) and `assessment_round` are set server-side by trigger `trg_set_assessment_scoring_tier` at creation; clients never choose them. Why: a score's evidence basis must not be forgeable.
-
 - DORA help knowledge lives in `dora_articles` (Postgres FTS via `dora_search_articles`, max 4 published hits); own-user context only via `dora_get_my_context()` keyed by auth.uid(); metrics/gaps store no raw conversation text. Why: cheap grounded retrieval without vectors and zero cross-user/PII leakage.
-- DORA answers go through `dora-assist`: deterministic exam-integrity block and no-article fallback before any AI call; AI sees only retrieved published articles + `dora_get_my_context`. Why: no invented procedures, no exam leakage, minimal AI cost.
 - Every Apply button routes through `src/lib/applicationRouter.ts` (WhatsApp → recruiter email → official site → flyer); SeaMinds-published adverts keep the agency in `job_postings.recruiter_name` and `notify-application` never falls back to the publishing account's email. Why: applications must reach the actual recruiter, and toasts must only claim what SeaMinds actually did.
 - Service-worker runtime caching rules live in `src/lib/pwaCacheRules.ts`: only listed public tables may be cached; every other backend call is NetworkOnly. Why: cached personal responses showed stale application state.
 - Crew recruiter-email delivery status is read via `notify-application` `kind: "delivery_status"` (own applications, ids only), cached in `vacancyFeed` and refreshed on app resume. Why: an application row alone does not prove the email was accepted.
@@ -19,3 +18,4 @@
 - Manager pages (/manager/dashboard, /manager/interviews, /manager-search, /post-vacancy) render inside one route-level `ShipManagerLayout` (navigation only; pages keep their own auth, permission and business logic; dashboard tabs are URL-driven via ?tab=/&section=). Why: one persistent shell without duplicating or rewriting working engines.
 - Vacancy ownership is encoded in `job_postings.recruiter_name`: new own-company rows store the publisher's company name, third-party adverts a distinct agency; NULL = legacy behaviour. Routing uses the raw `recruiterName` (`isThirdPartyAdvert`), never the display label. Publishing is one atomic INSERT per batch; ambiguous network failures mark the batch uncertain and retries reconcile by `posting_batch_id` first. Why: no schema field for routing mode, and a timeout is not proof nothing was committed.
 - Vacancies never expire automatically: direct feeds filter `status = 'active'` only; `expires_at` gets `NO_EXPIRY_COMPAT` (NOT NULL compat). Delete is blocked, never converted, when applications exist; uncertain batches are only re-checked by the same `posting_batch_id`. Why: retention is an owner decision; a timeout is not proof of no commit.
+- Vacancy recruiter country is detected phone → agency-name keyword → email ccTLD, in `src/lib/vacancyOrigin.ts` mirrored by SQL `public.vacancy_origin_of()` (used by `vacancy_origin_counts`). Why: email-only adverts must land under their country, not Worldwide; both sides must agree or tile counts and filters diverge.

@@ -123,7 +123,7 @@ export const loadVacancies = async (opts: LoadVacanciesOpts = {}): Promise<Unifi
     .eq("is_scam_flagged", false); // no age/expiry hiding — archival is manual
   extQuery = withoutArchivedExternal(extQuery);
   if (opts.minQuality !== undefined) extQuery = extQuery.gte("quality_score", opts.minQuality);
-  if (origin) extQuery = extQuery.or(originOrFilter(origin));
+  if (origin) extQuery = extQuery.or(originOrFilter(origin, "company_name"));
 
   let directQuery = supabase
     .from("job_postings")
@@ -131,7 +131,7 @@ export const loadVacancies = async (opts: LoadVacanciesOpts = {}): Promise<Unifi
       "id, rank_required, vessel_type, joining_port, joining_date, contract_duration, monthly_salary, company_name, verified, created_at, expires_at, additional_notes, contact_email, contact_whatsapp, positions, flier_url, posting_batch_id, recruiter_name"
     )
     .eq("status", "active");
-  if (origin) directQuery = directQuery.or(originOrFilter(origin));
+  if (origin) directQuery = directQuery.or(originOrFilter(origin, "recruiter_name"));
 
   const [directRes, extRes] = await Promise.all([
     directQuery.order("created_at", { ascending: false }).limit(opts.limitDirect ?? 20),
@@ -142,7 +142,10 @@ export const loadVacancies = async (opts: LoadVacanciesOpts = {}): Promise<Unifi
     ...(((directRes.data as any[]) || []).map(mapDirect)),
     ...(((extRes.data as any[]) || []).map(mapExternal)),
   ];
-  if (origin) rows = rows.filter((v) => originOf(v.whatsapp) === origin.code);
+  if (origin) rows = rows.filter((v) => originOf({
+    whatsapp: v.whatsapp, email: v.email,
+    name: v.kind === "direct" ? v.recruiterName : v.company,
+  }) === origin.code);
   return rows.sort(
     (a, b) => new Date(b.postedAt || 0).getTime() - new Date(a.postedAt || 0).getTime()
   );

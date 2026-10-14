@@ -16,3 +16,13 @@ describe("originOf hubs", () => {
   });
   it("unknown code stays null", () => expect(originOf("+254 7")).toBeNull());
 });
+describe("originOf multi-signal", () => {
+  it("phone wins first", () => expect(originOf({ whatsapp: "+63917", email: "a@x.vn" })).toBe("ph"));
+  it("email domain .com.ph → Philippines", () => expect(originOf({ email: "recruitment@elburgshipmanagement.com.ph" })).toBe("ph"));
+  it("agency name → Philippines", () => expect(originOf({ email: "recruitment@uplines.net", name: "United Philippine Lines" })).toBe("ph"));
+  it("vietnam email", () => expect(originOf({ email: "crew@abc.com.vn" })).toBe("vn"));
+  it("generic stays null", () => expect(originOf({ email: "jobs@gmail.com", name: "Ocean Crew" })).toBeNull());
+});
+describe("originOf order", () => {
+  it("agency country beats parent-company email", () => expect(originOf({ email: "x@osm.no", name: "OSM Thome Philippines" })).toBe("ph"));
+});

@@ -267,7 +267,7 @@ const JobFeed = () => {
           </div>
           {origin && (
             <p style={{ color: "#94a3b8", fontSize: 11, marginTop: 6 }}>
-              Showing jobs from recruiters in {origin.name} (by WhatsApp country code) · vessels trade worldwide
+              Showing jobs from recruiters in {origin.name} (by phone, email or agency) · vessels trade worldwide
             </p>
           )}
 
