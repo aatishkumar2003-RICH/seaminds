@@ -232,8 +232,8 @@ const JobFeed = () => {
     <div style={{ minHeight: "100vh", background: NAVY }}>
       <ApplyGateSheet open={gateOpen} onClose={() => setGateOpen(false)} next="/feed" />
       <Helmet>
-        <title>Maritime Jobs Feed — Live Seafarer Vacancies | SeaMinds</title>
-        <meta name="description" content="Live maritime job vacancies for seafarers — deck, engine, cadet and catering ranks from manning companies worldwide. Apply free on SeaMinds." />
+        <title>{`${rankHub ? rankHub.name + " " : ""}Seafarer Jobs, Ship Jobs & Crew Jobs at Sea${origin ? " — " + origin.name : ""} | SeaMinds`}</title>
+        <meta name="description" content={`Live jobs at sea for seafarers and ship crew${origin ? " from " + origin.name : " worldwide"} — deck, engine, cadet and catering vacancies. Apply direct to recruiters by WhatsApp or email, free.`} />
         <link rel="canonical" href="https://seaminds.life/feed" />
       </Helmet>
 
