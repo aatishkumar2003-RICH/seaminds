@@ -76,7 +76,8 @@ export interface OriginInput { whatsapp?: string | null; email?: string | null; 
 
 /** Accepts a phone string (legacy) or { whatsapp, email, name }. */
 export const originOf = (input: string | null | undefined | OriginInput): OriginCode | null => {
-  if (input == null || typeof input === "string") return byPhone(input);
+  if (input == null) return null;
+  if (typeof input === "string") return byPhone(input);
   return byPhone(input.whatsapp) || byName(input.name) || byEmail(input.email);
 };
 

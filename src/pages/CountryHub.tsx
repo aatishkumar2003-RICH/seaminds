@@ -49,7 +49,7 @@ const CountryHub = () => {
   if (!hub) return <NotFound title="Country hub not found" message="We don't have a hub for that country yet. Browse the live vacancy feed instead." />;
 
   const siblings = COUNTRY_HUBS.filter((c) => c.slug !== hub.slug).slice(0, 6);
-  const title = `Seafarer Jobs in ${hub.name} | SeaMinds`;
+  const title = `Jobs at Sea & Ship Jobs in ${hub.name} | SeaMinds`;
   const canonical = `https://seaminds.life/jobs/country/${hub.slug}`;
 
   return (
