@@ -1,0 +1,111 @@
+CREATE OR REPLACE FUNCTION public.vacancy_origin_of(wa text, email text, rname text)
+RETURNS text LANGUAGE sql IMMUTABLE SET search_path = public AS $f$
+  SELECT COALESCE(
+   (SELECT CASE
+       WHEN n = '' THEN NULL
+       WHEN n ~ '^7' AND length(n) = 11 THEN 'ru'
+       WHEN n LIKE '+380%' OR n LIKE '380%' THEN 'ua'
+       WHEN n LIKE '+880%' THEN 'bd'
+       WHEN n LIKE '+357%' THEN 'cy'
+       WHEN n LIKE '+385%' THEN 'hr'
+       WHEN n LIKE '+971%' THEN 'ae'
+       WHEN n LIKE '+62%' OR n LIKE '62%' OR n LIKE '08%' THEN 'id'
+       WHEN n LIKE '+91%' OR n LIKE '91%' THEN 'in'
+       WHEN n LIKE '+63%' OR n LIKE '63%' THEN 'ph'
+       WHEN n LIKE '+84%' OR n LIKE '84%' THEN 'vn'
+       WHEN n LIKE '+86%' THEN 'cn'
+       WHEN n LIKE '+95%' THEN 'mm'
+       WHEN n LIKE '+94%' THEN 'lk'
+       WHEN n LIKE '+92%' THEN 'pk'
+       WHEN n LIKE '+30%' THEN 'gr'
+       WHEN n LIKE '+90%' THEN 'tr'
+       WHEN n LIKE '+49%' THEN 'de'
+       WHEN n LIKE '+44%' THEN 'gb'
+       WHEN n LIKE '+31%' THEN 'nl'
+       WHEN n LIKE '+47%' THEN 'no'
+       WHEN n LIKE '+45%' THEN 'dk'
+       WHEN n LIKE '+33%' THEN 'fr'
+       WHEN n LIKE '+39%' THEN 'it'
+       WHEN n LIKE '+48%' THEN 'pl'
+       WHEN n LIKE '+40%' THEN 'ro'
+       WHEN n LIKE '+65%' THEN 'sg'
+       WHEN n LIKE '+7%' THEN 'ru'
+       WHEN n LIKE '+1%' THEN 'us'
+     END FROM (SELECT regexp_replace(COALESCE(wa,''), '[^0-9+]', '', 'g') AS n) x),
+   (SELECT CASE WHEN position('@' in e) = 0 THEN NULL
+    WHEN e ~ '(\.id)$' THEN 'id'
+    WHEN e ~ '(\.in)$' THEN 'in'
+    WHEN e ~ '(\.ua)$' THEN 'ua'
+    WHEN e ~ '(\.ru)$' THEN 'ru'
+    WHEN e ~ '(\.ph)$' THEN 'ph'
+    WHEN e ~ '(\.vn)$' THEN 'vn'
+    WHEN e ~ '(\.cn)$' THEN 'cn'
+    WHEN e ~ '(\.mm)$' THEN 'mm'
+    WHEN e ~ '(\.bd)$' THEN 'bd'
+    WHEN e ~ '(\.lk)$' THEN 'lk'
+    WHEN e ~ '(\.pk)$' THEN 'pk'
+    WHEN e ~ '(\.gr)$' THEN 'gr'
+    WHEN e ~ '(\.cy)$' THEN 'cy'
+    WHEN e ~ '(\.tr)$' THEN 'tr'
+    WHEN e ~ '(\.de)$' THEN 'de'
+    WHEN e ~ '(\.uk)$' THEN 'gb'
+    WHEN e ~ '(\.nl)$' THEN 'nl'
+    WHEN e ~ '(\.no)$' THEN 'no'
+    WHEN e ~ '(\.dk)$' THEN 'dk'
+    WHEN e ~ '(\.fr)$' THEN 'fr'
+    WHEN e ~ '(\.it)$' THEN 'it'
+    WHEN e ~ '(\.hr)$' THEN 'hr'
+    WHEN e ~ '(\.pl)$' THEN 'pl'
+    WHEN e ~ '(\.ro)$' THEN 'ro'
+    WHEN e ~ '(\.sg)$' THEN 'sg'
+    WHEN e ~ '(\.ae)$' THEN 'ae'
+    WHEN e ~ '(\.us)$' THEN 'us'
+     END FROM (SELECT lower(trim(COALESCE(email,''))) AS e) y),
+   (SELECT CASE WHEN s = '' THEN NULL
+    WHEN s LIKE ANY (ARRAY['%indonesia%','%jakarta%','%surabaya%','%batam%','%semarang%']) THEN 'id'
+    WHEN s LIKE ANY (ARRAY['%india%','%mumbai%','%chennai%','%kolkata%','%kochi%','%navi mumbai%']) THEN 'in'
+    WHEN s LIKE ANY (ARRAY['%ukrain%','%odesa%','%odessa%','%kherson%','%mykolaiv%','%izmail%']) THEN 'ua'
+    WHEN s LIKE ANY (ARRAY['%russia%','%novorossiysk%','%vladivostok%','%st. petersburg%','%saint petersburg%']) THEN 'ru'
+    WHEN s LIKE ANY (ARRAY['%philippin%','%phils%','%manila%','%cebu%','%makati%','%iloilo%']) THEN 'ph'
+    WHEN s LIKE ANY (ARRAY['%vietnam%','%viet nam%','%hai phong%','%haiphong%','%hanoi%','%ho chi minh%','%saigon%']) THEN 'vn'
+    WHEN s LIKE ANY (ARRAY['%china%','%shanghai%','%dalian%','%qingdao%','%tianjin%']) THEN 'cn'
+    WHEN s LIKE ANY (ARRAY['%myanmar%','%yangon%']) THEN 'mm'
+    WHEN s LIKE ANY (ARRAY['%bangladesh%','%chittagong%','%dhaka%']) THEN 'bd'
+    WHEN s LIKE ANY (ARRAY['%sri lanka%','%colombo%']) THEN 'lk'
+    WHEN s LIKE ANY (ARRAY['%pakistan%','%karachi%']) THEN 'pk'
+    WHEN s LIKE ANY (ARRAY['%greece%','%hellas%','%hellenic%','%piraeus%','%athens%']) THEN 'gr'
+    WHEN s LIKE ANY (ARRAY['%cyprus%','%limassol%','%larnaca%']) THEN 'cy'
+    WHEN s LIKE ANY (ARRAY['%turkey%','%türkiye%','%turkiye%','%istanbul%']) THEN 'tr'
+    WHEN s LIKE ANY (ARRAY['%germany%','%hamburg%','%bremen%','%gmbh%']) THEN 'de'
+    WHEN s LIKE ANY (ARRAY['%united kingdom%','%london%','%southampton%','%aberdeen%']) THEN 'gb'
+    WHEN s LIKE ANY (ARRAY['%netherlands%','%rotterdam%','%holland%']) THEN 'nl'
+    WHEN s LIKE ANY (ARRAY['%norway%','%bergen%','%oslo%']) THEN 'no'
+    WHEN s LIKE ANY (ARRAY['%denmark%','%copenhagen%']) THEN 'dk'
+    WHEN s LIKE ANY (ARRAY['%france%','%marseille%']) THEN 'fr'
+    WHEN s LIKE ANY (ARRAY['%italy%','%genoa%','%genova%','%naples%']) THEN 'it'
+    WHEN s LIKE ANY (ARRAY['%croatia%','%rijeka%']) THEN 'hr'
+    WHEN s LIKE ANY (ARRAY['%poland%','%gdynia%','%szczecin%','%gdansk%']) THEN 'pl'
+    WHEN s LIKE ANY (ARRAY['%romania%','%constanta%']) THEN 'ro'
+    WHEN s LIKE ANY (ARRAY['%singapore%']) THEN 'sg'
+    WHEN s LIKE ANY (ARRAY['%dubai%','%abu dhabi%','%sharjah%','%fujairah%','%u.a.e%']) THEN 'ae'
+    WHEN s LIKE ANY (ARRAY['%houston%','%new orleans%']) THEN 'us'
+     END FROM (SELECT lower(COALESCE(rname,'')) AS s) z),
+   'other');
+$f$;
+GRANT EXECUTE ON FUNCTION public.vacancy_origin_of(text,text,text) TO anon, authenticated;
+
+CREATE OR REPLACE FUNCTION public.vacancy_origin_counts()
+RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $f$
+  WITH o AS (
+    SELECT public.vacancy_origin_of(contact_whatsapp, contact_email, recruiter_name) AS k
+      FROM public.job_postings WHERE status = 'active'
+    UNION ALL
+    SELECT public.vacancy_origin_of(contact_whatsapp, contact_email, company_name)
+      FROM public.external_vacancies
+     WHERE archived_at IS NULL AND COALESCE(is_scam_flagged, false) = false
+  )
+  SELECT jsonb_build_object('total', (SELECT count(*) FROM o),
+    'by', COALESCE((SELECT jsonb_object_agg(k, cnt) FROM (SELECT k, count(*) cnt FROM o GROUP BY k) s), '{}'::jsonb));
+$f$;
+GRANT EXECUTE ON FUNCTION public.vacancy_origin_counts() TO anon, authenticated;
+NOTIFY pgrst, 'reload schema';

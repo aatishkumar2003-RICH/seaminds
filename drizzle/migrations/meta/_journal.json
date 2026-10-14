@@ -358,6 +358,13 @@
       "when": 1791958777918,
       "tag": "0050_vacancy_origin_counts_25_countries",
       "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1791971318289,
+      "tag": "0051_vacancy_origin_multi_signal",
+      "breakpoints": true
     }
   ]
 }
