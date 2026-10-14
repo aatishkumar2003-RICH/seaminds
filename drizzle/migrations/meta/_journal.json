@@ -365,6 +365,13 @@
       "when": 1791971318289,
       "tag": "0051_vacancy_origin_multi_signal",
       "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1791971386688,
+      "tag": "0052_vacancy_origin_name_before_email",
+      "breakpoints": true
     }
   ]
 }
