@@ -131,3 +131,6 @@ verify_jwt = false
 
 [functions.dora-assist]
 verify_jwt = false
+
+[functions.crew-job-digest]
+verify_jwt = false
