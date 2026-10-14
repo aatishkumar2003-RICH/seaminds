@@ -68,9 +68,11 @@ Deno.serve(async (req) => {
     if (await aiPaused(admin)) return aiPausedResponse(corsHeaders);
 
     // --- no daily cap (usage is logged in ai_usage for future credit billing).
-    // Burst guard only: max 120 reads per 10 minutes stops runaway loops/abuse.
+    // Burst guard only: max 300 reads per 10 minutes stops runaway loops/abuse.
+    // Platform operator account (atish@seaminds.life) is exempt, like admins.
+    const OPERATOR_IDS = new Set(["1f2bf462-d6c2-420e-b2a8-01717d611444"]);
     const { data: isAdm } = await admin.rpc("is_admin", { _user_id: userId });
-    if (isAdm !== true) try {
+    if (isAdm !== true && !OPERATOR_IDS.has(userId)) try {
       const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
       const { count } = await admin
         .from("ai_usage")
@@ -78,7 +80,7 @@ Deno.serve(async (req) => {
         .eq("user_id", userId)
         .eq("feature", "parse-vacancy-text")
         .gte("created_at", since);
-      if ((count ?? 0) >= 120) {
+      if ((count ?? 0) >= 300) {
         return new Response(
           JSON.stringify({ ok: false, error: "burst_limit", message: "Too many adverts at once — wait a few minutes and retry the failed ones." }),
           { status: 429, headers: jsonHeaders },
