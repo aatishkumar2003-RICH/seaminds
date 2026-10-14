@@ -134,3 +134,6 @@ verify_jwt = false
 
 [functions.crew-job-digest]
 verify_jwt = false
+
+[functions.manager-engagement]
+verify_jwt = false
