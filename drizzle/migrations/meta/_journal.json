@@ -337,6 +337,13 @@
       "when": 1791953933576,
       "tag": "0047_crew_job_digest_log",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1791956305719,
+      "tag": "0048_manager_engagement",
+      "breakpoints": true
     }
   ]
 }

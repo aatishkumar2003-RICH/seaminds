@@ -3241,6 +3241,24 @@ export type Database = {
           },
         ]
       }
+      manager_engagement_log: {
+        Row: {
+          kind: string
+          manager_user_id: string
+          sent_on: string
+        }
+        Insert: {
+          kind: string
+          manager_user_id: string
+          sent_on?: string
+        }
+        Update: {
+          kind?: string
+          manager_user_id?: string
+          sent_on?: string
+        }
+        Relationships: []
+      }
       manager_profiles: {
         Row: {
           admin_approved: boolean | null
@@ -3259,6 +3277,7 @@ export type Database = {
           fleet_until: string | null
           full_name: string | null
           id: string
+          marketing_emails: boolean
           phone: string | null
           user_id: string
         }
@@ -3279,6 +3298,7 @@ export type Database = {
           fleet_until?: string | null
           full_name?: string | null
           id?: string
+          marketing_emails?: boolean
           phone?: string | null
           user_id: string
         }
@@ -3299,6 +3319,7 @@ export type Database = {
           fleet_until?: string | null
           full_name?: string | null
           id?: string
+          marketing_emails?: boolean
           phone?: string | null
           user_id?: string
         }
