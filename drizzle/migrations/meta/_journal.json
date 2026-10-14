@@ -330,6 +330,13 @@
       "when": 1791902423032,
       "tag": "0046_fix_verification_tamper_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1791953933576,
+      "tag": "0047_crew_job_digest_log",
+      "breakpoints": true
     }
   ]
 }

@@ -1437,6 +1437,24 @@ export type Database = {
         }
         Relationships: []
       }
+      crew_digest_log: {
+        Row: {
+          crew_id: string
+          sent_on: string
+          vacancy_key: string
+        }
+        Insert: {
+          crew_id: string
+          sent_on?: string
+          vacancy_key: string
+        }
+        Update: {
+          crew_id?: string
+          sent_on?: string
+          vacancy_key?: string
+        }
+        Relationships: []
+      }
       crew_documents: {
         Row: {
           ai_confidence: number | null
