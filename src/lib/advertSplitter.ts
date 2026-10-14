@@ -7,6 +7,10 @@ export type AdvertBlock = { text: string; uncertain: boolean; reason?: string };
 
 // "---", "====", "===== PASTE 01 =====", "### ADVERT 3 ###"
 const SEPARATOR = /^\s*(?:[-=_*~#]{3,}(?:\s*(?:paste|advert|ad|post|batch|message|msg|page)\s*#?\d*\s*[-=_*~#]{3,})?)\s*$/i;
+// Numbered labels on their own line: "BATCH 1", "BATCH 2 : OSM THOME - INDIA", "[ADVERT 3]", "Vacancy #4 -", "JOB 5."
+// Trusted like "---" when the paste contains at least two of them. The heading line stays with its advert.
+const NUMBERED_HEADER = /^\s*[[(#*]*\s*(?:batch|advert|advertisement|ad|job|vacancy|post|paste)\s*(?:no\.?|#)?\s*\d{1,4}\s*[\])*]*\s*(?:[:.\-–—|)].*)?$/i;
+const isNumberedHeader = (l: string) => l.length <= 160 && NUMBERED_HEADER.test(l);
 // Telegram / WhatsApp export headers: "[13/10/2026 10:21] Name:", "13/10/26, 10:21 - Name:", "Forwarded from X"
 const MSG_HEADER = /^\s*(?:\[\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4},?\s+\d{1,2}:\d{2}(?::\d{2})?(?:\s*[AP]M)?\]|\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4},?\s+\d{1,2}:\d{2}(?:\s*[AP]M)?\s+-\s|Forwarded from\b)/i;
 // Channel post openers copied without timestamps: hiring headings, vacancy hashtags, "COMPANY:" lines,
@@ -133,6 +137,12 @@ function splitRaw(text: string): AdvertBlock[] {
   const lines = text.split("\n");
   if (lines.some((l) => SEPARATOR.test(l))) {
     return splitOn(lines, (l) => SEPARATOR.test(l), false).map((p) => review(p, false));
+  }
+  if (lines.filter(isNumberedHeader).length >= 2) {
+    const parts = splitOn(lines, isNumberedHeader, true);
+    // Text before the first label (a shared intro) joins the first advert.
+    if (parts.length > 1 && !isNumberedHeader(parts[0].split("\n")[0])) parts.splice(0, 2, `${parts[0]}\n\n${parts[1]}`);
+    return parts.map((p) => review(p, false));
   }
   if (lines.filter((l) => MSG_HEADER.test(l)).length >= 2) {
     return splitOn(lines, (l) => MSG_HEADER.test(l), true).flatMap((m) => splitPlain(m));

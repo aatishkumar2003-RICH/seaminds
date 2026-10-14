@@ -31,6 +31,8 @@ type Source = {
   rows: Row[];
   /** Set when the advert boundary was guessed; its vacancies start unselected. */
   boundary?: string;
+  /** Original pasted advert text, kept so a failed read can be retried without re-pasting. */
+  text?: string;
   /** Rows before "Expand by vessel type", kept so the manager can undo. */
   collapsed?: Row[];
 };
@@ -142,7 +144,7 @@ const PostVacancy = () => {
         id: uid(), kind: "text" as const,
         label: `${multi ? `Advert ${i + 1}: ` : ""}${b.text.slice(0, 48)}${b.text.length > 48 ? "…" : ""}`,
         status: "reading" as const, flierUrl: null, risk: { level: "low" as Risk, flags: [] }, rows: [],
-        boundary: b.uncertain ? b.reason : undefined,
+        boundary: b.uncertain ? b.reason : undefined, text: b.text,
       },
     }));
     setSources((p) => [...p, ...queued.map((q) => q.src)]);
@@ -161,6 +163,17 @@ const PostVacancy = () => {
       }
     };
     await Promise.all(Array.from({ length: Math.min(4, queued.length) }, worker));
+  };
+
+  const retryText = async (s: Source) => {
+    if (!s.text || !ready()) return;
+    patch(s.id, (x) => ({ ...x, status: "reading", error: undefined }));
+    try {
+      const { data, error } = await supabase.functions.invoke("parse-vacancy-text", { body: { text: s.text.slice(0, MAX_ADVERT_CHARS) } });
+      finishParse(s.id, data, error);
+    } catch (err) {
+      patch(s.id, (x) => ({ ...x, status: "error", error: err instanceof Error ? err.message : "Could not read this advert." }));
+    }
   };
 
   const addManual = () => {
@@ -510,7 +523,14 @@ const PostVacancy = () => {
             </p>
           )}
           {s.status === "reading" && <p className="text-xs text-muted-foreground flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> AI is reading this advert…</p>}
-          {s.status === "error" && <p className="text-xs text-[#f59e0b] flex items-center gap-1"><AlertTriangle size={12} /> {s.error}</p>}
+          {s.status === "error" && (
+            <div className="flex items-center gap-2">
+              <p className="flex-1 text-xs text-[#f59e0b] flex items-center gap-1"><AlertTriangle size={12} /> {s.error}</p>
+              {s.kind === "text" && s.text && (
+                <button onClick={() => retryText(s)} className="rounded-lg border border-[#D4AF37] px-2 py-1.5 text-[11px] font-semibold text-[#D4AF37] hover:bg-[#D4AF37]/10">Retry reading</button>
+              )}
+            </div>
+          )}
 
           {s.status === "ready" && (
             <>
