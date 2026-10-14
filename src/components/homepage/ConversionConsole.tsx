@@ -15,6 +15,7 @@ import { loadVacancies, loadMyApplicationTargets, onAppResume, type UnifiedVacan
 import SignInSheet from "@/components/homepage/SignInSheet";
 import ReleaseBadge from "@/components/ReleaseBadge";
 import { forcePwaHardReset } from "@/lib/pwaUpdate";
+import CountryGateway from "@/components/homepage/CountryGateway";
 
 
 const GOLD = "#D4AF37";
@@ -534,6 +535,8 @@ const ConversionConsole = () => {
         <h1 className="relative text-center text-[10px] sm:text-[11px] uppercase tracking-[0.18em] text-muted-foreground mb-4">
           Seafarer Jobs &amp; Maritime Vacancies — Crew Recruitment &amp; AI Competency Platform
         </h1>
+
+        <CountryGateway />
 
         <div className="relative grid gap-4 md:grid-cols-2 md:items-stretch">
           {/* LEFT — seafarers */}
