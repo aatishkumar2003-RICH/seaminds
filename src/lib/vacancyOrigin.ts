@@ -35,7 +35,7 @@ export const ORIGINS: Origin[] = [
   { code: "dk", name: "Denmark", flag: "🇩🇰", prefixes: ["+45"], domains: [".dk"], keywords: ["denmark", "copenhagen"] },
   { code: "fr", name: "France", flag: "🇫🇷", prefixes: ["+33"], domains: [".fr"], keywords: ["france", "marseille"] },
   { code: "it", name: "Italy", flag: "🇮🇹", prefixes: ["+39"], domains: [".it"], keywords: ["italy", "genoa", "genova", "naples"] },
-  { code: "hr", name: "Croatia", flag: "🇭🇷", prefixes: ["+385"], domains: [".hr"], keywords: ["croatia", "rijeka", "split"] },
+  { code: "hr", name: "Croatia", flag: "🇭🇷", prefixes: ["+385"], domains: [".hr"], keywords: ["croatia", "rijeka"] },
   { code: "pl", name: "Poland", flag: "🇵🇱", prefixes: ["+48"], domains: [".pl"], keywords: ["poland", "gdynia", "szczecin", "gdansk"] },
   { code: "ro", name: "Romania", flag: "🇷🇴", prefixes: ["+40"], domains: [".ro"], keywords: ["romania", "constanta"] },
   { code: "sg", name: "Singapore", flag: "🇸🇬", prefixes: ["+65"], domains: [".sg"], keywords: ["singapore"] },
