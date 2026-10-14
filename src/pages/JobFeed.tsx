@@ -1,6 +1,7 @@
 import { applyToVacancy } from "@/lib/applicationRouter";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { ORIGINS, originByCode } from "@/lib/vacancyOrigin";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { Anchor, BadgeCheck } from "lucide-react";
@@ -53,6 +54,13 @@ const timeAgo = (iso: string) => {
 
 const JobFeed = () => {
   const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
+  const origin = originByCode(params.get("country"));
+  const setOrigin = (code: string | null) => {
+    const next = new URLSearchParams(params);
+    if (code) next.set("country", code); else next.delete("country");
+    setParams(next, { replace: true });
+  };
   const [items, setItems] = useState<UnifiedVacancy[]>([]);
   const [posts, setPosts] = useState<CompanyPostItem[]>([]);
   const [appliedIds, setAppliedIds] = useState<Set<string>>(new Set());
@@ -120,9 +128,10 @@ const JobFeed = () => {
 
   useEffect(() => {
     (async () => {
+      setLoading(true);
       try {
         const [vacs, cposts, shipRes] = await Promise.all([
-          loadVacancies({ limitDirect: 60, limitExternal: 60 }),
+          loadVacancies(origin ? { limitDirect: 150, limitExternal: 150, origin: origin.code } : { limitDirect: 60, limitExternal: 60 }),
           supabase.from("company_posts" as any)
             .select("id, company_name, post_type, caption, image_url, whatsapp, link_url, verified, created_at")
             .eq("status", "live").order("created_at", { ascending: false }).limit(30),
@@ -141,7 +150,7 @@ const JobFeed = () => {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [origin?.code]);
 
   useEffect(() => {
     if (!signedIn) { setAppliedIds(new Set()); return; }
@@ -223,7 +232,25 @@ const JobFeed = () => {
             </button>
           </div>
 
-          <div style={{ display: "flex", gap: 7, marginTop: 11, overflowX: "auto", paddingBottom: 2 }}>
+          <div aria-label="Recruiter country" style={{ display: "flex", gap: 7, marginTop: 11, overflowX: "auto", paddingBottom: 2 }}>
+            {[{ code: null as string | null, label: "🌍 Worldwide" }, ...ORIGINS.map((o) => ({ code: o.code as string | null, label: `${o.flag} ${o.name}` }))].map((o) => {
+              const on = (origin?.code ?? null) === o.code;
+              return (
+                <button key={o.label} onClick={() => setOrigin(o.code)} style={{
+                  flexShrink: 0, padding: "6px 12px", borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: "pointer",
+                  background: on ? "rgba(212,175,55,0.18)" : CARD, color: on ? GOLD : "#cbd5e1",
+                  border: `1px solid ${on ? GOLD : BORDER}`,
+                }}>{o.label}</button>
+              );
+            })}
+          </div>
+          {origin && (
+            <p style={{ color: "#94a3b8", fontSize: 11, marginTop: 6 }}>
+              Showing jobs from recruiters in {origin.name} (by WhatsApp country code) · vessels trade worldwide
+            </p>
+          )}
+
+          <div style={{ display: "flex", gap: 7, marginTop: 9, overflowX: "auto", paddingBottom: 2 }}>
             {[...(matchProfile ? ["Matched"] : []), "All", "Deck", "Engine", "Cadet", "Catering"].map((f) => (
               <button key={f} onClick={() => setFilter(f)} style={{
                 flexShrink: 0, padding: "6px 13px", borderRadius: 999, fontSize: 12, fontWeight: 700, cursor: "pointer",

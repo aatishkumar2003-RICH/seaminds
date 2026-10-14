@@ -5940,6 +5940,7 @@ export type Database = {
         }
         Returns: Json
       }
+      vacancy_origin_counts: { Args: never; Returns: Json }
       validate_discount_code: {
         Args: { input_code: string; product_scope: string }
         Returns: {

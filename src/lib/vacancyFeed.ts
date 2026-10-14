@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { withoutArchivedExternal } from "@/lib/vacancyLifecycle";
 import { formatSalaryText } from "@/lib/salary";
+import { originByCode, originOf, originOrFilter } from "@/lib/vacancyOrigin";
 
 /** One vacancy shape shared by every SeaMinds surface (feed, home, jobs, homepage). */
 export interface UnifiedVacancy {
@@ -106,10 +107,13 @@ export interface LoadVacanciesOpts {
   limitDirect?: number;
   limitExternal?: number;
   minQuality?: number;
+  /** Recruiter country (WhatsApp dial code), see vacancyOrigin.ts */
+  origin?: string | null;
 }
 
 /** Loads live direct + external vacancies, merged and sorted newest first. */
 export const loadVacancies = async (opts: LoadVacanciesOpts = {}): Promise<UnifiedVacancy[]> => {
+  const origin = originByCode(opts.origin);
 
   let extQuery = supabase
     .from("external_vacancies")
@@ -119,23 +123,26 @@ export const loadVacancies = async (opts: LoadVacanciesOpts = {}): Promise<Unifi
     .eq("is_scam_flagged", false); // no age/expiry hiding — archival is manual
   extQuery = withoutArchivedExternal(extQuery);
   if (opts.minQuality !== undefined) extQuery = extQuery.gte("quality_score", opts.minQuality);
+  if (origin) extQuery = extQuery.or(originOrFilter(origin));
+
+  let directQuery = supabase
+    .from("job_postings")
+    .select(
+      "id, rank_required, vessel_type, joining_port, joining_date, contract_duration, monthly_salary, company_name, verified, created_at, expires_at, additional_notes, contact_email, contact_whatsapp, positions, flier_url, posting_batch_id, recruiter_name"
+    )
+    .eq("status", "active");
+  if (origin) directQuery = directQuery.or(originOrFilter(origin));
 
   const [directRes, extRes] = await Promise.all([
-    supabase
-      .from("job_postings")
-      .select(
-        "id, rank_required, vessel_type, joining_port, joining_date, contract_duration, monthly_salary, company_name, verified, created_at, expires_at, additional_notes, contact_email, contact_whatsapp, positions, flier_url, posting_batch_id, recruiter_name"
-      )
-      .eq("status", "active")
-      .order("created_at", { ascending: false })
-      .limit(opts.limitDirect ?? 20),
+    directQuery.order("created_at", { ascending: false }).limit(opts.limitDirect ?? 20),
     extQuery.order("created_at", { ascending: false }).limit(opts.limitExternal ?? 50),
   ]);
 
-  const rows = [
+  let rows = [
     ...(((directRes.data as any[]) || []).map(mapDirect)),
     ...(((extRes.data as any[]) || []).map(mapExternal)),
   ];
+  if (origin) rows = rows.filter((v) => originOf(v.whatsapp) === origin.code);
   return rows.sort(
     (a, b) => new Date(b.postedAt || 0).getTime() - new Date(a.postedAt || 0).getTime()
   );
