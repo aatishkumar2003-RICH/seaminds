@@ -351,6 +351,13 @@
       "when": 1791958171281,
       "tag": "0049_vacancy_origin_counts",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1791958777918,
+      "tag": "0050_vacancy_origin_counts_25_countries",
+      "breakpoints": true
     }
   ]
 }
