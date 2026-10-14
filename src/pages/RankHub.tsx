@@ -50,7 +50,7 @@ const RankHub = () => {
 
   const idx = RANK_HUBS.findIndex((r) => r.slug === hub.slug);
   const neighbours = [RANK_HUBS[idx - 1], RANK_HUBS[idx + 1]].filter(Boolean);
-  const title = `${hub.name} Jobs & Maritime Vacancies | SeaMinds`;
+  const title = `${hub.name} Jobs at Sea & Ship Jobs | SeaMinds`;
   const canonical = `https://seaminds.life/jobs/rank/${hub.slug}`;
 
   return (
