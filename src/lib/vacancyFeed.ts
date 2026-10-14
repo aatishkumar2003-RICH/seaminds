@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { withoutArchivedExternal } from "@/lib/vacancyLifecycle";
 import { formatSalaryText } from "@/lib/salary";
+import { originByCode, originOf, originOrFilter } from "@/lib/vacancyOrigin";
 
 /** One vacancy shape shared by every SeaMinds surface (feed, home, jobs, homepage). */
 export interface UnifiedVacancy {
