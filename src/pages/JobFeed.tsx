@@ -9,7 +9,8 @@ import { trackPixel } from "@/lib/metaPixel";
 import JobCard from "@/components/JobCard";
 import { loadVacancies, loadMyApplicationTargets, onAppResume, UnifiedVacancy } from "@/lib/vacancyFeed";
 import { fetchCrewCardInfo, getCachedCrewCardInfo, waApplyLink, recordApplication, openHandoffTab, completeHandoff, fetchQuickProfileDone, CrewCardInfo } from "@/lib/applyMessage";
-import { jobPath, RANK_HUBS } from "@/lib/jobSlug";
+import { jobPath, RANK_HUBS, rankHubBySlug, rankMatches } from "@/lib/jobSlug";
+import { VESSEL_GROUPS, vesselGroupBySlug, vesselMatches } from "@/lib/vesselGroups";
 import ApplyGateSheet from "@/components/ApplyGateSheet";
 import { toast } from "sonner";
 import { matchVacancy, rankVacancies, type MatchProfile } from "@/lib/smartMatch";
@@ -56,11 +57,15 @@ const JobFeed = () => {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const origin = originByCode(params.get("country"));
-  const setOrigin = (code: string | null) => {
+  const rankHub = rankHubBySlug(params.get("rank"));
+  const vesselGroup = vesselGroupBySlug(params.get("vessel"));
+  const setParam = (key: string, val: string | null) => {
     const next = new URLSearchParams(params);
-    if (code) next.set("country", code); else next.delete("country");
+    if (val) next.set(key, val); else next.delete(key);
     setParams(next, { replace: true });
   };
+  const setOrigin = (code: string | null) => setParam("country", code);
+  const clearAll = () => setParams(new URLSearchParams(), { replace: true });
   const [items, setItems] = useState<UnifiedVacancy[]>([]);
   const [posts, setPosts] = useState<CompanyPostItem[]>([]);
   const [appliedIds, setAppliedIds] = useState<Set<string>>(new Set());
@@ -131,7 +136,7 @@ const JobFeed = () => {
       setLoading(true);
       try {
         const [vacs, cposts, shipRes] = await Promise.all([
-          loadVacancies(origin ? { limitDirect: 150, limitExternal: 150, origin: origin.code } : { limitDirect: 60, limitExternal: 60 }),
+          loadVacancies(origin ? { limitDirect: 200, limitExternal: 200, origin: origin.code } : { limitDirect: 120, limitExternal: 120 }),
           supabase.from("company_posts" as any)
             .select("id, company_name, post_type, caption, image_url, whatsapp, link_url, verified, created_at")
             .eq("status", "live").order("created_at", { ascending: false }).limit(30),
@@ -158,15 +163,31 @@ const JobFeed = () => {
     return onAppResume(() => { loadMyApplicationTargets().then(setAppliedIds); });
   }, [signedIn]);
 
+  // Step 2 / 3: rank and vessel facets with live counts (never show a dead-end chip)
+  const byVessel = useMemo(() => (vesselGroup ? items.filter((v) => vesselMatches(vesselGroup, v.vessel)) : items), [items, vesselGroup]);
+  const byRank = useMemo(() => (rankHub ? items.filter((v) => rankMatches(rankHub, v.rank)) : items), [items, rankHub]);
+  const rankChips = useMemo(() => RANK_HUBS
+    .map((r) => ({ ...r, n: byVessel.filter((v) => rankMatches(r, v.rank)).length }))
+    .filter((r) => r.n > 0 || r.slug === rankHub?.slug), [byVessel, rankHub]);
+  const vesselChips = useMemo(() => VESSEL_GROUPS
+    .map((g) => ({ ...g, n: byRank.filter((v) => vesselMatches(g, v.vessel)).length }))
+    .filter((g) => g.n > 0 || g.slug === vesselGroup?.slug), [byRank, vesselGroup]);
+  const faceted = useMemo(() => (rankHub ? byVessel.filter((v) => rankMatches(rankHub, v.rank)) : byVessel), [byVessel, rankHub]);
+
   const shown = useMemo(() => {
     if (filter === "Matched") {
-      if (!matchProfile) return items;
-      return rankVacancies(items, matchProfile).filter((r) => r.match.isMatch).map((r) => r.vacancy);
+      if (!matchProfile) return faceted;
+      return rankVacancies(faceted, matchProfile).filter((r) => r.match.isMatch).map((r) => r.vacancy);
     }
-    if (filter === "All") return items;
+    if (filter === "All") return faceted;
     const keys = GROUPS[filter] || [];
-    return items.filter((i) => keys.some((k) => (i.rank || "").toLowerCase().includes(k)));
-  }, [items, filter, matchProfile]);
+    return faceted.filter((i) => keys.some((k) => (i.rank || "").toLowerCase().includes(k)));
+  }, [faceted, filter, matchProfile]);
+  const anyFacet = !!(origin || rankHub || vesselGroup);
+  const chip = (on: boolean) => ({
+    flexShrink: 0, padding: "5px 11px", borderRadius: 999, fontSize: 11, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" as const,
+    background: on ? GOLD : "transparent", color: on ? NAVY : GOLD, border: `1px solid ${GOLD}${on ? "" : "55"}`,
+  });
 
   const matchOf = (v: UnifiedVacancy) => (matchProfile ? matchVacancy(v, matchProfile) : null);
 
@@ -250,6 +271,34 @@ const JobFeed = () => {
             </p>
           )}
 
+          <div aria-label="Rank" style={{ display: "flex", gap: 6, marginTop: 9, overflowX: "auto", paddingBottom: 2 }}>
+            <span style={{ color: "#94a3b8", fontSize: 11, fontWeight: 700, alignSelf: "center", flexShrink: 0 }}>Rank:</span>
+            <button style={chip(!rankHub)} onClick={() => setParam("rank", null)}>All</button>
+            {!loading && rankChips.map((r) => (
+              <button key={r.slug} style={chip(rankHub?.slug === r.slug)} onClick={() => setParam("rank", rankHub?.slug === r.slug ? null : r.slug)}>
+                {r.name} <span style={{ opacity: 0.75, fontFamily: "monospace" }}>{r.n}</span>
+              </button>
+            ))}
+          </div>
+          <div aria-label="Vessel type" style={{ display: "flex", gap: 6, marginTop: 7, overflowX: "auto", paddingBottom: 2 }}>
+            <span style={{ color: "#94a3b8", fontSize: 11, fontWeight: 700, alignSelf: "center", flexShrink: 0 }}>Vessel:</span>
+            <button style={chip(!vesselGroup)} onClick={() => setParam("vessel", null)}>All</button>
+            {!loading && vesselChips.map((g) => (
+              <button key={g.slug} style={chip(vesselGroup?.slug === g.slug)} onClick={() => setParam("vessel", vesselGroup?.slug === g.slug ? null : g.slug)}>
+                {g.icon} {g.name} <span style={{ opacity: 0.75, fontFamily: "monospace" }}>{g.n}</span>
+              </button>
+            ))}
+          </div>
+          {anyFacet && !loading && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+              <span style={{ color: "#fff", fontSize: 12, fontWeight: 800 }}>
+                🎯 {faceted.length} {faceted.length === 1 ? "job" : "jobs"}
+                {rankHub ? ` for ${rankHub.name}` : ""}{vesselGroup ? ` · ${vesselGroup.name}` : ""}{origin ? ` · ${origin.name}` : ""}
+              </span>
+              <button onClick={clearAll} style={{ background: "none", border: "none", color: "#94a3b8", fontSize: 11, textDecoration: "underline", cursor: "pointer" }}>Clear all</button>
+            </div>
+          )}
+
           <div style={{ display: "flex", gap: 7, marginTop: 9, overflowX: "auto", paddingBottom: 2 }}>
             {[...(matchProfile ? ["Matched"] : []), "All", "Deck", "Engine", "Cadet", "Catering"].map((f) => (
               <button key={f} onClick={() => setFilter(f)} style={{
@@ -271,15 +320,6 @@ const JobFeed = () => {
             </a>
           </div>
 
-          <nav aria-label="Browse jobs by rank" style={{ display: "flex", gap: 7, marginTop: 9, overflowX: "auto", paddingBottom: 2 }}>
-            <span style={{ color: "#94a3b8", fontSize: 11, fontWeight: 700, alignSelf: "center", flexShrink: 0 }}>Browse by rank:</span>
-            {RANK_HUBS.map((r) => (
-              <a key={r.slug} href={`/jobs/rank/${r.slug}`} style={{
-                flexShrink: 0, padding: "5px 11px", borderRadius: 999, fontSize: 11, fontWeight: 700,
-                color: GOLD, border: `1px solid ${GOLD}66`, textDecoration: "none", whiteSpace: "nowrap",
-              }}>{r.name}</a>
-            ))}
-          </nav>
         </div>
       </header>
 
@@ -312,7 +352,7 @@ const JobFeed = () => {
 
         {!loading && shown.length === 0 && (
           <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 40, textAlign: "center", color: "#94a3b8" }}>
-            No vacancies in this category right now — try "All" to see everything live.
+            No vacancies for this selection right now — tap "Clear all" or choose another rank or vessel.
           </div>
         )}
 
