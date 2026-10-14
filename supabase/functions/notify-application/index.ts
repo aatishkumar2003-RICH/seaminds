@@ -381,7 +381,16 @@ Deno.serve(async (req) => {
           <p>Applied on: ${esc(appliedOn)}</p>
           ${teaser}${scoreLine}${profileBtn}
           ${mgr.imported
-            ? `<p style="color:#94a3b8;font-size:13px">You received this because your contact appears on a vacancy advertised on SeaMinds. Reply to the candidate directly. Want applicants in one dashboard? <a href="${SITE}/manager" style="color:#D4AF37">Post vacancies free on SeaMinds</a>.</p>`
+            ? `<div style="margin-top:20px;padding:16px;border:1px solid rgba(212,175,55,0.3);border-radius:12px;background:#0D1B2A">
+                <p style="color:#D4AF37;font-weight:bold;margin:0 0 8px">Recruiting more crew? Use ShipManager by SeaMinds</p>
+                <ul style="color:#cbd5e1;font-size:13px;margin:0 0 12px;padding-left:18px;line-height:1.6">
+                  <li>Paste many vacancies at once — AI turns them into posts</li>
+                  <li>All applicants and CVs in one dashboard</li>
+                  <li>AI interviews and crew search</li>
+                </ul>
+                ${goldBtn(`${SITE}/manager?utm_source=application_email&utm_medium=email&utm_campaign=recruiter_invite`, "Open ShipManager Login")}
+              </div>
+              <p style="color:#94a3b8;font-size:12px">You received this because your contact appears on a vacancy advertised on SeaMinds. Reply to the candidate directly. This is a one-off application notice, not a subscription.</p>`
             : goldBtn(managerLink, "Open your Applicants")}
         `),
       }));
