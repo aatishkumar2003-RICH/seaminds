@@ -23,3 +23,6 @@ describe("originOf multi-signal", () => {
   it("vietnam email", () => expect(originOf({ email: "crew@abc.com.vn" })).toBe("vn"));
   it("generic stays null", () => expect(originOf({ email: "jobs@gmail.com", name: "Ocean Crew" })).toBeNull());
 });
+describe("originOf order", () => {
+  it("agency country beats parent-company email", () => expect(originOf({ email: "x@osm.no", name: "OSM Thome Philippines" })).toBe("ph"));
+});

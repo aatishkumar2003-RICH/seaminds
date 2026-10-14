@@ -1,5 +1,5 @@
 /** Recruiter country of a vacancy, detected in 3 tiers:
- *   1. WhatsApp dial code  2. email country domain (.ph, .com.ph…)  3. agency name / city keyword.
+ *   1. WhatsApp dial code  2. agency name / city keyword  3. email country domain (.ph, .com.ph…).
  *  Must mirror public.vacancy_origin_of() in SQL.
  *  New countries match phones only on "+code" (bare digits are ambiguous). */
 export type OriginCode = string;
@@ -77,7 +77,7 @@ export interface OriginInput { whatsapp?: string | null; email?: string | null; 
 /** Accepts a phone string (legacy) or { whatsapp, email, name }. */
 export const originOf = (input: string | null | undefined | OriginInput): OriginCode | null => {
   if (input == null || typeof input === "string") return byPhone(input);
-  return byPhone(input.whatsapp) || byEmail(input.email) || byName(input.name);
+  return byPhone(input.whatsapp) || byName(input.name) || byEmail(input.email);
 };
 
 /** PostgREST `or` pre-filter (refine rows with originOf). nameCol = recruiter_name / company_name. */
