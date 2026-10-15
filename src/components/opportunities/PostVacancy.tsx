@@ -319,6 +319,8 @@ const PostVacancy = () => {
     if (sources.length && !window.confirm(`Discard all ${sources.length} staged source(s) and start fresh?`)) return;
     setSources([]); setScan(null); setFillKey(null); setAutoPicked(false);
     expandBatch.current = false; setBatchExpanded(false);
+    // Batch contacts belong to one batch only — never carry them into the next paste.
+    setPasteText(""); setBatchAgency(""); setBatchPhone(""); setBatchEmail(""); setBatchCc("+62"); setView("all");
   };
   const setAllOwnership = (o: Ownership) => { setScan(null); setSources((p) => p.map((s) => (s.status === "ready" ? { ...s, ownership: o } : s))); };
 
@@ -375,6 +377,7 @@ const PostVacancy = () => {
     if (res.status === "published") {
       toast({ title: publishSummary(res), description: [heldCount ? `${heldCount} vacanc${heldCount === 1 ? "y" : "ies"} still need attention below.` : "", ...res.failures].filter(Boolean).join(" · ") || undefined });
       dropPublished();
+      if (!heldCount) { setBatchAgency(""); setBatchPhone(""); setBatchEmail(""); setPasteText(""); }
       return;
     }
     if (res.failures.length) toast({ title: "Not published", description: res.failures.join(" · "), variant: "destructive" });
