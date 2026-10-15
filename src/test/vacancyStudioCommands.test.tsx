@@ -46,3 +46,47 @@ it("retries only failed empty readings and leaves successful readings untouched"
   expect(invoke.mock.calls[2][1].body.text).toContain("Chief Engineer");
   expect(screen.getByRole("button", { name: /^Retry failed readings$/ })).toBeDisabled();
 });
+
+it("activates individual toggles and keeps an advert's opt-out when the batch command is repeated", async () => {
+  invoke.mockResolvedValueOnce(parsed("Chief Officer", "Bulk Carrier / Oil Tanker"))
+    .mockResolvedValueOnce(parsed("Chief Engineer", "Container Ship / LNG"));
+  await intake();
+  await waitFor(() => expect(screen.getAllByRole("switch")).toHaveLength(2));
+  fireEvent.click(screen.getByRole("button", { name: /^Expand by vessel$/ }));
+  expect(screen.getAllByRole("switch").every((el) => el.getAttribute("aria-checked") === "true")).toBe(true);
+  fireEvent.click(screen.getAllByRole("switch")[0]);
+  expect(screen.getAllByRole("checkbox", { name: /Select Chief/ })).toHaveLength(3);
+  fireEvent.click(screen.getByRole("button", { name: /^Expand by vessel$/ }));
+  expect(screen.getAllByRole("checkbox", { name: /Select Chief/ })).toHaveLength(3);
+  expect(screen.getAllByRole("switch")[0]).toHaveAttribute("aria-checked", "false");
+  fireEvent.click(screen.getAllByRole("switch")[0]);
+  expect(screen.getAllByRole("checkbox", { name: /Select Chief/ })).toHaveLength(4);
+  expect(invoke).toHaveBeenCalledTimes(2);
+});
+
+it("expands a successful retried reading when the batch command was activated earlier", async () => {
+  invoke.mockResolvedValueOnce(parsed("Chief Officer", "Bulk Carrier / Oil Tanker"))
+    .mockResolvedValueOnce({ data: { ok: true, vacancies: [] }, error: null })
+    .mockResolvedValueOnce(parsed("Chief Engineer", "Container Ship / LNG"));
+  await intake();
+  await waitFor(() => expect(screen.getByRole("button", { name: "Retry failed readings (1)" })).not.toBeDisabled());
+  fireEvent.click(screen.getByRole("button", { name: /^Expand by vessel$/ }));
+  fireEvent.click(screen.getByRole("button", { name: "Retry failed readings (1)" }));
+  await waitFor(() => expect(screen.getAllByRole("checkbox", { name: /Select Chief/ })).toHaveLength(4));
+  expect(screen.getAllByRole("switch").every((el) => el.getAttribute("aria-checked") === "true")).toBe(true);
+  expect(invoke).toHaveBeenCalledTimes(3);
+});
+
+it("allows batch expansion while other adverts are still being read", async () => {
+  let finish: ((value: ReturnType<typeof parsed>) => void) | undefined;
+  invoke.mockResolvedValueOnce(parsed("Chief Officer", "Bulk Carrier / Oil Tanker"))
+    .mockImplementationOnce(() => new Promise((resolve) => { finish = resolve; }));
+  await intake();
+  await waitFor(() => expect(screen.getAllByRole("checkbox", { name: /Select Chief/ })).toHaveLength(1));
+  const expand = screen.getByRole("button", { name: /^Expand by vessel$/ });
+  expect(expand).not.toBeDisabled();
+  fireEvent.click(expand);
+  expect(screen.getAllByRole("checkbox", { name: /Select Chief/ })).toHaveLength(2);
+  finish?.(parsed("Chief Engineer", "Container Ship / LNG"));
+  await waitFor(() => expect(screen.getAllByRole("checkbox", { name: /Select Chief/ })).toHaveLength(4));
+});

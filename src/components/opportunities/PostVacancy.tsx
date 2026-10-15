@@ -36,6 +36,8 @@ type Source = {
   file?: File;
   /** Rows before "Expand by vessel type", kept so the manager can undo. */
   collapsed?: Row[];
+  /** An individual opt-out takes precedence over the batch expansion command. */
+  expansionExcluded?: boolean;
 };
 
 const uid = () => crypto.randomUUID();
@@ -80,6 +82,8 @@ const PostVacancy = () => {
   const [publishing, setPublishing] = useState(false);
   const [retrying, setRetrying] = useState(false);
   const retryLocks = useRef(new Set<string>());
+  const expandBatch = useRef(false);
+  const [batchExpanded, setBatchExpanded] = useState(false);
   const [uncertain, setUncertain] = useState<{ batchId: string; expected: number; message: string } | null>(null);
   const [lastResult, setLastResult] = useState<PublishResult | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -107,7 +111,10 @@ const PostVacancy = () => {
     if (error || !res?.ok) { patch(id, (s) => ({ ...s, status: "error", error: error ? parseError(error) : res?.error || "Could not read this advert." })); return; }
     const risk = { level: toRisk(res.risk?.level), flags: (res.risk?.flags || []).map(String) };
     const rows = (res.vacancies || []).map((v) => mkRow(toPreviewVacancy(v), risk.level));
-    patch(id, (s) => ({ ...s, status: rows.length ? "ready" : "error", error: rows.length ? undefined : "No vacancies found in this advert.", risk, rows: s.boundary ? rows.map((r) => ({ ...r, selected: false })) : rows }));
+    patch(id, (s) => {
+      const parsed: Source = { ...s, status: rows.length ? "ready" : "error", error: rows.length ? undefined : "No vacancies found in this advert.", risk, rows: s.boundary ? rows.map((r) => ({ ...r, selected: false })) : rows };
+      return expandBatch.current && !s.expansionExcluded ? expandSource(parsed) : parsed;
+    });
   };
 
   const addFliers = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -198,6 +205,7 @@ const PostVacancy = () => {
   const failedReadings = sources.filter(canRetry);
   const reading = sources.some((s) => s.status === "reading");
   const commandBusy = reading || retrying || checking || publishing || !!uncertain;
+  const expansionBusy = checking || publishing || !!uncertain;
   const expandable = (s: Source) => s.status === "ready" && !s.collapsed && s.rows.some((r) => splitVesselTypes(r.vessel_type).length > 1);
   const expandSource = (s: Source): Source => !expandable(s) ? s : ({
     ...s, collapsed: s.rows,
@@ -207,9 +215,17 @@ const PostVacancy = () => {
     }),
   });
   const expandAll = () => {
-    if (commandBusy) return;
+    if (expansionBusy) return;
+    expandBatch.current = true;
+    setBatchExpanded(true);
     setScan(null);
-    setSources((prev) => prev.map(expandSource));
+    setSources((prev) => prev.map((s) => s.expansionExcluded ? s : expandSource(s)));
+  };
+  const toggleExpansion = (id: string, on: boolean) => {
+    if (expansionBusy) return;
+    patch(id, (s) => on
+      ? expandSource({ ...s, expansionExcluded: false })
+      : { ...s, rows: s.collapsed || s.rows, collapsed: undefined, expansionExcluded: true });
   };
   const retryFailed = async () => {
     if (commandBusy || !failedReadings.length || !ready()) return;
@@ -291,6 +307,7 @@ const PostVacancy = () => {
   const resetStudio = () => {
     if (sources.length && !window.confirm(`Discard all ${sources.length} staged source(s) and start fresh?`)) return;
     setSources([]); setScan(null); setFillKey(null); setAutoPicked(false);
+    expandBatch.current = false; setBatchExpanded(false);
   };
   const setAllOwnership = (o: Ownership) => { setScan(null); setSources((p) => p.map((s) => (s.status === "ready" ? { ...s, ownership: o } : s))); };
 
@@ -357,7 +374,7 @@ const PostVacancy = () => {
   const dropPublished = () => {
     const keys = sentKeys.current;
     setScan(null);
-    setSources((p) => p.map((s) => (s.status === "ready" ? { ...s, rows: s.rows.filter((r) => !keys.has(r._key)) } : s)).filter((s) => s.status !== "ready" || s.rows.length > 0));
+    setSources((p) => p.map((s) => (s.status === "ready" ? { ...s, rows: s.rows.filter((r) => !keys.has(r._key)), collapsed: s.rows.some((r) => keys.has(r._key)) ? undefined : s.collapsed } : s)).filter((s) => s.status !== "ready" || s.rows.length > 0));
   };
 
   const publish = async () => {
@@ -402,18 +419,6 @@ const PostVacancy = () => {
 
   return (
     <div className="space-y-4 pt-3">
-      <section aria-label="Central Command" className="border-b border-primary/30 pb-4 space-y-3">
-        <h2 className="text-sm font-semibold text-primary">Central Command</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <Button variant="outline" className="min-h-11 h-auto whitespace-normal" onClick={expandAll} disabled={commandBusy || !sources.some(expandable)}>
-            <Ship size={16} className="mr-2 shrink-0" /> Expand by vessel
-          </Button>
-          <Button variant="outline" className="min-h-11 h-auto whitespace-normal" onClick={retryFailed} disabled={commandBusy || !failedReadings.length || !identity?.approved}>
-            {retrying ? <Loader2 size={16} className="mr-2 shrink-0 animate-spin" /> : <RotateCw size={16} className="mr-2 shrink-0" />}
-            {retrying ? "Retrying failed readings…" : `Retry failed readings${failedReadings.length ? ` (${failedReadings.length})` : ""}`}
-          </Button>
-        </div>
-      </section>
       <ol className="flex gap-2 text-[11px] sm:text-xs" aria-label="Studio steps">
         {["Add adverts", "Review vacancies", "Publish selected"].map((t, i) => (
           <li key={t} className={`flex-1 rounded-full px-3 py-1.5 text-center border ${step === i + 1 ? "border-[#D4AF37] text-[#D4AF37] bg-[#D4AF37]/10" : "border-border text-muted-foreground"}`}>{i + 1}. {t}</li>
@@ -474,6 +479,21 @@ const PostVacancy = () => {
         <p className="hidden lg:block rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">Vacancies read from your adverts and flyers will appear here for review.</p>
       )}
       {sources.length > 0 && <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">2. Review vacancies</h3>}
+      {sources.length > 0 && (
+        <section aria-label="Central Command" className="border-b border-primary/30 pb-4 space-y-3">
+          <h2 className="text-sm font-semibold text-primary">Central Command</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <Button variant="outline" aria-pressed={batchExpanded} className="min-h-11 h-auto whitespace-normal" onClick={expandAll} disabled={expansionBusy || (!reading && !sources.some((s) => expandable(s) && !s.expansionExcluded))}>
+              <Ship size={16} className="mr-2 shrink-0" /> Expand by vessel
+            </Button>
+            <Button variant="outline" className="min-h-11 h-auto whitespace-normal" onClick={retryFailed} disabled={commandBusy || !failedReadings.length || !identity?.approved}>
+              {retrying ? <Loader2 size={16} className="mr-2 shrink-0 animate-spin" /> : <RotateCw size={16} className="mr-2 shrink-0" />}
+              {retrying ? "Retrying failed readings…" : `Retry failed readings${failedReadings.length ? ` (${failedReadings.length})` : ""}`}
+            </Button>
+          </div>
+          {!reading && !sources.some(expandable) && !sources.some((s) => s.collapsed) && <p role="status" className="text-xs text-muted-foreground">No multi-vessel vacancies found in this batch.</p>}
+        </section>
+      )}
       {sources.some((s) => s.status === "ready") && (
         <section className="rounded-xl border border-[#D4AF37]/40 bg-[#D4AF37]/5 p-3 space-y-3" aria-label="Batch settings">
           <div>
@@ -562,18 +582,11 @@ const PostVacancy = () => {
           </div>
 
           {s.status === "ready" && (s.collapsed || s.rows.some((r) => splitVesselTypes(r.vessel_type).length > 1)) && (
-            <div className="flex flex-wrap items-center gap-2 rounded-lg border border-[#D4AF37]/30 bg-[#D4AF37]/5 p-2 text-[11px]">
-              {s.collapsed ? (
-                <>
-                  <span className="text-muted-foreground flex-1">Split into one vacancy per vessel type.</span>
-                  <button disabled={commandBusy} onClick={() => patch(s.id, (x) => x.collapsed ? ({ ...x, rows: x.collapsed, collapsed: undefined }) : x)} className="rounded-lg border border-[#D4AF37] px-2 py-1 font-semibold text-[#D4AF37]">Undo expansion</button>
-                </>
-              ) : (
-                <>
-                  <span className="text-muted-foreground flex-1">Some vacancies list several vessel types.</span>
-                  <button disabled={commandBusy} onClick={() => patch(s.id, expandSource)} className="rounded-lg bg-[#D4AF37] px-2 py-1 font-bold text-[#0D1B2A]">Expand by vessel type</button>
-                </>
-              )}
+            <div className="flex flex-wrap items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 p-2 text-[11px]">
+              <span className="text-muted-foreground flex-1">{s.collapsed ? "One vacancy per vessel type" : "Combined vessel vacancy"}</span>
+              <Button variant="outline" size="sm" role="switch" aria-label={`Expand by vessel for ${s.label}`} aria-checked={!!s.collapsed} disabled={expansionBusy} onClick={() => toggleExpansion(s.id, !s.collapsed)}>
+                <Ship size={14} className="mr-1 shrink-0" /> Expand by vessel: {s.collapsed ? "On" : "Off"}
+              </Button>
             </div>
           )}
           {s.boundary && (
