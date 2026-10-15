@@ -372,6 +372,13 @@
       "when": 1791971386688,
       "tag": "0052_vacancy_origin_name_before_email",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1792042236129,
+      "tag": "0053_recruiter_outreach",
+      "breakpoints": true
     }
   ]
 }

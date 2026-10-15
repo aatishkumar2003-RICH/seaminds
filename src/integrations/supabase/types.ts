@@ -4162,6 +4162,98 @@ export type Database = {
           },
         ]
       }
+      recruiter_outreach_contacts: {
+        Row: {
+          active_vacancies: number
+          applications_total: number
+          created_at: string
+          email: string
+          id: string
+          last_contacted_at: string | null
+          last_kind: string | null
+          next_due_at: string
+          notes: string | null
+          recruiter_name: string | null
+          stage: string
+          top_ranks: string[]
+          touches_sent: number
+          updated_at: string
+        }
+        Insert: {
+          active_vacancies?: number
+          applications_total?: number
+          created_at?: string
+          email: string
+          id?: string
+          last_contacted_at?: string | null
+          last_kind?: string | null
+          next_due_at?: string
+          notes?: string | null
+          recruiter_name?: string | null
+          stage?: string
+          top_ranks?: string[]
+          touches_sent?: number
+          updated_at?: string
+        }
+        Update: {
+          active_vacancies?: number
+          applications_total?: number
+          created_at?: string
+          email?: string
+          id?: string
+          last_contacted_at?: string | null
+          last_kind?: string | null
+          next_due_at?: string
+          notes?: string | null
+          recruiter_name?: string | null
+          stage?: string
+          top_ranks?: string[]
+          touches_sent?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      recruiter_outreach_log: {
+        Row: {
+          contact_id: string
+          error: string | null
+          id: string
+          kind: string
+          ok: boolean
+          provider_id: string | null
+          sent_at: string
+          subject: string | null
+        }
+        Insert: {
+          contact_id: string
+          error?: string | null
+          id?: string
+          kind: string
+          ok?: boolean
+          provider_id?: string | null
+          sent_at?: string
+          subject?: string | null
+        }
+        Update: {
+          contact_id?: string
+          error?: string | null
+          id?: string
+          kind?: string
+          ok?: boolean
+          provider_id?: string | null
+          sent_at?: string
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recruiter_outreach_log_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "recruiter_outreach_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       referral_codes: {
         Row: {
           active: boolean
@@ -5734,6 +5826,7 @@ export type Database = {
         Args: { p_assessment_id: string }
         Returns: Json
       }
+      recruiter_outreach_sync: { Args: never; Returns: Json }
       redeem_recovery_token: { Args: { p_token: string }; Returns: Json }
       refresh_ticker_stats: { Args: never; Returns: undefined }
       report_company_post: {
