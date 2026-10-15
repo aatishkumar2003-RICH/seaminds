@@ -29,7 +29,7 @@ const RankHub = () => {
       const nowIso = new Date().toISOString();
       const [p, e] = await Promise.all([
         supabase.from("job_postings" as any)
-          .select("id, rank_required, vessel_type, joining_port, company_name, created_at")
+          .select("id, rank_required, vessel_type, joining_port, company_name, recruiter_name, created_at")
           .eq("status", "active").order("created_at", { ascending: false }).limit(300),
         supabase.from("external_vacancies" as any)
           .select("id, rank_required, title, vessel_type, joining_port, company_name, fetched_at, is_scam_flagged")
@@ -37,7 +37,7 @@ const RankHub = () => {
       ]);
       const direct: Row[] = (((p as any).data as any[]) || [])
         .filter((r) => rankMatches(hub, r.rank_required))
-        .map((r) => ({ id: r.id, rank: r.rank_required || "Crew", vessel: r.vessel_type || "—", port: r.joining_port, company: r.company_name || "Maritime Company", kind: "direct" as const }));
+        .map((r) => ({ id: r.id, rank: r.rank_required || "Crew", vessel: r.vessel_type || "—", port: r.joining_port, company: (r as any).recruiter_name || r.company_name || "Maritime Company", kind: "direct" as const }));
       const ext: Row[] = (((e as any).data as any[]) || [])
         .filter((r) => !r.is_scam_flagged && rankMatches(hub, r.rank_required || r.title))
         .map((r) => ({ id: r.id, rank: r.rank_required || r.title || "Crew", vessel: r.vessel_type || "—", port: r.joining_port, company: r.company_name || "Maritime Company", kind: "external" as const }));
