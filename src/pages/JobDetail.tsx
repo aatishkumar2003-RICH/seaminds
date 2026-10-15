@@ -1,3 +1,4 @@
+import { buildJobPostingLd } from "@/lib/jobPostingLd";
 import { postingAgeLabel } from "@/lib/managerVacancies";
 import { isHistoricalListing } from "@/lib/vacancyFeed";
 import { withoutArchivedExternal } from "@/lib/vacancyLifecycle";
