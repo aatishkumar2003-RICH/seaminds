@@ -232,7 +232,8 @@ const PostVacancy = () => {
     const w = withCc(o.contact_whatsapp || "");
     if (w !== (o.contact_whatsapp || "")) o = { ...o, contact_whatsapp: w };
     // Either a valid email or a valid WhatsApp is enough: the unusable other channel is dropped.
-    const waOk = !!o.contact_whatsapp && checkWhatsapp(o.contact_whatsapp).ok;
+    const idLandline = /^\+?62[2-7]/.test((o.contact_whatsapp || "").replace(/[^\d+]/g, "")); // Indonesian office landline, not WhatsApp
+    const waOk = !!o.contact_whatsapp && !idLandline && checkWhatsapp(o.contact_whatsapp).ok;
     const emOk = !!o.contact_email && isValidEmail(o.contact_email);
     if (!waOk && emOk) o = { ...o, contact_whatsapp: "" };
     if (!emOk && waOk) o = { ...o, contact_email: "" };
