@@ -24,19 +24,19 @@ async function sign(id: string) {
 }
 
 type Contact = { id: string; email: string; recruiter_name: string | null; active_vacancies: number; applications_total: number; top_ranks: string[]; touches_sent: number; last_kind: string | null };
-type Stats = { crew: number; liveJobs: number; apps30: number; countries: number; posts: { title: string; slug: string; excerpt: string | null }[] };
+// STRICT: no crew headcount is ever loaded or shown to recruiters.
+type Stats = { liveJobs: number; apps30: number; countries: number; posts: { title: string; slug: string; excerpt: string | null }[] };
 
 async function loadStats(): Promise<Stats> {
   const since = new Date(Date.now() - 30 * 86400000).toISOString();
-  const [crew, jobs, apps, posts, origins] = await Promise.all([
-    svc.from("crew_profiles").select("id", { count: "exact", head: true }),
+  const [jobs, apps, posts, origins] = await Promise.all([
     svc.from("job_postings").select("id", { count: "exact", head: true }).eq("status", "active"),
     svc.from("job_applications").select("id", { count: "exact", head: true }).gte("created_at", since),
     svc.from("blog_posts").select("title,slug,excerpt").eq("published", true).eq("language", "en").order("created_at", { ascending: false }).limit(3),
     svc.rpc("vacancy_origin_counts"),
   ]);
   const countries = Array.isArray(origins.data) ? origins.data.length : 0;
-  return { crew: crew.count || 0, liveJobs: jobs.count || 0, apps30: apps.count || 0, countries, posts: (posts.data as any) || [] };
+  return { liveJobs: jobs.count || 0, apps30: apps.count || 0, countries, posts: (posts.data as any) || [] };
 }
 
 const utm = (path: string, c: string) => `${SITE}${path}${path.includes("?") ? "&" : "?"}utm_source=recruiter_outreach&utm_medium=email&utm_campaign=${c}`;
