@@ -319,6 +319,8 @@ const PostVacancy = () => {
     if (sources.length && !window.confirm(`Discard all ${sources.length} staged source(s) and start fresh?`)) return;
     setSources([]); setScan(null); setFillKey(null); setAutoPicked(false);
     expandBatch.current = false; setBatchExpanded(false);
+    // Batch contacts belong to one batch only — never carry them into the next paste.
+    setPasteText(""); setBatchAgency(""); setBatchPhone(""); setBatchEmail(""); setBatchCc("+62"); setView("all");
   };
   const setAllOwnership = (o: Ownership) => { setScan(null); setSources((p) => p.map((s) => (s.status === "ready" ? { ...s, ownership: o } : s))); };
 
