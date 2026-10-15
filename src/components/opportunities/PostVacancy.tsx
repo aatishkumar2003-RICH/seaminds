@@ -483,7 +483,7 @@ const PostVacancy = () => {
         <section aria-label="Central Command" className="border-b border-primary/30 pb-4 space-y-3">
           <h2 className="text-sm font-semibold text-primary">Central Command</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <button type="button" aria-pressed={batchExpanded} onClick={expandAll} disabled={expansionBusy || (!reading && !sources.some((s) => expandable(s) && !s.expansionExcluded))}
+            <button type="button" aria-label="Expand by vessel" aria-pressed={batchExpanded} onClick={expandAll} disabled={expansionBusy || (!reading && !sources.some((s) => expandable(s) && !s.expansionExcluded))}
               className={`flex items-center gap-3 rounded-xl border-2 px-3 py-2.5 min-h-12 text-left transition-colors disabled:opacity-45 disabled:cursor-not-allowed ${batchExpanded ? "border-[#D4AF37] bg-[#D4AF37]/20 text-[#D4AF37]" : "border-[#D4AF37]/40 bg-[#112240] text-foreground hover:bg-[#D4AF37]/10"}`}>
               <Ship size={18} className="shrink-0" />
               <span className="flex-1 text-sm font-semibold">Expand by vessel</span>
@@ -492,7 +492,7 @@ const PostVacancy = () => {
               </span>
               <span className={`w-7 text-[11px] font-bold ${batchExpanded ? "text-[#D4AF37]" : "text-[#94A3B8]"}`}>{batchExpanded ? "ON" : "OFF"}</span>
             </button>
-            <button type="button" onClick={retryFailed} disabled={commandBusy || !failedReadings.length || !identity?.approved}
+            <button type="button" aria-label={retrying ? "Retrying failed readings…" : `Retry failed readings${failedReadings.length ? ` (${failedReadings.length})` : ""}`} onClick={retryFailed} disabled={commandBusy || !failedReadings.length || !identity?.approved}
               className={`flex items-center gap-3 rounded-xl border-2 px-3 py-2.5 min-h-12 text-left transition-colors disabled:cursor-not-allowed ${failedReadings.length ? "border-[#f59e0b] bg-[#f59e0b]/15 text-[#f59e0b] hover:bg-[#f59e0b]/25 disabled:opacity-60" : "border-[#22c55e]/40 bg-[#22c55e]/10 text-[#22c55e]"}`}>
               {retrying ? <Loader2 size={18} className="shrink-0 animate-spin" /> : <RotateCw size={18} className="shrink-0" />}
               <span className="flex-1 text-sm font-semibold">{retrying ? "Retrying failed readings…" : failedReadings.length ? "Retry failed readings" : "All adverts read"}</span>
