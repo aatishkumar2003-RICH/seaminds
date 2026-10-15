@@ -53,7 +53,7 @@ function build(kind: string, c: Contact, s: Stats) {
   const T: Record<string, { subject: string; body: string; cta: [string, string] }> = {
     intro: { subject: `${c.active_vacancies || "Your"} vacancies are already reaching seafarers on SeaMinds`,
       body: `<p>${hi}</p><p>${yours}</p><p>Applications go straight to you — by email or WhatsApp, exactly as you published. No fee, no middleman.</p><p>Claim a free ShipManager account to see who applied, edit or close your adverts and post new ones.</p>`,
-      cta: ["Claim my vacancies", "/manager-login"] },
+      cta: ["Claim my vacancies", "/manager"] },
     paste: { subject: "Post a vacancy in 15 seconds — just paste it",
       body: `<p>${hi}</p><p>No forms. Paste your WhatsApp message, email or flyer into <b style="color:#fff">Vacancy Studio</b> — SeaMinds splits every rank, keeps your contact on each one and publishes the ones you tick.</p><p>Many adverts in one paste work too.</p>`,
       cta: ["Try one paste", "/post-vacancy"] },
@@ -62,7 +62,7 @@ function build(kind: string, c: Contact, s: Stats) {
       cta: ["See my applicants", "/manager/dashboard?tab=applicants"] },
     last: { subject: "Should I keep sharing your vacancies?",
       body: `<p>${hi}</p><p>Quick one: we will keep showing your public adverts to seafarers. If you'd like them edited, removed, or want applications filtered by SMC score, just reply to this email — a real person reads it.</p>`,
-      cta: ["Open ShipManager", "/manager-login"] },
+      cta: ["Open ShipManager", "/manager"] },
     report: { subject: `Your SeaMinds vacancy report — ${new Date().toLocaleString("en", { month: "long" })}`,
       body: `<p>${hi}</p><p>${yours}</p>${statRow(s)}<p>Fresh adverts get the most clicks — re-post or update yours in one paste.</p>`,
       cta: ["Update my vacancies", "/post-vacancy"] },
