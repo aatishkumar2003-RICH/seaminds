@@ -235,22 +235,11 @@ const ConversionConsole = () => {
       "@context": "https://schema.org",
       "@type": "ItemList",
       itemListElement: rows.map((v, i) => {
-        const posting: Record<string, unknown> = {
-          "@type": "JobPosting",
-          title: v.rank,
-          employmentType: "CONTRACTOR",
-          url: "https://seaminds.life/feed",
-          jobLocation: {
-            "@type": "Place",
-            address: { "@type": "PostalAddress", addressLocality: v.port || "Worldwide" },
-          },
-        };
-        const org = v.company || v.source;
-        if (org) posting.hiringOrganization = { "@type": "Organization", name: org };
-        const posted = v.postedAt;
-        if (posted) posting.datePosted = posted;
-        if (v.expiresAt) posting.validThrough = v.expiresAt;
-        if (v.notes) posting.description = v.notes;
+        const { "@context": _c, ...posting } = buildJobPostingLd({
+          rank: v.rank, vessel: (v as { vessel?: string | null }).vessel, port: v.port,
+          company: v.company, source: v.source, notes: v.notes,
+          postedAt: v.postedAt, expiresAt: v.expiresAt, url: "https://seaminds.life/feed",
+        });
         return { "@type": "ListItem", position: i + 1, item: posting };
       }),
     });
