@@ -592,9 +592,14 @@ const PostVacancy = () => {
           {s.status === "ready" && (s.collapsed || s.rows.some((r) => splitVesselTypes(r.vessel_type).length > 1)) && (
             <div className="flex flex-wrap items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 p-2 text-[11px]">
               <span className="text-muted-foreground flex-1">{s.collapsed ? "One vacancy per vessel type" : "Combined vessel vacancy"}</span>
-              <Button variant="outline" size="sm" role="switch" aria-label={`Expand by vessel for ${s.label}`} aria-checked={!!s.collapsed} disabled={expansionBusy} onClick={() => toggleExpansion(s.id, !s.collapsed)}>
-                <Ship size={14} className="mr-1 shrink-0" /> Expand by vessel: {s.collapsed ? "On" : "Off"}
-              </Button>
+              <button type="button" role="switch" aria-label={`Expand by vessel for ${s.label}`} aria-checked={!!s.collapsed} disabled={expansionBusy} onClick={() => toggleExpansion(s.id, !s.collapsed)}
+                className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 font-semibold disabled:opacity-50 ${s.collapsed ? "border-[#D4AF37] bg-[#D4AF37]/20 text-[#D4AF37]" : "border-[#94A3B8]/40 text-[#94A3B8]"}`}>
+                <Ship size={14} className="shrink-0" /> Expand by vessel
+                <span className={`relative inline-flex h-5 w-9 items-center rounded-full ${s.collapsed ? "bg-[#D4AF37]" : "bg-[#94A3B8]/40"}`}>
+                  <span className={`inline-block h-4 w-4 rounded-full bg-[#0D1B2A] transition-transform ${s.collapsed ? "translate-x-4" : "translate-x-0.5"}`} />
+                </span>
+                {s.collapsed ? "ON" : "OFF"}
+              </button>
             </div>
           )}
           {s.boundary && (
