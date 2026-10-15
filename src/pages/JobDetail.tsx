@@ -1,3 +1,4 @@
+import { buildJobPostingLd } from "@/lib/jobPostingLd";
 import { postingAgeLabel } from "@/lib/managerVacancies";
 import { isHistoricalListing } from "@/lib/vacancyFeed";
 import { withoutArchivedExternal } from "@/lib/vacancyLifecycle";
@@ -249,18 +250,11 @@ const JobDetail = () => {
   const salary = formatSalaryText(job.salary);
 
   const ld = job.kind === "direct" ? {
-    "@context": "https://schema.org",
-    "@type": "JobPosting",
-    title: `${job.rank} — ${job.vessel}`,
-    description: job.notes || `${job.rank} position on ${job.vessel} joining ${place}.`,
-    datePosted: job.posted,
-    validThrough: job.expires,
-    employmentType: "CONTRACTOR",
+    ...buildJobPostingLd({
+      rank: job.rank, vessel: job.vessel, port: job.port, company: job.company,
+      notes: job.notes, postedAt: job.posted, expiresAt: job.expires, url: canonical,
+    }),
     directApply: true,
-    hiringOrganization: { "@type": "Organization", name: job.company },
-    ...(job.port
-      ? { jobLocation: { "@type": "Place", address: { "@type": "PostalAddress", addressLocality: job.port } } }
-      : { applicantLocationRequirements: { "@type": "Country", name: "Worldwide" }, jobLocationType: "TELECOMMUTE" }),
   } : null;
 
   return (
