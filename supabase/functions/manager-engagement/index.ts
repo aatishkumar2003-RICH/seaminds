@@ -87,12 +87,11 @@ Deno.serve(async (req) => {
     if (ranks.size) {
       const fresh = (crew || []).filter((c: any) => c.id !== m.user_id && !sent.has(`match:${c.id}`) && ranks.has(canon(c.rank || c.role) || ""));
       if (fresh.length) {
-        const byRank: Record<string, number> = {};
-        fresh.forEach((c: any) => { const k = canon(c.rank || c.role)!; byRank[k] = (byRank[k] || 0) + 1; });
-        const list = Object.entries(byRank).sort((a, b) => b[1] - a[1]).slice(0, 6)
-          .map(([r, n]) => `<li style="margin:4px 0"><b style="color:#fff">${n}</b> × ${esc(title(r))}</li>`).join("");
-        subject = `${fresh.length} available seafarer${fresh.length > 1 ? "s" : ""} match your open vacancies`;
-        inner = `<h2 style="color:#D4AF37;margin:0 0 8px">🎯 New crew matches</h2><p>Hi ${esc(m.full_name || "there")}, these seafarers marked themselves available this week and match ranks you are hiring for:</p><ul style="padding-left:18px">${list}</ul><p style="color:#94A3B8;font-size:13px">Names and contact details are shown only inside ShipManager to approved accounts.</p>${btn(utm("/manager/dashboard?tab=applicants", "match_alert"), "See matching crew")}`;
+        // STRICT: never disclose real crew counts to managers — qualitative wording only.
+        const rankSet = Array.from(new Set(fresh.map((c: any) => canon(c.rank || c.role)!))).slice(0, 6);
+        const list = rankSet.map((r) => `<li style="margin:4px 0"><b style="color:#fff">${esc(title(r))}</b> — various crew available</li>`).join("");
+        subject = "Various crew are available matching your open vacancies";
+        inner = `<h2 style="color:#D4AF37;margin:0 0 8px">🎯 New crew matches</h2><p>Hi ${esc(m.full_name || "there")}, various crew marked themselves available this week for ranks you are hiring for:</p><ul style="padding-left:18px">${list}</ul><p style="color:#94A3B8;font-size:13px">Names and contact details are shown only inside ShipManager to approved accounts.</p>${btn(utm("/manager/dashboard?tab=applicants", "match_alert"), "See matching crew")}`;
         kinds = fresh.map((c: any) => `match:${c.id}`);
         type = "match";
       }
