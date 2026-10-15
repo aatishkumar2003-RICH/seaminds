@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { UploadCloud, Loader2, AlertTriangle, Plus, Trash2, ChevronDown, ChevronUp, FileText, Image as ImageIcon } from "lucide-react";
+import { UploadCloud, Loader2, AlertTriangle, Plus, Trash2, ChevronDown, ChevronUp, FileText, Image as ImageIcon, Ship, RotateCw } from "lucide-react";
 import {
   type PreviewVacancy, type ManagerIdentity, type Ownership, type DuplicateScan, type PublishResult,
   toPreviewVacancy, emptyPreviewVacancy, loadManagerIdentity, checkWhatsapp, isValidEmail,
@@ -33,6 +33,7 @@ type Source = {
   boundary?: string;
   /** Original pasted advert text, kept so a failed read can be retried without re-pasting. */
   text?: string;
+  file?: File;
   /** Rows before "Expand by vessel type", kept so the manager can undo. */
   collapsed?: Row[];
 };
@@ -77,6 +78,8 @@ const PostVacancy = () => {
   const [scan, setScan] = useState<DuplicateScan | null>(null);
   const [checking, setChecking] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [retrying, setRetrying] = useState(false);
+  const retryLocks = useRef(new Set<string>());
   const [uncertain, setUncertain] = useState<{ batchId: string; expected: number; message: string } | null>(null);
   const [lastResult, setLastResult] = useState<PublishResult | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -115,7 +118,7 @@ const PostVacancy = () => {
     if (files.length > room) toast({ title: `Up to ${MAX_FLIERS} flyers per batch`, description: `Only the first ${Math.max(room, 0)} were added.`, variant: "destructive" });
     for (const file of files.slice(0, Math.max(room, 0))) {
       const id = uid();
-      const base: Source = { id, kind: "flier", label: file.name, status: "reading", flierUrl: null, risk: { level: "low", flags: [] }, rows: [] };
+      const base: Source = { id, kind: "flier", label: file.name, status: "reading", flierUrl: null, risk: { level: "low", flags: [] }, rows: [], file };
       if (!ACCEPTED.includes(file.type.toLowerCase())) {
         setSources((p) => [...p, { ...base, status: "error", error: "Flyer must be a JPG, PNG or WEBP image." }]);
         continue;
@@ -165,15 +168,58 @@ const PostVacancy = () => {
     await Promise.all(Array.from({ length: Math.min(4, queued.length) }, worker));
   };
 
-  const retryText = async (s: Source) => {
-    if (!s.text || !ready()) return;
+  const canRetry = (s: Source) => s.status === "error" && s.rows.length === 0 &&
+    (!!s.text || !!s.file && ACCEPTED.includes(s.file.type.toLowerCase()));
+  const retryReading = async (s: Source) => {
+    if (!canRetry(s) || !ready() || !identity || retryLocks.current.has(s.id)) return;
+    retryLocks.current.add(s.id);
     patch(s.id, (x) => ({ ...x, status: "reading", error: undefined }));
     try {
-      const { data, error } = await supabase.functions.invoke("parse-vacancy-text", { body: { text: s.text.slice(0, MAX_ADVERT_CHARS) } });
+      let body: { text: string } | { image_base64: string };
+      if (s.text) body = { text: s.text.slice(0, MAX_ADVERT_CHARS) };
+      else if (s.file) {
+        const image_base64 = await downscaleImage(s.file);
+        if (!s.flierUrl) {
+          const up = await uploadOriginalFlier(s.file, identity.userId);
+          if (!up.ok) throw new Error(`Original flyer could not be saved: ${"error" in up ? up.error : ""}`);
+          patch(s.id, (x) => ({ ...x, flierUrl: up.url }));
+        }
+        body = { image_base64 };
+      } else return;
+      const { data, error } = await supabase.functions.invoke("parse-vacancy-text", { body });
       finishParse(s.id, data, error);
     } catch (err) {
       patch(s.id, (x) => ({ ...x, status: "error", error: err instanceof Error ? err.message : "Could not read this advert." }));
+    } finally {
+      retryLocks.current.delete(s.id);
     }
+  };
+
+  const failedReadings = sources.filter(canRetry);
+  const reading = sources.some((s) => s.status === "reading");
+  const commandBusy = reading || retrying || checking || publishing || !!uncertain;
+  const expandable = (s: Source) => s.status === "ready" && !s.collapsed && s.rows.some((r) => splitVesselTypes(r.vessel_type).length > 1);
+  const expandSource = (s: Source): Source => !expandable(s) ? s : ({
+    ...s, collapsed: s.rows,
+    rows: s.rows.flatMap((r) => {
+      const vessels = splitVesselTypes(r.vessel_type);
+      return vessels.length > 1 ? vessels.map((v) => ({ ...r, vessel_type: v, _key: uid(), open: false })) : [r];
+    }),
+  });
+  const expandAll = () => {
+    if (commandBusy) return;
+    setScan(null);
+    setSources((prev) => prev.map(expandSource));
+  };
+  const retryFailed = async () => {
+    if (commandBusy || !failedReadings.length || !ready()) return;
+    setRetrying(true);
+    let next = 0;
+    const worker = async () => {
+      while (next < failedReadings.length) await retryReading(failedReadings[next++]);
+    };
+    try { await Promise.all(Array.from({ length: Math.min(4, failedReadings.length) }, worker)); }
+    finally { setRetrying(false); }
   };
 
   const addManual = () => {
@@ -356,6 +402,18 @@ const PostVacancy = () => {
 
   return (
     <div className="space-y-4 pt-3">
+      <section aria-label="Central Command" className="border-b border-primary/30 pb-4 space-y-3">
+        <h2 className="text-sm font-semibold text-primary">Central Command</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <Button variant="outline" className="min-h-11 h-auto whitespace-normal" onClick={expandAll} disabled={commandBusy || !sources.some(expandable)}>
+            <Ship size={16} className="mr-2 shrink-0" /> Expand by vessel
+          </Button>
+          <Button variant="outline" className="min-h-11 h-auto whitespace-normal" onClick={retryFailed} disabled={commandBusy || !failedReadings.length || !identity?.approved}>
+            {retrying ? <Loader2 size={16} className="mr-2 shrink-0 animate-spin" /> : <RotateCw size={16} className="mr-2 shrink-0" />}
+            {retrying ? "Retrying failed readings…" : `Retry failed readings${failedReadings.length ? ` (${failedReadings.length})` : ""}`}
+          </Button>
+        </div>
+      </section>
       <ol className="flex gap-2 text-[11px] sm:text-xs" aria-label="Studio steps">
         {["Add adverts", "Review vacancies", "Publish selected"].map((t, i) => (
           <li key={t} className={`flex-1 rounded-full px-3 py-1.5 text-center border ${step === i + 1 ? "border-[#D4AF37] text-[#D4AF37] bg-[#D4AF37]/10" : "border-border text-muted-foreground"}`}>{i + 1}. {t}</li>
@@ -508,12 +566,12 @@ const PostVacancy = () => {
               {s.collapsed ? (
                 <>
                   <span className="text-muted-foreground flex-1">Split into one vacancy per vessel type.</span>
-                  <button onClick={() => patch(s.id, (x) => ({ ...x, rows: x.collapsed!, collapsed: undefined }))} className="rounded-lg border border-[#D4AF37] px-2 py-1 font-semibold text-[#D4AF37]">Undo expansion</button>
+                  <button disabled={commandBusy} onClick={() => patch(s.id, (x) => x.collapsed ? ({ ...x, rows: x.collapsed, collapsed: undefined }) : x)} className="rounded-lg border border-[#D4AF37] px-2 py-1 font-semibold text-[#D4AF37]">Undo expansion</button>
                 </>
               ) : (
                 <>
                   <span className="text-muted-foreground flex-1">Some vacancies list several vessel types.</span>
-                  <button onClick={() => patch(s.id, (x) => ({ ...x, collapsed: x.rows, rows: x.rows.flatMap((r) => { const vs = splitVesselTypes(r.vessel_type); return vs.length > 1 ? vs.map((v) => ({ ...r, vessel_type: v, _key: uid(), open: false })) : [r]; }) }))} className="rounded-lg bg-[#D4AF37] px-2 py-1 font-bold text-[#0D1B2A]">Expand by vessel type</button>
+                  <button disabled={commandBusy} onClick={() => patch(s.id, expandSource)} className="rounded-lg bg-[#D4AF37] px-2 py-1 font-bold text-[#0D1B2A]">Expand by vessel type</button>
                 </>
               )}
             </div>
@@ -527,8 +585,8 @@ const PostVacancy = () => {
           {s.status === "error" && (
             <div className="flex items-center gap-2">
               <p className="flex-1 text-xs text-[#f59e0b] flex items-center gap-1"><AlertTriangle size={12} /> {s.error}</p>
-              {s.kind === "text" && s.text && (
-                <button onClick={() => retryText(s)} className="rounded-lg border border-[#D4AF37] px-2 py-1.5 text-[11px] font-semibold text-[#D4AF37] hover:bg-[#D4AF37]/10">Retry reading</button>
+              {canRetry(s) && (
+                <Button variant="outline" size="sm" disabled={commandBusy} onClick={() => retryReading(s)}>Retry reading</Button>
               )}
             </div>
           )}
