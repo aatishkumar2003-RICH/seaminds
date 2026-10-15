@@ -421,7 +421,7 @@ const PostVacancy = () => {
     <div className="space-y-4 pt-3">
       <ol className="flex gap-2 text-[11px] sm:text-xs" aria-label="Studio steps">
         {["Add adverts", "Review vacancies", "Publish selected"].map((t, i) => (
-          <li key={t} className={`flex-1 rounded-full px-3 py-1.5 text-center border ${step === i + 1 ? "border-[#D4AF37] text-[#D4AF37] bg-[#D4AF37]/10" : "border-border text-muted-foreground"}`}>{i + 1}. {t}</li>
+          <li key={t} className={`flex-1 rounded-full px-3 py-1.5 text-center border ${step === i + 1 ? "border-[#D4AF37] text-[#0D1B2A] bg-[#D4AF37] font-bold" : "border-border text-muted-foreground"}`}>{i + 1}. {t}</li>
         ))}
       </ol>
 
@@ -483,13 +483,21 @@ const PostVacancy = () => {
         <section aria-label="Central Command" className="border-b border-primary/30 pb-4 space-y-3">
           <h2 className="text-sm font-semibold text-primary">Central Command</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <Button variant="outline" aria-pressed={batchExpanded} className="min-h-11 h-auto whitespace-normal" onClick={expandAll} disabled={expansionBusy || (!reading && !sources.some((s) => expandable(s) && !s.expansionExcluded))}>
-              <Ship size={16} className="mr-2 shrink-0" /> Expand by vessel
-            </Button>
-            <Button variant="outline" className="min-h-11 h-auto whitespace-normal" onClick={retryFailed} disabled={commandBusy || !failedReadings.length || !identity?.approved}>
-              {retrying ? <Loader2 size={16} className="mr-2 shrink-0 animate-spin" /> : <RotateCw size={16} className="mr-2 shrink-0" />}
-              {retrying ? "Retrying failed readings…" : `Retry failed readings${failedReadings.length ? ` (${failedReadings.length})` : ""}`}
-            </Button>
+            <button type="button" aria-pressed={batchExpanded} onClick={expandAll} disabled={expansionBusy || (!reading && !sources.some((s) => expandable(s) && !s.expansionExcluded))}
+              className={`flex items-center gap-3 rounded-xl border-2 px-3 py-2.5 min-h-12 text-left transition-colors disabled:opacity-45 disabled:cursor-not-allowed ${batchExpanded ? "border-[#D4AF37] bg-[#D4AF37]/20 text-[#D4AF37]" : "border-[#D4AF37]/40 bg-[#112240] text-foreground hover:bg-[#D4AF37]/10"}`}>
+              <Ship size={18} className="shrink-0" />
+              <span className="flex-1 text-sm font-semibold">Expand by vessel</span>
+              <span className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${batchExpanded ? "bg-[#D4AF37]" : "bg-[#94A3B8]/40"}`}>
+                <span className={`inline-block h-5 w-5 rounded-full bg-[#0D1B2A] shadow transition-transform ${batchExpanded ? "translate-x-5" : "translate-x-0.5"}`} />
+              </span>
+              <span className={`w-7 text-[11px] font-bold ${batchExpanded ? "text-[#D4AF37]" : "text-[#94A3B8]"}`}>{batchExpanded ? "ON" : "OFF"}</span>
+            </button>
+            <button type="button" onClick={retryFailed} disabled={commandBusy || !failedReadings.length || !identity?.approved}
+              className={`flex items-center gap-3 rounded-xl border-2 px-3 py-2.5 min-h-12 text-left transition-colors disabled:cursor-not-allowed ${failedReadings.length ? "border-[#f59e0b] bg-[#f59e0b]/15 text-[#f59e0b] hover:bg-[#f59e0b]/25 disabled:opacity-60" : "border-[#22c55e]/40 bg-[#22c55e]/10 text-[#22c55e]"}`}>
+              {retrying ? <Loader2 size={18} className="shrink-0 animate-spin" /> : <RotateCw size={18} className="shrink-0" />}
+              <span className="flex-1 text-sm font-semibold">{retrying ? "Retrying failed readings…" : failedReadings.length ? "Retry failed readings" : "All adverts read"}</span>
+              {failedReadings.length > 0 && !retrying && <span className="rounded-full bg-[#f59e0b] px-2 py-0.5 text-[11px] font-bold text-[#0D1B2A]">{failedReadings.length}</span>}
+            </button>
           </div>
           {!reading && !sources.some(expandable) && !sources.some((s) => s.collapsed) && <p role="status" className="text-xs text-muted-foreground">No multi-vessel vacancies found in this batch.</p>}
         </section>
