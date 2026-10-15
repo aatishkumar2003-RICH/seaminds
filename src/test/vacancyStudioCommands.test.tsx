@@ -25,7 +25,7 @@ it("expands every multi-vessel vacancy once, preserving each source and selectio
   invoke.mockResolvedValueOnce(parsed("Chief Officer", "Bulk Carrier / Oil Tanker"))
     .mockResolvedValueOnce(parsed("Chief Engineer", "Container Ship / LNG"));
   await intake();
-  const expand = screen.getByRole("button", { name: "Expand by vessel", exact: true });
+  const expand = screen.getByRole("button", { name: /^Expand by vessel$/ });
   await waitFor(() => expect(expand).not.toBeDisabled());
   fireEvent.click(expand);
   await waitFor(() => expect(screen.getAllByRole("checkbox", { name: /Select Chief/ })).toHaveLength(4));
@@ -44,5 +44,5 @@ it("retries only failed empty readings and leaves successful readings untouched"
   await waitFor(() => expect(screen.getAllByRole("checkbox", { name: /Select Chief/ })).toHaveLength(2));
   expect(invoke).toHaveBeenCalledTimes(3);
   expect(invoke.mock.calls[2][1].body.text).toContain("Chief Engineer");
-  expect(screen.getByRole("button", { name: "Retry failed readings", exact: true })).toBeDisabled();
+  expect(screen.getByRole("button", { name: /^Retry failed readings$/ })).toBeDisabled();
 });
