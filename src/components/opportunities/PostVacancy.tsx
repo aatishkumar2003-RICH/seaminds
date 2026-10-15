@@ -203,6 +203,13 @@ const PostVacancy = () => {
   };
 
   const failedReadings = sources.filter(canRetry);
+  /** Adverts that were read successfully but contained no vacancy (headings, intro fragments). */
+  const emptyAdverts = sources.filter((s) => s.status === "error" && s.rows.length === 0 && s.error === "No vacancies found in this advert.");
+  const discardEmpty = () => {
+    const ids = new Set(emptyAdverts.map((s) => s.id));
+    setScan(null);
+    setSources((p) => p.filter((s) => !ids.has(s.id)));
+  };
   const reading = sources.some((s) => s.status === "reading");
   const commandBusy = reading || retrying || checking || publishing || !!uncertain;
   const expansionBusy = checking || publishing || !!uncertain;
@@ -270,6 +277,8 @@ const PostVacancy = () => {
   const fill = contactCandidates.find((c) => c.key === fillKey) || null;
   const [batchCc, setBatchCc] = useState("+62");
   const [batchAgency, setBatchAgency] = useState("");
+  const [batchEmail, setBatchEmail] = useState("");
+  const [batchPhone, setBatchPhone] = useState("");
   const [view, setView] = useState<"all" | "ready" | "fix">("all");
   const isPlaceholder = (v?: string) => /^(null|undefined|none|n\/?a|nil|-+)$/i.test((v || "").trim());
   const blank = (v?: string) => !v?.trim() || isPlaceholder(v);
@@ -291,6 +300,8 @@ const PostVacancy = () => {
       const g = contactCandidates.find((c) => (em && c.email === em) || (wd.length >= 7 && digitsOf(c.whatsapp) === wd));
       if (g) o = { ...o, contact_email: o.contact_email || g.email, contact_whatsapp: o.contact_whatsapp || g.whatsapp, recruiter_name: o.recruiter_name || g.name };
     }
+    // Manager-typed batch contact: only for vacancies that still have no contact at all.
+    if (needsContact(o) && (batchEmail.trim() || batchPhone.trim())) o = { ...o, contact_email: batchEmail.trim(), contact_whatsapp: batchPhone.trim() };
     const w = withCc(o.contact_whatsapp || "");
     if (w !== (o.contact_whatsapp || "")) o = { ...o, contact_whatsapp: w };
     // Either a valid email or a valid WhatsApp is enough: the unusable other channel is dropped.
@@ -499,6 +510,13 @@ const PostVacancy = () => {
               {failedReadings.length > 0 && !retrying && <span className="rounded-full bg-[#f59e0b] px-2 py-0.5 text-[11px] font-bold text-[#0D1B2A]">{failedReadings.length}</span>}
             </button>
           </div>
+          {emptyAdverts.length > 0 && (
+            <button type="button" aria-label={`Discard all empty adverts (${emptyAdverts.length})`} onClick={discardEmpty} disabled={commandBusy}
+              className="w-full flex items-center gap-2 rounded-xl border-2 border-destructive/50 bg-destructive/10 px-3 py-2 min-h-11 text-sm font-semibold text-destructive hover:bg-destructive/20 disabled:opacity-50">
+              <Trash2 size={16} /> <span className="flex-1 text-left">Discard all empty adverts</span>
+              <span className="rounded-full bg-destructive px-2 py-0.5 text-[11px] font-bold text-destructive-foreground">{emptyAdverts.length}</span>
+            </button>
+          )}
           {!reading && !sources.some(expandable) && !sources.some((s) => s.collapsed) && <p role="status" className="text-xs text-muted-foreground">No multi-vessel vacancies found in this batch.</p>}
         </section>
       )}
@@ -557,7 +575,17 @@ const PostVacancy = () => {
               <Input value={batchAgency} onChange={(e) => { setScan(null); setBatchAgency(e.target.value); }} placeholder="e.g. PT. Diva Marina Indonesia" className="h-11 text-sm" />
               <span className="block text-[10px] text-muted-foreground">Used only where an advert has no company name. Optional for your own vacancies.</span>
             </label>
-            <p className="sm:col-span-2 text-[10px] text-muted-foreground">An email or a WhatsApp number is enough to publish — all other details are optional.</p>
+            <label className="block space-y-1">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-[#D4AF37]">Batch WhatsApp number</span>
+              <Input aria-label="Batch WhatsApp number" inputMode="tel" value={batchPhone} onChange={(e) => { setScan(null); setBatchPhone(e.target.value); }} placeholder="e.g. 0919 006 1411" className="h-11 text-sm" />
+              <span className="block text-[10px] text-muted-foreground">Uses the country code above. Filled only where an advert has no contact.</span>
+            </label>
+            <label className="block space-y-1">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-[#D4AF37]">Batch email</span>
+              <Input aria-label="Batch email" type="email" value={batchEmail} onChange={(e) => { setScan(null); setBatchEmail(e.target.value); }} placeholder="e.g. crewing@agency.com" className="h-11 text-sm" />
+              <span className="block text-[10px] text-muted-foreground">{batchEmail.trim() && !isValidEmail(batchEmail.trim()) ? "Email address is not valid." : "Filled only where an advert has no contact."}</span>
+            </label>
+            <p className="sm:col-span-2 text-[10px] text-muted-foreground">An email or a WhatsApp number is enough to publish — all other details are optional. Contacts already in an advert are never changed.</p>
           </div>
         </section>
       )}
