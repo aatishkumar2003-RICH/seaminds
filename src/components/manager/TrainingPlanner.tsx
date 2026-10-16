@@ -85,14 +85,14 @@ const TrainingPlanner = ({ inviteId, name, whatsapp, company, onLedgerChange }: 
           ))}
           {recs.length > 0 && (
             <div style={{ display: "flex", gap: 6 }}>
-              <button onClick={() => assign(true)} disabled={busy || !picked.length || !whatsapp}
-                style={{ flex: 1, background: GOLD, color: "#0D1B2A", border: 0, borderRadius: 9, padding: "8px 0", fontSize: 12, fontWeight: 800, cursor: "pointer", opacity: !picked.length || !whatsapp ? 0.5 : 1 }}>
-                {busy ? "Assigning…" : "Assign & send on WhatsApp"}
-              </button>
-              <button onClick={() => assign(false)} disabled={busy || !picked.length}
-                style={{ flex: 1, background: "transparent", color: GOLD, border: `1px solid ${GOLD}`, borderRadius: 9, padding: "8px 0", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
-                Assign & copy links
-              </button>
+              <Button onClick={() => assign(true)} disabled={busy || !picked.length || !whatsapp}
+                className="h-auto flex-1 whitespace-normal rounded-xl bg-gold px-2 py-2 text-xs font-bold text-primary-foreground hover:bg-gold/90">
+                <MessageCircle />{busy ? "Assigning…" : "Assign & open WhatsApp"}
+              </Button>
+              <Button onClick={() => assign(false)} disabled={busy || !picked.length} variant="outline"
+                className="h-auto flex-1 whitespace-normal rounded-xl border-gold px-2 py-2 text-xs text-gold">
+                <Copy />Assign & copy links
+              </Button>
             </div>
           )}
         </div>
@@ -105,10 +105,10 @@ const TrainingPlanner = ({ inviteId, name, whatsapp, company, onLedgerChange }: 
               {l.status === "completed" ? `✓ ${l.title} — ${l.quiz_correct}/${l.quiz_total}, read ${l.dwell_seconds ?? 0}s, ${l.completed_at ? new Date(l.completed_at).toLocaleDateString() : "date unavailable"}` : `• ${l.title} — ${l.status === "opened" ? "opened, not finished" : "assigned, not opened"}`}
             </p>
           ))}
-          <button onClick={async () => { await navigator.clipboard.writeText(trainingDossier(name, ledger)).catch(() => null); toast.success("Training record copied"); }}
-            style={{ display: "block", width: "100%", marginTop: 7, background: "transparent", color: GOLD, border: `1px solid ${GOLD}`, borderRadius: 9, padding: "7px 0", fontSize: 11.5, fontWeight: 700, cursor: "pointer" }}>
-            📋 Copy pre-joining training record
-          </button>
+          <Button variant="outline" className="mt-2 h-auto w-full whitespace-normal rounded-xl border-gold py-2 text-xs text-gold" onClick={async () => {
+            try { await navigator.clipboard.writeText(trainingDossier(name, ledger)); toast.success("Training record copied"); }
+            catch { toast.error("Could not copy training record. Please try again."); }
+          }}><Copy />Copy pre-joining training record</Button>
         </div>
       )}
       {(shareUrl || pendingLinks.length > 0) && <div className="mt-3 flex flex-wrap gap-2">
