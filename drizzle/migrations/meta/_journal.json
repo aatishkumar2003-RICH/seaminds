@@ -379,6 +379,13 @@
       "when": 1792042236129,
       "tag": "0053_recruiter_outreach",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1792128840170,
+      "tag": "0054_protect_private_interview_claim",
+      "breakpoints": true
     }
   ]
 }
