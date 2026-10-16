@@ -24,6 +24,7 @@ import CvViewsCard from "@/components/CvViewsCard";
 import BottomNav from "@/components/layout/BottomNav";
 
 // Lazily-loaded screens — each downloads only when opened
+import { checkRest, REST_STORAGE_KEY } from "@/lib/restHours";
 const CrewChat = lazy(() => import("@/components/CrewChat"));
 const WelfareDashboard = lazy(() => import("@/components/WelfareDashboard"));
 const Opportunities = lazy(() => import("@/components/Opportunities"));
@@ -38,6 +39,7 @@ const VoyageReport = lazy(() => import("@/components/VoyageReport"));
 const CertWallet = lazy(() => import("@/components/CertWallet"));
 const CvAndCertificates = lazy(() => import("@/components/CvAndCertificates"));
 const RestHoursTracker = lazy(() => import("@/components/RestHoursTracker"));
+const RestQuickLog = lazy(() => import("@/components/rest/RestQuickLog"));
 const VesselRating = lazy(() => import("@/components/VesselRating"));
 const NPSSurvey = lazy(() => import("@/components/NPSSurvey"));
 const VesselOnboardingCard = lazy(() => import("@/components/VesselOnboardingCard"));
@@ -721,8 +723,7 @@ const Index = () => {
   const certsRaw = localStorage.getItem("seaminds_certs");
   const certs: { expiryDate: string }[] = certsRaw ? (() => { try { return JSON.parse(certsRaw); } catch { return []; } })() : [];
   const expiringSoon = certs.filter(c => { const d = Math.ceil((new Date(c.expiryDate).getTime() - Date.now()) / 86400000); return d >= 0 && d < 90; }).length;
-  const restRaw = localStorage.getItem("seaminds_rest_today");
-  const restHours = restRaw ? parseFloat(restRaw) : 0;
+  const restHours = (() => { try { return checkRest(JSON.parse(localStorage.getItem(REST_STORAGE_KEY) || "[]")).rest24; } catch { return 0; } })();
   const cardStyle = { background: "rgba(13,27,42,0.8)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", minWidth: "0", textAlign: "center" as const, flexShrink: 0 };
 
   // === Main app view ===
@@ -786,6 +787,7 @@ const Index = () => {
                   <div className="text-[9px] text-muted-foreground">SeaMinds Score</div>
                 </button>
               </div>
+              {profileComplete && <Suspense fallback={null}><RestQuickLog profileId={profileId} onOpen={() => setScreen("resthours")} /></Suspense>}
 
               {/* Daily quote */}
               <div className="mt-2 rounded-xl border border-white/10 bg-secondary/30 px-1 py-2">
