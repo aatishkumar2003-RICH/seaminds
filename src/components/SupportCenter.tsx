@@ -21,11 +21,11 @@ const CATEGORIES = [
 
 interface MyTicket { ticket_ref: string; category: string; status: string; subject: string; created_at: string }
 
-interface Props { sourceScreen: string; onBack: () => void }
+interface Props { sourceScreen: string; onBack: () => void; onOpenSafety?: () => void }
 
 const newId = () => crypto.randomUUID();
 
-export default function SupportCenter({ sourceScreen, onBack }: Props) {
+export default function SupportCenter({ sourceScreen, onBack, onOpenSafety }: Props) {
   const { user } = useAuth();
   const submissionId = useRef<string>(newId());
   const [category, setCategory] = useState<string>("SYSTEM");
@@ -112,6 +112,13 @@ export default function SupportCenter({ sourceScreen, onBack }: Props) {
       <div className="rounded-xl border border-primary/30 bg-card p-3 text-xs leading-relaxed text-muted-foreground">
         Never send passwords, OTP codes, or wellness chat messages here. For an urgent safety problem or emergency, use the SOS button.
       </div>
+
+      {onOpenSafety && (
+        <button onClick={onOpenSafety} className="w-full rounded-xl border border-primary/30 bg-card p-4 text-left hover:bg-secondary">
+          <p className="text-sm font-bold text-primary">🛡️ Anonymous Safety & MLC 2006 Reporting</p>
+          <p className="mt-1 text-xs text-muted-foreground">Report safety or welfare concerns anonymously, sign off a voyage, rate a vessel or set up family updates.</p>
+        </button>
+      )}
 
       {user && (
         <DoraChat
