@@ -5207,6 +5207,7 @@ export type Database = {
           quiz: Json
           slug: string
           summary: string
+          tier: string
           title: string
           trading_areas: string[]
           updated_at: string
@@ -5230,6 +5231,7 @@ export type Database = {
           quiz?: Json
           slug: string
           summary: string
+          tier?: string
           title: string
           trading_areas?: string[]
           updated_at?: string
@@ -5253,6 +5255,7 @@ export type Database = {
           quiz?: Json
           slug?: string
           summary?: string
+          tier?: string
           title?: string
           trading_areas?: string[]
           updated_at?: string
@@ -6163,6 +6166,7 @@ export type Database = {
         Args: { p_area?: string; p_invite_id?: string; p_slugs?: string[] }
         Returns: Json
       }
+      training_catalog: { Args: never; Returns: Json }
       training_complete: {
         Args: { p_answers: number[]; p_token: string }
         Returns: Json

@@ -5,7 +5,7 @@ import { ChevronLeft, ExternalLink, Loader2, CheckCircle2, GraduationCap, Clock 
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { openTraining, completeTraining, trainingLedger, recommendTraining, assignTraining, trainingError, type LedgerItem, type Recommendation } from "@/lib/training";
+import { openTraining, completeTraining, trainingLedger, recommendTraining, assignTraining, trainingError, type LedgerItem, type Recommendation, trainingCatalog, trainingMatrix, type CatalogItem, type Segment } from "@/lib/training";
 
 const Shell = ({ children, onBack }: { children: React.ReactNode; onBack: () => void }) => (
   <main className="min-h-screen bg-background text-foreground pb-12">
@@ -128,9 +128,12 @@ const MyTraining = () => {
   const [items, setItems] = useState<LedgerItem[] | null>(null);
   const [recs, setRecs] = useState<Recommendation[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
+  const [catalog, setCatalog] = useState<CatalogItem[]>([]);
+  const [segment, setSegment] = useState<Segment>("TANKER");
 
   const load = useCallback(async () => {
-    const [l, r] = await Promise.all([trainingLedger(null), recommendTraining(null, "", 4)]);
+    const [l, r, c] = await Promise.all([trainingLedger(null), recommendTraining(null, "", 4), trainingCatalog()]);
+    setCatalog(c.ok ? c.items : []);
     setItems(l.ok ? l.items : []);
     setRecs(r.ok ? r.items.filter((x: Recommendation) => !x.assigned) : []);
   }, []);
@@ -143,6 +146,7 @@ const MyTraining = () => {
     if (!d.ok) return toast.error(trainingError(d.error_code));
     navigate(`/training/${d.assigned[0].token}`);
   };
+  const openItem = (c: CatalogItem) => (c.token ? navigate(`/training/${c.token}`) : start(c.slug));
 
   return (
     <section className="space-y-5">
@@ -165,7 +169,34 @@ const MyTraining = () => {
               ))}
             </div>
           )}
-          <h2 className="font-bold text-primary">Recommended for you</h2>
+          {catalog.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="font-bold text-primary">Training matrix</h2>
+              <div className="grid grid-cols-3 gap-1 rounded-xl border border-border bg-card p-1" role="tablist">
+                {([["TANKER", "Tanker"], ["DRY", "Dry cargo"], ["ALL", "All"]] as const).map(([k, label]) => (
+                  <button key={k} role="tab" aria-selected={segment === k} onClick={() => setSegment(k)}
+                    className={`rounded-lg py-2 text-xs font-bold ${segment === k ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>{label}</button>
+                ))}
+              </div>
+              {trainingMatrix(catalog, segment).map((g) => g.items.length > 0 && (
+                <div key={g.tier} className="space-y-2">
+                  <div><p className="text-sm font-bold">{g.label} · {g.items.filter((i) => i.status === "completed").length}/{g.items.length}</p><p className="text-xs text-muted-foreground">{g.hint}</p></div>
+                  {g.items.map((c) => (
+                    <div key={c.slug} className="rounded-lg border border-border bg-card p-3 flex items-center gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold">{c.status === "completed" ? "✓ " : ""}{c.title}</p>
+                        {c.media_url && <a href={c.media_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary underline"><ExternalLink size={11} />{c.media_label || "Official reference"}</a>}
+                      </div>
+                      <Button size="sm" variant={c.status === "completed" ? "outline" : "default"} disabled={busy === c.slug} onClick={() => openItem(c)}>
+                        {busy === c.slug ? "…" : c.status === "completed" ? "Review" : c.status ? "Continue" : "Start"}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+          <h2 className="font-bold text-primary">Recommended for you (from your profile & interview)</h2>
           {recs.length === 0 ? <p className="text-sm text-muted-foreground">No new recommendations. Complete your profile or an assessment for sharper suggestions.</p> : recs.map((r) => (
             <div key={r.slug} className="rounded-lg border border-primary/40 bg-card p-4 space-y-2">
               <p className="font-semibold">{r.title}</p>
