@@ -421,6 +421,13 @@
       "when": 1792166561484,
       "tag": "0059_training_matrix_tiers",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1792166828630,
+      "tag": "0060_rest_hours_cloud_save_fix",
+      "breakpoints": true
     }
   ]
 }
