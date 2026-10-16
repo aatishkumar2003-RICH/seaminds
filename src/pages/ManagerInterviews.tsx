@@ -138,7 +138,7 @@ const ManagerInterviews = () => {
   };
 
   const shareWhatsApp = (c: Campaign) => {
-    const msg = `⚓ You are invited to a SeaMinds interview\n\n${c.title}\nRank: ${c.rank_required}${c.vessel_type ? `\nVessel: ${c.vessel_type}` : ""}\n\nAbout 20 minutes. Free.\n\n${linkFor(c.open_link_token)}`;
+    const msg = `⚓ You are invited to a SeaMinds crew assessment\n\n${c.title}\nRank: ${c.rank_required}${c.vessel_type ? `\nVessel: ${c.vessel_type}` : ""}\n\nPrepare your profile first: upload a CV PDF or clear photo for an easy AI scan, or fill a short Quick Profile without a CV. Confirm your details, then start your interview.\n\nFree for crew.\n\n${linkFor(c.open_link_token)}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
   };
 

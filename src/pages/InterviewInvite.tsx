@@ -16,7 +16,7 @@ const InterviewInvite = () => {
   const { token } = useParams();
   const navigate = useNavigate();
   const [search, setSearch] = useSearchParams();
-  const { user, loading: authLoading } = useAuth();
+  const { user, isReady } = useAuth();
   const [info, setInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const prepare = search.get("prepare");
@@ -58,7 +58,7 @@ const InterviewInvite = () => {
         <Button variant="ghost" className="px-0 text-primary" onClick={() => prepare ? changeChoice() : navigate(-1)}>
           <ChevronLeft /> Back
         </Button>
-        {loading || authLoading ? (
+        {loading || !isReady ? (
           <p className="flex items-center gap-2 text-muted-foreground"><Loader2 className="animate-spin" size={18} /> Loading invitation…</p>
         ) : !info?.ok ? (
           <section className="space-y-4">
