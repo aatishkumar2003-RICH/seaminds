@@ -5674,6 +5674,14 @@ export type Database = {
           whatsapp: string
         }[]
       }
+      campaign_training_summary: {
+        Args: { p_campaign_id: string }
+        Returns: {
+          assigned: number
+          completed: number
+          invite_id: string
+        }[]
+      }
       candidate_rate_ok: {
         Args: {
           p_action: string
