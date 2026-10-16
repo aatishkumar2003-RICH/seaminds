@@ -1721,6 +1721,83 @@ export type Database = {
         }
         Relationships: []
       }
+      crew_training_assignments: {
+        Row: {
+          assigned_by: string | null
+          attempts: number
+          completed_at: string | null
+          created_at: string
+          crew_id: string
+          dwell_seconds: number | null
+          id: string
+          invite_id: string | null
+          last_attempt_at: string | null
+          match_score: number
+          module_id: string
+          module_version: number
+          opened_at: string | null
+          quiz_correct: number | null
+          quiz_total: number | null
+          reasons: Json
+          source: string
+          status: string
+          token: string
+          trading_area: string | null
+        }
+        Insert: {
+          assigned_by?: string | null
+          attempts?: number
+          completed_at?: string | null
+          created_at?: string
+          crew_id: string
+          dwell_seconds?: number | null
+          id?: string
+          invite_id?: string | null
+          last_attempt_at?: string | null
+          match_score?: number
+          module_id: string
+          module_version?: number
+          opened_at?: string | null
+          quiz_correct?: number | null
+          quiz_total?: number | null
+          reasons?: Json
+          source?: string
+          status?: string
+          token?: string
+          trading_area?: string | null
+        }
+        Update: {
+          assigned_by?: string | null
+          attempts?: number
+          completed_at?: string | null
+          created_at?: string
+          crew_id?: string
+          dwell_seconds?: number | null
+          id?: string
+          invite_id?: string | null
+          last_attempt_at?: string | null
+          match_score?: number
+          module_id?: string
+          module_version?: number
+          opened_at?: string | null
+          quiz_correct?: number | null
+          quiz_total?: number | null
+          reasons?: Json
+          source?: string
+          status?: string
+          token?: string
+          trading_area?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crew_training_assignments_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "training_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crew_vessel_experience: {
         Row: {
           created_at: string
@@ -5112,6 +5189,78 @@ export type Database = {
         }
         Relationships: []
       }
+      training_modules: {
+        Row: {
+          concepts: string[]
+          created_at: string
+          departments: string[]
+          domains: string[]
+          id: string
+          is_published: boolean
+          key_points: Json
+          levels: string[]
+          media_label: string | null
+          media_url: string | null
+          min_dwell_seconds: number
+          pass_mark: number
+          priority: number
+          quiz: Json
+          slug: string
+          summary: string
+          title: string
+          trading_areas: string[]
+          updated_at: string
+          version: number
+          vessel_families: string[]
+        }
+        Insert: {
+          concepts?: string[]
+          created_at?: string
+          departments?: string[]
+          domains?: string[]
+          id?: string
+          is_published?: boolean
+          key_points?: Json
+          levels?: string[]
+          media_label?: string | null
+          media_url?: string | null
+          min_dwell_seconds?: number
+          pass_mark?: number
+          priority?: number
+          quiz?: Json
+          slug: string
+          summary: string
+          title: string
+          trading_areas?: string[]
+          updated_at?: string
+          version?: number
+          vessel_families?: string[]
+        }
+        Update: {
+          concepts?: string[]
+          created_at?: string
+          departments?: string[]
+          domains?: string[]
+          id?: string
+          is_published?: boolean
+          key_points?: Json
+          levels?: string[]
+          media_label?: string | null
+          media_url?: string | null
+          min_dwell_seconds?: number
+          pass_mark?: number
+          priority?: number
+          quiz?: Json
+          slug?: string
+          summary?: string
+          title?: string
+          trading_areas?: string[]
+          updated_at?: string
+          version?: number
+          vessel_families?: string[]
+        }
+        Relationships: []
+      }
       vacancy_cleanup_audit: {
         Row: {
           action: string
@@ -6002,6 +6151,31 @@ export type Database = {
             }
             Returns: Json
           }
+      training_assign: {
+        Args: { p_area?: string; p_invite_id?: string; p_slugs?: string[] }
+        Returns: Json
+      }
+      training_complete: {
+        Args: { p_answers: number[]; p_token: string }
+        Returns: Json
+      }
+      training_ledger: { Args: { p_invite_id?: string }; Returns: Json }
+      training_open: { Args: { p_token: string }; Returns: Json }
+      training_recommend: {
+        Args: { p_area?: string; p_invite_id?: string; p_limit?: number }
+        Returns: Json
+      }
+      training_recommend_core: {
+        Args: {
+          p_area: string
+          p_crew: string
+          p_limit: number
+          p_target_vessel: string
+        }
+        Returns: Json
+      }
+      training_resolve_crew: { Args: { p_invite_id: string }; Returns: Json }
+      training_vessel_family: { Args: { p: string }; Returns: string }
       upsert_email_lead: {
         Args: {
           p_crew_profile_id?: string
