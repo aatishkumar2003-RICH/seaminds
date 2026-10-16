@@ -106,7 +106,7 @@ Deno.serve(async (req) => {
 
       // Full CV is behind the contact-reveal credit wall (admin bypasses).
       const ADMIN_UID = "492ee966-e015-4440-a415-6ad6275a4a9b";
-      if (authUser.id !== ADMIN_UID) {
+      if (!isOwner) {
         const { data: reveal } = await admin
           .from("contact_reveals")
           .select("id")
@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
 
     // Placed crew are protected during their contract: only the placing company
     // (or the admin) may see them, regardless of the availability filter.
-    if (authUser.id !== ADMIN_UID_SEARCH) {
+    if (!isOwner) {
       const today = new Date().toISOString().slice(0, 10);
       const myCompany = String(manager.company_name || "").trim().toLowerCase();
       const { data: placedRows } = await admin
