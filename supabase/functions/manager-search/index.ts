@@ -76,21 +76,25 @@ Deno.serve(async (req) => {
     const authUser = userData?.user;
     if (userErr || !authUser) return unauth();
 
-    const { data: manager } = await admin
+    const OWNER_EMAILS = ["atish@seaminds.life"];
+    const isOwner = OWNER_EMAILS.includes(String(authUser.email || "").trim().toLowerCase())
+      || authUser.id === "492ee966-e015-4440-a415-6ad6275a4a9b";
+
+    const { data: managerRow } = await admin
       .from("manager_profiles")
       .select("company_name, admin_approved, company_verified")
       .eq("user_id", authUser.id)
       .maybeSingle();
+    const manager = managerRow ?? (isOwner ? { company_name: "SeaMinds", admin_approved: true, company_verified: true } : null);
     if (!manager) return unauth();
 
     // Seafarer contact details and CVs are only released to approved companies.
-    if (manager.admin_approved !== true) {
+    if (manager.admin_approved !== true && !isOwner) {
       return json({
         success: false,
         pending_approval: true,
-        error: "Your company account is awaiting approval. SeaMinds verifies every company before releasing seafarer details. You can still post vacancies and arrange interviews meanwhile.",
+        error: "Your company account is awaiting approval. SeaMinds verifies every company before releasing seafarer details. Contact the SeaMinds admin team at admin@seaminds.life to request access.",
       }, 403);
-
     }
 
     if (action === "verify") {
