@@ -20,8 +20,8 @@ const sections = [
     body: "SeaMinds provides AI-powered wellness support tools for informational and self-help purposes only. These tools are not a substitute for professional medical advice, diagnosis, or treatment. If you are experiencing a medical or mental health emergency, please contact your vessel's medical officer, use the SOS emergency feature, or call local emergency services immediately. SeaMinds does not guarantee any specific health outcomes from using the wellness features.",
   },
   {
-    title: "5. Intellectual Property",
-    body: "All content, designs, logos, software, assessments, and technology on the SeaMinds platform are owned by SeaMinds or its licensors and are protected by international copyright and intellectual property laws. You may not reproduce, distribute, modify, or create derivative works from any SeaMinds content without prior written permission. The SMC Score methodology and certification system are proprietary to SeaMinds.",
+    title: "5. Intellectual Property & Copyright",
+    body: "© 2024–2026 SeaMinds. All rights reserved. All content, text, designs, logos, software, source code, assessments, question banks, AI companion technology, and graphics on the SeaMinds platform are owned by SeaMinds or its licensors and are protected by international copyright law, including the Berne Convention, and other intellectual property laws. You may not copy, scrape, reproduce, distribute, modify, republish, or create derivative works from any SeaMinds content without prior written permission. The SMC Score methodology, certification system, and the SeaMinds name and logo are proprietary to SeaMinds. Vacancy adverts remain the property of their respective recruiters. To report suspected copyright infringement or request a licence, email admin@seaminds.life with details of the work and where it appears.",
   },
   {
     title: "6. Limitation of Liability",

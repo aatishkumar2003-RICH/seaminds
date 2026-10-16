@@ -104,7 +104,7 @@ const HomeFooter = () => {
         </div>
         <div className="border-t border-white/5 pt-6 flex items-center justify-between">
           <p className="text-xs text-muted-foreground">
-            © 2026 SeaMinds. MLC 2006 Compliant.
+            © 2024–{new Date().getFullYear()} SeaMinds. All rights reserved. MLC 2006 Compliant.
           </p>
           <button
             onClick={() => { setShowPin(true); setPin(""); setError(""); }}
