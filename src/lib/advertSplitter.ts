@@ -5,8 +5,9 @@
 
 export type AdvertBlock = { text: string; uncertain: boolean; reason?: string };
 
-// "---", "====", "===== PASTE 01 =====", "### ADVERT 3 ###"
-const SEPARATOR = /^\s*(?:[-=_*~#]{3,}(?:\s*(?:paste|advert|ad|post|batch|message|msg|page)\s*#?\d*\s*[-=_*~#]{3,})?)\s*$/i;
+// "---", "====", "===== PASTE 01 =====", "### ADVERT 3 ###", "===== EUROPE-B8-001 =====":
+// any short label enclosed by delimiter marks on both sides is a trusted cut line.
+const SEPARATOR = /^\s*[-=_*~#]{3,}(?:[^\n]{1,80}?[-=_*~#]{3,})?\s*$/;
 // Numbered labels on their own line: "BATCH 1", "BATCH 2 : OSM THOME - INDIA", "[ADVERT 3]", "Vacancy #4 -", "JOB 5."
 // Trusted like "---" when the paste contains at least two of them. The heading line stays with its advert.
 const NUMBERED_HEADER = /^\s*[[(#*]*\s*(?:batch|advert|advertisement|ad|job|vacancy|post|paste)\s*(?:no\.?|#)?\s*\d{1,4}\s*[\])*]*\s*(?:[:.\-–—|)].*)?$/i;
