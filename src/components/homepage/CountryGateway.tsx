@@ -37,7 +37,7 @@ const CountryGateway = () => {
       aria-hidden={hidden || undefined}
       tabIndex={hidden ? -1 : undefined}
       className={tileCls}
-      style={{ ...tileSize, background: `${PANEL}E6`, border: `1px solid ${BORDER}` }}
+      style={{ ...tileSize, marginRight: 10, background: `${PANEL}E6`, border: `1px solid ${BORDER}` }}
     >
       <div className="flex items-center justify-between">
         <span className="text-2xl leading-none">{o.flag}</span>
@@ -100,7 +100,7 @@ const CountryGateway = () => {
               ))}
             </div>
           ) : (
-            <div className="cg-track flex gap-2.5 w-max" style={{ ["--cg-dur" as string]: `${duration}s` }}>
+            <div className="cg-track flex w-max" style={{ ["--cg-dur" as string]: `${duration}s` }}>
               {tiles.map((o) => tile(o, o.code))}
               {tiles.map((o) => tile(o, `dup-${o.code}`, true))}
             </div>
