@@ -161,41 +161,18 @@ const InterviewExam = () => {
     );
   }
 
-  if (state === "pending") {
-    return (
-      <div style={{ minHeight: "100vh", background: NAVY, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-        <div style={{ textAlign: "center", maxWidth: 340 }}>
-          <p style={{ fontSize: 40, marginBottom: 12 }}>⏳</p>
-          <h1 style={{ color: "#fff", fontSize: 19, fontWeight: 800, marginBottom: 10 }}>Answers saved — scoring in progress</h1>
-          <p style={{ color: "#94a3b8", fontSize: 13, lineHeight: 1.6, marginBottom: 20 }}>
-            Nothing is lost and this is not a fail. Open your interview link again later to finish sending your result to {ctx?.company}.
-          </p>
-          <button onClick={() => navigate("/app")}
-            style={{ background: GOLD, color: "#0D1B2A", border: "none", borderRadius: 12, padding: "13px 24px", fontWeight: 800, cursor: "pointer" }}>
-            Open SeaMinds
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (state === "done") {
-    return (
-      <div style={{ minHeight: "100vh", background: NAVY, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-        <div style={{ textAlign: "center", maxWidth: 340 }}>
-          <p style={{ fontSize: 40, marginBottom: 12 }}>✅</p>
-          <h1 style={{ color: "#fff", fontSize: 19, fontWeight: 800, marginBottom: 10 }}>Interview complete</h1>
-          <p style={{ color: "#94a3b8", fontSize: 13, lineHeight: 1.6, marginBottom: 20 }}>
-            {ctx?.company} can now see your result. Your score is saved to your SeaMinds profile
-            and works for other companies too.
-          </p>
-          <button onClick={() => navigate("/app")}
-            style={{ background: GOLD, color: "#0D1B2A", border: "none", borderRadius: 12, padding: "13px 24px", fontWeight: 800, cursor: "pointer" }}>
-            Open SeaMinds
-          </button>
-        </div>
-      </div>
-    );
+  if (state === "pending" || state === "done") {
+    return <main className="min-h-screen bg-background text-foreground px-4 py-6">
+      <section className="mx-auto max-w-lg space-y-5">
+        <Button variant="ghost" className="px-0 text-primary" onClick={() => navigate(`/interview/${token}`)}><ChevronLeft /> Back</Button>
+        <h1 className="text-xl font-bold">{state === "done" ? "Interview complete" : "Answers saved — scoring in progress"}</h1>
+        <p className="text-sm text-muted-foreground">{state === "done" ? `${ctx?.company} can now see your result. Your score is saved in your SeaMinds profile.` : `Your answers are saved. Reopen this interview link later to confirm your result for ${ctx?.company}.`}</p>
+        <h2 className="text-lg font-bold text-primary">Keep your CV ready</h2>
+        <p className="text-sm text-muted-foreground">Upload a CV PDF or clear photo. SeaMinds extracts your sea service, vessel types and certificates for you to review in your personal profile.</p>
+        <Button className="w-full h-auto whitespace-normal py-3" onClick={() => navigate("/app?tab=cv")}>Scan / Upload My CV</Button>
+        <Button variant="link" className="w-full h-auto whitespace-normal" onClick={() => navigate("/app")}>I'll update my CV later — Open SeaMinds</Button>
+      </section>
+    </main>;
   }
 
   // Sealed exam — no app navigation, no drawer, no feed

@@ -48,10 +48,15 @@ const InterviewInvite = () => {
     setSaving(true); setSaveError("");
     try {
       const parts = name.trim().split(/\s+/);
-      const { error } = await supabase.from("crew_profiles").upsert({ id: user.id,
+      const values = {
         first_name: parts[0], last_name: parts.slice(1).join(" "), email: user.email,
         whatsapp_number: whatsapp.trim(),
-      }, { onConflict: "id" }).select("id").single();
+      };
+      const { data: existing, error: readError } = await supabase.from("crew_profiles").select("id").eq("id", user.id).maybeSingle();
+      if (readError) throw readError;
+      const { error } = existing
+        ? await supabase.from("crew_profiles").update(values).eq("id", user.id).select("id").single()
+        : await supabase.from("crew_profiles").insert({ id: user.id, ...values, role: "Seafarer", ship_name: "" }).select("id").single();
       if (error) throw error;
       setProfileReady(true);
     } catch { setSaveError("Could not save your details. Please check your connection and try again."); }
