@@ -3,6 +3,8 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import AssessmentFlow from "@/components/smc/AssessmentFlow";
 import { openAssessmentV2, gatewayErrorMessage } from "@/lib/assessmentGateway";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft } from "lucide-react";
 
 const GOLD = "#D4AF37";
 const NAVY = "#0b1929";
@@ -28,7 +30,10 @@ const InterviewExam = () => {
         if (!res?.ok) { setError(res?.error || "This interview link is not valid."); setState("error"); return; }
 
         // Attach this seafarer to the invite
-        const { data: claimed } = await supabase.rpc("claim_interview" as any, { p_token: token, p_assessment_id: null });
+        // Private invites are authorized by the gateway, not the legacy claim RPC.
+        const { data: claimed } = res.kind === "open"
+          ? await supabase.rpc("claim_interview" as any, { p_token: token, p_assessment_id: null })
+          : { data: { ok: true, invite_id: res.invite_id, campaign_id: res.campaign_id } };
         const claim: any = claimed;
         if (!claim?.ok) { setError("Could not start this interview."); setState("error"); return; }
 
@@ -48,6 +53,17 @@ const InterviewExam = () => {
           .eq("invite_id", claim.invite_id)
           .maybeSingle();
         assessmentId = round2 ? null : ((existing as any)?.assessment_id || null);
+
+        if (!assessmentId) {
+          const [{ data: prepared }, { data: cv }] = await Promise.all([
+            supabase.from("crew_profiles").select("quick_profile_completed_at").eq("id", user.id).maybeSingle(),
+            supabase.from("crew_cv_data").select("sea_service, certificates").eq("user_id", user.id).maybeSingle(),
+          ]);
+          const hasCv = (Array.isArray(cv?.sea_service) && cv.sea_service.length > 0) || (Array.isArray(cv?.certificates) && cv.certificates.length > 0);
+          if (round2 ? !hasCv : !prepared?.quick_profile_completed_at && !hasCv) {
+            navigate(`/interview/${token}${round2 ? "?prepare=cv&round=2" : ""}`, { replace: true }); return;
+          }
+        }
 
         if (round2) {
           // Manager-requested CV-Based Round 2: separate record; Round 1 is never touched.
@@ -186,6 +202,7 @@ const InterviewExam = () => {
   return (
     <div style={{ position: "fixed", inset: 0, background: NAVY, display: "flex", flexDirection: "column", zIndex: 100 }}>
       <div style={{ padding: "10px 16px", borderBottom: "1px solid #1a2e47", flexShrink: 0 }}>
+        <Button variant="ghost" size="sm" className="text-primary px-0" onClick={() => navigate(`/interview/${token}`)}><ChevronLeft /> Back</Button>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
           <div style={{ minWidth: 0 }}>
             <p style={{ color: GOLD, fontSize: 10, fontWeight: 800, letterSpacing: 1.4 }}>SEAMINDS ASSESSMENT</p>
