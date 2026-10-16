@@ -205,7 +205,7 @@ const Index = () => {
       chat: "SeaMinds | Wellness", dashboard: "SeaMinds | Wellness",
       opportunities: "SeaMinds | Opportunities", news: "SeaMinds | News",
       academy: "SeaMinds | Academy", bridge: "SeaMinds | PMS",
-      community: "SeaMinds | Community", smc: "SeaMinds | SeaMinds Score",
+      community: "SeaMinds | Safety & Crew Tools", smc: "SeaMinds | SeaMinds Score",
       resume: "SeaMinds | CV Builder", certs: "SeaMinds | Certificates",
       resthours: "SeaMinds | Rest Hours", vesselrating: "SeaMinds | Vessel Rating",
       support: "SeaMinds | Support",
