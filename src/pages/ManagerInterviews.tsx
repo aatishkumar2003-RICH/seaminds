@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowLeft, Plus, Copy, Users, Mail } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { campaignTrainingSummary, trainingStatus, type TrainingSummary } from "@/lib/training";
 
 const GOLD = "#D4AF37";
 const NAVY = "#0D1B2A";
@@ -48,6 +50,30 @@ const ManagerInterviews = () => {
   const [busy, setBusy] = useState(false);
   const [r2Busy, setR2Busy] = useState<string | null>(null);
   const [trainFor, setTrainFor] = useState<string | null>(null);
+  const [training, setTraining] = useState<Record<string, TrainingSummary>>({});
+  const [trainingError, setTrainingError] = useState(false);
+
+  const refreshTraining = useCallback(async (campaignId: string) => {
+    const result = await campaignTrainingSummary(campaignId);
+    setTrainingError(!result.ok && !Array.isArray(result));
+    const items: TrainingSummary[] = Array.isArray(result) ? result : result.items || [];
+    if (Array.isArray(result) || result.ok) {
+      setTraining((previous) => ({ ...previous, ...Object.fromEntries(items.map((item) => [item.invite_id, item])) }));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!openId) return;
+    const refresh = () => { if (document.visibilityState === "visible") void refreshTraining(openId); };
+    const timer = window.setInterval(refresh, 30000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [openId, refreshTraining]);
 
   // email invite dialog
   const [inviteFor, setInviteFor] = useState<Campaign | null>(null);
@@ -110,6 +136,7 @@ const ManagerInterviews = () => {
   const showBoard = async (id: string) => {
     if (openId === id) { setOpenId(null); return; }
     setOpenId(id);
+    void refreshTraining(id);
     if (board[id]) return;
     const { data } = await supabase.rpc("campaign_leaderboard" as any, { p_campaign_id: id });
     setBoard((s) => ({ ...s, [id]: (data as any[]) || [] }));
@@ -369,8 +396,17 @@ const ManagerInterviews = () => {
                             )
                           )}
                           {r.status === "completed" && (
+                            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs" aria-live="polite">
+                              {trainingError ? <Button variant="ghost" size="sm" onClick={() => refreshTraining(c.id)} className="text-gold">Retry training status</Button>
+                                : !training[r.invite_id] ? <span className="text-muted-foreground">Loading training…</span>
+                                : <span className={`rounded-md border px-2 py-1 ${trainingStatus(training[r.invite_id]) === "complete" ? "border-sea-green/40 bg-sea-green/10 text-sea-green" : trainingStatus(training[r.invite_id]) === "pending" ? "border-gold/40 bg-gold/10 text-gold" : "border-border text-muted-foreground"}`}>
+                                  {trainingStatus(training[r.invite_id]) === "none" ? "No training assigned" : `${training[r.invite_id].completed}/${training[r.invite_id].assigned} briefings completed`}
+                                </span>}
+                            </div>
+                          )}
+                          {r.status === "completed" && (
                             trainFor === r.invite_id
-                              ? <Suspense fallback={null}><TrainingPlanner inviteId={r.invite_id} name={r.name} whatsapp={r.whatsapp} company="" /></Suspense>
+                              ? <Suspense fallback={null}><TrainingPlanner inviteId={r.invite_id} name={r.name} whatsapp={r.whatsapp} company="" onLedgerChange={(summary) => setTraining((previous) => ({ ...previous, [r.invite_id]: { invite_id: r.invite_id, ...summary } }))} /></Suspense>
                               : <button onClick={() => setTrainFor(r.invite_id)}
                                   style={{ display: "block", width: "100%", marginTop: 7, background: "transparent", color: GOLD, border: `1px solid ${GOLD}`, borderRadius: 9, padding: "8px 0", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
                                   🎓 Plan training

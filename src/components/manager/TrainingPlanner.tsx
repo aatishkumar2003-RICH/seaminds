@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { recommendTraining, assignTraining, trainingLedger, trainingMessage, trainingError, trainingDossier, TRADING_AREAS, type Recommendation, type LedgerItem } from "@/lib/training";
+import { recommendTraining, assignTraining, trainingLedger, trainingMessage, trainingError, trainingDossier, trainingProgress, trainingWhatsAppLink, TRADING_AREAS, type Recommendation, type LedgerItem } from "@/lib/training";
+import { Button } from "@/components/ui/button";
+import { Copy, MessageCircle } from "lucide-react";
 
 const GOLD = "#D4AF37";
 const BORDER = "#1e3a5f";
 
 /** Manager view: training needs for one interview candidate, assignment and the candidate's training record. */
-const TrainingPlanner = ({ inviteId, name, whatsapp, company }: { inviteId: string; name: string; whatsapp?: string; company: string }) => {
+const TrainingPlanner = ({ inviteId, name, whatsapp, company, onLedgerChange }: { inviteId: string; name: string; whatsapp?: string; company: string; onLedgerChange?: (summary: { assigned: number; completed: number }) => void }) => {
   const [area, setArea] = useState("");
   const [recs, setRecs] = useState<Recommendation[] | null>(null);
   const [meta, setMeta] = useState<any>(null);
@@ -14,6 +16,8 @@ const TrainingPlanner = ({ inviteId, name, whatsapp, company }: { inviteId: stri
   const [ledger, setLedger] = useState<LedgerItem[]>([]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [shareUrl, setShareUrl] = useState("");
+  const updateLedger = (items: LedgerItem[]) => { setLedger(items); onLedgerChange?.(trainingProgress(items)); };
 
   useEffect(() => {
     let live = true;
@@ -24,25 +28,38 @@ const TrainingPlanner = ({ inviteId, name, whatsapp, company }: { inviteId: stri
       if (!r.ok) { setErr(trainingError(r.error_code)); setRecs([]); return; }
       setMeta(r); setRecs(r.items);
       setPicked(r.items.filter((i: Recommendation) => i.gap || i.score >= 30).slice(0, 2).map((i: Recommendation) => i.slug));
-      setLedger(l.ok ? l.items : []);
+      if (l.ok) updateLedger(l.items);
     })();
     return () => { live = false; };
   }, [inviteId, area]);
 
   const assign = async (share: boolean) => {
     if (!picked.length || busy) return;
+    // Open during the tap, before awaiting the server, to avoid mobile popup blocking.
+    const popup = share ? window.open("about:blank", "_blank") : null;
+    if (popup) popup.opener = null;
     setBusy(true);
-    const d = await assignTraining(inviteId, picked, area);
-    setBusy(false);
-    if (!d.ok) return toast.error(trainingError(d.error_code));
-    const msg = trainingMessage(name, company, d.assigned, window.location.origin.includes("localhost") ? undefined : window.location.origin);
-    if (share) window.open(`https://wa.me/${String(whatsapp || "").replace(/[^\d]/g, "")}?text=${encodeURIComponent(msg)}`, "_blank");
-    else { await navigator.clipboard.writeText(msg).catch(() => null); toast.success("Training links copied"); }
-    const l = await trainingLedger(inviteId);
-    if (l.ok) setLedger(l.items);
+    try {
+      const d = await assignTraining(inviteId, picked, area);
+      if (!d.ok) { popup?.close(); toast.error(trainingError(d.error_code)); return; }
+      const msg = trainingMessage(name, company, d.assigned);
+      if (share) {
+        const url = trainingWhatsAppLink(whatsapp || "", msg);
+        setShareUrl(url);
+        if (popup) popup.location.href = url;
+        else toast.info("Training assigned. Tap Open WhatsApp to share the links.");
+      } else {
+        try { await navigator.clipboard.writeText(msg); toast.success("Training links copied"); }
+        catch { toast.error("Training assigned, but copying failed. Try copying the links below."); }
+      }
+      const l = await trainingLedger(inviteId);
+      if (l.ok) updateLedger(l.items);
+    } catch { popup?.close(); toast.error("Check your connection and retry."); }
+    finally { setBusy(false); }
   };
 
   const weak = meta?.weak_domains ? Object.keys(meta.weak_domains) : [];
+  const pendingLinks = ledger.filter((item) => item.status !== "completed" && item.token).flatMap((item) => item.token ? [{ title: item.title, token: item.token }] : []);
   return (
     <div style={{ marginTop: 9, borderTop: `1px solid ${BORDER}`, paddingTop: 9 }}>
       <p style={{ color: GOLD, fontSize: 12, fontWeight: 800 }}>🎓 Training needs</p>
@@ -85,7 +102,7 @@ const TrainingPlanner = ({ inviteId, name, whatsapp, company }: { inviteId: stri
           <p style={{ color: "#94a3b8", fontSize: 11, fontWeight: 700 }}>Training record · {ledger.filter((l) => l.status === "completed").length}/{ledger.length} verified</p>
           {ledger.map((l) => (
             <p key={l.slug} style={{ color: l.status === "completed" ? "#22c55e" : "#94a3b8", fontSize: 10.5, marginTop: 3 }}>
-              {l.status === "completed" ? `✓ ${l.title} — ${l.quiz_correct}/${l.quiz_total}, read ${l.dwell_seconds ?? 0}s, ${new Date(l.completed_at!).toLocaleDateString()}` : `• ${l.title} — ${l.status === "opened" ? "opened, not finished" : "sent, not opened"}`}
+              {l.status === "completed" ? `✓ ${l.title} — ${l.quiz_correct}/${l.quiz_total}, read ${l.dwell_seconds ?? 0}s, ${l.completed_at ? new Date(l.completed_at).toLocaleDateString() : "date unavailable"}` : `• ${l.title} — ${l.status === "opened" ? "opened, not finished" : "assigned, not opened"}`}
             </p>
           ))}
           <button onClick={async () => { await navigator.clipboard.writeText(trainingDossier(name, ledger)).catch(() => null); toast.success("Training record copied"); }}
@@ -94,6 +111,15 @@ const TrainingPlanner = ({ inviteId, name, whatsapp, company }: { inviteId: stri
           </button>
         </div>
       )}
+      {(shareUrl || pendingLinks.length > 0) && <div className="mt-3 flex flex-wrap gap-2">
+        {whatsapp && <Button asChild size="sm" variant="outline" className="border-gold text-gold">
+          <a href={shareUrl || trainingWhatsAppLink(whatsapp, trainingMessage(name, company, pendingLinks))} target="_blank" rel="noopener noreferrer"><MessageCircle />Open WhatsApp</a>
+        </Button>}
+        {pendingLinks.length > 0 && <Button size="sm" variant="outline" className="border-gold text-gold" onClick={async () => {
+          try { await navigator.clipboard.writeText(trainingMessage(name, company, pendingLinks)); toast.success("Training links copied"); }
+          catch { toast.error("Could not copy training links. Please try again."); }
+        }}><Copy />Copy pending links</Button>}
+      </div>}
     </div>
   );
 };

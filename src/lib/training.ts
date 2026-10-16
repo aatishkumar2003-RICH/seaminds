@@ -27,6 +27,16 @@ export const recommendTraining = (inviteId: string | null, area: string, limit =
 export const assignTraining = (inviteId: string | null, slugs: string[] | null, area: string) =>
   rpc("training_assign", { p_invite_id: inviteId, p_slugs: slugs, p_area: area || null });
 export const trainingLedger = (inviteId: string | null) => rpc("training_ledger", { p_invite_id: inviteId });
+export type TrainingSummary = { invite_id: string; assigned: number; completed: number };
+export const campaignTrainingSummary = (campaignId: string) => rpc("campaign_training_summary", { p_campaign_id: campaignId });
+export const trainingProgress = (items: Pick<LedgerItem, "status">[]) => ({
+  assigned: items.length,
+  completed: items.filter((item) => item.status === "completed").length,
+});
+export const trainingStatus = (summary: Pick<TrainingSummary, "assigned" | "completed">) =>
+  summary.assigned === 0 ? "none" : summary.completed === summary.assigned ? "complete" : "pending";
+export const trainingWhatsAppLink = (phone: string, message: string) =>
+  `https://wa.me/${phone.replace(/[^\d]/g, "")}?text=${encodeURIComponent(message)}`;
 export const openTraining = (token: string) => rpc("training_open", { p_token: token });
 export const completeTraining = (token: string, answers: number[]) => rpc("training_complete", { p_token: token, p_answers: answers });
 

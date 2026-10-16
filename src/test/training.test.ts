@@ -1,8 +1,22 @@
 import { describe, it, expect, vi } from "vitest";
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: vi.fn() } }));
-import { trainingLink, trainingMessage, trainingError, trainingDossier } from "@/lib/training";
+import { trainingLink, trainingMessage, trainingError, trainingDossier, trainingProgress, trainingStatus, trainingWhatsAppLink } from "@/lib/training";
 
 describe("training links", () => {
+  it("only completed training counts toward roster completion", () => {
+    expect(trainingProgress([{ status: "assigned" }, { status: "opened" }, { status: "completed" }])).toEqual({ assigned: 3, completed: 1 });
+  });
+  it("zero assignments are not completed training", () => {
+    expect(trainingStatus({ assigned: 0, completed: 0 })).toBe("none");
+    expect(trainingStatus({ assigned: 3, completed: 1 })).toBe("pending");
+    expect(trainingStatus({ assigned: 3, completed: 3 })).toBe("complete");
+  });
+  it("WhatsApp shares the same crew tokens using international digits", () => {
+    const message = trainingMessage("Aris", "Acme", [{ title: "Mooring", token: "crew-token" }]);
+    const url = new URL(trainingWhatsAppLink("+63 919-006-1411", message));
+    expect(url.pathname).toBe("/639190061411");
+    expect(url.searchParams.get("text")).toContain("https://seaminds.life/training/crew-token");
+  });
   it("builds a per-crew tokenized link", () => {
     expect(trainingLink("abc123")).toBe("https://seaminds.life/training/abc123");
   });
