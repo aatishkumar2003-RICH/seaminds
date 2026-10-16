@@ -124,7 +124,7 @@ const VesselRating = ({ onBack }: VesselRatingProps) => {
       {/* Header */}
       <div className="px-5 pt-4 lg:pt-8 pb-4 border-b border-border">
         <button onClick={onBack} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-3 transition-colors">
-          <ArrowLeft size={14} /> Back to Community
+          <ArrowLeft size={14} /> Back to Safety & Crew Tools
         </button>
         <h1 className="text-xl font-bold" style={{ color: "#D4AF37" }}>⭐ Rate Your Vessel</h1>
         <p className="text-xs text-muted-foreground mt-1">Community ratings — unmoderated opinions of individual seafarers.</p>

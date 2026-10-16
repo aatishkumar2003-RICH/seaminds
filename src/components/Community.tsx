@@ -76,9 +76,9 @@ const Community = ({ shipName, manningAgency, profileId, firstName, voyageStartD
       <div className="px-5 pt-4 lg:pt-8 pb-4 border-b border-border">
         <div className="flex items-center gap-2">
           <Compass size={20} className="text-primary" />
-          <h1 className="text-xl font-semibold text-foreground">Community</h1>
+          <h1 className="text-xl font-semibold text-foreground">Safety & Crew Tools</h1>
         </div>
-        <p className="text-xs text-muted-foreground mt-1">Anonymous connections across the fleet</p>
+        <p className="text-xs text-muted-foreground mt-1">MLC safety reporting, voyage sign-off, vessel ratings and family updates</p>
       </div>
 
       <div className="flex-1 overflow-y-auto px-5 py-6 space-y-6">

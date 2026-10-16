@@ -204,8 +204,8 @@ const Index = () => {
       home: "SeaMinds | Home",
       chat: "SeaMinds | Wellness", dashboard: "SeaMinds | Wellness",
       opportunities: "SeaMinds | Opportunities", news: "SeaMinds | News",
-      academy: "SeaMinds | Academy", bridge: "SeaMinds | PMS",
-      community: "SeaMinds | Community", smc: "SeaMinds | SeaMinds Score",
+      academy: "SeaMinds | Training & Research", bridge: "SeaMinds | PMS",
+      community: "SeaMinds | Safety & Crew Tools", smc: "SeaMinds | SeaMinds Score",
       resume: "SeaMinds | CV Builder", certs: "SeaMinds | Certificates",
       resthours: "SeaMinds | Rest Hours", vesselrating: "SeaMinds | Vessel Rating",
       support: "SeaMinds | Support",
@@ -877,7 +877,7 @@ const Index = () => {
               ) : screen === "smc" ? (
                 <ScreenErrorBoundary screenName="SeaMinds Score"><SMCScoreTab profileId={profileId} firstName={firstName} lastName={lastName} rank={role} shipName={shipName} /></ScreenErrorBoundary>
               ) : screen === "support" ? (
-                <ScreenErrorBoundary screenName="Help & Support"><SupportCenter sourceScreen={prevScreen && prevScreen !== "support" ? prevScreen : "home"} onBack={() => setScreen(prevScreen && prevScreen !== "support" ? prevScreen : "home")} /></ScreenErrorBoundary>
+                <ScreenErrorBoundary screenName="Help & Support"><SupportCenter sourceScreen={prevScreen && prevScreen !== "support" ? prevScreen : "home"} onBack={() => setScreen(prevScreen && prevScreen !== "support" ? prevScreen : "home")} onOpenSafety={() => navigateTo("community")} /></ScreenErrorBoundary>
               ) : null}
               </Suspense>
             </div>

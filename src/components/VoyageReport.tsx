@@ -153,7 +153,7 @@ const VoyageReport = ({ profileId, firstName, role, shipName, voyageStartDate, n
         .single();
 
       if (!family) {
-        toast.error("No family connection found. Set one up in Community first.");
+        toast.error("No family connection found. Set one up in Safety & Crew Tools first.");
         setSharing(false);
         return;
       }

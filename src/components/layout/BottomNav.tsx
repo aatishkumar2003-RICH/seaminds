@@ -11,8 +11,9 @@ interface Props {
 const TABS: { icon: string; label: string; screen: Screen; gated?: boolean }[] = [
   { icon: "🏠", label: "Home", screen: "home" },
   { icon: "💼", label: "Jobs", screen: "opportunities" },
-  { icon: "💬", label: "Chat", screen: "chat", gated: true },
+  { icon: "🎓", label: "Training", screen: "academy" },
   { icon: "📄", label: "CV / Cert", screen: "resume" },
+  { icon: "💬", label: "Chat", screen: "chat", gated: true },
 ];
 
 const BottomNav: React.FC<Props> = ({ screen, jobBadgeCount, onNavClick, onMore }) => (

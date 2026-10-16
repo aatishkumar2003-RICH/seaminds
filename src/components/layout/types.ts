@@ -16,10 +16,10 @@ export const NAV_ITEMS: NavItem[] = [
   { icon: "📄", label: "CV / Certificate", screen: "resume" },
 
   { icon: "🏆", label: "My Score", screen: "smc" },
-  { icon: "📚", label: "Learn", screen: "academy" },
+  { icon: "🎓", label: "Training & Research", screen: "academy" },
 
-  { icon: "👥", label: "Community", screen: "community", gated: true },
   { icon: "📰", label: "News", screen: "news" },
+  { icon: "🛡️", label: "Safety & Crew Tools", screen: "community", gated: true },
   { icon: "🛟", label: "Help & Support", screen: "support" },
 ];
 
