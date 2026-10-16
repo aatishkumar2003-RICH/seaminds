@@ -102,7 +102,7 @@ const goldBtn: React.CSSProperties = {
   background: GOLD, color: NAVY, border: "none", fontWeight: 800, fontSize: 14, width: "100%",
 };
 
-const QuickProfile = () => {
+const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => void; embedded?: boolean } = {}) => {
   const navigate = useNavigate();
   const { t } = useT();
   const [uid, setUid] = useState<string | null>(null);
@@ -281,6 +281,18 @@ const QuickProfile = () => {
     (claims[key] || "").split(",").map((s) => s.trim()).includes(option);
 
   const finish = async () => {
+    if (!uid) return;
+    const { error: profileError } = await supabase.from("crew_profiles").update({
+      rank, years_in_rank_band: yearsBand, contracts_in_rank_band: contractsBand,
+      total_sea_service_band: seaBand,
+    } as any).eq("id", uid);
+    const entries = Object.entries(families).map(([vessel_family, sea_time_band]) => ({ crew_id: uid, vessel_family, sea_time_band }));
+    const familyResult = entries.length ? await supabase.from("crew_vessel_experience" as any)
+      .upsert(entries, { onConflict: "crew_id,vessel_family" }) : { error: null };
+    const claimEntries = Object.entries(claims).map(([claim_key, value]) => ({ crew_id: uid, claim_key, value, updated_at: new Date().toISOString() }));
+    const claimResult = claimEntries.length ? await supabase.from("crew_claims" as any)
+      .upsert(claimEntries, { onConflict: "crew_id,claim_key" }) : { error: null };
+    if (profileError || familyResult.error || claimResult.error) return toast.error("Could not save your profile. Please check your connection and try again.");
     // Completion is recorded only after the server confirms a canonical rank is saved
     if (!(await confirmCanonicalRank())) { setStep(1); return toast.error("Please choose your official rank from the list."); }
     if (!uid) return;
@@ -293,6 +305,7 @@ const QuickProfile = () => {
     if (error || !(saved as any)?.quick_profile_completed_at) {
       return toast.error("Could not save your profile. Please check your connection and try again.");
     }
+    if (onComplete) { onComplete(); return; }
     setDone(true);
   };
 
@@ -379,14 +392,14 @@ const QuickProfile = () => {
   const progress = done ? 100 : step === 1 ? 8 : step === 2 ? 45 : 78;
 
   return (
-    <div style={{ minHeight: "100vh", background: NAVY, padding: "14px 14px 40px" }}>
+    <div style={{ minHeight: embedded ? undefined : "100vh", background: NAVY, padding: embedded ? "0" : "14px 14px 40px" }}>
       <div style={{ maxWidth: 560, margin: "0 auto", display: "flex", flexDirection: "column", gap: 14 }}>
-        <button
+        {!embedded && <button
           onClick={() => navigate(-1)}
           style={{ background: "transparent", border: "none", color: GOLD, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, fontSize: 13, padding: 0, alignSelf: "flex-start" }}
         >
           <ChevronLeft size={18} /> {t("back")}
-        </button>
+        </button>}
 
         <div>
           <h1 style={{ color: GOLD, fontSize: 21, fontWeight: 800 }}>{t("qpTitle")}</h1>

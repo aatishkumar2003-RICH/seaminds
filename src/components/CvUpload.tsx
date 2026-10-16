@@ -3,6 +3,7 @@ import { trackEvent } from "@/lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { logEvent } from "@/lib/logEvent";
+import { Button } from "@/components/ui/button";
 import { Check, Loader2, FileText, Ship, GraduationCap, Stethoscope, Upload } from "lucide-react";
 
 interface CvUploadProps {
@@ -58,7 +59,10 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
   const [cvSummary, setCvSummary] = useState<any>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [scanStage, setScanStage] = useState(0);
+  const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const sourceFile = useRef<File | null>(null);
+  const storedFile = useRef<string | null>(null);
 
   const stages = [
     '📄 Reading your CV...',
@@ -82,8 +86,13 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
   };
 
   const handleFile = async (file: File) => {
-    console.log('CV Upload: file selected', file?.name, file?.type, file?.size);
+    if (!user || !accessToken) { setErrorMsg("Please sign in before uploading your CV."); setStatus("error"); return; }
+    if (!file.size || file.size > 20 * 1024 * 1024 || !(file.type === "application/pdf" || ["image/jpeg", "image/png", "image/webp"].includes(file.type))) {
+      setErrorMsg("Choose a non-empty PDF, JPG, PNG or WebP file up to 20 MB."); setStatus("error"); return;
+    }
     setFileName(file.name);
+    sourceFile.current = file;
+    storedFile.current = null;
     setStatus("reading");
     setErrorMsg("");
     setShowConfirmation(false);
@@ -103,14 +112,12 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
       setIsProcessing(true);
       let data: any, error: any;
       try {
-        console.log('CV Upload: calling parse-cv-documents');
         const result = await supabase.functions.invoke("parse-cv-documents", {
           body: { file_base64: base64, mime_type: file.type },
           headers: { Authorization: `Bearer ${accessToken}` },
         });
         data = result.data;
         error = result.error;
-        console.log('CV Upload: response', data, error);
       } finally {
         setIsProcessing(false);
       }
@@ -120,7 +127,7 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
       }
 
       const parsed = typeof data.data === 'string' ? JSON.parse(data.data) : data.data;
-      console.log('CV Upload: parsed data', parsed);
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("Could not read CV details. Try a clearer file.");
 
       // Show confirmation screen instead of immediately saving
       setCvSummary(parsed);
@@ -137,7 +144,9 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
   };
 
   const handleConfirm = async () => {
-    if (!cvSummary) return;
+    if (!cvSummary || !user || saving) return;
+    setSaving(true);
+    setErrorMsg("");
 
     const cv = cvSummary.personal || cvSummary;
     const mapped: Parameters<CvUploadProps["onParsed"]>[0] = {};
@@ -158,26 +167,46 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
     if (yearsVal) mapped.yearsAtSea = YEARS_MAP[yearsVal] || yearsVal;
     if (cv.imoNumber) mapped.vesselImo = cv.imoNumber;
     if (cv.currentVessel) mapped.shipName = cv.currentVessel;
-    if (cv.phone) mapped.whatsappNumber = cv.phone;
-
-    console.log('CV Upload: confirmed, mapped data', mapped);
-    onParsed(mapped);
-    setShowConfirmation(false);
+    if (cv.phone || cvSummary.phone) mapped.whatsappNumber = cv.phone || cvSummary.phone;
 
     // Save structured document data to crew_cv_data
     try {
-      if (user?.id) {
-        await supabase.from("crew_cv_data").upsert({
+      if (user.id) {
+        if (sourceFile.current && !storedFile.current) {
+          const extension = sourceFile.current.type === "application/pdf" ? "pdf" : sourceFile.current.type.split("/")[1];
+          const path = `${user.id}/cv-${crypto.randomUUID()}.${extension}`;
+          const { error: uploadError } = await supabase.storage.from("crew-cvs").upload(path, sourceFile.current);
+          if (uploadError) throw uploadError;
+          storedFile.current = path;
+        }
+        const { data: previous, error: readError } = await supabase.from("crew_cv_data")
+          .select("medical").eq("user_id", user.id).maybeSingle();
+        if (readError) throw readError;
+        const previousMedical = previous?.medical && typeof previous.medical === "object" && !Array.isArray(previous.medical) ? previous.medical : {};
+        const { error: saveError } = await supabase.from("crew_cv_data").upsert({
             user_id: user.id,
-          certificates: (cvSummary.certificates || []) as any,
-          sea_service: (cvSummary.sea_service || cvSummary.vessel_experience || []) as any,
-          medical: (cvSummary.medical || []) as any,
-          education: (cvSummary.education || []) as any,
+          certificates: (Array.isArray(cvSummary.certificates) ? cvSummary.certificates : []) as any,
+          sea_service: (Array.isArray(cvSummary.sea_service) ? cvSummary.sea_service : Array.isArray(cvSummary.vessel_experience) ? cvSummary.vessel_experience : []) as any,
+          medical: { ...previousMedical, cv_original_path: storedFile.current, records: Array.isArray(cvSummary.medical) ? cvSummary.medical : [], personal: {
+            ...((previousMedical as any).personal || {}), firstName, lastName,
+            rank: rankVal || "", nationality: mapped.nationality || "", phone: mapped.whatsappNumber || "", email: cv.email || "",
+          } } as any,
+          education: (Array.isArray(cvSummary.education) ? cvSummary.education : []) as any,
           updated_at: new Date().toISOString(),
-        }, { onConflict: "user_id" });
-        console.log('CV Upload: document data saved to crew_cv_data');
+        }, { onConflict: "user_id" }).select("user_id").single();
+        if (saveError) throw saveError;
+        const patch: Record<string, string> = {};
+        if (firstName) patch.first_name = firstName;
+        if (lastName) patch.last_name = lastName;
+        if (rankVal) patch.rank = rankVal;
+        if (mapped.nationality) patch.nationality = mapped.nationality;
+        const { error: profileError } = await supabase.from("crew_profiles").update(patch).eq("id", user.id).select("id").single();
+        if (profileError) throw profileError;
+        setShowConfirmation(false);
+        onParsed(mapped);
       }
-    } catch (saveErr) { console.log("CV data save (non-blocking):", saveErr); }
+    } catch { setErrorMsg("Could not save your CV. Your scanned details are still here — please try confirming again."); }
+    finally { setSaving(false); }
   };
 
   return (
@@ -279,15 +308,14 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
             </div>
           )}
 
-          <div style={{ display:'flex', gap:'10px' }}>
-            <button onClick={handleConfirm}
-              style={{ flex:1, background:'#D4AF37', color:'#0D1B2A', border:'none', padding:'12px', borderRadius:'8px', fontWeight:'bold', cursor:'pointer', fontSize: '14px' }}>
-              ✓ Confirm & Proceed
-            </button>
-            <button onClick={() => { setShowConfirmation(false); setCvSummary(null); setStatus("idle"); }}
-              style={{ background:'transparent', color:'#888', border:'1px solid #2a4060', padding:'12px 16px', borderRadius:'8px', cursor:'pointer', fontSize: '13px' }}>
+          {errorMsg && <p role="alert" className="text-sm text-destructive mb-3">{errorMsg}</p>}
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={handleConfirm} disabled={saving} className="flex-1 h-auto py-3 whitespace-normal">
+              {saving ? "Saving…" : "✓ Confirm & Proceed"}
+            </Button>
+            <Button variant="outline" disabled={saving} onClick={() => { setShowConfirmation(false); setCvSummary(null); setStatus("idle"); }}>
               Re-upload
-            </button>
+            </Button>
           </div>
         </div>
       )}

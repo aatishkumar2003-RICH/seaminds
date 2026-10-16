@@ -1,9 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
 const SYSTEM_PROMPT = `You are a maritime HR expert. Extract ALL information from this seafarer CV document and return ONLY valid JSON with no markdown fences, no explanation:
 {
@@ -63,7 +60,17 @@ Use empty string "" for any field not found. Use empty array [] for any array no
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
-    const { file_base64, mime_type } = await req.json();
+    const url = Deno.env.get("SUPABASE_URL");
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    const jwt = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim();
+    if (!jwt || !url || !anonKey) return new Response(JSON.stringify({ error: "Please sign in before uploading your CV." }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const { data: auth, error: authError } = await createClient(url, anonKey).auth.getUser(jwt);
+    if (authError || !auth.user) return new Response(JSON.stringify({ error: "Please sign in before uploading your CV." }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const body = await req.json().catch(() => null);
+    const { file_base64, mime_type } = body || {};
+    if (typeof file_base64 !== "string" || !file_base64.length || file_base64.length > 28 * 1024 * 1024 || !/^[A-Za-z0-9+/]+={0,2}$/.test(file_base64) || !["application/pdf", "image/jpeg", "image/png", "image/webp"].includes(mime_type)) {
+      return new Response(JSON.stringify({ error: "Choose a non-empty PDF, JPG, PNG or WebP up to 20 MB." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
     if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY not configured");
 

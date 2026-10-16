@@ -1,15 +1,13 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState, lazy, Suspense } from "react";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { Eye, EyeOff } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, FileText, Zap, Anchor, ArrowRight, Loader2 } from "lucide-react";
 
-const GOLD = "#D4AF37";
-const NAVY = "#0D1B2A";
-const CARD = "#112240";
-const BORDER = "#1e3a5f";
-
+const CvUpload = lazy(() => import("@/components/CvUpload"));
+const QuickProfile = lazy(() => import("@/pages/QuickProfile"));
 const LANG_LABEL: Record<string, string> = {
   en: "English", vi: "Tiếng Việt", tl: "Tagalog", hi: "हिन्दी", id: "Bahasa Indonesia",
 };
@@ -17,215 +15,157 @@ const LANG_LABEL: Record<string, string> = {
 const InterviewInvite = () => {
   const { token } = useParams();
   const navigate = useNavigate();
+  const [search, setSearch] = useSearchParams();
+  const { user, isReady } = useAuth();
   const [info, setInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [starting, setStarting] = useState(false);
+  const [profileReady, setProfileReady] = useState(false);
+  const [profileChecked, setProfileChecked] = useState(false);
   const [name, setName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
-  
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [nationality, setNationality] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const prepare = search.get("prepare");
+  const round2 = search.get("round") === "2";
 
   useEffect(() => {
+    let active = true;
+    setProfileChecked(false);
+    if (!user) return;
     (async () => {
-      if (!token) { setLoading(false); return; }
-      const { data } = await supabase.rpc("get_interview_by_token" as any, { p_token: token });
-      const res: any = data;
-      setInfo(res);
-      if (res?.name) setName(res.name);
-      setLoading(false);
+      const { data } = await supabase.from("crew_profiles").select("id, first_name, last_name, whatsapp_number").eq("id", user.id).maybeSingle();
+      if (!active) return;
+      setProfileReady(!!data?.id && !!data.first_name && !!data.whatsapp_number);
+      setName([data?.first_name, data?.last_name].filter(Boolean).join(" ") || info?.name || "");
+      setWhatsapp(data?.whatsapp_number || "");
+      setProfileChecked(true);
     })();
+    return () => { active = false; };
+  }, [user?.id, info?.name]);
+
+  const saveBasics = async () => {
+    if (!user || !name.trim() || !/^\+\d[\d\s()-]{7,20}$/.test(whatsapp.trim()) || saving) return;
+    setSaving(true); setSaveError("");
+    try {
+      const parts = name.trim().split(/\s+/);
+      const values = {
+        first_name: parts[0], last_name: parts.slice(1).join(" "), email: user.email,
+        whatsapp_number: whatsapp.trim(),
+      };
+      const { data: existing, error: readError } = await supabase.from("crew_profiles").select("id").eq("id", user.id).maybeSingle();
+      if (readError) throw readError;
+      const { error } = existing
+        ? await supabase.from("crew_profiles").update(values).eq("id", user.id).select("id").single()
+        : await supabase.from("crew_profiles").insert({ id: user.id, ...values, role: "Seafarer", ship_name: "" }).select("id").single();
+      if (error) throw error;
+      setProfileReady(true);
+    } catch { setSaveError("Could not save your details. Please check your connection and try again."); }
+    finally { setSaving(false); }
+  };
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    (async () => {
+      try {
+        if (!token) return;
+        const { data, error } = await supabase.rpc("get_interview_by_token" as any, { p_token: token });
+        if (active) setInfo(error ? { ok: false, error: "Could not load this invitation. Please try again." } : data);
+      } catch {
+        if (active) setInfo({ ok: false, error: "Could not load this invitation. Please try again." });
+      } finally { if (active) setLoading(false); }
+    })();
+    return () => { active = false; };
   }, [token]);
 
-  const createAndStart = async () => {
-    if (!name.trim()) { toast.error("Please enter your name."); return; }
-    if (!whatsapp.trim()) { toast.error("Please enter your WhatsApp number."); return; }
-    if (!email.trim()) { toast.error("Please enter your email."); return; }
-    if (!password.trim()) { toast.error("Please choose a password."); return; }
-    if (password.length < 8) { toast.error("Password must be at least 8 characters."); return; }
-    setStarting(true);
-    try {
-      const { data: { user: existingUser } } = await supabase.auth.getUser();
-      if (existingUser) { navigate(`/interview/${token}/exam`); return; }
-
-      const parts = name.trim().split(" ");
-      const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/interview/${token}/exam`,
-          data: {
-            crew_signup: true,
-            first_name: parts[0],
-            last_name: parts.slice(1).join(" "),
-            whatsapp: whatsapp.trim(),
-            nationality: nationality || "",
-            rank: info?.rank || "",
-          },
-        },
-      });
-      if (error) {
-        if (String(error.message).toLowerCase().includes("already")) {
-          toast.error("That email is already registered. Please sign in first, then reopen this link.");
-        } else {
-          toast.error(error.message);
-        }
-        return;
-      }
-      if (!data.session) {
-        toast.success("Account created. Check your email to confirm, then reopen this interview link.");
-        return;
-      }
-      navigate(`/interview/${token}/exam`);
-    } catch {
-      toast.error("Could not create your account. Please try again.");
-    } finally {
-      setStarting(false);
-    }
+  const choose = (path: "cv" | "quick") => {
+    if (!token) return;
+    const params = new URLSearchParams({ prepare: path });
+    if (round2) params.set("round", "2");
+    const dest = `/interview/${encodeURIComponent(token)}?${params}`;
+    if (!user) { navigate(`/join?next=${encodeURIComponent(dest)}`); return; }
+    setSearch(params);
   };
-
-  const input: React.CSSProperties = {
-    width: "100%", background: NAVY, color: "#fff", border: `1px solid ${BORDER}`,
-    borderRadius: 11, padding: "12px 14px", fontSize: 15, outline: "none", marginTop: 6,
-  };
-
-  if (loading) {
-    return <div style={{ minHeight: "100vh", background: NAVY, display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8" }}>Loading…</div>;
-  }
-
-  if (!info?.ok) {
-    return (
-      <div style={{ minHeight: "100vh", background: NAVY, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-        <div style={{ textAlign: "center", maxWidth: 340 }}>
-          <p style={{ fontSize: 40, marginBottom: 12 }}>⚓</p>
-          <h1 style={{ color: "#fff", fontSize: 18, fontWeight: 800, marginBottom: 8 }}>
-            {info?.error || "This interview link is not valid."}
-          </h1>
-          <p style={{ color: "#94a3b8", fontSize: 13, lineHeight: 1.6, marginBottom: 20 }}>
-            Ask the company for a new link, or browse live vacancies on SeaMinds.
-          </p>
-          <button onClick={() => navigate("/feed")}
-            style={{ background: GOLD, color: NAVY, border: "none", borderRadius: 12, padding: "12px 22px", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>
-            See live jobs
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (info.already_done) {
-    return (
-      <div style={{ minHeight: "100vh", background: NAVY, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-        <div style={{ textAlign: "center", maxWidth: 340 }}>
-          <p style={{ fontSize: 40, marginBottom: 12 }}>✅</p>
-          <h1 style={{ color: "#fff", fontSize: 18, fontWeight: 800, marginBottom: 8 }}>You have already completed this interview</h1>
-          <p style={{ color: "#94a3b8", fontSize: 13, lineHeight: 1.6, marginBottom: 20 }}>
-            {info.company} can see your result. Keep your CV and availability up to date.
-          </p>
-          <button onClick={() => navigate("/app")}
-            style={{ background: GOLD, color: NAVY, border: "none", borderRadius: 12, padding: "12px 22px", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>
-            Open SeaMinds
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const startInterview = () => navigate(`/interview/${token}/exam${round2 ? "?round=2" : ""}`, { replace: true });
+  const changeChoice = () => setSearch(round2 ? { round: "2" } : {});
 
   return (
-    <div style={{ minHeight: "100vh", background: NAVY, paddingBottom: 40 }}>
+    <main className="min-h-screen bg-background text-foreground pb-10">
       <Helmet>
-        <title>{`Interview invitation — ${info.rank} | SeaMinds`}</title>
-        <meta name="description" content={`${info.company} invites you to a free SeaMinds interview for ${info.rank}. About 20 minutes.`} />
+        <title>{info?.ok ? `${info.company} Crew Assessment | SeaMinds` : "Crew Assessment | SeaMinds"}</title>
+        <meta name="description" content="Prepare your profile with a CV photo, PDF or Quick Profile, then take your invited SeaMinds crew interview." />
       </Helmet>
-
-      <div style={{ maxWidth: 460, margin: "0 auto", padding: "28px 18px" }}>
-        <div style={{ textAlign: "center", marginBottom: 22 }}>
-          <p style={{ fontSize: 34 }}>⚓</p>
-          <p style={{ color: GOLD, fontSize: 11, letterSpacing: 2, fontWeight: 800, marginTop: 4 }}>SEAMINDS INTERVIEW</p>
-        </div>
-
-        <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 18, marginBottom: 18 }}>
-          <p style={{ color: "#94a3b8", fontSize: 12 }}>You have been invited by</p>
-          <p style={{ color: GOLD, fontSize: 18, fontWeight: 900, marginTop: 3 }}>{info.company}</p>
-
-          <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 8 }}>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span style={{ color: "#94a3b8", fontSize: 12.5 }}>Position</span>
-              <span style={{ color: "#fff", fontSize: 12.5, fontWeight: 700 }}>{info.rank}</span>
-            </div>
-            {info.vessel && (
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ color: "#94a3b8", fontSize: 12.5 }}>Vessel</span>
-                <span style={{ color: "#fff", fontSize: 12.5, fontWeight: 700 }}>{info.vessel}</span>
-              </div>
+      <div className="mx-auto max-w-lg px-4 py-6 space-y-6">
+        <Button variant="ghost" className="px-0 text-primary" onClick={() => prepare ? changeChoice() : navigate(-1)}>
+          <ChevronLeft /> Back
+        </Button>
+        {loading || !isReady ? (
+          <p className="flex items-center gap-2 text-muted-foreground"><Loader2 className="animate-spin" size={18} /> Loading invitation…</p>
+        ) : !info?.ok ? (
+          <section className="space-y-4">
+            <Anchor className="text-primary" size={36} />
+            <h1 className="text-xl font-bold">{info?.error || "This interview link is not valid."}</h1>
+            <p className="text-sm text-muted-foreground">Ask the company for a new link, or browse live vacancies on SeaMinds.</p>
+            <Button onClick={() => navigate("/feed")}>See live jobs <ArrowRight /></Button>
+          </section>
+        ) : info.already_done && !round2 ? (
+          <section className="space-y-4">
+            <h1 className="text-xl font-bold">You have completed this interview</h1>
+            <p className="text-sm text-muted-foreground">{info.company} can see your result.</p>
+            <Button onClick={() => navigate(`/interview/${token}/exam`)}>Open interview result <ArrowRight /></Button>
+          </section>
+        ) : (
+          <>
+            <header className="space-y-3">
+              <Anchor size={32} className="text-primary" />
+              <h1 className="text-2xl font-bold break-words">{info.company} Crew Assessment</h1>
+              <p className="text-sm text-muted-foreground">Position: <strong className="text-foreground">{info.rank}</strong>{info.vessel ? ` · Vessel: ${info.vessel}` : ""}</p>
+              <p className="text-xs text-muted-foreground">{LANG_LABEL[info.language] || "English"} · Maritime English assessed separately</p>
+            </header>
+            {user && (prepare === "cv" || prepare === "quick") && !profileChecked ? <p className="text-muted-foreground">Loading your details…</p> : user && (prepare === "cv" || prepare === "quick") && !profileReady ? (
+              <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); void saveBasics(); }}>
+                <h2 className="font-bold">Your contact details</h2>
+                <label className="block text-sm">Full name<input required value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" className="mt-2 w-full rounded-lg border border-input bg-background p-3" /></label>
+                <label className="block text-sm">WhatsApp number<input required type="tel" pattern="\+[0-9][0-9\s()-]{7,20}" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="+63 919 006 1411" autoComplete="tel" className="mt-2 w-full rounded-lg border border-input bg-background p-3" /></label>
+                {saveError && <p role="alert" className="text-sm text-destructive">{saveError}</p>}
+                <Button type="submit" disabled={saving} className="w-full">{saving ? "Saving…" : "Save & continue"}<ArrowRight /></Button>
+              </form>
+            ) : user && (prepare === "cv" || prepare === "quick") ? (
+              <section className="space-y-4">
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="font-bold text-primary">{prepare === "cv" ? "Scan your CV" : "Quick Profile"}</h2>
+                  {!round2 && <Button variant="link" className="px-0" onClick={changeChoice}>Change option</Button>}
+                </div>
+                <p className="text-sm text-muted-foreground">Confirm and save your details to continue to your interview with {info.company}.</p>
+                <Suspense fallback={<p className="text-muted-foreground">Loading…</p>}>
+                  {prepare === "cv" ? <CvUpload onParsed={startInterview} /> : <QuickProfile embedded onComplete={startInterview} />}
+                </Suspense>
+              </section>
+            ) : (
+              <section className="space-y-4">
+                <h2 className="text-lg font-semibold">Choose how to prepare your profile</h2>
+                <article className="rounded-lg border border-primary/50 bg-card p-5 space-y-3">
+                  <div className="flex items-center gap-2 text-primary"><FileText size={22} /><h3 className="font-bold">AI CV Scan</h3><span className="ml-auto text-xs">Recommended</span></div>
+                  <p className="text-sm text-muted-foreground">Take a clear photo or upload your CV PDF. SeaMinds AI extracts your sea time, vessels and certificates for you to confirm — no retyping your CV.</p>
+                  <Button className="w-full h-auto py-3 whitespace-normal rounded-xl font-bold" onClick={() => choose("cv")}><FileText /> Upload or Scan My CV <ArrowRight /></Button>
+                </article>
+                {!round2 && <article className="rounded-lg border border-border bg-card p-5 space-y-3">
+                  <div className="flex items-center gap-2 text-primary"><Zap size={22} /><h3 className="font-bold">1-Minute Quick Profile</h3></div>
+                  <p className="text-sm text-muted-foreground">No CV file on your phone? Select your rank, sea time and vessel types, then answer a few short experience questions.</p>
+                  <Button variant="outline" className="w-full h-auto py-3 whitespace-normal rounded-xl border-primary text-primary" onClick={() => choose("quick")}><Zap /> Fill Quick Profile <ArrowRight /></Button>
+                </article>}
+                <p className="text-sm text-muted-foreground">Once your profile is saved, you can start your interview. {round2 ? "A CV is required for this manager-requested round." : "No CV is required for Quick Profile."}</p>
+                {!user && <p className="text-xs text-muted-foreground">Create your free account or sign in next. Your invitation stays with you.</p>}
+              </section>
             )}
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span style={{ color: "#94a3b8", fontSize: 12.5 }}>Language</span>
-              <span style={{ color: "#fff", fontSize: 12.5, fontWeight: 700 }}>{LANG_LABEL[info.language] || "English"}</span>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span style={{ color: "#94a3b8", fontSize: 12.5 }}>Takes about</span>
-              <span style={{ color: "#fff", fontSize: 12.5, fontWeight: 700 }}>20 minutes</span>
-            </div>
-          </div>
-        </div>
-
-        <div style={{ background: "rgba(212,175,55,0.07)", border: `1px solid rgba(212,175,55,0.3)`, borderRadius: 14, padding: 14, marginBottom: 18 }}>
-          <p style={{ color: "#cbd5e1", fontSize: 12, lineHeight: 1.6 }}>
-            ✅ Free — SeaMinds never charges seafarers<br />
-            ✅ Your score is saved to your profile and works for other companies too<br />
-            ✅ Answer in your own language — English is tested separately
-          </p>
-        </div>
-
-        <div style={{ marginBottom: 12 }}>
-          <label style={{ color: "#94a3b8", fontSize: 11, textTransform: "uppercase", letterSpacing: 0.6 }}>Your name *</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="As on your passport" style={input} />
-        </div>
-        <div style={{ marginBottom: 12 }}>
-          <label style={{ color: "#94a3b8", fontSize: 11, textTransform: "uppercase", letterSpacing: 0.6 }}>WhatsApp number *</label>
-          <input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="+63 917 000 0000" style={input} />
-        </div>
-        <div style={{ marginBottom: 12 }}>
-          <label style={{ color: "#94a3b8", fontSize: 11, textTransform: "uppercase", letterSpacing: 0.6 }}>Email *</label>
-          <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="your@email.com" style={input} />
-          <p style={{ color: "#64748b", fontSize: 10.5, marginTop: 5 }}>Your interview result and study plan are sent here.</p>
-        </div>
-        <div style={{ marginBottom: 12 }}>
-          <label style={{ color: "#94a3b8", fontSize: 11, textTransform: "uppercase", letterSpacing: 0.6 }}>Choose a password *</label>
-          <div style={{ position: "relative" }}>
-            <input value={password} onChange={(e) => setPassword(e.target.value)} type={showPassword ? "text" : "password"} placeholder="At least 8 characters" style={{ ...input, paddingRight: 44 }} />
-            <button
-              type="button"
-              onClick={() => setShowPassword((s) => !s)}
-              aria-label={showPassword ? "Hide password" : "Show password"}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#D4AF37")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#94a3b8")}
-              style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", background: "transparent", border: "none", cursor: "pointer", padding: 8, display: "flex", color: "#94a3b8" }}
-            >
-              {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
-            </button>
-          </div>
-        </div>
-        <div style={{ marginBottom: 18 }}>
-          <label style={{ color: "#94a3b8", fontSize: 11, textTransform: "uppercase", letterSpacing: 0.6 }}>Nationality</label>
-          <input value={nationality} onChange={(e) => setNationality(e.target.value)} placeholder="e.g. Filipino, Indian, Vietnamese" style={input} />
-        </div>
-
-        <button onClick={createAndStart} disabled={starting}
-          style={{ width: "100%", padding: "15px 0", borderRadius: 14, border: "none", background: GOLD, color: NAVY, fontWeight: 900, fontSize: 15.5, cursor: starting ? "default" : "pointer", opacity: starting ? 0.5 : 1 }}>
-          {starting ? "Creating…" : "Start Interview →"}
-        </button>
-
-
-        <p style={{ color: "#64748b", fontSize: 10.5, textAlign: "center", marginTop: 14, lineHeight: 1.6 }}>
-          Answer honestly and on your own. Switching tabs or pasting answers is recorded and shown to the company.
-        </p>
+            <footer className="border-t border-border pt-4 space-y-2 text-xs text-muted-foreground">
+              <p>Free for crew. Your profile stays in your SeaMinds account.</p>
+              <p>AI extraction is not independent verification. Interview scoring follows the company's assessment round.</p>
+            </footer>
+          </>
+        )}
       </div>
-    </div>
+    </main>
   );
 };
-
 export default InterviewInvite;

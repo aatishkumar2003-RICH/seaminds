@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
     const lang = LANGS[camp.language] || camp.language || "English";
     const validUntil = camp.closes_at
       ? new Date(camp.closes_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
-      : "14 days";
+      : "Until the company closes this interview";
 
     const html = `<div style="background:#0D1B2A;border-radius:14px;padding:24px;color:#ffffff;font-family:Arial,Helvetica,sans-serif;line-height:1.6">
   <h2 style="color:#D4AF37;font-size:18px;margin:0 0 12px">${esc(camp.company_name)} has invited you to an asynchronous AI crew interview</h2>
@@ -112,8 +112,12 @@ Deno.serve(async (req) => {
   <p style="margin:0 0 4px"><strong style="color:#D4AF37">Mode:</strong> online written questions in ${esc(lang)} — Maritime English is assessed separately</p>
   <p style="margin:0 0 4px"><strong style="color:#D4AF37">Estimated time:</strong> 15 minutes</p>
   <p style="margin:0 0 16px"><strong style="color:#D4AF37">Valid until:</strong> ${esc(validUntil)}</p>
-  <p><a href="${link}" style="background:#D4AF37;color:#0D1B2A;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block">Start my interview</a></p>
-  <p style="color:#94A3B8;font-size:13px;margin-top:16px">No payment is ever requested. Questions? Reply to this email.</p>
+  <h3 style="color:#D4AF37;font-size:16px">Prepare your profile — choose either option</h3>
+  <p><strong>AI CV Scan (recommended):</strong> Upload your CV PDF or take a clear photo. SeaMinds AI extracts your sea time, vessels and certificates for you to confirm — no retyping your CV.</p>
+  <p><strong>1-Minute Quick Profile:</strong> No CV on your phone? Select your rank, sea time and vessel types, then answer a few short experience questions.</p>
+  <p>Once your chosen profile is saved, you can start your interview. Create your free account or sign in after opening the link.</p>
+  <p><a href="${link}" style="background:#D4AF37;color:#0D1B2A;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block">Prepare my profile &amp; start interview</a></p>
+  <p style="color:#94A3B8;font-size:13px;margin-top:16px">Free for crew. AI extraction is not independent verification. Need help? Contact support@seaminds.life.</p>
   <p style="color:#94A3B8;font-size:12px;margin-top:22px">Sent via SeaMinds — seaminds.life · free crew platform, no agent fees</p>
 </div>`;
 
@@ -132,7 +136,7 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           from: "SeaMinds <crew@seaminds.life>",
           to: [email],
-          subject: `Interview invitation via SeaMinds — ${camp.rank_required}`,
+          subject: `Crew Assessment — ${camp.rank_required} with ${camp.company_name}`,
           html,
           text: toText(html),
         }),

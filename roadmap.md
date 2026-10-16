@@ -1,5 +1,11 @@
 # SeaMinds — Global Vacancy Growth Roadmap
 
+## Interview profile preparation
+- [x] Offer CV scan or Quick Profile on the invitation; retain token through sign-in and require confirmed saving.
+- [x] Update email/WhatsApp invitations; 18 regression checks passed, live synthetic CV scan succeeded, signed-in Quick Profile reached the same company preflight.
+- [x] Check desktop/mobile preview and clean compilation; deployed invitation email and authenticated CV parser.
+- [ ] Full candidate CV-save → completed interview → manager result/dossier receipt: needs a designated candidate/test invitation; no real CV was overwritten and no unsolicited email sent.
+
 ## Approved email standardization — Preview only
 - [x] Update the approved 13 customer-facing files; preserve Contact submissions and all delivery integrations.
 - [x] Audit remaining obsolete contacts; 91 tests passed, both TypeScript checks passed, desktop/mobile links and simulated Contact success/failure verified.
