@@ -5,6 +5,7 @@ import AssessmentFlow from "@/components/smc/AssessmentFlow";
 import { openAssessmentV2, gatewayErrorMessage } from "@/lib/assessmentGateway";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
+import { recommendTraining, assignTraining, type Recommendation } from "@/lib/training";
 
 const GOLD = "#D4AF37";
 const NAVY = "#0b1929";
@@ -17,6 +18,13 @@ const InterviewExam = () => {
   const [state, setState] = useState<"loading" | "ready" | "error" | "done" | "pending">("loading");
   const [error, setError] = useState("");
   const [ctx, setCtx] = useState<any>(null);
+  const [recs, setRecs] = useState<Recommendation[]>([]);
+  const [trainBusy, setTrainBusy] = useState<string | null>(null);
+  useEffect(() => {
+    if (state !== "done") return;
+    recommendTraining(null, "", 3).then((r) => setRecs(r.ok ? r.items.filter((i: Recommendation) => !i.assigned).slice(0, 3) : []));
+  }, [state]);
+
 
   useEffect(() => {
     (async () => {
@@ -171,6 +179,24 @@ const InterviewExam = () => {
         <p className="text-sm text-muted-foreground">Upload a CV PDF or clear photo. SeaMinds extracts your sea service, vessel types and certificates for you to review in your personal profile.</p>
         <Button className="w-full h-auto whitespace-normal py-3" onClick={() => navigate("/app?tab=cv")}>Scan / Upload My CV</Button>
         <Button variant="link" className="w-full h-auto whitespace-normal" onClick={() => navigate("/app")}>I'll update my CV later — Open SeaMinds</Button>
+        {state === "done" && recs.length > 0 && (
+          <div className="rounded-lg border border-primary/40 bg-card p-4 space-y-2">
+            <h2 className="font-bold text-primary">Short training picked for you</h2>
+            <p className="text-xs text-muted-foreground">Based on your answers and experience. About 3–5 minutes each; completion is saved to your record.</p>
+            {recs.map((r) => (
+              <Button key={r.slug} variant="outline" className="w-full h-auto whitespace-normal justify-start text-left py-2" disabled={!!trainBusy}
+                onClick={async () => {
+                  setTrainBusy(r.slug);
+                  const d = await assignTraining(null, [r.slug], "");
+                  setTrainBusy(null);
+                  if (d.ok && d.assigned?.[0]?.token) navigate(`/training/${d.assigned[0].token}`);
+                  else navigate("/training");
+                }}>
+                🎓 {trainBusy === r.slug ? "Opening…" : r.title}
+              </Button>
+            ))}
+          </div>
+        )}
       </section>
     </main>;
   }
