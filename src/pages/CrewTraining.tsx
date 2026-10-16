@@ -183,7 +183,8 @@ const MyTraining = () => {
 const CrewTraining = () => {
   const { token } = useParams();
   const navigate = useNavigate();
-  const { user, loading } = useAuth() as any;
+  const { user, isReady } = useAuth();
+  const loading = !isReady;
 
   useEffect(() => {
     if (!loading && !user) navigate(`/join?next=${encodeURIComponent(token ? `/training/${token}` : "/training")}`, { replace: true });

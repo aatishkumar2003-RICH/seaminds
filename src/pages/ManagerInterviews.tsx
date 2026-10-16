@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, lazy, Suspense } from "react";
+const TrainingPlanner = lazy(() => import("@/components/manager/TrainingPlanner"));
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -46,6 +47,7 @@ const ManagerInterviews = () => {
   const [board, setBoard] = useState<Record<string, any[]>>({});
   const [busy, setBusy] = useState(false);
   const [r2Busy, setR2Busy] = useState<string | null>(null);
+  const [trainFor, setTrainFor] = useState<string | null>(null);
 
   // email invite dialog
   const [inviteFor, setInviteFor] = useState<Campaign | null>(null);
@@ -365,6 +367,14 @@ const ManagerInterviews = () => {
                                 {r2Busy === r.invite_id ? "Sending request…" : "Request CV & Round 2"}
                               </button>
                             )
+                          )}
+                          {r.status === "completed" && (
+                            trainFor === r.invite_id
+                              ? <Suspense fallback={null}><TrainingPlanner inviteId={r.invite_id} name={r.name} whatsapp={r.whatsapp} company="" /></Suspense>
+                              : <button onClick={() => setTrainFor(r.invite_id)}
+                                  style={{ display: "block", width: "100%", marginTop: 7, background: "transparent", color: GOLD, border: `1px solid ${GOLD}`, borderRadius: 9, padding: "8px 0", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+                                  🎓 Plan training
+                                </button>
                           )}
                           {r.whatsapp && r.status === "completed" && (
                             <a href={`https://wa.me/${String(r.whatsapp).replace(/[^\d]/g, "")}`} target="_blank" rel="noopener noreferrer"

@@ -6,6 +6,11 @@
 - [x] Check desktop/mobile preview and clean compilation; deployed invitation email and authenticated CV parser.
 - [ ] Full candidate CV-save → completed interview → manager result/dossier receipt: needs a designated candidate/test invitation; no real CV was overwritten and no unsolicited email sent.
 
+## Adaptive crew training
+- [x] Curated catalog (18 modules), server-side selection (exam gaps, vessel, department, level, trading area), per-crew tokenized links, server-graded quiz with minimum reading time.
+- [x] Manager 'Plan training' on completed interview candidates; crew /training page; completed-training topics get a capped share of the next exam paper.
+- [ ] Admin screen to add/edit training modules (catalog currently managed by the team).
+
 ## Approved email standardization — Preview only
 - [x] Update the approved 13 customer-facing files; preserve Contact submissions and all delivery integrations.
 - [x] Audit remaining obsolete contacts; 91 tests passed, both TypeScript checks passed, desktop/mobile links and simulated Contact success/failure verified.
