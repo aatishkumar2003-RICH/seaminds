@@ -1,5 +1,10 @@
 # SeaMinds — Global Vacancy Growth Roadmap
 
+## Interview profile preparation
+- [ ] Offer CV scan or Quick Profile on the invitation, preserve the invite through login, and start only after confirmed saving.
+- [ ] Update email/WhatsApp invitations, test both paths and manager result continuity.
+- [ ] Verify preview; report any live-service testing blocker.
+
 ## Approved email standardization — Preview only
 - [x] Update the approved 13 customer-facing files; preserve Contact submissions and all delivery integrations.
 - [x] Audit remaining obsolete contacts; 91 tests passed, both TypeScript checks passed, desktop/mobile links and simulated Contact success/failure verified.
