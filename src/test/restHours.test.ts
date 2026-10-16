@@ -11,7 +11,7 @@ describe("STCW / MLC rest rules", () => {
     expect(checkRest([at(200, "rest"), at(24, "work"), at(9, "rest")], now).issues.some((i) => i.includes("minimum is 10h"))).toBe(true);
   });
   it("less than 77h rest in 7 days is flagged", () => {
-    const logs = [at(168, "work"), at(160, "rest"), at(152, "work"), ...Array.from({ length: 6 }, (_, d) => [at(144 - d * 24, "rest"), at(134 - d * 24, "work")]).flat(), at(10, "rest")];
+    const logs = Array.from({ length: 7 }, (_, d) => [at(168 - d * 24, "rest"), at(158 - d * 24, "work")]).flat();
     expect(checkRest(logs, now).issues.some((i) => i.includes("77h"))).toBe(true);
   });
   it("rest split into three periods is flagged", () => {
