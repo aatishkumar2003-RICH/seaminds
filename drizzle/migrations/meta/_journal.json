@@ -400,6 +400,13 @@
       "when": 1792132721158,
       "tag": "0056_training_catalog_initial_content",
       "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "7",
+      "when": 1792132776302,
+      "tag": "0057_issue_paper_training_retention",
+      "breakpoints": true
     }
   ]
 }
