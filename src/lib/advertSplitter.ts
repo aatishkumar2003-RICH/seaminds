@@ -137,7 +137,11 @@ function splitPlain(text: string): AdvertBlock[] {
 function splitRaw(text: string): AdvertBlock[] {
   const lines = text.split("\n");
   if (lines.some((l) => SEPARATOR.test(l))) {
-    return splitOn(lines, (l) => SEPARATOR.test(l), false).map((p) => review(p, false));
+    const parts = splitOn(lines, (l) => SEPARATOR.test(l), false);
+    // A contactless title/intro before the first cut line joins the first advert instead of becoming its own card.
+    const first = lines.findIndex((l) => SEPARATOR.test(l));
+    if (parts.length > 1 && lines.slice(0, first).join("").trim() && !hasContact(parts[0])) parts.splice(0, 2, `${parts[0]}\n\n${parts[1]}`);
+    return parts.map((p) => review(p, false));
   }
   if (lines.filter(isNumberedHeader).length >= 2) {
     const parts = splitOn(lines, isNumberedHeader, true);
