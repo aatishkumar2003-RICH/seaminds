@@ -95,4 +95,10 @@ describe("numbered batch labels", () => {
   it("does not treat a single label or 'Job 1 year contract' as dividers", () => {
     expect(splitAdverts(`Job 1 year contract\n${A}`)).toHaveLength(1);
   });
+  it("treats any delimited label like '===== EUROPE-B8-001 =====' as a strict cut, intro joins advert 1", () => {
+    const recs = Array.from({ length: 50 }, (_, i) => `===== EUROPE-B8-${String(i + 1).padStart(3, "0")} =====\nRANK: AB\n${i === 7 ? "EMAIL: Not published" : `EMAIL: r${i}@ferry.co.uk`}`);
+    const out = splitAdverts(`BATCH 8 TITLE\nResearch date\n\n${recs.join("\n\n")}`);
+    expect(out).toHaveLength(50);
+    expect(out[0].text).toContain("BATCH 8 TITLE");
+  });
 });
