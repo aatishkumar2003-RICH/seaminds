@@ -7,6 +7,8 @@
 - [ ] Full candidate CV-save → completed interview → manager result/dossier receipt: needs a designated candidate/test invitation; no real CV was overwritten and no unsolicited email sent.
 
 ## Adaptive crew training
+- [x] Candidate roster training badges and popup-safe WhatsApp dispatch; live status RPC checked, training regression checks passed.
+- [ ] Full manager badge/WhatsApp flow with a completed candidate: requesting account has no candidate results accessible through its owner-only interview board; needs designated test invitation/account.
 - [x] Curated catalog (18 modules), server-side selection (exam gaps, vessel, department, level, trading area), per-crew tokenized links, server-graded quiz with minimum reading time.
 - [x] Manager 'Plan training' on completed interview candidates; crew /training page; completed-training topics get a capped share of the next exam paper.
 - [ ] Admin screen to add/edit training modules (catalog currently managed by the team).
