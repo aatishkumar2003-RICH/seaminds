@@ -85,11 +85,11 @@ const nextKind = (c: Contact) => c.touches_sent < INTRO.length ? INTRO[c.touches
 async function send(to: string, c: Contact, kind: string, s: Stats) {
   const { subject, inner } = build(kind, c, s);
   const unsub = `${FN_URL}?c=${c.id}&s=${await sign(c.id)}`;
-  const html = `<div style="font-family:Arial,sans-serif;background:#0D1B2A;padding:24px;color:#e2e8f0"><div style="max-width:560px;margin:0 auto;background:#112240;border:1px solid rgba(212,175,55,0.3);border-radius:14px;padding:22px;line-height:1.55"><p style="margin:0 0 12px;color:#D4AF37;font-size:12px;font-weight:bold;letter-spacing:1px">SHIPMANAGER BY SEAMINDS</p>${inner}<p style="margin-top:18px">— Atish, SeaMinds</p><p style="color:#94A3B8;font-size:11px;margin-top:18px">You get this because your vacancy contact appears in public maritime job adverts shared on SeaMinds. Reply anytime. <a href="${unsub}" style="color:#94A3B8">Stop these emails</a></p></div></div>`;
+  const html = `<div style="font-family:Arial,sans-serif;background:#0D1B2A;padding:24px;color:#e2e8f0"><div style="max-width:560px;margin:0 auto;background:#112240;border:1px solid rgba(212,175,55,0.3);border-radius:14px;padding:22px;line-height:1.55"><p style="margin:0 0 12px;color:#D4AF37;font-size:12px;font-weight:bold;letter-spacing:1px">SHIPMANAGER BY SEAMINDS</p>${inner}<p style="margin-top:18px">— SeaMinds Team</p><p style="color:#94A3B8;font-size:11px;margin-top:18px">You get this because your vacancy contact appears in public maritime job adverts shared on SeaMinds. Reply anytime. <a href="${unsub}" style="color:#94A3B8">Stop these emails</a></p></div></div>`;
   const r = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${RESEND_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: "Atish at SeaMinds <admin@seaminds.life>", reply_to: "admin@seaminds.life", to: [to], subject, html,
+    body: JSON.stringify({ from: "SeaMinds Team <admin@seaminds.life>", reply_to: "admin@seaminds.life", to: [to], subject, html,
       headers: { "List-Unsubscribe": `<${unsub}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" } }),
   });
   const body = await r.json().catch(() => ({}));
