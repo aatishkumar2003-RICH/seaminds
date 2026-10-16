@@ -933,7 +933,7 @@ function ActivityTab() {
 
   const summary = [
     { label: "Total Registered Crew", value: crew.length },
-    { label: "SMC Certificates", value: smcCompleted },
+    { label: "SeaMinds Competency Certificate", value: smcCompleted },
     { label: "Wellness Chat Messages", value: chatCount },
     { label: "Job Applications", value: apps.length },
   ];
@@ -980,7 +980,7 @@ function ActivityTab() {
 
       {/* SMC */}
       <div className="rounded-lg p-4 border" style={card}>
-        <h2 className="text-lg font-bold mb-3" style={{ color: "#D4AF37" }}>🎖️ SMC Certificates ({smc.length})</h2>
+        <h2 className="text-lg font-bold mb-3" style={{ color: "#D4AF37" }}>🎖️ SeaMinds Competency Certificate ({smc.length})</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>

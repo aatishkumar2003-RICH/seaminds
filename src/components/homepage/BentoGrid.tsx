@@ -47,9 +47,9 @@ const useCountUp = (end: number, duration = 2000) => {
 
 const features = [
   { icon: MessageCircle, title: "AI Wellness", desc: "Private in-app conversations, never shared." },
-  { icon: Shield, title: "SMC Score", desc: "AI-assessed competency. Salary bidding." },
+  { icon: Shield, title: "SeaMinds Score", desc: "AI-assessed competency. Salary bidding." },
   { icon: BookOpen, title: "Academy", desc: "PSC prep, vetting, STCW updates." },
-  { icon: Briefcase, title: "Jobs", desc: "Verified listings with SMC requirements." },
+  { icon: Briefcase, title: "Jobs", desc: "Verified listings with SeaMinds Score requirements." },
   { icon: Heart, title: "Family", desc: "Keep your family connected at sea." },
   { icon: Users, title: "Community", desc: "Global community. One crew." },
 ];
@@ -88,7 +88,7 @@ const BentoGrid = () => {
           ))}
         </div>
 
-        {/* Row 2: Features (6) + SMC Score preview */}
+        {/* Row 2: Features (6) + SeaMinds Score preview */}
         <div ref={ref2} className="fade-in-on-scroll grid lg:grid-cols-5 gap-3">
           {/* Features 2x3 compact */}
           <div className="lg:col-span-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -101,7 +101,7 @@ const BentoGrid = () => {
             ))}
           </div>
 
-          {/* SMC Certificate inline */}
+          {/* SeaMinds Competency Certificate inline */}
           <div ref={counter.ref} className="lg:col-span-2 glass-card rounded-xl p-5 md:p-6 flex flex-col items-center justify-center">
             <div className="flex items-center gap-1.5 mb-1">
               <img src={seamindsLogo} alt="SeaMinds" className="w-4 h-4" />

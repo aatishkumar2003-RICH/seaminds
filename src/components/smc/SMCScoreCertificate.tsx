@@ -262,7 +262,7 @@ const SMCScoreCertificate = ({ data: hint, onImproveScore }: SMCScoreCertificate
         <div className="text-3xl mb-2">⚓</div>
         <p className="text-sm font-semibold text-foreground">No completed assessment yet</p>
         <p className="text-xs text-muted-foreground mt-1">
-          Your certificate appears here once you complete the SMC assessment.
+          Your certificate appears here once you complete the SeaMinds Competency Assessment.
         </p>
       </div>
     );

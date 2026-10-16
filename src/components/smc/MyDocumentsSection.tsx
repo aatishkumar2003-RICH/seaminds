@@ -73,7 +73,7 @@ const MyDocumentsSection = ({ profileId }: MyDocumentsSectionProps) => {
       }
     }
 
-    // 2. Load SMC assessment documents from smc-documents bucket
+    // 2. Load SeaMinds Competency Assessment documents from smc-documents bucket
     const { data: smcAssessment } = await supabase
       .from("smc_assessments")
       .select("id")
@@ -168,7 +168,7 @@ const MyDocumentsSection = ({ profileId }: MyDocumentsSectionProps) => {
 
   const handleDelete = async (doc: DocRecord) => {
     if (doc.source === "smc") {
-      toast.error("SMC assessment documents cannot be deleted");
+      toast.error("SeaMinds Competency Assessment documents cannot be deleted");
       return;
     }
 
@@ -238,7 +238,7 @@ const MyDocumentsSection = ({ profileId }: MyDocumentsSectionProps) => {
                 </p>
                 {doc.source === "smc" && (
                   <span className="inline-flex items-center gap-0.5 text-[9px] text-primary mt-0.5">
-                    <Shield size={8} /> SMC Assessment
+                    <Shield size={8} /> SeaMinds Competency Assessment
                   </span>
                 )}
               </div>

@@ -61,7 +61,7 @@ function build(kind: string, c: Contact, s: Stats) {
       body: `<p>${hi}</p><p>Real numbers from the last 30 days:</p>${statRow(s)}<p>${yours}</p><p>Candidates can also take a rank-specific AI assessment, so you can shortlist by verified skill score.</p>`,
       cta: ["See my applicants", "/manager/dashboard?tab=applicants"] },
     last: { subject: "Should I keep sharing your vacancies?",
-      body: `<p>${hi}</p><p>Quick one: we will keep showing your public adverts to seafarers. If you'd like them edited, removed, or want applications filtered by SMC score, just reply to this email — a real person reads it.</p>`,
+      body: `<p>${hi}</p><p>Quick one: we will keep showing your public adverts to seafarers. If you'd like them edited, removed, or want applications filtered by SeaMinds Score, just reply to this email — a real person reads it.</p>`,
       cta: ["Open ShipManager", "/manager"] },
     report: { subject: `Your SeaMinds vacancy report — ${new Date().toLocaleString("en", { month: "long" })}`,
       body: `<p>${hi}</p><p>${yours}</p>${statRow(s)}<p>Fresh adverts get the most clicks — re-post or update yours in one paste.</p>`,

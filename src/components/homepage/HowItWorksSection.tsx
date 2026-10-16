@@ -12,7 +12,7 @@ const steps = [
   {
     num: "02",
     icon: "🏆",
-    title: "Get Your SMC Score",
+    title: "Get Your SeaMinds Score",
     text: "15 rank-specific questions. AI evaluates your competency. Free for first 1,000 seafarers.",
   },
   {

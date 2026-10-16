@@ -179,7 +179,7 @@ const ManagerAssessmentRequest = ({ crewProfileId, crewName, onPaymentSuccess }:
       <div className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/25 rounded-xl px-4 py-3">
         <AlertTriangle size={18} className="text-amber-500 shrink-0 mt-0.5" />
         <p className="text-sm text-amber-200">
-          <span className="font-semibold">{crewName}</span> has not yet completed their SMC Assessment.
+          <span className="font-semibold">{crewName}</span> has not yet completed their SeaMinds Competency Assessment.
         </p>
       </div>
 

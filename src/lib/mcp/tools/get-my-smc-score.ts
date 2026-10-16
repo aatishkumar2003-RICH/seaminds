@@ -3,8 +3,8 @@ import { supabaseForUser, notAuthenticated, textResult, errorResult } from "../s
 
 export default defineTool({
   name: "get_my_smc_score",
-  title: "Get my SMC score",
-  description: "Return the signed-in seafarer's latest Seafarer Merit Score (SMC) assessment result and dimension scores.",
+  title: "Get my SeaMinds Score",
+  description: "Return the signed-in seafarer's latest SeaMinds Competency Score assessment result and dimension scores.",
   inputSchema: {},
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async (_input, ctx) => {
@@ -28,7 +28,7 @@ export default defineTool({
       .limit(1)
       .maybeSingle();
     if (error) return errorResult(error.message);
-    if (!data) return errorResult("No SMC assessment found yet.");
+    if (!data) return errorResult("No SeaMinds Competency Assessment found yet.");
     return textResult(data);
   },
 });

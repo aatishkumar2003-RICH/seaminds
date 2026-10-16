@@ -228,7 +228,7 @@ const Index = () => {
     return () => clearTimeout(timer);
   }, [appState]);
 
-  // Fetch SMC score
+  // Fetch SeaMinds Score
   useEffect(() => {
     if (appState !== "main" || !profileId) return;
     const fetchSmc = async () => {

@@ -37,7 +37,7 @@ const HomeFooter = () => {
     {
       title: "Platform",
       links: [
-        { label: "SMC Score", action: () => navigate("/smc-score") },
+        { label: "SeaMinds Score", action: () => navigate("/smc-score") },
         { label: "Wellness", action: () => navigate("/app") },
         { label: "Academy", action: () => navigate("/app") },
         { label: "Jobs", action: () => navigate("/jobs") },

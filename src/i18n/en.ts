@@ -88,7 +88,7 @@ const en = {
 
   // --- /join ---
   joinTitle: "Join SeaMinds",
-  joinSubtitle: "Free for seafarers — 2-minute Sea Profile, jobs, SMC assessment.",
+  joinSubtitle: "Free for seafarers — 2-minute Sea Profile, jobs, SeaMinds Competency Assessment.",
   joinBullet1: "Confidential conversations — never shared with your company",
   joinBullet2: "Built by a Master Mariner",
   joinBullet3: "Works wherever your voyage takes you",
@@ -137,7 +137,7 @@ const en = {
   qpDoneNote:
     "Add your CV and certificates anytime to strengthen your profile and help companies evaluate you faster.",
   qpDoneJobs: "See my matching jobs →",
-  qpDoneSmc: "Take the SMC Assessment →",
+  qpDoneSmc: "Take the SeaMinds Competency Assessment →",
   qpContinue: "Continue →",
   yes: "Yes",
   no: "No",

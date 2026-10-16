@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
 const benefits = [
-  { icon: "🛡️", title: "Assess Crew Before You Hire", desc: "SMC scores give you structured competency data before signing any contract." },
+  { icon: "🛡️", title: "Assess Crew Before You Hire", desc: "SeaMinds Score give you structured competency data before signing any contract." },
   { icon: "⏱", title: "MLC Compliance Dashboard", desc: "See rest hour compliance across your fleet. Audit-ready reports for Port State Control." },
   { icon: "📊", title: "Fleet Wellness Index", desc: "Anonymous aggregate wellness data per vessel. Spot problems before they become incidents." },
   { icon: "📜", title: "Certificate Expiry Alerts", desc: "Never sail with an uncertified crew member. Automated alerts 90/60/30 days before expiry." },
@@ -12,7 +12,7 @@ const benefits = [
 
 const features = [
   "Unlimited crew onboarding",
-  "SMC score access for all crew",
+  "SeaMinds Score access for all crew",
   "MLC rest hours compliance reports",
   "Fleet wellness dashboard",
   "Certificate expiry tracking",

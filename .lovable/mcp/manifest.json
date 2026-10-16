@@ -34,8 +34,8 @@
       },
       {
         "name": "get_my_smc_score",
-        "title": "Get my SMC score",
-        "description": "Return the signed-in seafarer's latest Seafarer Merit Score (SMC) assessment result and dimension scores.",
+        "title": "Get my SeaMinds Score",
+        "description": "Return the signed-in seafarer's latest SeaMinds Competency Score assessment result and dimension scores.",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,

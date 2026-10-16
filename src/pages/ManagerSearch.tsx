@@ -529,7 +529,7 @@ const ManagerSearch = () => {
                 <div><dt style={{ color: "#6b7280" }}>Nationality</dt><dd style={{ color: "#e5e7eb" }}>{r.nationality || "—"}</dd></div>
                 <div><dt style={{ color: "#6b7280" }}>Vessel Type</dt><dd style={{ color: "#e5e7eb" }}>{r.vessel_type || "—"}</dd></div>
                 <div>
-                  <dt style={{ color: "#6b7280" }}>SMC Score</dt>
+                  <dt style={{ color: "#6b7280" }}>SeaMinds Score</dt>
                   <dd style={{ color: r.smc_score != null ? GOLD : "#6b7280", fontWeight: 700 }}>
                     {r.smc_score != null ? `${r.smc_score}${r.smc_band ? ` · ${r.smc_band}` : ""}` : "Not assessed"}
                   </dd>

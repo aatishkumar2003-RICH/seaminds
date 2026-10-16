@@ -14,9 +14,9 @@ import { toast } from "sonner";
 
 const stats = [
   { value: "1.89M", label: "Seafarers worldwide" },
-  { value: "0.00–5.00", label: "SMC score range" },
+  { value: "0.00–5.00", label: "SeaMinds Score range" },
   { value: "MLC 2006", label: "Rest-hours standard" },
-  { value: "5.00", label: "Max SMC Score" },
+  { value: "5.00", label: "Max SeaMinds Score" },
 ];
 
 const benefits = [
@@ -193,12 +193,12 @@ const ForCompanies = () => {
         </div>
       </section>
 
-      {/* SMC Score Explainer */}
+      {/* SeaMinds Score Explainer */}
       <section className="py-16 md:py-24" style={{ background: "hsl(var(--secondary))" }}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-primary mb-3 font-mono-score">The SMC Score</p>
+              <p className="text-xs uppercase tracking-[0.25em] text-primary mb-3 font-mono-score">The SeaMinds Score</p>
               <h2 className="text-2xl md:text-3xl font-bold mb-4">
                 Assessed Competency,
                 <br />
@@ -217,7 +217,7 @@ const ForCompanies = () => {
             >
               <div className="text-center mb-6">
                 <p className="text-5xl font-bold text-primary font-mono-score">4.32</p>
-                <p className="text-xs text-muted-foreground mt-1">Sample SMC Score</p>
+                <p className="text-xs text-muted-foreground mt-1">Sample SeaMinds Score</p>
               </div>
               <div className="space-y-3">
                 {[
