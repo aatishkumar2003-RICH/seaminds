@@ -59,6 +59,7 @@ const RankHub = lazy(() => import("./pages/RankHub"));
 const CountryHub = lazy(() => import("./pages/CountryHub"));
 const FleetHome = lazy(() => import("./pages/FleetHome"));
 const FleetLogin = lazy(() => import("./pages/FleetLogin"));
+const CrewTraining = lazy(() => import("./pages/CrewTraining"));
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Pricing from "./pages/Pricing";
@@ -174,6 +175,8 @@ const App = () => (
             <Route path="/feed" element={<JobFeed />} />
             <Route path="/interview/:token" element={<InterviewInvite />} />
             <Route path="/interview/:token/exam" element={<InterviewExam />} />
+            <Route path="/training" element={<Suspense fallback={null}><CrewTraining /></Suspense>} />
+            <Route path="/training/:token" element={<Suspense fallback={null}><CrewTraining /></Suspense>} />
             <Route path="/join" element={<Join />} />
             <Route path="/join-free" element={<JoinLanding />} />
             <Route path="/manager" element={<ManagerAuth />} />
