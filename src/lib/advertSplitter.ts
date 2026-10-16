@@ -5,8 +5,9 @@
 
 export type AdvertBlock = { text: string; uncertain: boolean; reason?: string };
 
-// "---", "====", "===== PASTE 01 =====", "### ADVERT 3 ###"
-const SEPARATOR = /^\s*(?:[-=_*~#]{3,}(?:\s*(?:paste|advert|ad|post|batch|message|msg|page)\s*#?\d*\s*[-=_*~#]{3,})?)\s*$/i;
+// "---", "====", "===== PASTE 01 =====", "### ADVERT 3 ###", "===== EUROPE-B8-001 =====":
+// any short label enclosed by delimiter marks on both sides is a trusted cut line.
+const SEPARATOR = /^\s*[-=_*~#]{3,}(?:[^\n]{1,80}?[-=_*~#]{3,})?\s*$/;
 // Numbered labels on their own line: "BATCH 1", "BATCH 2 : OSM THOME - INDIA", "[ADVERT 3]", "Vacancy #4 -", "JOB 5."
 // Trusted like "---" when the paste contains at least two of them. The heading line stays with its advert.
 const NUMBERED_HEADER = /^\s*[[(#*]*\s*(?:batch|advert|advertisement|ad|job|vacancy|post|paste)\s*(?:no\.?|#)?\s*\d{1,4}\s*[\])*]*\s*(?:[:.\-–—|)].*)?$/i;
@@ -136,7 +137,11 @@ function splitPlain(text: string): AdvertBlock[] {
 function splitRaw(text: string): AdvertBlock[] {
   const lines = text.split("\n");
   if (lines.some((l) => SEPARATOR.test(l))) {
-    return splitOn(lines, (l) => SEPARATOR.test(l), false).map((p) => review(p, false));
+    const parts = splitOn(lines, (l) => SEPARATOR.test(l), false);
+    // A contactless title/intro before the first cut line joins the first advert instead of becoming its own card.
+    const first = lines.findIndex((l) => SEPARATOR.test(l));
+    if (parts.length > 1 && lines.slice(0, first).join("").trim() && !hasContact(parts[0])) parts.splice(0, 2, `${parts[0]}\n\n${parts[1]}`);
+    return parts.map((p) => review(p, false));
   }
   if (lines.filter(isNumberedHeader).length >= 2) {
     const parts = splitOn(lines, isNumberedHeader, true);
