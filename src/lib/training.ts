@@ -38,6 +38,19 @@ export const trainingMessage = (name: string, company: string, items: { title: s
     ...items.map((i, n) => `${n + 1}. ${i.title}\n${trainingLink(i.token, origin)}`), "",
     "Read the briefing, then answer 3 quick questions to confirm. Free for crew."].join("\n");
 
+/** Plain-text pre-joining training record for a candidate's crew file. Only completed modules count as verified. */
+export const trainingDossier = (name: string, items: LedgerItem[]) => {
+  const done = items.filter((i) => i.status === "completed");
+  const open = items.filter((i) => i.status !== "completed");
+  return [
+    `PRE-JOINING TRAINING RECORD — ${name || "Candidate"}`,
+    `Verified: ${done.length} of ${items.length} assigned`, "",
+    ...done.map((i, n) => `${n + 1}. ${i.title}\n   Completed ${i.completed_at ? new Date(i.completed_at).toISOString().slice(0, 16).replace("T", " ") + " UTC" : "—"} · Reading time ${i.dwell_seconds ?? 0}s · Quiz ${i.quiz_correct ?? 0}/${i.quiz_total ?? 0}`),
+    ...(open.length ? ["", "Not yet completed:", ...open.map((i) => `- ${i.title} (${i.status === "opened" ? "opened" : "sent"})`)] : []),
+    "", "Recorded by SeaMinds — reading time and quiz graded on the server.",
+  ].join("\n");
+};
+
 export const trainingError = (code?: string, wait?: number) => ({
   AUTH_REQUIRED: "Please sign in to continue.",
   NOT_FOUND: "This training link is not valid.",

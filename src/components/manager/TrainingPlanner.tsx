@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { recommendTraining, assignTraining, trainingLedger, trainingMessage, trainingError, TRADING_AREAS, type Recommendation, type LedgerItem } from "@/lib/training";
+import { recommendTraining, assignTraining, trainingLedger, trainingMessage, trainingError, trainingDossier, TRADING_AREAS, type Recommendation, type LedgerItem } from "@/lib/training";
 
 const GOLD = "#D4AF37";
 const BORDER = "#1e3a5f";
@@ -82,12 +82,16 @@ const TrainingPlanner = ({ inviteId, name, whatsapp, company }: { inviteId: stri
       )}
       {ledger.length > 0 && (
         <div style={{ marginTop: 8 }}>
-          <p style={{ color: "#94a3b8", fontSize: 11, fontWeight: 700 }}>Training record</p>
+          <p style={{ color: "#94a3b8", fontSize: 11, fontWeight: 700 }}>Training record · {ledger.filter((l) => l.status === "completed").length}/{ledger.length} verified</p>
           {ledger.map((l) => (
             <p key={l.slug} style={{ color: l.status === "completed" ? "#22c55e" : "#94a3b8", fontSize: 10.5, marginTop: 3 }}>
-              {l.status === "completed" ? `✓ ${l.title} — ${l.quiz_correct}/${l.quiz_total}, ${new Date(l.completed_at!).toLocaleDateString()}` : `• ${l.title} — ${l.status === "opened" ? "opened, not finished" : "sent, not opened"}`}
+              {l.status === "completed" ? `✓ ${l.title} — ${l.quiz_correct}/${l.quiz_total}, read ${l.dwell_seconds ?? 0}s, ${new Date(l.completed_at!).toLocaleDateString()}` : `• ${l.title} — ${l.status === "opened" ? "opened, not finished" : "sent, not opened"}`}
             </p>
           ))}
+          <button onClick={async () => { await navigator.clipboard.writeText(trainingDossier(name, ledger)).catch(() => null); toast.success("Training record copied"); }}
+            style={{ display: "block", width: "100%", marginTop: 7, background: "transparent", color: GOLD, border: `1px solid ${GOLD}`, borderRadius: 9, padding: "7px 0", fontSize: 11.5, fontWeight: 700, cursor: "pointer" }}>
+            📋 Copy pre-joining training record
+          </button>
         </div>
       )}
     </div>
