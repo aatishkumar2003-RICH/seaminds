@@ -73,3 +73,22 @@ export const trainingError = (code?: string, wait?: number) => ({
   NOTHING_TO_ASSIGN: "No new training matches right now — everything relevant is already completed.",
   TOO_MANY: "Choose up to 5 modules at a time.",
 } as Record<string, string>)[code || ""] || "Something went wrong. Check your connection and try again.";
+
+export type MatrixTier = "VETTING" | "STATUTORY" | "OPERATIONAL";
+export type Segment = "TANKER" | "DRY" | "ALL";
+export type CatalogItem = { slug: string; title: string; summary: string; tier: MatrixTier; vessel_families: string[]; departments: string[]; media_url: string | null; media_label: string | null; status: LedgerItem["status"] | null; token: string | null };
+export const trainingCatalog = () => rpc("training_catalog", {});
+export const MATRIX_TIERS: { tier: MatrixTier; label: string; hint: string }[] = [
+  { tier: "VETTING", label: "Mandatory vetting", hint: "Charterer / oil-major inspection requirements for your ship type" },
+  { tier: "STATUTORY", label: "Statutory — all ships", hint: "SOLAS, MARPOL, MLC and port state control essentials" },
+  { tier: "OPERATIONAL", label: "Job & department skills", hint: "Practical skills for your rank and department" },
+];
+const SEGMENT_FAMILIES: Record<Exclude<Segment, "ALL">, string[]> = {
+  TANKER: ["OIL_TANKER", "CHEM_TANKER", "LNG", "LPG"],
+  DRY: ["BULK", "GENERAL_CARGO", "CONTAINER"],
+};
+/** Groups catalog by tier. Modules without vessel families apply to every ship; others only to their segment. */
+export const trainingMatrix = (items: CatalogItem[], segment: Segment) => {
+  const fits = (i: CatalogItem) => segment === "ALL" || !i.vessel_families.length || i.vessel_families.some((f) => SEGMENT_FAMILIES[segment].includes(f));
+  return MATRIX_TIERS.map((t) => ({ ...t, items: items.filter((i) => i.tier === t.tier && fits(i)) }));
+};

@@ -39,3 +39,20 @@ describe("training links", () => {
     expect(d).toContain("- COLREG (opened)");
   });
 });
+
+import { trainingMatrix } from "@/lib/training";
+describe("training matrix", () => {
+  const mk = (slug: string, tier: any, vessel_families: string[]) => ({ slug, title: slug, summary: "", tier, vessel_families, departments: [], media_url: null, media_label: null, status: null, token: null });
+  const items = [mk("sire", "VETTING", ["OIL_TANKER"]), mk("risq", "VETTING", ["BULK"]), mk("mlc", "STATUTORY", [])];
+  it("tanker crew get SIRE vetting, not RightShip", () => {
+    const v = trainingMatrix(items, "TANKER")[0].items.map((i) => i.slug);
+    expect(v).toEqual(["sire"]);
+  });
+  it("dry cargo crew get RightShip vetting, not SIRE", () => {
+    expect(trainingMatrix(items, "DRY")[0].items.map((i) => i.slug)).toEqual(["risq"]);
+  });
+  it("statutory modules apply to every ship type", () => {
+    expect(trainingMatrix(items, "DRY")[1].items.map((i) => i.slug)).toEqual(["mlc"]);
+    expect(trainingMatrix(items, "TANKER")[1].items.map((i) => i.slug)).toEqual(["mlc"]);
+  });
+});

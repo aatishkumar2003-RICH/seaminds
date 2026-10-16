@@ -95,6 +95,10 @@ const Academy = () => {
       <ScrollArea className="flex-1">
 
         <div className="p-4 space-y-4">
+          <a href="/training" className="block rounded-xl border-2 border-primary bg-card p-4 hover:bg-secondary">
+            <p className="text-sm font-bold text-primary">🎓 My Training Matrix</p>
+            <p className="mt-1 text-xs text-muted-foreground">Mandatory vetting (Tanker SIRE 2.0 / Dry RightShip), statutory and job training — 3-minute briefings with a 3-question check, saved to your training record.</p>
+          </a>
           {/* Search Bar */}
           <div className="rounded-xl bg-primary/10 border-2 border-primary/40 p-3 space-y-2">
             <div className="flex gap-2">
