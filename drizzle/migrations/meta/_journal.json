@@ -393,6 +393,13 @@
       "when": 1792132636785,
       "tag": "0055_adaptive_crew_training",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1792132721158,
+      "tag": "0056_training_catalog_initial_content",
+      "breakpoints": true
     }
   ]
 }
