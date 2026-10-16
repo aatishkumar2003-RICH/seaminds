@@ -76,7 +76,7 @@ const id: Dict = {
   psSeeJobs: "LIHAT LOWONGAN SAYA →",
 
   joinTitle: "Gabung SeaMinds",
-  joinSubtitle: "Gratis untuk pelaut — Sea Profile 2 menit, lowongan, dan penilaian SMC.",
+  joinSubtitle: "Gratis untuk pelaut — Sea Profile 2 menit, lowongan, dan SeaMinds Score.",
   joinBullet1: "Percakapan rahasia — tidak pernah dibagikan ke perusahaan Anda",
   joinBullet2: "Dibangun oleh seorang Master Mariner",
   joinBullet3: "Bisa diakses ke mana pun pelayaran membawa Anda",

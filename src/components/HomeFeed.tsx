@@ -284,7 +284,7 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
       { icon: "🔥", value: streak ?? 0, label: "day streak", screen: "chat" },
       { icon: "📜", value: "—", label: "certificates", screen: "resume" },
       { icon: "⏱", value: "—", label: "rest hours", screen: "resthours" },
-      { icon: "🏆", value: score ? Number(score).toFixed(1) : "Get", label: "SMC", screen: "smc", highlight: true },
+      { icon: "🏆", value: score ? Number(score).toFixed(1) : "Get", label: "Score", screen: "smc", highlight: true },
     ];
 
     // Fall back to English articles if the language has none

@@ -164,7 +164,7 @@ const ManagerPaymentHistory = ({ managerUserId }: ManagerPaymentHistoryProps) =>
               {selectedReport.assessment.overall_score != null && (
                 <div style={{ marginTop: "8px", display: "inline-flex", alignItems: "center", gap: "8px" }}>
                   <span style={{ background: BAND_COLORS[selectedReport.assessment.score_band || ""] || "#555", color: "#fff", borderRadius: "6px", padding: "4px 12px", fontSize: "14px", fontWeight: "bold" }}>
-                    SMC {selectedReport.assessment.overall_score} — {selectedReport.assessment.score_band}
+                    SeaMinds Score {selectedReport.assessment.overall_score} — {selectedReport.assessment.score_band}
                   </span>
                 </div>
               )}
@@ -360,7 +360,7 @@ const ManagerPaymentHistory = ({ managerUserId }: ManagerPaymentHistoryProps) =>
                 doc.text("Maritime Intelligence Platform", 31, 18);
 
                 y = 26;
-                addLine("CONFIDENTIAL — SMC ASSESSMENT REPORT", 9, [212, 175, 55], true);
+                addLine("CONFIDENTIAL — SEAMINDS COMPETENCY REPORT", 9, [212, 175, 55], true);
                 y += 2;
                 addLine(c.name, 18, [255, 255, 255], true);
                 addLine(`${c.role} · ${c.ship_name}${a.completed_at ? ` · ${new Date(a.completed_at).toLocaleDateString()}` : ""}`, 10, [170, 170, 170]);
@@ -468,7 +468,7 @@ const ManagerPaymentHistory = ({ managerUserId }: ManagerPaymentHistoryProps) =>
                   doc.text(`Page ${p} of ${totalPages}`, w - 15, pageH - 9, { align: "right" });
                 }
 
-                doc.save(`SMC-Report-${c.name.replace(/\s+/g, "-")}-${new Date().toISOString().split("T")[0]}.pdf`);
+                doc.save(`SeaMinds-Score-Report-${c.name.replace(/\s+/g, "-")}-${new Date().toISOString().split("T")[0]}.pdf`);
               }}
               style={{ width: "100%", marginTop: "16px", marginBottom: "24px", padding: "14px", background: "#D4AF37", color: "#0D1B2A", border: "none", borderRadius: "12px", fontSize: "14px", fontWeight: "bold", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
             >

@@ -34,7 +34,7 @@ const sections = [
     body: `We use your data to:
 
 • Provide and personalise the SeaMinds platform and its features.
-• Generate your SMC Command Score and digital CV.
+• Generate your SeaMinds Competency Score and digital CV.
 • Track certificate expiry dates and send renewal reminders.
 • Improve our AI tools, content and user experience.
 • Communicate service updates and safety-related information.

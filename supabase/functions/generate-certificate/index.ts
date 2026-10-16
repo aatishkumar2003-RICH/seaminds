@@ -259,7 +259,7 @@ Deno.serve(async (req: Request) => {
       headers: {
         ...corsHeaders,
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="SMC-Certificate-${data.certificateId}.pdf"`,
+        "Content-Disposition": `attachment; filename="SeaMinds-Competency-Certificate-${data.certificateId}.pdf"`,
       },
     });
   } catch (err) {

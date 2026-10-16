@@ -155,7 +155,7 @@ const HeroSection = ({ timeOfDay = "day" }: Props) => {
                 Run structured AI crew interviews — every candidate scored 0.00–5.00 by rank, vessel type and experience. Browse verified CVs. Shortlist in hours, not weeks.
               </p>
               <div className="flex flex-wrap gap-2 justify-center mb-3">
-                {["🎓 AI Crew Interviews", "📄 Verified CV Database", "🏆 SMC-Scored Candidates", "📢 Post Vacancies from $19"].map((chip) => (
+                {["🎓 AI Crew Interviews", "📄 Verified CV Database", "🏆 SeaMinds-Scored Candidates", "📢 Post Vacancies from $19"].map((chip) => (
                   <span
                     key={chip}
                     className="rounded-full px-3 py-1 text-[11px] font-semibold text-primary"

@@ -2,7 +2,7 @@ import { useState } from "react";
 
 const tabs = [
   { emoji: "💬", label: "AI Wellness Chat" },
-  { emoji: "🏆", label: "SMC Certified Score" },
+  { emoji: "🏆", label: "SeaMinds Competency Score" },
   { emoji: "⏱", label: "Rest Hours Tracker" },
   { emoji: "📜", label: "Certificate Wallet" },
   { emoji: "💼", label: "Maritime Jobs" },

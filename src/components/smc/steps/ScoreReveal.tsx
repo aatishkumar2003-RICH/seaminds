@@ -181,7 +181,7 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
       const pdfW = pdf.internal.pageSize.getWidth();
       const pdfH = (canvas.height * pdfW) / canvas.width;
       pdf.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH);
-      pdf.save(`SeaMinds-SMC-Certificate.pdf`);
+      pdf.save(`SeaMinds-Competency-Certificate.pdf`);
     } catch(e) { console.error('Certificate download error:', e); }
   };
 
@@ -334,7 +334,7 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
             const pdfWidth = pdf.internal.pageSize.getWidth();
             const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-            pdf.save(`SeaMinds-SMC-Certificate-${certId || assessmentId}.pdf`);
+            pdf.save(`SeaMinds-Competency-Certificate-${certId || assessmentId}.pdf`);
           } catch(e) { console.error('Download error:', e); }
         }}
         style={{ background:'#D4AF37', color:'#0D1B2A', border:'none', padding:'10px 24px', borderRadius:'8px', fontWeight:'bold', cursor:'pointer', marginTop:'8px', display:'block', width:'100%' }}>

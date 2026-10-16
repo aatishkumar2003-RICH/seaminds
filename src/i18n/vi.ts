@@ -76,7 +76,7 @@ const vi: Dict = {
   psSeeJobs: "XEM VIỆC LÀM CỦA TÔI →",
 
   joinTitle: "Tham gia SeaMinds",
-  joinSubtitle: "Miễn phí cho thuyền viên — Sea Profile 2 phút, việc làm, đánh giá SMC.",
+  joinSubtitle: "Miễn phí cho thuyền viên — Sea Profile 2 phút, việc làm, SeaMinds Score.",
   joinBullet1: "Trò chuyện bảo mật — không bao giờ chia sẻ với công ty của bạn",
   joinBullet2: "Được xây dựng bởi một Master Mariner",
   joinBullet3: "Hoạt động ở bất cứ nơi nào chuyến đi đưa bạn tới",

@@ -155,7 +155,7 @@ export default function AssessmentOpsTab() {
       <div className="flex flex-col md:flex-row gap-2">
         <Input placeholder="Search name, email, assessment ID, rank" value={q} onChange={(e) => setQ(e.target.value)} className="bg-transparent" style={{ borderColor: BORDER, color: "#fff" }} />
         <select value={mode} onChange={(e) => setMode(e.target.value)} className="rounded-md px-2 py-2 text-sm" style={{ background: CARD, color: GOLD, border: `1px solid ${BORDER}` }}>
-          <option value="">All modes</option><option value="SMC">SMC self-service</option><option value="COMPANY">Company interview</option>
+          <option value="">All modes</option><option value="SMC">Self-service (SeaMinds Score)</option><option value="COMPANY">Company interview</option>
         </select>
         <select value={status} onChange={(e) => setStatus(e.target.value)} className="rounded-md px-2 py-2 text-sm" style={{ background: CARD, color: GOLD, border: `1px solid ${BORDER}` }}>
           <option value="">All statuses</option>

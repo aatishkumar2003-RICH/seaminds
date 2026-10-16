@@ -61,7 +61,7 @@ const HomePage = () => {
     "@context": "https://schema.org",
     "@type": "FAQPage",
     mainEntity: [
-      { "@type": "Question", name: "What is SeaMinds?", acceptedAnswer: { "@type": "Answer", text: "SeaMinds is the digital platform for seafarers — offering AI wellness support, the SMC Command Score, maritime academy, job matching, and community tools." }},
+      { "@type": "Question", name: "What is SeaMinds?", acceptedAnswer: { "@type": "Answer", text: "SeaMinds is the digital platform for seafarers — offering AI wellness support, the SeaMinds Competency Score, maritime academy, job matching, and community tools." }},
       { "@type": "Question", name: "Is my wellness data private?", acceptedAnswer: { "@type": "Answer", text: "Yes. SeaMinds follows the Sealed Envelope Principle — your wellness data and AI conversations are 100% private and never visible to employers or ship management." }},
       { "@type": "Question", name: "What is the SeaMinds Score?", acceptedAnswer: { "@type": "Answer", text: "The SeaMinds Command Score is an AI-assessed competency rating from 0.00 to 5.00 that covers technical skills, communication, behaviour, and sea experience." }},
       { "@type": "Question", name: "Is SeaMinds free?", acceptedAnswer: { "@type": "Answer", text: "Yes, SeaMinds offers a free tier with daily mood check-ins, AI wellness chat, community access, and basic job board. Pro and Company plans unlock additional features." }},
@@ -91,7 +91,7 @@ const HomePage = () => {
       { "@type": "Audience", audienceType: "Seafarers" },
       { "@type": "Audience", audienceType: "Manning agencies and ship managers" },
     ],
-    description: "Maritime job vacancies, seafarer profiles, SMC competency scoring, MLC 2006 rest hours tracking and AI crew wellness support.",
+    description: "Maritime job vacancies, seafarer profiles, SeaMinds Competency Score, MLC 2006 rest hours tracking and AI crew wellness support.",
   };
 
   // Redirect authenticated users to /app
@@ -142,7 +142,7 @@ const HomePage = () => {
         <nav aria-label="More" className="max-w-6xl mx-auto px-4 py-4 flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs font-semibold border-y" style={{ borderColor: "rgba(212,175,55,0.15)" }}>
           <Link to="/for-companies" className="text-muted-foreground hover:text-foreground no-underline">For Companies</Link>
           <span className="text-muted-foreground/40">·</span>
-          <Link to="/smc-score" className="text-muted-foreground hover:text-foreground no-underline">How SMC works</Link>
+          <Link to="/smc-score" className="text-muted-foreground hover:text-foreground no-underline">How the SeaMinds Score works</Link>
           <span className="text-muted-foreground/40">·</span>
           <Link to="/privacy" className="text-muted-foreground hover:text-foreground no-underline">Privacy</Link>
           <span className="text-muted-foreground/40">·</span>

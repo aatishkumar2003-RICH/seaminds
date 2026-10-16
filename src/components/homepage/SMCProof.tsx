@@ -16,7 +16,7 @@ const SMCProof = () => {
         <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center leading-tight mb-8">
           Your CV Tells Your History.
           <br />
-          Your SMC Shows Your Competency.
+          Your SeaMinds Score Shows Your Competency.
         </h2>
 
         <div className="grid gap-8 md:grid-cols-2 items-center">
@@ -64,7 +64,7 @@ const SMCProof = () => {
               SeaMinds Command Score
             </p>
             <p className="text-3xl font-bold text-primary font-mono-score mb-5">
-              SMC 4.18 · STRONG
+              SeaMinds Score 4.18 · STRONG
             </p>
             <div className="flex flex-col gap-3">
               {DIMENSIONS.map((d) => (

@@ -12,7 +12,7 @@ const benefits = [
 const steps = [
   "Email us your institution details — we set up a dedicated college code",
   "Share the code with your batch via WhatsApp or notice board",
-  "Students register free, complete SMC, download certificates",
+  "Students register free, complete the SeaMinds Competency Assessment, download certificates",
 ];
 
 const countries = ["India", "Philippines", "Indonesia", "Malaysia", "Vietnam", "Pakistan", "Bangladesh", "Sri Lanka"];
@@ -36,7 +36,7 @@ const CollegePage = () => {
           Give Every Graduate a Verified Competency Score Before Their First Contract
         </h1>
         <p className="text-muted-foreground text-sm max-w-xl mx-auto mb-8">
-          SeaMinds SMC certification is free for graduating cadets. Partner with us and your students leave with a recognised score on their CV.
+          The SeaMinds Competency Score is free for graduating cadets. Partner with us and your students leave with a recognised score on their CV.
         </p>
         <Button
           size="lg"

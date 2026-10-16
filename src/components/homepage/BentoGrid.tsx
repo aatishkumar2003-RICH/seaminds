@@ -49,7 +49,7 @@ const features = [
   { icon: MessageCircle, title: "AI Wellness", desc: "Private in-app conversations, never shared." },
   { icon: Shield, title: "SeaMinds Score", desc: "AI-assessed competency. Salary bidding." },
   { icon: BookOpen, title: "Academy", desc: "PSC prep, vetting, STCW updates." },
-  { icon: Briefcase, title: "Jobs", desc: "Verified listings with SMC requirements." },
+  { icon: Briefcase, title: "Jobs", desc: "Verified listings with SeaMinds Score requirements." },
   { icon: Heart, title: "Family", desc: "Keep your family connected at sea." },
   { icon: Users, title: "Community", desc: "Global community. One crew." },
 ];

@@ -6,7 +6,7 @@ import { useInView, prefersReducedMotion } from "@/hooks/useInView";
 const STEPS = [
   { n: "①", title: "VACANCY", detail: "Chief Officer · Bulk Carrier · 5+ yrs" },
   { n: "②", title: "MATCHES", detail: "22 relevant crew" },
-  { n: "③", title: "SEA PROFILE", detail: "Bulk 8 yrs · Rank 5 yrs · Available · SMC 4.18" },
+  { n: "③", title: "SEA PROFILE", detail: "Bulk 8 yrs · Rank 5 yrs · Available · SeaMinds Score 4.18" },
   { n: "④", title: "AI INTERVIEW", detail: "Technical 4.30 · Judgment 4.10 · English 4.00" },
   { n: "⑤", title: "SHORTLIST", detail: "3 candidates" },
 ];

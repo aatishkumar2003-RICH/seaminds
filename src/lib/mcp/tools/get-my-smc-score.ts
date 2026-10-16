@@ -4,7 +4,7 @@ import { supabaseForUser, notAuthenticated, textResult, errorResult } from "../s
 export default defineTool({
   name: "get_my_smc_score",
   title: "Get my SeaMinds Score",
-  description: "Return the signed-in seafarer's latest Seafarer Merit Score (SMC) assessment result and dimension scores.",
+  description: "Return the signed-in seafarer's latest SeaMinds Competency Score assessment result and dimension scores.",
   inputSchema: {},
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async (_input, ctx) => {
