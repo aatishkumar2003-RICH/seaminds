@@ -100,7 +100,7 @@ export default function ActivityTab() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
         <Card label="Total Crew" value={crew.length} />
         <Card label="CVs Built" value={cvs.length} />
-        <Card label="SMC Assessments" value={smc.length} />
+        <Card label="SeaMinds Competency Assessment" value={smc.length} />
         <Card label="Email Leads" value={leadCount} />
       </div>
 
@@ -153,7 +153,7 @@ export default function ActivityTab() {
       />
 
       <Table
-        title="SMC Assessments"
+        title="SeaMinds Competency Assessment"
         headers={["Name", "Rank", "Score", "Band", "Date"]}
         rows={smc.map((s) => {
           const p = profileFor(null, s.crew_profile_id);

@@ -105,7 +105,7 @@ const HeroSection = ({ timeOfDay = "day" }: Props) => {
                 {[...Array(2)].flatMap((_, dupeIdx) =>
                   [
                     "🔥 Streak Tracker", "⏱ MLC Rest Hours", "📜 Cert Wallet", "💰 Salary Check",
-                    "🔧 PMS Equipment", "🤖 AI Wellness", "🏆 SMC Score", "💼 Jobs Board",
+                    "🔧 PMS Equipment", "🤖 AI Wellness", "🏆 SeaMinds Score", "💼 Jobs Board",
                     "📷 Photo Diagnosis", "🎓 Academy",
                   ].map((pill) => (
                     <button

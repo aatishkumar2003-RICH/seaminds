@@ -365,7 +365,7 @@ const ManagerPaymentHistory = ({ managerUserId }: ManagerPaymentHistoryProps) =>
                 addLine(c.name, 18, [255, 255, 255], true);
                 addLine(`${c.role} · ${c.ship_name}${a.completed_at ? ` · ${new Date(a.completed_at).toLocaleDateString()}` : ""}`, 10, [170, 170, 170]);
                 if (a.overall_score != null) {
-                  addLine(`SMC Score: ${a.overall_score} — ${a.score_band || "N/A"}`, 13, [212, 175, 55], true);
+                  addLine(`SeaMinds Score: ${a.overall_score} — ${a.score_band || "N/A"}`, 13, [212, 175, 55], true);
                 }
                 y += 4;
 

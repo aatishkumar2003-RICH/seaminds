@@ -8,7 +8,7 @@ const navLinks = [
   { label: "Home", path: "/" },
   { label: "For Seafarers", path: "/app" },
   { label: "For Companies", path: "/for-companies" },
-  { label: "SMC Score", path: "/smc-score" },
+  { label: "SeaMinds Score", path: "/smc-score" },
   { label: "Jobs", path: "/feed" },
   { label: "Blog", path: "/blog" },
   { label: "Pricing", path: "/pricing" },

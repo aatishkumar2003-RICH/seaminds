@@ -4,7 +4,7 @@ import HomeNav from "@/components/homepage/HomeNav";
 import HomeFooter from "@/components/homepage/HomeFooter";
 
 const benefits = [
-  { icon: "🎓", title: "Free for All Cadets", desc: "First 1,000 SMC assessments are completely free. No cost to your institution or students." },
+  { icon: "🎓", title: "Free for All Cadets", desc: "First 1,000 SeaMinds Competency Assessment are completely free. No cost to your institution or students." },
   { icon: "📜", title: "Recognised Certificate", desc: "PDF certificate with QR verification. Cadets add it to their CV immediately." },
   { icon: "📊", title: "Batch Dashboard", desc: "Track your entire graduating batch's competency scores in one view." },
 ];

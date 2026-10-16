@@ -53,7 +53,7 @@ const TOUR_STEPS: TourStep[] = [
   },
   {
     icon: "🏆",
-    label: "SMC Score",
+    label: "SeaMinds Score",
     title: "Competency Score",
     description: "Get your AI-verified competency rating from 0.00 to 5.00. Technical skills, communication, behaviour — all assessed. Employers trust it.",
     accent: "43 96% 56%",

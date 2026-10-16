@@ -78,7 +78,7 @@ var search_jobs_default = defineTool2({
 import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@0.25.0";
 var get_my_smc_score_default = defineTool3({
   name: "get_my_smc_score",
-  title: "Get my SMC score",
+  title: "Get my SeaMinds Score",
   description: "Return the signed-in seafarer's latest Seafarer Merit Score (SMC) assessment result and dimension scores.",
   inputSchema: {},
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
@@ -92,7 +92,7 @@ var get_my_smc_score_default = defineTool3({
       "id, status, overall_score, score_band, technical_score, english_score, experience_score, behavioural_score, wellness_score, dimension_scores, certificate_id, recommendation, completed_at"
     ).eq("crew_profile_id", profile.id).order("completed_at", { ascending: false, nullsFirst: false }).limit(1).maybeSingle();
     if (error) return errorResult(error.message);
-    if (!data) return errorResult("No SMC assessment found yet.");
+    if (!data) return errorResult("No SeaMinds Competency Assessment found yet.");
     return textResult(data);
   }
 });

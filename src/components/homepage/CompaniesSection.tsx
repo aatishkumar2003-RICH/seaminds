@@ -26,7 +26,7 @@ const CompaniesSection = () => {
           Better Crew. Less Risk. Lower Cost.
         </h2>
         <p className="mb-14 max-w-xl mx-auto" style={{ color: "hsl(220 20% 40%)" }}>
-          The SMC Score gives shipping companies a structured data layer for every hire.
+          The SeaMinds Score gives shipping companies a structured data layer for every hire.
         </p>
 
         <div className="grid md:grid-cols-3 gap-6 mb-12">

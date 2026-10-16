@@ -9,7 +9,7 @@ const sections = [
   },
   {
     title: "2. Use of Service",
-    body: "SeaMinds provides AI-powered wellness support, competency assessments (SMC Score), maritime academy resources, job matching, and community tools for seafarers and maritime companies. You agree to use the platform only for lawful purposes and in accordance with these terms. You must not misuse the service, submit false documents, impersonate others, or attempt to manipulate assessment scores.",
+    body: "SeaMinds provides AI-powered wellness support, competency assessments (SeaMinds Score), maritime academy resources, job matching, and community tools for seafarers and maritime companies. You agree to use the platform only for lawful purposes and in accordance with these terms. You must not misuse the service, submit false documents, impersonate others, or attempt to manipulate assessment scores.",
   },
   {
     title: "3. Privacy and Data",
@@ -21,7 +21,7 @@ const sections = [
   },
   {
     title: "5. Intellectual Property & Copyright",
-    body: "© 2024–2026 SeaMinds. All rights reserved. All content, text, designs, logos, software, source code, assessments, question banks, AI companion technology, and graphics on the SeaMinds platform are owned by SeaMinds or its licensors and are protected by international copyright law, including the Berne Convention, and other intellectual property laws. You may not copy, scrape, reproduce, distribute, modify, republish, or create derivative works from any SeaMinds content without prior written permission. The SMC Score methodology, certification system, and the SeaMinds name and logo are proprietary to SeaMinds. Vacancy adverts remain the property of their respective recruiters. To report suspected copyright infringement or request a licence, email admin@seaminds.life with details of the work and where it appears.",
+    body: "© 2024–2026 SeaMinds. All rights reserved. All content, text, designs, logos, software, source code, assessments, question banks, AI companion technology, and graphics on the SeaMinds platform are owned by SeaMinds or its licensors and are protected by international copyright law, including the Berne Convention, and other intellectual property laws. You may not copy, scrape, reproduce, distribute, modify, republish, or create derivative works from any SeaMinds content without prior written permission. The SeaMinds Score methodology, certification system, and the SeaMinds name and logo are proprietary to SeaMinds. Vacancy adverts remain the property of their respective recruiters. To report suspected copyright infringement or request a licence, email admin@seaminds.life with details of the work and where it appears.",
   },
   {
     title: "6. Limitation of Liability",

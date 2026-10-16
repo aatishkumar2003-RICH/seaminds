@@ -231,7 +231,7 @@ const ManagerAuth = () => {
 
         {mode === "signup" && (
           <div className="grid grid-cols-3 gap-2 text-center">
-            {[["Search verified crew", Search], ["View SMC scores", Award], ["Post vacancies", Megaphone]].map(([t, Icon]: any) => (
+            {[["Search verified crew", Search], ["View SeaMinds Score", Award], ["Post vacancies", Megaphone]].map(([t, Icon]: any) => (
               <div key={t} className="bg-secondary/60 rounded-xl px-2 py-3 space-y-1">
                 <Icon size={16} className="text-primary mx-auto" />
                 <p className="text-[10px] leading-tight text-muted-foreground">{t}</p>

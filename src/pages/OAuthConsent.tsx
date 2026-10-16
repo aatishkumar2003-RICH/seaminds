@@ -146,7 +146,7 @@ const OAuthConsent = () => {
           <>
             <h1 className="text-xl font-semibold text-[#D4AF37]">Connect {clientName} to SeaMinds</h1>
             <p className="mt-3 text-sm text-white/70">
-              {clientName} will be able to read your crew profile, SMC score and job matches, and update your
+              {clientName} will be able to read your crew profile, SeaMinds Score and job matches, and update your
               availability — acting as you. Your wellness chats stay private.
             </p>
             <div className="mt-6 flex gap-3">

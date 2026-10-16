@@ -124,7 +124,7 @@ const vi: Dict = {
   qpDoneNote:
     "Thêm CV và chứng chỉ bất cứ lúc nào để hồ sơ mạnh hơn và giúp công ty đánh giá bạn nhanh hơn.",
   qpDoneJobs: "Xem việc làm phù hợp →",
-  qpDoneSmc: "Làm bài SMC Assessment →",
+  qpDoneSmc: "Làm bài SeaMinds Competency Assessment →",
   qpContinue: "Tiếp tục →",
   yes: "Có",
   no: "Không",

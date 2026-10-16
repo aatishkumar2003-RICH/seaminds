@@ -39,8 +39,8 @@ const title = (s: string) => s.replace(/\b\w/g, (c) => c.toUpperCase());
 const SERIES: { day: number; kind: string; subject: string; head: string; body: string; cta: string; path: string }[] = [
   { day: 1, kind: "series:studio", subject: "Post all your vacancies in one paste", head: "Bulk Vacancy Studio",
     body: "Paste a whole WhatsApp or Telegram message, an email or up to five flyers. SeaMinds separates every vacancy, keeps the right contact on each one and lets you publish the ready ones in one click.", cta: "Open Vacancy Studio", path: "/post-vacancy" },
-  { day: 3, kind: "series:smc", subject: "See verified skill scores before you call a seafarer", head: "SMC competency scores",
-    body: "Many SeaMinds crew carry an SMC score from a rank-specific assessment. Use it to shortlist faster and spend interview time only on strong candidates.", cta: "View your applicants", path: "/manager/dashboard?tab=applicants" },
+  { day: 3, kind: "series:smc", subject: "See verified skill scores before you call a seafarer", head: "SeaMinds Competency Scores",
+    body: "Many SeaMinds crew carry an SeaMinds Score from a rank-specific assessment. Use it to shortlist faster and spend interview time only on strong candidates.", cta: "View your applicants", path: "/manager/dashboard?tab=applicants" },
   { day: 6, kind: "series:interviews", subject: "Let AI run your first interview round", head: "AI Interview Studio",
     body: "Create one interview link, send it to many candidates and get a ranked leaderboard with technical, judgment and English scores.", cta: "Open AI Interview Studio", path: "/manager/interviews" },
   { day: 9, kind: "series:search", subject: "Find available crew by rank and vessel type", head: "Crew Search",

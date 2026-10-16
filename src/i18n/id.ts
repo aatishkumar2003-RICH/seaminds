@@ -124,7 +124,7 @@ const id: Dict = {
   qpDoneNote:
     "Tambahkan CV dan sertifikat kapan saja untuk memperkuat profil Anda dan membantu perusahaan menilai Anda lebih cepat.",
   qpDoneJobs: "Lihat lowongan yang cocok →",
-  qpDoneSmc: "Ikuti SMC Assessment →",
+  qpDoneSmc: "Ikuti SeaMinds Competency Assessment →",
   qpContinue: "Lanjut →",
   yes: "Ya",
   no: "Tidak",

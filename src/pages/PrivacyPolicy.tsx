@@ -15,7 +15,7 @@ const sections = [
     body: `We collect the following categories of data:
 
 • Account information — name, email address, nationality, rank, vessel details and WhatsApp number provided during registration.
-• Professional data — certificates, sea service records, medical fitness status and CV content uploaded for the SMC Score assessment.
+• Professional data — certificates, sea service records, medical fitness status and CV content uploaded for the SeaMinds Score assessment.
 • Wellness data — mood check-ins, streak records and AI chat conversations (subject to the Sealed Envelope Principle below).
 • Usage data — pages visited, features used, device type and browser information.
 • Location data — approximate coordinates if you enable location-based features (you can disable this at any time).`,
@@ -44,7 +44,7 @@ const sections = [
     title: "5. Data Sharing",
     body: `We do not sell your personal data. We may share limited information only in these cases:
 
-• With employers — only your SMC Score, professional qualifications, certificates, CV and rest-hours records, and only where the company holds an active subscription AND you have consented to the company link or applied to them. Wellness chats and mood check-ins are never included.
+• With employers — only your SeaMinds Score, professional qualifications, certificates, CV and rest-hours records, and only where the company holds an active subscription AND you have consented to the company link or applied to them. Wellness chats and mood check-ins are never included.
 • Service providers — trusted third-party processors (hosting, payment, AI) who are contractually bound to protect your data.
 • Legal obligations — when required by law, regulation or valid legal process.`,
   },

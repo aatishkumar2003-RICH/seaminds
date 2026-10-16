@@ -36,7 +36,7 @@ const tiers = [
     icon: Ship,
     features: [
       "Unlimited AI wellness chat",
-      "SMC Score assessment included",
+      "SeaMinds Score assessment included",
       "Full Academy & PMS reference",
       "BRIDGE equipment diagnostics",
       "Priority job matching",
@@ -56,7 +56,7 @@ const tiers = [
     features: [
       "Manager wellness dashboard",
       "Team analytics & reporting",
-      "Bulk SMC assessments",
+      "Bulk SeaMinds Competency Assessment",
       "Crew competency verification",
       "PSC inspection readiness",
       "MLC 2006 compliance reports",
@@ -81,7 +81,7 @@ const faqs = [
     a: "Yes. SeaMinds is built in full accordance with MLC 2006 seafarer welfare standards.",
   },
   {
-    q: "What is an SMC Score?",
+    q: "What is an SeaMinds Score?",
     a: "SeaMinds Certified Score — an AI-assessed competency rating from 0.00 to 5.00 that travels with you across every employer.",
   },
 ];

@@ -47,7 +47,7 @@ interface FlatQuestion {
 
 const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assessmentId, vesselType, yearsExperience, onComplete, onExit, mode = 'learn' }: AssessmentFlowProps) => {
   const sealed = mode === 'interview';
-  // Company-commissioned interview vs the crew's own SMC assessment
+  // Company-commissioned interview vs the crew's own SeaMinds Competency Assessment
   const interviewMode: 'company' | 'self' = mode === 'interview' ? 'company' : 'self';
   const { accessToken } = useAuth();
   // Core flow state

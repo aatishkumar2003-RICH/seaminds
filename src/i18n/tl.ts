@@ -76,7 +76,7 @@ const tl: Dict = {
   psSeeJobs: "TINGNAN ANG MGA TRABAHO KO →",
 
   joinTitle: "Sumali sa SeaMinds",
-  joinSubtitle: "Libre para sa seafarers — 2-minutong Sea Profile, trabaho, at SMC assessment.",
+  joinSubtitle: "Libre para sa seafarers — 2-minutong Sea Profile, trabaho, at SeaMinds Competency Assessment.",
   joinBullet1: "Kumpidensyal ang usapan — hindi kailanman ibinabahagi sa kompanya mo",
   joinBullet2: "Ginawa ng isang Master Mariner",
   joinBullet3: "Gumagana saan ka man dalhin ng biyahe mo",
@@ -124,7 +124,7 @@ const tl: Dict = {
   qpDoneNote:
     "Magdagdag ng CV at mga sertipiko anumang oras para mas malakas ang profile mo at mas mabilis kang ma-evaluate ng mga kompanya.",
   qpDoneJobs: "Tingnan ang mga tugmang trabaho →",
-  qpDoneSmc: "Kunin ang SMC Assessment →",
+  qpDoneSmc: "Kunin ang SeaMinds Competency Assessment →",
   qpContinue: "Magpatuloy →",
   yes: "Oo",
   no: "Hindi",

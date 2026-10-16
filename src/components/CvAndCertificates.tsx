@@ -61,7 +61,7 @@ const CvAndCertificates = ({ profileId }: Props) => {
         >
           <p className="text-xs font-bold" style={{ color: "#D4AF37" }}>⚓ Start with your 2-minute Sea Profile</p>
           <p className="text-[11px] leading-snug mt-0.5" style={{ color: "#94A3B8" }}>
-            All taps, no typing — it unlocks job applications and your SMC assessment. Build your full CV anytime after.
+            All taps, no typing — it unlocks job applications and your SeaMinds Competency Assessment. Build your full CV anytime after.
           </p>
           <button
             onClick={() => navigate("/quick-profile")}
@@ -88,7 +88,7 @@ const CvAndCertificates = ({ profileId }: Props) => {
           </button>
           <p className="text-xs font-bold pr-5" style={{ color: "#22c55e" }}>✓ You're application-ready</p>
           <p className="text-[11px] leading-snug mt-0.5" style={{ color: "#94A3B8" }}>
-            Your Sea Profile already lets you apply for jobs and take the SMC assessment. The sections below are optional — add them whenever you want to stand out. Companies evaluate complete profiles faster, and when a company shortlists you, we'll remind you to complete it.
+            Your Sea Profile already lets you apply for jobs and take the SeaMinds Competency Assessment. The sections below are optional — add them whenever you want to stand out. Companies evaluate complete profiles faster, and when a company shortlists you, we'll remind you to complete it.
           </p>
         </div>
       )}

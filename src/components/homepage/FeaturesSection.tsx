@@ -5,7 +5,7 @@ const features = [
   { icon: MessageCircle, title: "AI Wellness Companion", desc: "Private confidential in-app conversations, never shared with your company." },
   { icon: Shield, title: "SMC Certified Score", desc: "Portable AI-assessed crew competency score. Salary bidding marketplace." },
   { icon: BookOpen, title: "Maritime Academy", desc: "PSC inspection prep, vetting knowledge, STCW updates." },
-  { icon: Briefcase, title: "Jobs Board", desc: "Verified job listings with minimum SMC Score requirements." },
+  { icon: Briefcase, title: "Jobs Board", desc: "Verified job listings with minimum SeaMinds Score requirements." },
   { icon: Heart, title: "Family Connection", desc: "Keep your family informed and connected during voyages." },
   { icon: Users, title: "Community", desc: "Connect with a global seafarer community." },
 ];

@@ -76,7 +76,7 @@ const hi: Dict = {
   psSeeJobs: "मेरी नौकरियाँ देखें →",
 
   joinTitle: "SeaMinds से जुड़ें",
-  joinSubtitle: "नाविकों के लिए मुफ़्त — 2 मिनट की Sea Profile, नौकरियाँ, SMC assessment।",
+  joinSubtitle: "नाविकों के लिए मुफ़्त — 2 मिनट की Sea Profile, नौकरियाँ, SeaMinds Competency Assessment।",
   joinBullet1: "बातचीत पूरी तरह गोपनीय — आपकी कंपनी से कभी साझा नहीं",
   joinBullet2: "एक Master Mariner द्वारा बनाया गया",
   joinBullet3: "आपकी यात्रा जहाँ भी ले जाए, वहाँ काम करता है",
@@ -124,7 +124,7 @@ const hi: Dict = {
   qpDoneNote:
     "अपनी प्रोफ़ाइल मज़बूत करने के लिए कभी भी अपना CV और सर्टिफिकेट जोड़ें — कंपनियाँ आपका मूल्यांकन तेज़ी से कर पाएँगी।",
   qpDoneJobs: "मेरे लिए मिलती नौकरियाँ देखें →",
-  qpDoneSmc: "SMC Assessment दें →",
+  qpDoneSmc: "SeaMinds Competency Assessment दें →",
   qpContinue: "आगे बढ़ें →",
   yes: "हाँ",
   no: "नहीं",
