@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { checkRest, monthCsv } from "@/lib/restHours";
 
 interface LogEntry {
   type: "work" | "rest";
@@ -191,10 +192,16 @@ const RestHoursTracker = ({ onNavigate, profileId }: RestHoursTrackerProps) => {
   const hoursRestedWeekly = calcHours("rest", 168);
 
   // Violation detection
-  const hasViolation = logs.length > 0 && (hoursRestedToday < 10 || hoursRestedWeekly < 77);
-  const violationText = hoursRestedToday < 10
-    ? `You have ${hoursRestedToday} hours rest in last 24h. Minimum is 10 hours.`
-    : `You have ${hoursRestedWeekly} hours rest in last 7 days. Minimum is 77 hours.`;
+  const restCheck = checkRest(logs, now.getTime());
+  const hasViolation = restCheck.issues.length > 0;
+  const violationText = restCheck.issues.join(" ");
+  const downloadMonth = () => {
+    const csv = monthCsv(logs, now.getFullYear(), now.getMonth());
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+    const a = document.createElement("a");
+    a.href = url; a.download = `rest-hours-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+  };
 
   // 7-day history
   const last7Days = useMemo(() => {
@@ -315,6 +322,7 @@ const RestHoursTracker = ({ onNavigate, profileId }: RestHoursTrackerProps) => {
           <p className="text-[11px] text-muted-foreground">• Min <span style={{ color: "#D4AF37" }}>10 hours</span> rest per 24-hour period</p>
           <p className="text-[11px] text-muted-foreground">• Min <span style={{ color: "#D4AF37" }}>77 hours</span> rest per 7-day period</p>
           <p className="text-[11px] text-muted-foreground">• Max <span style={{ color: "#D4AF37" }}>14 hours</span> work per 24-hour period</p>
+          <p className="text-[11px] text-muted-foreground">• Rest in max <span style={{ color: "#D4AF37" }}>2 periods</span>, one at least <span style={{ color: "#D4AF37" }}>6 hours</span></p>
         </div>
       </div>
 
@@ -343,6 +351,10 @@ const RestHoursTracker = ({ onNavigate, profileId }: RestHoursTrackerProps) => {
           🔴 LOG REST START
         </button>
       </div>
+
+      <button onClick={downloadMonth} disabled={!logs.length} className="mb-4 w-full rounded-xl py-2 text-xs font-bold disabled:opacity-40" style={{ border: "1px solid #D4AF37", color: "#D4AF37", background: "transparent" }}>
+        ⬇ Download this month's rest hours record (CSV)
+      </button>
 
       {/* Current Status */}
       {currentStatus && currentSince && (
