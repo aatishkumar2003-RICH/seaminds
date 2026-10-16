@@ -19,8 +19,44 @@ const InterviewInvite = () => {
   const { user, isReady } = useAuth();
   const [info, setInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [profileReady, setProfileReady] = useState(false);
+  const [profileChecked, setProfileChecked] = useState(false);
+  const [name, setName] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const prepare = search.get("prepare");
   const round2 = search.get("round") === "2";
+
+  useEffect(() => {
+    let active = true;
+    setProfileChecked(false);
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase.from("crew_profiles").select("id, first_name, last_name, whatsapp_number").eq("id", user.id).maybeSingle();
+      if (!active) return;
+      setProfileReady(!!data?.id && !!data.first_name && !!data.whatsapp_number);
+      setName([data?.first_name, data?.last_name].filter(Boolean).join(" ") || info?.name || "");
+      setWhatsapp(data?.whatsapp_number || "");
+      setProfileChecked(true);
+    })();
+    return () => { active = false; };
+  }, [user?.id, info?.name]);
+
+  const saveBasics = async () => {
+    if (!user || !name.trim() || !/^\+\d[\d\s()-]{7,20}$/.test(whatsapp.trim()) || saving) return;
+    setSaving(true); setSaveError("");
+    try {
+      const parts = name.trim().split(/\s+/);
+      const { error } = await supabase.from("crew_profiles").upsert({ id: user.id,
+        first_name: parts[0], last_name: parts.slice(1).join(" "), email: user.email,
+        whatsapp_number: whatsapp.trim(),
+      }, { onConflict: "id" }).select("id").single();
+      if (error) throw error;
+      setProfileReady(true);
+    } catch { setSaveError("Could not save your details. Please check your connection and try again."); }
+    finally { setSaving(false); }
+  };
 
   useEffect(() => {
     let active = true;
@@ -81,7 +117,15 @@ const InterviewInvite = () => {
               <p className="text-sm text-muted-foreground">Position: <strong className="text-foreground">{info.rank}</strong>{info.vessel ? ` · Vessel: ${info.vessel}` : ""}</p>
               <p className="text-xs text-muted-foreground">{LANG_LABEL[info.language] || "English"} · Maritime English assessed separately</p>
             </header>
-            {user && (prepare === "cv" || prepare === "quick") ? (
+            {user && (prepare === "cv" || prepare === "quick") && !profileChecked ? <p className="text-muted-foreground">Loading your details…</p> : user && (prepare === "cv" || prepare === "quick") && !profileReady ? (
+              <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); void saveBasics(); }}>
+                <h2 className="font-bold">Your contact details</h2>
+                <label className="block text-sm">Full name<input required value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" className="mt-2 w-full rounded-lg border border-input bg-background p-3" /></label>
+                <label className="block text-sm">WhatsApp number<input required type="tel" pattern="\+[0-9][0-9\s()-]{7,20}" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="+63 919 006 1411" autoComplete="tel" className="mt-2 w-full rounded-lg border border-input bg-background p-3" /></label>
+                {saveError && <p role="alert" className="text-sm text-destructive">{saveError}</p>}
+                <Button type="submit" disabled={saving} className="w-full">{saving ? "Saving…" : "Save & continue"}<ArrowRight /></Button>
+              </form>
+            ) : user && (prepare === "cv" || prepare === "quick") ? (
               <section className="space-y-4">
                 <div className="flex items-center justify-between gap-2">
                   <h2 className="font-bold text-primary">{prepare === "cv" ? "Scan your CV" : "Quick Profile"}</h2>

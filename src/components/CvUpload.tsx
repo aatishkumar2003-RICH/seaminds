@@ -61,6 +61,8 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
   const [scanStage, setScanStage] = useState(0);
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const sourceFile = useRef<File | null>(null);
+  const storedFile = useRef<string | null>(null);
 
   const stages = [
     '📄 Reading your CV...',
@@ -89,6 +91,8 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
       setErrorMsg("Choose a non-empty PDF, JPG, PNG or WebP file up to 20 MB."); setStatus("error"); return;
     }
     setFileName(file.name);
+    sourceFile.current = file;
+    storedFile.current = null;
     setStatus("reading");
     setErrorMsg("");
     setShowConfirmation(false);
@@ -168,6 +172,13 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
     // Save structured document data to crew_cv_data
     try {
       if (user.id) {
+        if (sourceFile.current && !storedFile.current) {
+          const extension = sourceFile.current.type === "application/pdf" ? "pdf" : sourceFile.current.type.split("/")[1];
+          const path = `${user.id}/cv-${crypto.randomUUID()}.${extension}`;
+          const { error: uploadError } = await supabase.storage.from("crew-cvs").upload(path, sourceFile.current);
+          if (uploadError) throw uploadError;
+          storedFile.current = path;
+        }
         const { data: previous, error: readError } = await supabase.from("crew_cv_data")
           .select("medical").eq("user_id", user.id).maybeSingle();
         if (readError) throw readError;
@@ -176,7 +187,7 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
             user_id: user.id,
           certificates: (Array.isArray(cvSummary.certificates) ? cvSummary.certificates : []) as any,
           sea_service: (Array.isArray(cvSummary.sea_service) ? cvSummary.sea_service : Array.isArray(cvSummary.vessel_experience) ? cvSummary.vessel_experience : []) as any,
-          medical: { ...previousMedical, records: Array.isArray(cvSummary.medical) ? cvSummary.medical : [], personal: {
+          medical: { ...previousMedical, cv_original_path: storedFile.current, records: Array.isArray(cvSummary.medical) ? cvSummary.medical : [], personal: {
             ...((previousMedical as any).personal || {}), firstName, lastName,
             rank: rankVal || "", nationality: mapped.nationality || "", phone: mapped.whatsappNumber || "", email: cv.email || "",
           } } as any,
