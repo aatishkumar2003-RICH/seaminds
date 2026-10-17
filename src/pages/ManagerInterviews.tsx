@@ -52,6 +52,15 @@ const ManagerInterviews = () => {
   const [trainFor, setTrainFor] = useState<string | null>(null);
   const [training, setTraining] = useState<Record<string, TrainingSummary>>({});
   const [trainingError, setTrainingError] = useState(false);
+  const [companyName, setCompanyName] = useState("");
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase.from("manager_profiles").select("company_name").eq("user_id", user.id).maybeSingle();
+      setCompanyName(data?.company_name || "");
+    })();
+  }, []);
 
   const refreshTraining = useCallback(async (campaignId: string) => {
     const result = await campaignTrainingSummary(campaignId);
@@ -410,7 +419,7 @@ const ManagerInterviews = () => {
                           )}
                           {r.status === "completed" && (
                             trainFor === r.invite_id
-                              ? <Suspense fallback={null}><TrainingPlanner inviteId={r.invite_id} name={r.name} whatsapp={r.whatsapp} company="" onLedgerChange={(summary) => setTraining((previous) => ({ ...previous, [r.invite_id]: { invite_id: r.invite_id, ...summary } }))} /></Suspense>
+                              ? <Suspense fallback={null}><TrainingPlanner inviteId={r.invite_id} name={r.name} whatsapp={r.whatsapp} company={companyName} onLedgerChange={(summary) => setTraining((previous) => ({ ...previous, [r.invite_id]: { invite_id: r.invite_id, ...summary } }))} /></Suspense>
                               : <button onClick={() => setTrainFor(r.invite_id)}
                                   style={{ display: "block", width: "100%", marginTop: 7, background: "transparent", color: GOLD, border: `1px solid ${GOLD}`, borderRadius: 9, padding: "8px 0", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
                                   🎓 Plan training

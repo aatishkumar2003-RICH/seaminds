@@ -160,18 +160,34 @@ const MyTraining = () => {
       {items === null ? <p className="text-muted-foreground">Loading…</p> : (
         <>
           {items.length > 0 && (
-            <div className="space-y-2">
-              {items.map((i) => (
-                <div key={i.slug} className="rounded-lg border border-border bg-card p-3 flex items-center gap-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-sm">{i.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {i.status === "completed" ? `Completed ${new Date(i.completed_at!).toLocaleDateString()} · ${i.quiz_correct}/${i.quiz_total}` : i.status === "opened" ? "In progress" : "Assigned"}
-                    </p>
+            <div className="space-y-4">
+              {Object.entries(items.reduce<Record<string, LedgerItem[]>>((g, i) => {
+                const k = i.company?.trim() || "";
+                (g[k] ||= []).push(i);
+                return g;
+              }, {})).sort(([a], [b]) => (a === "" ? 1 : b === "" ? -1 : a.localeCompare(b))).map(([company, list]) => {
+                const done = list.filter((i) => i.status === "completed").length;
+                return (
+                  <div key={company || "self"} className="rounded-xl border border-primary/30 bg-card p-3 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-bold text-primary">{company ? `🏢 Assigned by ${company}` : "🧭 My own training"}</p>
+                      <span className="text-xs text-muted-foreground">{done}/{list.length} done</span>
+                    </div>
+                    <div className="h-1.5 overflow-hidden rounded-full bg-border"><div className="h-full bg-primary" style={{ width: `${(done / list.length) * 100}%` }} /></div>
+                    {list.map((i) => (
+                      <div key={i.slug} className="rounded-lg border border-border p-3 flex items-center gap-3">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-sm">{i.status === "completed" ? "✓ " : ""}{i.title}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {i.status === "completed" ? `Completed ${new Date(i.completed_at!).toLocaleDateString()} · ${i.quiz_correct}/${i.quiz_total}` : i.status === "opened" ? "In progress" : "Not started"}
+                          </p>
+                        </div>
+                        {i.token && <Button size="sm" variant={i.status === "completed" ? "outline" : "default"} onClick={() => navigate(`/training/${i.token}`)}>{i.status === "completed" ? "Review" : i.status === "opened" ? "Continue" : "Start"}</Button>}
+                      </div>
+                    ))}
                   </div>
-                  {i.token && <Button size="sm" variant={i.status === "completed" ? "outline" : "default"} onClick={() => navigate(`/training/${i.token}`)}>{i.status === "completed" ? "Review" : "Open"}</Button>}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
           {catalog.length > 0 && (
