@@ -8,7 +8,7 @@ const GOLD = "#D4AF37";
 const BORDER = "#1e3a5f";
 
 /** Manager view: training needs for one interview candidate, assignment and the candidate's training record. */
-const TrainingPlanner = ({ inviteId, name, whatsapp, company, onLedgerChange }: { inviteId: string; name: string; whatsapp?: string; company: string; onLedgerChange?: (summary: { assigned: number; completed: number }) => void }) => {
+const TrainingPlanner = ({ inviteId = null, applicationId = null, name, whatsapp, company, onLedgerChange }: { inviteId?: string | null; applicationId?: string | null; name: string; whatsapp?: string; company: string; onLedgerChange?: (summary: { assigned: number; completed: number }) => void }) => {
   const [area, setArea] = useState("");
   const [recs, setRecs] = useState<Recommendation[] | null>(null);
   const [meta, setMeta] = useState<any>(null);
@@ -23,7 +23,7 @@ const TrainingPlanner = ({ inviteId, name, whatsapp, company, onLedgerChange }: 
     let live = true;
     (async () => {
       setRecs(null); setErr("");
-      const [r, l] = await Promise.all([recommendTraining(inviteId, area, 5), trainingLedger(inviteId)]);
+      const [r, l] = await Promise.all([recommendTraining(inviteId, area, 5, applicationId), trainingLedger(inviteId, applicationId)]);
       if (!live) return;
       if (!r.ok) { setErr(trainingError(r.error_code)); setRecs([]); return; }
       setMeta(r); setRecs(r.items);
@@ -31,7 +31,7 @@ const TrainingPlanner = ({ inviteId, name, whatsapp, company, onLedgerChange }: 
       if (l.ok) updateLedger(l.items);
     })();
     return () => { live = false; };
-  }, [inviteId, area]);
+  }, [inviteId, applicationId, area]);
 
   const assign = async (share: boolean) => {
     if (!picked.length || busy) return;
@@ -40,9 +40,9 @@ const TrainingPlanner = ({ inviteId, name, whatsapp, company, onLedgerChange }: 
     if (popup) popup.opener = null;
     setBusy(true);
     try {
-      const d = await assignTraining(inviteId, picked, area);
+      const d = await assignTraining(inviteId, picked, area, applicationId);
       if (!d.ok) { popup?.close(); toast.error(trainingError(d.error_code)); return; }
-      const msg = trainingMessage(name, company, d.assigned);
+      const msg = trainingMessage(name, company, d.assigned.filter((i: { token: string | null }) => i.token));
       if (share) {
         const url = trainingWhatsAppLink(whatsapp || "", msg);
         setShareUrl(url);
@@ -52,7 +52,7 @@ const TrainingPlanner = ({ inviteId, name, whatsapp, company, onLedgerChange }: 
         try { await navigator.clipboard.writeText(msg); toast.success("Training links copied"); }
         catch { toast.error("Training assigned, but copying failed. Try copying the links below."); }
       }
-      const l = await trainingLedger(inviteId);
+      const l = await trainingLedger(inviteId, applicationId);
       if (l.ok) updateLedger(l.items);
     } catch { popup?.close(); toast.error("Check your connection and retry."); }
     finally { setBusy(false); }
@@ -85,7 +85,7 @@ const TrainingPlanner = ({ inviteId, name, whatsapp, company, onLedgerChange }: 
           ))}
           {recs.length > 0 && (
             <div style={{ display: "flex", gap: 6 }}>
-              <Button onClick={() => assign(true)} disabled={busy || !picked.length || !whatsapp}
+              <Button onClick={() => assign(true)} disabled={busy || !picked.length}
                 className="h-auto flex-1 whitespace-normal rounded-xl bg-gold px-2 py-2 text-xs font-bold text-primary-foreground hover:bg-gold/90">
                 <MessageCircle />{busy ? "Assigning…" : "Assign & open WhatsApp"}
               </Button>
@@ -118,8 +118,8 @@ const TrainingPlanner = ({ inviteId, name, whatsapp, company, onLedgerChange }: 
         </div>
       )}
       {(shareUrl || pendingLinks.length > 0) && <div className="mt-3 flex flex-wrap gap-2">
-        {whatsapp && <Button asChild size="sm" variant="outline" className="border-gold text-gold">
-          <a href={shareUrl || trainingWhatsAppLink(whatsapp, trainingMessage(name, company, pendingLinks))} target="_blank" rel="noopener noreferrer"><MessageCircle />Open WhatsApp</a>
+        {(whatsapp || shareUrl) && <Button asChild size="sm" variant="outline" className="border-gold text-gold">
+          <a href={shareUrl || trainingWhatsAppLink(whatsapp || "", trainingMessage(name, company, pendingLinks))} target="_blank" rel="noopener noreferrer"><MessageCircle />Open WhatsApp</a>
         </Button>}
         {pendingLinks.length > 0 && <Button size="sm" variant="outline" className="border-gold text-gold" onClick={async () => {
           try { await navigator.clipboard.writeText(trainingMessage(name, company, pendingLinks)); toast.success("Training links copied"); }

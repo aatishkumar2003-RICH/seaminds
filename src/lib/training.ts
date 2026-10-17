@@ -13,7 +13,7 @@ export type Recommendation = { slug: string; title: string; summary: string; sco
 export type LedgerItem = {
   title: string; slug: string; status: "assigned" | "opened" | "completed"; reasons: string[];
   assigned_at: string; opened_at: string | null; completed_at: string | null; dwell_seconds: number | null;
-  quiz_correct: number | null; quiz_total: number | null; concepts: string[]; token: string | null;
+  quiz_correct: number | null; quiz_total: number | null; concepts: string[]; token: string | null; company?: string | null;
 };
 
 const rpc = async (fn: string, args: Record<string, unknown>) => {
@@ -22,11 +22,13 @@ const rpc = async (fn: string, args: Record<string, unknown>) => {
   return (data ?? { ok: false, error_code: "NETWORK" }) as any;
 };
 
-export const recommendTraining = (inviteId: string | null, area: string, limit = 4) =>
-  rpc("training_recommend", { p_invite_id: inviteId, p_area: area || null, p_limit: limit });
-export const assignTraining = (inviteId: string | null, slugs: string[] | null, area: string) =>
-  rpc("training_assign", { p_invite_id: inviteId, p_slugs: slugs, p_area: area || null });
-export const trainingLedger = (inviteId: string | null) => rpc("training_ledger", { p_invite_id: inviteId });
+/** applicationId targets a direct job applicant instead of an interview invite (server checks ownership). */
+export const recommendTraining = (inviteId: string | null, area: string, limit = 4, applicationId: string | null = null) =>
+  rpc("training_recommend", { p_invite_id: inviteId, p_area: area || null, p_limit: limit, p_application_id: applicationId });
+export const assignTraining = (inviteId: string | null, slugs: string[] | null, area: string, applicationId: string | null = null) =>
+  rpc("training_assign", { p_invite_id: inviteId, p_slugs: slugs, p_area: area || null, p_application_id: applicationId });
+export const trainingLedger = (inviteId: string | null, applicationId: string | null = null) =>
+  rpc("training_ledger", { p_invite_id: inviteId, p_application_id: applicationId });
 export type TrainingSummary = { invite_id: string; assigned: number; completed: number };
 export const campaignTrainingSummary = (campaignId: string) => rpc("campaign_training_summary", { p_campaign_id: campaignId });
 export const trainingProgress = (items: Pick<LedgerItem, "status">[]) => ({
@@ -65,7 +67,7 @@ export const trainingError = (code?: string, wait?: number) => ({
   AUTH_REQUIRED: "Please sign in to continue.",
   NOT_FOUND: "This training link is not valid.",
   WRONG_ACCOUNT: "This training was assigned to a different SeaMinds account. Sign in with the account the company invited.",
-  FORBIDDEN: "You can only plan training for candidates of your own interviews.",
+  FORBIDDEN: "You can only plan training for your own applicants and interview candidates.",
   NOT_STARTED: "The candidate has not started the interview yet, so there is no profile to plan training for.",
   TOO_FAST: `Please take time to read the briefing first — ${wait ?? 0}s left.`,
   COOLDOWN: `Review the briefing again, then retry in ${wait ?? 0}s.`,
