@@ -1,5 +1,10 @@
 # SeaMinds — Global Vacancy Growth Roadmap
 
+## Interactive user guide
+- [ ] Build role-aware crew, ShipManager and staff guide with shareable lessons, visual walkthroughs and seminar/narration controls.
+- [ ] Connect homepage and signed-in navigation; reuse DORA and support escalation without changing authentication.
+- [ ] Verify guide navigation, role defaults, help and mobile/desktop presentation flows; report publication status.
+
 ## Interview profile preparation
 - [x] Offer CV scan or Quick Profile on the invitation; retain token through sign-in and require confirmed saving.
 - [x] Update email/WhatsApp invitations; 18 regression checks passed, live synthetic CV scan succeeded, signed-in Quick Profile reached the same company preflight.
