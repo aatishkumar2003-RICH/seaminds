@@ -93,8 +93,13 @@ const Module = ({ token }: { token: string }) => {
         <section className="rounded-lg border border-primary bg-card p-5 text-center space-y-2">
           <CheckCircle2 className="mx-auto text-primary" size={36} />
           <h2 className="text-lg font-bold">Training completed</h2>
-          <p className="text-sm text-muted-foreground">{result.correct}/{result.total} correct. This is saved in your SeaMinds training record and your next assessment can include these topics.</p>
-          <Button onClick={() => navigate("/training")}>My training</Button>
+          <p className="text-sm text-muted-foreground">{result.correct}/{result.total} correct. Saved to your SeaMinds training record — the company that assigned it can now see it as completed.</p>
+          <div className="flex flex-col gap-2 pt-1">
+            <Button asChild variant="outline" className="rounded-xl border-primary text-primary">
+              <a href={`https://wa.me/?text=${encodeURIComponent(`Training completed on SeaMinds ✅\n${m.title}\nQuiz: ${result.correct}/${result.total} · ${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC\nVerified record: ${window.location.origin}/training`)}`} target="_blank" rel="noopener noreferrer">Tell my manager on WhatsApp</a>
+            </Button>
+            <Button onClick={() => navigate("/training")}>My training</Button>
+          </div>
         </section>
       ) : (
         <section className="space-y-4">
