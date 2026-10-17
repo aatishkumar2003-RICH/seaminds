@@ -1,9 +1,9 @@
 # SeaMinds — Global Vacancy Growth Roadmap
 
 ## Interactive user guide
-- [ ] Build role-aware crew, ShipManager and staff guide with shareable lessons, visual walkthroughs and seminar/narration controls.
-- [ ] Connect homepage and signed-in navigation; reuse DORA and support escalation without changing authentication.
-- [ ] Verify guide navigation, role defaults, help and mobile/desktop presentation flows; report publication status.
+- [x] Build role-aware crew, ShipManager and staff guide with shareable lessons, actual privacy-safe screenshots and seminar/browser-narration controls.
+- [x] Connect homepage, crew/manager menus and staff sign-in; reuse DORA and support escalation without changing authentication.
+- [x] Verify sharing, guide navigation, presentation, phone layout, hosted images and requesting-account role default; real DORA answer and support prefill verified, no ticket sent. 19 tests passed. Preview only; no publication requested. Browser voice audibility remains device-dependent; guide is English, not a prerecorded video library.
 
 ## Interview profile preparation
 - [x] Offer CV scan or Quick Profile on the invitation; retain token through sign-in and require confirmed saving.

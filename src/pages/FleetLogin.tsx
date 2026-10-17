@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -155,6 +157,7 @@ export default function FleetLogin() {
         <ChevronLeft size={20} /> Back
       </button>
       <p className="text-center text-xs tracking-widest text-[#94A3B8] mt-4">SEAMINDS FLEET WORKSPACE</p>
+      <div className="mt-3 flex justify-center"><Button asChild variant="link"><Link to="/guide?role=staff">Ship management staff guide</Link></Button></div>
       {body}
     </div>
   );
