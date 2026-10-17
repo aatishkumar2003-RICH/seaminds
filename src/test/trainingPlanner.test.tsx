@@ -34,4 +34,14 @@ describe("manager training dispatch", () => {
     expect(link.getAttribute("href")).toContain("candidate-token");
     open.mockRestore();
   });
+});describe("training for direct job applicants", () => {
+  it("assigns against the job application, not an interview invite", async () => {
+    mocks.assign.mockResolvedValue({ ok: true, assigned: [{ title: "Mooring", token: "app-token" }] });
+    mocks.ledger.mockResolvedValue({ ok: true, items: [] });
+    vi.spyOn(window, "open").mockReturnValue(null);
+    render(<TrainingPlanner applicationId="app-1" name="Aris" company="Acme" />);
+    fireEvent.click(await screen.findByRole("button", { name: /Assign & open WhatsApp/ }));
+    await waitFor(() => expect(mocks.assign).toHaveBeenCalledWith(null, ["mooring"], "", "app-1"));
+    expect(mocks.ledger).toHaveBeenCalledWith(null, "app-1");
+  });
 });
