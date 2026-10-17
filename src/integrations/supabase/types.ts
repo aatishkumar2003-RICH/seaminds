@@ -1723,6 +1723,7 @@ export type Database = {
       }
       crew_training_assignments: {
         Row: {
+          application_id: string | null
           assigned_by: string | null
           attempts: number
           completed_at: string | null
@@ -1745,6 +1746,7 @@ export type Database = {
           trading_area: string | null
         }
         Insert: {
+          application_id?: string | null
           assigned_by?: string | null
           attempts?: number
           completed_at?: string | null
@@ -1767,6 +1769,7 @@ export type Database = {
           trading_area?: string | null
         }
         Update: {
+          application_id?: string | null
           assigned_by?: string | null
           attempts?: number
           completed_at?: string | null
@@ -6163,7 +6166,12 @@ export type Database = {
             Returns: Json
           }
       training_assign: {
-        Args: { p_area?: string; p_invite_id?: string; p_slugs?: string[] }
+        Args: {
+          p_application_id?: string
+          p_area?: string
+          p_invite_id?: string
+          p_slugs?: string[]
+        }
         Returns: Json
       }
       training_catalog: { Args: never; Returns: Json }
@@ -6171,10 +6179,18 @@ export type Database = {
         Args: { p_answers: number[]; p_token: string }
         Returns: Json
       }
-      training_ledger: { Args: { p_invite_id?: string }; Returns: Json }
+      training_ledger: {
+        Args: { p_application_id?: string; p_invite_id?: string }
+        Returns: Json
+      }
       training_open: { Args: { p_token: string }; Returns: Json }
       training_recommend: {
-        Args: { p_area?: string; p_invite_id?: string; p_limit?: number }
+        Args: {
+          p_application_id?: string
+          p_area?: string
+          p_invite_id?: string
+          p_limit?: number
+        }
         Returns: Json
       }
       training_recommend_core: {
@@ -6186,7 +6202,10 @@ export type Database = {
         }
         Returns: Json
       }
-      training_resolve_crew: { Args: { p_invite_id: string }; Returns: Json }
+      training_resolve_crew: {
+        Args: { p_application_id?: string; p_invite_id: string }
+        Returns: Json
+      }
       training_vessel_family: { Args: { p: string }; Returns: string }
       upsert_email_lead: {
         Args: {
