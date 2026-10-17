@@ -58,7 +58,11 @@ const ManagerInterviews = () => {
     setTrainingError(!result.ok && !Array.isArray(result));
     const items: TrainingSummary[] = Array.isArray(result) ? result : result.items || [];
     if (Array.isArray(result) || result.ok) {
-      setTraining((previous) => ({ ...previous, ...Object.fromEntries(items.map((item) => [item.invite_id, item])) }));
+      setTraining((previous) => {
+        const newly = items.filter((item) => previous[item.invite_id] && item.completed > previous[item.invite_id].completed).length;
+        if (newly) toast.success(`🎓 ${newly} candidate${newly === 1 ? "" : "s"} just completed training`);
+        return { ...previous, ...Object.fromEntries(items.map((item) => [item.invite_id, item])) };
+      });
     }
   }, []);
 

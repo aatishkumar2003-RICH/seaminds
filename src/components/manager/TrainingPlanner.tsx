@@ -100,6 +100,12 @@ const TrainingPlanner = ({ inviteId, name, whatsapp, company, onLedgerChange }: 
       {ledger.length > 0 && (
         <div style={{ marginTop: 8 }}>
           <p style={{ color: "#94a3b8", fontSize: 11, fontWeight: 700 }}>Training record · {ledger.filter((l) => l.status === "completed").length}/{ledger.length} verified</p>
+          <div style={{ height: 6, background: BORDER, borderRadius: 99, marginTop: 5, overflow: "hidden" }}>
+            <div style={{ height: "100%", width: `${(ledger.filter((l) => l.status === "completed").length / ledger.length) * 100}%`, background: "#22c55e" }} />
+          </div>
+          <p style={{ color: "#64748b", fontSize: 10, marginTop: 4 }}>
+            ✓ {ledger.filter((l) => l.status === "completed").length} done · ◐ {ledger.filter((l) => l.status === "opened").length} reading · ○ {ledger.filter((l) => l.status === "assigned").length} not opened
+          </p>
           {ledger.map((l) => (
             <p key={l.slug} style={{ color: l.status === "completed" ? "#22c55e" : "#94a3b8", fontSize: 10.5, marginTop: 3 }}>
               {l.status === "completed" ? `✓ ${l.title} — ${l.quiz_correct}/${l.quiz_total}, read ${l.dwell_seconds ?? 0}s, ${l.completed_at ? new Date(l.completed_at).toLocaleDateString() : "date unavailable"}` : `• ${l.title} — ${l.status === "opened" ? "opened, not finished" : "assigned, not opened"}`}
@@ -119,6 +125,9 @@ const TrainingPlanner = ({ inviteId, name, whatsapp, company, onLedgerChange }: 
           try { await navigator.clipboard.writeText(trainingMessage(name, company, pendingLinks)); toast.success("Training links copied"); }
           catch { toast.error("Could not copy training links. Please try again."); }
         }}><Copy />Copy pending links</Button>}
+        {pendingLinks.length > 0 && <Button asChild size="sm" variant="outline" className="border-gold text-gold">
+          <a href={`mailto:?subject=${encodeURIComponent("Your SeaMinds pre-joining training")}&body=${encodeURIComponent(trainingMessage(name, company, pendingLinks))}`}>Send by email</a>
+        </Button>}
       </div>}
     </div>
   );
