@@ -428,6 +428,13 @@
       "when": 1792166828630,
       "tag": "0060_rest_hours_cloud_save_fix",
       "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1792209451108,
+      "tag": "0061_training_for_job_applicants",
+      "breakpoints": true
     }
   ]
 }
