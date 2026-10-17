@@ -1,6 +1,7 @@
 import { matchApplicantToVacancy } from "@/lib/smartMatch";
 import VacancyCleanupPanel from "@/components/manager/VacancyCleanupPanel";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
+const TrainingPlanner = lazy(() => import("@/components/manager/TrainingPlanner"));
 import MyPostsPanel from "@/components/manager/MyPostsPanel";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Anchor, ArrowUpDown, Bell, LogOut, FileWarning, CreditCard, RefreshCw, Search, X } from "lucide-react";
@@ -194,6 +195,8 @@ const ManagerDashboard = () => {
   });
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [offerFor, setOfferFor] = useState<Applicant | null>(null);
+  const [trainingFor, setTrainingFor] = useState<Applicant | null>(null);
+  const [trainingCounts, setTrainingCounts] = useState<Record<string, { assigned: number; completed: number }>>({});
   const [offerForm, setOfferForm] = useState({
     vessel_name: "", joining_port: "", joining_date: "", salary: "",
     interview_required: true, interview_date: "", documents_required: true, message: "",
@@ -750,6 +753,19 @@ const ManagerDashboard = () => {
                           {a.outcome === "placed" && (
                             <p className="text-xs text-green-400">🎉 Placed — congratulations!</p>
                           )}
+                          {a.outcome !== "interested" && a.outcome !== "declined" && (() => {
+                            const t = trainingCounts[a.application_id];
+                            const label = !t || !t.assigned ? "🎓 Assign training" : t.completed === t.assigned ? `🎓 Training ${t.completed}/${t.assigned} ✓` : `🎓 Training ${t.completed}/${t.assigned}`;
+                            return (
+                              <button
+                                onClick={() => setTrainingFor(a)}
+                                aria-label={`Pre-joining training for ${a.crew_name}`}
+                                className={`text-[11px] font-semibold px-2.5 py-1.5 rounded-lg border transition-colors ${t && t.assigned && t.completed === t.assigned ? "border-green-500/50 text-green-400 bg-green-500/10" : "border-[#D4AF37]/50 text-[#D4AF37] hover:bg-[#D4AF37]/10"}`}
+                              >
+                                {label}
+                              </button>
+                            );
+                          })()}
                         </div>
     );
   };
