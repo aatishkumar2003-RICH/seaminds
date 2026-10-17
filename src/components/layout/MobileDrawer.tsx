@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import AboutSeaMinds from "@/components/AboutSeaMinds";
-import { LogOut, HelpCircle, X } from "lucide-react";
+import { LogOut, HelpCircle, X, BookOpen } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import SOSButton from "@/components/SOSButton";
@@ -115,6 +116,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
         })}
       </nav>
       <div className="mt-auto flex flex-col gap-2">
+        <Button asChild variant="ghost" size="sm" className="text-xs text-primary"><Link to="/guide?role=crew" onClick={() => setDrawerOpen(false)}><BookOpen />User Guide</Link></Button>
         <button onClick={onReplayTour} className="flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground">
           <HelpCircle size={14} /> Replay Tour
         </button>

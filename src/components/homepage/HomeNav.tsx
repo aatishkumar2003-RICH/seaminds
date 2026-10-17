@@ -11,6 +11,7 @@ const navLinks = [
   { label: "SeaMinds Score", path: "/smc-score" },
   { label: "Jobs", path: "/feed" },
   { label: "Blog", path: "/blog" },
+  { label: "User Guide", path: "/guide" },
   { label: "Pricing", path: "/pricing" },
   { label: "Colleges", path: "/colleges" },
 ];

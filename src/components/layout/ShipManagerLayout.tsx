@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import ReleaseBadge from "@/components/ReleaseBadge";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, LogOut, LayoutDashboard, Users, Search, GraduationCap, Ship, ShieldCheck, CreditCard, Megaphone, LifeBuoy } from "lucide-react";
+import { Menu, X, LogOut, LayoutDashboard, Users, Search, GraduationCap, Ship, ShieldCheck, CreditCard, Megaphone, LifeBuoy, BookOpen } from "lucide-react";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import LegalConsentGate from "@/components/legal/LegalConsentGate";
@@ -86,6 +86,7 @@ const ShipManagerLayout = () => {
       <button onClick={logout} className="flex items-center gap-3 rounded-xl px-3 min-h-[44px] text-sm text-muted-foreground hover:bg-secondary hover:text-foreground text-left">
         <LogOut size={16} /> Logout
       </button>
+      <Link to="/guide?role=manager" onClick={() => setOpen(false)} className="flex min-h-[44px] items-center gap-3 rounded-xl px-3 text-sm text-primary hover:bg-secondary"><BookOpen size={16} /> User Guide</Link>
     </nav>
   );
 
