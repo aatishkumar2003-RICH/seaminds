@@ -60,6 +60,7 @@ const CountryHub = lazy(() => import("./pages/CountryHub"));
 const FleetHome = lazy(() => import("./pages/FleetHome"));
 const FleetLogin = lazy(() => import("./pages/FleetLogin"));
 const CrewTraining = lazy(() => import("./pages/CrewTraining"));
+const UserGuide = lazy(() => import("./pages/UserGuide"));
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Pricing from "./pages/Pricing";
@@ -168,6 +169,7 @@ const App = () => (
           <MetaPixelManager />
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/guide" element={<Suspense fallback={<div className="min-h-screen bg-background p-8 text-muted-foreground">Loading SeaMinds guide…</div>}><UserGuide /></Suspense>} />
             <Route path="/app" element={<Index />} />
             <Route path="/quick-profile" element={<QuickProfile />} />
             <Route path="/profile-start" element={<ProfileStart />} />

@@ -407,3 +407,12 @@ button, a, [role="button"] { touch-action: manipulation; cursor: pointer; }
     animation: none !important;
   }
 }
+
+.guide-step-enter { animation: guide-step-in 240ms ease-out; }
+@keyframes guide-step-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .guide-step-enter { animation: none; }
+}

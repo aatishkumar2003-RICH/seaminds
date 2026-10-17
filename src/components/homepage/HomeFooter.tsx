@@ -57,6 +57,7 @@ const HomeFooter = () => {
     {
       title: "Resources",
       links: [
+        { label: "User Guide & Seminars", action: () => navigate("/guide") },
         { label: "Jobs", action: () => navigate("/app?tab=jobs") },
         { label: "Blog", action: () => navigate("/blog") },
         { label: "Maritime News", action: () => navigate("/blog") },

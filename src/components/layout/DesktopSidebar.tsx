@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import AboutSeaMinds from "@/components/AboutSeaMinds";
-import { LogOut, HelpCircle } from "lucide-react";
+import { LogOut, HelpCircle, BookOpen } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import SOSButton from "@/components/SOSButton";
@@ -76,6 +77,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
       </nav>
 
       <div className="mt-auto flex flex-col items-start gap-1 w-full px-2">
+        <Button asChild variant="ghost" size="sm" className="w-full justify-start px-2 text-xs text-primary"><Link to="/guide?role=crew"><BookOpen />User Guide</Link></Button>
         <a href="/profile" aria-label="My Sea Profile" className="text-xs font-semibold text-foreground truncate w-full hover:text-primary">{firstName || "Seafarer"}</a>
         <button onClick={onReplayTour} className="flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground">
           <HelpCircle size={14} />

@@ -1,6 +1,7 @@
 # Architecture rules
 
 - Subdirectories (e.g. `supabase/functions/`) have their own `AGENTS.md`; read it before changing files there.
+- Guide uses static lessons and URL audience/step state; own-profile reads personalise, never authorize. Why: safe seminar links.
 
 - Assessment recovery emails go through `recovery_outbox` (one row per reminder, leased, fenced by attempt, stable idempotency key); never send directly from `recovery_claim_due`. Why: a crashed worker must not strand recoverable work or mint new links per retry.
 - Heartbeat `save_checkpoint` never clears an interruption; only `confirm_resume` (same paper + persisted answer) does. Why: a reconnect is not proof of recovery.
