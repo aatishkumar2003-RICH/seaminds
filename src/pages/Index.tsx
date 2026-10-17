@@ -22,6 +22,7 @@ import HomeFeed from "@/components/HomeFeed";
 import NotificationBell from "@/components/NotificationBell";
 import CvViewsCard from "@/components/CvViewsCard";
 import BottomNav from "@/components/layout/BottomNav";
+import LegalConsentGate from "@/components/legal/LegalConsentGate";
 
 // Lazily-loaded screens — each downloads only when opened
 import { checkRest, REST_STORAGE_KEY } from "@/lib/restHours";
@@ -886,6 +887,7 @@ const Index = () => {
           </div>
         </div>
 
+        <LegalConsentGate role="crew" />
         <BottomNav
           screen={screen}
           jobBadgeCount={jobBadgeCount}

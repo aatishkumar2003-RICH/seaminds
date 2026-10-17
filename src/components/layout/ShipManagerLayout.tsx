@@ -4,6 +4,7 @@ import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, LogOut, LayoutDashboard, Users, Search, GraduationCap, Ship, ShieldCheck, CreditCard, Megaphone, LifeBuoy } from "lucide-react";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 import { supabase } from "@/integrations/supabase/client";
+import LegalConsentGate from "@/components/legal/LegalConsentGate";
 
 /** Persistent ShipManager shell. Pure navigation — every page keeps its own logic and permission checks. */
 const NAV = [
@@ -135,6 +136,7 @@ const ShipManagerLayout = () => {
       <div className="lg:pl-64">
         <Outlet />
       </div>
+      <LegalConsentGate role="manager" />
     </div>
   );
 };

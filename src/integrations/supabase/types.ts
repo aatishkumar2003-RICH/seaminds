@@ -5267,6 +5267,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_legal_consents: {
+        Row: {
+          acknowledged_at: string
+          consent_version: string
+          id: string
+          role: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string
+          consent_version: string
+          id?: string
+          role: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Update: {
+          acknowledged_at?: string
+          consent_version?: string
+          id?: string
+          role?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       vacancy_cleanup_audit: {
         Row: {
           action: string

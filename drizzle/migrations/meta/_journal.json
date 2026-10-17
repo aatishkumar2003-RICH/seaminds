@@ -435,6 +435,13 @@
       "when": 1792209451108,
       "tag": "0061_training_for_job_applicants",
       "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1792215493677,
+      "tag": "0062_user_legal_consents",
+      "breakpoints": true
     }
   ]
 }
