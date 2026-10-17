@@ -1586,6 +1586,39 @@ const ManagerDashboard = () => {
 
       </div>
 
+      {trainingFor && (
+        <div
+          className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center sm:p-4"
+          style={{ background: "rgba(0,0,0,0.75)" }}
+          onClick={() => setTrainingFor(null)}
+        >
+          <div
+            role="dialog"
+            aria-label="Pre-joining training"
+            onClick={(e) => e.stopPropagation()}
+            className="w-full sm:max-w-lg max-h-[90vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl p-5"
+            style={{ background: "#0D1B2A", border: "1px solid rgba(212,175,55,0.3)" }}
+          >
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div>
+                <p className="text-base font-extrabold" style={{ color: "#D4AF37" }}>🎓 Pre-joining training</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{trainingFor.crew_name} · {trainingFor.rank} · {trainingFor.vessel}</p>
+                <p className="text-[11px] text-muted-foreground mt-1">Pick up to 5 modules matched to this crew's CV and your vessel. Send the links — you'll see here when they complete.</p>
+              </div>
+              <button onClick={() => setTrainingFor(null)} aria-label="Close" className="w-9 h-9 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground"><X size={18} /></button>
+            </div>
+            <Suspense fallback={<p className="text-xs text-muted-foreground">Loading…</p>}>
+              <TrainingPlanner
+                applicationId={trainingFor.application_id}
+                name={trainingFor.crew_name}
+                company={companyName}
+                onLedgerChange={(summary) => setTrainingCounts((p) => ({ ...p, [trainingFor.application_id]: summary }))}
+              />
+            </Suspense>
+          </div>
+        </div>
+      )}
+
       {offerFor && (
         <div
           className="fixed inset-0 z-[200] flex items-center justify-center p-4"
