@@ -1,5 +1,6 @@
-// Daily crew job-match digest. Runs once a day (cron). Sends each opted-in crew member
-// up to 5 fresh vacancies matching their rank that they have not been emailed before.
+// Daily crew market digest. Runs once a day (cron). Leads with the real live vacancy count
+// for the crew member's rank (worldwide, new in 24h, home-country recruiters, ship types),
+// plus up to 3 unseen top picks and a "browse all" call-to-action into the app.
 // GET ?u=<crew_id>&s=<sig> = one-click unsubscribe (sets job_alerts_enabled=false).
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
