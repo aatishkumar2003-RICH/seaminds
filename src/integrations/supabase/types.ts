@@ -5752,6 +5752,7 @@ export type Database = {
         Returns: Json
       }
       claim_referral: { Args: { p_code: string }; Returns: Json }
+      claim_welcome_credits: { Args: never; Returns: Json }
       complete_interview: {
         Args: { p_assessment_id: string; p_invite_id: string }
         Returns: Json
@@ -5906,6 +5907,7 @@ export type Database = {
       get_my_referral_stats: { Args: never; Returns: Json }
       get_my_safety_reports: { Args: never; Returns: Json }
       get_my_sos_contacts: { Args: never; Returns: Json }
+      get_my_wallet: { Args: never; Returns: Json }
       get_public_ticker_stats: { Args: never; Returns: Json }
       get_referral_stats: { Args: never; Returns: Json }
       get_resume_state: { Args: { p_assessment_id: string }; Returns: Json }
