@@ -29,7 +29,7 @@ const CookieConsent = () => {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-[200] p-4 animate-in slide-in-from-bottom-4 duration-500">
+    <div className="fixed left-0 right-0 z-[200] p-4 animate-in slide-in-from-bottom-4 duration-500 bottom-[calc(4rem+env(safe-area-inset-bottom))] lg:bottom-0">
       <div className="mx-auto max-w-2xl rounded-xl border border-border bg-card/95 backdrop-blur-md shadow-2xl p-5">
         <div className="flex items-start gap-3">
           <div className="rounded-lg bg-primary/10 p-2 mt-0.5 shrink-0">
