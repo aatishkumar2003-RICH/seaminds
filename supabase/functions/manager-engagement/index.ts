@@ -37,16 +37,16 @@ const canon = (raw?: string | null) => {
 const title = (s: string) => s.replace(/\b\w/g, (c) => c.toUpperCase());
 
 const SERIES: { day: number; kind: string; subject: string; head: string; body: string; cta: string; path: string }[] = [
-  { day: 1, kind: "series:studio", subject: "Post all your vacancies in one paste", head: "Bulk Vacancy Studio",
-    body: "Paste a whole WhatsApp or Telegram message, an email or up to five flyers. SeaMinds separates every vacancy, keeps the right contact on each one and lets you publish the ready ones in one click.", cta: "Open Vacancy Studio", path: "/post-vacancy" },
-  { day: 3, kind: "series:smc", subject: "See verified skill scores before you call a seafarer", head: "SeaMinds Competency Scores",
-    body: "Many SeaMinds crew carry an SeaMinds Score from a rank-specific assessment. Use it to shortlist faster and spend interview time only on strong candidates.", cta: "View your applicants", path: "/manager/dashboard?tab=applicants" },
-  { day: 6, kind: "series:interviews", subject: "Let AI run your first interview round", head: "AI Interview Studio",
-    body: "Create one interview link, send it to many candidates and get a ranked leaderboard with technical, judgment and English scores.", cta: "Open AI Interview Studio", path: "/manager/interviews" },
-  { day: 9, kind: "series:search", subject: "Find available crew by rank and vessel type", head: "Crew Search",
-    body: "Search seafarers by rank, vessel experience and availability date. Access opens after a quick account approval by our team.", cta: "Open Crew Search", path: "/manager-search" },
-  { day: 14, kind: "series:workspace", subject: "One workspace for your fleet", head: "Ship Management Workspace",
-    body: "Takeover inspections, findings and fleet records in one place for your technical team. Request access and our team will set it up with you.", cta: "Request Fleet Workspace", path: "/management/inspections" },
+  { day: 1, kind: "series:studio", subject: "Don't fill forms — paste your WhatsApp crewing message", head: "15-second Vacancy Studio",
+    body: "Paste a whole WhatsApp or Telegram broadcast, an email or up to five flyers. SeaMinds separates every rank, keeps your own WhatsApp or email on each advert and publishes the ready ones in one click. Applications come straight to you — no middleman, no fee.", cta: "Try one paste now", path: "/post-vacancy" },
+  { day: 3, kind: "series:smc", subject: "Shortlist by skill before you pick up the phone", head: "SeaMinds Competency Scores",
+    body: "Many SeaMinds seafarers carry a rank-specific SeaMinds Score. Sort applicants by it and spend interview time only on the strongest candidates for your berth.", cta: "View my applicants", path: "/manager/dashboard?tab=applicants" },
+  { day: 6, kind: "series:interviews", subject: "Screen 30 candidates without 30 phone calls", head: "AI Interview Studio",
+    body: "Create one interview link for a rank and send it to all candidates. SeaMinds AI checks technical knowledge, safety judgement and maritime English, then hands you a ranked leaderboard.", cta: "Create an AI interview", path: "/manager/interviews" },
+  { day: 9, kind: "series:search", subject: "Urgent berth? Find available crew by rank and ship type", head: "Crew Search",
+    body: "Search seafarers by rank, vessel experience and availability date — ideal for urgent reliefs. Access opens after a quick account approval by our team, which protects crew privacy.", cta: "Open Crew Search", path: "/manager-search" },
+  { day: 14, kind: "series:workspace", subject: "We're building the fleet workspace — want early access?", head: "Ship Management Workspace (private testing)",
+    body: "Takeover inspections, findings and fleet records in one place for your technical team. It is in private testing; request access and our team will set it up with you.", cta: "Request early access", path: "/management/inspections" },
 ];
 
 const card = (inner: string) => `<div style="font-family:Arial,sans-serif;background:#0D1B2A;padding:24px;color:#e2e8f0"><div style="max-width:560px;margin:0 auto;background:#112240;border:1px solid rgba(212,175,55,0.3);border-radius:14px;padding:22px"><p style="margin:0 0 12px;color:#D4AF37;font-size:12px;font-weight:bold;letter-spacing:1px">SHIPMANAGER BY SEAMINDS</p>${inner}</div></div>`;
