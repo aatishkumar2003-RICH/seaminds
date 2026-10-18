@@ -5789,6 +5789,16 @@ export type Database = {
         Args: { p_crew_id: string; p_target_rank?: string }
         Returns: Json
       }
+      digest_rank_stats: {
+        Args: never
+        Returns: {
+          fresh: boolean
+          n: number
+          origin: string
+          rank_raw: string
+          vessel_bucket: string
+        }[]
+      }
       dora_get_my_context: { Args: never; Returns: Json }
       dora_log_unanswered: {
         Args: { p_key: string; p_summary: string }
