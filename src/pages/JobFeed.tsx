@@ -55,6 +55,7 @@ const timeAgo = (iso: string) => {
 };
 
 const JobFeed = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const origin = originByCode(params.get("country"));
