@@ -5,6 +5,7 @@ import { Menu, X, LogOut, LayoutDashboard, Users, Search, GraduationCap, Ship, S
 import seamindsLogo from "@/assets/seaminds-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import LegalConsentGate from "@/components/legal/LegalConsentGate";
+import CreditWallet from "@/components/CreditWallet";
 
 /** Persistent ShipManager shell. Pure navigation — every page keeps its own logic and permission checks. */
 const NAV = [
@@ -58,6 +59,7 @@ const ShipManagerLayout = () => {
       <p className="text-sm font-semibold text-foreground truncate">{identity.company}</p>
       {status && <span className={`inline-block text-[10px] font-semibold border rounded-full px-2 py-0.5 ${status.cls}`}>{status.text}</span>}
       <p className="text-[11px] text-emerald-400">Free for verified ship managers</p>
+      <CreditWallet audience="manager" />
       {!identity.approved && <p className="text-[10px] text-muted-foreground leading-snug">Crew Search and Fleet Workspace open after admin approval.</p>}
     </div>
   );
