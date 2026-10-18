@@ -1,16 +1,14 @@
 # Architecture rules
 
 - Subdirectories (e.g. `supabase/functions/`) have their own `AGENTS.md`; read it before changing files there.
-- Guide uses static lessons and URL audience/step state; own-profile reads personalise, never authorize. Why: safe seminar links.
-
-- Assessment recovery emails go through `recovery_outbox` (one row per reminder, leased, fenced by attempt, stable idempotency key); never send directly from `recovery_claim_due`. Why: a crashed worker must not strand recoverable work or mint new links per retry.
+- Assessment recovery emails go through `recovery_outbox` (leased, attempt-fenced, stable idempotency key); never send from `recovery_claim_due`. Why: crashes must not strand work or mint new links.
 - Heartbeat `save_checkpoint` never clears an interruption; only `confirm_resume` (same paper + persisted answer) does. Why: a reconnect is not proof of recovery.
 - Final scoring is single-flight via `final_scoring_lease` on `scoring_jobs`; a validated AI result is cached before commit and reused. Why: polling and concurrent requests must not trigger repeated AI calls.
 - Pre-paper start failures are recorded in `assessment_start_incidents` (owner-bound, server-classified); no fake checkpoint or paper. Why: failures before issuance must be visible and recoverable without bypassing readiness.
 - Readiness uses exact rank/context `blueprint_coverage*`, not global counts. Why: rows alone do not prove readiness.
 - Assessment `scoring_tier` (QUICK_PROFILE / CV_VERIFIED) and `assessment_round` are set server-side by trigger `trg_set_assessment_scoring_tier` at creation; clients never choose them. Why: a score's evidence basis must not be forgeable.
 - DORA help knowledge lives in `dora_articles` (Postgres FTS via `dora_search_articles`, max 4 published hits); own-user context only via `dora_get_my_context()` keyed by auth.uid(); metrics/gaps store no raw conversation text. Why: grounded retrieval, no cross-user leakage.
-- Every Apply button routes through `src/lib/applicationRouter.ts` (WhatsApp → recruiter email → official site → flyer); SeaMinds-published adverts keep the agency in `job_postings.recruiter_name` and `notify-application` never falls back to the publishing account's email. Why: applications must reach the actual recruiter, and toasts must only claim what SeaMinds actually did.
+- Every Apply button routes through `src/lib/applicationRouter.ts` (WhatsApp → recruiter email → official site → flyer); SeaMinds-published adverts keep the agency in `job_postings.recruiter_name` and `notify-application` never falls back to the publishing account's email. Why: applications must reach the actual recruiter, and toasts claim only what happened.
 - Service-worker runtime caching rules live in `src/lib/pwaCacheRules.ts`: only listed public tables may be cached; every other backend call is NetworkOnly. Why: cached personal responses showed stale application state.
 - Crew recruiter-email delivery status is read via `notify-application` `kind: "delivery_status"` (own applications, ids only), cached in `vacancyFeed` and refreshed on app resume. Why: an application row alone does not prove the email was accepted.
 - Feeds use keyset cursors per source (`loadVacancyPage`); no vacancy is hidden by age (old external = "hiring not confirmed"). Inventory pages and lifecycle actions go via `src/lib/vacancyLifecycle.ts`. Why: no false removals; one secure delete path.
@@ -20,5 +18,6 @@
 - Interview profile preparation stays on the token page with embedded QuickProfile/CvUpload; only confirmed saves advance, never client-selected scoring tiers. Why: preserve invitation and truthful evidence.
 - Vacancy ownership lives in `job_postings.recruiter_name` (own company vs distinct agency; NULL = legacy); routing uses raw `recruiterName` (`isThirdPartyAdvert`). Publishing is one atomic INSERT per batch; uncertain batches reconcile by `posting_batch_id`. Why: no routing-mode field; a timeout is not proof of no commit.
 - Vacancies never auto-expire: feeds filter `status = 'active'`; `expires_at` = `NO_EXPIRY_COMPAT`. Delete is blocked when applications exist. Why: retention is an owner decision.
-- Vacancy recruiter country is detected phone → agency-name keyword → email ccTLD, in `src/lib/vacancyOrigin.ts` mirrored by SQL `public.vacancy_origin_of()` (used by `vacancy_origin_counts`). Why: email-only adverts must land under their country, not Worldwide; both sides must agree or tile counts and filters diverge.
+- Vacancy recruiter country is detected phone → agency-name keyword → email ccTLD, in `src/lib/vacancyOrigin.ts` mirrored by SQL `public.vacancy_origin_of()` (used by `vacancy_origin_counts`). Why: email-only adverts land in their country; both sides must agree.
 - Training selection/dwell/grading use `training_*` RPCs, targeting either an interview invite or a job application (ownership checked in `training_resolve_crew`); quiz keys stay admin-only; `issue_paper` caps retention near 25%. Roster counts use owner-scoped `campaign_training_summary`, refreshed on resume. Why: truthful completion, privacy, blueprint coverage.
+- Credits live in `credit_ledger` (user id in `manager_user_id`, for crew too); one-off grants are unique per (user, reason), only via `claim_welcome_credits` / `trg_grant_referral_credits`; UI reads `get_my_wallet`. Why: no double-crediting.
