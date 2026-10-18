@@ -156,7 +156,12 @@ const MyTraining = () => {
   return (
     <section className="space-y-5">
       <Helmet><title>My Training | SeaMinds</title></Helmet>
+      <Button variant="ghost" className="px-0 text-primary" onClick={() => navigate("/app")}><ChevronLeft /> Back</Button>
       <h1 className="text-2xl font-bold">My training</h1>
+      <div role="tablist" className="flex gap-2">
+        <Button size="sm" role="tab" aria-selected="true">📋 Training Matrix</Button>
+        <Button size="sm" variant="outline" role="tab" aria-selected="false" onClick={() => navigate("/app?tab=academy")}>🔬 Ask AI Technical Assistant</Button>
+      </div>
       {items === null ? <p className="text-muted-foreground">Loading…</p> : (
         <>
           {items.length > 0 && (

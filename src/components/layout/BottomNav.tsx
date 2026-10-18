@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { type Screen, type NavItem } from "./types";
 
 interface Props {
@@ -8,15 +9,18 @@ interface Props {
   onMore: () => void;
 }
 
-const TABS: { icon: string; label: string; screen: Screen; gated?: boolean }[] = [
+// `path` tabs open a dedicated page; others switch the in-app screen.
+const TABS: { icon: string; label: string; screen: Screen; gated?: boolean; path?: string }[] = [
   { icon: "🏠", label: "Home", screen: "home" },
   { icon: "💼", label: "Jobs", screen: "opportunities" },
-  { icon: "🎓", label: "Training", screen: "academy" },
+  { icon: "🎓", label: "Training", screen: "academy", path: "/training" },
   { icon: "📄", label: "CV / Cert", screen: "resume" },
   { icon: "💬", label: "Chat", screen: "chat", gated: true },
 ];
 
-const BottomNav: React.FC<Props> = ({ screen, jobBadgeCount, onNavClick, onMore }) => (
+const BottomNav: React.FC<Props> = ({ screen, jobBadgeCount, onNavClick, onMore }) => {
+  const navigate = useNavigate();
+  return (
   <nav
     className="lg:hidden fixed bottom-0 left-0 right-0 z-30 flex items-stretch"
     style={{
@@ -30,7 +34,7 @@ const BottomNav: React.FC<Props> = ({ screen, jobBadgeCount, onNavClick, onMore 
       return (
         <button
           key={t.screen}
-          onClick={() => onNavClick(t as NavItem)}
+          onClick={() => (t.path ? navigate(t.path) : onNavClick(t as NavItem))}
           className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 relative"
           style={{ background: "transparent", border: "none", cursor: "pointer" }}
         >
@@ -58,6 +62,7 @@ const BottomNav: React.FC<Props> = ({ screen, jobBadgeCount, onNavClick, onMore 
       <span style={{ fontSize: 10, fontWeight: 600, color: "#94a3b8" }}>More</span>
     </button>
   </nav>
-);
+  );
+};
 
 export default BottomNav;
