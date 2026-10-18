@@ -87,7 +87,22 @@ Deno.serve(async (req) => {
     ...(ev || []).filter((r: any) => !r.is_scam_flagged).map((r: any) => ({ key: `ev:${r.id}`, id: r.id, rank: r.rank_required || r.title, vessel: r.vessel_type, port: r.joining_port, company: r.company_name, salary: r.salary_text, posted: r.created_at })),
   ].filter((v) => v.rank);
 
-  const { data: crew } = await svc.from("crew_profiles").select("id,first_name,rank,role,preferred_vessel_types").eq("job_alerts_enabled", true);
+  // Real live-market scale per rank (all active vacancies, never age-filtered).
+  const { data: agg } = await svc.rpc("digest_rank_stats");
+  type RS = { total: number; fresh: number; byOrigin: Record<string, number>; byVessel: Record<string, number> };
+  const rankStats = new Map<string, RS>();
+  for (const a of (agg as any[]) || []) {
+    const k = canon(a.rank_raw); if (!k) continue;
+    const s = rankStats.get(k) || { total: 0, fresh: 0, byOrigin: {}, byVessel: {} };
+    const n = Number(a.n) || 0;
+    s.total += n; if (a.fresh) s.fresh += n;
+    s.byOrigin[a.origin] = (s.byOrigin[a.origin] || 0) + n;
+    s.byVessel[a.vessel_bucket] = (s.byVessel[a.vessel_bucket] || 0) + n;
+    rankStats.set(k, s);
+  }
+  for (const v of vacs) if (v.key.startsWith("ev:")) { const k = canon(v.rank); const s = k && rankStats.get(k); if (s) s.total++; }
+
+  const { data: crew } = await svc.from("crew_profiles").select("id,first_name,rank,role,preferred_vessel_types,nationality").eq("job_alerts_enabled", true);
   const stats = { crew: crew?.length || 0, sent: 0, no_match: 0, failed: 0, no_email: 0 };
 
   for (const c of crew || []) {
@@ -98,10 +113,11 @@ Deno.serve(async (req) => {
     const prefs = (Array.isArray(c.preferred_vessel_types) ? c.preferred_vessel_types : []).map((s: string) => s.toLowerCase());
     const picks = vacs
       .filter((v) => !seen.has(v.key) && canon(v.rank) === cr)
-      .map((v) => ({ v, s: prefs.some((p: string) => (v.vessel || "").toLowerCase().includes(p.split(" ")[0])) ? 1 : 0 }))
+      .map((v) => ({ v, s: (prefs.some((p: string) => (v.vessel || "").toLowerCase().includes(p.split(" ")[0])) ? 2 : 0) + (v.salary ? 1 : 0) }))
       .sort((a, b) => b.s - a.s || b.v.posted.localeCompare(a.v.posted))
-      .slice(0, 5).map((x) => x.v);
-    if (!picks.length) { stats.no_match++; continue; }
+      .slice(0, 3).map((x) => x.v);
+    const rs = rankStats.get(cr);
+    if (!picks.length && !(rs && rs.fresh > 0)) { stats.no_match++; continue; }
 
     const { data: au } = await svc.auth.admin.getUserById(c.id);
     const email = au?.user?.email;
@@ -109,18 +125,36 @@ Deno.serve(async (req) => {
     if (force) { stats.sent++; continue; }
 
     const unsub = `${FN_URL}?u=${c.id}&s=${await sign(c.id)}`;
+    const rankLabel = c.rank || c.role || "your rank";
+    const total = rs?.total || picks.length;
+    const totalTxt = total >= 100 ? `${Math.floor(total / 10) * 10}+` : String(total);
+    const home = NAT[(c.nationality || "").toLowerCase().trim()];
+    const homeN = home ? rs?.byOrigin[home.code] || 0 : 0;
+    const vesselLine = Object.entries(rs?.byVessel || {}).filter(([k, n]) => k !== "Other" && n > 0)
+      .sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(" · ");
+    const utmD = (p: string, c2: string) => `${SITE}${p}${p.includes("?") ? "&" : "?"}utm_source=digest&utm_medium=email&utm_campaign=${c2}`;
+    const tile = (n: string | number, l: string) => `<td style="padding:10px;text-align:center;background:#0D1B2A;border-radius:10px"><div style="color:#D4AF37;font-size:22px;font-weight:bold">${esc(n)}</div><div style="color:#94A3B8;font-size:11px">${esc(l)}</div></td>`;
     const rows = picks.map((v) => `
       <div style="border:1px solid #1e3a5f;border-radius:10px;padding:12px;margin:10px 0">
         <p style="margin:0;color:#fff;font-weight:bold">${esc(v.rank)}${v.vessel ? ` · ${esc(v.vessel)}` : ""}</p>
         <p style="margin:4px 0 8px;color:#94A3B8;font-size:13px">${[v.company, v.port, v.salary].filter(Boolean).map(esc).join(" · ") || "Details in the advert"}</p>
-        <a href="${jobUrl(v.id, v.rank, v.vessel, v.port)}?utm_source=digest&utm_medium=email" style="color:#D4AF37;font-weight:bold;text-decoration:none">View &amp; apply →</a>
+        <a href="${jobUrl(v.id, v.rank, v.vessel, v.port)}?utm_source=digest&utm_medium=email&utm_campaign=pick" style="color:#D4AF37;font-weight:bold;text-decoration:none">View &amp; apply →</a>
       </div>`).join("");
     const html = card(`
-      <h2 style="color:#D4AF37;margin:0 0 6px">⚓ ${picks.length} new job${picks.length > 1 ? "s" : ""} for your rank</h2>
-      <p style="margin:0 0 8px">Hi ${esc(c.first_name || "there")}, here are today's vacancies matching <b>${esc(c.rank || c.role)}</b>.</p>
-      ${rows}
-      <p style="margin-top:16px"><a href="${SITE}/app?utm_source=digest&utm_medium=email" style="background:#D4AF37;color:#0D1B2A;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block">See all matches in SeaMinds</a></p>
-      <p style="color:#94A3B8;font-size:12px;margin-top:18px">Tip: keep your CV and availability date up to date so companies can reach you.<br>You get this because job alerts are on in your SeaMinds profile. <a href="${unsub}" style="color:#94A3B8">Unsubscribe</a></p>`);
+      <p style="margin:0 0 6px;color:#D4AF37;font-size:12px;font-weight:bold;letter-spacing:1px">SEAMINDS DAILY MARKET · ${esc(rankLabel).toUpperCase()}</p>
+      <h2 style="color:#fff;margin:0 0 6px">⚓ ${esc(totalTxt)} ${esc(rankLabel)} vacancies are live right now</h2>
+      <p style="margin:0 0 8px">Hi ${esc(c.first_name || "there")}, this is the real size of today's market for your rank on SeaMinds — not just a few adverts.</p>
+      <table width="100%" cellspacing="6" style="margin:12px 0"><tr>${tile(totalTxt, "live worldwide")}${tile(rs?.fresh || 0, "new in 24 hours")}${home ? tile(homeN, `from ${home.name} recruiters`) : ""}</tr></table>
+      ${vesselLine ? `<p style="color:#94A3B8;font-size:13px;margin:4px 0 12px">By ship type: ${esc(vesselLine)}</p>` : ""}
+      <a href="${utmD("/feed", "browse_all_top")}" style="background:#D4AF37;color:#0D1B2A;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:bold;display:inline-block">Browse all ${esc(totalTxt)} ${esc(rankLabel)} jobs →</a>
+      ${rows ? `<h3 style="color:#D4AF37;margin:20px 0 4px;font-size:15px">Today's top picks for you</h3>${rows}` : ""}
+      <div style="margin-top:18px;padding:12px;border-radius:10px;background:#0D1B2A;border:1px solid rgba(212,175,55,0.3)">
+        <p style="margin:0;color:#fff;font-weight:bold">Stand out to recruiters</p>
+        <p style="margin:4px 0 8px;color:#94A3B8;font-size:13px">A complete CV, your certificates with expiry dates and a SeaMinds Score help recruiters shortlist you faster.</p>
+        <a href="${utmD("/app?tab=profile", "profile_hook")}" style="color:#D4AF37;font-weight:bold;text-decoration:none">Update my Sea Profile →</a>
+      </div>
+      <p style="margin-top:14px;color:#94A3B8;font-size:13px">Know a shipmate looking for a berth? Forward this email — joining SeaMinds is free.</p>
+      <p style="color:#94A3B8;font-size:12px;margin-top:18px">Counts include every active advert on SeaMinds; always confirm details with the recruiter. SeaMinds never charges seafarers for jobs.<br>You get this because job alerts are on in your SeaMinds profile. <a href="${unsub}" style="color:#94A3B8">Unsubscribe</a></p>`);
 
     try {
       const r = await fetch("https://api.resend.com/emails", {
