@@ -995,8 +995,10 @@ const ResumeBuilder = () => {
           {/* ── CV COMPLETION PROGRESS ── */}
           {(() => {
             const missing = getCompletionStatus();
-            const total = 10;
-            const pct = Math.round(((total - missing.length) / total) * 100);
+            // Denominator = every required checklist item in getCompletionStatus (12 personal + certificate + sea service unless new joiner).
+            // Format-validity items replace a filled field, so they never exceed this count; clamp anyway so the bar can never go negative.
+            const total = 13 + (isNewJoinerRank ? 0 : 1);
+            const pct = Math.max(0, Math.min(100, Math.round(((total - missing.length) / total) * 100)));
             return (
               <div className="mb-2 bg-[#132236] rounded-xl p-3">
                 <div className="flex items-center justify-between mb-1.5">

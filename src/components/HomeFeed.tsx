@@ -1,4 +1,4 @@
-import { applyToVacancy } from "@/lib/applicationRouter";
+import { applyToVacancy, resolveApplyRoute } from "@/lib/applicationRouter";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { singleFlight, watchSentinel } from "@/lib/infiniteSentinel";
 import ApplyDialog, { ApplyTarget } from "@/components/ApplyDialog";
@@ -210,6 +210,10 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
     const fresh = page.filter((v) => !seenRef.current.has(`${v.kind}:${v.id}`));
     fresh.forEach((v) => seenRef.current.add(`${v.kind}:${v.id}`));
     return fresh.sort((a, b) => {
+      // Actionable adverts first; contact-less ones stay visible (never hidden) but sink to the end.
+      const ac = resolveApplyRoute(a, null).channel === "none" ? 0 : 1;
+      const bc = resolveApplyRoute(b, null).channel === "none" ? 0 : 1;
+      if (ac !== bc) return bc - ac;
       const am = deptOf(a.rank) === dept ? 1 : 0;
       const bm = deptOf(b.rank) === dept ? 1 : 0;
       if (am !== bm) return bm - am;

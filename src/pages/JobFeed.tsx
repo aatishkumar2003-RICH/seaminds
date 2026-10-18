@@ -1,6 +1,7 @@
 import { applyToVacancy } from "@/lib/applicationRouter";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { ORIGINS, originByCode } from "@/lib/vacancyOrigin";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
@@ -248,8 +249,8 @@ const JobFeed = () => {
                 <p style={{ color: "#94a3b8", fontSize: 11 }}>{countLabel}</p>
               </div>
             </div>
-            <button onClick={() => navigate("/app")} style={{ background: GOLD, color: NAVY, border: "none", borderRadius: 10, padding: "8px 14px", fontWeight: 800, fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>
-              Join Free
+            <button onClick={() => navigate(user ? "/app?tab=profile" : "/app")} style={{ background: GOLD, color: NAVY, border: "none", borderRadius: 10, padding: "8px 14px", fontWeight: 800, fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>
+              {user ? "⚓ My Profile" : "Join Free"}
             </button>
           </div>
 
@@ -295,7 +296,7 @@ const JobFeed = () => {
                 🎯 {faceted.length} {faceted.length === 1 ? "job" : "jobs"}
                 {rankHub ? ` for ${rankHub.name}` : ""}{vesselGroup ? ` · ${vesselGroup.name}` : ""}{origin ? ` · ${origin.name}` : ""}
               </span>
-              <button onClick={clearAll} style={{ background: "none", border: "none", color: "#94a3b8", fontSize: 11, textDecoration: "underline", cursor: "pointer" }}>Clear all</button>
+              <button onClick={clearAll} aria-label="Reset filters to show all worldwide vacancies" title="Only removes your filters — no jobs are deleted" style={{ background: "transparent", border: `1px solid ${GOLD}`, color: GOLD, fontSize: 11, fontWeight: 700, borderRadius: 999, padding: "4px 10px", cursor: "pointer" }}>✕ Reset filters to Worldwide</button>
             </div>
           )}
 
@@ -352,7 +353,7 @@ const JobFeed = () => {
 
         {!loading && shown.length === 0 && (
           <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 40, textAlign: "center", color: "#94a3b8" }}>
-            No vacancies for this selection right now — tap "Clear all" or choose another rank or vessel.
+            No vacancies for this selection right now — tap "Reset filters to Worldwide" or choose another rank or vessel.
           </div>
         )}
 
