@@ -48,6 +48,17 @@ const canon = (raw?: string | null) => {
   return r.trim();
 };
 
+// Crew nationality -> recruiter origin code used by vacancy_origin_of().
+const NAT: Record<string, { code: string; name: string }> = {
+  indian: { code: "in", name: "Indian" }, india: { code: "in", name: "Indian" },
+  indonesian: { code: "id", name: "Indonesian" }, indonesia: { code: "id", name: "Indonesian" },
+  filipino: { code: "ph", name: "Philippine" }, philippines: { code: "ph", name: "Philippine" }, philippine: { code: "ph", name: "Philippine" },
+  ukrainian: { code: "ua", name: "Ukrainian" }, ukraine: { code: "ua", name: "Ukrainian" },
+  vietnamese: { code: "vn", name: "Vietnamese" }, vietnam: { code: "vn", name: "Vietnamese" },
+  german: { code: "de", name: "German" }, germany: { code: "de", name: "German" },
+  russian: { code: "ru", name: "Russian" }, russia: { code: "ru", name: "Russian" },
+};
+
 type Vac = { key: string; id: string; rank: string; vessel: string | null; port: string | null; company: string | null; salary: string | null; posted: string };
 
 const card = (inner: string) => `<div style="font-family:Arial,sans-serif;background:#0D1B2A;padding:24px;color:#e2e8f0"><div style="max-width:560px;margin:0 auto;background:#112240;border:1px solid rgba(212,175,55,0.3);border-radius:14px;padding:22px">${inner}</div></div>`;
@@ -162,12 +173,12 @@ Deno.serve(async (req) => {
         headers: { Authorization: `Bearer ${RESEND_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           from: "SeaMinds Jobs <crew@seaminds.life>", to: [email],
-          subject: `${picks.length} new ${c.rank || c.role} job${picks.length > 1 ? "s" : ""} for you`,
+          subject: `⚓ ${c.first_name ? `${c.first_name}, ` : ""}${totalTxt} ${rankLabel} jobs live today${rs?.fresh ? ` (${rs.fresh} new in 24h)` : ""}`,
           html, headers: { "List-Unsubscribe": `<${unsub}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" },
         }),
       });
       if (!r.ok) { stats.failed++; console.error("digest send failed", r.status, await r.text()); continue; }
-      await svc.from("crew_digest_log").insert(picks.map((v) => ({ crew_id: c.id, vacancy_key: v.key, sent_on: today })));
+      await svc.from("crew_digest_log").insert([...picks.map((v) => ({ crew_id: c.id, vacancy_key: v.key, sent_on: today })), { crew_id: c.id, vacancy_key: `day:${today}`, sent_on: today }]);
       stats.sent++;
       await new Promise((res) => setTimeout(res, 600)); // stay under provider rate limit
     } catch (e) { stats.failed++; console.error("digest error", e); }
