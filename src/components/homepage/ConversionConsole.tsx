@@ -90,6 +90,7 @@ const MENU_LINKS: { label: string; to: string; external?: boolean }[] = [
   { label: "Create AI Interview", to: "/manager/interviews" },
   { label: "ShipManager Login", to: "/manager" },
   { label: "🛠️ Fleet Staff Login", to: "/fleet/login" },
+  { label: "📘 User Guide & Seminars", to: "/guide" },
   { label: "SeaMinds Score", to: "/app?tab=smc" },
   { label: "Jobs", to: "/app?tab=jobs" },
   { label: "Blog", to: "/blog" },
