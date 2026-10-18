@@ -449,6 +449,13 @@
       "when": 1792216703958,
       "tag": "0063_admin_oversight_results_applicants",
       "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1792303479423,
+      "tag": "0064_digest_rank_stats",
+      "breakpoints": true
     }
   ]
 }
