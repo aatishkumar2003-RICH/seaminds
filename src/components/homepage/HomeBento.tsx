@@ -15,6 +15,7 @@ const CARDS: { id?: string; title: string; body: string; link: string; cta: stri
   { title: "CV · CERTIFICATES · REST HOURS", body: "Build your CV, store certificates and keep an MLC rest-hours record.", link: "/app?tab=cv", cta: "OPEN CV →" },
   { title: "ACADEMY & COMMUNITY", body: "PSC prep, vetting and STCW updates — plus a crew community at sea.", link: "/app?tab=home", cta: "EXPLORE →" },
   { title: "MANAGER WORKFLOW", body: "Post Vacancy → Match → AI Interview → Shortlist.", link: "/for-companies", cta: "FIND CREW →" },
+  { title: "📘 USER GUIDE & SEMINAR SLIDES", body: "Step-by-step visual lessons for seafarers, ship managers and fleet staff.", link: "/guide", cta: "OPEN GUIDE →" },
 ];
 
 const HomeBento = () => {
