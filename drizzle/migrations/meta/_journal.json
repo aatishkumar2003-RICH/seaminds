@@ -477,6 +477,13 @@
       "when": 1792424094635,
       "tag": "0067_ship_marketplace",
       "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "7",
+      "when": 1792424715595,
+      "tag": "0068_ship_listings_hide_contacts_from_public",
+      "breakpoints": true
     }
   ]
 }
