@@ -4,7 +4,14 @@ export const VESSEL_TYPES = ["Tanker", "Bulk Carrier", "Container", "Gas Carrier
 export const MAX_PHOTOS = 8;
 
 export const MARKETPLACE_NOTICE =
-  "SeaMinds is a connection platform only. We are not a ship broker, surveyor, escrow agent or party to any sale. All vessel details, photos and prices are supplied by the seller and are not verified by SeaMinds. Buyers must carry out their own physical inspection, class, title, sanctions and legal checks, and agree terms (MOA) directly with the seller. SeaMinds accepts no liability for any listing, transaction, loss or dispute.";
+  "Marketplace Notice & Disclaimer: SeaMinds is an introductory noticeboard platform only. SeaMinds is not a shipbroker, maritime agent, surveyor, valuer, escrow agent, or party to any contract or transaction. All vessel particulars, specifications, classification records, equipment statuses, photos and price indications are supplied solely by the listing party and are not verified, inspected or guaranteed by SeaMinds. Prospective buyers are solely responsible for independent technical inspections, class record reviews, title and lien searches, sanctions checks, and for negotiating their own Memorandum of Agreement (e.g. BIMCO SALEFORM) and escrow arrangements directly with the seller. To the fullest extent permitted by law, SeaMinds disclaims all liability for any errors, misrepresentations, transactions, losses or disputes arising from any listing.";
+
+export const SELLER_DECLARATION = [
+  "Authority: I am the registered owner, an officer of the owning entity, the appointed manager with documented owner authorisation, or a broker holding a valid written mandate from the registered owner.",
+  "Accuracy: all information, particulars, survey statuses, photos and compliance statements are accurate, truthful and not misleading.",
+  "Sanctions & title: the vessel, its registered and beneficial owners and operators are not subject to UN, US (OFAC), EU, UK or other applicable sanctions, and the vessel is not under undisclosed arrest, maritime liens or ownership dispute.",
+  "Indemnity: I will indemnify and hold harmless SeaMinds, its directors and affiliates from any claims, penalties or damages arising from an unauthorised listing, false particulars or infringing materials.",
+];
 
 /** Resize + convert an image to WebP (max 1920px, q≈0.82) to keep uploads small on ship connections. */
 export async function compressPhoto(file: File): Promise<Blob> {
