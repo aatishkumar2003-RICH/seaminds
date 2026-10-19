@@ -555,7 +555,9 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
             <button
               style={{ ...goldBtn, opacity: step1Done ? 1 : 0.5 }}
               onClick={async () => {
+                if (!contactDone) return toast.error(phoneError ? "Please enter your WhatsApp number with country code." : "Please enter a valid contact email.");
                 if (!step1Done) return toast(t("qpNeedFour"));
+                saveProfile({ whatsapp_number: toE164(whatsapp), email: contactEmail.trim() });
                 if (!(await confirmCanonicalRank())) return toast.error("Please choose your official rank from the list.");
                 setStep(2);
               }}
