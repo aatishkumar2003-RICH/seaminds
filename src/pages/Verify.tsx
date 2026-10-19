@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ChevronLeft, Share2, Download } from 'lucide-react';
+import { toast } from 'sonner';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '@/integrations/supabase/client';
 import seamindsLogo from "@/assets/seaminds-logo.png";
@@ -46,6 +48,44 @@ const Verify = () => {
   const { id } = useParams<{ id: string }>();
   const [result, setResult] = useState<VerifyResult | null>(null);
   const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const navigate = useNavigate();
+
+  const goBack = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate('/app');
+  };
+
+  const shareUrl = `https://seaminds.life/verify/${id || ''}`;
+  const handleShare = async () => {
+    const text = `${result?.candidate || 'Seafarer'}${result?.rank ? ` (${result.rank})` : ''} — SeaMinds verified certificate`;
+    try {
+      if (navigator.share) { await navigator.share({ title: 'SeaMinds Certificate', text, url: shareUrl }); return; }
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success('Certificate link copied');
+    } catch { /* user cancelled */ }
+  };
+
+  const handlePdf = async () => {
+    const el = document.getElementById('verify-card');
+    if (!el) return;
+    setBusy(true);
+    try {
+      const { default: html2canvas } = await import('html2canvas');
+      const { jsPDF } = await import('jspdf');
+      const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#0D1B2A', useCORS: true });
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight();
+      pdf.setFillColor(13, 27, 42); pdf.rect(0, 0, pw, ph, 'F');
+      const margin = 12;
+      let w = pw - margin * 2, h = (canvas.height / canvas.width) * w;
+      if (h > ph - margin * 2) { h = ph - margin * 2; w = (canvas.width / canvas.height) * h; }
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', (pw - w) / 2, margin, w, h);
+      pdf.save(`SeaMinds-Certificate-${result?.certificate_id || id}.pdf`);
+    } catch (e) {
+      console.error(e); toast.error('Could not create the PDF. Please try again.');
+    } finally { setBusy(false); }
+  };
 
   useEffect(() => {
     let alive = true;
@@ -83,8 +123,16 @@ const Verify = () => {
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={pageDesc} />
       </Helmet>
-      <div style={{ minHeight:'100vh', background:'linear-gradient(135deg, #0D1B2A 0%, #1B2838 50%, #0D1B2A 100%)', display:'flex', alignItems:'center', justifyContent:'center', padding:'20px' }}>
-        <div style={{ maxWidth:'480px', width:'100%', textAlign:'center' }}>
+      <div style={{ minHeight:'100vh', width:'100%', boxSizing:'border-box', background:'linear-gradient(135deg, #0D1B2A 0%, #1B2838 50%, #0D1B2A 100%)' }}>
+        <div style={{ position:'sticky', top:0, zIndex:10, background:'#0D1B2A', borderBottom:'1px solid rgba(212,175,55,0.3)', paddingTop:'env(safe-area-inset-top)' }}>
+          <div style={{ maxWidth:'480px', margin:'0 auto', display:'flex', alignItems:'center', gap:8, padding:'10px 12px' }}>
+            <button onClick={goBack} aria-label="Back" style={{ display:'flex', alignItems:'center', gap:4, color:'#D4AF37', background:'transparent', border:'none', fontWeight:700, fontSize:15, cursor:'pointer', padding:4 }}>
+              <ChevronLeft size={22} /> Back
+            </button>
+            <span style={{ color:'#94A3B8', fontSize:13, marginLeft:'auto' }}>Certificate</span>
+          </div>
+        </div>
+        <div style={{ maxWidth:'480px', width:'100%', margin:'0 auto', padding:'20px 16px 40px', boxSizing:'border-box', textAlign:'center' }}>
           <img src={seamindsLogo} style={{ width:'60px', height:'60px', borderRadius:'12px', margin:'0 auto 16px', display:'block' }} alt="SeaMinds" />
 
           {loading && <p style={{ color:'#D4AF37', fontSize:'16px' }}>⏳ Verifying certificate…</p>}
@@ -97,7 +145,8 @@ const Verify = () => {
           )}
 
           {!loading && valid && (
-            <div style={{ background:'#1a2e47', borderRadius:'12px', padding:'32px', border:`1px solid ${expired ? 'rgba(245,158,11,0.5)' : 'rgba(212,175,55,0.4)'}` }}>
+            <>
+            <div id="verify-card" style={{ background:'#1a2e47', borderRadius:'12px', padding:'28px 20px', boxSizing:'border-box', width:'100%', border:`1px solid ${expired ? 'rgba(245,158,11,0.5)' : 'rgba(212,175,55,0.4)'}` }}>
               <div style={{ marginBottom:'20px' }}>
                 <div style={{ fontSize:'48px', marginBottom:'8px' }}>{expired ? '⚠️' : '✅'}</div>
                 <div style={{ color:'#D4AF37', fontSize:'14px', fontWeight:'bold', letterSpacing:'2px' }}>VERIFIED BY SEAMINDS</div>
@@ -157,6 +206,15 @@ const Verify = () => {
                 <div style={{ color:'#666', fontSize:'10px', marginTop:'2px' }}>PT Indoglobal Service Solutions</div>
               </div>
             </div>
+            <div style={{ display:'flex', gap:10, marginTop:16 }}>
+              <button onClick={handleShare} style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:6, padding:'12px', borderRadius:12, background:'transparent', color:'#D4AF37', border:'1px solid #D4AF37', fontWeight:700, fontSize:14, cursor:'pointer' }}>
+                <Share2 size={16} /> Share
+              </button>
+              <button onClick={handlePdf} disabled={busy} style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:6, padding:'12px', borderRadius:12, background:'#D4AF37', color:'#0D1B2A', border:'none', fontWeight:700, fontSize:14, cursor:'pointer', opacity: busy ? 0.6 : 1 }}>
+                <Download size={16} /> {busy ? 'Preparing…' : 'Save PDF'}
+              </button>
+            </div>
+            </>
           )}
         </div>
       </div>
