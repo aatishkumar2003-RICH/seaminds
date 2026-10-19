@@ -78,6 +78,23 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   const [sectionCard, setSectionCard] = useState<{ type: string; label: string; num: string; icon: string } | null>(null);
   const prevSectionType = useRef<string | null>(null);
   const introShown = useRef(false);
+  // One section-card timer at a time; the card's target index is applied exactly once (timer OR Continue tap).
+  const sectionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sectionTargetRef = useRef<number | null>(null);
+  const dismissSectionCard = () => {
+    if (sectionTimerRef.current) { clearTimeout(sectionTimerRef.current); sectionTimerRef.current = null; }
+    const target = sectionTargetRef.current;
+    sectionTargetRef.current = null;
+    setSectionCard(null);
+    if (target !== null) setQIndex(target);
+  };
+  const showSectionCard = (card: { type: string; label: string; num: string; icon: string }, target: number | null) => {
+    if (sectionTimerRef.current) clearTimeout(sectionTimerRef.current);
+    sectionTargetRef.current = target;
+    setSectionCard(card);
+    sectionTimerRef.current = setTimeout(dismissSectionCard, 4000);
+  };
+  useEffect(() => () => { if (sectionTimerRef.current) clearTimeout(sectionTimerRef.current); }, []);
 
   // Timer state
   const [timeLeft, setTimeLeft] = useState(60);
