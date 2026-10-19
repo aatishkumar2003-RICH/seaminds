@@ -3,6 +3,7 @@ import { trackEvent } from "@/lib/analytics";
 import { Shield, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useQrDataUrl } from "@/lib/qrDataUrl";
 import SMCScoreCertificate, { CalibrationPanel, hasLevelProfile, type LevelProfile } from "../SMCScoreCertificate";
 
 interface Props {
