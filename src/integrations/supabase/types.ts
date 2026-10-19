@@ -4503,6 +4503,149 @@ export type Database = {
         }
         Relationships: []
       }
+      ship_listing_reports: {
+        Row: {
+          created_at: string
+          id: string
+          listing_id: string
+          reason: string
+          reporter_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          listing_id: string
+          reason: string
+          reporter_id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          listing_id?: string
+          reason?: string
+          reporter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ship_listing_reports_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "ship_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ship_listings: {
+        Row: {
+          authority_basis: string
+          authority_confirmed_at: string
+          beam_m: number | null
+          builder: string | null
+          bwts: string | null
+          cargo_capacity: string | null
+          cargo_gear: string | null
+          class_society: string | null
+          contact_email: string | null
+          contact_whatsapp: string | null
+          created_at: string
+          delivery_window: string | null
+          description: string | null
+          dwt: number | null
+          eexi_cii: string | null
+          featured: boolean
+          flag: string | null
+          gt: number | null
+          id: string
+          imo: string | null
+          loa_m: number | null
+          location: string | null
+          main_engine: string | null
+          photos: string[]
+          price_text: string
+          scrubber: string | null
+          seller_company: string | null
+          seller_id: string
+          show_identity: boolean
+          status: string
+          updated_at: string
+          vessel_name: string | null
+          vessel_type: string
+          year_built: number | null
+        }
+        Insert: {
+          authority_basis: string
+          authority_confirmed_at?: string
+          beam_m?: number | null
+          builder?: string | null
+          bwts?: string | null
+          cargo_capacity?: string | null
+          cargo_gear?: string | null
+          class_society?: string | null
+          contact_email?: string | null
+          contact_whatsapp?: string | null
+          created_at?: string
+          delivery_window?: string | null
+          description?: string | null
+          dwt?: number | null
+          eexi_cii?: string | null
+          featured?: boolean
+          flag?: string | null
+          gt?: number | null
+          id?: string
+          imo?: string | null
+          loa_m?: number | null
+          location?: string | null
+          main_engine?: string | null
+          photos?: string[]
+          price_text?: string
+          scrubber?: string | null
+          seller_company?: string | null
+          seller_id?: string
+          show_identity?: boolean
+          status?: string
+          updated_at?: string
+          vessel_name?: string | null
+          vessel_type: string
+          year_built?: number | null
+        }
+        Update: {
+          authority_basis?: string
+          authority_confirmed_at?: string
+          beam_m?: number | null
+          builder?: string | null
+          bwts?: string | null
+          cargo_capacity?: string | null
+          cargo_gear?: string | null
+          class_society?: string | null
+          contact_email?: string | null
+          contact_whatsapp?: string | null
+          created_at?: string
+          delivery_window?: string | null
+          description?: string | null
+          dwt?: number | null
+          eexi_cii?: string | null
+          featured?: boolean
+          flag?: string | null
+          gt?: number | null
+          id?: string
+          imo?: string | null
+          loa_m?: number | null
+          location?: string | null
+          main_engine?: string | null
+          photos?: string[]
+          price_text?: string
+          scrubber?: string | null
+          seller_company?: string | null
+          seller_id?: string
+          show_identity?: boolean
+          status?: string
+          updated_at?: string
+          vessel_name?: string | null
+          vessel_type?: string
+          year_built?: number | null
+        }
+        Relationships: []
+      }
       ship_photos: {
         Row: {
           active: boolean | null
@@ -5924,6 +6067,7 @@ export type Database = {
         Returns: undefined
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_approved_manager: { Args: { _uid: string }; Returns: boolean }
       is_marketing_member: { Args: never; Returns: boolean }
       issue_paper: { Args: { p_assessment_id: string }; Returns: Json }
       log_marketing_action: {
