@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import PostVacancy from "@/components/opportunities/PostVacancy";
 
 const PostVacancyPage = () => {
@@ -12,7 +12,7 @@ const PostVacancyPage = () => {
             onClick={() => navigate("/manager/dashboard")}
             style={{ background: "transparent", border: "none", color: "#94a3b8", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, fontSize: 13 }}
           >
-            <ArrowLeft size={16} /> Dashboard
+            <ChevronLeft size={16} /> Dashboard
           </button>
           <div style={{ marginLeft: "auto" }}>
             <h1 style={{ color: "#D4AF37", fontSize: 16, fontWeight: 800 }}>Vacancy Studio</h1>
