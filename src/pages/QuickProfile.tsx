@@ -4,6 +4,20 @@ import { ChevronLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useT } from "@/i18n";
+import MobileVerify from "@/components/cv/MobileVerify";
+import { toE164, validatePhone } from "@/lib/verification/mobileProviders";
+
+/** Nationality → WhatsApp dial code, used only to pre-fill an empty number field. */
+const DIAL_BY_NATIONALITY: Record<string, string> = {
+  filipino: "+63", philippines: "+63", indian: "+91", india: "+91", indonesian: "+62", indonesia: "+62",
+  vietnamese: "+84", vietnam: "+84", ukrainian: "+380", ukraine: "+380", russian: "+7", russia: "+7",
+  myanmar: "+95", burmese: "+95", bangladeshi: "+880", bangladesh: "+880", "sri lankan": "+94", "sri lanka": "+94",
+  pakistani: "+92", pakistan: "+92", chinese: "+86", china: "+86", turkish: "+90", turkey: "+90",
+  romanian: "+40", romania: "+40", polish: "+48", poland: "+48", croatian: "+385", croatia: "+385",
+  greek: "+30", greece: "+30", georgian: "+995", georgia: "+995", nigerian: "+234", nigeria: "+234",
+  ghanaian: "+233", ghana: "+233", egyptian: "+20", egypt: "+20", malaysian: "+60", malaysia: "+60",
+};
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 const NAVY = "#0D1B2A";
 const CARD = "#112240";
@@ -118,6 +132,9 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
   const [seaBand, setSeaBand] = useState("");
   const [available, setAvailable] = useState(false);
   const [availableFrom, setAvailableFrom] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [fullName, setFullName] = useState("");
 
   // step 2
   const [families, setFamilies] = useState<Record<string, string>>({}); // family -> band (saved rows)
@@ -152,7 +169,7 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
 
       const [{ data: prof }, { data: fam }, { data: cl }] = await Promise.all([
         supabase.from("crew_profiles")
-          .select("first_name, rank, role, is_available, available_from, years_in_rank_band, contracts_in_rank_band, total_sea_service_band" as any)
+          .select("first_name, last_name, email, nationality, whatsapp_number, rank, role, is_available, available_from, years_in_rank_band, contracts_in_rank_band, total_sea_service_band" as any)
           .eq("id", user.id).maybeSingle(),
         supabase.from("crew_vessel_experience" as any).select("vessel_family, sea_time_band").eq("crew_id", user.id),
         supabase.from("crew_claims" as any).select("claim_key, value").eq("crew_id", user.id),
@@ -161,6 +178,9 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
       if (!active) return;
       const p: any = prof || {};
       setFirstName(p.first_name || "Sailor");
+      setFullName([p.first_name, p.last_name].filter(Boolean).join(" "));
+      setContactEmail(p.email || user.email || "");
+      setWhatsapp(p.whatsapp_number || DIAL_BY_NATIONALITY[String(p.nationality || "").trim().toLowerCase()] || "");
       // Generic "role" (e.g. "Seafarer") is never treated as a professional rank
       setRank(p.rank || "");
       setYearsBand(p.years_in_rank_band || "");
@@ -284,6 +304,7 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
     if (!uid) return;
     const { error: profileError } = await supabase.from("crew_profiles").update({
       rank, years_in_rank_band: yearsBand, contracts_in_rank_band: contractsBand,
+      whatsapp_number: toE164(whatsapp), email: contactEmail.trim(),
       total_sea_service_band: seaBand,
     } as any).eq("id", uid);
     const entries = Object.entries(families).map(([vessel_family, sea_time_band]) => ({ crew_id: uid, vessel_family, sea_time_band }));
@@ -384,7 +405,11 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
     return out;
   };
 
-  const step1Done = !!rank && !!yearsBand && !!contractsBand && !!seaBand;
+  const phoneError = validatePhone(whatsapp);
+  const emailOk = EMAIL_RE.test(contactEmail.trim());
+  const contactDone = !phoneError && emailOk;
+  const step1Done = !!rank && !!yearsBand && !!contractsBand && !!seaBand && contactDone;
+  const inputStyle: React.CSSProperties = { width: "100%", padding: "11px 12px", borderRadius: 10, background: NAVY, color: "#fff", border: `1px solid ${BORDER}`, fontSize: 14 };
   const step2Done = selectedFamilies.length > 0 || cadetSkipped;
 
   if (!ready) return <div style={{ minHeight: "100vh", background: NAVY }} />;
@@ -471,6 +496,42 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
               </Row>
             </Q>
 
+            <Q title="WhatsApp number (required)">
+              <input
+                type="tel" inputMode="tel" autoComplete="tel" maxLength={20}
+                value={whatsapp} placeholder="+63 917 123 4567"
+                onChange={(e) => setWhatsapp(e.target.value.replace(/[^\d+\s()-]/g, ""))}
+                onBlur={() => { if (!validatePhone(whatsapp)) { const n = toE164(whatsapp); setWhatsapp(n); saveProfile({ whatsapp_number: n }); } }}
+                style={inputStyle}
+              />
+              {whatsapp && phoneError && whatsapp.replace(/\D/g, "").length > 4 && (
+                <p style={{ color: "#f87171", fontSize: 11 }}>{phoneError}</p>
+              )}
+              {!phoneError && (
+                <MobileVerify phone={toE164(whatsapp)} email={contactEmail} fullName={fullName || firstName} />
+              )}
+            </Q>
+
+            <Q title="Contact email (required)">
+              <input
+                type="email" autoComplete="email" maxLength={255}
+                value={contactEmail} placeholder="name@example.com"
+                onChange={(e) => setContactEmail(e.target.value)}
+                onBlur={() => { if (EMAIL_RE.test(contactEmail.trim())) saveProfile({ email: contactEmail.trim() }); }}
+                style={inputStyle}
+              />
+              {contactEmail && !emailOk && <p style={{ color: "#f87171", fontSize: 11 }}>Enter a valid email address</p>}
+            </Q>
+
+            <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: 12 }}>
+              <p style={{ color: GOLD, fontSize: 12, fontWeight: 800, marginBottom: 4 }}>🔒 Official Contact &amp; Documentation Notice</p>
+              <p style={{ color: "#94A3B8", fontSize: 11, lineHeight: 1.6 }}>
+                Your WhatsApp and email are used only so verified ship managers and manning agencies can reach you for interviews,
+                contracts, travel and joining documents (MLC 2006), and for SeaMinds job alerts. They are shared only when you apply
+                or accept an interview. Your wellness check-ins and AI chats stay 100% private and are never shown to employers.
+              </p>
+            </div>
+
             <Q title={t("qpQAvailable")}>
               <Row>
                 <Chip label={t("yes")} on={available}
@@ -494,7 +555,9 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
             <button
               style={{ ...goldBtn, opacity: step1Done ? 1 : 0.5 }}
               onClick={async () => {
+                if (!contactDone) return toast.error(phoneError ? "Please enter your WhatsApp number with country code." : "Please enter a valid contact email.");
                 if (!step1Done) return toast(t("qpNeedFour"));
+                saveProfile({ whatsapp_number: toE164(whatsapp), email: contactEmail.trim() });
                 if (!(await confirmCanonicalRank())) return toast.error("Please choose your official rank from the list.");
                 setStep(2);
               }}
