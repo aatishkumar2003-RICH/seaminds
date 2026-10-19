@@ -120,7 +120,7 @@ const MobileVerify = ({ phone, email, fullName, onNormalized, onStatusChange }: 
           {status === "pending" ? (
             <span className="flex items-center gap-1 text-[11px] text-amber-400"><Clock size={12} /> Verification pending</span>
           ) : (
-            <span className="flex items-center gap-1 text-[11px] text-amber-400"><ShieldAlert size={12} /> 🟡 Mobile number not verified</span>
+            <span className="flex items-center gap-1 text-[11px] text-amber-400"><ShieldAlert size={12} /> Mobile number not verified</span>
           )}
           <button
             type="button"
@@ -144,7 +144,6 @@ const MobileVerify = ({ phone, email, fullName, onNormalized, onStatusChange }: 
       {formatError && phone && <p className="text-[10px] text-red-400 mt-1">{formatError}</p>}
       {msg && <p className="text-[10px] text-gray-400 mt-1">{msg}</p>}
       {err && <p className="text-[10px] text-red-400 mt-1">{err}</p>}
-      <p className="text-[10px] text-gray-500 mt-1">Optional — your CV can be generated without it.</p>
     </div>
   );
 };
