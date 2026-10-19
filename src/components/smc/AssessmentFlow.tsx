@@ -243,8 +243,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   useEffect(() => {
     if (flowStep === 'questions' && flatQuestions.length > 0 && !introShown.current) {
       introShown.current = true;
-      setSectionCard({ type: 'mcq', label: '📋 Knowledge Assessment', num: 'Section 1', icon: '📋' });
-      setTimeout(() => setSectionCard(null), 4000);
+      showSectionCard({ type: 'mcq', label: '📋 Knowledge Assessment', num: 'Section 1', icon: '📋' }, null);
     }
   }, [flowStep, flatQuestions]);
 
@@ -286,7 +285,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
       window.removeEventListener('offline', onOffline);
       window.removeEventListener('online', onOnline);
     };
-  }, [flowStep, assessmentId, qIndex]);
+  }, [flowStep, assessmentId]);
 
   // Tab switch detection
   useEffect(() => {
@@ -300,21 +299,16 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, []);
 
-  // Countdown timer
+  // Countdown timer — the updater stays pure; expiry is handled in the effect below.
   useEffect(() => {
     if (!timerActive || flowStep !== 'questions' || netDown) return; // paused while offline: never expire as candidate failure
-    const interval = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          handleAutoSubmit();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    const interval = setInterval(() => setTimeLeft(prev => (prev <= 1 ? 0 : prev - 1)), 1000);
     return () => clearInterval(interval);
   }, [qIndex, timerActive, flowStep, netDown]);
+  useEffect(() => {
+    if (timeLeft === 0 && timerActive && flowStep === 'questions' && !netDown) handleAutoSubmit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeLeft, timerActive]);
 
   // Paste detection
   const handlePaste = () => {
