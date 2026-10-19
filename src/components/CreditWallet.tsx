@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-type Wallet = { balance: number; welcome_claimed: boolean; code: string; link: string; referrals: number };
+type Wallet = { balance: number; welcome_claimed: boolean; code: string; link: string; referrals: number; verified_referrals?: number; referral_credits?: number };
 type Audience = "crew" | "manager";
 
 const LABEL: Record<string, string> = { welcome_launch: "Founder launch welcome", referral_joined: "Joined via invite", monthly_free: "Monthly free credits" };
@@ -42,8 +42,8 @@ const CreditWallet = ({ audience, className = "" }: { audience: Audience; classN
   if (!wallet) return null;
 
   const invite = audience === "manager"
-    ? `Join SeaMinds — free maritime jobs, CV builder and AI career tools. Sign up with my code ${wallet.code}: ${wallet.link}`
-    : `I'm on SeaMinds — free jobs worldwide, CV builder and competency score. Join with my code ${wallet.code} and get 10 bonus credits: ${wallet.link}`;
+    ? `Colleagues at sea — SeaMinds is a free maritime platform with live vacancies worldwide, a professional CV builder and career tools. Join with my code ${wallet.code}: ${wallet.link}`
+    : `Shipmates, take a look at SeaMinds — free vacancies worldwide, a professional CV builder and a private companion at sea. Join with my code ${wallet.code}: ${wallet.link}`;
 
   const copy = async () => {
     try { await navigator.clipboard.writeText(invite); toast.success("Invite copied"); } catch { toast.error("Could not copy — long-press the link instead"); }
@@ -70,12 +70,18 @@ const CreditWallet = ({ audience, className = "" }: { audience: Audience; classN
 
           <div className="rounded-xl border border-primary/30 bg-background/50 p-4 text-center">
             <p className="text-3xl font-bold text-primary">{wallet.balance}</p>
-            <p className="text-xs text-muted-foreground">credits available · {wallet.referrals} joined with your code</p>
+            <p className="text-xs text-muted-foreground">credits available</p>
+          </div>
+
+          <div className="rounded-xl border border-primary/20 p-3 text-xs space-y-1">
+            <div className="flex justify-between"><span className="text-muted-foreground">Welcome bonus</span><span className="font-bold text-foreground">{wallet.welcome_claimed ? 50 : 0}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Verified referrals ({wallet.verified_referrals ?? 0} × +1)</span><span className="font-bold text-foreground">{wallet.referral_credits ?? 0}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Joined, profile pending</span><span className="font-bold text-foreground">{Math.max(0, wallet.referrals - (wallet.verified_referrals ?? 0))}</span></div>
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-foreground">Invite and earn</p>
-            <p className="text-xs text-muted-foreground">You get 5 credits for every seafarer who joins with your code <span className="font-mono font-bold text-primary">{wallet.code}</span>. They get 10.</p>
+            <p className="text-sm font-semibold text-foreground">Invite shipmates, earn credits</p>
+            <p className="text-xs text-muted-foreground">Earn 1 credit for every seafarer who joins with your code <span className="font-mono font-bold text-primary">{wallet.code}</span> and completes their profile.</p>
             <div className="flex gap-2">
               <a
                 href={`https://wa.me/?text=${encodeURIComponent(invite)}`}
@@ -85,7 +91,7 @@ const CreditWallet = ({ audience, className = "" }: { audience: Audience; classN
               <button onClick={copy} className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-primary text-primary font-bold min-h-[44px] text-sm"><Copy size={16} /> Copy link</button>
             </div>
           </div>
-          <p className="text-[10px] text-muted-foreground">Welcome credits: {LABEL.welcome_launch}. Credits have no cash value.</p>
+          <p className="text-[10px] text-muted-foreground">Credits are complimentary and have no cash value. Self-referrals, disposable emails and duplicate accounts never earn credits.</p>
         </DialogContent>
       </Dialog>
     </>
