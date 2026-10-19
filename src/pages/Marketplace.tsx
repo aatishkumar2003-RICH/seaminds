@@ -8,6 +8,7 @@ import { VESSEL_TYPES, MARKETPLACE_NOTICE, signPhotos } from "@/lib/shipMarketpl
 import type { Tables } from "@/integrations/supabase/types";
 
 type Listing = Tables<"ship_listings">;
+const PUBLIC_COLS = "id,seller_id,status,vessel_name,imo,show_identity,vessel_type,flag,class_society,year_built,builder,dwt,gt,loa_m,beam_m,main_engine,bwts,scrubber,eexi_cii,cargo_capacity,cargo_gear,price_text,location,delivery_window,description,photos,seller_company,authority_basis,featured,created_at,updated_at";
 
 const Notice = () => (
   <div className="flex gap-2 rounded-xl border border-primary/30 bg-card p-3 text-[11px] leading-snug text-muted-foreground">
@@ -32,17 +33,31 @@ const Marketplace = () => {
   const [loading, setLoading] = useState(true);
   const [canPost, setCanPost] = useState(false);
 
+  const [mine, setMine] = useState(false);
+  const [tick, setTick] = useState(0);
+
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const { data } = await supabase.from("ship_listings").select("*").in("status", ["active", "sold"])
+      // Signed-out visitors cannot read seller contact columns, so they request public columns only.
+      const cols = user ? "*" : PUBLIC_COLS;
+      let q = supabase.from("ship_listings").select(cols);
+      q = mine && user ? q.eq("seller_id", user.id).neq("status", "hidden") : q.in("status", ["active", "sold"]);
+      const { data } = await q
         .order("featured", { ascending: false }).order("created_at", { ascending: false }).limit(200);
-      const list = (data ?? []) as Listing[];
+      const list = (data ?? []) as unknown as Listing[];
       setRows(list);
       setUrls(await signPhotos(list.flatMap((l) => l.photos.slice(0, id ? 8 : 1))));
       setLoading(false);
     })();
-  }, [id]);
+  }, [id, user, mine, tick]);
+
+  const setStatus = async (l: Listing, status: "active" | "sold" | "withdrawn") => {
+    const { error } = await supabase.from("ship_listings").update({ status }).eq("id", l.id);
+    if (error) return toast.error("Could not update the listing.");
+    toast.success(status === "sold" ? "Marked as sold." : status === "withdrawn" ? "Listing withdrawn." : "Listing is live again.");
+    setTick((t) => t + 1);
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -107,12 +122,21 @@ const Marketplace = () => {
                 {sel.contact_email && <a href={`mailto:${sel.contact_email}?subject=${encodeURIComponent(`Inquiry: ${title(sel)} (SeaMinds Marketplace)`)}`} className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-primary px-4 py-3 text-sm font-bold text-primary"><Mail size={16} />Email seller</a>}
               </div>
             ) : <Link to="/app" className="block rounded-xl border border-primary px-4 py-3 text-center text-sm font-bold text-primary">Sign in to contact the seller</Link>)}
+            {user && sel.seller_id === user.id && (
+              <div className="flex flex-wrap gap-2 rounded-2xl border border-primary/30 bg-card p-3">
+                <p className="w-full text-xs font-bold text-primary">Your listing · {sel.status}</p>
+                {sel.status !== "sold" && <button onClick={() => setStatus(sel, "sold")} className="rounded-xl border border-primary px-3 py-2 text-xs font-bold text-primary">Mark as sold</button>}
+                {sel.status !== "withdrawn" && <button onClick={() => setStatus(sel, "withdrawn")} className="rounded-xl border border-primary px-3 py-2 text-xs font-bold text-primary">Withdraw</button>}
+                {sel.status !== "active" && <button onClick={() => setStatus(sel, "active")} className="rounded-xl bg-primary px-3 py-2 text-xs font-bold text-primary-foreground">Relist</button>}
+              </div>
+            )}
             <Notice />
             <button onClick={() => report(sel)} className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-destructive"><Flag size={12} />Report this listing</button>
           </>
         ) : (
           <>
             <div className="flex gap-2 overflow-x-auto pb-1">
+              {canPost && <button onClick={() => setMine(!mine)} className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold ${mine ? "border-primary bg-primary text-primary-foreground" : "border-primary/30 text-primary"}`}>My listings</button>}
               {["All", ...VESSEL_TYPES].map((t) => (
                 <button key={t} onClick={() => setType(t)} className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold ${type === t ? "border-primary bg-primary text-primary-foreground" : "border-primary/30 text-muted-foreground"}`}>{t}</button>
               ))}
