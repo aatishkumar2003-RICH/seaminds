@@ -1089,6 +1089,9 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
           {/* ── SCENARIO ── */}
           {currentQ?.type === 'scenario' && (
             <div className="space-y-4">
+              <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.08em', color: '#D4AF37' }}>
+                SCENARIO {flatQuestions.slice(0, qIndex + 1).filter(q => q.type === 'scenario').length} OF {flatQuestions.filter(q => q.type === 'scenario').length} · NEW SITUATION
+              </p>
               {currentQ.situation && (
                 <div style={{ borderLeft: '3px solid #D4AF37', paddingLeft: '12px', marginBottom: '16px', color: '#ccc', fontSize: '13px' }}>
                   {currentQ.situation}

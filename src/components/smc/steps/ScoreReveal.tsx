@@ -3,6 +3,7 @@ import { trackEvent } from "@/lib/analytics";
 import { Shield, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useQrDataUrl } from "@/lib/qrDataUrl";
 import SMCScoreCertificate, { CalibrationPanel, hasLevelProfile, type LevelProfile } from "../SMCScoreCertificate";
 
 interface Props {
@@ -44,6 +45,8 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
   const [scoringFailed, setScoringFailed] = useState(false);
   const [failCode, setFailCode] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
+  const qrGold = useQrDataUrl(`https://seaminds.life/verify/${assessmentId}`, { dark: "#D4AF37", light: "#0D1B2A" });
+  const qrPlain = useQrDataUrl(`https://seaminds.life/verify/${certId || assessmentId}`);
   const [levelProfile, setLevelProfile] = useState<LevelProfile | null>(null);
   const { accessToken } = useAuth();
 

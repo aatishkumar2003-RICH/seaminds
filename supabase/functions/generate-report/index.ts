@@ -66,14 +66,18 @@ Write a professional evaluation. Return ONLY valid JSON (no markdown):
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${OPENAI_API_KEY}` },
-    body: JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "user", content: prompt }], max_tokens: 1500, temperature: 0.4 }),
+    body: JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "user", content: prompt }], max_tokens: 1500, temperature: 0.4, response_format: { type: "json_object" } }),
   });
   const data = await res.json();
   await meterAi(adminClient, { userId: gate.userId, feature: "generate-report", model: "gpt-4o-mini", usage: data?.usage, success: res.ok, latencyMs: Date.now() - _t0 });
 
-  const text = (data.choices?.[0]?.message?.content || "{}").replace(/```json|```/g,"").trim();
-  let report;
-  try { report = JSON.parse(text); } catch { report = { findings: ["Assessment completed."], remarks: "Report generation encountered an issue. Please review the scores above.", improvement_areas: [], training_recommendations: [], recommendation: "SUITABLE_WITH_TRAINING" }; }
+  const text = (data.choices?.[0]?.message?.content || "").replace(/```json|```/g,"").trim();
+  let report: any = null;
+  try { report = JSON.parse(text); } catch { report = null; }
+  if (!report || !Array.isArray(report.findings) || typeof report.remarks !== "string") {
+    // Never save a placeholder report; the next open will try again.
+    return new Response(JSON.stringify({ error: "REPORT_UNAVAILABLE" }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
+  }
   if (assessmentId) {
     const { error: repErr } = await adminClient.from("smc_assessments").update({ report }).eq("id", assessmentId);
     if (repErr) console.error("report write failed", repErr.message);
