@@ -6258,6 +6258,7 @@ export type Database = {
           title: string
         }[]
       }
+      ship_photo_visible: { Args: { _path: string }; Returns: boolean }
       start_or_resume_assessment: { Args: never; Returns: Json }
       submit_application: {
         Args: {

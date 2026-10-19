@@ -1,0 +1,2 @@
+REVOKE SELECT ON public.ship_listings FROM anon;
+GRANT SELECT (id, seller_id, status, vessel_name, imo, show_identity, vessel_type, flag, class_society, year_built, builder, dwt, gt, loa_m, beam_m, main_engine, bwts, scrubber, eexi_cii, cargo_capacity, cargo_gear, price_text, location, delivery_window, description, photos, seller_company, authority_basis, featured, created_at, updated_at) ON public.ship_listings TO anon;
