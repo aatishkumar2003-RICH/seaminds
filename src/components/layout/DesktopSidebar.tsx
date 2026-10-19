@@ -5,7 +5,8 @@ import { Link } from "react-router-dom";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import SOSButton from "@/components/SOSButton";
-import { NAV_ITEMS, type NavItem, type Screen } from "./types";
+import { type NavItem, type Screen } from "./types";
+import GroupedNav from "./GroupedNav";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 
 interface DesktopSidebarProps {
@@ -42,50 +43,19 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
         </Tooltip>
       </div>
 
-      <nav className="flex flex-1 flex-col items-center gap-0.5">
-        {NAV_ITEMS.map((item) => {
-          const active = screen === item.screen;
-          return (
-            <Tooltip key={item.screen}>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => onNavClick(item)}
-                  className={`relative flex w-full items-center gap-2 rounded-md border-l-2 px-2 py-1.5 text-sm transition-colors ${
-                    active
-                      ? "border-primary bg-accent text-primary"
-                      : "border-transparent text-muted-foreground hover:bg-secondary/70 hover:text-foreground"
-                  }`}
-                >
-                  <span className={tourActiveScreen === item.screen ? "animate-pulse" : ""}>{item.icon}</span>
-                  <span className="text-xs font-medium">{item.label}</span>
-                  {tourActiveScreen === item.screen && (
-                    <span className="absolute inset-0 rounded-md bg-primary animate-ping opacity-15" />
-                  )}
-                  {item.screen === "opportunities" && jobBadgeCount > 0 && (
-                    <span className="ml-auto flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 text-[7px] font-bold text-primary-foreground">
-                      {jobBadgeCount}
-                    </span>
-                  )}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="right" className="text-xs">
-                {item.label}
-              </TooltipContent>
-            </Tooltip>
-          );
-        })}
-      </nav>
+      <a href="/profile" aria-label="Open My Sea Profile" className="mb-2 flex w-full flex-col gap-1 rounded-xl border border-primary/30 bg-card/60 px-2 py-2 hover:border-primary/60">
+        <span className="truncate text-sm font-semibold text-foreground">{firstName || "Seafarer"}</span>
+        <span className="inline-flex w-fit items-center gap-1 rounded-full border border-primary/40 px-2 py-0.5 text-[10px] font-semibold text-primary">👤 My Sea Profile</span>
+      </a>
+
+      <GroupedNav screen={screen} active jobBadgeCount={jobBadgeCount} tourActiveScreen={tourActiveScreen} onNavClick={onNavClick} />
 
       <div className="mt-auto flex flex-col items-start gap-1 w-full px-2">
         <Button asChild variant="ghost" size="sm" className="w-full justify-start px-2 text-xs text-primary"><Link to="/guide?role=crew"><BookOpen />User Guide</Link></Button>
-        <a href="/profile" aria-label="My Sea Profile" className="text-xs font-semibold text-foreground truncate w-full hover:text-primary">{firstName || "Seafarer"}</a>
         <button onClick={onReplayTour} className="flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground">
           <HelpCircle size={14} />
           <span>Replay Tour</span>
         </button>
-        <a href="/profile" className="flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-xs font-semibold text-primary hover:bg-secondary/70">
-          <span>👤</span><span>My Sea Profile</span>
-        </a>
         <button onClick={() => setAboutOpen(true)} className="flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground">
           <span>ⓘ</span><span>About SeaMinds</span>
         </button>
