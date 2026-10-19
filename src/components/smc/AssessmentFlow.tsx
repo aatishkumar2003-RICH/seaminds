@@ -530,27 +530,25 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     } finally { setEvaluating(false); submittingRef.current = false; }
   };
 
+  // Absolute target index (never relative "+1"), so a late timer or double tap cannot skip or overflow.
   const advanceQuestion = () => {
-    if (qIndex + 1 < flatQuestions.length) {
-      const nextQ = flatQuestions[qIndex + 1];
-      const currQ = flatQuestions[qIndex];
-      // Show section title card when switching sections
-      if (nextQ && currQ && nextQ.type !== currQ.type) {
-        const label = nextQ.type === 'scenario' ? '🚨 Situational Judgment' : '🧭 Professional Behaviour';
-        const num = nextQ.type === 'scenario' ? 'Section 2' : 'Section 3';
-        const icon = nextQ.type === 'scenario' ? '🚨' : '💬';
-        setSectionCard({ type: nextQ.type, label, num, icon });
-        setTimeout(() => {
-          setSectionCard(null);
-          setQIndex(prev => prev + 1);
-        }, 4000);
-      } else {
-        setQIndex(prev => prev + 1);
-      }
+    const target = qIndex + 1;
+    if (target >= flatQuestions.length) { void finishPaper(); return; }
+    const nextQ = flatQuestions[target];
+    const currQ = flatQuestions[qIndex];
+    if (nextQ && currQ && nextQ.type !== currQ.type) {
+      const label = nextQ.type === 'scenario' ? '🚨 Situational Judgment' : '🧭 Professional Behaviour';
+      const num = nextQ.type === 'scenario' ? 'Section 2' : 'Section 3';
+      const icon = nextQ.type === 'scenario' ? '🚨' : '💬';
+      showSectionCard({ type: nextQ.type, label, num, icon }, target);
     } else {
-      void finishPaper();
+      setQIndex(target);
     }
   };
+  // Safety net: an out-of-range index must never render a blank question.
+  useEffect(() => {
+    if (flowStep === 'questions' && flatQuestions.length > 0 && qIndex >= flatQuestions.length) setQIndex(flatQuestions.length - 1);
+  }, [qIndex, flatQuestions.length, flowStep]);
 
   // Server-verified finish: every issued item must have a durably saved answer before scoring starts.
   const finishPaper = async () => {
@@ -974,11 +972,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
                     : 'Your responses are confidential'}
               </motion.p>
               <button
-                onClick={() => {
-                  const needsAdvance = flatQuestions[qIndex]?.type !== sectionCard.type;
-                  setSectionCard(null);
-                  if (needsAdvance) setQIndex(prev => prev + 1);
-                }}
+                onClick={dismissSectionCard}
                 style={{
                   marginTop: 20, width: "100%", padding: "13px 0", borderRadius: 12,
                   background: "#D4AF37", color: "#0D1B2A", border: "none",
