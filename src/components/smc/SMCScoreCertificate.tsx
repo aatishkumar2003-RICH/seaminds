@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useQrDataUrl } from "@/lib/qrDataUrl";
 import { TrendingUp, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -208,11 +209,24 @@ const SMCScoreCertificate = ({ data: hint, onImproveScore }: SMCScoreCertificate
     return () => { alive = false; };
   }, [hint?.certificateId]);
 
+  const qrSrc = useQrDataUrl(`https://seaminds.life/verify/${cert?.certificateId || ""}`);
+  const fitRef = useRef<HTMLDivElement>(null);
+  const [fit, setFit] = useState(0.42);
+  useEffect(() => {
+    const el = fitRef.current; if (!el) return;
+    const ro = new ResizeObserver(() => setFit(Math.min(1, el.clientWidth / 900)));
+    ro.observe(el); return () => ro.disconnect();
+  }, [cert, showImprove]);
+
   const captureAsImage = async (): Promise<string> => {
     const { default: html2canvas } = await import("html2canvas");
     const el = document.getElementById("smc-certificate");
     if (!el) throw new Error("Certificate element not found");
-    const canvas = await html2canvas(el, { scale: 3, useCORS: true, backgroundColor: "#0D1B2A" });
+    // Capture at full 900x600 size, ignoring the on-screen fit-to-width scaling.
+    const canvas = await html2canvas(el, {
+      scale: 2, useCORS: true, backgroundColor: "#0D1B2A", width: 900, height: 600,
+      onclone: (doc) => { const c = doc.getElementById("smc-certificate"); if (c) { c.style.transform = "none"; c.style.marginBottom = "0"; } },
+    });
     return canvas.toDataURL("image/png");
   };
 
@@ -272,7 +286,6 @@ const SMCScoreCertificate = ({ data: hint, onImproveScore }: SMCScoreCertificate
   const lowestSub = [...cert.subScores].sort((a, b) => a.score - b.score)[0];
   const improvementTopics = ACADEMY_MAP[lowestSub?.name] || [];
   const verifyUrl = `https://seaminds.life/verify/${cert.certificateId}`;
-  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=0&data=${encodeURIComponent(verifyUrl)}`;
 
   if (showImprove) {
     return (
@@ -324,6 +337,7 @@ const SMCScoreCertificate = ({ data: hint, onImproveScore }: SMCScoreCertificate
     <div className="flex flex-col h-full overflow-y-auto">
       <div className="p-4 space-y-4">
         {/* Certificate Card */}
+        <div ref={fitRef} style={{ width: '100%', height: `${600 * fit}px`, overflow: 'hidden' }}>
         <div
           id="smc-certificate"
           style={{
@@ -338,10 +352,9 @@ const SMCScoreCertificate = ({ data: hint, onImproveScore }: SMCScoreCertificate
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
             color: '#e2e8f0',
             overflow: 'hidden',
-            maxWidth: '100%',
             transformOrigin: 'top left',
-            transform: 'scale(0.42)',
-            marginBottom: '-348px',
+            maxWidth: 'none',
+            transform: `scale(${fit})`,
           }}
         >
           {/* Holographic ribbon */}
@@ -441,7 +454,7 @@ const SMCScoreCertificate = ({ data: hint, onImproveScore }: SMCScoreCertificate
                 background: '#ffffff', padding: '8px', borderRadius: '8px', marginBottom: '14px',
                 border: '1px solid rgba(212,175,55,0.4)',
               }}>
-                <img src={qrSrc} crossOrigin="anonymous" alt={`Verify certificate ${cert.certificateId}`} style={{ width: '96px', height: '96px', display: 'block' }} />
+                {qrSrc && <img src={qrSrc} alt={`Verify certificate ${cert.certificateId}`} style={{ width: '96px', height: '96px', display: 'block' }} />}
               </div>
 
               {/* Certificate ID box */}
@@ -485,6 +498,7 @@ const SMCScoreCertificate = ({ data: hint, onImproveScore }: SMCScoreCertificate
               SeaMinds — Advancing Maritime Excellence Through AI
             </span>
           </div>
+        </div>
         </div>
 
         {/* Name warning */}
