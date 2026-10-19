@@ -14,7 +14,7 @@
 - Feeds use keyset cursors per source (`loadVacancyPage`); no vacancy is hidden by age (old external = "hiring not confirmed"). Inventory pages and lifecycle actions go via `src/lib/vacancyLifecycle.ts`. Why: no false removals; one secure delete path.
 - Build metadata comes from vite.config.ts (/version.json NetworkOnly, not precached); UI reads src/lib/releaseInfo.ts. Why: identifiable builds, no stale update checks.
 - Assessments are created/resumed only via `open_assessment_v2(mode, invite_id, restart)` (client wrapper `src/lib/assessmentGateway.ts`); mode is explicit (PROFILE / CV_BASED), context is server-derived, one in_progress row per (crew, mode, context), evidence snapshot frozen at creation, preflight confirmation never automatic. Why: no client-forged tiers, no duplicates, old certificates stay truthful.
-- Manager pages share `ShipManagerLayout`; pages keep auth/logic, tabs use URL queries. Why: one shell.
+- Manager pages share `ShipManagerLayout`; pages keep auth/logic, tabs use URL queries. Why: one shell
 - Interview profile preparation stays on the token page with embedded QuickProfile/CvUpload; only confirmed saves advance, never client-selected scoring tiers. Why: preserve invitation and truthful evidence.
 - Vacancy ownership lives in `job_postings.recruiter_name` (own company vs distinct agency; NULL = legacy); routing uses raw `recruiterName` (`isThirdPartyAdvert`). Publishing is one atomic INSERT per batch; uncertain batches reconcile by `posting_batch_id`. Why: no routing-mode field; a timeout is not proof of no commit.
 - Vacancies never auto-expire: feeds filter `status = 'active'`; `expires_at` = `NO_EXPIRY_COMPAT`. Delete is blocked when applications exist. Why: retention is an owner decision.
