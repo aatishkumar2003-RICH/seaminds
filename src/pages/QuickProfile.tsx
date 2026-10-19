@@ -4,6 +4,20 @@ import { ChevronLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useT } from "@/i18n";
+import MobileVerify from "@/components/cv/MobileVerify";
+import { toE164, validatePhone } from "@/lib/verification/mobileProviders";
+
+/** Nationality → WhatsApp dial code, used only to pre-fill an empty number field. */
+const DIAL_BY_NATIONALITY: Record<string, string> = {
+  filipino: "+63", philippines: "+63", indian: "+91", india: "+91", indonesian: "+62", indonesia: "+62",
+  vietnamese: "+84", vietnam: "+84", ukrainian: "+380", ukraine: "+380", russian: "+7", russia: "+7",
+  myanmar: "+95", burmese: "+95", bangladeshi: "+880", bangladesh: "+880", "sri lankan": "+94", "sri lanka": "+94",
+  pakistani: "+92", pakistan: "+92", chinese: "+86", china: "+86", turkish: "+90", turkey: "+90",
+  romanian: "+40", romania: "+40", polish: "+48", poland: "+48", croatian: "+385", croatia: "+385",
+  greek: "+30", greece: "+30", georgian: "+995", georgia: "+995", nigerian: "+234", nigeria: "+234",
+  ghanaian: "+233", ghana: "+233", egyptian: "+20", egypt: "+20", malaysian: "+60", malaysia: "+60",
+};
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 const NAVY = "#0D1B2A";
 const CARD = "#112240";
@@ -118,6 +132,9 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
   const [seaBand, setSeaBand] = useState("");
   const [available, setAvailable] = useState(false);
   const [availableFrom, setAvailableFrom] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [fullName, setFullName] = useState("");
 
   // step 2
   const [families, setFamilies] = useState<Record<string, string>>({}); // family -> band (saved rows)
