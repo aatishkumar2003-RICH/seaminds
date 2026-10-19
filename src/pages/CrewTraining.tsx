@@ -163,6 +163,34 @@ const MyTraining = () => {
       </div>
       {items === null ? <p className="text-muted-foreground">Loading…</p> : (
         <>
+          {(() => {
+            const required = items.filter((i) => i.company?.trim() && i.status !== "completed" && i.token);
+            return (
+              <div className="space-y-2">
+                <h2 className="font-bold text-primary">⭐ Required & recommended for you</h2>
+                {required.length === 0 && recs.length === 0 && (
+                  <p className="text-sm text-muted-foreground">Nothing required right now. Complete your profile or an assessment for personal suggestions — or pick any module from the matrix below.</p>
+                )}
+                {required.map((i) => (
+                  <div key={`req-${i.slug}`} className="rounded-xl border-2 border-primary bg-card p-4 space-y-2">
+                    <span className="inline-block rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground">REQUIRED · Assigned by {i.company}</span>
+                    <p className="font-semibold">{i.title}</p>
+                    <Button className="w-full rounded-xl font-bold" onClick={() => navigate(`/training/${i.token}`)}>{i.status === "opened" ? "Continue" : "Start now"}</Button>
+                  </div>
+                ))}
+                {recs.map((r) => (
+                  <div key={`rec-${r.slug}`} className="rounded-xl border border-primary/60 bg-card p-4 space-y-2">
+                    <span className="inline-block rounded-full border border-primary px-2 py-0.5 text-[10px] font-bold text-primary">RECOMMENDED · From your profile & assessment</span>
+                    <p className="font-semibold">{r.title}</p>
+                    <p className="text-xs text-muted-foreground">{r.summary}</p>
+                    {r.reasons.length > 0 && <p className="text-xs text-primary">{r.reasons.join(" · ")}</p>}
+                    <Button className="w-full rounded-xl font-bold" disabled={busy === r.slug} onClick={() => start(r.slug)}>{busy === r.slug ? "Starting…" : "Start now"}</Button>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+          {items.length > 0 && <h2 className="font-bold text-primary pt-2">My progress</h2>}
           {items.length > 0 && (
             <div className="space-y-4">
               {Object.entries(items.reduce<Record<string, LedgerItem[]>>((g, i) => {
@@ -196,7 +224,7 @@ const MyTraining = () => {
           )}
           {catalog.length > 0 && (
             <div className="space-y-3">
-              <h2 className="font-bold text-primary">Training matrix</h2>
+              <h2 className="font-bold text-primary">Browse all training (optional)</h2>
               <div className="grid grid-cols-3 gap-1 rounded-xl border border-border bg-card p-1" role="tablist">
                 {([["TANKER", "Tanker"], ["DRY", "Dry cargo"], ["ALL", "All"]] as const).map(([k, label]) => (
                   <button key={k} role="tab" aria-selected={segment === k} onClick={() => setSegment(k)}
@@ -221,15 +249,6 @@ const MyTraining = () => {
               ))}
             </div>
           )}
-          <h2 className="font-bold text-primary">Recommended for you (from your profile & interview)</h2>
-          {recs.length === 0 ? <p className="text-sm text-muted-foreground">No new recommendations. Complete your profile or an assessment for sharper suggestions.</p> : recs.map((r) => (
-            <div key={r.slug} className="rounded-lg border border-primary/40 bg-card p-4 space-y-2">
-              <p className="font-semibold">{r.title}</p>
-              <p className="text-xs text-muted-foreground">{r.summary}</p>
-              <p className="text-xs text-primary">{r.reasons.join(" · ")}</p>
-              <Button size="sm" className="rounded-xl font-bold" disabled={busy === r.slug} onClick={() => start(r.slug)}>{busy === r.slug ? "Starting…" : "Start"}</Button>
-            </div>
-          ))}
         </>
       )}
     </section>

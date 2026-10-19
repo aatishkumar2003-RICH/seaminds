@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { toast } from "sonner";
 import { trackEvent } from "@/lib/analytics";
 import { Shield, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,6 +48,8 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
   const [retryKey, setRetryKey] = useState(0);
   const qrGold = useQrDataUrl(`https://seaminds.life/verify/${assessmentId}`, { dark: "#D4AF37", light: "#0D1B2A" });
   const qrPlain = useQrDataUrl(`https://seaminds.life/verify/${certId || assessmentId}`);
+  const printRef = useRef<HTMLDivElement>(null);
+  const [downloading, setDownloading] = useState(false);
   const [levelProfile, setLevelProfile] = useState<LevelProfile | null>(null);
   const { accessToken } = useAuth();
 
@@ -171,21 +174,25 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
 
 
   const handleDownloadCertificate = async () => {
+    const el = printRef.current;
+    if (!el || downloading) return;
+    setDownloading(true);
     try {
+      await new Promise((r) => setTimeout(r, 50)); // paint "Generating…" first
       const { default: html2canvas } = await import('html2canvas');
       const { jsPDF } = await import('jspdf');
-      const el = document.getElementById('smc-certificate-print');
-      if (!el) return;
-      el.style.display = 'block';
-      const canvas = await html2canvas(el, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff' });
-      el.style.display = 'none';
+      const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false });
       const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
       const imgData = canvas.toDataURL('image/png');
       const pdfW = pdf.internal.pageSize.getWidth();
       const pdfH = (canvas.height * pdfW) / canvas.width;
       pdf.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH);
-      pdf.save(`SeaMinds-Competency-Certificate.pdf`);
-    } catch(e) { console.error('Certificate download error:', e); }
+      pdf.save(`SeaMinds-Competency-Certificate-${certId || assessmentId}.pdf`);
+      toast.success('Certificate PDF downloaded');
+    } catch(e) {
+      console.error('Certificate download error:', e);
+      toast.error('Could not create the PDF. Please try again.');
+    } finally { setDownloading(false); }
   };
 
 
@@ -254,7 +261,7 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
   const fullName = [firstName, lastName].filter(Boolean).join(" ");
 
   return (
-    <div id="smc-certificate" className="overflow-y-auto" style={{ maxHeight: '100%' }}>
+    <div className="overflow-y-auto" style={{ maxHeight: '100%' }}>
       {onBack && (
         <button onClick={onBack}
           style={{ background:'transparent', border:'1px solid #2a4060', color:'#D4AF37', padding:'8px 16px', borderRadius:'8px', fontSize:'13px', cursor:'pointer', marginBottom:'16px', display:'block' }}>
@@ -302,47 +309,13 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
             <div style={{ color:'#888', fontSize:'10px' }}>seaminds.life</div>
           </div>
         </div>
-        {assessmentId && (
+        {assessmentId && qrGold && (
           <div style={{ textAlign:'center' }}>
-            <img
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=70x70&data=${encodeURIComponent(`https://seaminds.life/verify/${assessmentId}`)}&format=png&bgcolor=0d1b2a&color=D4AF37`}
-              style={{ width:'70px', height:'70px', display:'block' }}
-              alt="Verify Score"
-              crossOrigin="anonymous"
-            />
+            <img src={qrGold} style={{ width:'70px', height:'70px', display:'block' }} alt="Verify Score" />
             <div style={{ color:'#888', fontSize:'9px', marginTop:'2px' }}>Scan to verify</div>
           </div>
         )}
       </div>
-      <div style={{ textAlign:'center', margin:'16px 0', padding:'12px', background:'white', borderRadius:'8px', display:'inline-block' }}>
-        <img
-          src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(`https://seaminds.life/verify/${certId || assessmentId}`)}&format=png&bgcolor=ffffff`}
-          style={{ width:'80px', height:'80px', display:'block' }}
-          alt="Verify Certificate"
-          crossOrigin="anonymous"
-        />
-        <div style={{ fontSize:'9px', color:'#666', marginTop:'4px' }}>Scan to verify authenticity</div>
-        <div style={{ fontSize:'8px', color:'#999', marginTop:'2px' }}>{certId || assessmentId}</div>
-      </div>
-      <button
-        onClick={async () => {
-          try {
-            const { default: html2canvas } = await import('html2canvas');
-            const { jsPDF } = await import('jspdf');
-            const el = document.getElementById('smc-certificate');
-            if (!el) return;
-            const canvas = await html2canvas(el, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#0D1B2A' });
-            const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-            const imgData = canvas.toDataURL('image/png');
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-            pdf.save(`SeaMinds-Competency-Certificate-${certId || assessmentId}.pdf`);
-          } catch(e) { console.error('Download error:', e); }
-        }}
-        style={{ background:'#D4AF37', color:'#0D1B2A', border:'none', padding:'10px 24px', borderRadius:'8px', fontWeight:'bold', cursor:'pointer', marginTop:'8px', display:'block', width:'100%' }}>
-        ⬇ Download Certificate PDF
-      </button>
       {reportLoading && (
         <div style={{ textAlign:'center', color:'#D4AF37', padding:'16px', fontSize:'14px' }}>
           Generating your assessment report...
@@ -433,7 +406,7 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
       )}
 
       {/* Downloadable Certificate (hidden, rendered for PDF capture) */}
-      <div id="smc-certificate-print" style={{ display:'none', width:'1120px', padding:'60px', background:'#ffffff', fontFamily:'Georgia, serif' }}>
+      <div ref={printRef} aria-hidden="true" style={{ position:'fixed', left:'-20000px', top:0, width:'1120px', padding:'60px', background:'#ffffff', fontFamily:'Georgia, serif' }}>
         {/* Header */}
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', borderBottom:'3px solid #D4AF37', paddingBottom:'20px', marginBottom:'30px' }}>
           <img src="/seaminds-logo.png" style={{ width:'80px', height:'80px', borderRadius:'12px', objectFit:'contain' }} alt="SeaMinds" />
@@ -465,12 +438,7 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
             <div style={{ marginTop:'8px', fontStyle:'italic' }}>This certificate is digitally verified by SeaMinds AI.</div>
           </div>
           <div style={{ textAlign:'center' }}>
-            <img
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(`https://seaminds.life/verify/${certId || assessmentId}`)}&format=png&bgcolor=ffffff`}
-              style={{ width:'80px', height:'80px', display:'block' }}
-              alt="Verify Certificate"
-              crossOrigin="anonymous"
-            />
+            {qrPlain && <img src={qrPlain} style={{ width:'80px', height:'80px', display:'block' }} alt="Verify Certificate" />}
             <div style={{ fontSize:'9px', color:'#666', marginTop:'4px' }}>Scan to verify</div>
           </div>
         </div>
@@ -479,8 +447,9 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
       {/* Download Button */}
       <button
         onClick={handleDownloadCertificate}
-        style={{ background:'#D4AF37', color:'#0D1B2A', border:'none', padding:'12px 24px', borderRadius:'8px', fontWeight:'bold', cursor:'pointer', marginTop:'16px', display:'block', width:'100%', fontSize:'15px' }}>
-        ⬇ Download Certificate PDF
+        disabled={downloading}
+        style={{ opacity: downloading ? 0.6 : 1, background:'#D4AF37', color:'#0D1B2A', border:'none', padding:'12px 24px', borderRadius:'8px', fontWeight:'bold', cursor:'pointer', marginTop:'16px', display:'block', width:'100%', fontSize:'15px' }}>
+        {downloading ? 'Generating PDF…' : '⬇ Download Certificate PDF'}
       </button>
     </div>
   );
