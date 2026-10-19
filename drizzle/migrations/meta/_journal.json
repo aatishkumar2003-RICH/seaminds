@@ -470,6 +470,13 @@
       "when": 1792408508045,
       "tag": "0066_training_self_enrol_and_auto_assign",
       "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1792424094635,
+      "tag": "0067_ship_marketplace",
+      "breakpoints": true
     }
   ]
 }

@@ -60,6 +60,9 @@ const CountryHub = lazy(() => import("./pages/CountryHub"));
 const FleetHome = lazy(() => import("./pages/FleetHome"));
 const FleetLogin = lazy(() => import("./pages/FleetLogin"));
 const CrewTraining = lazy(() => import("./pages/CrewTraining"));
+const SailorsCockpit = lazy(() => import("./pages/SailorsCockpit"));
+const Marketplace = lazy(() => import("./pages/Marketplace"));
+const MarketplacePost = lazy(() => import("./pages/MarketplacePost"));
 const UserGuide = lazy(() => import("./pages/UserGuide"));
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -179,6 +182,9 @@ const App = () => (
             <Route path="/interview/:token/exam" element={<InterviewExam />} />
             <Route path="/training" element={<Suspense fallback={null}><CrewTraining /></Suspense>} />
             <Route path="/training/:token" element={<Suspense fallback={null}><CrewTraining /></Suspense>} />
+            <Route path="/cockpit" element={<Suspense fallback={null}><SailorsCockpit /></Suspense>} />
+            <Route path="/marketplace" element={<Suspense fallback={null}><Marketplace /></Suspense>} />
+            <Route path="/marketplace/post" element={<Suspense fallback={null}><MarketplacePost /></Suspense>} />
             <Route path="/join" element={<Join />} />
             <Route path="/join-free" element={<JoinLanding />} />
             <Route path="/manager" element={<ManagerAuth />} />

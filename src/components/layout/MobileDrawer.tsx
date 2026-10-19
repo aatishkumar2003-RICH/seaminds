@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import SOSButton from "@/components/SOSButton";
 import seamindsLogo from "@/assets/seaminds-logo.png";
-import { NAV_ITEMS, NATIONALITY_FLAGS, type NavItem, type Screen, type AppState } from "./types";
+import { NATIONALITY_FLAGS, type NavItem, type Screen, type AppState } from "./types";
+import GroupedNav from "./GroupedNav";
 
 interface MobileDrawerProps {
   drawerOpen: boolean;
@@ -82,47 +83,23 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
           <TooltipContent side="right">Sign Out</TooltipContent>
         </Tooltip>
       </div>
-      <div className="mb-6 flex items-center gap-1">
-      <a href="/profile" onClick={() => setDrawerOpen(false)} aria-label="My Sea Profile" className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-1 py-1 transition-colors hover:bg-secondary/60">
-        <span className="text-lg">{NATIONALITY_FLAGS[nationality] || "🌊"}</span>
-        <div className="flex min-w-0 flex-col break-words">
-          <span className="text-sm font-medium text-foreground">{firstName || "Seafarer"} {lastName}</span>
-          {role && <span className="text-xs text-muted-foreground">{role}</span>}
-        </div>
-      </a>
-      <Button variant="ghost" size="icon" onClick={() => setDrawerOpen(false)} aria-label="Close menu" title="Close menu" className="h-11 w-8 shrink-0 text-muted-foreground"><X aria-hidden="true" /></Button>
+      <div className="mb-3 flex items-start gap-1 rounded-xl border border-primary/30 bg-card/60 p-2">
+        <a href="/profile" onClick={() => setDrawerOpen(false)} aria-label="Open My Sea Profile" className="flex min-w-0 flex-1 flex-col gap-1">
+          <span className="flex items-center gap-1.5">
+            <span className="text-lg">{NATIONALITY_FLAGS[nationality] || "🌊"}</span>
+            <span className="min-w-0 break-words text-sm font-semibold text-foreground">{firstName || "Seafarer"} {lastName}</span>
+          </span>
+          {role && <span className="text-[11px] text-muted-foreground">{role}</span>}
+          <span className="mt-0.5 inline-flex w-fit items-center gap-1 rounded-full border border-primary/40 px-2 py-0.5 text-[10px] font-semibold text-primary">👤 My Sea Profile</span>
+        </a>
+        <Button variant="ghost" size="icon" onClick={() => setDrawerOpen(false)} aria-label="Close menu" title="Close menu" className="h-8 w-8 shrink-0 text-muted-foreground"><X aria-hidden="true" /></Button>
       </div>
-      <nav className="flex flex-1 flex-col gap-1">
-        {NAV_ITEMS.map((item) => {
-          const active = screen === item.screen && appState === "main";
-          return (
-             <button
-              key={item.screen}
-              onClick={() => onNavClick(item)}
-              className={`relative flex w-full items-center gap-2 rounded-lg border-l-2 px-2 py-2 text-left text-xs font-medium transition-colors ${active ? "border-primary bg-secondary text-foreground" : "border-transparent text-muted-foreground hover:bg-secondary/60 hover:text-foreground"}`}
-            >
-              <span className={`text-sm ${tourActiveScreen === item.screen ? "animate-pulse" : ""}`}>
-                {item.icon}
-              </span>
-              {tourActiveScreen === item.screen && (
-                <span className="absolute left-1.5 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full animate-ping opacity-20 bg-primary" />
-              )}
-              <span>{item.label}</span>
-              {item.screen === "opportunities" && jobBadgeCount > 0 && (
-                <span className="ml-auto flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">{jobBadgeCount}</span>
-              )}
-            </button>
-          );
-        })}
-      </nav>
-      <div className="mt-auto flex flex-col gap-2">
+      <GroupedNav screen={screen} active={appState === "main"} jobBadgeCount={jobBadgeCount} tourActiveScreen={tourActiveScreen} onNavClick={onNavClick} onAfterNavigate={() => setDrawerOpen(false)} />
+      <div className="mt-auto flex flex-col gap-1 pt-2">
         <Button asChild variant="ghost" size="sm" className="text-xs text-primary"><Link to="/guide?role=crew" onClick={() => setDrawerOpen(false)}><BookOpen />User Guide</Link></Button>
-        <button onClick={onReplayTour} className="flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground">
+        <button onClick={onReplayTour} className="flex items-center justify-center gap-1.5 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground">
           <HelpCircle size={14} /> Replay Tour
         </button>
-        <a href="/profile" className="flex items-center justify-center gap-1.5 py-2 text-xs font-semibold text-primary">
-          👤 My Sea Profile
-        </a>
         <button onClick={() => setAboutOpen(true)} className="flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground">
           ⓘ About SeaMinds
         </button>
