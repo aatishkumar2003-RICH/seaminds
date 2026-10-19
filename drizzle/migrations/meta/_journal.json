@@ -484,6 +484,13 @@
       "when": 1792424715595,
       "tag": "0068_ship_listings_hide_contacts_from_public",
       "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1792424764583,
+      "tag": "0069_ship_photos_read_only_listed",
+      "breakpoints": true
     }
   ]
 }
