@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQrDataUrl } from "@/lib/qrDataUrl";
 import { TrendingUp, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface SubScore {
   name: string;
@@ -218,51 +219,64 @@ const SMCScoreCertificate = ({ data: hint, onImproveScore }: SMCScoreCertificate
     ro.observe(el); return () => ro.disconnect();
   }, [cert, showImprove]);
 
+  const certCardRef = useRef<HTMLDivElement>(null);
+  const [busy, setBusy] = useState<null | "png" | "pdf" | "share">(null);
+
+  // Captures ONLY the 900x600 certificate card (never the whole page), at full size.
   const captureAsImage = async (): Promise<string> => {
-    const { default: html2canvas } = await import("html2canvas");
-    const el = document.getElementById("smc-certificate");
+    const el = certCardRef.current;
     if (!el) throw new Error("Certificate element not found");
-    // Capture at full 900x600 size, ignoring the on-screen fit-to-width scaling.
+    const { default: html2canvas } = await import("html2canvas");
+    await new Promise((r) => setTimeout(r, 50)); // let the "Generating…" state paint first
     const canvas = await html2canvas(el, {
-      scale: 2, useCORS: true, backgroundColor: "#0D1B2A", width: 900, height: 600,
-      onclone: (doc) => { const c = doc.getElementById("smc-certificate"); if (c) { c.style.transform = "none"; c.style.marginBottom = "0"; } },
+      scale: 2, useCORS: true, backgroundColor: "#0D1B2A", width: 900, height: 600, logging: false,
+      onclone: (doc) => { const c = doc.querySelector<HTMLElement>('[data-cert-card="1"]'); if (c) { c.style.transform = "none"; c.style.marginBottom = "0"; } },
     });
     return canvas.toDataURL("image/png");
   };
 
-  const handleDownloadPNG = async () => {
-    try {
-      const dataUrl = await captureAsImage();
-      const link = document.createElement("a");
-      link.download = `SeaMinds-Certificate-${cert?.certificateId}.png`;
-      link.href = dataUrl;
-      link.click();
-    } catch (e) { console.error(e); }
+  const run = async (kind: "png" | "pdf" | "share", fn: () => Promise<void>) => {
+    if (busy) return;
+    setBusy(kind);
+    try { await fn(); }
+    catch (e) { console.error(e); toast.error("Could not create the certificate file. Please try again."); }
+    finally { setBusy(null); }
   };
 
-  const handleDownloadPDF = async () => {
-    try {
-      const dataUrl = await captureAsImage();
-      const { jsPDF } = await import("jspdf");
-      const pdf = new jsPDF({ orientation: "landscape", unit: "px", format: [1200, 800] });
-      pdf.addImage(dataUrl, "PNG", 0, 0, 1200, 800);
-      pdf.save(`SeaMinds-Certificate-${cert?.certificateId}.pdf`);
-    } catch (e) { console.error(e); }
+  const savePng = async () => {
+    const dataUrl = await captureAsImage();
+    const link = document.createElement("a");
+    link.download = `SeaMinds-Certificate-${cert?.certificateId}.png`;
+    link.href = dataUrl;
+    link.click();
+    toast.success("Certificate image saved");
   };
+  const handleDownloadPNG = () => run("png", savePng);
 
-  const handleShare = async () => {
+  const handleDownloadPDF = () => run("pdf", async () => {
+    const dataUrl = await captureAsImage();
+    const { jsPDF } = await import("jspdf");
+    const pdf = new jsPDF({ orientation: "landscape", unit: "px", format: [1200, 800] });
+    pdf.addImage(dataUrl, "PNG", 0, 0, 1200, 800);
+    pdf.save(`SeaMinds-Certificate-${cert?.certificateId}.pdf`);
+    toast.success("Certificate PDF downloaded");
+  });
+
+  const handleShare = () => run("share", async () => {
     if (!cert) return;
-    try {
-      const dataUrl = await captureAsImage();
-      const blob = await (await fetch(dataUrl)).blob();
-      const file = new File([blob], `SeaMinds-Certificate-${cert.certificateId}.png`, { type: "image/png" });
-      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+    const dataUrl = await captureAsImage();
+    const blob = await (await fetch(dataUrl)).blob();
+    const file = new File([blob], `SeaMinds-Certificate-${cert.certificateId}.png`, { type: "image/png" });
+    if (navigator.share && navigator.canShare?.({ files: [file] })) {
+      try {
         await navigator.share({ files: [file], title: "My SeaMinds Certified Score", text: `I scored ${cert.overallScore.toFixed(2)} on my SeaMinds Competency Assessment as ${cert.rank}.` });
-      } else {
-        handleDownloadPNG();
-      }
-    } catch (e) { console.error(e); }
-  };
+      } catch (e: any) { if (e?.name !== "AbortError") throw e; }
+    } else {
+      const link = document.createElement("a");
+      link.download = file.name; link.href = dataUrl; link.click();
+      toast.success("Sharing isn't supported here — image saved instead");
+    }
+  });
 
   if (loading) {
     return (
@@ -339,7 +353,8 @@ const SMCScoreCertificate = ({ data: hint, onImproveScore }: SMCScoreCertificate
         {/* Certificate Card */}
         <div ref={fitRef} style={{ width: '100%', height: `${600 * fit}px`, overflow: 'hidden' }}>
         <div
-          id="smc-certificate"
+          ref={certCardRef}
+          data-cert-card="1"
           style={{
             width: '900px',
             height: '600px',
@@ -523,14 +538,14 @@ const SMCScoreCertificate = ({ data: hint, onImproveScore }: SMCScoreCertificate
 
         {/* Export buttons */}
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <button onClick={handleDownloadPNG} style={{ background: '#0D1B2A', border: '1px solid #D4AF37', color: '#D4AF37', padding: '10px 18px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
-            ⬇ Save as Image
+          <button disabled={!!busy} onClick={handleDownloadPNG} style={{ opacity: busy ? 0.6 : 1, background: '#0D1B2A', border: '1px solid #D4AF37', color: '#D4AF37', padding: '10px 18px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
+            {busy === "png" ? "Saving…" : "⬇ Save as Image"}
           </button>
-          <button onClick={handleDownloadPDF} style={{ background: '#D4AF37', border: 'none', color: '#0D1B2A', padding: '10px 18px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
-            ⬇ Download PDF
+          <button disabled={!!busy} onClick={handleDownloadPDF} style={{ opacity: busy ? 0.6 : 1, background: '#D4AF37', border: 'none', color: '#0D1B2A', padding: '10px 18px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
+            {busy === "pdf" ? "Generating PDF…" : "⬇ Download PDF"}
           </button>
-          <button onClick={handleShare} style={{ background: '#1a5a3a', border: 'none', color: 'white', padding: '10px 18px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
-            ↗ Share Certificate
+          <button disabled={!!busy} onClick={handleShare} style={{ opacity: busy ? 0.6 : 1, background: '#1a5a3a', border: 'none', color: 'white', padding: '10px 18px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
+            {busy === "share" ? "Preparing…" : "↗ Share Certificate"}
           </button>
         </div>
 
