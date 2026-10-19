@@ -78,6 +78,23 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   const [sectionCard, setSectionCard] = useState<{ type: string; label: string; num: string; icon: string } | null>(null);
   const prevSectionType = useRef<string | null>(null);
   const introShown = useRef(false);
+  // One section-card timer at a time; the card's target index is applied exactly once (timer OR Continue tap).
+  const sectionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sectionTargetRef = useRef<number | null>(null);
+  const dismissSectionCard = () => {
+    if (sectionTimerRef.current) { clearTimeout(sectionTimerRef.current); sectionTimerRef.current = null; }
+    const target = sectionTargetRef.current;
+    sectionTargetRef.current = null;
+    setSectionCard(null);
+    if (target !== null) setQIndex(target);
+  };
+  const showSectionCard = (card: { type: string; label: string; num: string; icon: string }, target: number | null) => {
+    if (sectionTimerRef.current) clearTimeout(sectionTimerRef.current);
+    sectionTargetRef.current = target;
+    setSectionCard(card);
+    sectionTimerRef.current = setTimeout(dismissSectionCard, 4000);
+  };
+  useEffect(() => () => { if (sectionTimerRef.current) clearTimeout(sectionTimerRef.current); }, []);
 
   // Timer state
   const [timeLeft, setTimeLeft] = useState(60);
@@ -226,8 +243,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   useEffect(() => {
     if (flowStep === 'questions' && flatQuestions.length > 0 && !introShown.current) {
       introShown.current = true;
-      setSectionCard({ type: 'mcq', label: '📋 Knowledge Assessment', num: 'Section 1', icon: '📋' });
-      setTimeout(() => setSectionCard(null), 4000);
+      showSectionCard({ type: 'mcq', label: '📋 Knowledge Assessment', num: 'Section 1', icon: '📋' }, null);
     }
   }, [flowStep, flatQuestions]);
 
@@ -269,7 +285,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
       window.removeEventListener('offline', onOffline);
       window.removeEventListener('online', onOnline);
     };
-  }, [flowStep, assessmentId, qIndex]);
+  }, [flowStep, assessmentId]);
 
   // Tab switch detection
   useEffect(() => {
@@ -283,21 +299,16 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, []);
 
-  // Countdown timer
+  // Countdown timer — the updater stays pure; expiry is handled in the effect below.
   useEffect(() => {
     if (!timerActive || flowStep !== 'questions' || netDown) return; // paused while offline: never expire as candidate failure
-    const interval = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          handleAutoSubmit();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    const interval = setInterval(() => setTimeLeft(prev => (prev <= 1 ? 0 : prev - 1)), 1000);
     return () => clearInterval(interval);
   }, [qIndex, timerActive, flowStep, netDown]);
+  useEffect(() => {
+    if (timeLeft === 0 && timerActive && flowStep === 'questions' && !netDown) handleAutoSubmit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeLeft, timerActive]);
 
   // Paste detection
   const handlePaste = () => {
@@ -519,27 +530,25 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     } finally { setEvaluating(false); submittingRef.current = false; }
   };
 
+  // Absolute target index (never relative "+1"), so a late timer or double tap cannot skip or overflow.
   const advanceQuestion = () => {
-    if (qIndex + 1 < flatQuestions.length) {
-      const nextQ = flatQuestions[qIndex + 1];
-      const currQ = flatQuestions[qIndex];
-      // Show section title card when switching sections
-      if (nextQ && currQ && nextQ.type !== currQ.type) {
-        const label = nextQ.type === 'scenario' ? '🚨 Situational Judgment' : '🧭 Professional Behaviour';
-        const num = nextQ.type === 'scenario' ? 'Section 2' : 'Section 3';
-        const icon = nextQ.type === 'scenario' ? '🚨' : '💬';
-        setSectionCard({ type: nextQ.type, label, num, icon });
-        setTimeout(() => {
-          setSectionCard(null);
-          setQIndex(prev => prev + 1);
-        }, 4000);
-      } else {
-        setQIndex(prev => prev + 1);
-      }
+    const target = qIndex + 1;
+    if (target >= flatQuestions.length) { void finishPaper(); return; }
+    const nextQ = flatQuestions[target];
+    const currQ = flatQuestions[qIndex];
+    if (nextQ && currQ && nextQ.type !== currQ.type) {
+      const label = nextQ.type === 'scenario' ? '🚨 Situational Judgment' : '🧭 Professional Behaviour';
+      const num = nextQ.type === 'scenario' ? 'Section 2' : 'Section 3';
+      const icon = nextQ.type === 'scenario' ? '🚨' : '💬';
+      showSectionCard({ type: nextQ.type, label, num, icon }, target);
     } else {
-      void finishPaper();
+      setQIndex(target);
     }
   };
+  // Safety net: an out-of-range index must never render a blank question.
+  useEffect(() => {
+    if (flowStep === 'questions' && flatQuestions.length > 0 && qIndex >= flatQuestions.length) setQIndex(flatQuestions.length - 1);
+  }, [qIndex, flatQuestions.length, flowStep]);
 
   // Server-verified finish: every issued item must have a durably saved answer before scoring starts.
   const finishPaper = async () => {
@@ -963,11 +972,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
                     : 'Your responses are confidential'}
               </motion.p>
               <button
-                onClick={() => {
-                  const needsAdvance = flatQuestions[qIndex]?.type !== sectionCard.type;
-                  setSectionCard(null);
-                  if (needsAdvance) setQIndex(prev => prev + 1);
-                }}
+                onClick={dismissSectionCard}
                 style={{
                   marginTop: 20, width: "100%", padding: "13px 0", borderRadius: 12,
                   background: "#D4AF37", color: "#0D1B2A", border: "none",
