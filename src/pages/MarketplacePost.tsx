@@ -4,7 +4,7 @@ import { ChevronLeft, ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { VESSEL_TYPES, MAX_PHOTOS, MARKETPLACE_NOTICE, compressPhoto } from "@/lib/shipMarketplace";
+import { VESSEL_TYPES, MAX_PHOTOS, MARKETPLACE_NOTICE, SELLER_DECLARATION, compressPhoto } from "@/lib/shipMarketplace";
 
 const inp = "w-full rounded-xl border border-primary/30 bg-card px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary";
 const num = (v: string) => (v.trim() === "" ? null : Number(v.replace(/,/g, "")) || null);
@@ -117,7 +117,9 @@ const MarketplacePost = () => {
                 <label key={v} className="flex items-center gap-2 text-xs"><input type="radio" name="auth" checked={authority === v} onChange={() => setAuthority(v)} />{l}</label>
               ))}
               <p className="text-[11px] leading-snug text-muted-foreground">{MARKETPLACE_NOTICE}</p>
-              <label className="flex items-start gap-2 text-xs"><input type="checkbox" className="mt-0.5" checked={agree} onChange={(e) => setAgree(e.target.checked)} />I confirm the details are accurate to my knowledge, I am authorised to offer this vessel, and I accept the notice above.</label>
+              <div className="space-y-1"><p className="text-xs font-bold text-primary">Seller's declaration of authority and accuracy</p>
+                <ol className="list-decimal space-y-1 pl-4 text-[11px] leading-snug text-muted-foreground">{SELLER_DECLARATION.map((d) => <li key={d}>{d}</li>)}</ol></div>
+              <label className="flex items-start gap-2 text-xs"><input type="checkbox" className="mt-0.5" checked={agree} onChange={(e) => setAgree(e.target.checked)} />I confirm and warrant each statement in the seller's declaration above, and I accept the marketplace notice and the <a href="/terms" target="_blank" rel="noreferrer" className="text-primary underline">Terms of Service</a>.</label>
             </section>
             <button disabled={busy} onClick={submit} className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground disabled:opacity-60">{busy ? "Publishing…" : "Publish listing (free)"}</button>
           </>
