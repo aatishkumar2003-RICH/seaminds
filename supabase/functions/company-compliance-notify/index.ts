@@ -48,10 +48,10 @@ Deno.serve(async (req) => {
         const { data: cc } = await sb.from('company_compliance').select('requested_items,admin_note').eq('manager_user_id', target).maybeSingle();
         const items = (cc?.requested_items || []).map((i: string) => `<li>${esc(i)}</li>`).join('');
         subject = `Action required: SeaMinds company verification for ${mp?.company_name || 'your company'}`;
-        html = shell('🛡️ Company Verification', `<p>Dear ${name},</p><p>Thank you for registering <b>${co}</b> on SeaMinds. To protect our seafarers and activate your verified employer status, please provide the following in your Manager Portal:</p><ul>${items}</ul>${cc?.admin_note ? `<p style="color:#D4AF37">Note: ${esc(cc.admin_note)}</p>` : ''}<p style="color:#94A3B8;font-size:12px">Please do not reply with attachments — upload them securely in your portal so our team can review them in one place.</p>`, { href: 'https://seaminds.life/management?tab=compliance', label: 'Upload in Manager Portal →' });
+        html = shell('🛡️ Company Verification', `<p>Dear ${name},</p><p>Thank you for registering <b>${co}</b> on SeaMinds. To protect our seafarers and activate your verified employer status, please provide the following in your Manager Portal:</p><ul>${items}</ul>${cc?.admin_note ? `<p style="color:#D4AF37">Note: ${esc(cc.admin_note)}</p>` : ''}<p style="color:#94A3B8;font-size:12px">Please do not reply with attachments — upload them securely in your portal so our team can review them in one place.</p>`, { href: 'https://seaminds.life/manager/dashboard#compliance', label: 'Upload in Manager Portal →' });
       } else {
         subject = `🎉 Account approved: welcome to SeaMinds, ${mp?.company_name || ''}`.trim();
-        html = shell('🎉 Your company is approved', `<p>Dear ${name},</p><p><b>${co}</b> has been reviewed and approved by SeaMinds.</p><p>Your account is now fully active: publish vacancies, review applicants and run interviews from your dashboard.</p>`, { href: 'https://seaminds.life/management', label: 'Open Manager Dashboard →' });
+        html = shell('🎉 Your company is approved', `<p>Dear ${name},</p><p><b>${co}</b> has been reviewed and approved by SeaMinds.</p><p>Your account is now fully active: publish vacancies, review applicants and run interviews from your dashboard.</p>`, { href: 'https://seaminds.life/manager/dashboard', label: 'Open Manager Dashboard →' });
       }
     } else if (event === 'docs_submitted') {
       const { mp, email } = await managerInfo(caller.id);
