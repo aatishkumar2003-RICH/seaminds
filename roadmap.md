@@ -1,5 +1,10 @@
 # SeaMinds — Global Vacancy Growth Roadmap
 
+## Owner plan and reward controls
+- [ ] Add private global plan editor for crew, ship managers and fleet management, with editable name, USD amount, credits, interval and archive state.
+- [ ] Add owner-controlled reward amounts/reminders, evidence-based one-time CV/score grants and completion-only referrals.
+- [ ] Show role-aware wallet reminders/history; audit personal referrals and credits in admin; verify persistence, permissions and duplicate protection.
+
 ## Interactive user guide
 - [x] Build role-aware crew, ShipManager and staff guide with shareable lessons, actual privacy-safe screenshots and seminar/browser-narration controls.
 - [x] Connect homepage, crew/manager menus and staff sign-in; reuse DORA and support escalation without changing authentication.
