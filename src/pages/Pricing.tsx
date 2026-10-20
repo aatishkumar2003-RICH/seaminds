@@ -12,13 +12,13 @@ import { supabase } from "@/integrations/supabase/client";
 
 const tiers = [
   {
-    name: "Free",
-    subtitle: "First 1,000 crew members",
-    getPrice: (p: any) => `$${p.free}`,
-    period: "forever",
+    name: "Crew access",
+    subtitle: "Free during our growth phase",
+    getPrice: (_p: any) => "Free today",
+    period: "",
     icon: Anchor,
     features: [
-      "AI wellness chat (5/month)",
+      "Private AI wellness chat",
       "Daily mood check-ins",
       "Community forum access",
       "Maritime news feed",
@@ -110,11 +110,11 @@ const Pricing = () => {
   return (
     <div className="min-h-screen text-foreground" style={{ background: "linear-gradient(180deg, hsl(210 50% 8%) 0%, hsl(210 40% 12%) 50%, hsl(210 50% 8%) 100%)" }}>
       <Helmet>
-        <title>SeaMinds Pricing — Plans for Seafarers & Companies</title>
-        <meta name="description" content="Free forever for seafarers, with an affordable Pro plan. Companies can request founding access during launch." />
+        <title>SeaMinds — Free Crew & Company Access</title>
+        <meta name="description" content="SeaMinds is free during our growth phase. Explore crew tools and request company access." />
         <link rel="canonical" href="https://seaminds.life/pricing" />
-        <meta property="og:title" content="SeaMinds Pricing — Plans for Seafarers & Companies" />
-        <meta property="og:description" content="Free forever for seafarers. Founding company access open during launch." />
+        <meta property="og:title" content="SeaMinds — Free Crew & Company Access" />
+        <meta property="og:description" content="Free crew tools and founding company access during our growth phase." />
         <meta property="og:url" content="https://seaminds.life/pricing" />
         <meta property="og:image" content="https://seaminds.life/og-image.png" />
         <script type="application/ld+json">{JSON.stringify({
@@ -132,16 +132,16 @@ const Pricing = () => {
       <main className="pt-24 pb-16 px-4 sm:px-6">
         <div className="max-w-5xl mx-auto text-center mb-14">
           <h1 className="text-3xl sm:text-4xl font-bold mb-3" style={{ color: "#D4AF37" }}>
-            Simple, Transparent Pricing
+            SeaMinds — Free Today
           </h1>
           <p className="text-muted-foreground max-w-xl mx-auto">
-            Whether you're a seafarer looking after your wellbeing or a company managing a fleet — there's a plan for you.
+            Crew tools and standard vacancy posting remain free during our growth phase. Company access remains approval-gated.
           </p>
         </div>
 
         {/* Pricing Cards */}
         <div className="max-w-5xl mx-auto grid sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
-          {tiers.filter((t) => t.name !== "Company").map((t) => {
+          {tiers.filter((t) => t.name === "Crew access").map((t) => {
             const Icon = t.icon;
             return (
               <Card
@@ -211,7 +211,7 @@ const Pricing = () => {
             <h2 className="text-2xl font-bold mb-3" style={{ color: "#D4AF37" }}>Founding Company Access</h2>
             <p className="text-sm text-muted-foreground leading-relaxed mb-6">
               SeaMinds is onboarding a limited group of founding companies during launch — full platform access, free,
-              with direct founder support. Pricing will be announced after the founding period.
+               with direct founder support. Crew search remains closed until opened by the owner.
             </p>
             <a href="mailto:admin@seaminds.life?subject=Founding%20Company%20Access">
               <Button className="w-full font-bold border-0" style={{ background: "linear-gradient(90deg, #D4AF37, #C5941F)", color: "#0D1B2A" }}>
