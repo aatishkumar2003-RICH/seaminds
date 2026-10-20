@@ -1,9 +1,13 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 const RESEND_KEY = Deno.env.get('RESEND_API_KEY')!;
+const ADMIN_UID = '492ee966-e015-4440-a415-6ad6275a4a9b';
+const ADMIN_URL = 'https://seaminds.life/admin';
+const COOLDOWN_MS = 12 * 60 * 60 * 1000;
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const clip = (v: unknown, n = 120) => (typeof v === 'string' ? v.slice(0, n) : '');
+const esc = (s: unknown) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 
 async function getUser(req: Request) {
   const token = (req.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '').trim();
@@ -31,27 +35,26 @@ async function allowAnonymous(ip: string) {
   return true;
 }
 
+function renderEmail(o: { title: string; band: string; ink: string; time: string; rows: [string, string, string][]; stat?: [string, string]; button: [string, string] }) {
+  const rows = o.rows.map(([i, l, v]) => `<tr><td style="padding:8px;border-bottom:1px solid #1e3a5f;color:#D4AF37;font-size:13px;white-space:nowrap">${i} ${esc(l)}</td><td style="padding:8px;border-bottom:1px solid #1e3a5f;color:#fff;font-size:13px;word-break:break-all">${esc(v || '-')}</td></tr>`).join('');
+  const stat = o.stat ? `<div style="text-align:center;padding:16px"><div style="font-size:28px;font-weight:bold;color:#D4AF37">${esc(o.stat[0])}</div><div style="color:#9CA3AF;font-size:12px">${esc(o.stat[1])}</div></div>` : '';
+  return `<div style="font-family:system-ui;max-width:520px;margin:0 auto;background:#0D1B2A;color:#fff;border-radius:12px;overflow:hidden"><div style="background:${o.band};padding:20px;text-align:center"><h2 style="margin:0;color:${o.ink}">${esc(o.title)}</h2><p style="margin:4px 0 0;color:${o.ink};font-size:13px">${esc(o.time)} WIB</p></div><table style="width:100%;padding:16px;border-collapse:collapse">${rows}</table>${stat}<div style="text-align:center;padding:4px 16px 20px"><a href="${o.button[1]}" style="display:inline-block;background:#D4AF37;color:#0D1B2A;padding:11px 24px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:13px">${esc(o.button[0])}</a></div><div style="text-align:center;padding:12px;background:rgba(255,255,255,0.03);color:#666;font-size:11px">SeaMinds — PT Indoglobal Service Solutions</div></div>`;
+}
+
 Deno.serve(async (req) => {
   const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type' };
   if (req.method === 'OPTIONS') return new Response(null, { headers: cors });
+  const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
   try {
     const user = await getUser(req);
     if (!user) {
       const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-      if (!(await allowAnonymous(ip))) {
-        return new Response(JSON.stringify({ success: false, error: 'Rate limit exceeded' }), {
-          status: 429, headers: { ...cors, 'Content-Type': 'application/json' },
-        });
-      }
+      if (!(await allowAnonymous(ip))) return json({ success: false, error: 'Rate limit exceeded' }, 429);
     }
 
     const body = await req.json();
-    const email = user?.email || clip(body.email);
-    if (!EMAIL_RE.test(email)) {
-      return new Response(JSON.stringify({ success: false, error: 'Invalid email' }), {
-        status: 400, headers: { ...cors, 'Content-Type': 'application/json' },
-      });
-    }
+    const email = (user?.email || clip(body.email)).trim().toLowerCase();
+    if (!EMAIL_RE.test(email)) return json({ success: false, error: 'Invalid email' }, 400);
     const first_name = clip(body.first_name, 60);
     const last_name = clip(body.last_name, 60);
     const nationality = clip(body.nationality, 60);
@@ -59,62 +62,117 @@ Deno.serve(async (req) => {
     const role = clip(body.role, 60);
     const vessel_type = clip(body.vessel_type, 60);
     const ship_name = clip(body.ship_name, 60);
+    const name = `${first_name} ${last_name}`.trim();
 
-    // Query builders are thenable but not Promises — wrap so failures never throw
+    const isLogin = /^Login via/i.test(role);
+    const isLinkRequest = /^Email Magic Link/i.test(role);
+    const provider = isLogin ? role.replace(/^Login via\s*/i, '') : (isLinkRequest ? 'magic link' : 'registration');
+
     const safe = async (run: () => unknown) => { try { await run(); } catch { /* ignore */ } };
 
-    // Save to signup log
-    await safe(() => supabase.from('signup_log').insert({ email, first_name, last_name, nationality, whatsapp_number, role, vessel_type, ship_name, notified: true }));
+    // ── Who is this? (server-side lookup, never trusted from the client) ──
+    let kind: 'admin' | 'manager' | 'workspace' | 'crew_new' | 'crew_login' | 'link_request' = isLinkRequest ? 'link_request' : (isLogin ? 'crew_login' : 'crew_new');
+    let mgr: any = null; let staff: any = null; let crew: any = null;
+    if (user) {
+      if (user.id === ADMIN_UID) kind = 'admin';
+      else {
+        const [m, s, c] = await Promise.all([
+          supabase.from('manager_profiles').select('company_name,company_type,full_name,designation,phone,country,admin_approved,created_at').eq('user_id', user.id).maybeSingle(),
+          supabase.from('fleet_staff_members').select('full_name,approved_role,requested_role,company,status').eq('user_id', user.id).maybeSingle(),
+          supabase.from('crew_profiles').select('first_name,last_name,role,nationality,whatsapp_number,vessel_type').eq('id', user.id).maybeSingle(),
+        ]);
+        mgr = m.data; staff = s.data; crew = c.data;
+        if (mgr) kind = 'manager';
+        else if (staff) kind = 'workspace';
+      }
+    }
 
-    // Log the signup as an app event so the monitor digest can report it
-    await safe(() => supabase.from('app_events').insert({
-      event_type: 'crew_signup',
-      message: `${first_name || ''} ${last_name || ''} joined SeaMinds`.trim(),
-      severity: 'info',
-      emailed: false,
-      metadata: {
-        name: `${first_name || ''} ${last_name || ''}`.trim(),
-        rank: role || '',
-        nationality: nationality || '',
-        email: email || '',
-      },
-    }));
+    // ── 12-hour cooldown for routine sign-ins (registrations always alert) ──
+    let send = true;
+    if (kind !== 'crew_new') {
+      const since = new Date(Date.now() - COOLDOWN_MS).toISOString();
+      const { count } = await supabase.from('signup_log').select('id', { count: 'exact', head: true })
+        .eq('email', email).eq('notified', true).gte('signed_up_at', since);
+      if ((count || 0) > 0) send = false;
+    }
 
-    // Upsert to email leads
+    await safe(() => supabase.from('signup_log').insert({ email, first_name, last_name, nationality, whatsapp_number, role, vessel_type, ship_name, notified: send }));
+
+    if (kind === 'crew_new') {
+      await safe(() => supabase.from('app_events').insert({
+        event_type: 'crew_signup', message: `${name} joined SeaMinds`.trim(), severity: 'info', emailed: false,
+        metadata: { name, rank: role, nationality, email },
+      }));
+    }
     await safe(() => supabase.rpc('upsert_email_lead', { p_email: email, p_first_name: first_name, p_last_name: last_name, p_nationality: nationality, p_whatsapp: whatsapp_number, p_role: role, p_vessel_type: vessel_type, p_source: 'registration' }));
 
+    if (!send) return json({ success: true, skipped: 'cooldown' });
 
-    // Get total crew count
-    const { count } = await supabase.from('crew_profiles').select('*', { count: 'exact', head: true });
     const t = new Date().toLocaleString('en-GB', { timeZone: 'Asia/Jakarta', dateStyle: 'medium', timeStyle: 'short' });
+    let subject = ''; let html = '';
 
-    // Send email notification with retry
+    if (kind === 'admin') {
+      subject = `🛡️ Admin Sign-In: ${email}`;
+      html = renderEmail({ title: '🛡️ Admin Console Access', band: 'linear-gradient(135deg,#D4AF37,#9B1C1C)', ink: '#fff', time: t,
+        rows: [['📧', 'Email', email], ['👤', 'Name', name || 'Atish Kumar'], ['🔑', 'Signed in with', provider]],
+        button: ['Open Admin Dashboard →', ADMIN_URL] });
+    } else if (kind === 'manager') {
+      const status = mgr.admin_approved ? 'Approved' : 'Approval pending';
+      const mName = mgr.full_name || name;
+      if (!mgr.admin_approved) {
+        const days = Math.max(0, Math.floor((Date.now() - new Date(mgr.created_at).getTime()) / 86400000));
+        subject = `⏳ Approval Pending: ${email} — ${mgr.company_name || 'Company'}`;
+        html = renderEmail({ title: '⏳ Company Approval Required', band: 'linear-gradient(135deg,#f59e0b,#D4AF37)', ink: '#0D1B2A', time: t,
+          rows: [['📧', 'Email', email], ['🏢', 'Company', mgr.company_name], ['🏷️', 'Type', mgr.company_type], ['👤', 'Manager', [mName, mgr.designation].filter(Boolean).join(', ')], ['📱', 'Phone / WhatsApp', mgr.phone], ['🌍', 'Country', mgr.country], ['🕒', 'Waiting', `${days} day(s)`], ['🔑', 'Signed in with', provider]],
+          button: ['Review & Approve →', `${ADMIN_URL}?tab=company_approval`] });
+      } else {
+        subject = `👔 Ship Manager Sign-In: ${email} — ${mgr.company_name || 'Company'} (${status})`;
+        html = renderEmail({ title: '👔 Ship Manager Signed In', band: 'linear-gradient(135deg,#D4AF37,#B8860B)', ink: '#0D1B2A', time: t,
+          rows: [['📧', 'Email', email], ['👤', 'Manager', mName], ['🏢', 'Company', mgr.company_name], ['🏷️', 'Type', mgr.company_type], ['✅', 'Status', status], ['📱', 'Phone / WhatsApp', mgr.phone], ['🔑', 'Signed in with', provider]],
+          button: ['View Companies →', `${ADMIN_URL}?tab=company_approval`] });
+      }
+    } else if (kind === 'workspace') {
+      const r = staff.approved_role || staff.requested_role || 'Staff';
+      subject = `🚢 Fleet Workspace Sign-In: ${email} — ${r}${staff.company ? ` (${staff.company})` : ''}`;
+      html = renderEmail({ title: '🚢 Fleet Workspace Access', band: 'linear-gradient(135deg,#06b6d4,#0D1B2A)', ink: '#fff', time: t,
+        rows: [['📧', 'Email', email], ['👤', 'Name', staff.full_name || name], ['🧭', 'Role', r], ['🏢', 'Company', staff.company], ['✅', 'Status', staff.status], ['🔑', 'Signed in with', provider]],
+        button: ['Open Admin Dashboard →', ADMIN_URL] });
+    } else if (kind === 'link_request') {
+      subject = `✉️ Sign-In Link Requested: ${email}`;
+      html = renderEmail({ title: '✉️ Email Sign-In Link Requested', band: 'linear-gradient(135deg,#334155,#0D1B2A)', ink: '#fff', time: t,
+        rows: [['📧', 'Email', email]], button: ['Open Admin Dashboard →', ADMIN_URL] });
+    } else {
+      const cn = crew ? `${crew.first_name || ''} ${crew.last_name || ''}`.trim() : '';
+      const rank = (kind === 'crew_new' ? role : crew?.role) || '';
+      const nat = nationality || crew?.nationality || '';
+      const { count } = await supabase.from('crew_profiles').select('*', { count: 'exact', head: true });
+      const rows: [string, string, string][] = [['📧', 'Email', email], ['👤', 'Name', name || cn], ['⚓', 'Rank', rank], ['🌍', 'Nationality', nat], ['📱', 'WhatsApp', whatsapp_number || crew?.whatsapp_number || ''], ['🚢', 'Vessel', vessel_type || crew?.vessel_type || '']];
+      if (kind === 'crew_new') {
+        rows.push(['🛳️', 'Ship', ship_name]);
+        subject = `🆕 New Crew: ${email} — ${[rank, name].filter(Boolean).join(' ')}${nat ? ` (${nat})` : ''} — ${count ?? '?'} total`;
+        html = renderEmail({ title: '⚓ New Crew Member Registered', band: 'linear-gradient(135deg,#D4AF37,#B8860B)', ink: '#0D1B2A', time: t, rows, stat: [String(count ?? '?'), 'total crew on SeaMinds'], button: ['View in Admin Dashboard →', `${ADMIN_URL}?tab=crew`] });
+      } else {
+        rows.push(['🔑', 'Signed in with', provider]);
+        subject = `⚓ Crew Sign-In: ${email}${rank ? ` — ${rank}` : ''}${nat ? ` (${nat})` : ''}`;
+        html = renderEmail({ title: '⚓ Seafarer Signed In', band: 'linear-gradient(135deg,#1e3a5f,#0D1B2A)', ink: '#D4AF37', time: t, rows, button: ['View in Admin Dashboard →', `${ADMIN_URL}?tab=crew`] });
+      }
+    }
+
     let lastError: string | null = null;
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
         const res = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${RESEND_KEY}` },
-          body: JSON.stringify({
-            from: 'SeaMinds <crew@seaminds.life>',
-            to: ['aatishkumar2003@gmail.com'],
-            subject: `🆕 ${first_name || ''} ${last_name || ''} joined SeaMinds — ${count} total crew`,
-            html: `<div style="font-family:system-ui;max-width:500px;margin:0 auto;background:#0D1B2A;color:white;border-radius:12px;overflow:hidden"><div style="background:linear-gradient(135deg,#D4AF37,#B8860B);padding:20px;text-align:center"><h2 style="margin:0;color:#0D1B2A">⚓ New Crew Member!</h2><p style="margin:4px 0 0;color:#0D1B2A;font-size:13px">${t} WIB</p></div><table style="width:100%;padding:16px;border-collapse:collapse">${[['📧','Email',email||'-'],['👤','Name',`${first_name||''} ${last_name||''}`],['📱','WhatsApp',whatsapp_number||'-'],['🌍','Nationality',nationality||'-'],['⚓','Role',role||'-'],['🚢','Vessel',vessel_type||'-'],['🛳️','Ship',ship_name||'-']].map(([icon,label,val])=>`<tr><td style="padding:8px;border-bottom:1px solid #1e3a5f;color:#D4AF37;font-size:13px">${icon} ${label}</td><td style="padding:8px;border-bottom:1px solid #1e3a5f;color:white;font-size:13px">${val}</td></tr>`).join('')}</table><div style="text-align:center;padding:16px"><div style="font-size:28px;font-weight:bold;color:#D4AF37">${count || '?'}</div><div style="color:#9CA3AF;font-size:12px">total crew on SeaMinds</div></div><div style="text-align:center;padding:0 16px 20px"><a href="https://seaminds.lovable.app/admin" style="display:inline-block;background:#D4AF37;color:#0D1B2A;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:13px">View in Admin Dashboard →</a></div><div style="text-align:center;padding:12px;background:rgba(255,255,255,0.03);color:#555;font-size:11px">SeaMinds — PT Indoglobal Service Solutions</div></div>`,
-          }),
+          body: JSON.stringify({ from: 'SeaMinds <crew@seaminds.life>', to: ['aatishkumar2003@gmail.com'], subject, html }),
         });
         if (res.ok) { lastError = null; break; }
         lastError = `HTTP ${res.status}: ${await res.text()}`;
-      } catch (e) {
-        lastError = String(e);
-      }
+      } catch (e) { lastError = String(e); }
       if (attempt < 2) await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
     }
-
-    return new Response(JSON.stringify({ success: !lastError, ...(lastError ? { error: lastError } : {}) }), {
-      status: lastError ? 502 : 200,
-      headers: { ...cors, 'Content-Type': 'application/json' },
-    });
+    return json({ success: !lastError, kind, ...(lastError ? { error: lastError } : {}) }, lastError ? 502 : 200);
   } catch (e) {
-    return new Response(JSON.stringify({ success: false, error: String(e) }), { status: 500, headers: cors });
+    return json({ success: false, error: String(e) }, 500);
   }
 });

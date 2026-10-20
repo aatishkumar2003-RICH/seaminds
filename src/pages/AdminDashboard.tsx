@@ -1459,7 +1459,12 @@ function ApplicationsTab() {
 /* ─── Main Dashboard ─── */
 export default function AdminDashboard() {
   const [authed, setAuthed] = useState<boolean | null>(null);
-  const [tab, setTab] = useState<"content_studio" | "company_approval" | "crew" | "activity" | "activity_full" | "cv_database" | "mobile_verify" | "pricing" | "discount" | "country_pricing" | "sub_admins" | "dpa" | "blog_images" | "agents" | "vacancy_intel" | "company_dir" | "company_posts" | "marketing" | "applications" | "referrals" | "assessment_ops" | "support_incidents" | "recruiter_outreach">("crew");
+  const [tab, setTab] = useState<"content_studio" | "company_approval" | "crew" | "activity" | "activity_full" | "cv_database" | "mobile_verify" | "pricing" | "discount" | "country_pricing" | "sub_admins" | "dpa" | "blog_images" | "agents" | "vacancy_intel" | "company_dir" | "company_posts" | "marketing" | "applications" | "referrals" | "assessment_ops" | "support_incidents" | "recruiter_outreach">(() => {
+    // Deep link from emails, e.g. /admin?tab=company_approval
+    const t = new URLSearchParams(window.location.search).get("tab");
+    const allowed = ["content_studio","company_approval","crew","activity","activity_full","cv_database","mobile_verify","pricing","discount","country_pricing","sub_admins","dpa","blog_images","agents","vacancy_intel","company_dir","company_posts","marketing","applications","referrals","assessment_ops","support_incidents","recruiter_outreach"];
+    return (t && allowed.includes(t) ? t : "crew") as any;
+  });
 
   useEffect(() => {
     let active = true;
