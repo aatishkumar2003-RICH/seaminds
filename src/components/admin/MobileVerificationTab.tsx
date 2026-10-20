@@ -41,7 +41,7 @@ export default function MobileVerificationTab() {
   }, []);
 
   const decide = async (row: Row, status: "verified" | "rejected") => {
-    await supabase
+    const { error } = await supabase
       .from("mobile_verifications")
       .update({
         verification_status: status,
@@ -49,7 +49,15 @@ export default function MobileVerificationTab() {
         verified_by: "admin",
       })
       .eq("id", row.id);
-    setNote(`${row.phone_number} marked ${status}.`);
+    if (error) { setNote(`Could not update: ${error.message}`); return; }
+    let msg = `${row.phone_number} marked ${status}.`;
+    if (status === "verified") {
+      if (row.email) {
+        const { data } = await supabase.functions.invoke("company-compliance-notify", { body: { event: "whatsapp_verified", verification_id: row.id } });
+        msg += data?.sent ? " Confirmation email sent." : " Email could not be sent.";
+      } else msg += " No email on record — no confirmation sent.";
+    }
+    setNote(msg);
     load();
   };
 

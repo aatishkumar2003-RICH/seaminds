@@ -1,5 +1,6 @@
 import { matchApplicantToVacancy } from "@/lib/smartMatch";
 import VacancyCleanupPanel from "@/components/manager/VacancyCleanupPanel";
+import CompanyCompliancePanel from "@/components/manager/CompanyCompliancePanel";
 import { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
 const TrainingPlanner = lazy(() => import("@/components/manager/TrainingPlanner"));
 import MyPostsPanel from "@/components/manager/MyPostsPanel";
@@ -1006,6 +1007,7 @@ const ManagerDashboard = () => {
           </button>
         </div>
       </header>
+      <CompanyCompliancePanel />
 
       <div className="max-w-6xl lg:max-w-[1400px] mx-auto px-4 sm:px-6 py-5 space-y-5">
         {/* Twin primary actions */}
