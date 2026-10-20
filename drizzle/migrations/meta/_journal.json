@@ -519,6 +519,13 @@
       "when": 1792498485888,
       "tag": "0073_credit_completion_trigger_safety",
       "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "7",
+      "when": 1792498687250,
+      "tag": "0074_referral_once_per_completed_crew",
+      "breakpoints": true
     }
   ]
 }

@@ -1536,7 +1536,7 @@ export default function AdminDashboard() {
         className="sticky top-0 z-50 -mx-4 md:-mx-8 px-4 md:px-8 pt-2 pb-3"
         style={{ background: "#0D1B2A", borderBottom: "1px solid rgba(212,175,55,0.25)" }}
       >
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
@@ -1549,7 +1549,7 @@ export default function AdminDashboard() {
             </Button>
             <h1 className="text-2xl font-bold" style={{ color: "#D4AF37" }}>SeaMinds Admin</h1>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 max-w-full overflow-x-auto pb-1">
             <Button
               variant="outline"
               onClick={() => {
