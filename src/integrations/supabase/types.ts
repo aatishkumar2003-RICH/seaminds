@@ -5776,6 +5776,13 @@ export type Database = {
         Args: { p_activate: boolean; p_email: string }
         Returns: string
       }
+      admin_manager_emails: {
+        Args: never
+        Returns: {
+          email: string
+          user_id: string
+        }[]
+      }
       admin_mark_compliance_verified: {
         Args: { p_manager: string }
         Returns: Json

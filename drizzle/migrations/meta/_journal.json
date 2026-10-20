@@ -498,6 +498,13 @@
       "when": 1792471103187,
       "tag": "0070_company_compliance",
       "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1792471141899,
+      "tag": "0071_admin_manager_emails",
+      "breakpoints": true
     }
   ]
 }
