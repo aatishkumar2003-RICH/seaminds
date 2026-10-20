@@ -23,3 +23,4 @@
 - Credits live in `credit_ledger` (user id in `manager_user_id`, for crew too); one-off grants are unique per (user, reason), only via `claim_welcome_credits` / `trg_grant_referral_credits`; UI reads `get_my_wallet`. Why: no double-crediting.
 - Ship marketplace is connection-only: `ship_listings` posts by approved managers; featured/hidden admin-only (trigger); photos private bucket + signed URLs. Why: no brokerage liability; public buckets blocked.
 - Crew menu = `NAV_ITEMS` sections rendered by `GroupedNav`. Why: one menu definition.
+- Company compliance lives in `company_compliance` (admin requests via `admin_request_company_docs`, managers submit via `submit_company_compliance`, files in private `company-documents/{uid}/`); every approval/request/submission emails the affected party via `company-compliance-notify`. Why: one review place, no email attachments, one action = one email.
