@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { CreditAudience, DEFAULT_REWARDS, RewardSettings, creditReasonLabel, reminderDue } from "@/lib/creditProgram";
+import CompanyProfileEditor from "@/components/CompanyProfileEditor";
 
 type Wallet = { ok: boolean; user_id: string; balance: number; welcome_claimed: boolean; code: string; link: string; referrals: number; verified_referrals?: number; referral_credits?: number; profile_rewarded?: boolean; score_rewarded?: boolean; settings?: RewardSettings; recent?: { delta: number; reason: string; created_at: string }[] };
 
@@ -15,6 +16,7 @@ const CreditWallet = ({ audience, className = "" }: { audience: CreditAudience; 
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [open, setOpen] = useState(false);
   const [justGranted, setJustGranted] = useState(0);
+  const [editingProfile, setEditingProfile] = useState(false);
 
   const load = useCallback(async () => {
     const { data, error } = await supabase.rpc("get_my_wallet");
@@ -103,7 +105,8 @@ const CreditWallet = ({ audience, className = "" }: { audience: CreditAudience; 
           <div className="space-y-2">
             <p className="text-sm font-semibold text-foreground">Earn more credits</p>
             <p className="text-xs text-muted-foreground">Milestone rewards are earned once, not for repeat edits or repeat scores.</p>
-            {settings.profile_credits > 0 && <div className="flex items-center justify-between gap-2 text-xs border-b border-border py-2"><span>{audience === "crew" ? "Complete your CV & profile" : "Complete your company profile"} · +{settings.profile_credits}</span>{wallet.profile_rewarded ? <span className="text-primary">Earned</span> : <Button size="sm" variant="outline" onClick={() => { setOpen(false); navigate(audience === "crew" ? "/app?tab=cv" : "/manager/dashboard?tab=account"); }}>Complete</Button>}</div>}
+            {settings.profile_credits > 0 && <div className="flex items-center justify-between gap-2 text-xs border-b border-border py-2"><span>{audience === "crew" ? "Complete your CV & profile" : "Complete your company profile"} · +{settings.profile_credits}</span>{wallet.profile_rewarded ? <span className="text-primary">Earned</span> : <Button size="sm" variant="outline" onClick={() => { if (audience === "crew") { setOpen(false); navigate("/app?tab=cv"); } else setEditingProfile(!editingProfile); }}>Complete</Button>}</div>}
+            {editingProfile && audience !== "crew" && <CompanyProfileEditor userId={wallet.user_id} onSaved={async () => { const updated = await load(); if (updated?.ok) setWallet(updated); setEditingProfile(false); }} />}
             {audience === "crew" && settings.score_credits > 0 && <div className="flex items-center justify-between gap-2 text-xs border-b border-border py-2"><span>Complete your first score · +{settings.score_credits}</span>{wallet.score_rewarded ? <span className="text-primary">Earned</span> : <Button size="sm" variant="outline" onClick={() => { setOpen(false); navigate("/app?tab=smc"); }}>My Score</Button>}</div>}
           </div>
           <div className="space-y-2">
