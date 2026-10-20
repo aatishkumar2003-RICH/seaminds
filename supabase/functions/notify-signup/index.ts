@@ -87,14 +87,47 @@ Deno.serve(async (req) => {
       }
     }
 
-    // ── 12-hour cooldown for routine sign-ins (registrations always alert) ──
+    // ── Alert rules: admin & manager = every sign-in (60s duplicate guard);
+    //    crew/workspace = first notified sign-in only; registrations always alert ──
     let send = true;
-    if (kind !== 'crew_new') {
-      const since = new Date(Date.now() - COOLDOWN_MS).toISOString();
+    if (kind !== 'crew_new' && kind !== 'link_request') {
+      const everyLogin = kind === 'admin' || kind === 'manager';
+      let q = supabase.from('signup_log').select('id', { count: 'exact', head: true }).eq('email', email).eq('notified', true);
+      if (everyLogin) q = q.gte('signed_up_at', new Date(Date.now() - 60_000).toISOString());
+      const { count } = await q;
+      if ((count || 0) > 0) send = false;
+    } else if (kind === 'link_request') {
       const { count } = await supabase.from('signup_log').select('id', { count: 'exact', head: true })
-        .eq('email', email).eq('notified', true).gte('signed_up_at', since);
+        .eq('email', email).eq('notified', true).gte('signed_up_at', new Date(Date.now() - COOLDOWN_MS).toISOString());
       if ((count || 0) > 0) send = false;
     }
+
+    // ── Location & device (from edge headers; IP lookup fallback) ──
+    const h = req.headers;
+    const ip = h.get('cf-connecting-ip') || h.get('x-real-ip') || h.get('x-forwarded-for')?.split(',')[0]?.trim() || '';
+    let cc = (h.get('cf-ipcountry') || '').toUpperCase();
+    let city = h.get('cf-ipcity') || '';
+    let region = '';
+    if (send && ip && (!cc || cc === 'XX')) {
+      try {
+        const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 1500);
+        const r = await fetch(`https://ipwho.is/${encodeURIComponent(ip)}`, { signal: ctl.signal });
+        clearTimeout(tm);
+        const g = await r.json();
+        if (g?.success) { cc = String(g.country_code || '').toUpperCase(); city = city || g.city || ''; region = g.region || ''; }
+      } catch { /* lookup optional */ }
+    }
+    let countryName = cc;
+    try { if (/^[A-Z]{2}$/.test(cc)) countryName = new Intl.DisplayNames(['en'], { type: 'region' }).of(cc) || cc; } catch { /* ignore */ }
+    const flag = /^[A-Z]{2}$/.test(cc) ? String.fromCodePoint(...[...cc].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65)) : '';
+    const location = cc ? `${flag} ${countryName}${city || region ? ` (${[city, region].filter(Boolean).join(', ')})` : ''}`.trim() : 'Unknown';
+    const ua = h.get('user-agent') || '';
+    const browser = /Edg\//.test(ua) ? 'Edge' : /OPR\//.test(ua) ? 'Opera' : /SamsungBrowser/.test(ua) ? 'Samsung Internet' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'Unknown browser';
+    const os = /iPhone/.test(ua) ? 'iPhone' : /iPad/.test(ua) ? 'iPad' : /Android/.test(ua) ? 'Android' : /Windows/.test(ua) ? 'Windows' : /Mac OS X/.test(ua) ? 'Mac' : /Linux/.test(ua) ? 'Linux' : 'Unknown device';
+    const device = `${browser} on ${os}`;
+    const geoRows: [string, string, string][] = [['📍', 'Login country', location], ['🌐', 'IP address', ip || 'Unknown'], ['💻', 'Device', device]];
+    const norm = (s: string) => s.toLowerCase().replace(/[^a-z]/g, '');
+    const mismatch = (declared: string) => !!(declared && cc && countryName && norm(declared) !== norm(countryName) && norm(declared) !== norm(cc));
 
     await safe(() => supabase.from('signup_log').insert({ email, first_name, last_name, nationality, whatsapp_number, role, vessel_type, ship_name, notified: send }));
 
