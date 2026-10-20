@@ -526,6 +526,13 @@
       "when": 1792498687250,
       "tag": "0074_referral_once_per_completed_crew",
       "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "7",
+      "when": 1792498787308,
+      "tag": "0075_single_profile_reward_across_roles",
+      "breakpoints": true
     }
   ]
 }
