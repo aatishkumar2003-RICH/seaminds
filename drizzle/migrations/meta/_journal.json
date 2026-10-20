@@ -512,6 +512,13 @@
       "when": 1792498416379,
       "tag": "0072_owner_plan_reward_controls",
       "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "7",
+      "when": 1792498485888,
+      "tag": "0073_credit_completion_trigger_safety",
+      "breakpoints": true
     }
   ]
 }
