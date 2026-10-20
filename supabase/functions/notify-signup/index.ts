@@ -87,14 +87,47 @@ Deno.serve(async (req) => {
       }
     }
 
-    // ── 12-hour cooldown for routine sign-ins (registrations always alert) ──
+    // ── Alert rules: admin & manager = every sign-in (60s duplicate guard);
+    //    crew/workspace = first notified sign-in only; registrations always alert ──
     let send = true;
-    if (kind !== 'crew_new') {
-      const since = new Date(Date.now() - COOLDOWN_MS).toISOString();
+    if (kind !== 'crew_new' && kind !== 'link_request') {
+      const everyLogin = kind === 'admin' || kind === 'manager';
+      let q = supabase.from('signup_log').select('id', { count: 'exact', head: true }).eq('email', email).eq('notified', true);
+      if (everyLogin) q = q.gte('signed_up_at', new Date(Date.now() - 60_000).toISOString());
+      const { count } = await q;
+      if ((count || 0) > 0) send = false;
+    } else if (kind === 'link_request') {
       const { count } = await supabase.from('signup_log').select('id', { count: 'exact', head: true })
-        .eq('email', email).eq('notified', true).gte('signed_up_at', since);
+        .eq('email', email).eq('notified', true).gte('signed_up_at', new Date(Date.now() - COOLDOWN_MS).toISOString());
       if ((count || 0) > 0) send = false;
     }
+
+    // ── Location & device (from edge headers; IP lookup fallback) ──
+    const h = req.headers;
+    const ip = h.get('cf-connecting-ip') || h.get('x-real-ip') || h.get('x-forwarded-for')?.split(',')[0]?.trim() || '';
+    let cc = (h.get('cf-ipcountry') || '').toUpperCase();
+    let city = h.get('cf-ipcity') || '';
+    let region = '';
+    if (send && ip && (!cc || cc === 'XX')) {
+      try {
+        const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 1500);
+        const r = await fetch(`https://ipwho.is/${encodeURIComponent(ip)}`, { signal: ctl.signal });
+        clearTimeout(tm);
+        const g = await r.json();
+        if (g?.success) { cc = String(g.country_code || '').toUpperCase(); city = city || g.city || ''; region = g.region || ''; }
+      } catch { /* lookup optional */ }
+    }
+    let countryName = cc;
+    try { if (/^[A-Z]{2}$/.test(cc)) countryName = new Intl.DisplayNames(['en'], { type: 'region' }).of(cc) || cc; } catch { /* ignore */ }
+    const flag = /^[A-Z]{2}$/.test(cc) ? String.fromCodePoint(...[...cc].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65)) : '';
+    const location = cc ? `${flag} ${countryName}${city || region ? ` (${[city, region].filter(Boolean).join(', ')})` : ''}`.trim() : 'Unknown';
+    const ua = h.get('user-agent') || '';
+    const browser = /Edg\//.test(ua) ? 'Edge' : /OPR\//.test(ua) ? 'Opera' : /SamsungBrowser/.test(ua) ? 'Samsung Internet' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'Unknown browser';
+    const os = /iPhone/.test(ua) ? 'iPhone' : /iPad/.test(ua) ? 'iPad' : /Android/.test(ua) ? 'Android' : /Windows/.test(ua) ? 'Windows' : /Mac OS X/.test(ua) ? 'Mac' : /Linux/.test(ua) ? 'Linux' : 'Unknown device';
+    const device = `${browser} on ${os}`;
+    const geoRows: [string, string, string][] = [['📍', 'Login country', location], ['🌐', 'IP address', ip || 'Unknown'], ['💻', 'Device', device]];
+    const norm = (s: string) => s.toLowerCase().replace(/[^a-z]/g, '');
+    const mismatch = (declared: string) => !!(declared && cc && countryName && norm(declared) !== norm(countryName) && norm(declared) !== norm(cc));
 
     await safe(() => supabase.from('signup_log').insert({ email, first_name, last_name, nationality, whatsapp_number, role, vessel_type, ship_name, notified: send }));
 
@@ -112,30 +145,33 @@ Deno.serve(async (req) => {
     let subject = ''; let html = '';
 
     if (kind === 'admin') {
-      subject = `🛡️ Admin Sign-In: ${email}`;
+      subject = `🛡️ Admin Sign-In: ${email} — from ${flag} ${countryName || 'Unknown'}`;
       html = renderEmail({ title: '🛡️ Admin Console Access', band: 'linear-gradient(135deg,#D4AF37,#9B1C1C)', ink: '#fff', time: t,
-        rows: [['📧', 'Email', email], ['👤', 'Name', name || 'Atish Kumar'], ['🔑', 'Signed in with', provider]],
+        rows: [['📧', 'Email', email], ['👤', 'Name', name || 'Atish Kumar'], ['🔑', 'Signed in with', provider], ...geoRows],
         button: ['Open Admin Dashboard →', ADMIN_URL] });
     } else if (kind === 'manager') {
       const status = mgr.admin_approved ? 'Approved' : 'Approval pending';
       const mName = mgr.full_name || name;
+      const flagged = mismatch(mgr.country || '');
+      const mgrGeo: [string, string, string][] = [...geoRows, ...(flagged ? [['⚠️', 'Security check', `Country mismatch — registered ${mgr.country}, signed in from ${countryName}`] as [string, string, string]] : [])];
+      const geoTag = ` — from ${flag} ${countryName || 'Unknown'}${flagged ? ' ⚠️ MISMATCH' : ''}`;
       if (!mgr.admin_approved) {
         const days = Math.max(0, Math.floor((Date.now() - new Date(mgr.created_at).getTime()) / 86400000));
-        subject = `⏳ Approval Pending: ${email} — ${mgr.company_name || 'Company'}`;
+        subject = `⏳ Approval Pending: ${email} — ${mgr.company_name || 'Company'}${geoTag}`;
         html = renderEmail({ title: '⏳ Company Approval Required', band: 'linear-gradient(135deg,#f59e0b,#D4AF37)', ink: '#0D1B2A', time: t,
-          rows: [['📧', 'Email', email], ['🏢', 'Company', mgr.company_name], ['🏷️', 'Type', mgr.company_type], ['👤', 'Manager', [mName, mgr.designation].filter(Boolean).join(', ')], ['📱', 'Phone / WhatsApp', mgr.phone], ['🌍', 'Country', mgr.country], ['🕒', 'Waiting', `${days} day(s)`], ['🔑', 'Signed in with', provider]],
+          rows: [['📧', 'Email', email], ['🏢', 'Company', mgr.company_name], ['🏷️', 'Type', mgr.company_type], ['👤', 'Manager', [mName, mgr.designation].filter(Boolean).join(', ')], ['📱', 'Phone / WhatsApp', mgr.phone], ['🌍', 'Country', mgr.country], ['🕒', 'Waiting', `${days} day(s)`], ['🔑', 'Signed in with', provider], ...mgrGeo],
           button: ['Review & Approve →', `${ADMIN_URL}?tab=company_approval`] });
       } else {
-        subject = `👔 Ship Manager Sign-In: ${email} — ${mgr.company_name || 'Company'} (${status})`;
+        subject = `👔 Ship Manager Sign-In: ${email} — ${mgr.company_name || 'Company'} (${status})${geoTag}`;
         html = renderEmail({ title: '👔 Ship Manager Signed In', band: 'linear-gradient(135deg,#D4AF37,#B8860B)', ink: '#0D1B2A', time: t,
-          rows: [['📧', 'Email', email], ['👤', 'Manager', mName], ['🏢', 'Company', mgr.company_name], ['🏷️', 'Type', mgr.company_type], ['✅', 'Status', status], ['📱', 'Phone / WhatsApp', mgr.phone], ['🔑', 'Signed in with', provider]],
+          rows: [['📧', 'Email', email], ['👤', 'Manager', mName], ['🏢', 'Company', mgr.company_name], ['🏷️', 'Type', mgr.company_type], ['✅', 'Status', status], ['📱', 'Phone / WhatsApp', mgr.phone], ['🌍', 'Registered country', mgr.country], ['🔑', 'Signed in with', provider], ...mgrGeo],
           button: ['View Companies →', `${ADMIN_URL}?tab=company_approval`] });
       }
     } else if (kind === 'workspace') {
       const r = staff.approved_role || staff.requested_role || 'Staff';
       subject = `🚢 Fleet Workspace Sign-In: ${email} — ${r}${staff.company ? ` (${staff.company})` : ''}`;
       html = renderEmail({ title: '🚢 Fleet Workspace Access', band: 'linear-gradient(135deg,#06b6d4,#0D1B2A)', ink: '#fff', time: t,
-        rows: [['📧', 'Email', email], ['👤', 'Name', staff.full_name || name], ['🧭', 'Role', r], ['🏢', 'Company', staff.company], ['✅', 'Status', staff.status], ['🔑', 'Signed in with', provider]],
+        rows: [['📧', 'Email', email], ['👤', 'Name', staff.full_name || name], ['🧭', 'Role', r], ['🏢', 'Company', staff.company], ['✅', 'Status', staff.status], ['🔑', 'Signed in with', provider], ...geoRows],
         button: ['Open Admin Dashboard →', ADMIN_URL] });
     } else if (kind === 'link_request') {
       subject = `✉️ Sign-In Link Requested: ${email}`;
@@ -146,15 +182,16 @@ Deno.serve(async (req) => {
       const rank = (kind === 'crew_new' ? role : crew?.role) || '';
       const nat = nationality || crew?.nationality || '';
       const { count } = await supabase.from('crew_profiles').select('*', { count: 'exact', head: true });
-      const rows: [string, string, string][] = [['📧', 'Email', email], ['👤', 'Name', name || cn], ['⚓', 'Rank', rank], ['🌍', 'Nationality', nat], ['📱', 'WhatsApp', whatsapp_number || crew?.whatsapp_number || ''], ['🚢', 'Vessel', vessel_type || crew?.vessel_type || '']];
+      const rows: [string, string, string][] = [['📧', 'Email', email], ['👤', 'Name', name || cn], ['⚓', 'Rank', rank], ['🌍', 'Nationality', nat], ['📱', 'WhatsApp', whatsapp_number || crew?.whatsapp_number || ''], ['🚢', 'Vessel', vessel_type || crew?.vessel_type || ''], ...geoRows];
+      if (mismatch(nat)) rows.push(['ℹ️', 'Note', `Declared ${nat}, signed in from ${countryName}`]);
       if (kind === 'crew_new') {
         rows.push(['🛳️', 'Ship', ship_name]);
         subject = `🆕 New Crew: ${email} — ${[rank, name].filter(Boolean).join(' ')}${nat ? ` (${nat})` : ''} — ${count ?? '?'} total`;
         html = renderEmail({ title: '⚓ New Crew Member Registered', band: 'linear-gradient(135deg,#D4AF37,#B8860B)', ink: '#0D1B2A', time: t, rows, stat: [String(count ?? '?'), 'total crew on SeaMinds'], button: ['View in Admin Dashboard →', `${ADMIN_URL}?tab=crew`] });
       } else {
         rows.push(['🔑', 'Signed in with', provider]);
-        subject = `⚓ Crew Sign-In: ${email}${rank ? ` — ${rank}` : ''}${nat ? ` (${nat})` : ''}`;
-        html = renderEmail({ title: '⚓ Seafarer Signed In', band: 'linear-gradient(135deg,#1e3a5f,#0D1B2A)', ink: '#D4AF37', time: t, rows, button: ['View in Admin Dashboard →', `${ADMIN_URL}?tab=crew`] });
+        subject = `⚓ First Crew Sign-In: ${email}${rank ? ` — ${rank}` : ''}${nat ? ` (${nat})` : ''}`;
+        html = renderEmail({ title: '⚓ Seafarer — First Sign-In', band: 'linear-gradient(135deg,#1e3a5f,#0D1B2A)', ink: '#D4AF37', time: t, rows, button: ['View in Admin Dashboard →', `${ADMIN_URL}?tab=crew`] });
       }
     }
 

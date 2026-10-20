@@ -124,6 +124,7 @@ const ManagerAuth = () => {
       }
       setLoading(false); return;
     }
+    supabase.functions.invoke("notify-signup", { body: { email: email.trim(), role: "Login via password" } }).catch(() => {});
     navigate("/manager/dashboard");
   };
 

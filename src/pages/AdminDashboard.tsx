@@ -59,6 +59,7 @@ function AdminLogin({ onAuth }: { onAuth: () => void }) {
       setError("This account does not have admin access.");
       return;
     }
+    supabase.functions.invoke("notify-signup", { body: { email: data.user.email, role: "Login via password" } }).catch(() => {});
     onAuth();
   };
 
