@@ -1057,7 +1057,7 @@ function ActivityTab() {
                   <td className="p-2" style={td}>{[l.first_name, l.last_name].filter(Boolean).join(" ") || "—"}</td>
                   <td className="p-2" style={td}>{l.role || "—"}</td>
                   <td className="p-2" style={td}>{l.source || "—"}</td>
-                  <td className="p-2" style={td}>{l.visits ?? 0}</td>
+                  <td className="p-2" style={td}>{l.total_visits ?? 0}</td>
                   <td className="p-2">
                     <Badge style={l.converted ? { background: "#22c55e", color: "#0D1B2A" } : { background: "#64748B", color: "#fff" }}>
                       {l.converted ? "yes" : "no"}
@@ -1484,31 +1484,45 @@ export default function AdminDashboard() {
   };
 
 
-  const tabs = [
-    { id: "content_studio" as const, label: "✨ Content Studio" },
-    { id: "company_approval" as const, label: "🔒 Company Approval" },
-    { id: "crew" as const, label: "Crew Search" },
-    { id: "activity" as const, label: "📋 Crew Activity" },
-    { id: "activity_full" as const, label: "📋 Activity" },
-    { id: "cv_database" as const, label: "📄 CV Database" },
-    { id: "mobile_verify" as const, label: "📱 Mobile Verification" },
-    { id: "pricing" as const, label: "Pricing" },
-    { id: "discount" as const, label: "Discount Codes" },
-    { id: "country_pricing" as const, label: "Country Pricing" },
-    { id: "sub_admins" as const, label: "Sub-Admins" },
-    { id: "dpa" as const, label: "SOS / DPA Contacts" },
-    { id: "blog_images" as const, label: "Blog Images" },
-    { id: "agents" as const, label: "🤖 Agents" },
-    { id: "vacancy_intel" as const, label: "📊 Vacancy Intel" },
-    { id: "company_dir" as const, label: "🏢 Companies" },
-    { id: "company_posts" as const, label: "Company Posts" },
-    { id: "applications" as const, label: "📨 Applications" },
-    { id: "marketing" as const, label: "📣 Marketing" },
-    { id: "referrals" as const, label: "📣 Referrals" },
-    { id: "assessment_ops" as const, label: "🧭 Assessment Ops" },
-    { id: "support_incidents" as const, label: "🛟 Support & Incidents" },
-    { id: "recruiter_outreach" as const, label: "📨 Recruiter Outreach" },
+  const groups = [
+    { name: "🏢 Companies", tabs: [
+      { id: "company_approval" as const, label: "Company Approval" },
+      { id: "company_dir" as const, label: "Company Directory" },
+      { id: "company_posts" as const, label: "Company Posts" },
+      { id: "applications" as const, label: "Applications" },
+    ] },
+    { name: "⚓ Crew", tabs: [
+      { id: "crew" as const, label: "Crew Search" },
+      { id: "cv_database" as const, label: "CV Database" },
+      { id: "mobile_verify" as const, label: "Mobile Verification" },
+      { id: "assessment_ops" as const, label: "Assessment Ops" },
+    ] },
+    { name: "🎯 Growth & Leads", tabs: [
+      { id: "activity" as const, label: "Crew, Leads & Certificates" },
+      { id: "activity_full" as const, label: "Growth Pulse" },
+      { id: "referrals" as const, label: "Referrals" },
+      { id: "marketing" as const, label: "Marketing Team" },
+      { id: "content_studio" as const, label: "Content Studio" },
+      { id: "blog_images" as const, label: "Blog Images" },
+    ] },
+    { name: "📊 Vacancies", tabs: [
+      { id: "vacancy_intel" as const, label: "Vacancy Intel" },
+      { id: "recruiter_outreach" as const, label: "Recruiter Outreach" },
+      { id: "agents" as const, label: "AI Agents" },
+    ] },
+    { name: "🛟 Support & Safety", tabs: [
+      { id: "support_incidents" as const, label: "Support & Incidents" },
+      { id: "dpa" as const, label: "SOS / DPA Contacts" },
+    ] },
+    { name: "⚙️ Settings", tabs: [
+      { id: "sub_admins" as const, label: "Sub-Admins" },
+      { id: "pricing" as const, label: "Pricing" },
+      { id: "discount" as const, label: "Discount Codes" },
+      { id: "country_pricing" as const, label: "Country Pricing" },
+    ] },
   ];
+  const activeGroup = groups.find((g) => g.tabs.some((t) => t.id === tab)) ?? groups[0];
+  const tabs = activeGroup.tabs;
 
   return (
     <div className="min-h-screen p-4 md:p-8" style={{ background: "#0D1B2A" }}>
@@ -1555,9 +1569,27 @@ export default function AdminDashboard() {
           </div>
         </div>
 
+        <div className="flex gap-2 overflow-x-auto flex-nowrap md:flex-wrap pb-2 mb-2 scrollbar-none" style={{ borderBottom: "1px solid rgba(212,175,55,0.15)" }}>
+          {groups.map((g) => (
+            <Button key={g.name} onClick={() => setTab(g.tabs[0].id)}
+              className="shrink-0 whitespace-nowrap font-bold rounded-xl"
+              style={activeGroup.name === g.name
+                ? { background: "#D4AF37", color: "#0D1B2A" }
+                : { background: "#112240", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.3)" }
+              }>
+              {g.name}
+            </Button>
+          ))}
+          <Button onClick={() => (window.location.href = "/marketplace")}
+            className="shrink-0 whitespace-nowrap font-bold rounded-xl"
+            style={{ background: "#112240", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.3)" }}>
+            🚢 Ship Marketplace ↗
+          </Button>
+        </div>
         <div className="flex gap-2 overflow-x-auto flex-nowrap md:flex-wrap pb-1 scrollbar-none">
           {tabs.map((t) => (
             <Button key={t.id} onClick={() => setTab(t.id)}
+              size="sm"
               className="shrink-0 whitespace-nowrap"
               style={tab === t.id
                 ? { background: "#D4AF37", color: "#0D1B2A" }
