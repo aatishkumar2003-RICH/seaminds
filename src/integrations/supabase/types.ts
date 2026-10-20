@@ -888,6 +888,51 @@ export type Database = {
           },
         ]
       }
+      company_compliance: {
+        Row: {
+          admin_note: string | null
+          document_paths: string[]
+          license_number: string | null
+          manager_note: string | null
+          manager_user_id: string
+          requested_at: string | null
+          requested_items: string[]
+          reviewed_at: string | null
+          status: string
+          submitted_at: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          admin_note?: string | null
+          document_paths?: string[]
+          license_number?: string | null
+          manager_note?: string | null
+          manager_user_id: string
+          requested_at?: string | null
+          requested_items?: string[]
+          reviewed_at?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          admin_note?: string | null
+          document_paths?: string[]
+          license_number?: string | null
+          manager_note?: string | null
+          manager_user_id?: string
+          requested_at?: string | null
+          requested_items?: string[]
+          reviewed_at?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       company_contacts: {
         Row: {
           company_aliases: string[] | null
@@ -5731,6 +5776,10 @@ export type Database = {
         Args: { p_activate: boolean; p_email: string }
         Returns: string
       }
+      admin_mark_compliance_verified: {
+        Args: { p_manager: string }
+        Returns: Json
+      }
       admin_ops_action: {
         Args: { p_action: string; p_assessment_id: string; p_reason?: string }
         Returns: Json
@@ -5752,6 +5801,10 @@ export type Database = {
       admin_ops_timeline: { Args: { p_assessment_id: string }; Returns: Json }
       admin_reissue_paper: {
         Args: { p_assessment_id: string; p_policy?: string; p_reason: string }
+        Returns: Json
+      }
+      admin_request_company_docs: {
+        Args: { p_items: string[]; p_manager: string; p_note: string }
         Returns: Json
       }
       admin_support_set_status: {
@@ -6269,6 +6322,15 @@ export type Database = {
           p_rank?: string
           p_vacancy_id?: string
           p_vessel?: string
+        }
+        Returns: Json
+      }
+      submit_company_compliance: {
+        Args: {
+          p_license: string
+          p_note: string
+          p_paths: string[]
+          p_website: string
         }
         Returns: Json
       }
