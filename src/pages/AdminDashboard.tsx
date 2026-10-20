@@ -31,6 +31,7 @@ import AssessmentOpsTab from "@/components/admin/AssessmentOpsTab";
 import SupportIncidentsTab from "@/components/admin/SupportIncidentsTab";
 import RecruiterOutreachTab from "@/components/admin/RecruiterOutreachTab";
 import PasswordInput from "@/components/PasswordInput";
+import PlansCreditsTab from "@/components/admin/PlansCreditsTab";
 
 // Admin = the SeaMinds owner account. The browser only checks that this exact
 // authenticated user is signed in (it just hides the UI). Real enforcement is
@@ -1522,9 +1523,8 @@ export default function AdminDashboard() {
     ] },
     { name: "⚙️ Settings", tabs: [
       { id: "sub_admins" as const, label: "Sub-Admins" },
-      { id: "pricing" as const, label: "Pricing" },
+      { id: "pricing" as const, label: "Plans & Credits" },
       { id: "discount" as const, label: "Discount Codes" },
-      { id: "country_pricing" as const, label: "Country Pricing" },
     ] },
   ];
   const activeGroup = groups.find((g) => g.tabs.some((t) => t.id === tab)) ?? groups[0];
@@ -1614,9 +1614,9 @@ export default function AdminDashboard() {
       {tab === "activity_full" && <ActivityFullTab />}
       {tab === "cv_database" && <CVDatabaseTab />}
       {tab === "mobile_verify" && <MobileVerificationTab />}
-      {tab === "pricing" && <PricingTab />}
+      {tab === "pricing" && <PlansCreditsTab />}
       {tab === "discount" && <DiscountCodesTab />}
-      {tab === "country_pricing" && <CountryPricingTab />}
+      {tab === "country_pricing" && <PlansCreditsTab />}
       {tab === "sub_admins" && <SubAdminsTab />}
       {tab === "dpa" && <DPAContactsTab />}
       {tab === "blog_images" && <BlogImagesTab />}
