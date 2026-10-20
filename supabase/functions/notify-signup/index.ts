@@ -145,30 +145,33 @@ Deno.serve(async (req) => {
     let subject = ''; let html = '';
 
     if (kind === 'admin') {
-      subject = `🛡️ Admin Sign-In: ${email}`;
+      subject = `🛡️ Admin Sign-In: ${email} — from ${flag} ${countryName || 'Unknown'}`;
       html = renderEmail({ title: '🛡️ Admin Console Access', band: 'linear-gradient(135deg,#D4AF37,#9B1C1C)', ink: '#fff', time: t,
-        rows: [['📧', 'Email', email], ['👤', 'Name', name || 'Atish Kumar'], ['🔑', 'Signed in with', provider]],
+        rows: [['📧', 'Email', email], ['👤', 'Name', name || 'Atish Kumar'], ['🔑', 'Signed in with', provider], ...geoRows],
         button: ['Open Admin Dashboard →', ADMIN_URL] });
     } else if (kind === 'manager') {
       const status = mgr.admin_approved ? 'Approved' : 'Approval pending';
       const mName = mgr.full_name || name;
+      const flagged = mismatch(mgr.country || '');
+      const mgrGeo: [string, string, string][] = [...geoRows, ...(flagged ? [['⚠️', 'Security check', `Country mismatch — registered ${mgr.country}, signed in from ${countryName}`] as [string, string, string]] : [])];
+      const geoTag = ` — from ${flag} ${countryName || 'Unknown'}${flagged ? ' ⚠️ MISMATCH' : ''}`;
       if (!mgr.admin_approved) {
         const days = Math.max(0, Math.floor((Date.now() - new Date(mgr.created_at).getTime()) / 86400000));
-        subject = `⏳ Approval Pending: ${email} — ${mgr.company_name || 'Company'}`;
+        subject = `⏳ Approval Pending: ${email} — ${mgr.company_name || 'Company'}${geoTag}`;
         html = renderEmail({ title: '⏳ Company Approval Required', band: 'linear-gradient(135deg,#f59e0b,#D4AF37)', ink: '#0D1B2A', time: t,
-          rows: [['📧', 'Email', email], ['🏢', 'Company', mgr.company_name], ['🏷️', 'Type', mgr.company_type], ['👤', 'Manager', [mName, mgr.designation].filter(Boolean).join(', ')], ['📱', 'Phone / WhatsApp', mgr.phone], ['🌍', 'Country', mgr.country], ['🕒', 'Waiting', `${days} day(s)`], ['🔑', 'Signed in with', provider]],
+          rows: [['📧', 'Email', email], ['🏢', 'Company', mgr.company_name], ['🏷️', 'Type', mgr.company_type], ['👤', 'Manager', [mName, mgr.designation].filter(Boolean).join(', ')], ['📱', 'Phone / WhatsApp', mgr.phone], ['🌍', 'Country', mgr.country], ['🕒', 'Waiting', `${days} day(s)`], ['🔑', 'Signed in with', provider], ...mgrGeo],
           button: ['Review & Approve →', `${ADMIN_URL}?tab=company_approval`] });
       } else {
-        subject = `👔 Ship Manager Sign-In: ${email} — ${mgr.company_name || 'Company'} (${status})`;
+        subject = `👔 Ship Manager Sign-In: ${email} — ${mgr.company_name || 'Company'} (${status})${geoTag}`;
         html = renderEmail({ title: '👔 Ship Manager Signed In', band: 'linear-gradient(135deg,#D4AF37,#B8860B)', ink: '#0D1B2A', time: t,
-          rows: [['📧', 'Email', email], ['👤', 'Manager', mName], ['🏢', 'Company', mgr.company_name], ['🏷️', 'Type', mgr.company_type], ['✅', 'Status', status], ['📱', 'Phone / WhatsApp', mgr.phone], ['🔑', 'Signed in with', provider]],
+          rows: [['📧', 'Email', email], ['👤', 'Manager', mName], ['🏢', 'Company', mgr.company_name], ['🏷️', 'Type', mgr.company_type], ['✅', 'Status', status], ['📱', 'Phone / WhatsApp', mgr.phone], ['🌍', 'Registered country', mgr.country], ['🔑', 'Signed in with', provider], ...mgrGeo],
           button: ['View Companies →', `${ADMIN_URL}?tab=company_approval`] });
       }
     } else if (kind === 'workspace') {
       const r = staff.approved_role || staff.requested_role || 'Staff';
       subject = `🚢 Fleet Workspace Sign-In: ${email} — ${r}${staff.company ? ` (${staff.company})` : ''}`;
       html = renderEmail({ title: '🚢 Fleet Workspace Access', band: 'linear-gradient(135deg,#06b6d4,#0D1B2A)', ink: '#fff', time: t,
-        rows: [['📧', 'Email', email], ['👤', 'Name', staff.full_name || name], ['🧭', 'Role', r], ['🏢', 'Company', staff.company], ['✅', 'Status', staff.status], ['🔑', 'Signed in with', provider]],
+        rows: [['📧', 'Email', email], ['👤', 'Name', staff.full_name || name], ['🧭', 'Role', r], ['🏢', 'Company', staff.company], ['✅', 'Status', staff.status], ['🔑', 'Signed in with', provider], ...geoRows],
         button: ['Open Admin Dashboard →', ADMIN_URL] });
     } else if (kind === 'link_request') {
       subject = `✉️ Sign-In Link Requested: ${email}`;
@@ -179,15 +182,16 @@ Deno.serve(async (req) => {
       const rank = (kind === 'crew_new' ? role : crew?.role) || '';
       const nat = nationality || crew?.nationality || '';
       const { count } = await supabase.from('crew_profiles').select('*', { count: 'exact', head: true });
-      const rows: [string, string, string][] = [['📧', 'Email', email], ['👤', 'Name', name || cn], ['⚓', 'Rank', rank], ['🌍', 'Nationality', nat], ['📱', 'WhatsApp', whatsapp_number || crew?.whatsapp_number || ''], ['🚢', 'Vessel', vessel_type || crew?.vessel_type || '']];
+      const rows: [string, string, string][] = [['📧', 'Email', email], ['👤', 'Name', name || cn], ['⚓', 'Rank', rank], ['🌍', 'Nationality', nat], ['📱', 'WhatsApp', whatsapp_number || crew?.whatsapp_number || ''], ['🚢', 'Vessel', vessel_type || crew?.vessel_type || ''], ...geoRows];
+      if (mismatch(nat)) rows.push(['ℹ️', 'Note', `Declared ${nat}, signed in from ${countryName}`]);
       if (kind === 'crew_new') {
         rows.push(['🛳️', 'Ship', ship_name]);
         subject = `🆕 New Crew: ${email} — ${[rank, name].filter(Boolean).join(' ')}${nat ? ` (${nat})` : ''} — ${count ?? '?'} total`;
         html = renderEmail({ title: '⚓ New Crew Member Registered', band: 'linear-gradient(135deg,#D4AF37,#B8860B)', ink: '#0D1B2A', time: t, rows, stat: [String(count ?? '?'), 'total crew on SeaMinds'], button: ['View in Admin Dashboard →', `${ADMIN_URL}?tab=crew`] });
       } else {
         rows.push(['🔑', 'Signed in with', provider]);
-        subject = `⚓ Crew Sign-In: ${email}${rank ? ` — ${rank}` : ''}${nat ? ` (${nat})` : ''}`;
-        html = renderEmail({ title: '⚓ Seafarer Signed In', band: 'linear-gradient(135deg,#1e3a5f,#0D1B2A)', ink: '#D4AF37', time: t, rows, button: ['View in Admin Dashboard →', `${ADMIN_URL}?tab=crew`] });
+        subject = `⚓ First Crew Sign-In: ${email}${rank ? ` — ${rank}` : ''}${nat ? ` (${nat})` : ''}`;
+        html = renderEmail({ title: '⚓ Seafarer — First Sign-In', band: 'linear-gradient(135deg,#1e3a5f,#0D1B2A)', ink: '#D4AF37', time: t, rows, button: ['View in Admin Dashboard →', `${ADMIN_URL}?tab=crew`] });
       }
     }
 
