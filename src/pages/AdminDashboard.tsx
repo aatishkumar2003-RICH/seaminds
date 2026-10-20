@@ -31,6 +31,7 @@ import AssessmentOpsTab from "@/components/admin/AssessmentOpsTab";
 import SupportIncidentsTab from "@/components/admin/SupportIncidentsTab";
 import RecruiterOutreachTab from "@/components/admin/RecruiterOutreachTab";
 import PasswordInput from "@/components/PasswordInput";
+import PlansCreditsTab from "@/components/admin/PlansCreditsTab";
 
 // Admin = the SeaMinds owner account. The browser only checks that this exact
 // authenticated user is signed in (it just hides the UI). Real enforcement is
@@ -1522,9 +1523,8 @@ export default function AdminDashboard() {
     ] },
     { name: "⚙️ Settings", tabs: [
       { id: "sub_admins" as const, label: "Sub-Admins" },
-      { id: "pricing" as const, label: "Pricing" },
+      { id: "pricing" as const, label: "Plans & Credits" },
       { id: "discount" as const, label: "Discount Codes" },
-      { id: "country_pricing" as const, label: "Country Pricing" },
     ] },
   ];
   const activeGroup = groups.find((g) => g.tabs.some((t) => t.id === tab)) ?? groups[0];
@@ -1536,7 +1536,7 @@ export default function AdminDashboard() {
         className="sticky top-0 z-50 -mx-4 md:-mx-8 px-4 md:px-8 pt-2 pb-3"
         style={{ background: "#0D1B2A", borderBottom: "1px solid rgba(212,175,55,0.25)" }}
       >
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
@@ -1549,7 +1549,7 @@ export default function AdminDashboard() {
             </Button>
             <h1 className="text-2xl font-bold" style={{ color: "#D4AF37" }}>SeaMinds Admin</h1>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 max-w-full overflow-x-auto pb-1">
             <Button
               variant="outline"
               onClick={() => {
@@ -1614,9 +1614,9 @@ export default function AdminDashboard() {
       {tab === "activity_full" && <ActivityFullTab />}
       {tab === "cv_database" && <CVDatabaseTab />}
       {tab === "mobile_verify" && <MobileVerificationTab />}
-      {tab === "pricing" && <PricingTab />}
+      {tab === "pricing" && <PlansCreditsTab />}
       {tab === "discount" && <DiscountCodesTab />}
-      {tab === "country_pricing" && <CountryPricingTab />}
+      {tab === "country_pricing" && <PlansCreditsTab />}
       {tab === "sub_admins" && <SubAdminsTab />}
       {tab === "dpa" && <DPAContactsTab />}
       {tab === "blog_images" && <BlogImagesTab />}

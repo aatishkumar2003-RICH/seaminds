@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import SignInGate from "@/components/takeover/SignInGate";
 import StaffApprovals from "@/components/fleet/StaffApprovals";
 import TakeoverInspections from "@/pages/TakeoverInspections";
+import CreditWallet from "@/components/CreditWallet";
 
 const TABS = [
   { id: "fleet", label: "🚢 Ships" }, { id: "staff", label: "👥 Staff & Access" }, { id: "pms", label: "🛠 PMS" },
@@ -99,7 +100,7 @@ export default function FleetHome() {
       </div>
 
       <div className="p-4 max-w-4xl mx-auto">
-        <h1 className="text-xl font-bold text-[#D4AF37]">Fleet & PMS Workspace</h1>
+        <div className="flex flex-wrap items-center justify-between gap-2"><h1 className="text-xl font-bold text-[#D4AF37]">Fleet & PMS Workspace</h1>{user && <CreditWallet audience="fleet" />}</div>
         <p className="text-xs text-[#94A3B8] mb-3">One command centre for every ship under management</p>
 
         <div className="flex gap-2 overflow-x-auto mb-4 -mx-1 px-1">

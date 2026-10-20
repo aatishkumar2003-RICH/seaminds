@@ -505,6 +505,34 @@
       "when": 1792471141899,
       "tag": "0071_admin_manager_emails",
       "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "7",
+      "when": 1792498416379,
+      "tag": "0072_owner_plan_reward_controls",
+      "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "7",
+      "when": 1792498485888,
+      "tag": "0073_credit_completion_trigger_safety",
+      "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "7",
+      "when": 1792498687250,
+      "tag": "0074_referral_once_per_completed_crew",
+      "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "7",
+      "when": 1792498787308,
+      "tag": "0075_single_profile_reward_across_roles",
+      "breakpoints": true
     }
   ]
 }

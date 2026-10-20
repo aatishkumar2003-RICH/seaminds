@@ -1351,6 +1351,33 @@ export type Database = {
         }
         Relationships: []
       }
+      credit_control_audit: {
+        Row: {
+          actor: string
+          after_value: Json | null
+          before_value: Json | null
+          created_at: string
+          entity: string
+          id: string
+        }
+        Insert: {
+          actor?: string
+          after_value?: Json | null
+          before_value?: Json | null
+          created_at?: string
+          entity?: string
+          id?: string
+        }
+        Update: {
+          actor?: string
+          after_value?: Json | null
+          before_value?: Json | null
+          created_at?: string
+          entity?: string
+          id?: string
+        }
+        Relationships: []
+      }
       credit_ledger: {
         Row: {
           created_at: string
@@ -1372,6 +1399,72 @@ export type Database = {
           id?: string
           manager_user_id?: string
           reason?: string
+        }
+        Relationships: []
+      }
+      credit_plans: {
+        Row: {
+          active: boolean
+          audience: string
+          credits: number
+          id: string
+          interval: string
+          name: string
+          price_usd: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          audience?: string
+          credits?: number
+          id?: string
+          interval?: string
+          name?: string
+          price_usd?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          audience?: string
+          credits?: number
+          id?: string
+          interval?: string
+          name?: string
+          price_usd?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      credit_program_settings: {
+        Row: {
+          id: boolean
+          profile_credits: number
+          referral_credits: number
+          reminder_hours: number
+          reminders_enabled: boolean
+          score_credits: number
+          updated_at: string
+          welcome_credits: number
+        }
+        Insert: {
+          id?: boolean
+          profile_credits?: number
+          referral_credits?: number
+          reminder_hours?: number
+          reminders_enabled?: boolean
+          score_credits?: number
+          updated_at?: string
+          welcome_credits?: number
+        }
+        Update: {
+          id?: boolean
+          profile_credits?: number
+          referral_credits?: number
+          reminder_hours?: number
+          reminders_enabled?: boolean
+          score_credits?: number
+          updated_at?: string
+          welcome_credits?: number
         }
         Relationships: []
       }
@@ -5767,6 +5860,10 @@ export type Database = {
         Args: { p_campaign_id: string; p_people: Json }
         Returns: Json
       }
+      admin_credit_report: {
+        Args: { p_offset?: number; p_search?: string }
+        Returns: Json
+      }
       admin_get_incident_diagnostic_bundle: {
         Args: { p_incident_id: string }
         Returns: Json
@@ -5981,6 +6078,8 @@ export type Database = {
         }
         Returns: Json
       }
+      credit_cv_ready: { Args: { p_uid: string }; Returns: boolean }
+      credit_profile_ready: { Args: { p_uid: string }; Returns: boolean }
       crew_respond_fleet_link: {
         Args: { p_accept: boolean; p_link_id: string }
         Returns: Json
@@ -6358,6 +6457,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      sync_credit_milestones: { Args: { p_uid: string }; Returns: undefined }
       takeover_add_member: {
         Args: { p_email: string; p_inspection_id: string; p_role: string }
         Returns: Json

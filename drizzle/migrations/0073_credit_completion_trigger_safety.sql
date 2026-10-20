@@ -1,0 +1,3 @@
+CREATE OR REPLACE FUNCTION public.credit_milestone_changed() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ DECLARE v_uid uuid; BEGIN IF TG_TABLE_NAME='crew_profiles' THEN v_uid:=NEW.id; ELSIF TG_TABLE_NAME='smc_assessments' THEN v_uid:=NEW.crew_profile_id; ELSE v_uid:=NEW.user_id; END IF; PERFORM sync_credit_milestones(v_uid); RETURN NEW; END $$;
+CREATE TRIGGER credit_referral_completion AFTER INSERT OR UPDATE OF first_name,rank,email,whatsapp_number ON public.crew_profiles FOR EACH ROW EXECUTE FUNCTION public.grant_referral_credits();
+NOTIFY pgrst,'reload schema';
