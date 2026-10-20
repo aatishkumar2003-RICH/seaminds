@@ -505,6 +505,13 @@
       "when": 1792471141899,
       "tag": "0071_admin_manager_emails",
       "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "7",
+      "when": 1792498416379,
+      "tag": "0072_owner_plan_reward_controls",
+      "breakpoints": true
     }
   ]
 }
