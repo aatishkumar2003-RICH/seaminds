@@ -1,9 +1,10 @@
 # SeaMinds — Global Vacancy Growth Roadmap
 
 ## Owner plan and reward controls
-- [ ] Add private global plan editor for crew, ship managers and fleet management, with editable name, USD amount, credits, interval and archive state.
-- [ ] Add owner-controlled reward amounts/reminders, evidence-based one-time CV/score grants and completion-only referrals.
-- [ ] Show role-aware wallet reminders/history; audit personal referrals and credits in admin; verify persistence, permissions and duplicate protection.
+- [x] Add private global plan editor for crew, ship managers and fleet management, with editable name, USD amount, credits, interval and archive state. Existing Pricing/Country Pricing links now use one editor; public paid-tier cards removed.
+- [x] Add owner-controlled reward amounts/reminders, evidence-based one-time CV/score grants and completion-only referrals; cross-role profile reward and referral reassignment protected.
+- [x] Show role-aware wallet reminders/history and embedded company-profile completion; audit personal referrals and credits in admin; 17 tests passed, owner plan create/edit/reload/archive and wallet reconciliation verified, signed-out access denied, mobile overflow corrected.
+- [ ] Fresh referred crew signup → full CV save → scored completion: needs a designated candidate account and invitation; existing owner milestones/repeated wallet reads verified without altering candidate data.
 
 ## Interactive user guide
 - [x] Build role-aware crew, ShipManager and staff guide with shareable lessons, actual privacy-safe screenshots and seminar/browser-narration controls.
