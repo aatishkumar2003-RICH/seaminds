@@ -1569,9 +1569,27 @@ export default function AdminDashboard() {
           </div>
         </div>
 
+        <div className="flex gap-2 overflow-x-auto flex-nowrap md:flex-wrap pb-2 mb-2 scrollbar-none" style={{ borderBottom: "1px solid rgba(212,175,55,0.15)" }}>
+          {groups.map((g) => (
+            <Button key={g.name} onClick={() => setTab(g.tabs[0].id)}
+              className="shrink-0 whitespace-nowrap font-bold rounded-xl"
+              style={activeGroup.name === g.name
+                ? { background: "#D4AF37", color: "#0D1B2A" }
+                : { background: "#112240", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.3)" }
+              }>
+              {g.name}
+            </Button>
+          ))}
+          <Button onClick={() => (window.location.href = "/marketplace")}
+            className="shrink-0 whitespace-nowrap font-bold rounded-xl"
+            style={{ background: "#112240", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.3)" }}>
+            🚢 Ship Marketplace ↗
+          </Button>
+        </div>
         <div className="flex gap-2 overflow-x-auto flex-nowrap md:flex-wrap pb-1 scrollbar-none">
           {tabs.map((t) => (
             <Button key={t.id} onClick={() => setTab(t.id)}
+              size="sm"
               className="shrink-0 whitespace-nowrap"
               style={tab === t.id
                 ? { background: "#D4AF37", color: "#0D1B2A" }
