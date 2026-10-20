@@ -1,7 +1,6 @@
 # Architecture rules
 
 - Subdirectories (e.g. `supabase/functions/`) have their own `AGENTS.md`; read it before changing files there.
-- Assessment recovery emails go through `recovery_outbox` (leased, attempt-fenced, stable idempotency key); never send from `recovery_claim_due`. Why: crashes must not strand work or mint new links.
 - Heartbeat `save_checkpoint` never clears an interruption; only `confirm_resume` (same paper + persisted answer) does. Why: a reconnect is not proof of recovery.
 - Final scoring is single-flight via `final_scoring_lease` on `scoring_jobs`; a validated AI result is cached before commit and reused. Why: polling and concurrent requests must not trigger repeated AI calls.
 - Pre-paper start failures are recorded in `assessment_start_incidents` (owner-bound, server-classified); no fake checkpoint or paper. Why: failures before issuance must be visible and recoverable without bypassing readiness.
@@ -10,7 +9,6 @@
 - DORA help knowledge lives in `dora_articles` (Postgres FTS via `dora_search_articles`, max 4 published hits); own-user context only via `dora_get_my_context()` keyed by auth.uid(); metrics/gaps store no raw conversation text. Why: grounded retrieval, no cross-user leakage.
 - Every Apply button routes through `src/lib/applicationRouter.ts` (WhatsApp → recruiter email → official site → flyer); SeaMinds-published adverts keep the agency in `job_postings.recruiter_name` and `notify-application` never falls back to the publishing account's email. Why: applications must reach the actual recruiter, and toasts claim only what happened.
 - Service-worker runtime caching rules live in `src/lib/pwaCacheRules.ts`: only listed public tables may be cached; every other backend call is NetworkOnly. Why: cached personal responses showed stale application state.
-- Crew recruiter-email delivery status is read via `notify-application` `kind: "delivery_status"` (own applications, ids only), cached in `vacancyFeed` and refreshed on app resume. Why: an application row alone does not prove the email was accepted.
 - Feeds use keyset cursors per source (`loadVacancyPage`); no vacancy is hidden by age (old external = "hiring not confirmed"). Inventory pages and lifecycle actions go via `src/lib/vacancyLifecycle.ts`. Why: no false removals; one secure delete path.
 - Build metadata comes from vite.config.ts (/version.json NetworkOnly, not precached); UI reads src/lib/releaseInfo.ts. Why: identifiable builds, no stale update checks.
 - Assessments are created/resumed only via `open_assessment_v2(mode, invite_id, restart)` (client wrapper `src/lib/assessmentGateway.ts`); mode is explicit (PROFILE / CV_BASED), context is server-derived, one in_progress row per (crew, mode, context), evidence snapshot frozen at creation, preflight confirmation never automatic. Why: no client-forged tiers, no duplicates, old certificates stay truthful.
@@ -23,4 +21,4 @@
 - Credits live in `credit_ledger` (user id in `manager_user_id`, for crew too); one-off grants are unique per (user, reason), only via `claim_welcome_credits` / `trg_grant_referral_credits`; UI reads `get_my_wallet`. Why: no double-crediting.
 - Ship marketplace is connection-only: `ship_listings` posts by approved managers; featured/hidden admin-only (trigger); photos private bucket + signed URLs. Why: no brokerage liability; public buckets blocked.
 - Crew menu = `NAV_ITEMS` sections rendered by `GroupedNav`. Why: one menu definition.
-- Company compliance lives in `company_compliance` (admin requests via `admin_request_company_docs`, managers submit via `submit_company_compliance`, files in private `company-documents/{uid}/`); every approval/request/submission emails the affected party via `company-compliance-notify`. Why: one review place, no email attachments, one action = one email.
+- Company compliance: `company_compliance` + RPCs, files in private `company-documents/{uid}/`; each request/submission/approval emails via `company-compliance-notify`. Why: one review place, one action = one email.
