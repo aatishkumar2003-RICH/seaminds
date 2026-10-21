@@ -11,7 +11,7 @@ describe("readXlsxCv", () => {
     const file = new File([buf], "CE_VU_VAN_TIEN.xlsx");
     (file as any).arrayBuffer = async () => buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
     const { text, photo } = await readXlsxCv(file);
-    expect(text).toContain("VU VAN TIEN");
+    expect(text).toContain("NAME IN FULL | VU | TIEN | VAN");
     expect(text).toContain("BREMEN BELLE");
     expect(photo?.startsWith("data:image/jpeg")).toBe(true);
   });
