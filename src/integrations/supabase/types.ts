@@ -811,6 +811,51 @@ export type Database = {
           },
         ]
       }
+      briefing_log: {
+        Row: {
+          audience: string
+          error: string | null
+          id: string
+          ok: boolean
+          post_id: string | null
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          audience: string
+          error?: string | null
+          id?: string
+          ok?: boolean
+          post_id?: string | null
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          audience?: string
+          error?: string | null
+          id?: string
+          ok?: boolean
+          post_id?: string | null
+          sent_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      briefing_optout: {
+        Row: {
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       cached_stats: {
         Row: {
           key: string

@@ -533,6 +533,13 @@
       "when": 1792498787308,
       "tag": "0075_single_profile_reward_across_roles",
       "breakpoints": true
+    },
+    {
+      "idx": 76,
+      "version": "7",
+      "when": 1792552580669,
+      "tag": "0076_weekly_maritime_briefing",
+      "breakpoints": true
     }
   ]
 }
