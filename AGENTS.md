@@ -22,4 +22,4 @@
 - Ship marketplace is connection-only: `ship_listings` posts by approved managers; featured/hidden admin-only (trigger); photos private bucket + signed URLs. Why: no brokerage liability.
 - Crew menu = `NAV_ITEMS` sections rendered by `GroupedNav`. Why: one menu.
 - Company compliance: `company_compliance` + RPCs, files in private `company-documents/{uid}/`; each request/submission/approval emails via `company-compliance-notify`. Why: one review place, one action = one email.
-- Excel CVs: browser unzip in `src/lib/xlsxCv.ts`, text to `parse-cv-documents`; CV declaration versioned in `crew_cv_data.medical.declaration`. Why: no server unzip or schema change.
+- Excel CVs: browser unzip in `src/lib/xlsxCv.ts`, text to `parse-cv-documents`; CV declaration versioned in `crew_cv_data.medical.declaration`. Why: no schema change.
