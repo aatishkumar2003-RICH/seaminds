@@ -54,6 +54,12 @@ const toDataUrl = (bytes: Uint8Array, ext: string) => {
   return `data:image/${ext === "png" ? "png" : "jpeg"};base64,${btoa(bin)}`;
 };
 
+export function excelSerialToDate(serial: number): string | null {
+  if (serial < 1 || serial > 80000) return null;
+  const d = new Date(Date.UTC(1899, 11, 30) + Math.floor(serial) * 86400000);
+  return `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}/${d.getUTCFullYear()}`;
+}
+
 export async function readXlsxCv(file: File): Promise<{ text: string; photo: string | null }> {
   if (/\.xls$/i.test(file.name)) throw new Error("Old .xls files are not supported. Please open it in Excel and “Save As” .xlsx, then upload again.");
   const files = unzipSync(new Uint8Array(await file.arrayBuffer()));
@@ -67,6 +73,17 @@ export async function readXlsxCv(file: File): Promise<{ text: string; photo: str
   const relMap: Record<string, string> = {};
   Array.from(rels.getElementsByTagName("Relationship")).forEach(r => { relMap[r.getAttribute("Id")!] = r.getAttribute("Target")!; });
 
+  // Cells whose style is a date format hold Excel serial numbers; convert them to DD/MM/YYYY.
+  const styles = xml(get("xl/styles.xml"));
+  const customDate = new Set(Array.from(styles.getElementsByTagName("numFmt"))
+    .filter(f => /[dmy]/i.test((f.getAttribute("formatCode") || "").replace(/\[[^\]]*\]|"[^"]*"/g, "")))
+    .map(f => f.getAttribute("numFmtId")));
+  const xfs = styles.getElementsByTagName("cellXfs")[0];
+  const dateStyle = xfs ? Array.from(xfs.getElementsByTagName("xf")).map(x => {
+    const id = x.getAttribute("numFmtId") || "0"; const n = Number(id);
+    return (n >= 14 && n <= 22) || (n >= 45 && n <= 47) || customDate.has(id);
+  }) : [];
+
   const parts: string[] = [];
   for (const sh of Array.from(xml(get("xl/workbook.xml")).getElementsByTagName("sheet"))) {
     const rid = sh.getAttribute("r:id") || sh.getAttributeNS("http://schemas.openxmlformats.org/officeDocument/2006/relationships", "id") || "";
@@ -79,6 +96,7 @@ export async function readXlsxCv(file: File): Promise<{ text: string; photo: str
         const t = c.getAttribute("t");
         const v = c.getElementsByTagName("v")[0]?.textContent ?? "";
         let val = t === "s" ? shared[Number(v)] ?? "" : t === "inlineStr" ? (c.getElementsByTagName("t")[0]?.textContent ?? "") : v;
+        if (!t && dateStyle[Number(c.getAttribute("s") || 0)] && /^\d+(\.\d+)?$/.test(val)) val = excelSerialToDate(Number(val)) || val;
         val = val.replace(/\s+/g, " ").trim();
         if (val) cells[colIndex(c.getAttribute("r") || "A")] = val;
       }

@@ -20,3 +20,11 @@ describe("readXlsxCv", () => {
     await expect(readXlsxCv(new File(["x"], "old.xls"))).rejects.toThrow(/xlsx/);
   });
 });
+
+import { excelSerialToDate } from "@/lib/xlsxCv";
+describe("excelSerialToDate", () => {
+  it("converts Excel serial numbers", () => {
+    expect(excelSerialToDate(33097)).toBe("12/08/1990");
+    expect(excelSerialToDate(49287)).toBe("09/12/2034");
+  });
+});

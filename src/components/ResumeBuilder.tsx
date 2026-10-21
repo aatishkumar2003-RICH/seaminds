@@ -412,8 +412,8 @@ const ResumeBuilder = () => {
     if (importSections.personal) {
       setPersonal((p: any) => ({
         ...p,
-        firstName: cv.name?.split(' ')[0] || p.firstName,
-        lastName: cv.name?.split(' ').slice(1).join(' ') || p.lastName,
+        firstName: cv.first_name || cv.name?.split(' ')[0] || p.firstName,
+        lastName: cv.last_name || cv.name?.split(' ').slice(1).join(' ') || p.lastName,
         rank: cv.rank || p.rank,
         nationality: cv.nationality || p.nationality,
         dob: cv.date_of_birth || p.dob,
