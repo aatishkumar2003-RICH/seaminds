@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
     ];
 
     if (isSheet) {
-      userContent.push({ type: "text", text: "This CV comes from an Excel agency application form. Cells are separated by ' | ', one row per line, grouped by sheet. Map labels (e.g. 'Seaman Book', 'CoC', 'GRT', 'Sign on') to the schema. Expand abbreviations: CE=Chief Engineer, C/O=Chief Officer, 2/E=2nd Engineer, B.C/BC=Bulk Carrier, CONT=Container. Phone numbers starting 00 become +. Whole numbers between 20000 and 60000 in date columns are Excel serial dates (days since 1899-12-30) — convert them to DD/MM/YYYY. When name parts are labelled (SURNAME)/(FIRST NAME)/(MIDDLE NAME), set last_name = surname and first_name = first + middle. Pre-interview answers (engine makers, wages) go into summary/main_engine_types.\n\n" + text_content });
+      userContent.push({ type: "text", text: "This CV comes from an Excel agency application form. Cells are separated by ' | ', one row per line, grouped by sheet. Map labels (e.g. 'Seaman Book', 'CoC', 'GRT', 'Sign on') to the schema. Expand abbreviations: CE=Chief Engineer, C/O=Chief Officer, 2/E=2nd Engineer, B.C/BC=Bulk Carrier, CONT=Container. Phone numbers starting 00 become +. Whole numbers between 20000 and 60000 in date columns are Excel serial dates (days since 1899-12-30) — convert them to DD/MM/YYYY. When name parts are labelled (SURNAME)/(FIRST NAME)/(MIDDLE NAME), set last_name = surname and first_name = first + middle. Labels may sit on the row BELOW the values; match them by position (1st value = 1st label). Pre-interview answers (engine makers, wages) go into summary/main_engine_types.\n\n" + text_content });
     } else if (isPdf) {
       userContent.push({
         type: "file",
