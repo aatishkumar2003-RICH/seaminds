@@ -1,7 +1,7 @@
 // Weekly Maritime Briefing: one blog article per user per week, staggered by weekday so the
 // free email quota never spikes. Tue = Indonesia/Vietnam, Wed = Philippines, Thu = India +
 // everyone else, Fri = ShipManagers. Topic matched to department; no repeat within 90 days.
-// Quota gate: stands down if >50 emails already went out in 24h; max 20 per run.
+// Quota gate: only sends while 24h total stays under 80; max 20 per run.
 // GET ?u=<user_id>&s=<sig> = one-click unsubscribe. POST {dry:true} = report only.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
@@ -12,7 +12,7 @@ const svc = createClient(Deno.env.get("SUPABASE_URL")!, SVC_KEY);
 const RESEND_KEY = Deno.env.get("RESEND_API_KEY") || "";
 const FN_URL = `${Deno.env.get("SUPABASE_URL")}/functions/v1/weekly-briefing`;
 const RUN_CAP = 20;
-const QUOTA_GATE = 50;
+const CEILING = 80; // leaves ~20/day of the 100 free emails for alerts and applications
 const esc = (s: unknown) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
@@ -117,7 +117,7 @@ Deno.serve(async (req) => {
   if (!group) return json({ skipped: "not_a_briefing_day", dow });
 
   const used = await sentLast24h();
-  if (used > QUOTA_GATE && !body.dry) return json({ skipped: "quota_gate", used });
+  if (used >= CEILING && !body.dry) return json({ skipped: "quota_gate", used });
 
   const { data: out } = await svc.from("briefing_optout").select("user_id");
   const optedOut = new Set((out || []).map((o: any) => o.user_id));
@@ -142,7 +142,7 @@ Deno.serve(async (req) => {
       list.push({ id: c.id, email: c.email, name: c.first_name || "", rank: c.rank || c.role, nat: c.nationality, manager: false });
     }
   }
-  const budget = Math.min(RUN_CAP, Math.max(0, QUOTA_GATE - used + 30));
+  const budget = Math.min(RUN_CAP, Math.max(0, CEILING - used));
   const batch = list.slice(0, budget);
   if (body.dry) return json({ group, used, eligible: list.length, would_send: batch.length });
 
