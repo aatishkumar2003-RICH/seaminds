@@ -11,6 +11,9 @@ import { generateUniqueCvId, genderChar, countryCodeFromNationality, CV_ID_PATTE
 import ContactVerify from "@/components/cv/ContactVerify";
 import MobileVerify from "@/components/cv/MobileVerify";
 import { validatePhone } from "@/lib/verification/mobileProviders";
+import { isSpreadsheet, readXlsxCv } from "@/lib/xlsxCv";
+
+const DECLARATION_VERSION = "2026.1";
 
 
 
@@ -223,6 +226,12 @@ const ResumeBuilder = () => {
   const [openSection, setOpenSection] = useState<string | null>("personal");
   const [photo, setPhoto] = useState<string | null>(null);
   const photoRef = useRef<HTMLInputElement>(null);
+  const scanPhotoRef = useRef<string | null>(null);
+  type Declaration = { acceptedAt: string; version: string; name: string };
+  const declRef = useRef<Declaration | null>(null);
+  const [declaration, setDeclaration] = useState<Declaration | null>(null);
+  const [showDeclModal, setShowDeclModal] = useState(false);
+  const [declTicked, setDeclTicked] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
   const scanInputRef = useRef<HTMLInputElement>(null);
   const [scanning, setScanning] = useState(false);
@@ -365,18 +374,27 @@ const ResumeBuilder = () => {
     if (!file) return;
     setScanning(true);
     setScanMessage("");
+    scanPhotoRef.current = null;
     try {
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve((reader.result as string).split(",")[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
+      let body: Record<string, string>;
+      if (isSpreadsheet(file)) {
+        const { text, photo: sheetPhoto } = await readXlsxCv(file);
+        scanPhotoRef.current = sheetPhoto;
+        body = { text_content: text, mime_type: "text/spreadsheet" };
+      } else {
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve((reader.result as string).split(",")[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        body = { file_base64: base64, mime_type: file.type };
+      }
       const { data, error } = await supabase.functions.invoke("parse-cv-documents", {
-        body: { file_base64: base64, mime_type: file.type },
+        body,
         headers: { Authorization: `Bearer ${accessToken}` },
       });
-      if (error || !data?.success) throw new Error(error?.message || "Scan failed");
+      if (error || !data?.success) throw new Error(data?.error || error?.message || "Scan failed");
       setScanResult(data.data);
       setImportSections({ personal: true, sea: true, certs: true, edu: true, skills: true });
       setShowScanConfirm(true);
@@ -456,8 +474,21 @@ const ResumeBuilder = () => {
         }));
       }
     }
-    const totalRecs = (cv.sea_service?.length || 0) + (cv.certificates?.length || 0);
-    setScanMessage(`✅ Imported ${totalRecs} records. Review and fill any missing details.`);
+    const importedPhoto = scanPhotoRef.current;
+    if (importedPhoto && !photo) setPhoto(importedPhoto);
+    const p = importSections.personal ? cv : {};
+    const still: string[] = [];
+    if (!photo && !importedPhoto) still.push("Photo");
+    if (!personal.gender) still.push("Gender");
+    if (!(p.date_of_birth || personal.dob)) still.push("Date of Birth");
+    if (!(p.passport_no || personal.passportNo)) still.push("Passport No.");
+    if (!(p.cdc_no || personal.cdcNo)) still.push("CDC / Seaman Book");
+    if (!(p.phone || personal.phone)) still.push("WhatsApp");
+    if (!(p.email || personal.email)) still.push("Email");
+    still.push("Email verification code");
+    const seaN = importSections.sea ? cv.sea_service?.length || 0 : 0;
+    const certN = importSections.certs ? cv.certificates?.length || 0 : 0;
+    setScanMessage(`✅ Imported ${seaN} sea service entries, ${certN} certificates${importedPhoto && !photo ? " & profile photo" : ""}. ⚠️ Still needed: ${still.join(", ")}. Please also check imported dates.`);
     setShowScanConfirm(false);
     setScanResult(null);
     setOpenSection("personal");
@@ -500,6 +531,16 @@ const ResumeBuilder = () => {
       setShowMissingModal(true);
       return;
     }
+    if (declaration?.version !== DECLARATION_VERSION) { setDeclTicked(false); setShowDeclModal(true); return; }
+    setView('preview');
+  };
+
+  const confirmDeclaration = async () => {
+    const d = { acceptedAt: new Date().toISOString(), version: DECLARATION_VERSION, name: `${personal.firstName} ${personal.lastName}`.trim() };
+    declRef.current = d;
+    setDeclaration(d);
+    setShowDeclModal(false);
+    await saveCVData({ personal, sea, certs, edu, skills, photo, training });
     setView('preview');
   };
 
@@ -637,7 +678,7 @@ const ResumeBuilder = () => {
         certificates: data.certs as any,
         sea_service: data.sea as any,
         education: data.edu as any,
-        medical: { personal: savedPersonal, skills: data.skills || {}, photo: data.photo || null, training: data.training || [], cv_uid: savedCvUid } as any,
+        medical: { personal: savedPersonal, skills: data.skills || {}, photo: data.photo || null, training: data.training || [], cv_uid: savedCvUid, declaration: declRef.current } as any,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_id' });
 
@@ -722,6 +763,7 @@ const ResumeBuilder = () => {
         if (meta?.personal) setPersonal(meta.personal);
         if (meta?.skills) setSkills(meta.skills);
         if (meta?.photo) setPhoto(meta.photo);
+        if (meta?.declaration?.acceptedAt) { declRef.current = meta.declaration; setDeclaration(meta.declaration); }
         if (meta?.training) setTraining(meta.training);
         const seaData = typeof data.sea_service === 'string' ? JSON.parse(data.sea_service) : data.sea_service;
         if (Array.isArray(seaData) && seaData.length > 0) setSea(seaData);
@@ -935,6 +977,29 @@ const ResumeBuilder = () => {
         </div>
       )}
 
+      {/* ── SEAFARER DECLARATION MODAL ── */}
+      {showDeclModal && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.75)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <div className="bg-[#0D1B2A] border-2 border-[#D4AF37] rounded-xl p-5 w-[92%] max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="text-[#D4AF37] text-lg font-bold mb-3">⚓ Seafarer's Authenticity Declaration</div>
+            <p className="text-gray-200 text-sm mb-3">I, <strong>{`${personal.firstName} ${personal.lastName}`.trim()}</strong>, declare that all personal particulars, sea service records, certificates, licences and qualifications in this CV are authentic, true and correct to the best of my knowledge. I understand that:</p>
+            <ol className="text-gray-300 text-xs space-y-2 list-decimal pl-5 mb-4">
+              <li>I bear sole responsibility for the authenticity and validity of all documents, sea time and certificates I submit.</li>
+              <li>SeaMinds provides digital CV formatting and introduction tools and does not physically verify or guarantee original certificates.</li>
+              <li>Employers and crewing agencies remain responsible for inspecting original flag-state licences, STCW certificates and medical fitness before engagement.</li>
+            </ol>
+            <label className="flex items-start gap-2 text-white text-sm mb-4 cursor-pointer">
+              <input type="checkbox" checked={declTicked} onChange={e => setDeclTicked(e.target.checked)} className="mt-1 accent-[#D4AF37]" />
+              I declare and confirm all information is authentic and correct.
+            </label>
+            <div className="flex gap-2">
+              <button onClick={() => setShowDeclModal(false)} className="px-4 py-3 rounded-xl border border-[#D4AF37] text-[#D4AF37] text-sm font-semibold">Cancel</button>
+              <button onClick={confirmDeclaration} disabled={!declTicked} className="flex-1 bg-[#D4AF37] text-[#0D1B2A] py-3 rounded-xl font-bold text-sm disabled:opacity-40">Confirm & Generate CV</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── MISSING FIELDS MODAL ── */}
       {showMissingModal && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center' }}>
@@ -977,7 +1042,7 @@ const ResumeBuilder = () => {
 
           {/* ── AI SCAN CV ── */}
           <div className="rounded-xl p-4 mb-2 border border-[#D4AF37] bg-[#0D1B2A]">
-            <input ref={scanInputRef} type="file" accept=".pdf,image/*" className="hidden" onChange={handleScanCV} />
+            <input ref={scanInputRef} type="file" accept=".pdf,image/*,.xlsx,.xls" className="hidden" onChange={handleScanCV} />
             <div className="flex items-center gap-2 mb-1">
               <span className="text-lg">⚡</span>
               <span className="text-[#D4AF37] font-bold text-sm">AI Auto-Fill</span>
@@ -1831,6 +1896,15 @@ const ResumeBuilder = () => {
                 <p style={{ fontSize:'10px', color:'#333' }}>{personal.emergencyName}{personal.emergencyPhone && ` — ${personal.emergencyPhone}`}</p>
               </div>
             )}
+
+            {/* SEAFARER DECLARATION */}
+            <div style={{ marginTop:'14px', border:'1px solid #0D1B2A', padding:'6px 8px', fontSize:'8px', color:'#333', lineHeight:'1.5' }}>
+              <div style={{ fontWeight:'bold', color:'#0D1B2A', letterSpacing:'1px', marginBottom:'2px' }}>SEAFARER DECLARATION & DISCLAIMER</div>
+              The seafarer certifies that the information, sea service and certificates in this CV are authentic and true; their accuracy remains the sole responsibility of the seafarer. SeaMinds is a digital connection platform and does not verify original documents — employers and agencies must verify originals before engagement.
+              <div style={{ marginTop:'3px', fontWeight:'bold' }}>
+                Confirmed electronically by: {declaration?.name || `${personal.firstName} ${personal.lastName}`.trim()} • Date: {declaration ? new Date(declaration.acceptedAt).toLocaleDateString('en-GB') : '—'} • UID: {smartCVId}
+              </div>
+            </div>
 
             {/* FOOTER */}
             <div style={{ borderTop:'2px solid #0D1B2A', marginTop:'16px', paddingTop:'8px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
