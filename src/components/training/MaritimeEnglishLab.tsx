@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { SCENARIOS, scoreAnswer, loadProgress, recordAttempt, dailyScenario, level, today, pickVariant, deptOf, rankOrdered, nextRecommended, type Scenario, type ScoreResult, type Domain, type Dept, type Progress } from "@/lib/maritimeEnglish";
+import EnglishTracks from "@/components/training/EnglishTracks";
 import { HINTS, HINT_LANGS, defaultHintLang, type HintLang } from "@/lib/maritimeEnglishHints";
 
 const DOMAINS: Domain[] = ["Bridge & VHF", "Engine Room", "Deck & Ratings", "Safety & Emergency", "PSC & Vetting"];
@@ -18,8 +19,9 @@ const speak = (text: string) => {
   window.speechSynthesis.speak(u);
 };
 
-const Drill = ({ sc: base, isDaily, lang, setLang, onDone, onBack }: { sc: Scenario; isDaily: boolean; lang: HintLang | null; setLang: (l: HintLang | null) => void; onDone: (s: number) => void; onBack: () => void }) => {
-  const [sc, setSc] = useState(() => pickVariant(base));
+export const Drill = ({ sc: base, isDaily, lang, setLang, onDone, onBack, exam }: { sc: Scenario; isDaily: boolean; lang: HintLang | null; setLang: (l: HintLang | null) => void; onDone: (s: number) => void; onBack: () => void; exam?: { step: number; total: number; onNext: () => void } }) => {
+  const examVariant = useMemo(() => base, [base]);
+  const [sc, setSc] = useState(() => (exam ? examVariant : pickVariant(base)));
   const [answer, setAnswer] = useState("");
   const [listening, setListening] = useState(false);
   const [result, setResult] = useState<ScoreResult | null>(null);
@@ -48,10 +50,10 @@ const Drill = ({ sc: base, isDaily, lang, setLang, onDone, onBack }: { sc: Scena
 
   return (
     <div className="space-y-4">
-      <Button variant="ghost" className="px-0 text-primary" onClick={onBack}><ChevronLeft /> All scenarios</Button>
+      <Button variant="ghost" className="px-0 text-primary" onClick={onBack}><ChevronLeft /> {exam ? "Leave assessment" : "All scenarios"}</Button>
       <div className="rounded-2xl border border-primary/40 bg-card p-4 space-y-3">
         <div className="flex items-center justify-between text-xs">
-          <span className="font-bold text-primary">{isDaily ? "⭐ TODAY'S CHALLENGE" : sc.domain.toUpperCase()}</span>
+          <span className="font-bold text-primary">{exam ? `📝 ASSESSMENT · QUESTION ${exam.step} OF ${exam.total}` : isDaily ? "⭐ TODAY'S CHALLENGE" : sc.domain.toUpperCase()}</span>
           <span className="text-muted-foreground">{sc.task}</span>
         </div>
         <h2 className="text-lg font-bold">{sc.title}</h2>
@@ -86,7 +88,7 @@ const Drill = ({ sc: base, isDaily, lang, setLang, onDone, onBack }: { sc: Scena
 
       <textarea value={answer} onChange={(e) => setAnswer(e.target.value)} rows={3} placeholder="Your reply appears here (you can also type)…"
         className="w-full rounded-xl border border-border bg-background p-3 text-sm" />
-      <Button className="w-full rounded-xl font-bold" disabled={!answer.trim() || listening} onClick={check}>Check my answer</Button>
+      <Button className="w-full rounded-xl font-bold" disabled={!answer.trim() || listening || (!!exam && !!result)} onClick={check}>{exam ? "Submit answer" : "Check my answer"}</Button>
 
       {result && (
         <div className="rounded-2xl border border-primary/40 bg-card p-4 space-y-3">
@@ -99,11 +101,12 @@ const Drill = ({ sc: base, isDaily, lang, setLang, onDone, onBack }: { sc: Scena
               <div className="h-1.5 rounded-full bg-border overflow-hidden"><div className="h-full bg-primary" style={{ width: `${v}%` }} /></div></div>
           ))}
           {result.tips.length > 0 && <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-1">{result.tips.map((t) => <li key={t}>{t}</li>)}</ul>}
+          {exam ? <Button className="w-full rounded-xl font-bold" onClick={exam.onNext}>{exam.step < exam.total ? "Next question →" : "See my result →"}</Button> : <>
           <div className="rounded-xl bg-background p-3 text-sm border border-border">
             <p className="text-xs text-primary font-semibold mb-1">Model answer</p>{sc.model}
             <Button variant="link" size="sm" className="px-0" onClick={() => speak(sc.model)}><Volume2 size={14} /> Listen & repeat</Button>
           </div>
-          <Button variant="outline" className="w-full rounded-xl" onClick={() => { setResult(null); setAnswer(""); setSc(pickVariant(base)); }}><RotateCcw size={16} /> Try a new version (practice is unlimited)</Button>
+          <Button variant="outline" className="w-full rounded-xl" onClick={() => { setResult(null); setAnswer(""); setSc(pickVariant(base)); }}><RotateCcw size={16} /> Try a new version (practice is unlimited)</Button></>}
         </div>
       )}
     </div>
@@ -171,6 +174,8 @@ const MaritimeEnglishLab = () => {
         </div>
       </div>
 
+      <EnglishTracks dept={dept} best={progress.best} lang={lang} setLang={setLang} onAttempt={(sc, s) => onDone(sc, s, false)} onOpenLesson={(sc) => setActive({ sc, daily: false })} />
+
       <button type="button" onClick={() => setActive({ sc: daily, daily: true })} className="w-full text-left rounded-2xl border-2 border-primary bg-primary/10 p-4">
         <p className="text-xs font-bold text-primary">⭐ TODAY'S 2-MINUTE CHALLENGE {doneToday && `· Done (${progress.daily[today()]})`}</p>
         <p className="font-bold">{daily.title}</p>
@@ -183,6 +188,7 @@ const MaritimeEnglishLab = () => {
         <p className="text-xs text-muted-foreground">{progress.best[recommended.id] !== undefined ? `Your weakest so far (best ${progress.best[recommended.id]})` : "Not tried yet"}</p>
       </button>
 
+      <p className="pt-2 text-xs font-bold uppercase tracking-wider text-primary">📚 Full practice library</p>
       <div className="flex gap-2 overflow-x-auto pb-1">
         {(["ALL", ...DOMAINS] as const).map((d) => (
           <button key={d} onClick={() => setDomain(d)} className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold border ${domain === d ? "bg-primary text-primary-foreground border-primary" : "border-primary/40 text-primary"}`}>{d === "ALL" ? "All" : d}</button>
