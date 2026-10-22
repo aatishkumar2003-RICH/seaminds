@@ -339,6 +339,18 @@ const Index = () => {
 
   const PROFILE_COLS = 'id, first_name, last_name, onboarded, role, rank, ship_name, voyage_start_date, manning_agency, nationality, whatsapp_number, vessel_type, port_of_joining, onboarding_complete';
 
+  // Refresh header/Cockpit immediately when the CV Builder saves new details.
+  useEffect(() => {
+    const refresh = async () => {
+      const id = authUser?.id || localStorage.getItem('seamind_profile_id');
+      if (!id) return;
+      const { data } = await supabase.from('crew_profiles').select(PROFILE_COLS).eq('id', id).maybeSingle();
+      if (data) applyProfileRow(data);
+    };
+    window.addEventListener('seaminds:profile-updated', refresh);
+    return () => window.removeEventListener('seaminds:profile-updated', refresh);
+  }, [authUser?.id]);
+
   // Init
   useEffect(() => {
     const init = async () => {
