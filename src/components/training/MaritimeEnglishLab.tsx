@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Mic, MicOff, Volume2, ChevronLeft, RotateCcw, Flame, Trophy, Radio } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SCENARIOS, scoreAnswer, loadProgress, recordAttempt, dailyScenario, level, today, type Scenario, type ScoreResult, type Domain } from "@/lib/maritimeEnglish";
+import { SCENARIOS, VI_HINTS, scoreAnswer, loadProgress, recordAttempt, dailyScenario, level, today, type Scenario, type ScoreResult, type Domain } from "@/lib/maritimeEnglish";
 
 const DOMAINS: Domain[] = ["Bridge & VHF", "Engine Room", "Safety & Emergency", "PSC & Vetting"];
 
