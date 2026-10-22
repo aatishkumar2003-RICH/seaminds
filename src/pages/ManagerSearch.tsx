@@ -490,12 +490,30 @@ const ManagerSearch = () => {
                 <option value="available">Available now</option>
               </select>
             </div>
+            <div>
+              <span style={label}>Competency Score</span>
+              <select value={minScore} onChange={(e) => setMinScore(e.target.value)} style={input}>
+                <option value="">Any score</option>
+                <option value="4">Top performers (4.00+)</option>
+                <option value="3.5">Competent (3.50+)</option>
+                <option value="3">3.00+</option>
+              </select>
+            </div>
+            <div>
+              <span style={label}>Maritime English</span>
+              <select value={minEnglish} onChange={(e) => setMinEnglish(e.target.value)} style={input}>
+                <option value="">Any level</option>
+                <option value="85">Ready for sea (85%+)</option>
+                <option value="70">Confident (70%+)</option>
+                <option value="50">Developing (50%+)</option>
+              </select>
+            </div>
             <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
               <button onClick={() => search()} disabled={loading} style={{ ...goldBtn, flex: 1, opacity: loading ? 0.6 : 1 }}>
                 {loading ? "Searching…" : "Search"}
               </button>
               <button
-                onClick={() => { setRank(""); setNationality(""); setVesselType(""); setAvailability("all"); }}
+                onClick={() => { setRank(""); setNationality(""); setVesselType(""); setAvailability("all"); setMinScore(""); setMinEnglish(""); }}
                 style={ghostBtn}
               >
                 Clear
