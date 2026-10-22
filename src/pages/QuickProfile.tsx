@@ -449,6 +449,7 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
             <p style={{ color: "#94A3B8", fontSize: 12, lineHeight: 1.6 }}>
               {t("qpDoneNote")}
             </p>
+            {(() => { const n = new URLSearchParams(window.location.search).get("next"); return n && n.startsWith("/") && !n.startsWith("//") ? <button style={goldBtn} onClick={() => navigate(n)}>Continue →</button> : null; })()}
             <button style={goldBtn} onClick={() => navigate("/app?tab=jobs")}>{t("qpDoneJobs")}</button>
             <button style={goldBtn} onClick={() => navigate("/app?tab=smc")}>{t("qpDoneSmc")}</button>
           </div>

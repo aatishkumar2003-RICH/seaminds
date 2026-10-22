@@ -122,6 +122,14 @@ const ConversionConsole = () => {
 
   const [needsQuickProfile, setNeedsQuickProfile] = useState(false);
   const [gateOpen, setGateOpen] = useState(false);
+  const [heroTab, setHeroTab] = useState<"crew" | "train" | "company">("train");
+  // Training & AI interview need sign-in + Quick Profile; return to the chosen tool afterwards.
+  const openTraining = (dest: string) => {
+    const qp = `/quick-profile?next=${encodeURIComponent(dest)}`;
+    if (!user) navigate(`/join?next=${encodeURIComponent(qp)}`);
+    else if (needsQuickProfile) navigate(qp);
+    else navigate(dest);
+  };
 
   useEffect(() => {
     if (!user?.id) { setCardInfo(null); setNeedsQuickProfile(false); return; }
@@ -529,10 +537,21 @@ const ConversionConsole = () => {
 
         <CountryGateway />
 
-        <div className="relative grid gap-4 md:grid-cols-2 md:items-stretch">
+        <div role="tablist" aria-label="Choose your path" className="relative md:hidden grid grid-cols-3 gap-1 p-1 mb-3 rounded-xl" style={{ background: `${PANEL}CC`, border: `1px solid ${BORDER}` }}>
+          {([["crew", "⚓ Jobs"], ["train", "🎙️ AI Training"], ["company", "🏢 Companies"]] as const).map(([k, label]) => (
+            <button key={k} role="tab" aria-selected={heroTab === k} onClick={() => setHeroTab(k)}
+              className="relative h-10 rounded-lg text-[11px] font-bold transition"
+              style={heroTab === k ? { background: GOLD, color: NAVY } : { color: "#E2E8F0" }}>
+              {label}
+              {k === "train" && heroTab !== k && <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full animate-pulse" style={{ background: GREEN }} />}
+            </button>
+          ))}
+        </div>
+
+        <div className="relative grid gap-4 md:grid-cols-3 md:items-stretch">
           {/* LEFT — seafarers */}
           <div
-            className="rounded-2xl p-4 sm:p-5 flex flex-col"
+            className={`rounded-2xl p-4 sm:p-5 flex-col ${heroTab === "crew" ? "flex" : "hidden md:flex"}`}
             style={{ background: `${PANEL}CC`, border: `1px solid ${BORDER}` }}
           >
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] mb-2" style={{ color: GOLD }}>
@@ -569,9 +588,53 @@ const ConversionConsole = () => {
             </div>
           </div>
 
+          {/* MIDDLE — AI interview & training */}
+          <div
+            className={`rounded-2xl p-4 sm:p-5 flex-col relative overflow-hidden ${heroTab === "train" ? "flex" : "hidden md:flex"}`}
+            style={{ background: `linear-gradient(160deg, ${PANEL}F2, ${NAVY}F2)`, border: `1px solid ${GOLD}` , boxShadow: "0 0 32px rgba(212,175,55,0.18)" }}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: GOLD }}>AI Interview &amp; Maritime Training</p>
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(34,197,94,0.15)", color: GREEN }}>● LIVE VOICE</span>
+            </div>
+            <h2 className="text-xl sm:text-2xl md:text-[26px] font-bold leading-tight text-foreground mb-3">
+              Speak like a pro on the radio. Pass your interview.
+            </h2>
+            <div className="flex items-end gap-[3px] h-6 mb-3" aria-hidden="true">
+              {[8, 16, 11, 22, 14, 24, 10, 18, 7, 20, 13, 9, 17, 12].map((h, i) => (
+                <span key={i} className="w-1 rounded-full animate-pulse" style={{ height: h, background: GOLD, opacity: 0.4 + (i % 4) * 0.15, animationDelay: `${i * 90}ms` }} />
+              ))}
+              <span className="ml-2 text-[10px] font-mono" style={{ color: GOLD }}>VHF CH 16 · IMO SMCP</span>
+            </div>
+            <div className="space-y-2 mb-4">
+              {[
+                ["🎙️", "Maritime English Voice Lab", "Push-to-talk radio drills, instant score", "/training?tab=english"],
+                ["🤖", "AI Competency Interview", "Rank-based questions, your own score", "/app?tab=smc"],
+                ["📚", "Training Matrix", "Recommended courses for your rank", "/training"],
+              ].map(([icon, title, sub, to]) => (
+                <button key={title} onClick={() => openTraining(to)}
+                  className="w-full flex items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:opacity-90"
+                  style={{ background: "rgba(212,175,55,0.08)", border: `1px solid ${BORDER}` }}>
+                  <span className="text-lg">{icon}</span>
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-[13px] font-bold text-foreground">{title}</span>
+                    <span className="block text-[10px] text-muted-foreground">{sub}</span>
+                  </span>
+                  <span style={{ color: GOLD }}>→</span>
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-muted-foreground mb-3">Hints in Tiếng Việt · Free practice · Sign in &amp; quick profile required</p>
+            <button onClick={() => openTraining("/training?tab=english")}
+              className="sm-cta-pulse mt-auto w-full rounded-xl px-6 h-12 font-bold inline-flex items-center justify-center"
+              style={{ background: GOLD, color: NAVY }}>
+              Start free training →
+            </button>
+          </div>
+
           {/* RIGHT — shipping & manning companies */}
           <div
-            className="rounded-2xl p-4 sm:p-5 flex flex-col"
+            className={`rounded-2xl p-4 sm:p-5 flex-col ${heroTab === "company" ? "flex" : "hidden md:flex"}`}
             style={{ background: `${PANEL}CC`, border: `1px solid ${BORDER}` }}
           >
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] mb-2" style={{ color: GOLD }}>
