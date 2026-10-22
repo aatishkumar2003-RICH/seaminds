@@ -196,7 +196,6 @@ export interface Progress { best: Record<string, number>; history: { d: string; 
 const KEY = "seaminds_english_progress_v1";
 export const today = () => new Date().toISOString().slice(0, 10);
 export const dailyScenario = (d = today(), dept: Dept = "all") => { const pool = dept === "all" ? SCENARIOS : SCENARIOS.filter((x) => DEPT_DOMAINS[dept].includes(x.domain)); return pool[[...d].reduce((n, c) => n + c.charCodeAt(0), 0) % pool.length]; };
-export const _legacyDaily = (d = today()) => SCENARIOS[[...d].reduce((n, c) => n + c.charCodeAt(0), 0) % SCENARIOS.length];
 export function loadProgress(): Progress {
   try { return { best: {}, history: [], daily: {}, streak: 0, ...JSON.parse(localStorage.getItem(KEY) || "{}") }; } catch { return { best: {}, history: [], daily: {}, streak: 0 }; }
 }
