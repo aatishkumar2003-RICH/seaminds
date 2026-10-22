@@ -555,6 +555,12 @@ const ManagerSearch = () => {
                     {r.smc_score != null ? `${r.smc_score}${r.smc_band ? ` · ${r.smc_band}` : ""}` : "Not assessed"}
                   </dd>
                 </div>
+                <div>
+                  <dt style={{ color: "#6b7280" }}>Maritime English</dt>
+                  <dd style={{ color: r.english_avg != null ? GOLD : "#6b7280", fontWeight: 700 }}>
+                    {r.english_avg != null ? `${r.english_avg}% · ${r.english_avg >= 85 ? "Ready for sea" : r.english_avg >= 70 ? "Confident" : r.english_avg >= 50 ? "Developing" : "Starter"}` : "No practice yet"}
+                  </dd>
+                </div>
               </dl>
 
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
