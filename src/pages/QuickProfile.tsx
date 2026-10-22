@@ -124,6 +124,7 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
   const [ready, setReady] = useState(false);
   const [step, setStep] = useState(1);
   const [done, setDone] = useState(false);
+  const [askUpdate, setAskUpdate] = useState(false);
 
   // step 1
   const [rank, setRank] = useState("");
@@ -188,6 +189,7 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
       setSeaBand(p.total_sea_service_band || "");
       setAvailable(!!p.is_available);
       setAvailableFrom(p.available_from ? String(p.available_from).slice(0, 10) : "");
+      if (!embedded && p.rank && p.whatsapp_number) setAskUpdate(true);
 
       const fmap: Record<string, string> = {};
       ((fam as any[]) || []).forEach((f) => { fmap[f.vessel_family] = f.sea_time_band; });
@@ -441,7 +443,18 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
           <p style={{ color: GOLD, fontSize: 13, fontWeight: 700 }}>⚓ {matches} {t("qpMatches")}</p>
         )}
 
-        {done ? (
+        {askUpdate && !done ? (
+          <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 20, textAlign: "center", display: "flex", flexDirection: "column", gap: 12 }}>
+            <p style={{ fontSize: 36 }}>⚓</p>
+            <p style={{ color: GOLD, fontSize: 18, fontWeight: 800 }}>Welcome back, {firstName}!</p>
+            <p style={{ color: "#e5e7eb", fontSize: 13 }}>You already have a Sea Profile as {rank}. Do you want to update it?</p>
+            <button style={goldBtn} onClick={() => {
+              const n = new URLSearchParams(window.location.search).get("next");
+              navigate(n && n.startsWith("/") && !n.startsWith("//") ? n : "/app");
+            }}>No, continue →</button>
+            <button style={{ ...goldBtn, background: "transparent", color: GOLD, border: `1px solid ${GOLD}` }} onClick={() => setAskUpdate(false)}>Yes, update my profile</button>
+          </div>
+        ) : done ? (
           <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 20, textAlign: "center", display: "flex", flexDirection: "column", gap: 12 }}>
             <p style={{ fontSize: 40 }}>⚓</p>
             <p style={{ color: GOLD, fontSize: 19, fontWeight: 800 }}>{t("qpDoneTitle")}, {firstName}!</p>

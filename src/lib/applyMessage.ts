@@ -222,10 +222,12 @@ export const fetchQuickProfileDone = async (profileId: string): Promise<boolean>
   try {
     const { data } = await supabase
       .from("crew_profiles")
-      .select("quick_profile_completed_at" as any)
+      .select("quick_profile_completed_at, rank, whatsapp_number" as any)
       .eq("id", profileId)
       .maybeSingle();
-    const done = !!(data as any)?.quick_profile_completed_at;
+    const d = data as any;
+    // A profile built via CV/onboarding (rank + WhatsApp saved) counts as complete too.
+    const done = !!d?.quick_profile_completed_at || (!!d?.rank && !!d?.whatsapp_number);
     quickProfileCache.set(profileId, done);
     return done;
   } catch {
