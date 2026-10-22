@@ -121,3 +121,19 @@ export function recordAttempt(p: Progress, id: string, score: number, isDaily: b
   try { localStorage.setItem(KEY, JSON.stringify(next)); } catch { /* ignore */ }
   return next;
 }
+
+// Vietnamese explanations (understand in Tiếng Việt, answer in English).
+export const VI_HINTS: Record<string, string> = {
+  "vhf-tss": "VTS yêu cầu tàu đến khu neo A2 và tránh xa luồng hướng đông. Hãy đọc lại (read back) đúng chỉ thị, kết thúc bằng \"Over\".",
+  "vhf-crossing": "Tình huống cắt hướng. Trả lời tàu kia: bạn sẽ làm gì (đổi hướng sang phải / giảm tốc), dùng câu ngắn theo SMCP.",
+  "vhf-pilot": "Hoa tiêu sắp lên tàu. Đọc lại vị trí, thời gian, mạn đặt thang hoa tiêu và độ cao thang.",
+  "eng-handover": "Bàn giao ca máy. Báo cáo tình trạng máy chính, máy phát, bơm, báo động và việc còn tồn.",
+  "eng-alarm": "Báo động nhiệt độ cao. Báo cáo cho buồng lái: thiết bị nào, giá trị bao nhiêu, bạn đang xử lý thế nào.",
+  "eng-bunker": "Xác nhận nhận nhiên liệu. Đọc lại loại dầu, số lượng, két nhận và lưu lượng bơm.",
+  "safe-fire": "Cháy buồng máy. Báo cáo ngay: vị trí đám cháy, người bị thương, hành động đã thực hiện.",
+  "safe-mob": "Người rơi xuống biển. Hô báo: mạn nào, ném phao, giữ người trong tầm nhìn, báo buồng lái.",
+  "safe-mayday": "Chuyển tiếp tín hiệu cấp cứu (Mayday Relay). Đọc lại tên tàu gặp nạn, vị trí, tình trạng và số người.",
+  "psc-ows": "Thanh tra PSC hỏi về thiết bị phân ly dầu nước (OWS). Giải thích cách vận hành, giới hạn 15 ppm và sổ nhật ký dầu.",
+  "psc-enclosed": "Giải thích quy trình vào không gian kín: giấy phép, thông gió, đo khí, người canh, thiết bị cứu hộ.",
+  "psc-drill": "Giải thích nhiệm vụ của bạn trong diễn tập (cháy / bỏ tàu): vị trí tập trung và công việc cụ thể.",
+};

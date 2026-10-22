@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Mic, MicOff, Volume2, ChevronLeft, RotateCcw, Flame, Trophy, Radio } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SCENARIOS, scoreAnswer, loadProgress, recordAttempt, dailyScenario, level, today, type Scenario, type ScoreResult, type Domain } from "@/lib/maritimeEnglish";
+import { SCENARIOS, VI_HINTS, scoreAnswer, loadProgress, recordAttempt, dailyScenario, level, today, type Scenario, type ScoreResult, type Domain } from "@/lib/maritimeEnglish";
 
 const DOMAINS: Domain[] = ["Bridge & VHF", "Engine Room", "Safety & Emergency", "PSC & Vetting"];
 
@@ -17,6 +17,7 @@ const Drill = ({ sc, isDaily, onDone, onBack }: { sc: Scenario; isDaily: boolean
   const [answer, setAnswer] = useState("");
   const [listening, setListening] = useState(false);
   const [result, setResult] = useState<ScoreResult | null>(null);
+  const [showVi, setShowVi] = useState(() => localStorage.getItem("sm_eng_vi") === "1");
   const recRef = useRef<any>(null);
   const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
@@ -55,6 +56,14 @@ const Drill = ({ sc, isDaily, onDone, onBack }: { sc: Scenario; isDaily: boolean
         </div>
         <Button variant="outline" size="sm" onClick={() => speak(sc.incoming)}><Volume2 size={16} /> Play again</Button>
         <p className="text-sm"><span className="font-semibold text-primary">Your task: </span>{sc.instruction}</p>
+        {VI_HINTS[sc.id] && (
+          <div>
+            <button type="button" className="text-xs font-semibold text-primary underline" onClick={() => { const v = !showVi; setShowVi(v); localStorage.setItem("sm_eng_vi", v ? "1" : "0"); }}>
+              🇻🇳 {showVi ? "Ẩn gợi ý tiếng Việt" : "Gợi ý tiếng Việt"}
+            </button>
+            {showVi && <p className="mt-1 text-xs rounded-lg bg-background border border-border p-2">{VI_HINTS[sc.id]} <em>Trả lời bằng tiếng Anh.</em></p>}
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col items-center gap-2">
