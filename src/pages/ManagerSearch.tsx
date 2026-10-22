@@ -56,6 +56,7 @@ interface CrewResult {
   contracts_in_rank_band?: string | null;
   total_sea_service_band?: string | null;
   quick_profile_done?: boolean;
+  english_avg?: number | null;
 }
 
 const REFILL_MAILTO = "mailto:admin@seaminds.life?subject=Credit%20refill%20request";
@@ -206,6 +207,8 @@ const ManagerSearch = () => {
   const [nationality, setNationality] = useState("");
   const [vesselType, setVesselType] = useState("");
   const [availability, setAvailability] = useState<"all" | "available">("all");
+  const [minScore, setMinScore] = useState("");
+  const [minEnglish, setMinEnglish] = useState("");
   const [results, setResults] = useState<CrewResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
@@ -237,7 +240,7 @@ const ManagerSearch = () => {
     try {
       const data = await callFn({
         action: "search",
-        filters: { rank, nationality, vesselType, availability },
+        filters: { rank, nationality, vesselType, availability, minScore, minEnglish },
         page: 0,
         pageSize: 50,
       });
@@ -263,7 +266,7 @@ const ManagerSearch = () => {
     try {
       const data = await callFn({
         action: "search",
-        filters: { rank, nationality, vesselType, availability },
+        filters: { rank, nationality, vesselType, availability, minScore, minEnglish },
         page: next,
         pageSize: 50,
       });

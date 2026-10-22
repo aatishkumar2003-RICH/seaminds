@@ -206,6 +206,24 @@ Deno.serve(async (req) => {
       query = query.or(orParts.join(","));
     }
 
+    // Appraisal filters: minimum competency score (0-5) and Maritime English readiness (recent practice average).
+    const minScore = Number(filters.minScore) || 0;
+    if (minScore > 0) {
+      const { data: rows } = await admin.from("smc_assessments").select("crew_profile_id")
+        .eq("status", "completed").gte("overall_score", minScore).limit(5000);
+      const sids = [...new Set((rows || []).map((r: any) => r.crew_profile_id).filter(Boolean))];
+      query = sids.length ? query.in("id", sids) : query.in("id", ["00000000-0000-0000-0000-000000000000"]);
+    }
+    const minEnglish = Number(filters.minEnglish) || 0;
+    if (minEnglish > 0) {
+      const { data: rows } = await admin.from("english_attempts").select("user_id, score")
+        .gte("created_at", new Date(Date.now() - 90 * 86400000).toISOString()).order("created_at", { ascending: false }).limit(20000);
+      const per: Record<string, number[]> = {};
+      (rows || []).forEach((r: any) => { const a = (per[r.user_id] ||= []); if (a.length < 10) a.push(r.score); });
+      const eids = Object.entries(per).filter(([, a]) => a.length >= 3 && a.reduce((n, x) => n + x, 0) / a.length >= minEnglish).map(([u]) => u);
+      query = eids.length ? query.in("id", eids) : query.in("id", ["00000000-0000-0000-0000-000000000000"]);
+    }
+
     // Availability defaults to available-only unless the manager asks for "all"
     if (filters.availability === undefined || filters.availability === null || filters.availability === "" || filters.availability === "available") {
       query = query.eq("is_available", true);
@@ -222,6 +240,7 @@ Deno.serve(async (req) => {
     const ids = (profiles || []).map((p: any) => p.id);
     let cvByUser: Record<string, any> = {};
     let smcByUser: Record<string, any> = {};
+    const engByUser: Record<string, number> = {};
 
     if (ids.length) {
       const [{ data: cvs }, { data: smcs }] = await Promise.all([
@@ -231,6 +250,11 @@ Deno.serve(async (req) => {
           .select("crew_profile_id, overall_score, score_band, status, completed_at")
           .in("crew_profile_id", ids),
       ]);
+      const { data: eng } = await admin.from("english_attempts").select("user_id, score").in("user_id", ids)
+        .order("created_at", { ascending: false }).limit(ids.length * 10);
+      const tmp: Record<string, number[]> = {};
+      (eng || []).forEach((r: any) => { const a = (tmp[r.user_id] ||= []); if (a.length < 10) a.push(r.score); });
+      Object.entries(tmp).forEach(([u, a]) => { if (a.length >= 3) engByUser[u] = Math.round(a.reduce((n, x) => n + x, 0) / a.length); });
       (cvs || []).forEach((c: any) => (cvByUser[c.user_id] = { ...c, medical: parseMaybeJson(c.medical) }));
       (smcs || []).forEach((s: any) => {
         const prev = smcByUser[s.crew_profile_id];
@@ -266,6 +290,7 @@ Deno.serve(async (req) => {
         contracts_in_rank_band: p.contracts_in_rank_band ?? null,
         total_sea_service_band: p.total_sea_service_band ?? null,
         quick_profile_done: !!p.quick_profile_completed_at,
+        english_avg: engByUser[p.id] ?? null,
       };
     });
 
