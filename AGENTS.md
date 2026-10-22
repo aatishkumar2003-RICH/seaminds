@@ -23,3 +23,4 @@
 - Crew menu = `NAV_ITEMS` sections rendered by `GroupedNav`. Why: one menu.
 - Company compliance: `company_compliance` + RPCs, files in private `company-documents/{uid}/`; each request/submission/approval emails via `company-compliance-notify`. Why: one review place, one action = one email.
 - Excel CVs: browser unzip in `src/lib/xlsxCv.ts`, text to `parse-cv-documents`; CV declaration versioned in `crew_cv_data.medical.declaration`. Why: no schema change.
+- Maritime English progress is server-recorded via `record_english_attempt` (one daily per UTC day, +5 credits per 7-day streak, unique ledger reason); scores are self-practice, shown to managers only as recent average. Why: device-independent streaks without farmable credits.
