@@ -2374,6 +2374,36 @@ export type Database = {
         }
         Relationships: []
       }
+      english_attempts: {
+        Row: {
+          created_at: string
+          id: string
+          is_daily: boolean
+          practice_date: string
+          scenario_id: string
+          score: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_daily?: boolean
+          practice_date?: string
+          scenario_id: string
+          score: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_daily?: boolean
+          practice_date?: string
+          scenario_id?: string
+          score?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       entitlements: {
         Row: {
           amount_cents: number | null
@@ -6178,6 +6208,7 @@ export type Database = {
         Args: { p_action: string; p_post_id: string }
         Returns: Json
       }
+      english_summary_for: { Args: { p_uid: string }; Returns: Json }
       enqueue_scoring: { Args: { p_assessment_id: string }; Returns: Json }
       expire_old_vacancies: { Args: never; Returns: string }
       final_scoring_lease: {
@@ -6248,6 +6279,7 @@ export type Database = {
       get_my_applicants: { Args: never; Returns: Json }
       get_my_applications: { Args: never; Returns: Json }
       get_my_credit_balance: { Args: never; Returns: Json }
+      get_my_english_summary: { Args: never; Returns: Json }
       get_my_fleet: { Args: never; Returns: Json }
       get_my_offers: { Args: never; Returns: Json }
       get_my_recovery: { Args: never; Returns: Json }
@@ -6312,6 +6344,10 @@ export type Database = {
       process_recovery_queue: { Args: never; Returns: string }
       process_scoring_jobs: { Args: never; Returns: string }
       rank_group_of: { Args: { p_rank: string }; Returns: string }
+      record_english_attempt: {
+        Args: { p_daily: boolean; p_scenario: string; p_score: number }
+        Returns: Json
+      }
       record_interruption: {
         Args: { p_assessment_id: string; p_kind: string; p_reason?: string }
         Returns: Json

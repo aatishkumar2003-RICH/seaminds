@@ -1,5 +1,5 @@
 // Maritime English Lab: original SeaMinds scenarios + deterministic scoring (no AI cost).
-export type Domain = "Bridge & VHF" | "Engine Room" | "Safety & Emergency" | "PSC & Vetting";
+export type Domain = "Bridge & VHF" | "Engine Room" | "Safety & Emergency" | "PSC & Vetting" | "Deck & Ratings";
 export interface Scenario {
   id: string;
   domain: Domain;
@@ -73,7 +73,97 @@ export const SCENARIOS: Scenario[] = [
     instruction: "Explain your muster station and your duty clearly.",
     model: "My muster station is at lifeboat number one. My duty is to prepare the lifeboat and check all crew are wearing lifejackets.",
     facts: [["muster"], ["lifeboat", "life raft", "liferaft"], ["duty", "responsib"], ["lifejacket", "life jacket"]] },
+  { id: "rat-helm", domain: "Deck & Ratings", title: "Helm order", task: "Read back",
+    incoming: "Officer of the watch: Starboard ten. Steer course one two five.",
+    instruction: "Repeat the helm order exactly, then report when steady.",
+    model: "Starboard ten. Steer course one two five. Steady on one two five.",
+    facts: [["starboard"], ["ten", "10"], ["one two five", "125"], ["steady", "course"]] },
+  { id: "rat-lookout", domain: "Deck & Ratings", title: "Lookout report", task: "Report",
+    incoming: "Bridge to lookout: report anything you see.",
+    instruction: "Report a small fishing boat, two points on the port bow, about two miles.",
+    model: "Bridge, lookout. Small fishing boat, two points on the port bow, distance about two miles.",
+    facts: [["fishing"], ["two points", "2 points"], ["port bow", "port"], ["two miles", "2 miles"]] },
+  { id: "rat-mooring", domain: "Deck & Ratings", title: "Mooring station", task: "Report",
+    incoming: "Bridge to forward station: report status of lines.",
+    instruction: "Report: two head lines and one spring line fast, tug made fast.",
+    model: "Bridge, forward station. Two head lines and one spring line are fast. Tug is made fast.",
+    facts: [["head line", "headline"], ["two", "2"], ["spring"], ["tug"], ["fast"]] },
+  { id: "rat-gangway", domain: "Deck & Ratings", title: "Gangway watch visitor", task: "Respond",
+    incoming: "Visitor at gangway: Hello, I am the surveyor. Can I come on board?",
+    instruction: "Ask for ID, log the visitor and say you will call the duty officer.",
+    model: "Good morning. Please show me your ID card. I will log your name and call the duty officer.",
+    facts: [["id", "identification", "identity"], ["log", "record", "sign"], ["duty officer", "officer"]] },
+  { id: "eng-sounding", domain: "Engine Room", title: "Tank sounding report", task: "Report",
+    incoming: "Chief Engineer: what are the morning soundings?",
+    instruction: "Report: fuel oil tank 3 port at 42 cubic metres, sludge tank 60 percent.",
+    model: "Good morning Chief. Fuel oil tank number three port is forty two cubic metres. Sludge tank is sixty percent.",
+    facts: [["fuel oil", "fuel"], ["three", "3"], ["42", "forty two"], ["sludge"], ["60", "sixty"]] },
+  { id: "vhf-anchor", domain: "Bridge & VHF", title: "Anchoring report", task: "Report",
+    incoming: "Port control: Ocean Star, report when anchored. Over.",
+    instruction: "Report anchored at anchorage B, 5 shackles in water.",
+    model: "Port control, Ocean Star. Information: we are anchored in anchorage B, five shackles in the water. Over.",
+    facts: [["anchor"], ["b", "bravo"], ["five", "5"], ["shackle"]], markers: ["information", "over"] },
 ];
+
+// Alternative versions so each attempt can show a different pattern (no memorising one answer).
+type Variant = Pick<Scenario, "incoming" | "instruction" | "model" | "facts">;
+const VARIANTS: Record<string, Variant[]> = {
+  "vhf-tss": [{ incoming: "Nordic Star, this is Port Klang VTS. Instruction: proceed to anchorage B4. Keep clear of the westbound lane. Over.",
+    instruction: "Read back the VTS instruction using closed-loop communication.",
+    model: "Port Klang VTS, this is Nordic Star. Read back: proceed to anchorage B4, keep clear of the westbound lane. Over.",
+    facts: [["nordic star"], ["anchorage"], ["b4", "b 4", "bravo four"], ["westbound"], ["keep clear", "clear"]] }],
+  "vhf-pilot": [{ incoming: "Ocean Star, pilot station. Pilot boards at 0915 hours, port side, ladder two metres above water. Over.",
+    instruction: "Read back the pilot boarding arrangements.",
+    model: "Pilot station, Ocean Star. Read back: pilot boards at 0915 hours, port side, ladder two metres above water. Over.",
+    facts: [["0915", "09 15", "zero nine one five", "nine fifteen"], ["port"], ["ladder"], ["two metre", "2 metre", "two meter", "2 meter"]] }],
+  "eng-bunker": [{ incoming: "Barge to ship: reduce pumping to 80 cubic metres per hour for topping off. Confirm.",
+    instruction: "Confirm the new pumping rate by reading it back.",
+    model: "Read back: reduce pumping to eighty cubic metres per hour for topping off. Confirmed.",
+    facts: [["80", "eighty", "eight zero"], ["cubic"], ["hour"], ["reduc"]] }],
+  "safe-mob": [{ incoming: "Bridge, this is aft station. What happened?",
+    instruction: "Report man overboard on starboard side, lifebuoy with light thrown.",
+    model: "Bridge, aft station. Man overboard, starboard side. Lifebuoy with light thrown. Over.",
+    facts: [["man overboard", "person overboard"], ["starboard"], ["lifebuoy", "life buoy", "lifering"], ["light"]] }],
+  "rat-helm": [{ incoming: "Officer of the watch: Hard a port. Steer course zero four five.",
+    instruction: "Repeat the helm order exactly, then report when steady.",
+    model: "Hard a port. Steer course zero four five. Steady on zero four five.",
+    facts: [["hard a port", "hard port"], ["zero four five", "045", "45"], ["steady", "course"]] }],
+  "eng-handover": [{ incoming: "Third Engineer: I am taking over. Any problems?",
+    instruction: "Report: number 1 purifier stopped for cleaning, boiler pressure 7 bar, no alarms.",
+    model: "Number one purifier is stopped for cleaning. Boiler pressure is seven bar. No alarms.",
+    facts: [["purifier"], ["one", "1"], ["boiler"], ["seven", "7"], ["no alarm"]] }],
+};
+export function pickVariant(sc: Scenario, rnd = Math.random): Scenario {
+  const opts = [sc, ...(VARIANTS[sc.id] ?? []).map((v) => ({ ...sc, ...v }))];
+  return opts[Math.floor(rnd() * opts.length) % opts.length];
+}
+
+// Department from profile rank so the most useful scenarios appear first.
+export type Dept = "deck" | "engine" | "rating" | "all";
+export function deptOf(rank?: string | null): Dept {
+  const r = (rank || "").toLowerCase();
+  if (!r) return "all";
+  if (/engineer|eto|electric|fitter|oiler|wiper|motorman|engine/.test(r)) return /oiler|wiper|fitter|motorman/.test(r) ? "rating" : "engine";
+  if (/bosun|ab |ab$|able|ordinary|os\b|seaman|cook|mess|steward|pumpman/.test(r)) return "rating";
+  if (/master|captain|officer|mate|cadet/.test(r)) return "deck";
+  return "all";
+}
+const DEPT_DOMAINS: Record<Dept, Domain[]> = {
+  deck: ["Bridge & VHF", "Safety & Emergency", "PSC & Vetting"],
+  engine: ["Engine Room", "Safety & Emergency", "PSC & Vetting"],
+  rating: ["Deck & Ratings", "Safety & Emergency", "Engine Room"],
+  all: [],
+};
+export function rankOrdered(dept: Dept, list = SCENARIOS): Scenario[] {
+  const pri = DEPT_DOMAINS[dept];
+  if (!pri.length) return list;
+  return [...list].sort((a, b) => (pri.indexOf(a.domain) + 1 || 99) - (pri.indexOf(b.domain) + 1 || 99));
+}
+/** Smart next pick: weakest or never-tried scenario in the crew member's department. */
+export function nextRecommended(dept: Dept, best: Record<string, number>): Scenario {
+  const pool = rankOrdered(dept).slice(0, dept === "all" ? SCENARIOS.length : 12);
+  return [...pool].sort((a, b) => (best[a.id] ?? -1) - (best[b.id] ?? -1))[0];
+}
 
 export interface ScoreResult { total: number; meaning: number; protocol: number; fluency: number; missed: string[]; tips: string[] }
 
@@ -105,7 +195,7 @@ export const level = (avg: number) => avg >= 85 ? "Ready for sea" : avg >= 70 ? 
 export interface Progress { best: Record<string, number>; history: { d: string; s: number }[]; daily: Record<string, number>; streak: number; lastDaily?: string }
 const KEY = "seaminds_english_progress_v1";
 export const today = () => new Date().toISOString().slice(0, 10);
-export const dailyScenario = (d = today()) => SCENARIOS[[...d].reduce((n, c) => n + c.charCodeAt(0), 0) % SCENARIOS.length];
+export const dailyScenario = (d = today(), dept: Dept = "all") => { const pool = dept === "all" ? SCENARIOS : SCENARIOS.filter((x) => DEPT_DOMAINS[dept].includes(x.domain)); return pool[[...d].reduce((n, c) => n + c.charCodeAt(0), 0) % pool.length]; };
 export function loadProgress(): Progress {
   try { return { best: {}, history: [], daily: {}, streak: 0, ...JSON.parse(localStorage.getItem(KEY) || "{}") }; } catch { return { best: {}, history: [], daily: {}, streak: 0 }; }
 }

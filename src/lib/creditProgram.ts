@@ -18,4 +18,4 @@ export function reminderDue(settings: RewardSettings, lastSeen: number, now: num
   return settings.reminders_enabled && (!Number.isFinite(lastSeen) || lastSeen <= 0 || now - lastSeen >= settings.reminder_hours * 3600000);
 }
 export const CREDIT_REASON_LABELS: Record<string, string> = { welcome_launch: "Welcome bonus", cv_completed: "Completed CV & profile", manager_profile_completed: "Completed company profile", assessment_completed: "First completed score", monthly_free: "Monthly complimentary credits", referral_joined: "Legacy invite bonus" };
-export function creditReasonLabel(reason: string) { return CREDIT_REASON_LABELS[reason] || (reason.startsWith("referral_") ? "Completed referral" : reason.startsWith("reveal:") ? "Legacy contact access" : reason); }
+export function creditReasonLabel(reason: string) { return CREDIT_REASON_LABELS[reason] || (reason.startsWith("referral_") ? "Completed referral" : reason.startsWith("english_streak_") ? "7-day English streak" : reason.startsWith("reveal:") ? "Legacy contact access" : reason); }

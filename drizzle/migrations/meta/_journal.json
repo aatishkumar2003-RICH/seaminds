@@ -540,6 +540,13 @@
       "when": 1792552580669,
       "tag": "0076_weekly_maritime_briefing",
       "breakpoints": true
+    },
+    {
+      "idx": 77,
+      "version": "7",
+      "when": 1792663695911,
+      "tag": "0077_english_training_progress",
+      "breakpoints": true
     }
   ]
 }

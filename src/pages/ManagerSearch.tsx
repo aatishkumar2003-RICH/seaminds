@@ -56,6 +56,7 @@ interface CrewResult {
   contracts_in_rank_band?: string | null;
   total_sea_service_band?: string | null;
   quick_profile_done?: boolean;
+  english_avg?: number | null;
 }
 
 const REFILL_MAILTO = "mailto:admin@seaminds.life?subject=Credit%20refill%20request";
@@ -206,6 +207,8 @@ const ManagerSearch = () => {
   const [nationality, setNationality] = useState("");
   const [vesselType, setVesselType] = useState("");
   const [availability, setAvailability] = useState<"all" | "available">("all");
+  const [minScore, setMinScore] = useState("");
+  const [minEnglish, setMinEnglish] = useState("");
   const [results, setResults] = useState<CrewResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
@@ -237,7 +240,7 @@ const ManagerSearch = () => {
     try {
       const data = await callFn({
         action: "search",
-        filters: { rank, nationality, vesselType, availability },
+        filters: { rank, nationality, vesselType, availability, minScore, minEnglish },
         page: 0,
         pageSize: 50,
       });
@@ -263,7 +266,7 @@ const ManagerSearch = () => {
     try {
       const data = await callFn({
         action: "search",
-        filters: { rank, nationality, vesselType, availability },
+        filters: { rank, nationality, vesselType, availability, minScore, minEnglish },
         page: next,
         pageSize: 50,
       });
@@ -487,12 +490,30 @@ const ManagerSearch = () => {
                 <option value="available">Available now</option>
               </select>
             </div>
+            <div>
+              <span style={label}>Competency Score</span>
+              <select value={minScore} onChange={(e) => setMinScore(e.target.value)} style={input}>
+                <option value="">Any score</option>
+                <option value="4">Top performers (4.00+)</option>
+                <option value="3.5">Competent (3.50+)</option>
+                <option value="3">3.00+</option>
+              </select>
+            </div>
+            <div>
+              <span style={label}>Maritime English</span>
+              <select value={minEnglish} onChange={(e) => setMinEnglish(e.target.value)} style={input}>
+                <option value="">Any level</option>
+                <option value="85">Ready for sea (85%+)</option>
+                <option value="70">Confident (70%+)</option>
+                <option value="50">Developing (50%+)</option>
+              </select>
+            </div>
             <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
               <button onClick={() => search()} disabled={loading} style={{ ...goldBtn, flex: 1, opacity: loading ? 0.6 : 1 }}>
                 {loading ? "Searching…" : "Search"}
               </button>
               <button
-                onClick={() => { setRank(""); setNationality(""); setVesselType(""); setAvailability("all"); }}
+                onClick={() => { setRank(""); setNationality(""); setVesselType(""); setAvailability("all"); setMinScore(""); setMinEnglish(""); }}
                 style={ghostBtn}
               >
                 Clear
@@ -532,6 +553,12 @@ const ManagerSearch = () => {
                   <dt style={{ color: "#6b7280" }}>SeaMinds Score</dt>
                   <dd style={{ color: r.smc_score != null ? GOLD : "#6b7280", fontWeight: 700 }}>
                     {r.smc_score != null ? `${r.smc_score}${r.smc_band ? ` · ${r.smc_band}` : ""}` : "Not assessed"}
+                  </dd>
+                </div>
+                <div>
+                  <dt style={{ color: "#6b7280" }}>Maritime English</dt>
+                  <dd style={{ color: r.english_avg != null ? GOLD : "#6b7280", fontWeight: 700 }}>
+                    {r.english_avg != null ? `${r.english_avg}% · ${r.english_avg >= 85 ? "Ready for sea" : r.english_avg >= 70 ? "Confident" : r.english_avg >= 50 ? "Developing" : "Starter"}` : "No practice yet"}
                   </dd>
                 </div>
               </dl>
