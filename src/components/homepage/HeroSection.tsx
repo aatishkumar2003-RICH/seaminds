@@ -81,6 +81,24 @@ const HeroSection = ({ timeOfDay = "day" }: Props) => {
               No long CV form to get started · Professional profile in about 2 minutes
             </p>
 
+            <button
+              type="button"
+              onClick={() => navigate("/training?tab=english")}
+              className="mx-auto mb-6 block w-full max-w-lg rounded-2xl border-2 border-primary bg-primary/10 px-5 py-4 text-left transition hover:bg-primary/15"
+            >
+              <p className="text-[10px] uppercase tracking-[0.25em] text-primary font-mono-score mb-1">New · Free for every seafarer</p>
+              <p className="text-lg md:text-xl font-bold text-foreground">🎙️ Maritime English Voice Lab</p>
+              <p className="text-xs md:text-sm text-muted-foreground mb-2">
+                International-standard speaking practice built on IMO SMCP: live VHF radio drills, readbacks, engine handovers and PSC / vetting interview answers — scored instantly on safe meaning, not accent.
+              </p>
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {["📻 VHF push-to-talk", "🔁 Closed-loop readback", "🛂 PSC & vetting prep", "🔥 Daily streak"].map((c) => (
+                  <span key={c} className="rounded-full border border-primary/50 px-2.5 py-0.5 text-[11px] font-semibold text-primary">{c}</span>
+                ))}
+              </div>
+              <span className="sm-cta-gold inline-flex rounded-xl px-5 h-10 items-center text-sm font-bold">Practice English Free →</span>
+            </button>
+
 
             <div
               className="mx-auto mb-7 max-w-lg rounded-2xl px-4 py-3 flex items-start gap-3 text-left"

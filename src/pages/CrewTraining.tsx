@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import MaritimeEnglishLab from "@/components/training/MaritimeEnglishLab";
 import { Helmet } from "react-helmet-async";
 import { ChevronLeft, ExternalLink, Loader2, CheckCircle2, GraduationCap, Clock } from "lucide-react";
 import { toast } from "sonner";
@@ -130,6 +131,8 @@ const Module = ({ token }: { token: string }) => {
 
 const MyTraining = () => {
   const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
+  const english = params.get("tab") === "english";
   const [items, setItems] = useState<LedgerItem[] | null>(null);
   const [recs, setRecs] = useState<Recommendation[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
@@ -157,11 +160,12 @@ const MyTraining = () => {
     <section className="space-y-5">
       <Helmet><title>My Training | SeaMinds</title></Helmet>
       <h1 className="text-2xl font-bold">My training</h1>
-      <div role="tablist" className="flex gap-2">
-        <Button size="sm" role="tab" aria-selected="true">📋 Training Matrix</Button>
+      <div role="tablist" className="flex flex-wrap gap-2">
+        <Button size="sm" role="tab" variant={english ? "outline" : "default"} aria-selected={!english} onClick={() => setParams({})}>📋 Training Matrix</Button>
+        <Button size="sm" role="tab" variant={english ? "default" : "outline"} aria-selected={english} onClick={() => setParams({ tab: "english" })}>🎙️ English Classes</Button>
         <Button size="sm" variant="outline" role="tab" aria-selected="false" onClick={() => navigate("/app?tab=academy")}>🔬 Ask AI Technical Assistant</Button>
       </div>
-      {items === null ? <p className="text-muted-foreground">Loading…</p> : (
+      {english ? <MaritimeEnglishLab /> : items === null ? <p className="text-muted-foreground">Loading…</p> : (
         <>
           {(() => {
             const required = items.filter((i) => i.company?.trim() && i.status !== "completed" && i.token);
