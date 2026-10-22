@@ -50,7 +50,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
     try {
       const { newer, remote } = await checkPwaUpdate();
       if (newer) {
-        toast.success(`Update ${remote?.version ?? ""} available — installing…`.replace("  ", " "));
+        toast.success("Update available — installing…"); void remote;
         await forcePwaHardReset();
       } else {
         toast("You're on the latest version", { action: { label: "Force refresh", onClick: () => void forcePwaHardReset() } });

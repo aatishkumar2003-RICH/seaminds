@@ -44,4 +44,4 @@ export const NATIONALITY_FLAGS: Record<string, string> = {
   Fijian: "🇫🇯", Maldivian: "🇲🇻", Ghanaian: "🇬🇭", Nigerian: "🇳🇬",
 };
 
-export const DRAWER_WIDTH = 176; // w-44
+export const DRAWER_WIDTH = 192; // w-48
