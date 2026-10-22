@@ -106,6 +106,8 @@ Deno.serve(async (req) => {
       headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "gpt-4o-mini",
+        response_format: { type: "json_object" },
+        temperature: 0,
         messages: [{ role: "system", content: SYSTEM_PROMPT }, { role: "user", content: userContent }]
       })
     });

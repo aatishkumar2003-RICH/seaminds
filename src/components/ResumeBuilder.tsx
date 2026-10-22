@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { normalizeCvDate } from "@/lib/cvDates";
 import {
   Camera, Plus, Trash2, Eye, Edit3, Award, Ship, FileText,
   User, GraduationCap, Globe, ChevronDown, ChevronUp,
@@ -416,7 +417,7 @@ const ResumeBuilder = () => {
         lastName: cv.last_name || cv.name?.split(' ').slice(1).join(' ') || p.lastName,
         rank: cv.rank || p.rank,
         nationality: cv.nationality || p.nationality,
-        dob: cv.date_of_birth || p.dob,
+        dob: normalizeCvDate(cv.date_of_birth) || p.dob,
         passportNo: cv.passport_no || cv.passportNo || p.passportNo,
         cdcNo: cv.cdc_no || cv.cdcNo || cv.seaman_book || p.cdcNo,
         cdcCountry: cv.cdc_country || cv.cdcCountry || p.cdcCountry,
@@ -436,8 +437,8 @@ const ResumeBuilder = () => {
         company: s.company || '',
         manningAgent: s.manning_agent || '',
         rankOnBoard: s.rank || '',
-        fromDate: s.sign_on || s.signOn || s.from_date || '',
-        toDate: s.sign_off || s.signOff || s.to_date || '',
+        fromDate: normalizeCvDate(s.sign_on || s.signOn || s.from_date),
+        toDate: normalizeCvDate(s.sign_off || s.signOff || s.to_date),
         engineType: s.engine_type || s.engineType || '',
         cargoType: s.cargo_type || s.cargoType || '',
         reasonForLeaving: '',
@@ -449,8 +450,8 @@ const ResumeBuilder = () => {
         name: c.name || c.cert_name || '',
         number: c.number || c.cert_no || c.certNo || '',
         flagState: '',
-        issueDate: c.issue_date || c.issueDate || '',
-        expiryDate: c.expiry_date || c.expiryDate || '',
+        issueDate: normalizeCvDate(c.issue_date || c.issueDate),
+        expiryDate: normalizeCvDate(c.expiry_date || c.expiryDate),
         issuingAuthority: c.issuing_authority || c.issued_by || c.authority || '',
         category: "stcw" as const,
         isCustom: true,
@@ -475,7 +476,7 @@ const ResumeBuilder = () => {
       }
     }
     const importedPhoto = scanPhotoRef.current;
-    if (importedPhoto && !photo) setPhoto(importedPhoto);
+    if (importedPhoto && (!photo || photo === importedPhoto || window.confirm("This CV contains a photo. Replace your current photo with it?"))) setPhoto(importedPhoto);
     const p = importSections.personal ? cv : {};
     const still: string[] = [];
     if (!photo && !importedPhoto) still.push("Photo");
@@ -701,41 +702,45 @@ const ResumeBuilder = () => {
           user_id: user.id,
         };
 
-        if (/^\d{4}-\d{2}-\d{2}/.test(savedPersonal.dob || '')) profilePayload.date_of_birth = savedPersonal.dob;
+        const isoDob = normalizeCvDate(savedPersonal.dob);
+        if (isoDob) profilePayload.date_of_birth = isoDob;
         const { data: existingProfile } = await supabase
           .from('crew_profiles')
           .select('id, first_name, last_name, email, role, rank, nationality, whatsapp_number, ship_name, years_at_sea, gender, passport_number, crew_unique_id, date_of_birth')
           .eq('id', user.id)
           .maybeSingle();
 
+        // The latest CV is authoritative: every non-empty CV value overwrites the profile.
+        const cvComplete = !!(savedPersonal.firstName && savedPersonal.lastName && savedPersonal.nationality && savedPersonal.gender
+          && profilePayload.date_of_birth && profilePayload.rank && profilePayload.whatsapp_number && (data.sea?.length || 0) > 0);
         if (existingProfile) {
           const updatePayload: Record<string, any> = {};
-          const fillIfMissing = (column: string, current: any, next: any) => {
-            if ((current === null || current === undefined || String(current).trim() === '') && next !== null && next !== undefined && String(next).trim() !== '') {
+          const latest = (column: string, current: any, next: any) => {
+            if (next !== null && next !== undefined && String(next).trim() !== '' && String(next) !== String(current ?? '')) {
               updatePayload[column] = next;
             }
           };
-          fillIfMissing('first_name', existingProfile.first_name, profilePayload.first_name);
-          fillIfMissing('last_name', existingProfile.last_name, profilePayload.last_name);
-          fillIfMissing('email', existingProfile.email, profilePayload.email);
-          fillIfMissing('nationality', existingProfile.nationality, profilePayload.nationality);
-          fillIfMissing('whatsapp_number', existingProfile.whatsapp_number, profilePayload.whatsapp_number);
-          fillIfMissing('ship_name', existingProfile.ship_name, profilePayload.ship_name);
-          fillIfMissing('years_at_sea', existingProfile.years_at_sea, profilePayload.years_at_sea);
-          fillIfMissing('gender', existingProfile.gender, profilePayload.gender);
-          fillIfMissing('passport_number', existingProfile.passport_number, profilePayload.passport_number);
+          const hasName = !!savedPersonal.firstName;
+          if (hasName) latest('first_name', existingProfile.first_name, profilePayload.first_name);
+          latest('last_name', existingProfile.last_name, profilePayload.last_name);
+          latest('email', existingProfile.email, savedPersonal.email || null);
+          latest('nationality', existingProfile.nationality, profilePayload.nationality);
+          latest('whatsapp_number', existingProfile.whatsapp_number, profilePayload.whatsapp_number);
+          if (savedPersonal.currentVessel) latest('ship_name', existingProfile.ship_name, profilePayload.ship_name);
+          latest('years_at_sea', existingProfile.years_at_sea, profilePayload.years_at_sea);
+          latest('gender', existingProfile.gender, profilePayload.gender);
+          latest('passport_number', existingProfile.passport_number, profilePayload.passport_number);
+          latest('date_of_birth', existingProfile.date_of_birth, profilePayload.date_of_birth);
+          latest('rank', existingProfile.rank, profilePayload.rank);
+          if (profilePayload.rank) latest('role', existingProfile.role, profilePayload.role);
           if (savedCvUid && existingProfile.crew_unique_id !== savedCvUid) updatePayload.crew_unique_id = savedCvUid;
-          fillIfMissing('date_of_birth', existingProfile.date_of_birth, profilePayload.date_of_birth);
-          if ((!existingProfile.rank || existingProfile.rank === existingProfile.role) && profilePayload.rank) updatePayload.rank = profilePayload.rank;
-          if ((!existingProfile.role || existingProfile.role === 'Rating') && profilePayload.role) updatePayload.role = profilePayload.role;
           updatePayload.cdc_applied = !!savedPersonal.cdcApplied;
-          if (Object.keys(updatePayload).length > 0) {
-            await supabase.from('crew_profiles').update(updatePayload as any).eq('id', user.id);
-          }
-
+          if (cvComplete) { updatePayload.onboarded = true; updatePayload.onboarding_complete = true; }
+          await supabase.from('crew_profiles').update(updatePayload as any).eq('id', user.id);
         } else {
-          await supabase.from('crew_profiles').insert({ id: user.id, ...profilePayload, onboarded: false, onboarding_complete: false } as any);
+          await supabase.from('crew_profiles').insert({ id: user.id, ...profilePayload, onboarded: cvComplete, onboarding_complete: cvComplete } as any);
         }
+        window.dispatchEvent(new CustomEvent('seaminds:profile-updated'));
       }
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
