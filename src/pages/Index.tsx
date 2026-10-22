@@ -834,7 +834,7 @@ const Index = () => {
 
 
             {/* Main content area */}
-            <div ref={contentRef} className="flex-1 overflow-y-auto pb-16 lg:pb-0">
+            <div ref={contentRef} className="flex-1 overflow-y-auto pb-bottom-nav lg:pb-0">
 
               {screen === "chat" && jobMatch && (
                 <div className="mx-4 mb-2 flex items-center justify-between gap-2 rounded-[10px] border p-[10px]"
