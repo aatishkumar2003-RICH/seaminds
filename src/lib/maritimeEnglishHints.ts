@@ -1,12 +1,34 @@
 // Native-language hints: understand the situation in your language, answer in English.
 import { VI_HINTS } from "@/lib/maritimeEnglish";
 
-export type HintLang = "vi" | "id" | "hi";
+export type HintLang = "en" | "vi" | "id" | "hi";
 export const HINT_LANGS: { code: HintLang; flag: string; label: string; answerInEnglish: string }[] = [
+  { code: "en", flag: "🇬🇧", label: "English", answerInEnglish: "Speak clearly using standard IMO SMCP." },
   { code: "vi", flag: "🇻🇳", label: "Tiếng Việt", answerInEnglish: "Trả lời bằng tiếng Anh." },
   { code: "id", flag: "🇮🇩", label: "Bahasa Indonesia", answerInEnglish: "Jawab dalam bahasa Inggris." },
   { code: "hi", flag: "🇮🇳", label: "हिन्दी", answerInEnglish: "उत्तर अंग्रेज़ी में दें।" },
 ];
+
+const EN: Record<string, string> = {
+  "vhf-tss": "VTS gives an instruction. Start with the station names, say \"Read back\", repeat the anchorage and the lane exactly, end with \"Over\".",
+  "vhf-crossing": "Crossing situation. Name the other vessel, say you received the advice, state you keep course and speed, end with \"Over\".",
+  "vhf-pilot": "Pilot boarding. Read back the time, the side (port/starboard) and the ladder height. Echo every number.",
+  "eng-handover": "Watch handover. Report main engine, generator on load, bilge level and alarms in short clear sentences.",
+  "eng-alarm": "Alarm report to the bridge. Use \"Information\": name the alarm, then say what you are doing (reduce load, check pump).",
+  "eng-bunker": "Bunkering. Say \"Read back\", repeat the rate with its unit (cubic metres per hour), then confirm.",
+  "safe-fire": "Fire report. Start with \"Warning\", give the exact location, then crew mustering and fire team status.",
+  "safe-mob": "Man overboard. Shout it first, then the side of the ship, then that the lifebuoy is thrown.",
+  "safe-mayday": "Distress message. Read back vessel name, position, problem and persons on board. Acknowledge the Mayday.",
+  "psc-ows": "PSC question on the oily water separator. Explain the 15 ppm alarm test and the Oil Record Book entry.",
+  "psc-enclosed": "Enclosed space entry. Explain permit, ventilation, gas/oxygen test and the standby person, in order.",
+  "psc-drill": "Abandon ship drill. Say your muster station and your exact duty there.",
+  "rat-helm": "Helm order. Repeat the officer's order word for word (direction, degrees, course), then report when steady.",
+  "rat-lookout": "Lookout report. Object type, bearing (port/starboard bow) and distance.",
+  "rat-mooring": "Forward station report. Number of head lines and springs made fast, and tug made fast.",
+  "rat-gangway": "Gangway watch. Ask for ID, log the visitor and call the duty officer.",
+  "eng-sounding": "Morning soundings. Tank name, number, side and volume or percentage.",
+  "vhf-anchor": "Anchored report. Name the anchorage and the shackles in the water.",
+};
 
 const VI_EXTRA: Record<string, string> = {
   "rat-helm": "Lệnh lái. Nhắc lại chính xác lệnh của sĩ quan (hướng bánh lái, số độ, hướng đi) rồi báo khi tàu đã ổn định.",
@@ -59,7 +81,7 @@ const HI: Record<string, string> = {
   "vhf-anchor": "एंकर होने की रिपोर्ट: कौन सा एंकरेज और पानी में कितने शैकल।",
 };
 
-export const HINTS: Record<HintLang, Record<string, string>> = { vi: { ...VI_HINTS, ...VI_EXTRA }, id: ID, hi: HI };
+export const HINTS: Record<HintLang, Record<string, string>> = { en: EN, vi: { ...VI_HINTS, ...VI_EXTRA }, id: ID, hi: HI };
 
 export function defaultHintLang(nationality?: string | null): HintLang | null {
   const n = (nationality || "").toLowerCase();
