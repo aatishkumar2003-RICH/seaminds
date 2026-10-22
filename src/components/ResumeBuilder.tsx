@@ -416,7 +416,7 @@ const ResumeBuilder = () => {
         lastName: cv.last_name || cv.name?.split(' ').slice(1).join(' ') || p.lastName,
         rank: cv.rank || p.rank,
         nationality: cv.nationality || p.nationality,
-        dob: cv.date_of_birth || p.dob,
+        dob: normalizeCvDate(cv.date_of_birth) || p.dob,
         passportNo: cv.passport_no || cv.passportNo || p.passportNo,
         cdcNo: cv.cdc_no || cv.cdcNo || cv.seaman_book || p.cdcNo,
         cdcCountry: cv.cdc_country || cv.cdcCountry || p.cdcCountry,
@@ -436,8 +436,8 @@ const ResumeBuilder = () => {
         company: s.company || '',
         manningAgent: s.manning_agent || '',
         rankOnBoard: s.rank || '',
-        fromDate: s.sign_on || s.signOn || s.from_date || '',
-        toDate: s.sign_off || s.signOff || s.to_date || '',
+        fromDate: normalizeCvDate(s.sign_on || s.signOn || s.from_date),
+        toDate: normalizeCvDate(s.sign_off || s.signOff || s.to_date),
         engineType: s.engine_type || s.engineType || '',
         cargoType: s.cargo_type || s.cargoType || '',
         reasonForLeaving: '',
@@ -449,8 +449,8 @@ const ResumeBuilder = () => {
         name: c.name || c.cert_name || '',
         number: c.number || c.cert_no || c.certNo || '',
         flagState: '',
-        issueDate: c.issue_date || c.issueDate || '',
-        expiryDate: c.expiry_date || c.expiryDate || '',
+        issueDate: normalizeCvDate(c.issue_date || c.issueDate),
+        expiryDate: normalizeCvDate(c.expiry_date || c.expiryDate),
         issuingAuthority: c.issuing_authority || c.issued_by || c.authority || '',
         category: "stcw" as const,
         isCustom: true,
@@ -475,7 +475,7 @@ const ResumeBuilder = () => {
       }
     }
     const importedPhoto = scanPhotoRef.current;
-    if (importedPhoto && !photo) setPhoto(importedPhoto);
+    if (importedPhoto && (!photo || photo === importedPhoto || window.confirm("This CV contains a photo. Replace your current photo with it?"))) setPhoto(importedPhoto);
     const p = importSections.personal ? cv : {};
     const still: string[] = [];
     if (!photo && !importedPhoto) still.push("Photo");
