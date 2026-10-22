@@ -309,6 +309,13 @@ button, a, [role="button"] { touch-action: manipulation; cursor: pointer; }
 }
 
 @layer utilities {
+  /* Clearance so the fixed mobile bottom nav never covers content. */
+  .pb-bottom-nav {
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+  }
+  @media (min-width: 1024px) {
+    .pb-bottom-nav { padding-bottom: 1rem; }
+  }
   .safe-area-pb {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }

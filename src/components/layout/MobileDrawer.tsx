@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import AboutSeaMinds from "@/components/AboutSeaMinds";
-import { LogOut, HelpCircle, X, BookOpen } from "lucide-react";
+import { LogOut, HelpCircle, X, BookOpen, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { checkPwaUpdate, forcePwaHardReset } from "@/lib/pwaUpdate";
 import SOSButton from "@/components/SOSButton";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 import { NATIONALITY_FLAGS, type NavItem, type Screen, type AppState } from "./types";
@@ -43,9 +44,26 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
    jobBadgeCount, onNavClick, onReplayTour, onSignOut, onOpenChat, shipName, tourActiveScreen,
 }) => {
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const handleCheckUpdate = async () => {
+    setChecking(true);
+    try {
+      const { newer, remote } = await checkPwaUpdate();
+      if (newer) {
+        toast.success(`Update ${remote?.version ?? ""} available — installing…`.replace("  ", " "));
+        await forcePwaHardReset();
+      } else {
+        toast("You're on the latest version", { action: { label: "Force refresh", onClick: () => void forcePwaHardReset() } });
+      }
+    } catch {
+      toast.error("Couldn't check for updates. Try again with internet.");
+    } finally {
+      setChecking(false);
+    }
+  };
   return (
     <div
-      className={`fixed top-0 left-0 z-50 h-full w-44 border-r border-border/40 bg-background/95 px-2.5 py-5 backdrop-blur-sm lg:hidden ${!isSwiping && !isEdgeSwiping ? "transition-transform duration-300 ease-in-out" : ""}`}
+      className={`fixed top-0 left-0 z-50 flex h-[100dvh] w-48 flex-col border-r border-border/40 bg-background/95 px-2.5 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-sm lg:hidden ${!isSwiping && !isEdgeSwiping ? "transition-transform duration-300 ease-in-out" : ""}`}
       style={{
         transform: drawerOpen
           ? `translateX(${Math.min(0, touchDelta)}px)`
@@ -69,33 +87,34 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
         setIsSwiping(false);
       }}
     >
-      <div className="mb-3 flex items-center justify-between gap-1">
-        <div className="flex items-center gap-1.5">
+      <div className="mb-3 flex shrink-0 items-center justify-between gap-1">
+        <div className="flex min-w-0 items-center gap-1.5">
         <img src={seamindsLogo} alt="SeaMinds" className="h-6 w-6 rounded object-contain" />
-        <span className="text-sm font-bold text-foreground/80">SeaMinds</span>
+        <span className="truncate text-sm font-bold text-foreground/80">SeaMinds</span>
         </div>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="outline" size="icon" onClick={onSignOut} aria-label="Sign Out" title="Sign Out" className="h-11 w-11 shrink-0 rounded-full border-primary/40 text-primary hover:bg-primary/10 hover:text-primary">
-              <LogOut aria-hidden="true" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="right">Sign Out</TooltipContent>
-        </Tooltip>
+        <div className="flex shrink-0 items-center gap-1">
+          <Button variant="outline" size="icon" onClick={handleCheckUpdate} disabled={checking} aria-label="Check for update" title="Check for update" className="h-9 w-9 rounded-full border-primary/40 text-primary hover:bg-primary/10 hover:text-primary">
+            <RefreshCw aria-hidden="true" className={checking ? "animate-spin" : ""} />
+          </Button>
+          <Button variant="outline" size="icon" onClick={onSignOut} aria-label="Sign Out" title="Sign Out" className="h-9 w-9 rounded-full border-primary/40 text-primary hover:bg-primary/10 hover:text-primary">
+            <LogOut aria-hidden="true" />
+          </Button>
+        </div>
       </div>
-      <div className="mb-3 flex items-start gap-1 rounded-xl border border-primary/30 bg-card/60 p-2">
+      <div className="mb-3 flex shrink-0 items-start gap-1 rounded-xl border border-primary/30 bg-card/60 p-2">
         <a href="/profile" onClick={() => setDrawerOpen(false)} aria-label="Open My Sea Profile" className="flex min-w-0 flex-1 flex-col gap-1">
-          <span className="flex items-center gap-1.5">
+          <span className="flex min-w-0 items-center gap-1.5">
             <span className="text-lg">{NATIONALITY_FLAGS[nationality] || "🌊"}</span>
-            <span className="min-w-0 break-words text-sm font-semibold text-foreground">{firstName || "Seafarer"} {lastName}</span>
+            <span className="min-w-0 line-clamp-2 break-words text-sm font-semibold text-foreground" title={`${firstName} ${lastName}`}>{firstName || "Seafarer"} {lastName}</span>
           </span>
-          {role && <span className="text-[11px] text-muted-foreground">{role}</span>}
+          {role && <span className="truncate text-[11px] text-muted-foreground">{role}</span>}
           <span className="mt-0.5 inline-flex w-fit items-center gap-1 rounded-full border border-primary/40 px-2 py-0.5 text-[10px] font-semibold text-primary">👤 My Sea Profile</span>
         </a>
         <Button variant="ghost" size="icon" onClick={() => setDrawerOpen(false)} aria-label="Close menu" title="Close menu" className="h-8 w-8 shrink-0 text-muted-foreground"><X aria-hidden="true" /></Button>
       </div>
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
       <GroupedNav screen={screen} active={appState === "main"} jobBadgeCount={jobBadgeCount} tourActiveScreen={tourActiveScreen} onNavClick={onNavClick} onAfterNavigate={() => setDrawerOpen(false)} />
-      <div className="mt-auto flex flex-col gap-1 pt-2">
+      <div className="flex flex-col gap-1 pt-2">
         <Button asChild variant="ghost" size="sm" className="text-xs text-primary"><Link to="/guide?role=crew" onClick={() => setDrawerOpen(false)}><BookOpen />User Guide</Link></Button>
         <button onClick={onReplayTour} className="flex items-center justify-center gap-1.5 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground">
           <HelpCircle size={14} /> Replay Tour
@@ -103,11 +122,12 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
         <button onClick={() => setAboutOpen(true)} className="flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground">
           ⓘ About SeaMinds
         </button>
-        {aboutOpen && <AboutSeaMinds onClose={() => setAboutOpen(false)} />}
         <div className="w-full">
           <SOSButton onOpenChat={onOpenChat} firstName={firstName} shipName={shipName} inline />
         </div>
       </div>
+      </div>
+      {aboutOpen && <AboutSeaMinds onClose={() => setAboutOpen(false)} />}
     </div>
   );
 };

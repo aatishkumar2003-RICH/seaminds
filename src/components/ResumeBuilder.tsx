@@ -850,7 +850,7 @@ const ResumeBuilder = () => {
       {/* ── SCAN CONFIRMATION MODAL ── */}
       {showScanConfirm && scanResult && (
         <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={() => setShowScanConfirm(false)}>
-          <div className="bg-[#0D1B2A] border-2 border-[#D4AF37] rounded-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto"
+          <div className="bg-[#0D1B2A] border-2 border-[#D4AF37] rounded-2xl w-full max-w-lg max-h-[calc(100dvh-7rem-env(safe-area-inset-bottom))] overflow-y-auto"
             onClick={e => e.stopPropagation()}>
             <div className="sticky top-0 bg-[#0D1B2A] border-b border-[#1e3a5f] p-4 flex items-center justify-between z-10">
               <h2 className="text-white font-bold text-base">✅ AI extracted the following — Please confirm</h2>
@@ -1043,7 +1043,7 @@ const ResumeBuilder = () => {
 
       {/* ══════════ FORM VIEW ══════════ */}
       {view === "form" && (
-        <div className="flex-1 overflow-y-auto px-3 pt-2 space-y-1 print:hidden">
+        <div className="flex-1 overflow-y-auto px-3 pt-2 space-y-1 print:hidden pb-bottom-nav">
 
           {/* ── AI SCAN CV ── */}
           <div className="rounded-xl p-4 mb-2 border border-[#D4AF37] bg-[#0D1B2A]">
@@ -1555,7 +1555,7 @@ const ResumeBuilder = () => {
 
       {/* ══════════ PREVIEW VIEW ══════════ */}
       {view === "preview" && (
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto pb-bottom-nav print:pb-0">
           <div className="px-3 pt-3 pb-2 flex gap-2 print:hidden">
             <button onClick={() => setView("form")}
               className="px-4 py-3 bg-[#132236] text-gray-300 rounded-xl text-sm font-medium flex items-center gap-2 hover:text-white transition-colors">
