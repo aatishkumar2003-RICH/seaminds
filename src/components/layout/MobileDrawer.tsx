@@ -68,7 +68,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
         transform: drawerOpen
           ? `translateX(${Math.min(0, touchDelta)}px)`
           : isEdgeSwiping && edgeSwipeDelta > 0
-            ? `translateX(${-176 + edgeSwipeDelta}px)`
+            ? `translateX(${-192 + edgeSwipeDelta}px)`
             : "translateX(-100%)",
       }}
       onTouchStart={(e) => {
