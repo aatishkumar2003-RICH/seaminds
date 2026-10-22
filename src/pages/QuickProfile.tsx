@@ -124,6 +124,7 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
   const [ready, setReady] = useState(false);
   const [step, setStep] = useState(1);
   const [done, setDone] = useState(false);
+  const [askUpdate, setAskUpdate] = useState(false);
 
   // step 1
   const [rank, setRank] = useState("");
@@ -188,6 +189,7 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
       setSeaBand(p.total_sea_service_band || "");
       setAvailable(!!p.is_available);
       setAvailableFrom(p.available_from ? String(p.available_from).slice(0, 10) : "");
+      if (!embedded && p.rank && p.whatsapp_number) setAskUpdate(true);
 
       const fmap: Record<string, string> = {};
       ((fam as any[]) || []).forEach((f) => { fmap[f.vessel_family] = f.sea_time_band; });
