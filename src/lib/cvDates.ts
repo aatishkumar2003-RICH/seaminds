@@ -23,9 +23,9 @@ export function normalizeCvDate(input: unknown): string {
     return valid(y, mo, d);
   }
   m = s.match(/^(\d{1,2})[\s-]+([A-Za-z]{3,9})[\s,-]+(\d{4})$/);
-  if (m && MONTHS[m[2].slice(0, 4).toLowerCase()] ?? MONTHS[m?.[2]?.slice(0, 3).toLowerCase() ?? ""]) {
-    const mo = MONTHS[m[2].slice(0, 4).toLowerCase()] ?? MONTHS[m[2].slice(0, 3).toLowerCase()];
-    return valid(+m[3], mo, +m[1]);
+  if (m) {
+    const mo = MONTHS[m[2].slice(0, 3).toLowerCase()];
+    return mo ? valid(+m[3], mo, +m[1]) : "";
   }
   if (/^\d{5}$/.test(s)) {
     const n = +s;
