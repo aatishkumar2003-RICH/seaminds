@@ -63,12 +63,12 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
   };
   return (
     <div
-      className={`fixed top-0 left-0 z-50 flex h-[100dvh] w-48 flex-col border-r border-border/40 bg-background/95 px-2.5 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-sm lg:hidden ${!isSwiping && !isEdgeSwiping ? "transition-transform duration-300 ease-in-out" : ""}`}
+      className={`fixed top-0 left-0 z-50 flex h-[100dvh] w-[82vw] max-w-[300px] flex-col rounded-r-2xl border-r border-primary/30 bg-background/98 px-3 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-2xl backdrop-blur-md lg:hidden ${!isSwiping && !isEdgeSwiping ? "transition-transform duration-300 ease-in-out" : ""}`}
       style={{
         transform: drawerOpen
           ? `translateX(${Math.min(0, touchDelta)}px)`
           : isEdgeSwiping && edgeSwipeDelta > 0
-            ? `translateX(${-192 + edgeSwipeDelta}px)`
+            ? `translateX(calc(-100% + ${edgeSwipeDelta}px))`
             : "translateX(-100%)",
       }}
       onTouchStart={(e) => {
