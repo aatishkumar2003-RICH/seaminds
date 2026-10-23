@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import LineupTickets from "@/components/LineupTickets";
 
 const NAVY = "#0D1B2A";
 
@@ -97,7 +98,7 @@ const CrewOffers = ({ profileId, highlightApplicationId, onCountChange }: Props)
   };
 
 
-  if (!offers.length && !placed.length) return null;
+  if (!offers.length && !placed.length && !joinings.length) return null;
 
   return (
     <>
@@ -176,10 +177,21 @@ const CrewOffers = ({ profileId, highlightApplicationId, onCountChange }: Props)
               >
                 Upload documents
               </a>
+              <div className="rounded-xl p-2" style={{ background: NAVY }}>
+                <LineupTickets applicationId={o.id} role="crew" compact />
+              </div>
             </div>
           </div>
         );
       })}
+      {joinings.map((j) => (
+        <div key={`join-${j.id}`} className="mx-4 mb-3 rounded-2xl border border-[#D4AF37]/30 bg-[#112240] p-3">
+          <p className="text-xs font-bold text-[#D4AF37]">
+            {j.outcome === "placed" ? "⚓ Your joining" : "⭐ Shortlisted"} · {j.company_name || "Company"}{j.rank_applied ? ` · ${j.rank_applied}` : ""}
+          </p>
+          <LineupTickets applicationId={j.id} role="crew" />
+        </div>
+      ))}
     </>
   );
 };
