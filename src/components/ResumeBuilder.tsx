@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { normalizeCvDate } from "@/lib/cvDates";
+import { expandRank } from "@/lib/cvRanks";
 import {
   Camera, Plus, Trash2, Eye, Edit3, Award, Ship, FileText,
   User, GraduationCap, Globe, ChevronDown, ChevronUp,
