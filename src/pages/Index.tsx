@@ -900,12 +900,14 @@ const Index = () => {
         </div>
 
         <LegalConsentGate role="crew" />
-        <BottomNav
-          screen={screen}
-          jobBadgeCount={jobBadgeCount}
-          onNavClick={handleNavClick}
-          onMore={() => setDrawerOpen(true)}
-        />
+        {!drawerOpen && !isEdgeSwiping && (
+          <BottomNav
+            screen={screen}
+            jobBadgeCount={jobBadgeCount}
+            onNavClick={handleNavClick}
+            onMore={() => setDrawerOpen(true)}
+          />
+        )}
 
 
         {/* Feedback modal */}
