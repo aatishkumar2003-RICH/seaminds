@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import LineupTickets from "@/components/LineupTickets";
 
 const NAVY = "#0D1B2A";
 
@@ -23,6 +24,7 @@ interface Offer {
 const CrewOffers = ({ profileId, highlightApplicationId, onCountChange }: Props) => {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [placed, setPlaced] = useState<{ id: string; company: string | null }[]>([]);
+  const [joinings, setJoinings] = useState<{ id: string; company_name: string | null; rank_applied: string | null; outcome: string }[]>([]);
   const highlightRef = useRef<HTMLDivElement | null>(null);
 
   const load = useCallback(async () => {
@@ -30,6 +32,13 @@ const CrewOffers = ({ profileId, highlightApplicationId, onCountChange }: Props)
     const { data: sess } = await supabase.auth.getSession();
     const uid = sess.session?.user?.id || profileId;
     if (!uid) return;
+
+    // Active joinings (placed, or with an open issue) — lets crew raise/answer issues
+    const { data: j } = await supabase.from("job_applications")
+      .select("id, company_name, rank_applied, outcome")
+      .eq("crew_id", uid).in("outcome", ["shortlisted", "placed"])
+      .order("created_at", { ascending: false }).limit(5);
+    setJoinings((j as any[]) || []);
 
     const rpc = await supabase.rpc("get_my_offers" as any);
     if (!rpc.error && Array.isArray(rpc.data)) {
@@ -89,7 +98,7 @@ const CrewOffers = ({ profileId, highlightApplicationId, onCountChange }: Props)
   };
 
 
-  if (!offers.length && !placed.length) return null;
+  if (!offers.length && !placed.length && !joinings.length) return null;
 
   return (
     <>
@@ -168,10 +177,21 @@ const CrewOffers = ({ profileId, highlightApplicationId, onCountChange }: Props)
               >
                 Upload documents
               </a>
+              <div className="rounded-xl p-2" style={{ background: NAVY }}>
+                <LineupTickets applicationId={o.id} role="crew" compact />
+              </div>
             </div>
           </div>
         );
       })}
+      {joinings.map((j) => (
+        <div key={`join-${j.id}`} className="mx-4 mb-3 rounded-2xl border border-[#D4AF37]/30 bg-[#112240] p-3">
+          <p className="text-xs font-bold text-[#D4AF37]">
+            {j.outcome === "placed" ? "⚓ Your joining" : "⭐ Shortlisted"} · {j.company_name || "Company"}{j.rank_applied ? ` · ${j.rank_applied}` : ""}
+          </p>
+          <LineupTickets applicationId={j.id} role="crew" />
+        </div>
+      ))}
     </>
   );
 };

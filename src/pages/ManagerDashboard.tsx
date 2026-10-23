@@ -1,3 +1,4 @@
+import LineupTickets from "@/components/LineupTickets";
 import { matchApplicantToVacancy } from "@/lib/smartMatch";
 import VacancyCleanupPanel from "@/components/manager/VacancyCleanupPanel";
 import CompanyCompliancePanel from "@/components/manager/CompanyCompliancePanel";
@@ -753,6 +754,9 @@ const ManagerDashboard = () => {
                           )}
                           {a.outcome === "placed" && (
                             <p className="text-xs text-green-400">🎉 Placed — congratulations!</p>
+                          )}
+                          {["shortlisted", "offered", "placed"].includes(a.outcome) && (
+                            <LineupTickets applicationId={a.application_id} role="manager" compact />
                           )}
                           {a.outcome !== "interested" && a.outcome !== "declined" && (() => {
                             const t = trainingCounts[a.application_id];
