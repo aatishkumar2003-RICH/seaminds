@@ -304,29 +304,30 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
 
   const finish = async () => {
     if (!uid) return;
-    const { error: profileError } = await supabase.from("crew_profiles").update({
+    const { error: profileError } = await resilientSave("quick_profile", () => supabase.from("crew_profiles").update({
       rank, years_in_rank_band: yearsBand, contracts_in_rank_band: contractsBand,
       whatsapp_number: toE164(whatsapp), email: contactEmail.trim(),
       total_sea_service_band: seaBand,
-    } as any).eq("id", uid);
+    } as any).eq("id", uid));
     const entries = Object.entries(families).map(([vessel_family, sea_time_band]) => ({ crew_id: uid, vessel_family, sea_time_band }));
-    const familyResult = entries.length ? await supabase.from("crew_vessel_experience" as any)
-      .upsert(entries, { onConflict: "crew_id,vessel_family" }) : { error: null };
+    const familyResult = entries.length ? await resilientSave("quick_profile_vessels", () => supabase.from("crew_vessel_experience" as any)
+      .upsert(entries, { onConflict: "crew_id,vessel_family" })) : { error: null };
     const claimEntries = Object.entries(claims).map(([claim_key, value]) => ({ crew_id: uid, claim_key, value, updated_at: new Date().toISOString() }));
-    const claimResult = claimEntries.length ? await supabase.from("crew_claims" as any)
-      .upsert(claimEntries, { onConflict: "crew_id,claim_key" }) : { error: null };
-    if (profileError || familyResult.error || claimResult.error) return toast.error("Could not save your profile. Please check your connection and try again.");
+    const claimResult = claimEntries.length ? await resilientSave("quick_profile_claims", () => supabase.from("crew_claims" as any)
+      .upsert(claimEntries, { onConflict: "crew_id,claim_key" })) : { error: null };
+    const firstError = profileError || familyResult.error || claimResult.error;
+    if (firstError) return toast.error(saveErrorMessage(firstError));
     // Completion is recorded only after the server confirms a canonical rank is saved
     if (!(await confirmCanonicalRank())) { setStep(1); return toast.error("Please choose your official rank from the list."); }
     if (!uid) return;
     // Success is shown only after the database confirms the completion was saved
-    const { data: saved, error } = await supabase.from("crew_profiles")
+    const { data: saved, error } = await resilientSave("quick_profile_complete", () => supabase.from("crew_profiles")
       .update({ quick_profile_completed_at: new Date().toISOString() } as any)
       .eq("id", uid)
       .select("quick_profile_completed_at")
-      .maybeSingle();
+      .maybeSingle());
     if (error || !(saved as any)?.quick_profile_completed_at) {
-      return toast.error("Could not save your profile. Please check your connection and try again.");
+      return toast.error(saveErrorMessage(error));
     }
     if (onComplete) { onComplete(); return; }
     setDone(true);
