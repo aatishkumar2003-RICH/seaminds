@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { normalizeCvDate } from "@/lib/cvDates";
+import { expandRank } from "@/lib/cvRanks";
 import {
   Camera, Plus, Trash2, Eye, Edit3, Award, Ship, FileText,
   User, GraduationCap, Globe, ChevronDown, ChevronUp,
@@ -415,7 +416,8 @@ const ResumeBuilder = () => {
         ...p,
         firstName: cv.first_name || cv.name?.split(' ')[0] || p.firstName,
         lastName: cv.last_name || cv.name?.split(' ').slice(1).join(' ') || p.lastName,
-        rank: cv.rank || p.rank,
+        rank: expandRank(cv.rank || cv.applying_for) || p.rank,
+        applyingFor: expandRank(cv.applying_for) || p.applyingFor,
         nationality: cv.nationality || p.nationality,
         dob: normalizeCvDate(cv.date_of_birth) || p.dob,
         passportNo: cv.passport_no || cv.passportNo || p.passportNo,
@@ -423,6 +425,9 @@ const ResumeBuilder = () => {
         cdcCountry: cv.cdc_country || cv.cdcCountry || p.cdcCountry,
         phone: cv.phone || cv.whatsapp || p.phone,
         email: cv.email || p.email,
+        address: cv.address || p.address,
+        emergencyName: cv.emergency_contact_name || p.emergencyName,
+        emergencyPhone: cv.emergency_contact_phone || p.emergencyPhone,
         summary: cv.summary || p.summary,
       }));
     }
@@ -436,7 +441,7 @@ const ResumeBuilder = () => {
         imoNumber: s.imo || '',
         company: s.company || '',
         manningAgent: s.manning_agent || '',
-        rankOnBoard: s.rank || '',
+        rankOnBoard: expandRank(s.rank),
         fromDate: normalizeCvDate(s.sign_on || s.signOn || s.from_date),
         toDate: normalizeCvDate(s.sign_off || s.signOff || s.to_date),
         engineType: s.engine_type || s.engineType || '',
@@ -549,68 +554,13 @@ const ResumeBuilder = () => {
   const handleDownloadPDF = async () => {
     setGeneratingPdf(true);
     try {
-      const { default: html2canvas } = await import('html2canvas');
-      const { jsPDF } = await import('jspdf');
-      const el = document.getElementById('cv-preview');
-      if (!el) {
-        alert('CV preview is not ready yet. Please try again.');
-        return;
-      }
-
       await saveCVData({ personal, sea, certs, edu, skills, photo, training });
-
-      // Make sure every image (incl. the passport photo) is fully decoded
-      // before html2canvas snapshots the node, otherwise it renders blank.
-      await Promise.all(
-        Array.from(el.querySelectorAll('img')).map(img =>
-          img.complete && img.naturalWidth > 0
-            ? (img.decode ? img.decode().catch(() => undefined) : Promise.resolve())
-            : new Promise<void>(resolve => {
-                img.onload = () => resolve();
-                img.onerror = () => resolve();
-                setTimeout(resolve, 3000);
-              })
-        )
-      );
-
-      const canvas = await html2canvas(el, {
-        scale: window.devicePixelRatio > 2 ? 1.5 : 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-        windowWidth: el.scrollWidth,
-        windowHeight: el.scrollHeight,
-        imageTimeout: 15000,
-        onclone: (_doc, clonedEl) => {
-          // html2canvas ignores object-fit — emulate the crop with a background image
-          clonedEl.querySelectorAll('img').forEach(img => {
-            const src = img.getAttribute('src') || '';
-            if (!src) return;
-            const cs = window.getComputedStyle(img);
-            if (cs.objectFit === 'cover' || cs.objectFit === 'contain') {
-              const wrap = img as HTMLImageElement;
-              wrap.style.objectFit = 'fill';
-            }
-            img.setAttribute('crossorigin', 'anonymous');
-          });
-        },
+      const { buildResumePdf } = await import('@/lib/resumePdf');
+      const pdf = await buildResumePdf({
+        personal, sea, certs, edu, training, skills, photo,
+        cvUid: crewUniqueId || smartCVId, declaration,
       });
 
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-      const imgData = canvas.toDataURL('image/png');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      let heightLeft = pdfHeight;
-      let position = 0;
-      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
-      heightLeft -= pdf.internal.pageSize.getHeight();
-      while (heightLeft > 0) {
-        position -= pdf.internal.pageSize.getHeight();
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
-        heightLeft -= pdf.internal.pageSize.getHeight();
-      }
 
       const fileName = `SeaMinds-CV-${smartCVId}-${personal.firstName || 'Seafarer'}-${personal.lastName || ''}.pdf`.replace(/\s+/g, '-');
       if (user?.id) {
