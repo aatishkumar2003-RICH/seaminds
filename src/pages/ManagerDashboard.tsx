@@ -1,3 +1,4 @@
+import LineupTickets from "@/components/LineupTickets";
 import { matchApplicantToVacancy } from "@/lib/smartMatch";
 import VacancyCleanupPanel from "@/components/manager/VacancyCleanupPanel";
 import CompanyCompliancePanel from "@/components/manager/CompanyCompliancePanel";
