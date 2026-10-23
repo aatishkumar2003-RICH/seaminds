@@ -23,6 +23,7 @@ interface Offer {
 const CrewOffers = ({ profileId, highlightApplicationId, onCountChange }: Props) => {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [placed, setPlaced] = useState<{ id: string; company: string | null }[]>([]);
+  const [joinings, setJoinings] = useState<{ id: string; company_name: string | null; rank_applied: string | null; outcome: string }[]>([]);
   const highlightRef = useRef<HTMLDivElement | null>(null);
 
   const load = useCallback(async () => {
@@ -30,6 +31,13 @@ const CrewOffers = ({ profileId, highlightApplicationId, onCountChange }: Props)
     const { data: sess } = await supabase.auth.getSession();
     const uid = sess.session?.user?.id || profileId;
     if (!uid) return;
+
+    // Active joinings (placed, or with an open issue) — lets crew raise/answer issues
+    const { data: j } = await supabase.from("job_applications")
+      .select("id, company_name, rank_applied, outcome")
+      .eq("crew_id", uid).in("outcome", ["shortlisted", "placed"])
+      .order("created_at", { ascending: false }).limit(5);
+    setJoinings((j as any[]) || []);
 
     const rpc = await supabase.rpc("get_my_offers" as any);
     if (!rpc.error && Array.isArray(rpc.data)) {
