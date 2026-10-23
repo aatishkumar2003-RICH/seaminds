@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { resilientSave, saveErrorMessage } from "@/lib/resilientSave";
 import { toast } from "sonner";
 import { useT } from "@/i18n";
 import MobileVerify from "@/components/cv/MobileVerify";
