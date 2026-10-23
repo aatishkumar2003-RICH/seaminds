@@ -547,6 +547,13 @@
       "when": 1792663695911,
       "tag": "0077_english_training_progress",
       "breakpoints": true
+    },
+    {
+      "idx": 78,
+      "version": "7",
+      "when": 1792760179752,
+      "tag": "0078_lineup_tickets",
+      "breakpoints": true
     }
   ]
 }

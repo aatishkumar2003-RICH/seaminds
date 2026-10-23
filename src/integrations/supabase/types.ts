@@ -3454,6 +3454,100 @@ export type Database = {
           },
         ]
       }
+      lineup_ticket_messages: {
+        Row: {
+          author_id: string
+          author_role: string
+          body: string
+          created_at: string
+          id: string
+          ticket_id: string
+        }
+        Insert: {
+          author_id: string
+          author_role: string
+          body: string
+          created_at?: string
+          id?: string
+          ticket_id: string
+        }
+        Update: {
+          author_id?: string
+          author_role?: string
+          body?: string
+          created_at?: string
+          id?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lineup_ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "lineup_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lineup_tickets: {
+        Row: {
+          application_id: string
+          category: string
+          created_at: string
+          crew_id: string
+          escalated_at: string | null
+          id: string
+          raised_by: string
+          raised_by_role: string
+          resolution_note: string | null
+          resolved_at: string | null
+          statement: string
+          status: string
+          ticket_ref: string
+          updated_at: string
+        }
+        Insert: {
+          application_id: string
+          category: string
+          created_at?: string
+          crew_id: string
+          escalated_at?: string | null
+          id?: string
+          raised_by: string
+          raised_by_role: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          statement: string
+          status?: string
+          ticket_ref?: string
+          updated_at?: string
+        }
+        Update: {
+          application_id?: string
+          category?: string
+          created_at?: string
+          crew_id?: string
+          escalated_at?: string | null
+          id?: string
+          raised_by?: string
+          raised_by_role?: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          statement?: string
+          status?: string
+          ticket_ref?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lineup_tickets_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "job_applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       management_periods: {
         Row: {
           created_at: string
@@ -6306,6 +6400,7 @@ export type Database = {
       is_approved_manager: { Args: { _uid: string }; Returns: boolean }
       is_marketing_member: { Args: never; Returns: boolean }
       issue_paper: { Args: { p_assessment_id: string }; Returns: Json }
+      lineup_party_role: { Args: { p_application_id: string }; Returns: string }
       log_marketing_action: {
         Args: { p_action: string; p_details?: Json }
         Returns: undefined
@@ -6343,6 +6438,14 @@ export type Database = {
       process_answer_scoring_queue: { Args: never; Returns: string }
       process_recovery_queue: { Args: never; Returns: string }
       process_scoring_jobs: { Args: never; Returns: string }
+      raise_lineup_ticket: {
+        Args: {
+          p_application_id: string
+          p_category: string
+          p_statement: string
+        }
+        Returns: Json
+      }
       rank_group_of: { Args: { p_rank: string }; Returns: string }
       record_english_attempt: {
         Args: { p_daily: boolean; p_scenario: string; p_score: number }
@@ -6415,6 +6518,10 @@ export type Database = {
       recruiter_outreach_sync: { Args: never; Returns: Json }
       redeem_recovery_token: { Args: { p_token: string }; Returns: Json }
       refresh_ticker_stats: { Args: never; Returns: undefined }
+      reply_lineup_ticket: {
+        Args: { p_body: string; p_ticket_id: string }
+        Returns: Json
+      }
       report_company_post: {
         Args: { post_id: string; reason?: string }
         Returns: boolean
@@ -6497,6 +6604,10 @@ export type Database = {
           tags: string[]
           title: string
         }[]
+      }
+      set_lineup_ticket_status: {
+        Args: { p_action: string; p_note?: string; p_ticket_id: string }
+        Returns: Json
       }
       ship_photo_visible: { Args: { _path: string }; Returns: boolean }
       start_or_resume_assessment: { Args: never; Returns: Json }
