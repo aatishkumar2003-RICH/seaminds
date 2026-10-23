@@ -98,3 +98,9 @@ No slice starts without a written instruction naming it.
 - [x] Slice 2: tier badge on score/certificate; rescoring options (retake quick / upgrade to CV)
 - [x] Slice 3: manager "Request CV & Round 2" on interview board
 - [x] Yes/No chips for "Available for work now?" on Quick Sea Profile
+
+## Agency Crewing Suite
+- [x] Phase 1: two-way joining issue tickets (crew ↔ company), 48h reply window, escalation to SeaMinds.
+- [ ] Admin screen to review escalated joining issues.
+- [ ] Phase 2: Principal CV Studio (SeaMinds / Synergy / Anglo-Eastern layouts).
+- [ ] Phase 3: Expiry radar and portage bill ledger.
