@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { resilientSave, saveErrorMessage } from "@/lib/resilientSave";
 
 const YEARS_BANDS = ["0–1", "2–4", "5–8", "9–14", "15+"];
 const CONTRACT_BANDS = ["0", "1–2", "3–5", "6–10", "10+"];
@@ -44,11 +45,11 @@ export default function SeaProfile() {
     if (!uid) return;
     if (!ranks.some((r) => r.canonical_rank === form.rank)) { toast.error("Choose your official rank from the list."); return; }
     setState("saving");
-    const { error } = await supabase.from("crew_profiles").update(form as any).eq("id", uid);
+    const { error } = await resilientSave("sea_profile", () => supabase.from("crew_profiles").update(form as any).eq("id", uid));
     // Verify the save actually landed before claiming success
     const { data: check } = await supabase.from("crew_profiles").select("rank").eq("id", uid).maybeSingle();
     setState("ready");
-    if (error || (check as any)?.rank !== form.rank) { toast.error("Could not save your profile. Please try again."); return; }
+    if (error || (check as any)?.rank !== form.rank) { toast.error(saveErrorMessage(error)); return; }
     toast.success("Sea Profile saved. Earlier scores are unchanged.");
     if (ret && ret.startsWith("/")) navigate(ret);
   };
