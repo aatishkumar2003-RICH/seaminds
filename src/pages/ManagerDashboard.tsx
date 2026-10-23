@@ -754,6 +754,9 @@ const ManagerDashboard = () => {
                           {a.outcome === "placed" && (
                             <p className="text-xs text-green-400">🎉 Placed — congratulations!</p>
                           )}
+                          {["shortlisted", "offered", "placed"].includes(a.outcome) && (
+                            <LineupTickets applicationId={a.application_id} role="manager" compact />
+                          )}
                           {a.outcome !== "interested" && a.outcome !== "declined" && (() => {
                             const t = trainingCounts[a.application_id];
                             const label = !t || !t.assigned ? "🎓 Assign training" : t.completed === t.assigned ? `🎓 Training ${t.completed}/${t.assigned} ✓` : `🎓 Training ${t.completed}/${t.assigned}`;
