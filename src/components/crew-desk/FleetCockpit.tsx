@@ -86,14 +86,16 @@ export default function FleetCockpit({ rows, onOpen }: { rows: CockpitRoster[] |
               {open ? <ChevronDown size={16} className="text-primary" /> : <ChevronRight size={16} className="text-primary" />}
               <span className="font-bold text-primary">{v.name}</span>
               <span className="text-xs text-muted-foreground">{[v.imo && `IMO ${v.imo}`, v.type, v.flag].filter(Boolean).join(" • ")}</span>
-              <span className="ml-auto text-xs text-muted-foreground">{v.onboard} onboard • {money(v.payroll)}/mo</span>
+              <span className="ml-auto text-xs text-muted-foreground">{v.onboard}{v.required ? ` / ${v.required}` : ""} onboard • {formatPayroll(v.payroll)}/mo</span>
+              <span role="button" tabIndex={0} onClick={e => { e.stopPropagation(); setRequired(v.name, v.required); }} className={`text-[11px] rounded-full border px-2 ${v.shortfall ? "border-destructive/50 text-destructive" : "border-border text-muted-foreground"}`}>{v.required === null ? "Set safe manning" : v.shortfall ? `${v.shortfall} below safe manning` : "Safe manning met"}</span>
+              {v.missingCritical > 0 && <span className="text-[11px] rounded-full border border-destructive/50 text-destructive px-2">{v.missingCritical} senior rank{v.missingCritical > 1 ? "s" : ""} missing</span>}
               {v.alerts > 0 && <span className="text-[11px] rounded-full border border-amber-400/50 text-amber-400 px-2">{v.alerts} alert{v.alerts > 1 ? "s" : ""}</span>}
             </button>
             {open && (
               <div className="overflow-x-auto">
-                <table className="w-full text-sm min-w-[820px]">
+                <table className="w-full text-sm min-w-[920px]">
                   <thead className="text-[11px] uppercase text-muted-foreground border-b border-border">
-                    <tr>{["Rank", "Name", "Status", "Sign-on", "Days onboard", "Contract ends", "Relief in", "Monthly wage"].map(h => <th key={h} className="text-left font-medium px-4 py-2">{h}</th>)}</tr>
+                    <tr>{["Rank", "Name", "Status", "Sign-on", "Days onboard", "Contract ends", "Relief in", "Reliever", "Monthly wage"].map(h => <th key={h} className="text-left font-medium px-4 py-2">{h}</th>)}</tr>
                   </thead>
                   <tbody>
                     {crew.map(c => (
@@ -105,6 +107,7 @@ export default function FleetCockpit({ rows, onOpen }: { rows: CockpitRoster[] |
                         <td className="px-4 py-2.5">{c.daysOnboard !== null && c.band ? <span className={`text-xs border rounded-full px-2 tabular-nums ${BAND[c.band]}`}>{c.daysOnboard} d</span> : "—"}</td>
                         <td className="px-4 py-2.5 text-muted-foreground tabular-nums">{c.contractEnd || "No contract"}</td>
                         <td className={`px-4 py-2.5 tabular-nums ${c.daysToRelief !== null && c.daysToRelief <= 30 ? "text-amber-400 font-semibold" : "text-muted-foreground"}`}>{c.daysToRelief === null ? "—" : c.daysToRelief < 0 ? `Overdue ${-c.daysToRelief} d` : `${c.daysToRelief} d`}</td>
+                        <td className="px-4 py-2.5 text-xs">{c.reliever ? <span className={c.reliever.ready ? "text-emerald-400" : "text-amber-400"}>{c.reliever.name}{c.reliever.ready ? " ✓" : " (pending)"}</span> : c.daysToRelief !== null && c.daysToRelief <= 30 ? <span className="text-destructive">None</span> : "—"}</td>
                         <td className="px-4 py-2.5 tabular-nums text-foreground">{c.monthly ? money(c.monthly, c.currency) : <span className="text-xs text-muted-foreground">{c.contractStatus === "issued" ? "Awaiting signature" : "—"}</span>}</td>
                       </tr>
                     ))}
@@ -115,6 +118,15 @@ export default function FleetCockpit({ rows, onOpen }: { rows: CockpitRoster[] |
           </div>
         );
       })}
+
+      {filter === "all" && data.signedOff.length > 0 && (
+        <div className="rounded-xl border border-border bg-card p-4">
+          <p className="text-sm font-semibold text-foreground mb-2">Signed off / on leave ({data.signedOff.length})</p>
+          <div className="flex flex-wrap gap-2">
+            {data.signedOff.map(c => <button key={c.application_id} onClick={() => setSel(c)} className="rounded-xl border border-border px-3 min-h-[40px] text-sm text-foreground hover:bg-secondary">{c.name} <span className="text-xs text-muted-foreground">{c.rank} • last {c.vessel}</span></button>)}
+          </div>
+        </div>
+      )}
 
       {sel && (
         <div className="fixed inset-0 z-50 flex justify-end bg-background/60" onClick={() => setSel(null)}>
@@ -132,6 +144,17 @@ export default function FleetCockpit({ rows, onOpen }: { rows: CockpitRoster[] |
               ))}
             </dl>
             {sel.band === "critical" && <p className="text-xs text-destructive">Over 270 days onboard — arrange relief before the 11-month limit.</p>}
+            {sel.state === "signedoff" && <p className="text-xs text-muted-foreground">Contract completed — signed off / on leave. Available for the next contract.</p>}
+            {liveContract && (
+              <label className="block rounded-lg border border-border p-3">
+                <span className="text-xs text-muted-foreground">Nominated reliever</span>
+                <select value={liveContract.reliever_application_id || ""} onChange={e => setReliever(e.target.value)} className="mt-1 w-full rounded-xl border border-border bg-background px-3 min-h-[44px] text-sm text-foreground">
+                  <option value="">Not nominated</option>
+                  {relieverOptions.map(r => <option key={r.application_id} value={r.application_id}>{r.name} — {r.rank || "rank?"} ({r.state === "lineup" ? "confirmed" : r.state === "signedoff" ? "on leave" : "not confirmed"})</option>)}
+                </select>
+                {sel.reliever && <p className={`mt-1 text-xs ${sel.reliever.ready ? "text-emerald-400" : "text-amber-400"}`}>{sel.reliever.ready ? "Reliever confirmed with signed SEA" : "Reliever needs joining confirmation and a signed SEA"}</p>}
+              </label>
+            )}
             <div className="grid gap-2">
               <button onClick={() => onOpen("contracts", sel.application_id)} className="flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground font-bold min-h-[44px]"><ScrollText size={16} /> SEA contract</button>
               <button onClick={() => onOpen("cv", sel.application_id)} className="flex items-center justify-center gap-2 rounded-xl border border-primary text-primary font-semibold min-h-[44px]"><FileText size={16} /> CV & principal formats</button>
