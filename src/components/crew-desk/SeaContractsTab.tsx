@@ -21,7 +21,7 @@ function F({ label, children }: { label: string; children: React.ReactNode }) {
 }
 const errMsg = (e: any) => { const k = Object.keys(ERR).find(k => String(e?.message || "").includes(k)); return k ? ERR[k] : "Could not save. Please retry."; };
 
-export default function SeaContractsTab({ rows }: { rows: Row[] | null }) {
+export default function SeaContractsTab({ rows, focusId }: { rows: Row[] | null; focusId?: string }) {
   const [list, setList] = useState<(SeaContract & { id: string; status: string })[] | null>(null);
   const [edit, setEdit] = useState<SeaContract | null>(null);
   const [pick, setPick] = useState("");
@@ -43,6 +43,19 @@ export default function SeaContractsTab({ rows }: { rows: Row[] | null }) {
       setEmployer((mp as any)?.company_name || "");
     });
   }, []);
+
+  // Deep link from Fleet Overview: open this crew member's current contract, or start a prefilled draft.
+  const [focused, setFocused] = useState("");
+  useEffect(() => {
+    if (!focusId || focused === focusId || list === null || rows === null) return;
+    setFocused(focusId);
+    const mine = list.filter(c => c.application_id === focusId);
+    const current = mine.find(c => ["draft", "issued", "signed"].includes(c.status)) || mine[0];
+    if (current) { setEdit(current); return; }
+    const r = rows.find(x => x.application_id === focusId);
+    if (r?.crew_confirmed) setEdit(blank(r, employer));
+    else if (r) toast.info("This crew member must confirm joining before a contract can be created.");
+  }, [focusId, list, rows, employer, focused]);
 
   const total = useMemo(() => (edit ? monthlyTotal(edit) : 0), [edit]);
   const locked = edit?.status === "signed" || edit?.status === "completed" || edit?.status === "cancelled";
