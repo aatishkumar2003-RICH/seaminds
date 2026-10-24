@@ -4,10 +4,11 @@ import { ChevronLeft, FileDown, Lock, Users, FileText, ScrollText, Wallet } from
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { buildResumePdf } from "@/lib/resumePdf";
-import { buildPrincipalPdf, missingForPrincipal, PRESETS, type MasterRecord, type PrincipalPreset } from "@/lib/principalCvPdf";
+import { missingForPrincipal, type MasterRecord } from "@/lib/principalCvPdf";
+import PrincipalTemplateStudio from "@/components/crew-desk/PrincipalTemplateStudio";
+import { Button } from "@/components/ui/button";
 
 type RosterRow = { application_id: string; outcome: string; crew_name: string; rank: string; nationality: string; vessel: string; joining_date: string | null; crew_confirmed: boolean; crew_unique_id: string };
-type Format = "master" | PrincipalPreset;
 
 const TABS = [
   { id: "roster", label: "Roster", icon: Users },
@@ -21,19 +22,12 @@ export default function CrewDesk() {
   const [params, setParams] = useSearchParams();
   const tab = params.get("tab") || "roster";
   const [rows, setRows] = useState<RosterRow[] | null>(null);
-  const [company, setCompany] = useState("");
   const [selected, setSelected] = useState<string>("");
-  const [format, setFormat] = useState<Format>("master");
   const [record, setRecord] = useState<MasterRecord | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     (async () => {
-      const { data: auth } = await supabase.auth.getUser();
-      if (auth?.user) {
-        const { data: mp } = await supabase.from("manager_profiles").select("company_name").eq("user_id", auth.user.id).maybeSingle();
-        setCompany(mp?.company_name || "");
-      }
       const { data, error } = await supabase.rpc("crew_desk_roster" as any);
       if (error) { toast.error("Could not load your crew roster. Please retry."); setRows([]); return; }
       setRows((data as any) || []);
@@ -41,14 +35,17 @@ export default function CrewDesk() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
     setRecord(null);
     if (!selected) return;
     (async () => {
       const { data, error } = await supabase.rpc("crew_desk_master_record" as any, { _application_id: selected });
       const d = data as any;
+      if (cancelled) return;
       if (error || d?.error) { toast.error(d?.error === "crew_not_confirmed" ? "The crew member must confirm joining before you can open their full record." : "Could not open this crew record."); return; }
       setRecord(d);
     })();
+    return () => { cancelled = true; };
   }, [selected]);
 
   const openCv = (id: string) => { setSelected(id); setParams({ tab: "cv" }); };
@@ -58,10 +55,9 @@ export default function CrewDesk() {
     setBusy(true);
     try {
       const name = [record.personal?.firstName || record.profile?.first_name, record.personal?.lastName || record.profile?.last_name].filter(Boolean).join("_") || "crew";
-      const pdf = format === "master"
-        ? await buildResumePdf({ personal: { ...record.profile, ...record.personal, firstName: record.personal?.firstName || record.profile?.first_name, lastName: record.personal?.lastName || record.profile?.last_name, rank: record.personal?.rank || record.profile?.rank }, sea: record.sea || [], certs: record.certs || [], edu: record.edu || [], training: (record as any).training || [], skills: record.skills || {}, photo: record.photo || null, cvUid: record.cv_uid || "", declaration: record.declaration as any })
-        : await buildPrincipalPdf(record, format, company);
-      pdf.save(`${name}_${format}_CV.pdf`);
+      if (!record.declaration?.acceptedAt) throw new Error("declaration_required");
+      const pdf = await buildResumePdf({ personal: { ...record.profile, ...record.personal, firstName: record.personal?.firstName || record.profile?.first_name, lastName: record.personal?.lastName || record.profile?.last_name, rank: record.personal?.rank || record.profile?.rank }, sea: record.sea || [], certs: record.certs || [], edu: record.edu || [], training: (record as any).training || [], skills: record.skills || {}, photo: record.photo || null, cvUid: record.cv_uid || "", declaration: record.declaration as any });
+      pdf.save(`${name}_SeaMinds_CV.pdf`);
       toast.success("CV downloaded");
     } catch { toast.error("PDF could not be created. Please try again."); }
     setBusy(false);
@@ -110,7 +106,7 @@ export default function CrewDesk() {
       )}
 
       {tab === "cv" && (
-        <div className="rounded-xl border border-border bg-card p-4 space-y-4">
+        <div className="space-y-4">
           <div>
             <label className="text-xs text-muted-foreground">Crew member (confirmed joiners)</label>
             <select value={selected} onChange={e => setSelected(e.target.value)} className="mt-1 w-full rounded-xl border border-border bg-background px-3 min-h-[44px] text-sm text-foreground">
@@ -119,19 +115,11 @@ export default function CrewDesk() {
             </select>
             {rows && confirmed.length === 0 && <p className="text-xs text-muted-foreground mt-1">No crew has confirmed joining yet.</p>}
           </div>
-          <div className="grid gap-2 sm:grid-cols-3">
-            {([["master", "SeaMinds Master", "Portrait A4 with photo, full history and crew declaration."], ["anglo", PRESETS.anglo.title, PRESETS.anglo.note], ["synergy", PRESETS.synergy.title, PRESETS.synergy.note]] as [Format, string, string][]).map(([id, t, n]) => (
-              <button key={id} onClick={() => setFormat(id)} className={`text-left rounded-xl border p-3 ${format === id ? "border-primary bg-primary/10" : "border-border"}`}>
-                <p className="text-sm font-semibold text-foreground">{t}</p>
-                <p className="text-[11px] text-muted-foreground mt-1">{n}</p>
-              </button>
-            ))}
-          </div>
           {record && missing.length > 0 && <p className="text-xs text-amber-400">Still missing in the crew's CV: {missing.join(", ")}. Ask the crew to update their CV in the SeaMinds app.</p>}
-          <button disabled={!record || busy} onClick={exportPdf} className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground font-bold min-h-[48px] disabled:opacity-50">
-            <FileDown size={16} /> {busy ? "Creating PDF…" : "Download CV"}
-          </button>
-          <p className="text-[11px] text-muted-foreground">Principal layouts are SeaMinds "style" formats, not official company forms. Send us a principal's blank form to match it exactly.</p>
+          <Button disabled={!record || busy || !record.declaration?.acceptedAt} onClick={exportPdf} className="w-full min-h-12">
+            <FileDown size={16} /> {busy ? "Creating PDF…" : "Download SeaMinds CV (PDF)"}
+          </Button>
+          <PrincipalTemplateStudio record={record} />
         </div>
       )}
 
