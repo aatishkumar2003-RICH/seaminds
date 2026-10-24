@@ -78,6 +78,7 @@ import Join from "./pages/Join";
 import ResetPassword from "./pages/ResetPassword";
 import CompanyPost from "./pages/CompanyPost";
 import ManagerInterviews from "./pages/ManagerInterviews";
+const CrewDesk = lazy(() => import("./pages/CrewDesk"));
 import ShipManagerLayout from "./components/layout/ShipManagerLayout";
 import InterviewInvite from "./pages/InterviewInvite";
 import InterviewExam from "./pages/InterviewExam";
@@ -191,6 +192,7 @@ const App = () => (
             <Route element={<ShipManagerLayout />}>
               <Route path="/manager/dashboard" element={<ManagerDashboard />} />
               <Route path="/manager/interviews" element={<ManagerInterviews />} />
+              <Route path="/manager/crew-desk" element={<Suspense fallback={null}><CrewDesk /></Suspense>} />
               <Route path="/manager-search" element={<ManagerSearch />} />
               <Route path="/post-vacancy" element={<PostVacancyPage />} />
             </Route>
