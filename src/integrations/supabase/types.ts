@@ -4872,6 +4872,7 @@ export type Database = {
           overtime_hours: number
           port_of_engagement: string
           rank: string
+          reliever_application_id: string | null
           repatriation_port: string
           signed_at: string | null
           start_date: string | null
@@ -4906,6 +4907,7 @@ export type Database = {
           overtime_hours?: number
           port_of_engagement?: string
           rank?: string
+          reliever_application_id?: string | null
           repatriation_port?: string
           signed_at?: string | null
           start_date?: string | null
@@ -4940,6 +4942,7 @@ export type Database = {
           overtime_hours?: number
           port_of_engagement?: string
           rank?: string
+          reliever_application_id?: string | null
           repatriation_port?: string
           signed_at?: string | null
           start_date?: string | null
@@ -5981,6 +5984,27 @@ export type Database = {
           region?: string | null
           url?: string | null
           value?: string
+        }
+        Relationships: []
+      }
+      vessel_manning: {
+        Row: {
+          manager_id: string
+          required_complement: number
+          updated_at: string
+          vessel_name: string
+        }
+        Insert: {
+          manager_id?: string
+          required_complement: number
+          updated_at?: string
+          vessel_name: string
+        }
+        Update: {
+          manager_id?: string
+          required_complement?: number
+          updated_at?: string
+          vessel_name?: string
         }
         Relationships: []
       }

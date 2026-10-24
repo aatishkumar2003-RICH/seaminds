@@ -88,7 +88,7 @@ export default function CrewDesk() {
         ))}
       </div>
 
-      {tab === "fleet" && <FleetCockpit rows={rows} onOpen={(t, id) => { setSelected(id); setParams({ tab: t }); }} />}
+      {tab === "fleet" && <FleetCockpit rows={rows} onOpen={(t, id) => { setSelected(id); setParams(t === "contracts" ? { tab: t, crew: id } : { tab: t }); }} />}
       {tab === "roster" && (
         <div className="space-y-2">
           {rows === null && <p className="text-sm text-muted-foreground">Loading roster…</p>}
@@ -127,7 +127,7 @@ export default function CrewDesk() {
         </div>
       )}
 
-      {tab === "contracts" && <SeaContractsTab rows={rows} />}
+      {tab === "contracts" && <SeaContractsTab rows={rows} focusId={params.get("crew") || undefined} />}
       {tab === "portage" && (
         <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
           Portage bill, cash advances and allotments come next, built on your signed SEA contracts.
