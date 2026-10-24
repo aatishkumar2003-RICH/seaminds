@@ -8,6 +8,8 @@ import { missingForPrincipal, type MasterRecord } from "@/lib/principalCvPdf";
 import PrincipalTemplateStudio from "@/components/crew-desk/PrincipalTemplateStudio";
 import SeaContractsTab from "@/components/crew-desk/SeaContractsTab";
 import FleetCockpit from "@/components/crew-desk/FleetCockpit";
+import OperatingModelPicker from "@/components/crew-desk/OperatingModelPicker";
+import type { OperatingModel } from "@/lib/fleetCockpit";
 import { Button } from "@/components/ui/button";
 
 type RosterRow = { application_id: string; outcome: string; crew_name: string; rank: string; nationality: string; vessel: string; joining_date: string | null; crew_confirmed: boolean; crew_unique_id: string };
@@ -28,6 +30,13 @@ export default function CrewDesk() {
   const [selected, setSelected] = useState<string>("");
   const [record, setRecord] = useState<MasterRecord | null>(null);
   const [busy, setBusy] = useState(false);
+  const [model, setModel] = useState<OperatingModel | null | undefined>(undefined);
+  const [choosing, setChoosing] = useState(false);
+
+  useEffect(() => {
+    (supabase as any).from("crew_workspace_settings").select("operating_model").maybeSingle()
+      .then(({ data }: any) => setModel(data?.operating_model ?? null));
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -141,6 +150,7 @@ export default function CrewDesk() {
           Portage bill, cash advances and allotments come next, built on your signed SEA contracts.
         </div>
       )}
+      </>}
     </div>
   );
 }
