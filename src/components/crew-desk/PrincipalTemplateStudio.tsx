@@ -83,7 +83,7 @@ export default function PrincipalTemplateStudio({ record }: { record: MasterReco
       const { data, error } = await supabase.storage.from("principal-templates").download(template.file_path);
       if (error || !data) throw new Error("The saved template could not be downloaded. Please retry.");
       const bytes = await fillTemplate(new Uint8Array(await data.arrayBuffer()), template.file_type, savedMappings, record, template.photo_path);
-      const url = URL.createObjectURL(new Blob([bytes], { type: template.file_type === "docx" ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document" : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+      const url = URL.createObjectURL(new Blob([new Uint8Array(bytes).buffer], { type: template.file_type === "docx" ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document" : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
       const a = document.createElement("a"); a.href = url; a.download = `${values.name || "Crew"}_${template.company_name}_CV.${template.file_type}`.replace(/[<>:"/\\|?*]/g, "_"); a.click(); setTimeout(() => URL.revokeObjectURL(url), 10000);
       toast.success("Company-format CV downloaded");
     } catch (e) { toast.error(e instanceof Error ? e.message : "CV could not be created."); }
@@ -105,13 +105,14 @@ export default function PrincipalTemplateStudio({ record }: { record: MasterReco
       <p className="text-xs text-muted-foreground">Select the crew field for each answer location. Unmapped text stays unchanged. Review the blank form before saving; do not upload a completed CV.</p>
       <input aria-label="Find template field" placeholder="Find a cell, paragraph or label…" className={inputClass} value={filter} onChange={e => setFilter(e.target.value)} />
       <div className="max-h-80 overflow-y-auto border-y border-border divide-y divide-border">
-        {inspection.targets.filter(t => t.label.toLowerCase().includes(filter.toLowerCase())).map(t => <div key={`${t.part}:${t.target}`} className="grid sm:grid-cols-2 gap-2 py-2">
+        {inspection.targets.filter(t => t.label.toLowerCase().includes(filter.toLowerCase())).slice(0, 40).map(t => <div key={`${t.part}:${t.target}`} className="grid sm:grid-cols-2 gap-2 py-2">
           <span className="text-xs text-foreground break-words">{t.label}</span>
           <select aria-label={`Map ${t.target} ${t.part}`} className={inputClass} value={t.field} onChange={e => { setReviewed(false); setInspection({ ...inspection, targets: inspection.targets.map(other => other === t ? { ...other, field: e.target.value } : other) }); }}>
             <option value="">Keep unchanged</option>{FIELD_OPTIONS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
           </select>
         </div>)}
       </div>
+      {inspection.targets.filter(t => t.label.toLowerCase().includes(filter.toLowerCase())).length > 40 && <p className="text-xs text-muted-foreground">Showing the first 40 locations. Search for a cell reference or paragraph label to find another location.</p>}
       <label className="block text-xs text-muted-foreground space-y-1">Photo placeholder<select className={inputClass} value={photo} onChange={e => { setPhoto(e.target.value); setReviewed(false); }} aria-label="Photo placeholder">
         <option value="">No photo replacement</option>{inspection.photos.map(p => <option key={p} value={p}>{p}</option>)}
       </select></label>
