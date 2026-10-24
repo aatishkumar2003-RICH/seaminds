@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ImagePlus, X } from "lucide-react";
+import { ChevronLeft, ImagePlus, X, Lock, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { VESSEL_TYPES, MAX_PHOTOS, MARKETPLACE_NOTICE, SELLER_DECLARATION, compressPhoto } from "@/lib/shipMarketplace";
+import { VESSEL_TYPES, MAX_PHOTOS, MARKETPLACE_NOTICE, SELLER_DECLARATION, compressPhoto, marketplaceApprovalMailto } from "@/lib/shipMarketplace";
 
 const inp = "w-full rounded-xl border border-primary/30 bg-card px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary";
 const num = (v: string) => (v.trim() === "" ? null : Number(v.replace(/,/g, "")) || null);
@@ -22,7 +22,7 @@ const MarketplacePost = () => {
 
   useEffect(() => {
     if (!user) { setAllowed(false); return; }
-    supabase.rpc("is_approved_manager", { _uid: user.id }).then(({ data }) => setAllowed(!!data));
+    supabase.rpc("is_marketplace_seller" as any, { _uid: user.id }).then(({ data }) => setAllowed(!!data));
   }, [user]);
 
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => setF((p) => ({ ...p, [k]: e.target.value }));
@@ -72,7 +72,11 @@ const MarketplacePost = () => {
       </header>
       <main className="mx-auto max-w-2xl space-y-5 p-4">
         {allowed === null ? <p className="text-sm text-muted-foreground">Checking your account…</p> : !allowed ? (
-          <div className="rounded-2xl border border-primary/30 bg-card p-5 text-sm text-muted-foreground">Listing vessels is open to approved ship owners and managers. Sign in with your company account; new accounts can list once approved by our team.</div>
+          <div className="space-y-3 rounded-2xl border border-primary/30 bg-card p-5 text-sm text-muted-foreground">
+            <p className="flex items-center gap-2 font-bold text-primary"><Lock size={16} />Listing approval required</p>
+            <p>To protect buyers, every seller is checked by the SeaMinds team before listing. Send us a short email with your company and your authority to sell (owner, mandate or broker). Browsing listings stays open to everyone.</p>
+            <a href={marketplaceApprovalMailto(null, user?.email)} className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-3 font-bold text-primary-foreground"><Mail size={16} />Request approval by email</a>
+          </div>
         ) : (
           <>
             <section className="space-y-3"><h2 className="text-sm font-bold text-primary">Identity</h2>
