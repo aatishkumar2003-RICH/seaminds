@@ -2008,6 +2008,24 @@ export type Database = {
         }
         Relationships: []
       }
+      crew_workspace_settings: {
+        Row: {
+          manager_id: string
+          operating_model: string
+          updated_at: string
+        }
+        Insert: {
+          manager_id?: string
+          operating_model: string
+          updated_at?: string
+        }
+        Update: {
+          manager_id?: string
+          operating_model?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cta_library: {
         Row: {
           active: boolean | null
