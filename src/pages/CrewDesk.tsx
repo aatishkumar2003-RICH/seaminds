@@ -77,8 +77,16 @@ export default function CrewDesk() {
           <h1 className="text-lg font-bold text-primary">Crew Management Tools</h1>
           <p className="text-xs text-muted-foreground">Your private crew desk — free during launch.</p>
         </div>
+        {model && !choosing && (
+          <button onClick={() => setChoosing(true)} className="ml-auto text-xs rounded-xl border border-primary/40 text-primary px-3 min-h-[36px]">
+            {model === "ship_manager" ? "Full Ship Manager" : "Crewing Agency"} · Change
+          </button>
+        )}
       </div>
 
+      {model === undefined && <p className="text-sm text-muted-foreground">Loading…</p>}
+      {(model === null || choosing) && <OperatingModelPicker current={model ?? null} onCancel={model ? () => setChoosing(false) : undefined} onSaved={m => { setModel(m); setChoosing(false); }} />}
+      {model && !choosing && <>
       <div className="flex gap-2 overflow-x-auto pb-1">
         {TABS.map(t => (
           <button key={t.id} onClick={() => setParams({ tab: t.id })}
@@ -88,7 +96,7 @@ export default function CrewDesk() {
         ))}
       </div>
 
-      {tab === "fleet" && <FleetCockpit rows={rows} onOpen={(t, id) => { setSelected(id); setParams(t === "contracts" ? { tab: t, crew: id } : { tab: t }); }} />}
+      {tab === "fleet" && <FleetCockpit rows={rows} mode={model || "crewing_agency"} onOpen={(t, id) => { setSelected(id); setParams(t === "contracts" ? { tab: t, crew: id } : { tab: t }); }} />}
       {tab === "roster" && (
         <div className="space-y-2">
           {rows === null && <p className="text-sm text-muted-foreground">Loading roster…</p>}
