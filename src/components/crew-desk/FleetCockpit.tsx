@@ -1,33 +1,58 @@
 import { useEffect, useMemo, useState } from "react";
 import { Ship, Users, Plane, AlarmClock, ShieldAlert, Wallet, X, FileText, ScrollText, ChevronDown, ChevronRight } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { buildCockpit, type CockpitRoster, type CockpitRow } from "@/lib/fleetCockpit";
+import { buildCockpit, formatPayroll, type CockpitRoster, type CockpitRow, type Manning } from "@/lib/fleetCockpit";
 
 const money = (n: number, cur = "USD") => `${cur} ${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 const BAND = { ok: "text-emerald-400 border-emerald-400/40", plan: "text-amber-400 border-amber-400/40", critical: "text-destructive border-destructive/50" };
 
 export default function FleetCockpit({ rows, onOpen }: { rows: CockpitRoster[] | null; onOpen: (tab: "cv" | "contracts", id: string) => void }) {
   const [contracts, setContracts] = useState<any[] | null>(null);
+  const [manning, setManning] = useState<Manning[]>([]);
   const [filter, setFilter] = useState<"all" | "relief" | "mlc">("all");
   const [closed, setClosed] = useState<Record<string, boolean>>({});
-  const [sel, setSel] = useState<CockpitRow | null>(null);
+  const [selId, setSelId] = useState<string | null>(null);
 
-  useEffect(() => {
-    supabase.from("sea_contracts" as any).select("application_id,status,vessel_name,imo_number,flag_state,vessel_type,start_date,duration_months,currency,basic_wage,fixed_overtime,leave_pay,allowances")
+  const load = () => {
+    supabase.from("sea_contracts" as any).select("id,application_id,status,vessel_name,imo_number,flag_state,vessel_type,start_date,duration_months,currency,basic_wage,fixed_overtime,leave_pay,allowances,reliever_application_id").order("created_at")
       .then(({ data }) => setContracts((data as any) || []));
-  }, []);
+    supabase.from("vessel_manning" as any).select("vessel_name,required_complement").then(({ data }) => setManning((data as any) || []));
+  };
+  useEffect(load, []);
 
-  const data = useMemo(() => buildCockpit(rows || [], contracts || []), [rows, contracts]);
+  const data = useMemo(() => buildCockpit(rows || [], contracts || [], new Date(), manning), [rows, contracts, manning]);
   if (!rows || !contracts) return <p className="text-sm text-muted-foreground">Loading fleet overview…</p>;
+  const sel = selId ? data.rows.find(r => r.application_id === selId) || null : null;
+  const setSel = (r: CockpitRow | null) => setSelId(r?.application_id || null);
+  const liveContract = sel ? contracts.find(c => c.application_id === sel.application_id && ["issued", "signed"].includes(c.status)) : null;
+  const relieverOptions = sel ? data.rows.filter(r => r.application_id !== sel.application_id && (r.state === "lineup" || r.state === "signedoff" || r.state === "pipeline")) : [];
+
+  const setReliever = async (id: string) => {
+    if (!liveContract) return;
+    const { error } = await (supabase as any).from("sea_contracts").update({ reliever_application_id: id || null }).eq("id", liveContract.id);
+    if (error) { toast.error(String(error.message).includes("contract_closed") ? "This contract is closed." : "Could not save the reliever."); return; }
+    toast.success(id ? "Reliever nominated" : "Reliever removed"); load();
+  };
+  const setRequired = async (vessel: string, current: number | null) => {
+    const v = prompt(`Minimum safe manning for ${vessel} (from the Safe Manning Document). Leave empty to clear.`, current ? String(current) : "");
+    if (v === null) return;
+    const n = parseInt(v, 10);
+    const q = !v.trim() ? (supabase as any).from("vessel_manning").delete().eq("vessel_name", vessel)
+      : Number.isFinite(n) && n >= 1 && n <= 80 ? (supabase as any).from("vessel_manning").upsert({ vessel_name: vessel, required_complement: n, updated_at: new Date().toISOString() }) : null;
+    if (!q) { toast.error("Enter a number between 1 and 80."); return; }
+    const { error } = await q;
+    if (error) toast.error("Could not save safe manning."); else load();
+  };
 
   const k = data.kpi;
   const tiles = [
     { label: "Active vessels", value: k.vessels, icon: Ship },
     { label: "Crew onboard", value: k.onboard, icon: Users },
     { label: "Lineup / travelling", value: k.lineup, icon: Plane },
-    { label: "Relief due ≤30 days", value: k.reliefDue, icon: AlarmClock, warn: k.reliefDue > 0, f: "relief" as const },
+    { label: k.reliefUnplanned ? `Relief due ≤30 d • ${k.reliefUnplanned} without reliever` : "Relief due ≤30 days", value: k.reliefDue, icon: AlarmClock, warn: k.reliefUnplanned > 0, f: "relief" as const },
     { label: "Over 270 days onboard", value: k.mlcCritical, icon: ShieldAlert, warn: k.mlcCritical > 0, f: "mlc" as const },
-    { label: "Monthly payroll (signed)", value: money(k.payroll), icon: Wallet },
+    { label: "Monthly payroll (signed)", value: formatPayroll(k.payroll), icon: Wallet },
   ];
   const show = (c: CockpitRow) => filter === "all" || (filter === "relief" ? c.daysToRelief !== null && c.daysToRelief <= 30 : c.band === "critical");
 
