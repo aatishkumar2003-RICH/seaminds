@@ -4112,6 +4112,42 @@ export type Database = {
           },
         ]
       }
+      principal_cv_templates: {
+        Row: {
+          company_name: string
+          created_at: string
+          file_path: string
+          file_type: string
+          id: string
+          manager_user_id: string
+          mappings: Json
+          photo_path: string | null
+          template_name: string
+        }
+        Insert: {
+          company_name: string
+          created_at?: string
+          file_path: string
+          file_type: string
+          id?: string
+          manager_user_id?: string
+          mappings?: Json
+          photo_path?: string | null
+          template_name: string
+        }
+        Update: {
+          company_name?: string
+          created_at?: string
+          file_path?: string
+          file_type?: string
+          id?: string
+          manager_user_id?: string
+          mappings?: Json
+          photo_path?: string | null
+          template_name?: string
+        }
+        Relationships: []
+      }
       profile_view_links: {
         Row: {
           application_id: string
