@@ -1,17 +1,19 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { ChevronLeft, FileDown, Lock, Users, FileText, ScrollText, Wallet } from "lucide-react";
+import { ChevronLeft, FileDown, Lock, Users, FileText, ScrollText, Wallet, LayoutDashboard } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { buildResumePdf } from "@/lib/resumePdf";
 import { missingForPrincipal, type MasterRecord } from "@/lib/principalCvPdf";
 import PrincipalTemplateStudio from "@/components/crew-desk/PrincipalTemplateStudio";
 import SeaContractsTab from "@/components/crew-desk/SeaContractsTab";
+import FleetCockpit from "@/components/crew-desk/FleetCockpit";
 import { Button } from "@/components/ui/button";
 
 type RosterRow = { application_id: string; outcome: string; crew_name: string; rank: string; nationality: string; vessel: string; joining_date: string | null; crew_confirmed: boolean; crew_unique_id: string };
 
 const TABS = [
+  { id: "fleet", label: "Fleet Overview", icon: LayoutDashboard },
   { id: "roster", label: "Roster", icon: Users },
   { id: "cv", label: "Principal CV Studio", icon: FileText },
   { id: "contracts", label: "SEA Contracts", icon: ScrollText },
@@ -21,7 +23,7 @@ const STATUS: Record<string, string> = { shortlisted: "Shortlisted", offered: "O
 
 export default function CrewDesk() {
   const [params, setParams] = useSearchParams();
-  const tab = params.get("tab") || "roster";
+  const tab = params.get("tab") || "fleet";
   const [rows, setRows] = useState<RosterRow[] | null>(null);
   const [selected, setSelected] = useState<string>("");
   const [record, setRecord] = useState<MasterRecord | null>(null);
@@ -68,7 +70,7 @@ export default function CrewDesk() {
   const missing = record ? missingForPrincipal(record) : [];
 
   return (
-    <div className="max-w-5xl mx-auto p-4 pb-24 space-y-4">
+    <div className="max-w-7xl 2xl:max-w-[1600px] mx-auto p-4 lg:px-8 pb-24 space-y-4">
       <div className="flex items-center gap-2">
         <Link to="/manager/dashboard?tab=crew" aria-label="Back" className="w-10 h-10 flex items-center justify-center rounded-xl text-primary hover:bg-secondary"><ChevronLeft size={20} /></Link>
         <div>
@@ -86,6 +88,7 @@ export default function CrewDesk() {
         ))}
       </div>
 
+      {tab === "fleet" && <FleetCockpit rows={rows} onOpen={(t, id) => { setSelected(id); setParams({ tab: t }); }} />}
       {tab === "roster" && (
         <div className="space-y-2">
           {rows === null && <p className="text-sm text-muted-foreground">Loading roster…</p>}
