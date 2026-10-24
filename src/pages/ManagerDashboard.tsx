@@ -1014,6 +1014,26 @@ const ManagerDashboard = () => {
       <CompanyCompliancePanel />
 
       <div className="max-w-6xl lg:max-w-[1400px] mx-auto px-4 sm:px-6 py-5 space-y-5">
+        {/* Fleet Workspace — top command card */}
+        <div className="rounded-2xl border border-primary/50 bg-secondary p-3 sm:p-4">
+          <div className="flex items-center justify-between gap-2 mb-2.5">
+            <p className="text-sm sm:text-base font-bold text-primary">🚢 Fleet Workspace</p>
+            <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border border-primary text-primary">Pro suite</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { label: "👥 Crew Management", desc: "Roster, CVs, joinings", tab: "crew" },
+              { label: "🛠️ Technical Management", desc: "Inspections & PMS", tab: "technical" },
+            ].map((t) => (
+              <button key={t.tab} onClick={() => navigate(`/manager/fleet-workspace?tab=${t.tab}`)}
+                className="text-left rounded-xl border border-primary/40 bg-background/40 px-3 py-2.5 hover:border-primary transition-colors min-h-[56px]">
+                <p className="text-xs sm:text-sm font-bold text-primary leading-tight">{t.label}</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">{t.desc} →</p>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Twin primary actions */}
         <div className="grid grid-cols-2 gap-3">
           {[
@@ -1032,12 +1052,6 @@ const ManagerDashboard = () => {
           ))}
         </div>
 
-        {/* Fleet Workspace — thin full-width bar */}
-        <button onClick={() => navigate("/management/inspections")}
-          className="w-full flex items-center justify-between gap-3 rounded-xl border border-primary/40 bg-secondary px-4 py-2.5 hover:border-primary transition-colors min-h-[44px]">
-          <span className="text-sm font-semibold text-primary truncate">🚢 Fleet Workspace <span className="font-normal text-muted-foreground text-xs">· inspections & ship management</span></span>
-          <span className="shrink-0 text-xs font-bold text-primary">Open →</span>
-        </button>
 
         {/* Tabs */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 bg-secondary rounded-xl p-1">

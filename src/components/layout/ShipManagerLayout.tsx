@@ -17,7 +17,7 @@ const NAV = [
   { to: "/manager-search", label: "Crew Search", icon: Search, match: (p: string) => p === "/manager-search" },
   { to: "/manager/interviews", label: "AI Interview Studio", icon: GraduationCap, match: (p: string) => p === "/manager/interviews" },
   { to: "/manager/dashboard?tab=crew&section=safety", label: "Safety & Compliance", icon: ShieldCheck, match: (p: string, q: URLSearchParams) => p === "/manager/dashboard" && q.get("section") === "safety" },
-  { to: "/management/inspections", label: "Fleet Workspace", icon: Ship, match: (p: string) => p.startsWith("/management/"), note: "" },
+  { to: "/manager/fleet-workspace", label: "Fleet Workspace", icon: Ship, match: (p: string) => p === "/manager/fleet-workspace" || p.startsWith("/management/"), note: "" },
   { to: "/manager/dashboard?tab=payments", label: "Account & Usage", icon: CreditCard, match: (p: string, q: URLSearchParams) => p === "/manager/dashboard" && q.get("tab") === "payments" },
 ];
 
