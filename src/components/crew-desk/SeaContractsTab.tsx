@@ -16,6 +16,9 @@ const blank = (r: Row, employer: string): SeaContract => ({
   start_date: r.joining_date, duration_months: 6, tolerance_months: 1, notice_days: 30, cba_reference: "", currency: "USD",
   basic_wage: 0, fixed_overtime: 0, overtime_hours: 103, extra_ot_rate: 0, leave_days_per_month: MLC_MIN_LEAVE_DAYS, leave_pay: 0, allowances: [], notes: "",
 });
+function F({ label, children }: { label: string; children: React.ReactNode }) {
+  return <label className="block"><span className="text-xs text-muted-foreground">{label}</span><div className="mt-1">{children}</div></label>;
+}
 const errMsg = (e: any) => { const k = Object.keys(ERR).find(k => String(e?.message || "").includes(k)); return k ? ERR[k] : "Could not save. Please retry."; };
 
 export default function SeaContractsTab({ rows }: { rows: Row[] | null }) {
@@ -79,7 +82,6 @@ export default function SeaContractsTab({ rows }: { rows: Row[] | null }) {
   };
 
   const inp = "w-full rounded-xl border border-border bg-background px-3 min-h-[44px] text-sm text-foreground disabled:opacity-60";
-  const F = ({ label, children }: { label: string; children: React.ReactNode }) => <label className="block"><span className="text-xs text-muted-foreground">{label}</span><div className="mt-1">{children}</div></label>;
 
   if (edit) return (
     <div className="space-y-4 pb-bottom-nav">
