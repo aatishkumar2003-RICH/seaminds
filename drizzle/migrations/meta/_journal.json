@@ -575,6 +575,13 @@
       "when": 1792827598639,
       "tag": "0081_sea_contracts",
       "breakpoints": true
+    },
+    {
+      "idx": 82,
+      "version": "7",
+      "when": 1792835195239,
+      "tag": "0082_fleet_reliever_and_manning",
+      "breakpoints": true
     }
   ]
 }
