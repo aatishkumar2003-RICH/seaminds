@@ -6012,6 +6012,7 @@ export type Database = {
       }
     }
     Functions: {
+      _crew_desk_app_owned: { Args: { _app: string }; Returns: boolean }
       _gen_public_ref: { Args: { p_prefix: string }; Returns: string }
       _start_incident_upsert: {
         Args: {
@@ -6249,6 +6250,11 @@ export type Database = {
       }
       credit_cv_ready: { Args: { p_uid: string }; Returns: boolean }
       credit_profile_ready: { Args: { p_uid: string }; Returns: boolean }
+      crew_desk_master_record: {
+        Args: { _application_id: string }
+        Returns: Json
+      }
+      crew_desk_roster: { Args: never; Returns: Json }
       crew_respond_fleet_link: {
         Args: { p_accept: boolean; p_link_id: string }
         Returns: Json

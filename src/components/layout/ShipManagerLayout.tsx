@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import ReleaseBadge from "@/components/ReleaseBadge";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, LogOut, LayoutDashboard, Users, Search, GraduationCap, Ship, ShieldCheck, CreditCard, Megaphone, LifeBuoy, BookOpen } from "lucide-react";
+import { Menu, X, LogOut, LayoutDashboard, Users, Search, GraduationCap, Ship, ShieldCheck, CreditCard, Megaphone, LifeBuoy, BookOpen, ClipboardList } from "lucide-react";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import LegalConsentGate from "@/components/legal/LegalConsentGate";
@@ -12,6 +12,7 @@ const NAV = [
   { to: "/manager/dashboard?tab=crew", label: "Today's Overview", icon: LayoutDashboard, match: (p: string, q: URLSearchParams) => p === "/manager/dashboard" && (!q.get("tab") || q.get("tab") === "crew") && q.get("section") !== "safety" },
   { to: "/manager/dashboard?tab=applicants", label: "Recruitment & Applicants", icon: Users, match: (p: string, q: URLSearchParams) => p === "/manager/dashboard" && q.get("tab") === "applicants" },
   { to: "/post-vacancy", label: "Post Vacancy", icon: Megaphone, match: (p: string) => p === "/post-vacancy" },
+  { to: "/manager/crew-desk", label: "Crew Management Tools", icon: ClipboardList, match: (p: string) => p === "/manager/crew-desk" },
   { to: "/marketplace", label: "Ship Marketplace", icon: Ship, match: (p: string) => p.startsWith("/marketplace") },
   { to: "/manager-search", label: "Crew Search", icon: Search, match: (p: string) => p === "/manager-search" },
   { to: "/manager/interviews", label: "AI Interview Studio", icon: GraduationCap, match: (p: string) => p === "/manager/interviews" },

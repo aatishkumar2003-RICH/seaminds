@@ -104,3 +104,9 @@ No slice starts without a written instruction naming it.
 - [ ] Admin screen to review escalated joining issues.
 - [ ] Phase 2: Principal CV Studio (SeaMinds / Synergy / Anglo-Eastern layouts).
 - [ ] Phase 3: Expiry radar and portage bill ledger.
+
+## Crew Management Tools
+- [x] Step 1: workspace, roster, Principal CV Studio (Master/Anglo-style/Synergy-style)
+- [ ] Step 2: SEA contracts with salary breakdown
+- [ ] Step 3: Portage bill, cash advances, allotments
+- [ ] Step 4: Admin quota/pricing controls
