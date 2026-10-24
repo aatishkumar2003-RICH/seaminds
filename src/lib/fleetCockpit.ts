@@ -25,7 +25,8 @@ export function mlcBand(daysOnboard: number): MlcBand {
 
 const addMoney = (m: Record<string, number>, cur: string, n: number) => { if (n) m[cur] = Math.round(((m[cur] || 0) + n) * 100) / 100; return m; };
 
-export function buildCockpit(roster: CockpitRoster[], contracts: CockpitContract[], today = new Date(), manning: Manning[] = []) {
+export type OperatingModel = "crewing_agency" | "ship_manager";
+export function buildCockpit(roster: CockpitRoster[], contracts: CockpitContract[], today = new Date(), manning: Manning[] = [], mode: OperatingModel = "ship_manager") {
   const live = new Map<string, CockpitContract>(), done = new Map<string, CockpitContract>();
   for (const c of contracts) {
     if (["issued", "signed"].includes(c.status)) live.set(c.application_id, c);
@@ -78,11 +79,13 @@ export function buildCockpit(roster: CockpitRoster[], contracts: CockpitContract
     vessels: [...vessels.entries()].map(([name, crew]) => {
       const ob = crew.filter(c => c.state === "onboard");
       const required = req.get(name) ?? null;
-      const missingCritical = ob.length ? CRITICAL_RANKS.filter(re => !ob.some(c => re.test(c.rank || ""))).length : 0;
+      // Crewing agencies supply single positions: safe manning only applies where they crew the whole ship.
+      const tracked = mode === "ship_manager" || required !== null;
+      const missingCritical = tracked && ob.length ? CRITICAL_RANKS.filter(re => !ob.some(c => re.test(c.rank || ""))).length : 0;
       return {
         name, imo: meta.get(name)?.imo_number || "", flag: meta.get(name)?.flag_state || "", type: meta.get(name)?.vessel_type || "",
         crew: crew.sort((a, b) => (a.daysToRelief ?? 9999) - (b.daysToRelief ?? 9999)),
-        onboard: ob.length, required, shortfall: required !== null ? Math.max(0, required - ob.length) : 0, missingCritical,
+        onboard: ob.length, required, tracked, shortfall: required !== null ? Math.max(0, required - ob.length) : 0, missingCritical,
         payroll: ob.reduce((m, c) => addMoney(m, c.currency, c.monthly), {} as Record<string, number>),
         alerts: crew.filter(c => (reliefDue(c) && !c.reliever) || c.band === "critical").length + (required !== null && required > ob.length ? 1 : 0),
       };

@@ -38,4 +38,18 @@ describe("fleet cockpit", () => {
     const v = buildCockpit([r("a")], [c("a")], today, [{ vessel_name: "MV A", required_complement: 14 }]).vessels[0];
     expect(v.shortfall).toBe(13);
   });
+  it("crewing agency: no safe-manning or senior-rank warnings on partially supplied vessels", () => {
+    const v = buildCockpit([r("a")], [c("a", { duration_months: 9 })], today, [], "crewing_agency").vessels[0];
+    expect(v.tracked).toBe(false);
+    expect(v.missingCritical).toBe(0);
+    expect(v.alerts).toBe(0);
+  });
+  it("crewing agency: safe manning applies once the vessel is marked fully crewed", () => {
+    const v = buildCockpit([r("a")], [c("a")], today, [{ vessel_name: "MV A", required_complement: 14 }], "crewing_agency").vessels[0];
+    expect(v.tracked).toBe(true);
+    expect(v.missingCritical).toBe(4);
+  });
+  it("full ship manager: senior-rank warnings on every vessel", () => {
+    expect(buildCockpit([r("a")], [c("a")], today, [], "ship_manager").vessels[0].missingCritical).toBe(4);
+  });
 });

@@ -8,6 +8,8 @@ import { missingForPrincipal, type MasterRecord } from "@/lib/principalCvPdf";
 import PrincipalTemplateStudio from "@/components/crew-desk/PrincipalTemplateStudio";
 import SeaContractsTab from "@/components/crew-desk/SeaContractsTab";
 import FleetCockpit from "@/components/crew-desk/FleetCockpit";
+import OperatingModelPicker from "@/components/crew-desk/OperatingModelPicker";
+import type { OperatingModel } from "@/lib/fleetCockpit";
 import { Button } from "@/components/ui/button";
 
 type RosterRow = { application_id: string; outcome: string; crew_name: string; rank: string; nationality: string; vessel: string; joining_date: string | null; crew_confirmed: boolean; crew_unique_id: string };
@@ -28,6 +30,13 @@ export default function CrewDesk() {
   const [selected, setSelected] = useState<string>("");
   const [record, setRecord] = useState<MasterRecord | null>(null);
   const [busy, setBusy] = useState(false);
+  const [model, setModel] = useState<OperatingModel | null | undefined>(undefined);
+  const [choosing, setChoosing] = useState(false);
+
+  useEffect(() => {
+    (supabase as any).from("crew_workspace_settings").select("operating_model").maybeSingle()
+      .then(({ data }: any) => setModel(data?.operating_model ?? null));
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -77,8 +86,16 @@ export default function CrewDesk() {
           <h1 className="text-lg font-bold text-primary">Crew Management Tools</h1>
           <p className="text-xs text-muted-foreground">Your private crew desk — free during launch.</p>
         </div>
+        {model && !choosing && (
+          <button onClick={() => setChoosing(true)} className="ml-auto text-xs rounded-xl border border-primary/40 text-primary px-3 min-h-[36px]">
+            {model === "ship_manager" ? "Full Ship Manager" : "Crewing Agency"} · Change
+          </button>
+        )}
       </div>
 
+      {model === undefined && <p className="text-sm text-muted-foreground">Loading…</p>}
+      {(model === null || choosing) && <OperatingModelPicker current={model ?? null} onCancel={model ? () => setChoosing(false) : undefined} onSaved={m => { setModel(m); setChoosing(false); }} />}
+      {model && !choosing && <>
       <div className="flex gap-2 overflow-x-auto pb-1">
         {TABS.map(t => (
           <button key={t.id} onClick={() => setParams({ tab: t.id })}
@@ -88,7 +105,7 @@ export default function CrewDesk() {
         ))}
       </div>
 
-      {tab === "fleet" && <FleetCockpit rows={rows} onOpen={(t, id) => { setSelected(id); setParams(t === "contracts" ? { tab: t, crew: id } : { tab: t }); }} />}
+      {tab === "fleet" && <FleetCockpit rows={rows} mode={model || "crewing_agency"} onOpen={(t, id) => { setSelected(id); setParams(t === "contracts" ? { tab: t, crew: id } : { tab: t }); }} />}
       {tab === "roster" && (
         <div className="space-y-2">
           {rows === null && <p className="text-sm text-muted-foreground">Loading roster…</p>}
@@ -133,6 +150,7 @@ export default function CrewDesk() {
           Portage bill, cash advances and allotments come next, built on your signed SEA contracts.
         </div>
       )}
+      </>}
     </div>
   );
 }
