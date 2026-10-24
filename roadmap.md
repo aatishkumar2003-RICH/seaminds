@@ -106,6 +106,7 @@ No slice starts without a written instruction naming it.
 - [ ] Phase 3: Expiry radar and portage bill ledger.
 
 ## Crew Management Tools
+- [ ] Custom company templates: private Word/Excel upload, reviewed field mapping, same-format CV export, privacy and end-to-end checks.
 - [x] Step 1: workspace, roster, Principal CV Studio (Master/Anglo-style/Synergy-style)
 - [ ] Step 2: SEA contracts with salary breakdown
 - [ ] Step 3: Portage bill, cash advances, allotments
