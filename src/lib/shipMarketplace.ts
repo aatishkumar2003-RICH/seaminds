@@ -31,3 +31,8 @@ export async function signPhotos(paths: string[]): Promise<Record<string, string
   (data ?? []).forEach((d) => { if (d.path && d.signedUrl) out[d.path] = d.signedUrl; });
   return out;
 }
+
+/** Listing is locked behind SeaMinds email approval (marketplace_sellers, admin-granted). */
+export const marketplaceApprovalMailto = (company?: string | null, email?: string | null) =>
+  `mailto:admin@seaminds.life?subject=${encodeURIComponent("Ship Marketplace Listing Approval Request")}&body=${encodeURIComponent(
+    `Hello SeaMinds team,\n\nPlease approve our account to list vessels on the Ship Marketplace.\n\nCompany: ${company || ""}\nAccount email: ${email || ""}\nVessel(s) to list (type / IMO):\nBasis of selling authority (owner / mandate / broker):\n\nWe can provide the mandate or ownership documents on request.\n`)}`;
