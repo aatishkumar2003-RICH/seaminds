@@ -3880,6 +3880,24 @@ export type Database = {
         }
         Relationships: []
       }
+      marketplace_sellers: {
+        Row: {
+          approved_at: string
+          approved_by: string | null
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string
+          approved_by?: string | null
+          user_id: string
+        }
+        Update: {
+          approved_at?: string
+          approved_by?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       mobile_verifications: {
         Row: {
           created_at: string
@@ -6588,6 +6606,7 @@ export type Database = {
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_approved_manager: { Args: { _uid: string }; Returns: boolean }
       is_marketing_member: { Args: never; Returns: boolean }
+      is_marketplace_seller: { Args: { _uid: string }; Returns: boolean }
       issue_paper: { Args: { p_assessment_id: string }; Returns: Json }
       lineup_party_role: { Args: { p_application_id: string }; Returns: string }
       log_marketing_action: {

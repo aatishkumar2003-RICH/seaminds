@@ -589,6 +589,13 @@
       "when": 1792841523093,
       "tag": "0083_crew_workspace_operating_model",
       "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "7",
+      "when": 1792845380175,
+      "tag": "0084_ship_marketplace_email_approval_lock",
+      "breakpoints": true
     }
   ]
 }
