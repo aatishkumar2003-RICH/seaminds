@@ -2,12 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { Ship, Users, Plane, AlarmClock, ShieldAlert, Wallet, X, FileText, ScrollText, ChevronDown, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { buildCockpit, formatPayroll, type CockpitRoster, type CockpitRow, type Manning } from "@/lib/fleetCockpit";
+import { buildCockpit, formatPayroll, type CockpitRoster, type CockpitRow, type Manning, type OperatingModel } from "@/lib/fleetCockpit";
 
 const money = (n: number, cur = "USD") => `${cur} ${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 const BAND = { ok: "text-emerald-400 border-emerald-400/40", plan: "text-amber-400 border-amber-400/40", critical: "text-destructive border-destructive/50" };
 
-export default function FleetCockpit({ rows, onOpen }: { rows: CockpitRoster[] | null; onOpen: (tab: "cv" | "contracts", id: string) => void }) {
+export default function FleetCockpit({ rows, onOpen, mode = "ship_manager" }: { rows: CockpitRoster[] | null; onOpen: (tab: "cv" | "contracts", id: string) => void; mode?: OperatingModel }) {
   const [contracts, setContracts] = useState<any[] | null>(null);
   const [manning, setManning] = useState<Manning[]>([]);
   const [filter, setFilter] = useState<"all" | "relief" | "mlc">("all");
@@ -21,7 +21,7 @@ export default function FleetCockpit({ rows, onOpen }: { rows: CockpitRoster[] |
   };
   useEffect(load, []);
 
-  const data = useMemo(() => buildCockpit(rows || [], contracts || [], new Date(), manning), [rows, contracts, manning]);
+  const data = useMemo(() => buildCockpit(rows || [], contracts || [], new Date(), manning, mode), [rows, contracts, manning, mode]);
   if (!rows || !contracts) return <p className="text-sm text-muted-foreground">Loading fleet overview…</p>;
   const sel = selId ? data.rows.find(r => r.application_id === selId) || null : null;
   const setSel = (r: CockpitRow | null) => setSelId(r?.application_id || null);
@@ -87,7 +87,7 @@ export default function FleetCockpit({ rows, onOpen }: { rows: CockpitRoster[] |
               <span className="font-bold text-primary">{v.name}</span>
               <span className="text-xs text-muted-foreground">{[v.imo && `IMO ${v.imo}`, v.type, v.flag].filter(Boolean).join(" • ")}</span>
               <span className="ml-auto text-xs text-muted-foreground">{v.onboard}{v.required ? ` / ${v.required}` : ""} onboard • {formatPayroll(v.payroll)}/mo</span>
-              <span role="button" tabIndex={0} onClick={e => { e.stopPropagation(); setRequired(v.name, v.required); }} className={`text-[11px] rounded-full border px-2 ${v.shortfall ? "border-destructive/50 text-destructive" : "border-border text-muted-foreground"}`}>{v.required === null ? "Set safe manning" : v.shortfall ? `${v.shortfall} below safe manning` : "Safe manning met"}</span>
+              <span role="button" tabIndex={0} onClick={e => { e.stopPropagation(); setRequired(v.name, v.required); }} className={`text-[11px] rounded-full border px-2 ${v.shortfall ? "border-destructive/50 text-destructive" : "border-border text-muted-foreground"}`}>{v.required === null ? (v.tracked ? "Set safe manning" : "We crew the full ship? Track safe manning") : v.shortfall ? `${v.shortfall} below safe manning` : "Safe manning met"}</span>
               {v.missingCritical > 0 && <span className="text-[11px] rounded-full border border-destructive/50 text-destructive px-2">{v.missingCritical} senior rank{v.missingCritical > 1 ? "s" : ""} missing</span>}
               {v.alerts > 0 && <span className="text-[11px] rounded-full border border-amber-400/50 text-amber-400 px-2">{v.alerts} alert{v.alerts > 1 ? "s" : ""}</span>}
             </button>
