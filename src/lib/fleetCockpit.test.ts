@@ -39,7 +39,7 @@ describe("fleet cockpit", () => {
     expect(v.shortfall).toBe(13);
   });
   it("crewing agency: no safe-manning or senior-rank warnings on partially supplied vessels", () => {
-    const v = buildCockpit([r("a")], [c("a")], today, [], "crewing_agency").vessels[0];
+    const v = buildCockpit([r("a")], [c("a", { duration_months: 9 })], today, [], "crewing_agency").vessels[0];
     expect(v.tracked).toBe(false);
     expect(v.missingCritical).toBe(0);
     expect(v.alerts).toBe(0);
