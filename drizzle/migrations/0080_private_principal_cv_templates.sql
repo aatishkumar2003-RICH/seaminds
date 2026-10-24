@@ -1,0 +1,7 @@
+CREATE TABLE public.principal_cv_templates (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), manager_user_id uuid NOT NULL DEFAULT auth.uid(), company_name text NOT NULL, template_name text NOT NULL, file_path text NOT NULL, file_type text NOT NULL CHECK (file_type IN ('docx','xlsx')), mappings jsonb NOT NULL DEFAULT '[]'::jsonb, photo_path text, created_at timestamptz NOT NULL DEFAULT now(), CONSTRAINT template_owner_path CHECK (split_part(file_path,'/',1) = manager_user_id::text), CONSTRAINT template_names CHECK (length(trim(company_name)) BETWEEN 1 AND 120 AND length(trim(template_name)) BETWEEN 1 AND 120));
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.principal_cv_templates TO authenticated;
+GRANT ALL ON public.principal_cv_templates TO service_role;
+ALTER TABLE public.principal_cv_templates ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Approved manager owns templates" ON public.principal_cv_templates FOR ALL TO authenticated USING (manager_user_id = auth.uid() AND public.is_approved_manager(auth.uid())) WITH CHECK (manager_user_id = auth.uid() AND public.is_approved_manager(auth.uid()));
+CREATE POLICY "Private principal template objects" ON storage.objects FOR ALL TO authenticated USING (bucket_id = 'principal-templates' AND (storage.foldername(name))[1] = auth.uid()::text AND public.is_approved_manager(auth.uid())) WITH CHECK (bucket_id = 'principal-templates' AND (storage.foldername(name))[1] = auth.uid()::text AND public.is_approved_manager(auth.uid()) AND lower(storage.extension(name)) IN ('docx','xlsx'));
+NOTIFY pgrst, 'reload schema';

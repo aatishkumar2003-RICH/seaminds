@@ -106,6 +106,8 @@ No slice starts without a written instruction naming it.
 - [ ] Phase 3: Expiry radar and portage bill ledger.
 
 ## Crew Management Tools
+- [x] Custom company templates: private Word/Excel upload, reviewed field mapping, same-format CV generation, declaration/file-safety checks; 14 tests passed; requesting-account upload/save/reload/delete and phone layout verified.
+- [ ] Confirmed-crew company CV download and photo/layout review using an authorized blank principal form: requesting manager has no confirmed crew; needs a confirmed joining and blank form with photo slot. Automated Word/Excel generation is verified, not an actual candidate submission.
 - [x] Step 1: workspace, roster, Principal CV Studio (Master/Anglo-style/Synergy-style)
 - [ ] Step 2: SEA contracts with salary breakdown
 - [ ] Step 3: Portage bill, cash advances, allotments
