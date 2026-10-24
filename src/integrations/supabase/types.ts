@@ -4846,6 +4846,111 @@ export type Database = {
         }
         Relationships: []
       }
+      sea_contracts: {
+        Row: {
+          allowances: Json
+          application_id: string
+          basic_wage: number
+          cba_reference: string
+          created_at: string
+          crew_id: string | null
+          currency: string
+          duration_months: number
+          employer_address: string
+          employer_name: string
+          extra_ot_rate: number
+          fixed_overtime: number
+          flag_state: string
+          id: string
+          imo_number: string
+          issued_at: string | null
+          leave_days_per_month: number
+          leave_pay: number
+          manager_id: string
+          notes: string
+          notice_days: number
+          overtime_hours: number
+          port_of_engagement: string
+          rank: string
+          repatriation_port: string
+          signed_at: string | null
+          start_date: string | null
+          status: string
+          tolerance_months: number
+          updated_at: string
+          vessel_name: string
+          vessel_type: string
+        }
+        Insert: {
+          allowances?: Json
+          application_id: string
+          basic_wage?: number
+          cba_reference?: string
+          created_at?: string
+          crew_id?: string | null
+          currency?: string
+          duration_months?: number
+          employer_address?: string
+          employer_name?: string
+          extra_ot_rate?: number
+          fixed_overtime?: number
+          flag_state?: string
+          id?: string
+          imo_number?: string
+          issued_at?: string | null
+          leave_days_per_month?: number
+          leave_pay?: number
+          manager_id?: string
+          notes?: string
+          notice_days?: number
+          overtime_hours?: number
+          port_of_engagement?: string
+          rank?: string
+          repatriation_port?: string
+          signed_at?: string | null
+          start_date?: string | null
+          status?: string
+          tolerance_months?: number
+          updated_at?: string
+          vessel_name?: string
+          vessel_type?: string
+        }
+        Update: {
+          allowances?: Json
+          application_id?: string
+          basic_wage?: number
+          cba_reference?: string
+          created_at?: string
+          crew_id?: string | null
+          currency?: string
+          duration_months?: number
+          employer_address?: string
+          employer_name?: string
+          extra_ot_rate?: number
+          fixed_overtime?: number
+          flag_state?: string
+          id?: string
+          imo_number?: string
+          issued_at?: string | null
+          leave_days_per_month?: number
+          leave_pay?: number
+          manager_id?: string
+          notes?: string
+          notice_days?: number
+          overtime_hours?: number
+          port_of_engagement?: string
+          rank?: string
+          repatriation_port?: string
+          signed_at?: string | null
+          start_date?: string | null
+          status?: string
+          tolerance_months?: number
+          updated_at?: string
+          vessel_name?: string
+          vessel_type?: string
+        }
+        Relationships: []
+      }
       ship_listing_reports: {
         Row: {
           created_at: string
