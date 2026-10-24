@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { buildResumePdf } from "@/lib/resumePdf";
 import { missingForPrincipal, type MasterRecord } from "@/lib/principalCvPdf";
 import PrincipalTemplateStudio from "@/components/crew-desk/PrincipalTemplateStudio";
+import SeaContractsTab from "@/components/crew-desk/SeaContractsTab";
 import { Button } from "@/components/ui/button";
 
 type RosterRow = { application_id: string; outcome: string; crew_name: string; rank: string; nationality: string; vessel: string; joining_date: string | null; crew_confirmed: boolean; crew_unique_id: string };
@@ -13,7 +14,7 @@ type RosterRow = { application_id: string; outcome: string; crew_name: string; r
 const TABS = [
   { id: "roster", label: "Roster", icon: Users },
   { id: "cv", label: "Principal CV Studio", icon: FileText },
-  { id: "contracts", label: "SEA Contracts", icon: ScrollText, soon: true },
+  { id: "contracts", label: "SEA Contracts", icon: ScrollText },
   { id: "portage", label: "Portage Bill", icon: Wallet, soon: true },
 ];
 const STATUS: Record<string, string> = { shortlisted: "Shortlisted", offered: "Offer sent", placed: "Joining / Onboard" };
@@ -123,9 +124,10 @@ export default function CrewDesk() {
         </div>
       )}
 
-      {(tab === "contracts" || tab === "portage") && (
+      {tab === "contracts" && <SeaContractsTab rows={rows} />}
+      {tab === "portage" && (
         <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
-          {tab === "contracts" ? "SEA contract drafting with salary breakdown is the next step." : "Portage bill, cash advances and allotments come after SEA contracts."}
+          Portage bill, cash advances and allotments come next, built on your signed SEA contracts.
         </div>
       )}
     </div>
