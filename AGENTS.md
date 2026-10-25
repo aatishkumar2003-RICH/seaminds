@@ -33,3 +33,4 @@
 
 - WhatsApp marketing leads live only in admin-only `whatsapp_crew_leads`; sends go through `whatsapp-leads` (approved templates only, one per call, client-paced, opt-out never resent). Why: protect number quality and proprietary contact lists.
 - Portage bill rows live in `portage_entries` (one per contract per month, owner = contract manager); trigger `portage_entry_guard` requires a signed/completed contract, copies its currency, enforces draft→finalized→paid and locks paid months. Calculations/PDFs in `src/lib/portageBill.ts`. Why: wages derive only from signed SEA terms and settled months cannot be altered.
+- Crew appraisals live in `crew_appraisals` (one per signed contract, owner = contract manager); trigger `crew_appraisal_guard` computes overall, requires appraiser + training for rehire_with_training, and locks after finalizing. Logic/PDF in `src/lib/crewAppraisal.ts`. Why: re-employment verdicts must be tamper-proof.
