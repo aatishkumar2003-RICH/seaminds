@@ -4201,6 +4201,7 @@ export type Database = {
           other_deduction: number
           paid_at: string | null
           prev_balance: number
+          sign_off_date: string | null
           status: string
           updated_at: string
           year_month: string
@@ -4227,6 +4228,7 @@ export type Database = {
           other_deduction?: number
           paid_at?: string | null
           prev_balance?: number
+          sign_off_date?: string | null
           status?: string
           updated_at?: string
           year_month: string
@@ -4253,6 +4255,7 @@ export type Database = {
           other_deduction?: number
           paid_at?: string | null
           prev_balance?: number
+          sign_off_date?: string | null
           status?: string
           updated_at?: string
           year_month?: string
@@ -6671,6 +6674,7 @@ export type Database = {
       }
       credit_cv_ready: { Args: { p_uid: string }; Returns: boolean }
       credit_profile_ready: { Args: { p_uid: string }; Returns: boolean }
+      crew_desk_certificate_radar: { Args: never; Returns: Json }
       crew_desk_master_record: {
         Args: { _application_id: string }
         Returns: Json
