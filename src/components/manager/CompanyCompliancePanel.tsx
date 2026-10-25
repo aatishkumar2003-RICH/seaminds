@@ -78,8 +78,33 @@ export default function CompanyCompliancePanel() {
     : status === "requested" ? `Action required · ${c?.requested_items.length || 0} item(s) requested`
     : status === "submitted" ? "Verification under review"
     : "Verify your company · 4 quick items";
-  const input = "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground";
+  const input = "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none";
   const flags = c?.ai_result?.flags || [];
+  const hasPrev = !!c?.document_paths?.length;
+  const done = [license.trim() && website.trim(), person.name?.trim() && person.email?.trim() && person.phone?.trim(), bizFile, crewFile].filter(Boolean).length;
+  const Field = ({ label, hint, req = true, children }: { label: string; hint: string; req?: boolean; children: React.ReactNode }) => (
+    <label className="block space-y-1">
+      <span className="text-xs font-semibold text-foreground">{label}{req ? <span className="text-primary"> *</span> : <span className="font-normal text-muted-foreground"> (optional)</span>}</span>
+      {children}
+      <span className="block text-[11px] leading-snug text-muted-foreground">{hint}</span>
+    </label>
+  );
+  const Drop = ({ title, hint, file, set }: { title: string; hint: string; file: File | null; set: (f: File | null) => void }) => (
+    <label className={`flex cursor-pointer items-center gap-3 rounded-xl border border-dashed px-3 py-3 transition ${file ? "border-primary bg-primary/10" : "border-primary/40 hover:bg-primary/5"}`}>
+      <span className="text-xl">{file ? "✅" : "📄"}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-xs font-semibold text-foreground">{title} <span className="text-primary">*</span></span>
+        <span className="block truncate text-[11px] text-muted-foreground">{file ? `${file.name} · ${(file.size / 1048576).toFixed(1)} MB` : hint}</span>
+      </span>
+      <span className="shrink-0 text-[11px] font-bold text-primary">{file ? "Change" : "Upload"}</span>
+      <input type="file" accept="application/pdf,image/*" className="sr-only" onChange={(e) => set(e.target.files?.[0] || null)} />
+    </label>
+  );
+  const Step = ({ n, t }: { n: number; t: string }) => (
+    <p className="mt-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-primary">
+      <span className="flex h-5 w-5 items-center justify-center rounded-full border border-primary/50 text-[10px]">{n}</span>{t}
+    </p>
+  );
 
   return (
     <section id="compliance" className={`mx-4 sm:mx-6 mt-3 rounded-xl border bg-card ${alarm ? "border-destructive/60" : "border-primary/30"}`}>
@@ -94,33 +119,54 @@ export default function CompanyCompliancePanel() {
         <span className="shrink-0 text-[11px] font-semibold text-primary">{open ? "Hide ▴" : "Open ▾"}</span>
       </button>
       {open && (
-        <div className="border-t border-border px-4 pb-4 pt-2">
-          <p className="text-xs text-muted-foreground">Upload once — documents are checked automatically, usually within a minute. You can keep using SeaMinds meanwhile.</p>
+        <div className="border-t border-border px-4 pb-4 pt-3">
+          <div className="rounded-lg border border-primary/20 bg-background/50 p-3">
+            <p className="text-xs font-semibold text-foreground">What you need ready</p>
+            <ul className="mt-1 space-y-0.5 text-[11px] text-muted-foreground">
+              <li>• Your crewing / recruitment licence number</li>
+              <li>• Your official company website</li>
+              <li>• Details of the person responsible for the company</li>
+              <li>• Two documents (PDF or clear photo, max 10 MB each)</li>
+            </ul>
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full bg-primary transition-all" style={{ width: `${done * 25}%` }} /></div>
+            <p className="mt-1 text-[10px] text-muted-foreground">{done} of 4 sections complete · checked automatically, you can keep working meanwhile</p>
+          </div>
           {c?.admin_note && <p className="mt-2 text-xs text-primary">Note from SeaMinds: {c.admin_note}</p>}
           {status === "flagged" && flags.length > 0 && (
-            <ul className="mt-2 list-disc pl-5 text-xs text-destructive">{flags.map((f) => <li key={f}>{f}</li>)}</ul>
+            <div className="mt-2 rounded-lg border border-destructive/40 bg-destructive/10 p-2">
+              <p className="text-xs font-semibold text-destructive">Please fix and resubmit:</p>
+              <ul className="list-disc pl-5 text-[11px] text-destructive">{flags.map((f) => <li key={f}>{f}</li>)}</ul>
+            </div>
           )}
-          <p className="mt-3 text-[11px] font-bold uppercase tracking-wide text-primary">1 · Company</p>
-          <div className="mt-1 grid gap-2 sm:grid-cols-2">
-            <input className={input} placeholder="Crewing licence no. (RPSL / SIUPPAK)" value={license} onChange={(e) => setLicense(e.target.value)} maxLength={200} />
-            <input className={input} placeholder="Official company website" value={website} onChange={(e) => setWebsite(e.target.value)} maxLength={300} />
+
+          <Step n={1} t="Company details" />
+          <div className="mt-2 grid gap-3 sm:grid-cols-2">
+            <Field label="Crewing licence number" hint="Exactly as printed on your licence, e.g. RPSL / SIUPPAK / MLC recruitment licence no.">
+              <input className={input} placeholder="e.g. SIUPPAK 123.4/AL.003/2024" value={license} onChange={(e) => setLicense(e.target.value)} maxLength={200} />
+            </Field>
+            <Field label="Company website" hint="Your official website, e.g. www.yourcompany.com">
+              <input className={input} type="url" inputMode="url" placeholder="https://www.yourcompany.com" value={website} onChange={(e) => setWebsite(e.target.value)} maxLength={300} />
+            </Field>
           </div>
-          <p className="mt-3 text-[11px] font-bold uppercase tracking-wide text-primary">2 · Responsible person</p>
-          <div className="mt-1 grid gap-2 sm:grid-cols-2">
-            {(["name", "title", "email", "phone"] as const).map((k) => (
-              <input key={k} className={input} maxLength={k === "email" ? 200 : 150} type={k === "email" ? "email" : "text"}
-                placeholder={{ name: "Full name", title: "Designation (optional)", email: "Email", phone: "Phone / WhatsApp" }[k]}
-                value={person[k] || ""} onChange={(e) => setPerson({ ...person, [k]: e.target.value })} />
-            ))}
+
+          <Step n={2} t="Responsible person" />
+          <p className="mt-1 text-[11px] text-muted-foreground">Director or manager accountable for crewing at your company.</p>
+          <div className="mt-2 grid gap-3 sm:grid-cols-2">
+            <Field label="Full name" hint="As on their ID"><input className={input} placeholder="e.g. Budi Santoso" maxLength={150} value={person.name || ""} onChange={(e) => setPerson({ ...person, name: e.target.value })} /></Field>
+            <Field label="Designation" req={false} hint="e.g. Director, Crewing Manager"><input className={input} placeholder="e.g. Crewing Manager" maxLength={150} value={person.title || ""} onChange={(e) => setPerson({ ...person, title: e.target.value })} /></Field>
+            <Field label="Work email" hint="Company email preferred"><input className={input} type="email" placeholder="name@yourcompany.com" maxLength={200} value={person.email || ""} onChange={(e) => setPerson({ ...person, email: e.target.value })} /></Field>
+            <Field label="Phone / WhatsApp" hint="With country code, e.g. +62 812 3456 7890"><input className={input} type="tel" placeholder="+62 812 3456 7890" maxLength={50} value={person.phone || ""} onChange={(e) => setPerson({ ...person, phone: e.target.value })} /></Field>
           </div>
-          <p className="mt-3 text-[11px] font-bold uppercase tracking-wide text-primary">3 · Documents (PDF or photo, max 10 MB)</p>
-          <label className="mt-1 block text-xs text-foreground">Business licence / company registration
-            <input type="file" accept="application/pdf,image/*" className="mt-1 block text-xs text-muted-foreground" onChange={(e) => setBizFile(e.target.files?.[0] || null)} />
-          </label>
-          <label className="mt-2 block text-xs text-foreground">Crewing licence (RPSL / SIUPPAK / recruitment licence)
-            <input type="file" accept="application/pdf,image/*" className="mt-1 block text-xs text-muted-foreground" onChange={(e) => setCrewFile(e.target.files?.[0] || null)} />
-          </label>
-          <button disabled={busy} onClick={submit} className="mt-3 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground disabled:opacity-60">
+
+          <Step n={3} t="Documents" />
+          {hasPrev && <p className="mt-1 text-[11px] text-muted-foreground">Documents already received. Upload fresh copies to resubmit.</p>}
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            <Drop title="Business licence" hint="Company registration / NIB / trade licence" file={bizFile} set={setBizFile} />
+            <Drop title="Crewing licence" hint="RPSL / SIUPPAK / recruitment licence" file={crewFile} set={setCrewFile} />
+          </div>
+          <p className="mt-1 text-[10px] text-muted-foreground">Full page, all corners visible, not blurred. Company name must match your profile.</p>
+
+          <button disabled={busy} onClick={submit} className="mt-4 w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-60 sm:w-auto">
             {busy ? "Submitting…" : "Submit for verification"}
           </button>
         </div>
