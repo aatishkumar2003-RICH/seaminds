@@ -4095,6 +4095,95 @@ export type Database = {
           },
         ]
       }
+      portage_entries: {
+        Row: {
+          allotment: number
+          bond_store: number
+          bonus: number
+          cash_advance: number
+          communication: number
+          contract_id: string
+          created_at: string
+          currency: string
+          days_in_month: number
+          days_served: number
+          deductions: number
+          extra_ot_hours: number
+          finalized_at: string | null
+          gross: number
+          id: string
+          manager_id: string
+          net_payable: number
+          notes: string
+          other_deduction: number
+          paid_at: string | null
+          prev_balance: number
+          status: string
+          updated_at: string
+          year_month: string
+        }
+        Insert: {
+          allotment?: number
+          bond_store?: number
+          bonus?: number
+          cash_advance?: number
+          communication?: number
+          contract_id: string
+          created_at?: string
+          currency?: string
+          days_in_month?: number
+          days_served?: number
+          deductions?: number
+          extra_ot_hours?: number
+          finalized_at?: string | null
+          gross?: number
+          id?: string
+          manager_id: string
+          net_payable?: number
+          notes?: string
+          other_deduction?: number
+          paid_at?: string | null
+          prev_balance?: number
+          status?: string
+          updated_at?: string
+          year_month: string
+        }
+        Update: {
+          allotment?: number
+          bond_store?: number
+          bonus?: number
+          cash_advance?: number
+          communication?: number
+          contract_id?: string
+          created_at?: string
+          currency?: string
+          days_in_month?: number
+          days_served?: number
+          deductions?: number
+          extra_ot_hours?: number
+          finalized_at?: string | null
+          gross?: number
+          id?: string
+          manager_id?: string
+          net_payable?: number
+          notes?: string
+          other_deduction?: number
+          paid_at?: string | null
+          prev_balance?: number
+          status?: string
+          updated_at?: string
+          year_month?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portage_entries_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "sea_contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_engagement: {
         Row: {
           action: string
