@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { ChevronLeft, FileDown, Lock, Users, FileText, ScrollText, Wallet, LayoutDashboard } from "lucide-react";
+import { ChevronLeft, FileDown, Lock, Users, FileText, ScrollText, Wallet, LayoutDashboard, Star } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { buildResumePdf } from "@/lib/resumePdf";
@@ -9,6 +9,7 @@ import PrincipalTemplateStudio from "@/components/crew-desk/PrincipalTemplateStu
 import SeaContractsTab from "@/components/crew-desk/SeaContractsTab";
 import FleetCockpit from "@/components/crew-desk/FleetCockpit";
 import PortageBillTab from "@/components/crew-desk/PortageBillTab";
+import AppraisalsTab from "@/components/crew-desk/AppraisalsTab";
 import OperatingModelPicker from "@/components/crew-desk/OperatingModelPicker";
 import type { OperatingModel } from "@/lib/fleetCockpit";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ const TABS = [
   { id: "cv", label: "Principal CV Studio", icon: FileText },
   { id: "contracts", label: "SEA Contracts", icon: ScrollText },
   { id: "portage", label: "Portage Bill", icon: Wallet, soon: false },
+  { id: "appraisals", label: "Appraisals", icon: Star },
 ];
 const STATUS: Record<string, string> = { shortlisted: "Shortlisted", offered: "Offer sent", placed: "Joining / Onboard" };
 
@@ -147,6 +149,7 @@ export default function CrewDesk() {
 
       {tab === "contracts" && <SeaContractsTab rows={rows} focusId={params.get("crew") || undefined} />}
       {tab === "portage" && <PortageBillTab rows={rows} />}
+      {tab === "appraisals" && <AppraisalsTab rows={rows} />}
       </>}
     </div>
   );

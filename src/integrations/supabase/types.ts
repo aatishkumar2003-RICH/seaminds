@@ -1513,6 +1513,89 @@ export type Database = {
         }
         Relationships: []
       }
+      crew_appraisals: {
+        Row: {
+          appraiser_name: string
+          appraiser_role: string
+          contract_id: string
+          created_at: string
+          emergency: number
+          english: number
+          finalized_at: string | null
+          id: string
+          leadership: number
+          manager_id: string
+          overall: number
+          period_from: string | null
+          period_to: string | null
+          promotion_verdict: string
+          rehire_verdict: string
+          remarks: string
+          safety: number
+          status: string
+          teamwork: number
+          technical: number
+          training_needs: string[]
+          updated_at: string
+        }
+        Insert: {
+          appraiser_name?: string
+          appraiser_role?: string
+          contract_id: string
+          created_at?: string
+          emergency?: number
+          english?: number
+          finalized_at?: string | null
+          id?: string
+          leadership?: number
+          manager_id: string
+          overall?: number
+          period_from?: string | null
+          period_to?: string | null
+          promotion_verdict?: string
+          rehire_verdict?: string
+          remarks?: string
+          safety?: number
+          status?: string
+          teamwork?: number
+          technical?: number
+          training_needs?: string[]
+          updated_at?: string
+        }
+        Update: {
+          appraiser_name?: string
+          appraiser_role?: string
+          contract_id?: string
+          created_at?: string
+          emergency?: number
+          english?: number
+          finalized_at?: string | null
+          id?: string
+          leadership?: number
+          manager_id?: string
+          overall?: number
+          period_from?: string | null
+          period_to?: string | null
+          promotion_verdict?: string
+          rehire_verdict?: string
+          remarks?: string
+          safety?: number
+          status?: string
+          teamwork?: number
+          technical?: number
+          training_needs?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crew_appraisals_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: true
+            referencedRelation: "sea_contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crew_availability: {
         Row: {
           about_me: string | null

@@ -8,7 +8,7 @@ const CREW = [
   { title: "Principal CV Studio", desc: "Export a crew CV in SeaMinds, Anglo-Eastern-style or Synergy-style layout.", to: "/manager/crew-desk", live: true },
   { title: "Joining Issues (Tickets)", desc: "Private two-way threads with crew about a joining.", to: "/manager/dashboard?tab=applicants", live: true },
   { title: "Contracts (SEA) & Portage Bill", desc: "Signed contracts, monthly wages, advances, allotments and payslips.", to: "/manager/crew-desk?tab=portage", live: true },
-  { title: "Appraisals & Training", desc: "Post-voyage feedback and training follow-up — in preparation.", live: false },
+  { title: "Appraisals & Training", desc: "Post-voyage appraisals, re-employment verdicts and training needs.", to: "/manager/crew-desk?tab=appraisals", live: true },
 ];
 
 const TECH = [
