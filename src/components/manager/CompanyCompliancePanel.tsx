@@ -14,6 +14,7 @@ export default function CompanyCompliancePanel() {
   const [note, setNote] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState<boolean | null>(null);
 
   const load = async () => {
     if (!user) return;
@@ -48,9 +49,25 @@ export default function CompanyCompliancePanel() {
   };
 
   const input = "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground";
+  const alarm = c.status === "requested";
+  const isOpen = open ?? false;
   return (
-    <section id="compliance" className="mx-4 sm:mx-6 mt-4 rounded-xl border border-primary/40 bg-card p-4">
-      <p className="text-sm font-bold text-primary">🛡️ Company verification</p>
+    <section id="compliance" className={`mx-4 sm:mx-6 mt-3 rounded-xl border bg-card ${alarm ? "border-destructive/60" : "border-primary/30"}`}>
+      <button type="button" onClick={() => setOpen(!isOpen)} aria-expanded={isOpen}
+        className="flex w-full items-center gap-2 px-3 py-2.5 text-left">
+        {alarm ? (
+          <span className="relative flex h-3 w-3 shrink-0">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75" />
+            <span className="relative inline-flex h-3 w-3 rounded-full bg-destructive" />
+          </span>
+        ) : <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-primary/70" />}
+        <span className="min-w-0 flex-1 truncate text-xs font-bold text-primary">
+          🛡️ {alarm ? `Action required · ${c.requested_items.length} item(s) requested` : "Verification under review"}
+          {alarm && c.admin_note && <span className="font-normal text-muted-foreground"> · {c.admin_note}</span>}
+        </span>
+        <span className="shrink-0 text-[11px] font-semibold text-primary">{isOpen ? "Hide ▴" : alarm ? "Open ▾" : "View ▾"}</span>
+      </button>
+      {isOpen && <div className="border-t border-border px-4 pb-4 pt-2">
       {c.status === "submitted" ? (
         <p className="mt-1 text-xs text-muted-foreground">Thank you — your documents are under review. You can add more below if needed.</p>
       ) : (
@@ -68,6 +85,7 @@ export default function CompanyCompliancePanel() {
       <button disabled={busy} onClick={submit} className="mt-3 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground disabled:opacity-60">
         {busy ? "Submitting…" : "Submit for verification"}
       </button>
+      </div>}
     </section>
   );
 }
