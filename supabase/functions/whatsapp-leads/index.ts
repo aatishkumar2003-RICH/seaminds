@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
         method: "POST",
         headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: "google/gemini-3.8-flash",
           messages: [{ role: "user", content: [
             { type: "text", text: "Extract every person and phone number visible in this image (WhatsApp group list, contact list, crew list or flyer). Return ONLY a JSON array of objects: {\"name\": string|null, \"phone\": string, \"rank\": string|null}. Copy phone numbers exactly as shown. No markdown." },
             { type: "image_url", image_url: { url: `data:${mime};base64,${img}` } },
