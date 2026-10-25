@@ -65,6 +65,11 @@ export default function PortageBillTab({ rows }: { rows: Row[] | null }) {
   useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [contracts, ym]);
 
   const calc = (c: PortageContract) => { const e = entries[c.id]; return e ? { ...e, ...computePortage(c, e.days_served, e.days_in_month, e) } : null; };
+  const setSignOff = (c: PortageContract, v: string) => {
+    const [mS, mE] = [`${ym}-01`, `${ym}-${String(daysInMonth(ym)).padStart(2, "0")}`];
+    if (v && (v < mS || v > mE || (c.start_date && v < c.start_date))) { toast.error("Sign-off date must fall inside this month and after sign-on."); return; }
+    setEntries(s => ({ ...s, [c.id]: { ...s[c.id], sign_off_date: v || null, days_served: daysServed(ym, c.start_date, c.duration_months, v || null) } }));
+  };
   const setField = (id: string, k: keyof PortageEntry, v: string) => setEntries(s => ({ ...s, [id]: { ...s[id], [k]: Math.max(0, Number(v) || 0) } }));
 
   const save = async (c: PortageContract, status?: string) => {
