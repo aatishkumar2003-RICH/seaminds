@@ -32,3 +32,4 @@
 - Crew Desk operating model (crewing_agency / ship_manager) lives in owner-only `crew_workspace_settings`, asked on first entry; safe-manning and senior-rank warnings apply to all vessels for ship_manager, and only to vessels with a `vessel_manning` row for agencies. Why: agencies supplying single positions must not see false manning alarms.
 
 - WhatsApp marketing leads live only in admin-only `whatsapp_crew_leads`; sends go through `whatsapp-leads` (approved templates only, one per call, client-paced, opt-out never resent). Why: protect number quality and proprietary contact lists.
+- Portage bill rows live in `portage_entries` (one per contract per month, owner = contract manager); trigger `portage_entry_guard` requires a signed/completed contract, copies its currency, enforces draft→finalized→paid and locks paid months. Calculations/PDFs in `src/lib/portageBill.ts`. Why: wages derive only from signed SEA terms and settled months cannot be altered.

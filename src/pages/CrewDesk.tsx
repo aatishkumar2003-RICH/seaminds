@@ -8,6 +8,7 @@ import { missingForPrincipal, type MasterRecord } from "@/lib/principalCvPdf";
 import PrincipalTemplateStudio from "@/components/crew-desk/PrincipalTemplateStudio";
 import SeaContractsTab from "@/components/crew-desk/SeaContractsTab";
 import FleetCockpit from "@/components/crew-desk/FleetCockpit";
+import PortageBillTab from "@/components/crew-desk/PortageBillTab";
 import OperatingModelPicker from "@/components/crew-desk/OperatingModelPicker";
 import type { OperatingModel } from "@/lib/fleetCockpit";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,7 @@ const TABS = [
   { id: "roster", label: "Roster", icon: Users },
   { id: "cv", label: "Principal CV Studio", icon: FileText },
   { id: "contracts", label: "SEA Contracts", icon: ScrollText },
-  { id: "portage", label: "Portage Bill", icon: Wallet, soon: true },
+  { id: "portage", label: "Portage Bill", icon: Wallet, soon: false },
 ];
 const STATUS: Record<string, string> = { shortlisted: "Shortlisted", offered: "Offer sent", placed: "Joining / Onboard" };
 
@@ -145,11 +146,7 @@ export default function CrewDesk() {
       )}
 
       {tab === "contracts" && <SeaContractsTab rows={rows} focusId={params.get("crew") || undefined} />}
-      {tab === "portage" && (
-        <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
-          Portage bill, cash advances and allotments come next, built on your signed SEA contracts.
-        </div>
-      )}
+      {tab === "portage" && <PortageBillTab rows={rows} />}
       </>}
     </div>
   );
