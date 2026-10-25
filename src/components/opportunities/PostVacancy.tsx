@@ -15,6 +15,7 @@ import {
   validateContactFormats, validateAttribution, ACCEPTED_FLIER_TYPES as ACCEPTED,
 } from "@/lib/managerVacancies";
 import { splitAdverts, MAX_PASTE_CHARS, MAX_ADVERT_CHARS } from "@/lib/advertSplitter";
+import { WhatsAppBroadcastPanel } from "./WhatsAppBroadcastPanel";
 
 const MAX_FLIERS = 5;
 type Risk = "low" | "medium" | "high";
@@ -86,6 +87,7 @@ const PostVacancy = () => {
   const [batchExpanded, setBatchExpanded] = useState(false);
   const [uncertain, setUncertain] = useState<{ batchId: string; expected: number; message: string } | null>(null);
   const [lastResult, setLastResult] = useState<PublishResult | null>(null);
+  const [showPrev, setShowPrev] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { loadManagerIdentity().then(setIdentity); }, []);
@@ -771,6 +773,13 @@ const PostVacancy = () => {
             </Button>
           )}
           {lastResult?.status === "published" && <p className="text-[11px] text-[#22c55e]">{publishSummary(lastResult)}</p>}
+          {lastResult?.status === "published" && lastResult.batchId && (
+            <WhatsAppBroadcastPanel batchId={lastResult.batchId} title="📢 Broadcast to WhatsApp Channel / Group" />
+          )}
+          <button className="text-xs text-[#D4AF37] underline" onClick={() => setShowPrev((x) => !x)}>
+            {showPrev ? "Hide previous vacancies" : "📚 Previous vacancies & broadcast links"}
+          </button>
+          {showPrev && <WhatsAppBroadcastPanel title="Previous vacancies & broadcast links" />}
         </section>
       )}
       </div>
