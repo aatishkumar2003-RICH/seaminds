@@ -9,6 +9,31 @@ type C = {
   document_paths: string[]; responsible_person: Person | null; ai_result: { flags?: string[] } | null;
 };
 
+const Field = ({ label, hint, req = true, children }: { label: string; hint: string; req?: boolean; children: React.ReactNode }) => (
+  <label className="block space-y-1">
+    <span className="text-xs font-semibold text-foreground">{label}{req ? <span className="text-primary"> *</span> : <span className="font-normal text-muted-foreground"> (optional)</span>}</span>
+    {children}
+    <span className="block text-[11px] leading-snug text-muted-foreground">{hint}</span>
+  </label>
+);
+const Drop = ({ title, hint, file, set }: { title: string; hint: string; file: File | null; set: (f: File | null) => void }) => (
+  <label className={`flex cursor-pointer items-center gap-3 rounded-xl border border-dashed px-3 py-3 transition ${file ? "border-primary bg-primary/10" : "border-primary/40 hover:bg-primary/5"}`}>
+    <span className="text-xl">{file ? "✅" : "📄"}</span>
+    <span className="min-w-0 flex-1">
+      <span className="block text-xs font-semibold text-foreground">{title} <span className="text-primary">*</span></span>
+      <span className="block truncate text-[11px] text-muted-foreground">{file ? `${file.name} · ${(file.size / 1048576).toFixed(1)} MB` : hint}</span>
+    </span>
+    <span className="shrink-0 text-[11px] font-bold text-primary">{file ? "Change" : "Upload"}</span>
+    <input type="file" accept="application/pdf,image/*" className="sr-only" onChange={(e) => set(e.target.files?.[0] || null)} />
+  </label>
+);
+const Step = ({ n, t }: { n: number; t: string }) => (
+  <p className="mt-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-primary">
+    <span className="flex h-5 w-5 items-center justify-center rounded-full border border-primary/50 text-[10px]">{n}</span>{t}
+  </p>
+);
+
+
 /** Self-service company verification: 4 items → AI check → auto-verified, or flagged to admin. Never blocks work. */
 export default function CompanyCompliancePanel() {
   const { user } = useAuth();
@@ -85,30 +110,6 @@ export default function CompanyCompliancePanel() {
   const flags = c?.ai_result?.flags || [];
   const hasPrev = !!c?.document_paths?.length;
   const done = [license.trim() && website.trim(), person.name?.trim() && person.email?.trim() && person.phone?.trim(), bizFile, crewFile].filter(Boolean).length;
-  const Field = ({ label, hint, req = true, children }: { label: string; hint: string; req?: boolean; children: React.ReactNode }) => (
-    <label className="block space-y-1">
-      <span className="text-xs font-semibold text-foreground">{label}{req ? <span className="text-primary"> *</span> : <span className="font-normal text-muted-foreground"> (optional)</span>}</span>
-      {children}
-      <span className="block text-[11px] leading-snug text-muted-foreground">{hint}</span>
-    </label>
-  );
-  const Drop = ({ title, hint, file, set }: { title: string; hint: string; file: File | null; set: (f: File | null) => void }) => (
-    <label className={`flex cursor-pointer items-center gap-3 rounded-xl border border-dashed px-3 py-3 transition ${file ? "border-primary bg-primary/10" : "border-primary/40 hover:bg-primary/5"}`}>
-      <span className="text-xl">{file ? "✅" : "📄"}</span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-xs font-semibold text-foreground">{title} <span className="text-primary">*</span></span>
-        <span className="block truncate text-[11px] text-muted-foreground">{file ? `${file.name} · ${(file.size / 1048576).toFixed(1)} MB` : hint}</span>
-      </span>
-      <span className="shrink-0 text-[11px] font-bold text-primary">{file ? "Change" : "Upload"}</span>
-      <input type="file" accept="application/pdf,image/*" className="sr-only" onChange={(e) => set(e.target.files?.[0] || null)} />
-    </label>
-  );
-  const Step = ({ n, t }: { n: number; t: string }) => (
-    <p className="mt-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-primary">
-      <span className="flex h-5 w-5 items-center justify-center rounded-full border border-primary/50 text-[10px]">{n}</span>{t}
-    </p>
-  );
-
   return (
     <section id="compliance" className={`mx-4 sm:mx-6 mt-3 rounded-xl border bg-card ${alarm ? "border-destructive/60" : "border-primary/30"}`}>
       <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="flex w-full items-center gap-2 px-3 py-2.5 text-left">
