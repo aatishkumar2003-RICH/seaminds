@@ -23,7 +23,7 @@ export default function WhatsAppLeadsStudio() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [preview, setPreview] = useState<string | null>(null);
   const [paste, setPaste] = useState("");
-  const [audience, setAudience] = useState<"agent" | "crew">("agent");
+  const [audience, setAudience] = useState<"agent" | "crew">("crew");
   const [tag, setTag] = useState("");
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
@@ -86,14 +86,14 @@ export default function WhatsAppLeadsStudio() {
   };
 
   const dispatch = async () => {
-    const queue = leads.filter((l) => l.status === "approved" && l.audience === "agent");
-    if (!queue.length) return toast.error("No approved agency leads to send");
-    if (!confirm(`Send the Fleet Partnership WhatsApp to ${queue.length} contacts, one every 3 seconds?`)) return;
+    const queue = leads.filter((l) => l.status === "approved" && l.audience === "crew");
+    if (!queue.length) return toast.error("No approved crew contacts to send");
+    if (!confirm(`Send the Seafarer Welcome WhatsApp to ${queue.length} crew, one every 3 seconds?`)) return;
     stopRef.current = false;
     setProgress({ done: 0, total: queue.length });
     let ok = 0;
     for (let i = 0; i < queue.length && !stopRef.current; i++) {
-      const { data } = await supabase.functions.invoke("whatsapp-leads", { body: { action: "send", lead_id: queue[i].id, template: "fleet_partnership" } });
+      const { data } = await supabase.functions.invoke("whatsapp-leads", { body: { action: "send", lead_id: queue[i].id, template: "crew_welcome" } });
       if (data?.ok) ok++;
       setProgress({ done: i + 1, total: queue.length });
       await new Promise((r) => setTimeout(r, 3000));
@@ -121,8 +121,8 @@ export default function WhatsAppLeadsStudio() {
           <input ref={fileRef} type="file" multiple accept="image/*,.xlsx,.xls,.csv,.txt" className="hidden" onChange={(e) => { onFiles(e.target.files); e.target.value = ""; }} />
           <button disabled={busy} onClick={() => fileRef.current?.click()} className="px-4 py-2 rounded-xl font-bold text-sm" style={{ background: gold, color: "#0D1B2A" }}>{busy ? "Reading…" : "Upload screenshots / files"}</button>
           <select value={audience} onChange={(e) => setAudience(e.target.value as any)} className="px-3 py-2 rounded-xl text-sm" style={{ background: "#0D1B2A", color: "#fff", border: "1px solid rgba(212,175,55,0.3)" }}>
+            <option value="crew">Seafarers (Crew)</option>
             <option value="agent">Agencies / Managers</option>
-            <option value="crew">Seafarers (no approved message yet)</option>
           </select>
           <input placeholder="Batch tag e.g. Jakarta Agents Oct" value={tag} onChange={(e) => setTag(e.target.value)} className="px-3 py-2 rounded-xl text-sm bg-transparent" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#fff" }} />
         </div>
@@ -161,10 +161,10 @@ export default function WhatsAppLeadsStudio() {
           {progress ? (
             <button onClick={() => { stopRef.current = true; }} className="px-4 py-2 rounded-xl text-sm font-bold" style={{ border: "1px solid #ef4444", color: "#ef4444" }}>Stop ({progress.done}/{progress.total})</button>
           ) : (
-            <button onClick={dispatch} className="px-4 py-2 rounded-xl text-sm font-bold" style={{ background: gold, color: "#0D1B2A" }}>Send to approved agencies</button>
+            <button onClick={dispatch} className="px-4 py-2 rounded-xl text-sm font-bold" style={{ background: gold, color: "#0D1B2A" }}>Send to approved crew</button>
           )}
         </div>
-        <p className="text-xs mt-1" style={{ color: "#94A3B8" }}>Sending works only after Meta approves the Fleet Partnership message. Mark anyone who replies STOP as "opt out" — they will never be messaged again.</p>
+        <p className="text-xs mt-1" style={{ color: "#94A3B8" }}>Sending works only after Meta approves the Seafarer Welcome message. Mark anyone who replies STOP as "opt out" — they will never be messaged again.</p>
         <div className="mt-3 max-h-[480px] overflow-auto space-y-1">
           {leads.map((l) => (
             <div key={l.id} className="flex flex-wrap items-center gap-2 text-sm p-2 rounded-lg" style={{ background: "#0D1B2A", color: "#e2e8f0" }}>

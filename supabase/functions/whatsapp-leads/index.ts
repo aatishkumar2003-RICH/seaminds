@@ -8,6 +8,7 @@ const TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN") || "";
 const FROM = (Deno.env.get("TWILIO_WHATSAPP_FROM") || "").replace(/^whatsapp:/, "").trim();
 const TEMPLATES: Record<string, string> = {
   fleet_partnership: "HXd248f99fc3c4d3b7529cbb5134b0a9fe",
+  crew_welcome: "HX061c2b5a5f172b330a9ffa735c027875",
 };
 
 const cors = {
