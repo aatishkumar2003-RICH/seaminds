@@ -53,7 +53,10 @@ export default function CompanyCompliancePanel() {
 
   const submit = async () => {
     if (!license.trim() || !website.trim()) { toast.error("Licence number and website are required"); return; }
+    if (!/^(https?:\/\/)?[\w-]+(\.[\w-]+)+/i.test(website.trim())) { toast.error("Enter a valid website, e.g. www.yourcompany.com"); return; }
     if (!person.name?.trim() || !person.email?.trim() || !person.phone?.trim()) { toast.error("Responsible person name, email and phone are required"); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(person.email.trim())) { toast.error("Enter a valid work email"); return; }
+    if (person.phone.replace(/\D/g, "").length < 8) { toast.error("Enter the phone number with country code"); return; }
     if (!bizFile || !crewFile) { toast.error("Upload both the business licence and the crewing licence"); return; }
     const bad = [bizFile, crewFile].find((f) => f.size > 10 * 1024 * 1024 || !/pdf|image\//.test(f.type));
     if (bad) { toast.error(`${bad.name}: PDF or image up to 10 MB only`); return; }
