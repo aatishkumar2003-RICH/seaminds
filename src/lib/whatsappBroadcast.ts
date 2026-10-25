@@ -30,7 +30,7 @@ export const broadcastText = (v: BroadcastVacancy) => {
     "",
     "Shared via SeaMinds — free for seafarers.",
   ];
-  return lines.filter((l) => l !== null && l !== undefined && l !== false).join("\n");
+  return lines.filter((l): l is string => typeof l === "string").join("\n");
 };
 
 export const whatsappShareUrl = (text: string) => `https://wa.me/?text=${encodeURIComponent(text)}`;
