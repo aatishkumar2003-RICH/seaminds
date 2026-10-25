@@ -1507,6 +1507,7 @@ export default function AdminDashboard() {
     ] },
     { name: "🎯 Growth & Leads", tabs: [
       { id: "activity" as const, label: "Crew, Leads & Certificates" },
+      { id: "whatsapp_studio" as const, label: "📱 WhatsApp Studio & Saved Numbers" },
       { id: "activity_full" as const, label: "Growth Pulse" },
       { id: "referrals" as const, label: "Referrals" },
       { id: "marketing" as const, label: "Marketing Team" },
@@ -1516,7 +1517,6 @@ export default function AdminDashboard() {
     { name: "📊 Vacancies", tabs: [
       { id: "vacancy_intel" as const, label: "Vacancy Intel" },
       { id: "recruiter_outreach" as const, label: "Recruiter Outreach" },
-      { id: "whatsapp_studio" as const, label: "WhatsApp Studio" },
       { id: "agents" as const, label: "AI Agents" },
     ] },
     { name: "🛟 Support & Safety", tabs: [

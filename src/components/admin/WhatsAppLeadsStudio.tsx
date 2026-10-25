@@ -157,7 +157,10 @@ export default function WhatsAppLeadsStudio() {
 
       <div className="rounded-xl p-4" style={card}>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="text-sm" style={{ color: "#e2e8f0" }}>Saved: {leads.length} · approved {counts.approved || 0} · sent {counts.sent || 0} · failed {counts.failed || 0} · opted out {counts.opt_out || 0}</div>
+          <div>
+            <h3 className="font-bold" style={{ color: gold }}>Saved WhatsApp Numbers ({leads.length})</h3>
+            <div className="text-sm" style={{ color: "#e2e8f0" }}>approved {counts.approved || 0} · sent {counts.sent || 0} · failed {counts.failed || 0} · opted out {counts.opt_out || 0}</div>
+          </div>
           {progress ? (
             <button onClick={() => { stopRef.current = true; }} className="px-4 py-2 rounded-xl text-sm font-bold" style={{ border: "1px solid #ef4444", color: "#ef4444" }}>Stop ({progress.done}/{progress.total})</button>
           ) : (
