@@ -3,8 +3,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const ADMIN_UID = "492ee966-e015-4440-a415-6ad6275a4a9b";
 const svc = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-const SID = Deno.env.get("TWILIO_ACCOUNT_SID") || "";
-const TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN") || "";
 const FROM = (Deno.env.get("TWILIO_WHATSAPP_FROM") || "").replace(/^whatsapp:/, "").trim();
 const GW = "https://connector-gateway.lovable.dev/twilio";
 const gwHeaders = (form = false): Record<string, string> => ({
