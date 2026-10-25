@@ -28,6 +28,12 @@ export default function WhatsAppLeadsStudio() {
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const stopRef = useRef(false);
+  const [tplStatus, setTplStatus] = useState<Record<string, string> | null>(null);
+  const [testing, setTesting] = useState(false);
+  const [q, setQ] = useState("");
+  const [aud, setAud] = useState("all");
+  const [st, setSt] = useState("all");
+  const [editing, setEditing] = useState<{ id: string; name: string; rank: string; audience: string } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
@@ -107,6 +113,39 @@ export default function WhatsAppLeadsStudio() {
     await supabase.from("whatsapp_crew_leads").update({ status }).eq("id", id); load();
   };
 
+  const checkTemplates = async () => {
+    setTplStatus(null);
+    const { data } = await supabase.functions.invoke("whatsapp-leads", { body: { action: "template_status" } });
+    setTplStatus(data?.statuses || { crew_welcome: "unavailable", fleet_partnership: "unavailable" });
+  };
+  useEffect(() => { checkTemplates(); }, []);
+
+  const sendTest = async () => {
+    setTesting(true);
+    const { data } = await supabase.functions.invoke("whatsapp-leads", { body: { action: "test", template: "crew_welcome" } });
+    setTesting(false);
+    data?.ok ? toast.success("Test sent to your WhatsApp (+62 852…)") : toast.error(`Test not sent: ${data?.error || "unknown error"}`);
+  };
+
+  const saveEdit = async () => {
+    if (!editing) return;
+    const { error } = await supabase.from("whatsapp_crew_leads").update({ name: editing.name.trim() || null, rank_detected: editing.rank.trim() || null, audience: editing.audience }).eq("id", editing.id);
+    if (error) return toast.error(error.message);
+    setEditing(null); toast.success("Contact updated"); load();
+  };
+
+  const remove = async (l: Lead) => {
+    if (!confirm(`Delete ${l.name || l.phone_e164}? This cannot be undone.`)) return;
+    const { error } = await supabase.from("whatsapp_crew_leads").delete().eq("id", l.id);
+    error ? toast.error(error.message) : (toast.success("Contact deleted"), load());
+  };
+
+  const crewApproved = tplStatus?.crew_welcome === "approved";
+  const needle = q.trim().toLowerCase().replace(/[\s-]/g, "");
+  const shown = leads.filter((l) =>
+    (aud === "all" || l.audience === aud) && (st === "all" || l.status === st) &&
+    (!needle || [l.name, l.phone_e164, l.batch_tag, l.rank_detected].some((v) => (v || "").toLowerCase().replace(/[\s-]/g, "").includes(needle))));
+
   const badge: Record<Staged["flag"], [string, string]> = {
     ready: ["Ready", "#22c55e"], dup_batch: ["Duplicate", "#f59e0b"], existing: ["Already saved", "#60a5fa"], invalid: ["Invalid", "#ef4444"],
   };
@@ -159,24 +198,54 @@ export default function WhatsAppLeadsStudio() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h3 className="font-bold" style={{ color: gold }}>Saved WhatsApp Numbers ({leads.length})</h3>
-            <div className="text-sm" style={{ color: "#e2e8f0" }}>approved {counts.approved || 0} · sent {counts.sent || 0} · failed {counts.failed || 0} · opted out {counts.opt_out || 0}</div>
+            <div className="text-sm" style={{ color: "#e2e8f0" }}>ready {counts.approved || 0} · sent {counts.sent || 0} · failed {counts.failed || 0} · opted out {counts.opt_out || 0}</div>
           </div>
-          {progress ? (
-            <button onClick={() => { stopRef.current = true; }} className="px-4 py-2 rounded-xl text-sm font-bold" style={{ border: "1px solid #ef4444", color: "#ef4444" }}>Stop ({progress.done}/{progress.total})</button>
-          ) : (
-            <button onClick={dispatch} className="px-4 py-2 rounded-xl text-sm font-bold" style={{ background: gold, color: "#0D1B2A" }}>Send to approved crew</button>
-          )}
+          <div className="flex flex-wrap gap-2">
+            <button onClick={sendTest} disabled={testing} className="px-4 py-2 rounded-xl text-sm font-bold" style={{ border: `1px solid ${gold}`, color: gold }}>{testing ? "Sending…" : "Send 1 test to my WhatsApp"}</button>
+            {progress ? (
+              <button onClick={() => { stopRef.current = true; }} className="px-4 py-2 rounded-xl text-sm font-bold" style={{ border: "1px solid #ef4444", color: "#ef4444" }}>Stop ({progress.done}/{progress.total})</button>
+            ) : (
+              <button onClick={dispatch} disabled={!crewApproved} className="px-4 py-2 rounded-xl text-sm font-bold disabled:opacity-40" style={{ background: gold, color: "#0D1B2A" }}>{crewApproved ? "Send to ready crew" : "🔒 Send locked"}</button>
+            )}
+          </div>
         </div>
-        <p className="text-xs mt-1" style={{ color: "#94A3B8" }}>Sending works only after Meta approves the Seafarer Welcome message. Mark anyone who replies STOP as "opt out" — they will never be messaged again.</p>
-        <div className="mt-3 max-h-[480px] overflow-auto space-y-1">
-          {leads.map((l) => (
+        <div className="mt-2 text-xs p-2 rounded-lg" style={{ background: "#0D1B2A", color: crewApproved ? "#22c55e" : "#f59e0b" }}>
+          Seafarer Welcome message: <b>{tplStatus?.crew_welcome ?? "checking…"}</b> · Manager message: <b>{tplStatus?.fleet_partnership ?? "checking…"}</b>
+          {!crewApproved && " — broadcasting stays locked until Meta approves, to protect your number's quality score."}
+          <button onClick={checkTemplates} className="ml-2 underline" style={{ color: gold }}>refresh</button>
+        </div>
+        <p className="text-xs mt-1" style={{ color: "#94A3B8" }}>Keep this page open while sending. If it stops, press Send again — it continues only with contacts not yet sent. Anyone who replies STOP: tap "opt out" and they will never be messaged again.</p>
+        <div className="flex flex-wrap gap-2 mt-3">
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, number or batch…" className="flex-1 min-w-[180px] px-3 py-2 rounded-xl text-sm bg-transparent" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#fff" }} />
+          {[["all", "All"], ["crew", "Seafarers"], ["agent", "Agencies"]].map(([k, l]) => (
+            <button key={k} onClick={() => setAud(k)} className="px-3 py-1 rounded-xl text-xs" style={aud === k ? { background: gold, color: "#0D1B2A" } : { border: "1px solid rgba(212,175,55,0.3)", color: "#94A3B8" }}>{l}</button>
+          ))}
+          {[["all", "Any status"], ["approved", "Ready"], ["sent", "Sent"], ["failed", "Failed"], ["opt_out", "Opted out"]].map(([k, l]) => (
+            <button key={k} onClick={() => setSt(k)} className="px-3 py-1 rounded-xl text-xs" style={st === k ? { background: gold, color: "#0D1B2A" } : { border: "1px solid rgba(212,175,55,0.3)", color: "#94A3B8" }}>{l}</button>
+          ))}
+        </div>
+        <div className="text-xs mt-2" style={{ color: "#94A3B8" }}>Showing {shown.length} of {leads.length}</div>
+        <div className="mt-2 max-h-[480px] overflow-auto space-y-1">
+          {shown.map((l) => editing?.id === l.id ? (
+            <div key={l.id} className="flex flex-wrap items-center gap-2 text-sm p-2 rounded-lg" style={{ background: "#0D1B2A" }}>
+              <input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} placeholder="Name" className="flex-1 min-w-[120px] px-2 py-1 rounded bg-transparent" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#fff" }} />
+              <input value={editing.rank} onChange={(e) => setEditing({ ...editing, rank: e.target.value })} placeholder="Rank" className="w-28 px-2 py-1 rounded bg-transparent" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#fff" }} />
+              <select value={editing.audience} onChange={(e) => setEditing({ ...editing, audience: e.target.value })} className="px-2 py-1 rounded text-xs" style={{ background: "#0D1B2A", color: "#fff", border: "1px solid rgba(212,175,55,0.3)" }}>
+                <option value="crew">Seafarer</option><option value="agent">Agency</option>
+              </select>
+              <button onClick={saveEdit} className="text-xs font-bold px-2 py-1 rounded" style={{ background: gold, color: "#0D1B2A" }}>Save</button>
+              <button onClick={() => setEditing(null)} className="text-xs underline" style={{ color: "#94A3B8" }}>cancel</button>
+            </div>
+          ) : (
             <div key={l.id} className="flex flex-wrap items-center gap-2 text-sm p-2 rounded-lg" style={{ background: "#0D1B2A", color: "#e2e8f0" }}>
-              <span className="flex-1 min-w-0 truncate">{l.name || "—"} <span className="text-xs" style={{ color: "#94A3B8" }}>{l.batch_tag}</span></span>
+              <span className="flex-1 min-w-0 truncate">{l.name || "—"} {l.rank_detected && <span className="text-xs" style={{ color: gold }}>{l.rank_detected}</span>} <span className="text-xs" style={{ color: "#94A3B8" }}>{l.batch_tag}</span></span>
               <span className="font-mono text-xs">{l.phone_e164}</span>
-              <span className="text-xs" style={{ color: "#94A3B8" }}>{l.audience}</span>
-              <span className="text-xs" style={{ color: l.status === "sent" ? "#22c55e" : l.status === "failed" ? "#ef4444" : gold }} title={l.last_error || ""}>{l.status}</span>
+              <span className="text-xs" style={{ color: "#94A3B8" }}>{l.audience === "crew" ? "seafarer" : "agency"}</span>
+              <span className="text-xs" style={{ color: l.status === "sent" ? "#22c55e" : l.status === "failed" ? "#ef4444" : gold }} title={l.last_error || ""}>{l.status === "approved" ? "ready" : l.status}</span>
+              <button onClick={() => setEditing({ id: l.id, name: l.name || "", rank: l.rank_detected || "", audience: l.audience })} className="text-xs underline" style={{ color: gold }}>edit</button>
               {l.status !== "opt_out" && <button onClick={() => setStatus(l.id, "opt_out")} className="text-xs underline" style={{ color: "#94A3B8" }}>opt out</button>}
               {l.status === "failed" && <button onClick={() => setStatus(l.id, "approved")} className="text-xs underline" style={{ color: gold }}>retry</button>}
+              <button onClick={() => remove(l)} className="text-xs underline" style={{ color: "#ef4444" }}>delete</button>
             </div>
           ))}
         </div>
