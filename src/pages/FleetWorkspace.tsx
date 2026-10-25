@@ -7,7 +7,7 @@ const CREW = [
   { title: "Roster & Master Records", desc: "Your crew list, joining status and consent-gated master CVs.", to: "/manager/crew-desk", live: true },
   { title: "Principal CV Studio", desc: "Export a crew CV in SeaMinds, Anglo-Eastern-style or Synergy-style layout.", to: "/manager/crew-desk", live: true },
   { title: "Joining Issues (Tickets)", desc: "Private two-way threads with crew about a joining.", to: "/manager/dashboard?tab=applicants", live: true },
-  { title: "Contracts (SEA) & Portage Bill", desc: "Wages, advances and allotments — in preparation.", live: false },
+  { title: "Contracts (SEA) & Portage Bill", desc: "Signed contracts, monthly wages, advances, allotments and payslips.", to: "/manager/crew-desk?tab=portage", live: true },
   { title: "Appraisals & Training", desc: "Post-voyage feedback and training follow-up — in preparation.", live: false },
 ];
 
