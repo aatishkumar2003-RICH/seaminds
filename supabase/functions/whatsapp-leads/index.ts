@@ -6,6 +6,13 @@ const svc = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_S
 const SID = Deno.env.get("TWILIO_ACCOUNT_SID") || "";
 const TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN") || "";
 const FROM = (Deno.env.get("TWILIO_WHATSAPP_FROM") || "").replace(/^whatsapp:/, "").trim();
+const GW = "https://connector-gateway.lovable.dev/twilio";
+const gwHeaders = (form = false): Record<string, string> => ({
+  Authorization: `Bearer ${Deno.env.get("LOVABLE_API_KEY") || ""}`,
+  "X-Connection-Api-Key": Deno.env.get("TWILIO_API_KEY") || "",
+  ...(form ? { "Content-Type": "application/x-www-form-urlencoded" } : {}),
+});
+const gwReady = () => !!Deno.env.get("LOVABLE_API_KEY") && !!Deno.env.get("TWILIO_API_KEY");
 const TEMPLATES: Record<string, string> = {
   fleet_partnership: "HXd248f99fc3c4d3b7529cbb5134b0a9fe",
   crew_welcome: "HX061c2b5a5f172b330a9ffa735c027875",
@@ -56,13 +63,11 @@ Deno.serve(async (req) => {
     }
 
     if (body.action === "template_status") {
-      if (!SID || !TOKEN) return json({ error: "WhatsApp sender not configured" }, 500);
+      if (!gwReady()) return json({ error: "WhatsApp sender not configured" }, 500);
       const out: Record<string, string> = {};
       for (const [k, sid] of Object.entries(TEMPLATES)) {
         try {
-          const r = await fetch(`https://content.twilio.com/v1/Content/${sid}/ApprovalRequests`, {
-            headers: { Authorization: `Basic ${btoa(`${SID}:${TOKEN}`)}` },
-          });
+          const r = await fetch(`${GW}/content/v1/Content/${sid}/ApprovalRequests`, { headers: gwHeaders() });
           const p = await r.json().catch(() => ({}));
           out[k] = String(p?.whatsapp?.status || (r.ok ? "unknown" : "error")).toLowerCase();
         } catch { out[k] = "error"; }
@@ -73,11 +78,11 @@ Deno.serve(async (req) => {
     if (body.action === "test") {
       const tpl = TEMPLATES[String(body.template || "")];
       if (!tpl) return json({ error: "Unknown template" }, 400);
-      if (!SID || !TOKEN || !FROM) return json({ error: "WhatsApp sender not configured" }, 500);
+      if (!gwReady() || !FROM) return json({ error: "WhatsApp sender not configured" }, 500);
       // Test goes ONLY to the owner's own handset; never to a lead.
-      const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${SID}/Messages.json`, {
+      const r = await fetch(`${GW}/Messages.json`, {
         method: "POST",
-        headers: { Authorization: `Basic ${btoa(`${SID}:${TOKEN}`)}`, "Content-Type": "application/x-www-form-urlencoded" },
+        headers: gwHeaders(true),
         body: new URLSearchParams({
           From: `whatsapp:${FROM}`, To: "whatsapp:+6285219878989", ContentSid: tpl,
           ContentVariables: JSON.stringify({ "1": "Test" }),
@@ -91,7 +96,7 @@ Deno.serve(async (req) => {
       const id = String(body.lead_id || "");
       const tpl = TEMPLATES[String(body.template || "")];
       if (!id || !tpl) return json({ error: "Missing lead or unknown template" }, 400);
-      if (!SID || !TOKEN || !FROM) return json({ error: "WhatsApp sender not configured" }, 500);
+      if (!gwReady() || !FROM) return json({ error: "WhatsApp sender not configured" }, 500);
       const { data: lead } = await svc.from("whatsapp_crew_leads").select("*").eq("id", id).maybeSingle();
       if (!lead) return json({ error: "Lead not found" }, 404);
       if (lead.status === "opt_out" || lead.status === "sent") return json({ ok: true, skipped: lead.status });
@@ -99,9 +104,9 @@ Deno.serve(async (req) => {
         From: `whatsapp:${FROM}`, To: `whatsapp:${lead.phone_e164}`, ContentSid: tpl,
         ContentVariables: JSON.stringify({ "1": lead.name || "Sir/Madam" }),
       });
-      const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${SID}/Messages.json`, {
+      const r = await fetch(`${GW}/Messages.json`, {
         method: "POST",
-        headers: { Authorization: `Basic ${btoa(`${SID}:${TOKEN}`)}`, "Content-Type": "application/x-www-form-urlencoded" },
+        headers: gwHeaders(true),
         body: params,
       });
       const p = await r.json().catch(() => ({}));
