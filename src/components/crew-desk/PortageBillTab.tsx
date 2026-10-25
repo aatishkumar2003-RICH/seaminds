@@ -65,6 +65,11 @@ export default function PortageBillTab({ rows }: { rows: Row[] | null }) {
   useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [contracts, ym]);
 
   const calc = (c: PortageContract) => { const e = entries[c.id]; return e ? { ...e, ...computePortage(c, e.days_served, e.days_in_month, e) } : null; };
+  const setSignOff = (c: PortageContract, v: string) => {
+    const [mS, mE] = [`${ym}-01`, `${ym}-${String(daysInMonth(ym)).padStart(2, "0")}`];
+    if (v && (v < mS || v > mE || (c.start_date && v < c.start_date))) { toast.error("Sign-off date must fall inside this month and after sign-on."); return; }
+    setEntries(s => ({ ...s, [c.id]: { ...s[c.id], sign_off_date: v || null, days_served: daysServed(ym, c.start_date, c.duration_months, v || null) } }));
+  };
   const setField = (id: string, k: keyof PortageEntry, v: string) => setEntries(s => ({ ...s, [id]: { ...s[id], [k]: Math.max(0, Number(v) || 0) } }));
 
   const save = async (c: PortageContract, status?: string) => {
@@ -123,7 +128,7 @@ export default function PortageBillTab({ rows }: { rows: Row[] | null }) {
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-secondary text-xs text-muted-foreground">
               <tr>
-                <th className="text-left p-2">Crew</th><th className="text-right p-2">Days</th><th className="text-right p-2">Fixed wages</th><th className="text-right p-2">B/F</th>
+                <th className="text-left p-2">Crew</th><th className="text-right p-2">Days</th><th className="text-left p-2">Sign-off</th><th className="text-right p-2">Fixed wages</th><th className="text-right p-2">B/F</th>
                 {NUM.map(f => <th key={f.k} className="text-right p-2">{f.l}</th>)}
                 <th className="text-right p-2">Net payable</th><th className="p-2">Status</th><th className="p-2">Actions</th>
               </tr>
@@ -136,6 +141,7 @@ export default function PortageBillTab({ rows }: { rows: Row[] | null }) {
                   <tr key={c.id} className="border-t border-border align-middle">
                     <td className="p-2 min-w-[150px]"><p className="font-semibold text-foreground">{nameOf(c.application_id)}</p><p className="text-[11px] text-muted-foreground">{c.rank} · {c.vessel_name}</p></td>
                     <td className="p-2 text-right">{e.days_served}/{e.days_in_month}</td>
+                    <td className="p-1"><input type="date" disabled={locked} value={e.sign_off_date || ""} onChange={ev => setSignOff(c, ev.target.value)} aria-label="Sign-off date" title="Actual sign-off date — leave blank if still onboard" className="w-36 rounded-lg border border-border bg-background px-2 min-h-[36px] text-foreground disabled:opacity-60" /></td>
                     <td className="p-2 text-right whitespace-nowrap">{fmt(c.currency, e.fixed)}</td>
                     <td className="p-2 text-right whitespace-nowrap">{fmt(c.currency, e.prev_balance)}</td>
                     {NUM.map(f => (
@@ -161,7 +167,7 @@ export default function PortageBillTab({ rows }: { rows: Row[] | null }) {
           </table>
         </div>
       )}
-      <p className="text-[11px] text-muted-foreground">Fixed wages = contract monthly total × days served ÷ days in month. B/F = last month's balance if it was not marked paid. Paid months are permanently locked.</p>
+      <p className="text-[11px] text-muted-foreground">Fixed wages = contract monthly total × days served ÷ days in month. Sign-off = actual sign-off day for the final settlement (counted as a day served). B/F = last month's balance if it was not marked paid. Paid months are permanently locked.</p>
     </div>
   );
 }

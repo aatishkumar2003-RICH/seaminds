@@ -13,6 +13,7 @@ export type PortageInputs = {
 export type PortageEntry = PortageInputs & {
   id?: string; contract_id: string; year_month: string; days_served: number; days_in_month: number;
   gross: number; deductions: number; net_payable: number; currency: string; status: string; notes: string;
+  sign_off_date?: string | null;
 };
 
 const r2 = (n: number) => Math.round((Number(n) || 0) * 100) / 100;
@@ -65,7 +66,7 @@ export function buildPayslipPdf(c: PortageContract, e: PortageEntry, crewName: s
   const p = computePortage(c, e.days_served, e.days_in_month, e);
   pdf.setFont("helvetica", "bold"); pdf.setFontSize(15); pdf.text("Monthly Account of Wages", M, y); y += 6;
   pdf.setFontSize(9); pdf.setFont("helvetica", "normal"); pdf.text("MLC 2006, Standard A2.2", M, y); y += 9;
-  const meta: [string, string][] = [["Employer", employer || "-"], ["Seafarer", crewName], ["Rank", c.rank || "-"], ["Vessel", c.vessel_name || "-"], ["Period", monthLabel(e.year_month)], ["Days served", `${e.days_served} of ${e.days_in_month}`], ["Status", e.status]];
+  const meta: [string, string][] = [["Employer", employer || "-"], ["Seafarer", crewName], ["Rank", c.rank || "-"], ["Vessel", c.vessel_name || "-"], ["Period", monthLabel(e.year_month)], ["Days served", `${e.days_served} of ${e.days_in_month}`], ...(e.sign_off_date ? [["Signed off", e.sign_off_date] as [string, string]] : []), ["Status", e.status]];
   pdf.setFontSize(10);
   meta.forEach(([k, v]) => { pdf.setFont("helvetica", "bold"); pdf.text(k, M, y); pdf.setFont("helvetica", "normal"); pdf.text(String(v), M + 40, y); y += 5.5; });
   y += 4;
