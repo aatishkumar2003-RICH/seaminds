@@ -936,12 +936,19 @@ export type Database = {
       company_compliance: {
         Row: {
           admin_note: string | null
+          ai_checked_at: string | null
+          ai_result: Json | null
+          ai_runs: number
+          ai_runs_day: string | null
+          business_license_path: string | null
+          crewing_license_path: string | null
           document_paths: string[]
           license_number: string | null
           manager_note: string | null
           manager_user_id: string
           requested_at: string | null
           requested_items: string[]
+          responsible_person: Json
           reviewed_at: string | null
           status: string
           submitted_at: string | null
@@ -950,12 +957,19 @@ export type Database = {
         }
         Insert: {
           admin_note?: string | null
+          ai_checked_at?: string | null
+          ai_result?: Json | null
+          ai_runs?: number
+          ai_runs_day?: string | null
+          business_license_path?: string | null
+          crewing_license_path?: string | null
           document_paths?: string[]
           license_number?: string | null
           manager_note?: string | null
           manager_user_id: string
           requested_at?: string | null
           requested_items?: string[]
+          responsible_person?: Json
           reviewed_at?: string | null
           status?: string
           submitted_at?: string | null
@@ -964,12 +978,19 @@ export type Database = {
         }
         Update: {
           admin_note?: string | null
+          ai_checked_at?: string | null
+          ai_result?: Json | null
+          ai_runs?: number
+          ai_runs_day?: string | null
+          business_license_path?: string | null
+          crewing_license_path?: string | null
           document_paths?: string[]
           license_number?: string | null
           manager_note?: string | null
           manager_user_id?: string
           requested_at?: string | null
           requested_items?: string[]
+          responsible_person?: Json
           reviewed_at?: string | null
           status?: string
           submitted_at?: string | null
@@ -7060,6 +7081,16 @@ export type Database = {
           p_license: string
           p_note: string
           p_paths: string[]
+          p_website: string
+        }
+        Returns: Json
+      }
+      submit_company_verification: {
+        Args: {
+          p_business_path: string
+          p_crewing_path: string
+          p_license: string
+          p_person: Json
           p_website: string
         }
         Returns: Json
