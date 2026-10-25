@@ -55,6 +55,38 @@ Deno.serve(async (req) => {
       return json({ rows: Array.isArray(rows) ? rows.slice(0, 500) : [] });
     }
 
+    if (body.action === "template_status") {
+      if (!SID || !TOKEN) return json({ error: "WhatsApp sender not configured" }, 500);
+      const out: Record<string, string> = {};
+      for (const [k, sid] of Object.entries(TEMPLATES)) {
+        try {
+          const r = await fetch(`https://content.twilio.com/v1/Content/${sid}/ApprovalRequests`, {
+            headers: { Authorization: `Basic ${btoa(`${SID}:${TOKEN}`)}` },
+          });
+          const p = await r.json().catch(() => ({}));
+          out[k] = String(p?.whatsapp?.status || (r.ok ? "unknown" : "error")).toLowerCase();
+        } catch { out[k] = "error"; }
+      }
+      return json({ ok: true, statuses: out });
+    }
+
+    if (body.action === "test") {
+      const tpl = TEMPLATES[String(body.template || "")];
+      if (!tpl) return json({ error: "Unknown template" }, 400);
+      if (!SID || !TOKEN || !FROM) return json({ error: "WhatsApp sender not configured" }, 500);
+      // Test goes ONLY to the owner's own handset; never to a lead.
+      const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${SID}/Messages.json`, {
+        method: "POST",
+        headers: { Authorization: `Basic ${btoa(`${SID}:${TOKEN}`)}`, "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          From: `whatsapp:${FROM}`, To: "whatsapp:+6285219878989", ContentSid: tpl,
+          ContentVariables: JSON.stringify({ "1": "Test" }),
+        }),
+      });
+      const p = await r.json().catch(() => ({}));
+      return json(r.ok ? { ok: true, sid: p.sid } : { ok: false, error: p?.message || `Twilio ${r.status}` });
+    }
+
     if (body.action === "send") {
       const id = String(body.lead_id || "");
       const tpl = TEMPLATES[String(body.template || "")];
