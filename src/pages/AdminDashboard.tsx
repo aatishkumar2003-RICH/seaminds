@@ -32,6 +32,7 @@ import SupportIncidentsTab from "@/components/admin/SupportIncidentsTab";
 import RecruiterOutreachTab from "@/components/admin/RecruiterOutreachTab";
 import PasswordInput from "@/components/PasswordInput";
 import PlansCreditsTab from "@/components/admin/PlansCreditsTab";
+import WhatsAppLeadsStudio from "@/components/admin/WhatsAppLeadsStudio";
 
 // Admin = the SeaMinds owner account. The browser only checks that this exact
 // authenticated user is signed in (it just hides the UI). Real enforcement is
@@ -1461,10 +1462,10 @@ function ApplicationsTab() {
 /* ─── Main Dashboard ─── */
 export default function AdminDashboard() {
   const [authed, setAuthed] = useState<boolean | null>(null);
-  const [tab, setTab] = useState<"content_studio" | "company_approval" | "crew" | "activity" | "activity_full" | "cv_database" | "mobile_verify" | "pricing" | "discount" | "country_pricing" | "sub_admins" | "dpa" | "blog_images" | "agents" | "vacancy_intel" | "company_dir" | "company_posts" | "marketing" | "applications" | "referrals" | "assessment_ops" | "support_incidents" | "recruiter_outreach">(() => {
+  const [tab, setTab] = useState<"content_studio" | "company_approval" | "crew" | "activity" | "activity_full" | "cv_database" | "mobile_verify" | "pricing" | "discount" | "country_pricing" | "sub_admins" | "dpa" | "blog_images" | "agents" | "vacancy_intel" | "company_dir" | "company_posts" | "marketing" | "applications" | "referrals" | "assessment_ops" | "support_incidents" | "recruiter_outreach" | "whatsapp_studio">(() => {
     // Deep link from emails, e.g. /admin?tab=company_approval
     const t = new URLSearchParams(window.location.search).get("tab");
-    const allowed = ["content_studio","company_approval","crew","activity","activity_full","cv_database","mobile_verify","pricing","discount","country_pricing","sub_admins","dpa","blog_images","agents","vacancy_intel","company_dir","company_posts","marketing","applications","referrals","assessment_ops","support_incidents","recruiter_outreach"];
+    const allowed = ["content_studio","company_approval","crew","activity","activity_full","cv_database","mobile_verify","pricing","discount","country_pricing","sub_admins","dpa","blog_images","agents","vacancy_intel","company_dir","company_posts","marketing","applications","referrals","assessment_ops","support_incidents","recruiter_outreach","whatsapp_studio"];
     return (t && allowed.includes(t) ? t : "crew") as any;
   });
 
@@ -1515,6 +1516,7 @@ export default function AdminDashboard() {
     { name: "📊 Vacancies", tabs: [
       { id: "vacancy_intel" as const, label: "Vacancy Intel" },
       { id: "recruiter_outreach" as const, label: "Recruiter Outreach" },
+      { id: "whatsapp_studio" as const, label: "WhatsApp Studio" },
       { id: "agents" as const, label: "AI Agents" },
     ] },
     { name: "🛟 Support & Safety", tabs: [
@@ -1630,6 +1632,7 @@ export default function AdminDashboard() {
       {tab === "assessment_ops" && <AssessmentOpsTab />}
       {tab === "support_incidents" && <SupportIncidentsTab onOpenAssessmentOps={() => setTab("assessment_ops")} />}
       {tab === "recruiter_outreach" && <RecruiterOutreachTab />}
+      {tab === "whatsapp_studio" && <WhatsAppLeadsStudio />}
     </div>
   );
 }
