@@ -25,6 +25,7 @@ interface Compliance {
   manager_user_id: string; status: string; requested_items: string[]; admin_note: string | null;
   requested_at: string | null; license_number: string | null; website: string | null;
   manager_note: string | null; document_paths: string[]; submitted_at: string | null;
+  responsible_person?: { name?: string; title?: string; email?: string; phone?: string } | null; ai_result?: { flags?: string[]; confidence?: number; passed?: boolean } | null;
 }
 
 const notify = async (event: string, manager_user_id: string) => {
@@ -36,6 +37,9 @@ const notify = async (event: string, manager_user_id: string) => {
 const statusPill = (c?: Compliance) => {
   if (!c || c.status === "none") return { t: "🟡 Pending review", col: "#f59e0b" };
   if (c.status === "requested") return { t: `🟠 Docs requested ${c.requested_at ? new Date(c.requested_at).toLocaleDateString() : ""}`, col: "#fb923c" };
+  if (c.status === "flagged") return { t: "🚨 AI flagged — needs your review", col: "#ef4444" };
+  if (c.status === "ai_review") return { t: "🤖 AI checking documents", col: "#60a5fa" };
+  if (c.status === "verified" && c.ai_result?.passed) return { t: "🟢 Auto-verified by AI", col: "#22c55e" };
   if (c.status === "submitted") return { t: "🔵 Docs submitted — ready for review", col: "#60a5fa" };
   return { t: "🟢 Documents verified", col: "#22c55e" };
 };
@@ -109,7 +113,8 @@ const CompanyApprovalTab = () => {
     load();
   };
 
-  const pending = rows.filter((r) => !r.admin_approved);
+  const flagged = rows.filter((r) => comp[r.user_id]?.status === "flagged");
+  const pending = rows.filter((r) => !r.admin_approved && comp[r.user_id]?.status !== "flagged");
   const approved = rows.filter((r) => r.admin_approved);
   const btn = (bg: string, col: string, border = "none") => ({ padding: "7px 14px", borderRadius: 9, background: bg, color: col, border, fontSize: 12, fontWeight: 700, cursor: "pointer" } as const);
 
@@ -135,6 +140,8 @@ const CompanyApprovalTab = () => {
             {c.requested_items?.length > 0 && <p><b style={{ color: GOLD }}>Requested:</b> {c.requested_items.join(" · ")}</p>}
             {c.license_number && <p>Licence / registration: <b>{c.license_number}</b></p>}
             {c.website && <p>Website: <a href={/^https?:/.test(c.website) ? c.website : `https://${c.website}`} target="_blank" rel="noreferrer" style={{ color: GOLD }}>{c.website}</a></p>}
+            {c.responsible_person?.name && <p>Responsible person: <b>{c.responsible_person.name}</b>{c.responsible_person.title ? ` · ${c.responsible_person.title}` : ""} · {c.responsible_person.email} · {c.responsible_person.phone}</p>}
+            {c.ai_result && <p style={{ color: c.ai_result.passed ? "#22c55e" : "#ef4444" }}>AI check: {c.ai_result.passed ? "passed" : "flagged"}{typeof c.ai_result.confidence === "number" ? ` · confidence ${c.ai_result.confidence}%` : ""}{(c.ai_result.flags || []).length > 0 ? ` — ${(c.ai_result.flags || []).join(" · ")}` : ""}</p>}
             {c.manager_note && <p>Company note: {c.manager_note}</p>}
             {c.document_paths?.length > 0 && (
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>
@@ -152,7 +159,7 @@ const CompanyApprovalTab = () => {
             <button disabled={busy === m.id} onClick={() => setFlag(m, "admin_approved", false)} style={btn("transparent", "#ef4444", "1px solid rgba(239,68,68,0.5)")}>Revoke approval</button>
           )}
           <button disabled={busy === m.id} onClick={() => { setReqFor(m); setPicked(c?.requested_items?.filter((i) => REQUEST_OPTIONS.includes(i)) || []); }} style={btn(GOLD, "#0D1B2A")}>📋 Request documents</button>
-          {c?.status === "submitted" && (
+          {(c?.status === "submitted" || c?.status === "flagged" || c?.status === "ai_review") && (
             <button disabled={busy === m.id} onClick={() => markVerified(m)} style={btn("transparent", "#22c55e", "1px solid #22c55e")}>Mark documents verified</button>
           )}
           <button disabled={busy === m.id} onClick={() => setFlag(m, "company_verified", !m.company_verified)} style={btn("transparent", GOLD, `1px solid ${GOLD}`)}>
@@ -173,6 +180,10 @@ const CompanyApprovalTab = () => {
       </div>
 
       {loading && <p style={{ color: "#94a3b8", fontSize: 13 }}>Loading…</p>}
+      {!loading && flagged.length > 0 && (<>
+        <p style={{ color: "#ef4444", fontSize: 11, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 8 }}>🚨 AI alarms ({flagged.length})</p>
+        {flagged.map((m) => <Card key={m.id} m={m} />)}
+      </>)}
       {!loading && pending.length > 0 && (<>
         <p style={{ color: "#f59e0b", fontSize: 11, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 8 }}>Pending approval ({pending.length})</p>
         {pending.map((m) => <Card key={m.id} m={m} />)}
