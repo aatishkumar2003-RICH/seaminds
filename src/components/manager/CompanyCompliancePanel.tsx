@@ -37,7 +37,7 @@ export default function CompanyCompliancePanel() {
   if (status === "verified") {
     return (
       <section className="mx-4 sm:mx-6 mt-3 flex items-center gap-2 rounded-xl border border-primary/30 bg-card px-3 py-2 text-xs">
-        <span className="h-2.5 w-2.5 rounded-full bg-[hsl(142_71%_45%)]" />
+        <span className="h-2.5 w-2.5 rounded-full bg-primary" />
         <span className="font-bold text-primary">🛡️ Company Verified ✓</span>
         {c?.license_number && <span className="truncate text-muted-foreground">· Licence {c.license_number}</span>}
       </section>
@@ -120,7 +120,7 @@ export default function CompanyCompliancePanel() {
           <label className="mt-2 block text-xs text-foreground">Crewing licence (RPSL / SIUPPAK / recruitment licence)
             <input type="file" accept="application/pdf,image/*" className="mt-1 block text-xs text-muted-foreground" onChange={(e) => setCrewFile(e.target.files?.[0] || null)} />
           </label>
-          <button disabled={busy || status === "ai_review"} onClick={submit} className="mt-3 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground disabled:opacity-60">
+          <button disabled={busy} onClick={submit} className="mt-3 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground disabled:opacity-60">
             {busy ? "Submitting…" : "Submit for verification"}
           </button>
         </div>
