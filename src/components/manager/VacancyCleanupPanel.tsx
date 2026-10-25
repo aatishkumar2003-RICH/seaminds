@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { logEvent } from "@/lib/logEvent";
+import { ShareButtons } from "@/components/opportunities/WhatsAppBroadcastPanel";
 import { AGE_PRESETS, ageInDays, canTransition, parseCustomDays } from "@/lib/managerVacancies";
 import {
   loadManagerVacancyPage, loadManagerStatusCounts, loadApplicationCounts, requestLifecycleAction, summarizeLifecycle,
@@ -226,6 +227,7 @@ export default function VacancyCleanupPanel({
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {p.flier_url && <button className={btn} onClick={() => onViewFlier(p.flier_url!)}>View flyer</button>}
+                  {st === "active" && <ShareButtons v={p} />}
                   <button className={btn} onClick={() => onEdit(p)}>Edit</button>
                   {canTransition(st, "filled") && <button className={btn} onClick={() => requestStatus("filled", [p.id])}>Mark filled</button>}
                   {canTransition(st, "archived") && <button className={btn} onClick={() => requestStatus("archived", [p.id])}>Archive</button>}
