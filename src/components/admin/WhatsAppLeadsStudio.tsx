@@ -93,7 +93,8 @@ export default function WhatsAppLeadsStudio() {
 
   const dispatch = async () => {
     const queue = leads.filter((l) => l.status === "approved" && l.audience === "crew");
-    if (!queue.length) return toast.error("No approved crew contacts to send");
+    if (!crewApproved) return toast.error("Locked until Meta approves the Seafarer Welcome message");
+    if (!queue.length) return toast.error("No ready crew contacts to send");
     if (!confirm(`Send the Seafarer Welcome WhatsApp to ${queue.length} crew, one every 3 seconds?`)) return;
     stopRef.current = false;
     setProgress({ done: 0, total: queue.length });
