@@ -6164,6 +6164,54 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_crew_leads: {
+        Row: {
+          audience: string
+          batch_tag: string | null
+          created_at: string
+          id: string
+          last_error: string | null
+          message_sid: string | null
+          name: string | null
+          phone_e164: string
+          phone_raw: string | null
+          rank_detected: string | null
+          sent_at: string | null
+          source: string
+          status: string
+        }
+        Insert: {
+          audience?: string
+          batch_tag?: string | null
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          message_sid?: string | null
+          name?: string | null
+          phone_e164: string
+          phone_raw?: string | null
+          rank_detected?: string | null
+          sent_at?: string | null
+          source?: string
+          status?: string
+        }
+        Update: {
+          audience?: string
+          batch_tag?: string | null
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          message_sid?: string | null
+          name?: string | null
+          phone_e164?: string
+          phone_raw?: string | null
+          rank_detected?: string | null
+          sent_at?: string | null
+          source?: string
+          status?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       question_bank_public: {
