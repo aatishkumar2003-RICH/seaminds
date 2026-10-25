@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
 
     await sb.from('company_compliance').update({ status: pass ? 'verified' : 'flagged', ai_result: result, ai_checked_at: now, reviewed_at: pass ? now : null, updated_at: now }).eq('manager_user_id', uid);
     if (pass) {
-      await sb.from('manager_profiles').update({ company_verified: true, admin_approved: true, approved_at: now }).eq('user_id', uid);
+      await sb.from('manager_profiles').update({ company_verified: true }).eq('user_id', uid);
     }
 
     // One email: manager on pass, admin alarm on flag.
