@@ -1,7 +1,7 @@
 import React, { useState, useEffect, lazy, Suspense } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
-import { Anchor, X } from "lucide-react";
+import { Anchor, X, ChevronLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTimeOfDay } from "@/hooks/useTimeOfDay";
@@ -529,7 +529,10 @@ const Index = () => {
   };
 
   const saveProfileGate = async () => {
-    if (!role || !nationality || !whatsappNumber) return;
+    if (!role || !nationality || !whatsappNumber) {
+      toast({ title: "Almost there", description: "Please add your nationality and WhatsApp number too." });
+      return;
+    }
     const dbRole = role.includes("Captain") || role.includes("Master") ? "Captain"
       : (role.includes("Engine Cadet") || role.includes("ETO Cadet") || role.includes("Trainee Officer (Engine)")) ? "Engineer"
       : (role.includes("Deck Cadet") || role.includes("Trainee Officer (Deck)")) ? "Officer"
@@ -557,8 +560,11 @@ const Index = () => {
   };
 
   const profileGateUI = (
-    <div className="flex h-full flex-col items-center justify-start overflow-y-auto bg-background px-6 py-8 text-center">
-      <div className="mb-4 text-primary">
+    <div className="relative flex h-full flex-col items-center justify-start overflow-y-auto bg-background px-6 py-8 text-center">
+      <button onClick={() => setScreen("home")} aria-label="Close" className="absolute left-4 top-4 flex items-center gap-1 text-sm font-semibold text-primary">
+        <ChevronLeft size={18} /> Back
+      </button>
+      <div className="mb-4 mt-6 text-primary">
         <svg xmlns="http://www.w3.org/2000/svg" width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
       </div>
       <h2 className="mb-2 text-lg font-bold text-foreground">Complete Your Profile</h2>

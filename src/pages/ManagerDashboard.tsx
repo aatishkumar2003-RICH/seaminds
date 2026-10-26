@@ -301,7 +301,6 @@ const ManagerDashboard = () => {
     }
     const identity = await loadManagerIdentity();
     if (!identity?.userId) { toast.error("Loading your company account — please try again"); return; }
-    if (!identity.approved) { toast.error("Your company account is pending approval"); return; }
     setReadingFlier(true);
     try {
       const image_base64 = await downscaleImage(file);
@@ -343,7 +342,7 @@ const ManagerDashboard = () => {
     setPublishing(true);
     try {
       const identity = await loadManagerIdentity();
-      if (!identity?.approved) { toast.error("Your company account is pending approval"); return; }
+      if (!identity?.userId) { toast.error("Loading your company account — please try again"); return; }
       const result = await publishVacancyBatch(rows, identity, sourceType, {
         skipDuplicateScan: true,
         flierUrl: sourceType === "flier" ? flierUrl : null,
@@ -378,7 +377,7 @@ const ManagerDashboard = () => {
     if (blocked) { toast.error("Country code required — add +XX (or clear the WhatsApp number) before publishing."); return; }
     setPublishing(true);
     const identity = await loadManagerIdentity();
-    if (!identity?.approved) { setPublishing(false); toast.error("Your company account is pending approval"); return; }
+    if (!identity?.userId) { setPublishing(false); toast.error("Loading your company account — please try again"); return; }
     const scan = await scanDuplicates(identity.userId, previews);
     setPublishing(false);
     if (scan.toPublish.length === 0) {
