@@ -1839,6 +1839,7 @@ export type Database = {
       }
       crew_profiles: {
         Row: {
+          availability_status: string | null
           available_from: string | null
           cdc_applied: boolean
           contracts_in_rank_band: string | null
@@ -1895,6 +1896,7 @@ export type Database = {
           years_in_rank_band: string | null
         }
         Insert: {
+          availability_status?: string | null
           available_from?: string | null
           cdc_applied?: boolean
           contracts_in_rank_band?: string | null
@@ -1951,6 +1953,7 @@ export type Database = {
           years_in_rank_band?: string | null
         }
         Update: {
+          availability_status?: string | null
           available_from?: string | null
           cdc_applied?: boolean
           contracts_in_rank_band?: string | null
