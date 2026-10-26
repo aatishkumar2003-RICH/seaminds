@@ -1,3 +1,5 @@
+import { ensureCrewProfileRow, MANAGER_ACCOUNT_MSG } from "@/lib/crewProfileRow";
+import { markProfileDone } from "@/lib/applyMessage";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
@@ -305,6 +307,8 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
 
   const finish = async () => {
     if (!uid) return;
+    const ensured = await ensureCrewProfileRow();
+    if (ensured === "manager") return toast.error(MANAGER_ACCOUNT_MSG);
     const { error: profileError } = await resilientSave("quick_profile", () => supabase.from("crew_profiles").update({
       rank, years_in_rank_band: yearsBand, contracts_in_rank_band: contractsBand,
       whatsapp_number: toE164(whatsapp), email: contactEmail.trim(),
@@ -330,6 +334,7 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
     if (error || !(saved as any)?.quick_profile_completed_at) {
       return toast.error(saveErrorMessage(error));
     }
+    markProfileDone(uid);
     if (onComplete) { onComplete(); return; }
     setDone(true);
   };

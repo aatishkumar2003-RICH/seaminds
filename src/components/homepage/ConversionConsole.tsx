@@ -262,6 +262,7 @@ const ConversionConsole = () => {
     try {
       // Shared router: opens WhatsApp/portal synchronously from this tap (mobile-safe), never the SeaMinds admin.
       const out = await applyToVacancy(v, cardInfo || getCachedCrewCardInfo());
+      if (out.needsProfile) { setGateOpen(true); return; }
       const t = out.toast;
       (t.tone === "error" ? toast.error : t.tone === "warning" ? toast.warning : toast.success)(`${t.title} — ${t.description}`);
       if (out.ok) setApplied((s) => ({ ...s, [v.id]: out.duplicate ? "dup" : "ok" }));

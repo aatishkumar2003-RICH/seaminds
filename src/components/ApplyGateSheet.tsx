@@ -30,15 +30,21 @@ const ApplyGateSheet = ({ open, onClose, next }: Props) => {
           width: "100%", maxWidth: 520, padding: "22px 20px calc(22px + env(safe-area-inset-bottom))",
         }}
       >
-        <p style={{ color: "#fff", fontSize: 18, fontWeight: 900 }}>⚓ Complete your Sea Profile first</p>
+        <p style={{ color: "#fff", fontSize: 18, fontWeight: 900 }}>⚓ Add your profile to apply</p>
         <p style={{ color: "#94A3B8", fontSize: 13, lineHeight: 1.6, marginTop: 8 }}>
-          2 minutes, just taps — managers receive your verified profile with every application.
+          Recruiters receive your profile with every application. Choose one:
         </p>
         <button
           onClick={() => navigate(target)}
           style={{ marginTop: 16, width: "100%", padding: "14px 0", borderRadius: 12, border: "none", background: GOLD, color: NAVY, fontWeight: 900, fontSize: 14.5, cursor: "pointer" }}
         >
-          Complete Sea Profile →
+          ⚡ Quick Profile — 2 minutes, just taps
+        </button>
+        <button
+          onClick={() => navigate("/app?tab=cv")}
+          style={{ marginTop: 10, width: "100%", padding: "14px 0", borderRadius: 12, background: "transparent", color: GOLD, border: `1px solid ${GOLD}`, fontWeight: 900, fontSize: 14.5, cursor: "pointer" }}
+        >
+          📄 Upload or build my CV
         </button>
         <button
           onClick={onClose}

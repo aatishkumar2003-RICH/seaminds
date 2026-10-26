@@ -214,24 +214,31 @@ export const completeHandoff = (win: Window | null, url: string | null) => {
 
 const quickProfileCache = new Map<string, boolean>();
 
-/** True when the crew's Quick Sea Profile is complete. Resolve on mount, never on tap. */
+/** Mark a profile complete after a confirmed save (Quick Profile, Sea Profile or CV). */
+export const markProfileDone = (profileId: string) => { if (profileId) quickProfileCache.set(profileId, true); };
+
+/**
+ * True when the crew has a Quick Profile OR a CV-based profile. Fails closed:
+ * a lookup failure is not proof of a profile. Only positive results are cached.
+ */
 export const fetchQuickProfileDone = async (profileId: string): Promise<boolean> => {
   if (!profileId) return false;
-  const hit = quickProfileCache.get(profileId);
-  if (hit !== undefined) return hit;
+  if (quickProfileCache.get(profileId)) return true;
   try {
-    const { data } = await supabase
-      .from("crew_profiles")
-      .select("quick_profile_completed_at, rank, whatsapp_number" as any)
-      .eq("id", profileId)
-      .maybeSingle();
+    const [{ data, error }, { data: cv }] = await Promise.all([
+      supabase.from("crew_profiles").select("quick_profile_completed_at, rank, whatsapp_number" as any).eq("id", profileId).maybeSingle(),
+      supabase.from("crew_cv_data").select("user_id").eq("user_id", profileId).maybeSingle(),
+    ]);
+    if (error) return false;
     const d = data as any;
-    // A profile built via CV/onboarding (rank + WhatsApp saved) counts as complete too.
-    const done = !!d?.quick_profile_completed_at || (!!d?.rank && !!d?.whatsapp_number);
-    quickProfileCache.set(profileId, done);
+    const done = !!d?.quick_profile_completed_at || (!!d?.rank && d.rank !== "Seafarer" && !!d?.whatsapp_number) || (!!cv && !!d?.rank);
+    if (done) quickProfileCache.set(profileId, true);
     return done;
   } catch {
-    return true; // never block applying on a lookup failure
+    return false;
   }
 };
 
+
+/** Synchronous check used by the apply router (must not await before opening the handoff tab). */
+export const isProfileDoneCached = (): boolean => Array.from(quickProfileCache.values()).some(Boolean);

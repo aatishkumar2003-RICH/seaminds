@@ -7,6 +7,8 @@ vi.mock("@/integrations/supabase/client", () => ({
 }));
 
 import { applyToVacancy } from "@/lib/applicationRouter";
+import { markProfileDone } from "@/lib/applyMessage";
+markProfileDone("crew-test");
 import type { UnifiedVacancy } from "@/lib/vacancyFeed";
 
 // Email-only advert: no WhatsApp, no portal.

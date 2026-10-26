@@ -199,6 +199,7 @@ const JobDetail = () => {
     try {
       trackPixel("Contact", { content_name: "job_apply_detail" });
       const out = await applyToVacancy(unified, card);
+      if (out.needsProfile) { setGateOpen(true); return; }
       show(out.toast);
       if (out.ok || out.toast.tone === "warning") setApplied(true);
       if (route.channel === "email" && out.ok) setEmailDone(true);

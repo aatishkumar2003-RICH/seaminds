@@ -7,6 +7,8 @@ vi.mock("@/integrations/supabase/client", () => ({
 }));
 
 import { applyToVacancy, applyByEmail } from "@/lib/applicationRouter";
+import { markProfileDone } from "@/lib/applyMessage";
+markProfileDone("crew-test");
 import type { UnifiedVacancy } from "@/lib/vacancyFeed";
 
 const v: UnifiedVacancy = {
