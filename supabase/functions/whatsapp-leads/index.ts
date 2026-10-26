@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           model: "google/gemini-3.8-flash",
           messages: [{ role: "user", content: [
-            { type: "text", text: "Extract every person and phone number visible in this image (WhatsApp group list, contact list, crew list or flyer). Return ONLY a JSON array of objects: {\"name\": string|null, \"phone\": string, \"rank\": string|null}. Copy phone numbers exactly as shown. No markdown." },
+            { type: "text", text: "Extract every phone number visible in this image (WhatsApp group list, contact list, crew list or flyer). Do NOT extract names or any other details. Return ONLY a JSON array of objects: {\"phone\": string}. Copy phone numbers exactly as shown. No markdown." },
             { type: "image_url", image_url: { url: `data:${mime};base64,${img}` } },
           ] }],
         }),
@@ -57,7 +57,8 @@ Deno.serve(async (req) => {
       const txt = String(d.choices?.[0]?.message?.content || "").replace(/```json|```/g, "").trim();
       let rows: unknown = [];
       try { rows = JSON.parse(txt.slice(txt.indexOf("["), txt.lastIndexOf("]") + 1)); } catch { rows = []; }
-      return json({ rows: Array.isArray(rows) ? rows.slice(0, 500) : [] });
+      const phones = Array.isArray(rows) ? rows.map((r: any) => ({ phone: String(r?.phone ?? r ?? "") })).filter((r) => r.phone).slice(0, 500) : [];
+      return json({ rows: phones });
     }
 
     if (body.action === "template_status") {
