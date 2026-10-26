@@ -196,6 +196,7 @@ const ManagerDashboard = () => {
     contract_duration: "", monthly_salary: "", contact_whatsapp: "", contact_email: "", additional_notes: "",
   });
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const [applicantView, setApplicantView] = useState<"all" | "vacancy">("all");
   const [offerFor, setOfferFor] = useState<Applicant | null>(null);
   const [trainingFor, setTrainingFor] = useState<Applicant | null>(null);
   const [trainingCounts, setTrainingCounts] = useState<Record<string, { assigned: number; completed: number }>>({});
@@ -832,9 +833,17 @@ const ManagerDashboard = () => {
     .slice(0, 6);
 
   const aq = applicantQuery.trim().toLowerCase();
-  const visibleGroups = !aq ? applicantGroups : applicantGroups
+  // One inbox: every application across all vacancies, newest first (default view).
+  const inboxGroups = applicants.length ? [{
+    key: "__all__",
+    title: "📥 All applications — newest first",
+    meta: `${applicants.length} total · ${awaitingCount} awaiting review`,
+    items: [...applicants].sort((x, y) => new Date(y.applied_at).getTime() - new Date(x.applied_at).getTime()),
+  }] : [];
+  const baseGroups = applicantView === "all" ? inboxGroups : applicantGroups;
+  const visibleGroups = !aq ? baseGroups : baseGroups
     .map((g) => ({ ...g, items: g.items.filter((a) =>
-      [a.crew_name, a.crew_rank, a.rank, a.nationality, a.vessel].some((v) => (v || "").toLowerCase().includes(aq))) }))
+      [a.crew_name, a.crew_rank, a.rank, a.nationality, a.vessel, a.vacancy_label].some((v) => (v || "").toLowerCase().includes(aq))) }))
     .filter((g) => g.items.length > 0);
 
   // ---------- Vacancy console ----------
