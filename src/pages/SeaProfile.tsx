@@ -45,11 +45,17 @@ export default function SeaProfile() {
     if (!uid) return;
     if (!ranks.some((r) => r.canonical_rank === form.rank)) { toast.error("Choose your official rank from the list."); return; }
     setState("saving");
+    const ensured = await ensureCrewProfileRow();
+    if (ensured === "manager") { setState("ready"); toast.error(MANAGER_ACCOUNT_MSG); return; }
     const { error } = await resilientSave("sea_profile", () => supabase.from("crew_profiles").update(form as any).eq("id", uid));
     // Verify the save actually landed before claiming success
     const { data: check } = await supabase.from("crew_profiles").select("rank").eq("id", uid).maybeSingle();
     setState("ready");
-    if (error || (check as any)?.rank !== form.rank) { toast.error(saveErrorMessage(error)); return; }
+    if (error || (check as any)?.rank !== form.rank) {
+      toast.error(error ? saveErrorMessage(error) : "Your profile could not be saved. Please check your connection and tap Save again.");
+      return;
+    }
+    markProfileDone(uid);
     toast.success("Sea Profile saved. Earlier scores are unchanged.");
     navigate(ret && ret.startsWith("/") ? ret : "/app");
   };
