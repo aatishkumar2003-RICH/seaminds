@@ -571,9 +571,6 @@ export const publishVacancyBatch = async (
   const requested = rows.length;
   const base = { requested, published: 0, duplicatesSkipped: 0 };
   if (requested === 0) return { ...base, failures: [], batchId: null, status: "nothing" };
-  if (!identity.approved) {
-    return { ...base, failures: ["Your company account is pending approval"], batchId: null, status: "blocked" };
-  }
 
   const missingFlier = rows.some((r) => (r.source_type ?? sourceType) === "flier" && !(r.flier_url !== undefined ? r.flier_url : opts?.flierUrl));
   if (missingFlier) {

@@ -104,7 +104,6 @@ const PostVacancy = () => {
 
   const ready = (): boolean => {
     if (!identity?.userId) { toast({ title: "Please wait", description: "Loading your company account…", variant: "destructive" }); return false; }
-    if (!identity.approved) { toast({ title: "Pending approval", description: "Your company account is pending approval.", variant: "destructive" }); return false; }
     return true;
   };
 
@@ -450,7 +449,7 @@ const PostVacancy = () => {
             <button onClick={resetStudio} className="rounded-lg border border-[#D4AF37]/40 px-2.5 py-1.5 text-[11px] text-[#D4AF37] hover:bg-[#D4AF37]/10">↺ Reset studio</button>
           )}
         </div>
-        <p className="text-[11px] text-muted-foreground">Publishing as <span className="text-foreground font-medium">{identity?.companyName || "—"}</span> (from your approved company profile).</p>
+        <p className="text-[11px] text-muted-foreground">Publishing as <span className="text-foreground font-medium">{identity?.companyName || "—"}</span> (from your company profile).</p>
 
         <button
           type="button"
@@ -508,7 +507,7 @@ const PostVacancy = () => {
               </span>
               <span className={`w-7 text-[11px] font-bold ${batchExpanded ? "text-[#D4AF37]" : "text-[#94A3B8]"}`}>{batchExpanded ? "ON" : "OFF"}</span>
             </button>
-            <button type="button" aria-label={retrying ? "Retrying failed readings…" : `Retry failed readings${failedReadings.length ? ` (${failedReadings.length})` : ""}`} onClick={retryFailed} disabled={commandBusy || !failedReadings.length || !identity?.approved}
+            <button type="button" aria-label={retrying ? "Retrying failed readings…" : `Retry failed readings${failedReadings.length ? ` (${failedReadings.length})` : ""}`} onClick={retryFailed} disabled={commandBusy || !failedReadings.length || !identity?.userId}
               className={`flex items-center gap-3 rounded-xl border-2 px-3 py-2.5 min-h-12 text-left transition-colors disabled:cursor-not-allowed ${failedReadings.length ? "border-[#f59e0b] bg-[#f59e0b]/15 text-[#f59e0b] hover:bg-[#f59e0b]/25 disabled:opacity-60" : "border-[#22c55e]/40 bg-[#22c55e]/10 text-[#22c55e]"}`}>
               {retrying ? <Loader2 size={18} className="shrink-0 animate-spin" /> : <RotateCw size={18} className="shrink-0" />}
               <span className="flex-1 text-sm font-semibold">{retrying ? "Retrying failed readings…" : failedReadings.length ? "Retry failed readings" : "All adverts read"}</span>
@@ -701,7 +700,7 @@ const PostVacancy = () => {
                               <p className="text-[10px] text-muted-foreground">Recruiter: Extracted from advert — not independently verified.</p>
                             </>
                           ) : s.ownership === "own" ? (
-                            <p className="text-[11px] text-muted-foreground">Recruiter: {identity?.companyName} (your approved company)</p>
+                            <p className="text-[11px] text-muted-foreground">Recruiter: {identity?.companyName} (your company)</p>
                           ) : null}
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {field("Rank", r.rank_required, set("rank_required"), "e.g. Chief Officer")}
@@ -768,7 +767,7 @@ const PostVacancy = () => {
               </div>
             </div>
           ) : (
-            <Button className="w-full h-11" onClick={runCheck} disabled={checking || !engineRows.length || problems.length > 0 || !identity?.approved || sources.some((s) => s.status === "reading")}>
+            <Button className="w-full h-11" onClick={runCheck} disabled={checking || !engineRows.length || problems.length > 0 || !identity?.userId || sources.some((s) => s.status === "reading")}>
               {checking ? "Checking…" : heldCount > 0 ? `Check & publish ${engineRows.length} ready →` : "Check & continue →"}
             </Button>
           )}

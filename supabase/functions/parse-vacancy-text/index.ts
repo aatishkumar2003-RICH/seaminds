@@ -54,13 +54,13 @@ Deno.serve(async (req) => {
       auth: { persistSession: false },
     });
 
-    // --- approved manager only ---
+    // --- any registered manager (free growth phase) ---
     const { data: mgr } = await admin
       .from("manager_profiles")
       .select("admin_approved")
       .eq("user_id", userId)
       .maybeSingle();
-    if (!mgr || mgr.admin_approved !== true) {
+    if (!mgr) {
       return new Response(JSON.stringify({ ok: false, error: "not_approved" }), { status: 403, headers: jsonHeaders });
     }
 
