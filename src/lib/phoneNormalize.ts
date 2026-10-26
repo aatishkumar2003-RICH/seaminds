@@ -31,8 +31,8 @@ export function extractLeadsFromText(text: string, defaultCc = "62"): ExtractedL
     const matches = line.match(/(?:\+|00)?\d[\d\s().-]{7,18}\d/g) || [];
     for (const m of matches) {
       const e164 = normalizePhone(m, defaultCc);
-      const rest = line.replace(m, " ").replace(/[|,;\t:]+/g, " ").replace(/\s+/g, " ").trim();
-      out.push({ name: rest ? rest.slice(0, 80) : null, phone_raw: m.trim(), phone_e164: e164, rank: null });
+      // Numbers only: names in chats/sheets are unreliable, so none are kept.
+      out.push({ name: null, phone_raw: m.trim(), phone_e164: e164, rank: null });
     }
   }
   return out;

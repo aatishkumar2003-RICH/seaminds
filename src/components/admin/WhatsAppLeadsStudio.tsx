@@ -67,7 +67,7 @@ export default function WhatsAppLeadsStudio() {
           const { b64, mime } = await compress(f);
           const { data, error } = await supabase.functions.invoke("whatsapp-leads", { body: { action: "extract", imageBase64: b64, mimeType: mime } });
           if (error || data?.error) { toast.error(data?.error || "Could not read screenshot"); continue; }
-          stage((data.rows || []).map((r: any) => ({ name: r.name || null, phone_raw: String(r.phone || ""), phone_e164: normalizePhone(String(r.phone || "")), rank: r.rank || null })), "img");
+          stage((data.rows || []).map((r: any) => ({ name: null, phone_raw: String(r.phone || ""), phone_e164: normalizePhone(String(r.phone || "")), rank: null })), "img");
         } else if (isSpreadsheet(f)) {
           const { text } = await readXlsxCv(f);
           stage(extractLeadsFromText(text), "xlsx");
