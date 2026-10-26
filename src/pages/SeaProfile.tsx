@@ -23,6 +23,9 @@ export default function SeaProfile() {
   const [ranks, setRanks] = useState<{ canonical_rank: string; department_label: string | null }[]>([]);
   const [form, setForm] = useState<Form>(EMPTY);
   const [state, setState] = useState<"loading" | "ready" | "saving" | "signin">("loading");
+  const [editing, setEditing] = useState(!!ret);
+  const [info, setInfo] = useState<any>({});
+  const [avail, setAvail] = useState<string>("");
 
   useEffect(() => {
     (async () => {
@@ -30,18 +33,31 @@ export default function SeaProfile() {
       if (!user) { setState("signin"); return; }
       setUid(user.id);
       const [{ data: p }, { data: rt }] = await Promise.all([
-        supabase.from("crew_profiles").select("rank, vessel_type, years_in_rank_band, contracts_in_rank_band, total_sea_service_band" as any).eq("id", user.id).maybeSingle(),
+        supabase.from("crew_profiles").select("first_name, last_name, crew_unique_id, nationality, whatsapp_number, email, is_available, availability_status, placed_until, rank, vessel_type, years_in_rank_band, contracts_in_rank_band, total_sea_service_band" as any).eq("id", user.id).maybeSingle(),
         supabase.from("rank_taxonomy" as any).select("canonical_rank, department_label"),
       ]);
       const seen = new Set<string>();
       setRanks(((rt as any[]) || []).filter((r) => !seen.has(r.canonical_rank) && seen.add(r.canonical_rank))
         .sort((a, b) => (a.department_label || "").localeCompare(b.department_label || "") || a.canonical_rank.localeCompare(b.canonical_rank)));
       const pp: any = p || {};
+      setInfo(pp);
+      const placed = pp.placed_until && new Date(pp.placed_until) > new Date();
+      setAvail(pp.availability_status || (placed ? "joined" : pp.is_available ? "ready" : "not_available"));
       setForm({ rank: pp.rank || "", vessel_type: pp.vessel_type || "", years_in_rank_band: pp.years_in_rank_band || "",
         contracts_in_rank_band: pp.contracts_in_rank_band || "", total_sea_service_band: pp.total_sea_service_band || "" });
       setState("ready");
     })();
   }, []);
+
+  const setAvailability = async (v: string) => {
+    if (!uid || v === avail) return;
+    const prev = avail; setAvail(v);
+    const ensured = await ensureCrewProfileRow();
+    if (ensured === "manager") { setAvail(prev); toast.error(MANAGER_ACCOUNT_MSG); return; }
+    const { data, error } = await supabase.from("crew_profiles").update({ availability_status: v } as any).eq("id", uid).select("availability_status").maybeSingle();
+    if (error || (data as any)?.availability_status !== v) { setAvail(prev); toast.error("Could not update availability. Please try again."); return; }
+    toast.success(v === "ready" ? "You're marked Ready to join." : v === "joined" ? "Marked as Joined (onboard)." : "Marked Not available.");
+  };
 
   const save = async () => {
     if (!uid) return;
