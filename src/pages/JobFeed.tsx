@@ -200,6 +200,7 @@ const JobFeed = () => {
     try {
       trackPixel("Contact", { content_name: "job_apply_public" });
       const out = await applyToVacancy(v, cardInfo || getCachedCrewCardInfo());
+      if (out.needsProfile) { setGateOpen(true); return; }
       const t = out.toast;
       (t.tone === "error" ? toast.error : t.tone === "warning" ? toast.warning : toast.success)(`${t.title} — ${t.description}`);
       if (out.ok) setAppliedIds((s0) => new Set(s0).add(v.id));

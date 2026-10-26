@@ -294,6 +294,7 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     try {
       const out = await applyToVacancy(v, cardInfo || getCachedCrewCardInfo());
       setDirectBusy((s0) => ({ ...s0, [v.id]: false }));
+      if (out.needsProfile) { setGateOpen(true); return; }
       if (out.ok) setDirectApplied((s0) => ({ ...s0, [v.id]: out.duplicate ? "dup" : "ok" }));
       toast({ title: out.toast.title, description: out.toast.description, variant: out.toast.tone === "error" ? "destructive" : undefined });
       loadMyApplications();

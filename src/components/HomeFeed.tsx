@@ -442,6 +442,7 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
       log("vacancy", v.id, "apply");
       const out = await applyToVacancy(v, cardInfo || getCachedCrewCardInfo());
       setDirectBusy((s0) => ({ ...s0, [v.id]: false }));
+      if (out.needsProfile) { setGateOpen(true); return; }
       const t = out.toast;
       (t.tone === "error" ? toast.error : t.tone === "warning" ? toast.warning : toast.success)(`${t.title} — ${t.description}`);
       if (out.ok) setDirectApplied((s0) => ({ ...s0, [v.id]: out.duplicate ? "dup" : "ok" }));
