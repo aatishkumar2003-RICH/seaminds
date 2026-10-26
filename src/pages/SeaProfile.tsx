@@ -51,7 +51,7 @@ export default function SeaProfile() {
     setState("ready");
     if (error || (check as any)?.rank !== form.rank) { toast.error(saveErrorMessage(error)); return; }
     toast.success("Sea Profile saved. Earlier scores are unchanged.");
-    if (ret && ret.startsWith("/")) navigate(ret);
+    navigate(ret && ret.startsWith("/") ? ret : "/app");
   };
 
   const back = () => (ret && ret.startsWith("/") ? navigate(ret) : navigate("/app"));
