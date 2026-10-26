@@ -119,6 +119,7 @@ const ShipManagerLayout = () => {
       {/* Mobile top bar */}
       <div className="lg:hidden sticky top-0 z-40 flex items-center justify-between border-b border-border bg-background/95 backdrop-blur px-4 h-14" style={{ paddingTop: "env(safe-area-inset-top)" }}>
         {brand}
+        <ReleaseBadge className="ml-auto mr-1" />
         <button onClick={() => setOpen(true)} aria-label="Open ShipManager menu" className="w-11 h-11 flex items-center justify-center rounded-xl text-primary">
           <Menu size={20} />
         </button>

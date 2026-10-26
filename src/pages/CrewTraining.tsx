@@ -2,16 +2,22 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import MaritimeEnglishLab from "@/components/training/MaritimeEnglishLab";
 import { Helmet } from "react-helmet-async";
-import { ChevronLeft, ExternalLink, Loader2, CheckCircle2, GraduationCap, Clock } from "lucide-react";
+import { ChevronLeft, ExternalLink, Loader2, CheckCircle2, GraduationCap, Clock, Home, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { openTraining, completeTraining, trainingLedger, recommendTraining, assignTraining, trainingError, type LedgerItem, type Recommendation, trainingCatalog, trainingMatrix, type CatalogItem, type Segment } from "@/lib/training";
 
-const Shell = ({ children, onBack }: { children: React.ReactNode; onBack: () => void }) => (
+const Shell = ({ children, onBack, onQuit }: { children: React.ReactNode; onBack: () => void; onQuit?: () => void }) => (
   <main className="min-h-screen bg-background text-foreground pb-12">
     <div className="mx-auto max-w-lg px-4 py-5 space-y-5">
-      <Button variant="ghost" className="px-0 text-primary" onClick={onBack}><ChevronLeft /> Back</Button>
+      <div className="flex items-center justify-between">
+        <Button variant="ghost" className="px-0 text-primary" onClick={onBack}><ChevronLeft /> Back</Button>
+        <div className="flex items-center gap-1">
+          {onQuit && <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={onQuit}><RotateCcw size={16} /> Quit / restart</Button>}
+          <Button variant="ghost" size="sm" className="text-primary" onClick={() => { window.location.assign("/app"); }} aria-label="Home"><Home size={16} /> Home</Button>
+        </div>
+      </div>
       {children}
     </div>
   </main>
@@ -270,7 +276,12 @@ const CrewTraining = () => {
   }, [loading, user, token, navigate]);
 
   return (
-    <Shell onBack={() => (token ? navigate("/training") : navigate(-1))}>
+    <Shell
+      onBack={() => (token ? navigate("/training", { replace: true }) : navigate("/app", { replace: true }))}
+      onQuit={token ? () => {
+        if (window.confirm("Quit this module? Your unsaved answers will be cleared and you can restart it any time.")) navigate("/training", { replace: true });
+      } : undefined}
+    >
       {!user ? <p className="text-muted-foreground">Loading…</p> : token ? <Module token={token} /> : <MyTraining />}
       <p className="text-xs text-muted-foreground">Training is for learning and preparation; it is not an STCW certificate. <Link to="/app" className="text-primary underline">Open SeaMinds</Link></p>
     </Shell>

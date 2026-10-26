@@ -652,6 +652,20 @@
       "when": 1793022281697,
       "tag": "0092_offer_respects_crew_availability",
       "breakpoints": true
+    },
+    {
+      "idx": 93,
+      "version": "7",
+      "when": 1793032764588,
+      "tag": "0093_applicants_own_vacancies_only",
+      "breakpoints": true
+    },
+    {
+      "idx": 94,
+      "version": "7",
+      "when": 1793032789817,
+      "tag": "0094_applicants_exclude_agency_adverts",
+      "breakpoints": true
     }
   ]
 }
