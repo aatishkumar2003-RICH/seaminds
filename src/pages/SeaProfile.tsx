@@ -107,7 +107,36 @@ export default function SeaProfile() {
         {state === "signin" && (
           <button onClick={() => navigate("/app")} className="w-full py-3 rounded-xl font-bold" style={{ background: "#D4AF37", color: "#0D1B2A" }}>Sign in to edit your profile</button>
         )}
-        {(state === "ready" || state === "saving") && (
+        {state === "ready" && !editing && (
+          <div className="space-y-4">
+            <div className="rounded-2xl p-4 space-y-3" style={{ background: "#112240", border: "1px solid rgba(212,175,55,0.3)" }}>
+              <div>
+                <p className="text-lg font-bold text-white">{[info.first_name, info.last_name].filter(Boolean).join(" ") || "Seafarer"}</p>
+                <p className="text-xs" style={{ color: "#94A3B8" }}>{[info.crew_unique_id, info.nationality].filter(Boolean).join(" · ")}</p>
+              </div>
+              {[["Rank", form.rank], ["Vessel type", form.vessel_type], ["Years in rank", form.years_in_rank_band],
+                ["Contracts in rank", form.contracts_in_rank_band], ["Total sea service", form.total_sea_service_band],
+                ["WhatsApp", info.whatsapp_number], ["Email", info.email]].map(([k, v]) => (
+                <div key={k} className="flex justify-between gap-3 text-sm">
+                  <span style={{ color: "#94A3B8" }}>{k}</span>
+                  <span className="text-white font-semibold text-right break-all">{v || <span style={{ color: "#f59e0b" }}>Not set</span>}</span>
+                </div>
+              ))}
+            </div>
+            <div className="rounded-2xl p-4 space-y-2" style={{ background: "#112240", border: "1px solid rgba(212,175,55,0.3)" }}>
+              <p className="text-xs font-semibold" style={{ color: "#94A3B8" }}>My availability</p>
+              <div className="grid grid-cols-3 gap-2">
+                {[["ready", "🟢 Ready to join"], ["joined", "🚢 Joined"], ["not_available", "⏸️ Not available"]].map(([v, l]) => (
+                  <button key={v} type="button" aria-pressed={avail === v} onClick={() => setAvailability(v)}
+                    className="px-2 py-2 rounded-xl text-xs font-bold" style={chip(avail === v)}>{l}</button>
+                ))}
+              </div>
+            </div>
+            <button onClick={() => navigate(`/quick-profile?edit=1&next=${encodeURIComponent("/profile")}`)} className="w-full py-3 rounded-xl font-bold" style={{ background: "#D4AF37", color: "#0D1B2A" }}>✏️ Edit full profile (Quick Profile tour)</button>
+            <button onClick={() => setEditing(true)} className="w-full py-3 rounded-xl font-bold" style={{ background: "transparent", color: "#D4AF37", border: "1px solid #D4AF37" }}>Quick edit rank &amp; sea service</button>
+          </div>
+        )}
+        {(state === "ready" || state === "saving") && editing && (
           <div className="rounded-2xl p-4 space-y-5" style={{ background: "#112240", border: "1px solid rgba(212,175,55,0.3)" }}>
             <label className="block space-y-2">
               <span className="text-xs font-semibold" style={{ color: "#94A3B8" }}>Official rank</span>
