@@ -638,6 +638,13 @@
       "when": 1793020416858,
       "tag": "0090_rank_aliases_and_availability_status",
       "breakpoints": true
+    },
+    {
+      "idx": 91,
+      "version": "7",
+      "when": 1793020432382,
+      "tag": "0091_availability_respects_placement_lock",
+      "breakpoints": true
     }
   ]
 }
