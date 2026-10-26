@@ -645,6 +645,13 @@
       "when": 1793020432382,
       "tag": "0091_availability_respects_placement_lock",
       "breakpoints": true
+    },
+    {
+      "idx": 92,
+      "version": "7",
+      "when": 1793022281697,
+      "tag": "0092_offer_respects_crew_availability",
+      "breakpoints": true
     }
   ]
 }
