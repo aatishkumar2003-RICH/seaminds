@@ -75,7 +75,7 @@ export default function SeaProfile() {
     }
     markProfileDone(uid);
     toast.success("Sea Profile saved. Earlier scores are unchanged.");
-    navigate(ret && ret.startsWith("/") ? ret : "/app");
+    if (ret && ret.startsWith("/")) navigate(ret); else setEditing(false);
   };
 
   const back = () => (ret && ret.startsWith("/") ? navigate(ret) : navigate("/app"));
