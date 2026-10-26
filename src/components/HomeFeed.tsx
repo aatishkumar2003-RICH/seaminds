@@ -13,7 +13,7 @@ import JobCard from "@/components/JobCard";
 import ReleaseBadge from "@/components/ReleaseBadge";
 import { loadVacancyPage, loadMyApplicationTargets, onAppResume, START_CURSOR, UnifiedVacancy, VacancyCursor, vacancySalary } from "@/lib/vacancyFeed";
 import ApplyGateSheet from "@/components/ApplyGateSheet";
-import CrewOffers from "@/components/CrewOffers";
+import CrewResponsesBar from "@/components/CrewResponsesBar";
 import CreditWallet from "@/components/CreditWallet";
 
 type NewsItem = { title: string; link: string; pubDate: string; source: string };
@@ -516,7 +516,7 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
 
 
       <div className="flex justify-end px-1"><CreditWallet audience="crew" /></div>
-      <CrewOffers profileId={profileId} />
+      <CrewResponsesBar profileId={profileId} />
 
 
       {fleetInvites.map((inv) => (
