@@ -525,7 +525,16 @@ const ManagerDashboard = () => {
     } as any);
     if (error) { setOfferSending(false); toast.error(error.message); return; }
     const result = data as { ok?: boolean; error?: string } | null;
-    if (result && !result.ok) { setOfferSending(false); toast.error(result.error || "Could not send offer"); return; }
+    if (result && !result.ok) {
+      setOfferSending(false);
+      const friendly: Record<string, string> = {
+        crew_already_placed: "This seafarer has marked himself as joined/on board, so offers are paused until he sets 'Ready to join'.",
+        already_placed: "This application is already placed.",
+        not_authorised: "You can only send offers for your own vacancies.",
+      };
+      toast.error(friendly[result.error || ""] || "Could not send offer — please try again.");
+      return;
+    }
 
     const notified = (await notifyOffer(applicationId)).sent;
     setOfferSending(false);
@@ -1274,6 +1283,20 @@ const ManagerDashboard = () => {
                 <RefreshCw size={16} className={applicantsLoading ? "animate-spin" : ""} />
               </button>
             </div>
+            <div className="flex gap-2" role="tablist" aria-label="Applicant view">
+              {([["all", "📥 All applications"], ["vacancy", "📁 By vacancy"]] as const).map(([k, label]) => (
+                <button
+                  key={k}
+                  role="tab"
+                  aria-selected={applicantView === k}
+                  onClick={() => setApplicantView(k)}
+                  className={`flex-1 rounded-xl px-3 py-2 text-xs font-bold transition-colors ${applicantView === k ? "bg-primary text-primary-foreground" : "border border-primary/40 text-primary"}`}
+                >
+                  {label}{k === "all" && awaitingCount > 0 ? ` · ${awaitingCount} new` : ""}
+                </button>
+              ))}
+            </div>
+
 
             {applicantGroups.length === 0 ? (
               <div className="text-center py-6">
