@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
       if (lead.status === "opt_out" || lead.status === "sent") return json({ ok: true, skipped: lead.status });
       const params = new URLSearchParams({
         From: `whatsapp:${FROM}`, To: `whatsapp:${lead.phone_e164}`, ContentSid: tpl,
-        ContentVariables: JSON.stringify({ "1": lead.name || "Sir/Madam" }),
+        ContentVariables: JSON.stringify({ "1": lead.name || "Valued Seafarer" }),
       });
       const r = await fetch(`${GW}/Messages.json`, {
         method: "POST",
