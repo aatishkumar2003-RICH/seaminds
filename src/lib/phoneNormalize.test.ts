@@ -11,9 +11,9 @@ describe("normalizePhone", () => {
 });
 
 describe("extractLeadsFromText", () => {
-  it("finds number and name hint", () => {
+  it("extracts number only, never a name", () => {
     const r = extractLeadsFromText("Budi Santoso - Oiler 0812 3456 7890");
     expect(r[0].phone_e164).toBe("+6281234567890");
-    expect(r[0].name).toContain("Budi");
+    expect(r[0].name).toBeNull();
   });
 });
