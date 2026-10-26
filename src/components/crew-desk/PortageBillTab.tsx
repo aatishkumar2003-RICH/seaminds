@@ -107,6 +107,13 @@ export default function PortageBillTab({ rows }: { rows: Row[] | null }) {
           <option value="">All vessels</option>{vessels.map(v => <option key={v} value={v}>{v}</option>)}
         </select></label>
         <Button variant="outline" onClick={vesselPdf} disabled={!vessel || !lines.length} className="ml-auto"><FileDown size={14} /> Vessel portage bill PDF</Button>
+        <Button variant="outline" onClick={() => {
+          const q = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+          const head = ["Crew", "Rank", "Vessel", "Month", "Currency", "Days served", "Earnings", "Allotment", "Advance", "Bond store", "Communication", "Other deduction", "Net payable"];
+          const body = lines.map(l => [nameOf(l.c.application_id), l.c.rank, l.c.vessel_name, ym, l.e.currency, l.e.days_served, l.e.gross, l.e.allotment, l.e.cash_advance, l.e.bond_store, l.e.communication, l.e.other_deduction, l.e.net_payable].map(q).join(","));
+          const url = URL.createObjectURL(new Blob(["\uFEFF" + [head.map(q).join(","), ...body].join("\r\n")], { type: "text/csv;charset=utf-8" }));
+          const a = document.createElement("a"); a.href = url; a.download = `Portage_${vessel || "all"}_${ym}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 10000);
+        }} disabled={!lines.length}><FileDown size={14} /> Excel (CSV)</Button>
       </div>
 
       {Object.keys(totals).length > 0 && (

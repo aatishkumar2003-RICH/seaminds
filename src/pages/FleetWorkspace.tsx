@@ -5,7 +5,7 @@ type Tab = "crew" | "technical";
 
 const CREW = [
   { title: "Roster & Master Records", desc: "Your crew list, joining status and consent-gated master CVs.", to: "/manager/crew-desk", live: true },
-  { title: "Principal CV Studio", desc: "Export a crew CV in SeaMinds, Anglo-Eastern-style or Synergy-style layout.", to: "/manager/crew-desk", live: true },
+  { title: "Principal CV Studio", desc: "Upload any principal's blank Word/Excel CV form once, name it yourself, then fill it from the master CV.", to: "/manager/crew-desk?tab=cv", live: true },
   { title: "Joining Issues (Tickets)", desc: "Private two-way threads with crew about a joining.", to: "/manager/dashboard?tab=applicants", live: true },
   { title: "Contracts (SEA) & Portage Bill", desc: "Signed contracts, monthly wages, advances, allotments and payslips.", to: "/manager/crew-desk?tab=portage", live: true },
   { title: "Appraisals & Training", desc: "Post-voyage appraisals, re-employment verdicts and training needs.", to: "/manager/crew-desk?tab=appraisals", live: true },
