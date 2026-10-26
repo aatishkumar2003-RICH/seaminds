@@ -88,7 +88,7 @@ export default function SeaContractsTab({ rows, focusId }: { rows: Row[] | null;
       const { data } = await supabase.rpc("crew_desk_master_record" as any, { _application_id: c.application_id });
       const d: any = data || {}; const p = d.personal || {}, pr = d.profile || {};
       const name = [p.firstName || pr.first_name, p.lastName || pr.last_name].filter(Boolean).join(" ") || nameOf(c.application_id);
-      const pdf = buildSeaPdf(c, { name, nationality: p.nationality || pr.nationality, dob: p.dob || p.dateOfBirth || pr.date_of_birth, passport: p.passportNumber || p.passport, cdc: p.cdcNumber || p.seamanBook, crewId: d.crew_unique_id || pr.crew_unique_id });
+      const pdf = buildSeaPdf(c, { name, nationality: p.nationality || pr.nationality, dob: p.dob || p.dateOfBirth || pr.date_of_birth, passport: p.passportNo || p.passportNumber || p.passport, cdc: p.cdcNo || p.cdcNumber || p.seamanBook, crewId: d.cv_uid || d.crew_unique_id || pr.crew_unique_id });
       pdf.save(`SEA_${name.replace(/\s+/g, "_")}.pdf`);
     } catch { toast.error("PDF could not be created."); }
     setBusy(false);

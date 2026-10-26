@@ -197,6 +197,7 @@ const App = () => (
               <Route path="/manager/interviews" element={<ManagerInterviews />} />
               <Route path="/manager/crew-desk" element={<Suspense fallback={null}><CrewDesk /></Suspense>} />
               <Route path="/manager/fleet-workspace" element={<Suspense fallback={null}><FleetWorkspace /></Suspense>} />
+              <Route path="/fleet-workspace" element={<Navigate to="/manager/fleet-workspace" replace />} />
               <Route path="/manager-search" element={<ManagerSearch />} />
               <Route path="/post-vacancy" element={<PostVacancyPage />} />
             </Route>

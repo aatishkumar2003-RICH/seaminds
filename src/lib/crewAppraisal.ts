@@ -70,9 +70,12 @@ export function buildAppraisalPdf(a: Appraisal, meta: { crew: string; rank: stri
   doc.text("Overall", 15, y + 2); doc.text(overallScore(a).toFixed(2), 175, y + 2); y += 12;
   row("Re-employment", REHIRE_LABEL[a.rehire_verdict]);
   row("Promotion", PROMO_LABEL[a.promotion_verdict]);
-  if (a.training_needs.length) row("Training needs", a.training_needs.join(", "));
+  const tn: unknown = a.training_needs;
+  const needs = Array.isArray(tn) ? tn.map(String).filter(Boolean).join(", ") : typeof tn === "string" ? tn.trim() : "";
+  if (needs) { const tl = doc.splitTextToSize(needs, 135); doc.setFont("helvetica", "bold"); doc.text("Training needs", 15, y); doc.setFont("helvetica", "normal"); doc.text(tl, 60, y); y += tl.length * 5 + 1; }
   y += 2; doc.setFont("helvetica", "bold"); doc.text("Remarks", 15, y); y += 5; doc.setFont("helvetica", "normal");
-  const lines = doc.splitTextToSize(a.remarks || "-", 180); doc.text(lines, 15, y); y += lines.length * 5 + 15;
+  for (const ln of doc.splitTextToSize(a.remarks || "-", 180) as string[]) { if (y > 280) { doc.addPage(); y = 18; } doc.text(ln, 15, y); y += 5; }
+  y += 15; if (y > 270) { doc.addPage(); y = 30; }
   doc.line(15, y, 85, y); doc.line(125, y, 195, y); y += 5; doc.setFontSize(8);
   doc.text("Appraiser signature", 15, y); doc.text("Seafarer signature", 125, y); y += 8;
   doc.text(a.status === "finalized" ? `Finalized ${a.finalized_at?.slice(0, 10) || ""}` : "DRAFT — not final", 15, y);
