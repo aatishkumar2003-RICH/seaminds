@@ -1,3 +1,5 @@
+import { ensureCrewProfileRow, MANAGER_ACCOUNT_MSG } from "@/lib/crewProfileRow";
+import { markProfileDone } from "@/lib/applyMessage";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronLeft, Loader2 } from "lucide-react";

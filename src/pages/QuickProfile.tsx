@@ -1,3 +1,5 @@
+import { ensureCrewProfileRow, MANAGER_ACCOUNT_MSG } from "@/lib/crewProfileRow";
+import { markProfileDone } from "@/lib/applyMessage";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
@@ -332,6 +334,7 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
     if (error || !(saved as any)?.quick_profile_completed_at) {
       return toast.error(saveErrorMessage(error));
     }
+    markProfileDone(uid);
     if (onComplete) { onComplete(); return; }
     setDone(true);
   };
