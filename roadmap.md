@@ -113,3 +113,12 @@ No slice starts without a written instruction naming it.
 - [ ] Next: Portage bill (cash advances, allotments, monthly wage account) built on signed SEAs
 - [ ] Step 3: Portage bill, cash advances, allotments
 - [ ] Step 4: Admin quota/pricing controls
+
+## Navigation, updates & applications (Oct 2026)
+- [x] Manager inbox shows only own vacancies (no admin bypass, no agency adverts posted for others)
+- [x] Training: Back → lobby, Home button, Quit/restart module
+- [x] Tap-to-update build badge on homepage, crew feed and manager portal (top bar on phones)
+- [ ] Interview exam exit to lobby + assessment restart
+- [ ] Revamped crew Responses page (thanks/accept with remark, request badges)
+- [ ] Reapply anti-spam + structured rejection reasons
+- [ ] Placement only at SEA signing (accept = Processing)
