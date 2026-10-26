@@ -79,6 +79,18 @@ const SCREEN_TO_TAB: Record<Screen, string> = {
   vesselrating: "vesselrating", support: "support",
 };
 
+/** Isolated so the per-second tick re-renders only this label, not the whole app. */
+const UtcClock = React.memo(() => {
+  const [t, setT] = useState("");
+  useEffect(() => {
+    const tick = () => setT(new Date().toISOString().slice(11, 19) + " UTC");
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+  return <span className="text-xs font-mono text-muted-foreground">{t}</span>;
+});
+
 const Index = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -101,7 +113,6 @@ const Index = () => {
   const [nationality, setNationality] = useState("");
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [showSignOffConfirm, setShowSignOffConfirm] = useState(false);
-  const [utcTime, setUtcTime] = useState("");
   const [jobMatch, setJobMatch] = useState<{ rank_required: string; vessel_type: string; joining_port: string } | null>(null);
   const [jobBadgeCount, setJobBadgeCount] = useState(0);
   const [targetScreen, setTargetScreen] = useState<Screen>("home");
@@ -193,13 +204,6 @@ const Index = () => {
 
   const navigateTo = (next: Screen) => { setPrevScreen(screen); setScreen(next); };
 
-  // UTC clock
-  useEffect(() => {
-    const tick = () => setUtcTime(new Date().toISOString().slice(11, 19) + " UTC");
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, []);
 
   // Page title
   useEffect(() => {
@@ -776,7 +780,7 @@ const Index = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <NotificationBell profileId={profileId} onNavigate={(s) => setScreen(s as any)} />
-                  <span className="text-xs font-mono text-muted-foreground">{utcTime}</span>
+                  <UtcClock />
                 </div>
 
               </div>

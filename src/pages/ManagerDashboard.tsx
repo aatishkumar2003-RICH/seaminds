@@ -196,6 +196,7 @@ const ManagerDashboard = () => {
     contract_duration: "", monthly_salary: "", contact_whatsapp: "", contact_email: "", additional_notes: "",
   });
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const [applicantView, setApplicantView] = useState<"all" | "vacancy">("all");
   const [offerFor, setOfferFor] = useState<Applicant | null>(null);
   const [trainingFor, setTrainingFor] = useState<Applicant | null>(null);
   const [trainingCounts, setTrainingCounts] = useState<Record<string, { assigned: number; completed: number }>>({});
@@ -524,7 +525,16 @@ const ManagerDashboard = () => {
     } as any);
     if (error) { setOfferSending(false); toast.error(error.message); return; }
     const result = data as { ok?: boolean; error?: string } | null;
-    if (result && !result.ok) { setOfferSending(false); toast.error(result.error || "Could not send offer"); return; }
+    if (result && !result.ok) {
+      setOfferSending(false);
+      const friendly: Record<string, string> = {
+        crew_already_placed: "This seafarer has marked himself as joined/on board, so offers are paused until he sets 'Ready to join'.",
+        already_placed: "This application is already placed.",
+        not_authorised: "You can only send offers for your own vacancies.",
+      };
+      toast.error(friendly[result.error || ""] || "Could not send offer — please try again.");
+      return;
+    }
 
     const notified = (await notifyOffer(applicationId)).sent;
     setOfferSending(false);
@@ -832,9 +842,17 @@ const ManagerDashboard = () => {
     .slice(0, 6);
 
   const aq = applicantQuery.trim().toLowerCase();
-  const visibleGroups = !aq ? applicantGroups : applicantGroups
+  // One inbox: every application across all vacancies, newest first (default view).
+  const inboxGroups = applicants.length ? [{
+    key: "__all__",
+    title: "📥 All applications — newest first",
+    meta: `${applicants.length} total · ${awaitingCount} awaiting review`,
+    items: [...applicants].sort((x, y) => new Date(y.applied_at).getTime() - new Date(x.applied_at).getTime()),
+  }] : [];
+  const baseGroups = applicantView === "all" ? inboxGroups : applicantGroups;
+  const visibleGroups = !aq ? baseGroups : baseGroups
     .map((g) => ({ ...g, items: g.items.filter((a) =>
-      [a.crew_name, a.crew_rank, a.rank, a.nationality, a.vessel].some((v) => (v || "").toLowerCase().includes(aq))) }))
+      [a.crew_name, a.crew_rank, a.rank, a.nationality, a.vessel, a.vacancy_label].some((v) => (v || "").toLowerCase().includes(aq))) }))
     .filter((g) => g.items.length > 0);
 
   // ---------- Vacancy console ----------
@@ -1265,6 +1283,20 @@ const ManagerDashboard = () => {
                 <RefreshCw size={16} className={applicantsLoading ? "animate-spin" : ""} />
               </button>
             </div>
+            <div className="flex gap-2" role="tablist" aria-label="Applicant view">
+              {([["all", "📥 All applications"], ["vacancy", "📁 By vacancy"]] as const).map(([k, label]) => (
+                <button
+                  key={k}
+                  role="tab"
+                  aria-selected={applicantView === k}
+                  onClick={() => setApplicantView(k)}
+                  className={`flex-1 rounded-xl px-3 py-2 text-xs font-bold transition-colors ${applicantView === k ? "bg-primary text-primary-foreground" : "border border-primary/40 text-primary"}`}
+                >
+                  {label}{k === "all" && awaitingCount > 0 ? ` · ${awaitingCount} new` : ""}
+                </button>
+              ))}
+            </div>
+
 
             {applicantGroups.length === 0 ? (
               <div className="text-center py-6">
