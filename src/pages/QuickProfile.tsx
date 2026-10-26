@@ -31,7 +31,7 @@ const RANKS = [
   "Captain / Master", "Chief Officer", "2nd Officer", "3rd Officer",
   "Chief Engineer", "2nd Engineer", "3rd Engineer", "4th Engineer", "ETO / EEO",
   "Bosun", "AB Seaman", "Ordinary Seaman (OS)", "Fitter", "Oiler", "Wiper",
-  "Cook", "Chief Cook", "Messman / Steward", "Deck Cadet", "Engine Cadet", "ETO Cadet", "Pumpman",
+  "Cook", "Chief Cook", "Messman", "Steward", "Deck Cadet", "Engine Cadet", "ETO Cadet", "Pumpman",
   "Electrician", "Refrigeration Engineer", "Radio Officer",
   "Trainee Officer (Deck)", "Trainee Officer (Engine)", "Trainee OS", "Trainee Cook",
 ];
@@ -192,7 +192,7 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
       setSeaBand(p.total_sea_service_band || "");
       setAvailable(!!p.is_available);
       setAvailableFrom(p.available_from ? String(p.available_from).slice(0, 10) : "");
-      if (!embedded && p.rank && p.whatsapp_number) setAskUpdate(true);
+      if (!embedded && p.rank && p.whatsapp_number && !new URLSearchParams(window.location.search).has("edit")) setAskUpdate(true);
 
       const fmap: Record<string, string> = {};
       ((fam as any[]) || []).forEach((f) => { fmap[f.vessel_family] = f.sea_time_band; });
