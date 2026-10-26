@@ -276,7 +276,12 @@ const CrewTraining = () => {
   }, [loading, user, token, navigate]);
 
   return (
-    <Shell onBack={() => (token ? navigate("/training") : navigate(-1))}>
+    <Shell
+      onBack={() => (token ? navigate("/training", { replace: true }) : navigate("/app", { replace: true }))}
+      onQuit={token ? () => {
+        if (window.confirm("Quit this module? Your unsaved answers will be cleared and you can restart it any time.")) navigate("/training", { replace: true });
+      } : undefined}
+    >
       {!user ? <p className="text-muted-foreground">Loading…</p> : token ? <Module token={token} /> : <MyTraining />}
       <p className="text-xs text-muted-foreground">Training is for learning and preparation; it is not an STCW certificate. <Link to="/app" className="text-primary underline">Open SeaMinds</Link></p>
     </Shell>
