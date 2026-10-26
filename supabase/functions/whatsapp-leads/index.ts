@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
         headers: gwHeaders(true),
         body: new URLSearchParams({
           From: `whatsapp:${FROM}`, To: "whatsapp:+6285219878989", ContentSid: tpl,
-          ContentVariables: JSON.stringify({ "1": "Test" }),
+          ContentVariables: JSON.stringify({ "1": "Valued Seafarer" }),
         }),
       });
       const p = await r.json().catch(() => ({}));
@@ -100,7 +100,8 @@ Deno.serve(async (req) => {
       if (lead.status === "opt_out" || lead.status === "sent") return json({ ok: true, skipped: lead.status });
       const params = new URLSearchParams({
         From: `whatsapp:${FROM}`, To: `whatsapp:${lead.phone_e164}`, ContentSid: tpl,
-        ContentVariables: JSON.stringify({ "1": lead.name || "Valued Seafarer" }),
+        // Screenshot-captured names are unreliable (emojis, acronyms), so broadcasts use one uniform greeting.
+        ContentVariables: JSON.stringify({ "1": "Valued Seafarer" }),
       });
       const r = await fetch(`${GW}/Messages.json`, {
         method: "POST",
