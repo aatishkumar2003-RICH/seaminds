@@ -1,7 +1,7 @@
 // One application routing decision shared by every Apply button.
 // Publisher (who posted) is kept separate from the recruiter (who hires).
 import type { UnifiedVacancy } from "@/lib/vacancyFeed";
-import { normalizeWaNumber, waApplyLink, buildApplyMessage, recordApplication, sendApplicationEmail, openHandoffTab, completeHandoff, type CrewCardInfo } from "@/lib/applyMessage";
+import { normalizeWaNumber, waApplyLink, buildApplyMessage, recordApplication, sendApplicationEmail, openHandoffTab, completeHandoff, isProfileDoneCached, type CrewCardInfo } from "@/lib/applyMessage";
 
 /** House accounts that publish imported adverts on behalf of other agencies. */
 export const isSeaMindsPublished = (v: Pick<UnifiedVacancy, "kind" | "publisherName">) =>
@@ -108,6 +108,8 @@ export interface ApplyOutcome {
   duplicate: boolean;
   emailSent?: boolean;
   toast: ReturnType<typeof routeToast>;
+  /** True when Apply was blocked because the crew has no Quick Profile or CV profile. */
+  needsProfile?: boolean;
 }
 
 /**
@@ -116,6 +118,11 @@ export interface ApplyOutcome {
  */
 export const applyToVacancy = async (v: UnifiedVacancy, card: CrewCardInfo | null): Promise<ApplyOutcome> => {
   const route = resolveApplyRoute(v, card);
+  // Hard gate: every applicant needs a confirmed Quick Profile or CV-based profile.
+  if (route.record && !isProfileDoneCached()) {
+    return { route, ok: false, duplicate: false, needsProfile: true,
+      toast: { title: "Complete your profile first", description: "Add a 2-minute Quick Profile or upload your CV, then apply.", tone: "warning" } };
+  }
   if (!route.record) {
     return {
       route, ok: false, duplicate: false,

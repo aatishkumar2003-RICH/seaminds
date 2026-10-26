@@ -239,3 +239,6 @@ export const fetchQuickProfileDone = async (profileId: string): Promise<boolean>
   }
 };
 
+
+/** Synchronous check used by the apply router (must not await before opening the handoff tab). */
+export const isProfileDoneCached = (): boolean => Array.from(quickProfileCache.values()).some(Boolean);
