@@ -759,6 +759,7 @@ export default function CVDatabaseTab() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Modal for parsed data */}
