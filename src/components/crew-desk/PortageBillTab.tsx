@@ -128,7 +128,7 @@ export default function PortageBillTab({ rows }: { rows: Row[] | null }) {
         </div>
       )}
 
-      {!lines.length && <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">No crew with a signed contract served in this month. Sign a contract in SEA Contracts and it appears here automatically.</div>}
+      {!lines.length && <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">No crew with a signed contract served in this month. Sign a contract in SEA Contracts and it appears here automatically. <a href="/manager/crew-desk?tab=contracts" className="ml-1 font-bold text-primary underline">Open SEA Contracts →</a></div>}
 
       {lines.length > 0 && (
         <div className="overflow-x-auto rounded-xl border border-border bg-card">
