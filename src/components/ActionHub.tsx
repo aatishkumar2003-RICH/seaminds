@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import InterviewScheduleCard from "@/components/InterviewScheduleCard";
 import type { InterviewSchedule } from "@/lib/interviewSchedule";
 
 interface Hub {
@@ -67,8 +66,8 @@ export default function ActionHub() {
           <p className="text-[11px] font-bold uppercase tracking-wide text-primary">🎤 AI interview</p>
           <p className="text-sm font-semibold text-foreground">{i.company_name || "Company"}{i.rank ? ` · ${i.rank}` : ""}</p>
           {i.schedule_note && <p className="text-xs italic text-muted-foreground">“{i.schedule_note}”</p>}
-          <InterviewScheduleCard inviteId={i.id} schedule={i} me="crew" onChanged={load}
-            onJoin={() => navigate(`/interview/${encodeURIComponent(i.token)}`)} />
+          <p className="text-xs text-muted-foreground">The company will contact you on WhatsApp or email to agree the time. Start when you are ready.</p>
+          <button onClick={() => navigate(`/interview/${encodeURIComponent(i.token)}`)} className="w-full rounded-xl bg-primary py-2.5 text-sm font-bold text-primary-foreground">🚀 Open interview</button>
         </div>
       ))}
 

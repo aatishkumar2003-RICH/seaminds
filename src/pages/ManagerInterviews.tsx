@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback, lazy, Suspense } from "react";
 const TrainingPlanner = lazy(() => import("@/components/manager/TrainingPlanner"));
-import InterviewScheduler from "@/components/manager/InterviewScheduler";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -418,7 +417,17 @@ const ManagerInterviews = () => {
                                 </span>}
                             </div>
                           )}
-                          {r.status !== "completed" && r.invite_id && <InterviewScheduler inviteId={r.invite_id} />}
+                          {r.status !== "completed" && (
+                            r.whatsapp ? (
+                              <a href={`https://wa.me/${String(r.whatsapp).replace(/[^\d]/g, "")}?text=${encodeURIComponent(`Hello ${r.name || ""}, this is ${companyName || "our company"} via SeaMinds regarding your interview for ${c.rank_required}. Please let us know a suitable time for you.`)}`}
+                                target="_blank" rel="noopener noreferrer"
+                                style={{ display: "block", marginTop: 9, textAlign: "center", background: "#25D366", color: "#fff", borderRadius: 9, padding: "8px 0", fontSize: 12, fontWeight: 700, textDecoration: "none" }}>
+                                💬 Agree interview time on WhatsApp
+                              </a>
+                            ) : (
+                              <p style={{ marginTop: 7, color: "#94a3b8", fontSize: 11 }}>Agree the interview time with the candidate by email.</p>
+                            )
+                          )}
                           {r.status === "completed" && (
                             trainFor === r.invite_id
                               ? <Suspense fallback={null}><TrainingPlanner inviteId={r.invite_id} name={r.name} whatsapp={r.whatsapp} company={companyName} onLedgerChange={(summary) => setTraining((previous) => ({ ...previous, [r.invite_id]: { invite_id: r.invite_id, ...summary } }))} /></Suspense>
