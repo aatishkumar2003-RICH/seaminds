@@ -13,10 +13,8 @@ export const ensureCrewProfileRow = async (): Promise<EnsureResult> => {
   const { data: row, error } = await supabase.from("crew_profiles").select("id").eq("id", user.id).maybeSingle();
   if (error) return "error";
   if (row) return "ok";
+  // Dual role allowed: ship managers (often seafarers on leave) may also keep a Sea Profile.
   const meta: any = user.user_metadata || {};
-  if (meta.company_name) return "manager";
-  const { data: mgr } = await supabase.from("manager_profiles").select("id").eq("user_id", user.id).maybeSingle();
-  if (mgr) return "manager";
   const email = user.email || "";
   const { error: insErr } = await supabase.from("crew_profiles").insert({
     id: user.id,

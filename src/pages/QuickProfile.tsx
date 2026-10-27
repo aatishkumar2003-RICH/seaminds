@@ -175,6 +175,10 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
       if (!user) { navigate("/app"); return; }
       if (!active) return;
       setUid(user.id);
+      // Make sure a Sea Profile row exists (also for company accounts) so verification can save
+      try { await ensureCrewProfileRow(); } catch { /* retried on save */ }
+      if (!active) return;
+
 
       const [{ data: prof }, { data: fam }, { data: cl }] = await Promise.all([
         supabase.from("crew_profiles")
