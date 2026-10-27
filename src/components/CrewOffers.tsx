@@ -24,7 +24,9 @@ interface Offer {
 const CrewOffers = ({ profileId, highlightApplicationId, onCountChange }: Props) => {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [placed, setPlaced] = useState<{ id: string; company: string | null }[]>([]);
-  const [joinings, setJoinings] = useState<{ id: string; company_name: string | null; rank_applied: string | null; outcome: string }[]>([]);
+  const [joinings, setJoinings] = useState<{ id: string; company_name: string | null; rank_applied: string | null; outcome: string; decline_reason?: string | null; crew_remark?: string | null }[]>([]);
+  const [remarkFor, setRemarkFor] = useState<string | null>(null);
+  const [remarkText, setRemarkText] = useState("");
   const highlightRef = useRef<HTMLDivElement | null>(null);
 
   const load = useCallback(async () => {
@@ -35,9 +37,9 @@ const CrewOffers = ({ profileId, highlightApplicationId, onCountChange }: Props)
 
     // Active joinings (placed, or with an open issue) — lets crew raise/answer issues
     const { data: j } = await supabase.from("job_applications")
-      .select("id, company_name, rank_applied, outcome")
-      .eq("crew_id", uid).in("outcome", ["shortlisted", "placed"])
-      .order("created_at", { ascending: false }).limit(5);
+      .select("id, company_name, rank_applied, outcome, decline_reason, crew_remark")
+      .eq("crew_id", uid).in("outcome", ["shortlisted", "accepted", "placed", "declined"])
+      .order("created_at", { ascending: false }).limit(8);
     setJoinings((j as any[]) || []);
 
     const rpc = await supabase.rpc("get_my_offers" as any);
@@ -76,10 +78,7 @@ const CrewOffers = ({ profileId, highlightApplicationId, onCountChange }: Props)
 
     // remove immediately so ACTION REQUIRED clears without a reload
     setOffers((prev) => prev.filter((o) => o.id !== offer.id));
-    if (accept) {
-      setPlaced((prev) => [...prev, { id: offer.id, company: offer.company_name }]);
-      toast.success("Placement confirmed ⚓");
-    }
+    if (accept) toast.success("Offer accepted — processing until you sign the SEA ⏳");
 
     // Email + manager notification. Delivery failure never reverses the recorded response.
     let notified: { sent?: boolean; manager_notified?: boolean } | null = null;
@@ -97,6 +96,14 @@ const CrewOffers = ({ profileId, highlightApplicationId, onCountChange }: Props)
     load();
   };
 
+
+  const sendRemark = async (id: string) => {
+    const { data, error } = await supabase.rpc("crew_send_remark" as any, { p_application_id: id, p_remark: remarkText });
+    if (error || !(data as any)?.ok) { toast.error((data as any)?.error === "not_allowed" ? "Please wait a minute before sending another note." : "Could not send your note."); return; }
+    toast.success("Sent to the manager ✓");
+    setRemarkFor(null);
+    load();
+  };
 
   if (!offers.length && !placed.length && !joinings.length) return null;
 
@@ -160,7 +167,7 @@ const CrewOffers = ({ profileId, highlightApplicationId, onCountChange }: Props)
                   className="flex-1 rounded-xl py-2.5 font-bold text-[13px] flex items-center justify-center gap-2"
                   style={{ background: NAVY, color: "#D4AF37", border: "none", cursor: "pointer" }}
                 >
-                  ⚓ Accept & Get Placed
+                  ⚓ Accept offer
                 </button>
                 <button
                   onClick={() => respond(o, false)}
@@ -184,14 +191,46 @@ const CrewOffers = ({ profileId, highlightApplicationId, onCountChange }: Props)
           </div>
         );
       })}
-      {joinings.map((j) => (
-        <div key={`join-${j.id}`} className="mx-4 mb-3 rounded-2xl border border-[#D4AF37]/30 bg-[#112240] p-3">
-          <p className="text-xs font-bold text-[#D4AF37]">
-            {j.outcome === "placed" ? "⚓ Your joining" : "⭐ Shortlisted"} · {j.company_name || "Company"}{j.rank_applied ? ` · ${j.rank_applied}` : ""}
-          </p>
-          <LineupTickets applicationId={j.id} role="crew" />
+      {joinings.map((j) => {
+        const label = j.outcome === "placed" ? "⚓ Onboard — SEA signed" : j.outcome === "accepted" ? "⏳ Processing — awaiting SEA" : j.outcome === "declined" ? "📝 Not selected" : "⭐ Shortlisted";
+        return (
+        <div key={`join-${j.id}`} className="mx-4 mb-3 rounded-2xl border border-primary/30 bg-card p-3 space-y-2">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <p className="text-xs font-bold text-primary">{label}</p>
+              <p className="text-sm font-semibold text-foreground">{j.company_name || "Company"}{j.rank_applied ? ` · ${j.rank_applied}` : ""}</p>
+            </div>
+          </div>
+          {j.outcome === "accepted" && <p className="text-xs text-muted-foreground">You are free to apply elsewhere until you sign the contract.</p>}
+          {j.outcome === "declined" && (
+            <p className="text-xs text-muted-foreground">{j.decline_reason ? `Reason: ${j.decline_reason}. ` : ""}Update your profile or CV and reapply anytime from the vacancy.</p>
+          )}
+          {j.crew_remark && <p className="text-xs italic text-muted-foreground">Your note: “{j.crew_remark}”</p>}
+          {j.outcome !== "declined" && (remarkFor === j.id ? (
+            <div className="space-y-2">
+              <div className="flex flex-wrap gap-1.5">
+                {["Thank you, received! 🙏", "Preparing my documents", "Available for briefing", "Ready to join on date"].map((c) => (
+                  <button key={c} onClick={() => setRemarkText(c)} className="rounded-full border border-primary/40 px-2.5 py-1 text-[11px] text-primary">{c}</button>
+                ))}
+              </div>
+              <textarea value={remarkText} onChange={(e) => setRemarkText(e.target.value.slice(0, 300))} rows={2} placeholder="Add a remark (departure port, passport status…)" className="w-full rounded-xl border border-primary/30 bg-background p-2 text-sm text-foreground" />
+              <div className="flex gap-2">
+                <button onClick={() => sendRemark(j.id)} className="flex-1 rounded-xl bg-primary py-2 text-sm font-bold text-primary-foreground">Send to manager</button>
+                <button onClick={() => setRemarkFor(null)} className="rounded-xl border border-primary px-3 py-2 text-sm text-primary">Cancel</button>
+              </div>
+            </div>
+          ) : (
+            <button onClick={() => { setRemarkFor(j.id); setRemarkText(""); }} className="w-full rounded-xl border border-primary py-2 text-xs font-bold text-primary">💬 Say thanks / add remark</button>
+          ))}
+          {j.outcome !== "declined" && (
+            <details className="text-xs text-muted-foreground">
+              <summary className="cursor-pointer">⚖️ Report an issue</summary>
+              <LineupTickets applicationId={j.id} role="crew" />
+            </details>
+          )}
         </div>
-      ))}
+        );
+      })}
     </>
   );
 };
