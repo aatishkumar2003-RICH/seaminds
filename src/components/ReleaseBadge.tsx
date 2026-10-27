@@ -5,7 +5,7 @@ import { CURRENT_RELEASE, formatWib } from "@/lib/releaseInfo";
 import { checkPwaUpdate, forcePwaHardReset } from "@/lib/pwaUpdate";
 
 /** Build label that doubles as an "Update app" button. Checks quietly on mount and highlights when a newer build exists. */
-const ReleaseBadge = ({ className = "" }: { className?: string }) => {
+const ReleaseBadge = ({ className = "", compact = false }: { className?: string; compact?: boolean }) => {
   const when = formatWib(CURRENT_RELEASE.buildTime);
   const [newer, setNewer] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -30,6 +30,32 @@ const ReleaseBadge = ({ className = "" }: { className?: string }) => {
     });
     setBusy(false);
   };
+
+  if (compact) {
+    return (
+      <div className={`flex justify-center ${className}`}>
+        <button
+          type="button"
+          onClick={onClick}
+          aria-label={newer ? "Update ready — tap to update" : "Sync app"}
+          className={`group inline-flex items-center gap-1.5 rounded-full border px-3 h-8 text-xs font-semibold backdrop-blur-md transition-all active:scale-95 ${newer ? "border-primary bg-primary/20 text-primary shadow-[0_0_12px_rgba(212,175,55,0.45)] animate-pulse" : "border-primary/30 bg-primary/10 text-primary hover:bg-primary/20"}`}
+        >
+          {newer ? (
+            <>⚡ <span>Update Ready</span></>
+          ) : (
+            <>
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60 animate-ping" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+              </span>
+              <RefreshCw size={12} className={`transition-transform duration-500 ${busy ? "animate-spin" : "group-hover:rotate-180"}`} />
+              <span>Sync</span>
+            </>
+          )}
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className={`flex justify-center ${className}`}>
