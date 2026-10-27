@@ -129,6 +129,13 @@ const Index = () => {
   const [vesselType, setVesselType] = useState("");
   const [portOfJoining, setPortOfJoining] = useState("");
   const [forceTour, setForceTour] = useState(false);
+  // Welcome tour waits until the privacy banner is answered so the two never overlap.
+  const [consentAnswered, setConsentAnswered] = useState(() => { try { return !!localStorage.getItem("seaminds_cookie_consent"); } catch { return true; } });
+  useEffect(() => {
+    const onConsent = () => setConsentAnswered(true);
+    window.addEventListener("sm-consent-changed", onConsent);
+    return () => window.removeEventListener("sm-consent-changed", onConsent);
+  }, []);
   const [statsOpen, setStatsOpen] = useState(false);
   const contentRef = React.useRef<HTMLDivElement>(null);
 
@@ -1010,7 +1017,7 @@ const Index = () => {
         )}
       </div>
       <Suspense fallback={null}>
-        <OnboardingTour enabled={appState === "main"} forceShow={forceTour} onForceShowConsumed={() => setForceTour(false)} onNavigate={(s) => { navigateTo(s); setTourActiveScreen(s); }} onDismiss={() => setTourActiveScreen(null)} />
+        <OnboardingTour enabled={appState === "main" && consentAnswered} forceShow={forceTour} onForceShowConsumed={() => setForceTour(false)} onNavigate={(s) => { navigateTo(s); setTourActiveScreen(s); }} onDismiss={() => setTourActiveScreen(null)} />
       </Suspense>
     </>
   );

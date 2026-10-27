@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { CreditAudience, DEFAULT_REWARDS, RewardSettings, creditReasonLabel, reminderDue } from "@/lib/creditProgram";
+import { CreditAudience, DEFAULT_REWARDS, RewardSettings, creditReasonLabel } from "@/lib/creditProgram";
 import CompanyProfileEditor from "@/components/CompanyProfileEditor";
 
 type Wallet = { ok: boolean; user_id: string; balance: number; welcome_claimed: boolean; code: string; link: string; referrals: number; verified_referrals?: number; referral_credits?: number; profile_rewarded?: boolean; score_rewarded?: boolean; settings?: RewardSettings; recent?: { delta: number; reason: string; created_at: string }[] };

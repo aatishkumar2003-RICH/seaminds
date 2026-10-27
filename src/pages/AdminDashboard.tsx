@@ -203,6 +203,13 @@ function CrewSearchTab() {
       {results.length === 0 && !loading && query && (
         <p style={{ color: "#A0A0A0" }}>No results found.</p>
       )}
+      {results.length === 0 && !loading && !query && (
+        <div className="rounded-xl border border-dashed p-8 text-center" style={{ borderColor: "rgba(212,175,55,0.3)", color: "#94A3B8" }}>
+          <Search className="w-8 h-8 mx-auto mb-2" style={{ color: "#D4AF37" }} />
+          <p className="font-semibold" style={{ color: "#E0E0E0" }}>Find any registered seafarer</p>
+          <p className="text-sm mt-1">Type a name, Crew ID, WhatsApp number, passport number or date of birth (YYYY-MM-DD), then press Search.</p>
+        </div>
+      )}
 
       <Dialog open={!!editRow} onOpenChange={() => setEditRow(null)}>
         <DialogContent style={{ background: "#0D1B2A", borderColor: "#D4AF37" }}>
