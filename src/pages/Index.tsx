@@ -211,7 +211,7 @@ const Index = () => {
       home: "SeaMinds | Home",
       chat: "SeaMinds | Wellness", dashboard: "SeaMinds | Wellness",
       opportunities: "SeaMinds | Opportunities", news: "SeaMinds | News",
-      academy: "SeaMinds | Training & Research", bridge: "SeaMinds | PMS",
+      academy: "SeaMinds | Maritime Research & PSC", bridge: "SeaMinds | PMS",
       community: "SeaMinds | Safety & Crew Tools", smc: "SeaMinds | SeaMinds Score",
       resume: "SeaMinds | CV Builder", certs: "SeaMinds | Certificates",
       resthours: "SeaMinds | Rest Hours", vesselrating: "SeaMinds | Vessel Rating",
