@@ -86,15 +86,31 @@ async function sendEmail(to: string, code: string) {
 // Known Twilio WhatsApp Sandbox senders (freeform body messages allowed for joined numbers)
 const SANDBOX_SENDERS = ['+14155238886', '+17372508034'];
 
+// Paid Twilio account is reached through the linked connector; legacy SID/token is a fallback only.
+const GW_KEY = Deno.env.get('LOVABLE_API_KEY') || '';
+const GW_TWILIO = Deno.env.get('TWILIO_API_KEY') || '';
+const useGateway = () => !!GW_KEY && !!GW_TWILIO;
+const OTP_TEMPLATE = TWILIO_CONTENT_SID || 'HXb9fe635f81450471969e82378c3777c4';
+
 async function twilioPost(params: URLSearchParams) {
-  const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/Messages.json`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Basic ${btoa(`${TWILIO_SID}:${TWILIO_TOKEN}`)}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: params,
-  });
+  const res = useGateway()
+    ? await fetch('https://connector-gateway.lovable.dev/twilio/Messages.json', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${GW_KEY}`,
+          'X-Connection-Api-Key': GW_TWILIO,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: params,
+      })
+    : await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/Messages.json`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Basic ${btoa(`${TWILIO_SID}:${TWILIO_TOKEN}`)}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: params,
+      });
   const text = await res.text();
   let parsed: any = null;
   try { parsed = JSON.parse(text); } catch { /* non-JSON */ }
@@ -102,7 +118,7 @@ async function twilioPost(params: URLSearchParams) {
 }
 
 async function sendWhatsApp(to: string, code: string): Promise<boolean> {
-  if (!TWILIO_SID || !TWILIO_TOKEN || !TWILIO_WA_FROM) {
+  if ((!useGateway() && (!TWILIO_SID || !TWILIO_TOKEN)) || !TWILIO_WA_FROM) {
     log('twilio not configured');
     return false;
   }
@@ -110,6 +126,15 @@ async function sendWhatsApp(to: string, code: string): Promise<boolean> {
   const from = `whatsapp:${bare}`;
   const isSandbox = SANDBOX_SENDERS.includes(bare);
   const body = `Your SeaMinds verification code is ${code}. It expires in 10 minutes.`;
+
+  // 0) Approved OTP template first (business-initiated messages require it)
+  if (!isSandbox) {
+    const tpl = new URLSearchParams({ From: from, To: `whatsapp:${to}`, ContentSid: OTP_TEMPLATE, ContentVariables: JSON.stringify({ '1': code }) });
+    log('twilio request', { api: 'otp-template', gateway: useGateway(), To: `whatsapp:${to}` });
+    const t = await twilioPost(tpl);
+    log('twilio response', { status: t.status, body: t.text.slice(0, 600) });
+    if (t.ok) return true;
+  }
 
   // 1) Freeform body message (works for Sandbox and inside a 24h session window)
   const freeform = new URLSearchParams({ From: from, To: `whatsapp:${to}`, Body: body });
