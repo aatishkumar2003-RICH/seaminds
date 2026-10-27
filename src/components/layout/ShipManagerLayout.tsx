@@ -12,6 +12,7 @@ const NAV = [
   { to: "/manager/dashboard?tab=crew", label: "Today's Overview", icon: LayoutDashboard, match: (p: string, q: URLSearchParams) => p === "/manager/dashboard" && (!q.get("tab") || q.get("tab") === "crew") && q.get("section") !== "safety" },
   { to: "/manager/dashboard?tab=applicants", label: "Recruitment & Applicants", icon: Users, match: (p: string, q: URLSearchParams) => p === "/manager/dashboard" && q.get("tab") === "applicants" },
   { to: "/post-vacancy", label: "Post Vacancy", icon: Megaphone, match: (p: string) => p === "/post-vacancy" },
+  { to: "/manager/market-feed", label: "Live Vacancy Feed", icon: Megaphone, match: (p: string) => p === "/manager/market-feed" },
   { to: "/manager/crew-desk", label: "Crew Management Tools", icon: ClipboardList, match: (p: string) => p === "/manager/crew-desk" },
   { to: "/marketplace", label: "Ship Marketplace", icon: Ship, match: (p: string) => p.startsWith("/marketplace"), note: "Approval" },
   { to: "/manager-search", label: "Crew Search", icon: Search, match: (p: string) => p === "/manager-search" },
