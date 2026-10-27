@@ -53,7 +53,7 @@ export default function SeaProfile() {
         contracts_in_rank_band: pp.contracts_in_rank_band || "", total_sea_service_band: pp.total_sea_service_band || "" });
       setState("ready");
     })();
-  }, []);
+  }, [authReady, authUser?.id]);
 
   const setAvailability = async (v: string) => {
     if (!uid || v === avail) return;

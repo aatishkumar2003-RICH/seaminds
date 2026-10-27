@@ -235,7 +235,7 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
     })();
     return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [authReady, authUser?.id]);
 
   /* ---------- live vacancy counter ---------- */
   useEffect(() => {
