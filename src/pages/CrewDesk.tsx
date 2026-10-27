@@ -15,7 +15,7 @@ import OperatingModelPicker from "@/components/crew-desk/OperatingModelPicker";
 import type { OperatingModel } from "@/lib/fleetCockpit";
 import { Button } from "@/components/ui/button";
 
-type RosterRow = { application_id: string; outcome: string; crew_name: string; rank: string; nationality: string; vessel: string; joining_date: string | null; crew_confirmed: boolean; crew_unique_id: string };
+type RosterRow = { application_id: string; outcome: string; crew_name: string; rank: string; nationality: string; vessel: string; joining_date: string | null; crew_confirmed: boolean; crew_unique_id: string; crew_remark?: string | null };
 
 const TABS = [
   { id: "fleet", label: "Fleet Overview", icon: LayoutDashboard },
@@ -121,6 +121,7 @@ export default function CrewDesk() {
                 <p className="font-semibold text-foreground">{r.crew_name || "Crew"}</p>
                 <p className="text-xs text-muted-foreground">{[r.rank, r.nationality, r.vessel].filter(Boolean).join(" • ")}</p>
                 {r.joining_date && <p className="text-xs text-muted-foreground">Joining: {r.joining_date}</p>}
+                {r.crew_remark && <p className="text-xs italic text-primary/80">💬 “{r.crew_remark}”</p>}
               </div>
               <span className="text-[11px] rounded-full border border-primary/40 text-primary px-2 py-0.5">{STATUS[r.outcome] || r.outcome}</span>
               {r.crew_confirmed

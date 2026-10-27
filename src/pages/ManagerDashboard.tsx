@@ -703,7 +703,8 @@ const ManagerDashboard = () => {
       case "awaiting": return { cls: "bg-muted text-muted-foreground", label: "New" };
       case "shortlisted": return { cls: "bg-[#D4AF37]/15 text-[#D4AF37]", label: "⭐ Shortlisted" };
       case "offered": return { cls: "bg-blue-500/15 text-blue-400", label: "📨 Offered" };
-      case "placed": return { cls: "bg-green-500/15 text-green-400", label: "⚓ Placed" };
+      case "accepted": return { cls: "bg-[#D4AF37]/15 text-[#D4AF37]", label: "⏳ Processing — issue SEA" };
+      case "placed": return { cls: "bg-green-500/15 text-green-400", label: "⚓ Onboard (SEA signed)" };
       case "declined":
       case "offer_declined": return { cls: "bg-secondary text-muted-foreground/70", label: "Declined" };
       case "released": return { cls: "bg-muted text-muted-foreground", label: "Released" };
