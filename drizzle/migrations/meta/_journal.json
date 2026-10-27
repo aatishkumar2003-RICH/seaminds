@@ -701,6 +701,13 @@
       "when": 1793108569790,
       "tag": "0099_open_vacancy_posting_to_all_managers",
       "breakpoints": true
+    },
+    {
+      "idx": 100,
+      "version": "7",
+      "when": 1793108592243,
+      "tag": "0100_normalize_job_posting_admin_safe",
+      "breakpoints": true
     }
   ]
 }
