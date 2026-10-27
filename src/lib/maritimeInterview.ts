@@ -26,3 +26,6 @@ export function completedReview(session: InterviewSession) {
 export function requestTranscript(session: InterviewSession) {
   return session.turns.map(({ question, answer }) => ({ question, answer }));
 }
+export function verdictLabel(v: string | null | undefined) {
+  return v === "ready" ? "Ready" : v === "ready_with_training" ? "Ready with training" : v === "not_ready" ? "Not ready yet" : "—";
+}

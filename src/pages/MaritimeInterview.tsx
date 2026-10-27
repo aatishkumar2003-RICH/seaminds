@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { useInterviewVoice } from "@/hooks/useInterviewVoice";
-import { applyInterviewStep, completedReview, emptyInterview, requestTranscript, MAX_ANSWER_CHARS, MAX_TURNS } from "@/lib/maritimeInterview";
+import { applyInterviewStep, completedReview, emptyInterview, verdictLabel, MAX_ANSWER_CHARS, MAX_TURNS } from "@/lib/maritimeInterview";
 import type { ExamStep } from "../../supabase/functions/_shared/maritimeExaminer";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 
@@ -35,6 +35,9 @@ export default function MaritimeInterview() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [leaving, setLeaving] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [shared, setShared] = useState(false);
+  const [history, setHistory] = useState<{ id: string; target_rank: string | null; rank: string; technical_pct: number | null; verdict: string | null; completed_at: string | null }[]>([]);
   const inFlight = useRef(false);
   const mounted = useRef(true);
   const voice = useInterviewVoice(locale, text => setAnswer(a => `${a}${a ? " " : ""}${text}`.slice(0, MAX_ANSWER_CHARS)));
@@ -55,7 +58,7 @@ export default function MaritimeInterview() {
     try {
       const { data, error: failure } = await supabase.functions.invoke("maritime-examiner", {
         headers: { Authorization: `Bearer ${accessToken}` },
-        body: { rank, targetRank, vessel, language: languages.find(([l]) => l === locale)?.[1] || "English", turns: requestTranscript(session), ...(session.question ? { pendingQuestion: session.question, answer: response ?? answer.trim() } : {}) },
+        body: sessionId && session.question ? { sessionId, answer: response ?? answer.trim() } : { rank, targetRank, vessel, language: languages.find(([l]) => l === locale)?.[1] || "English" },
       });
       if (failure || data?.error) {
         let message = data?.message;
@@ -67,12 +70,24 @@ export default function MaritimeInterview() {
         throw new Error(message || "The examiner could not respond. Your current answer is still here. Please try again.");
       }
       const next = applyInterviewStep(session, data as ExamStep, session.question ? response ?? answer.trim() : undefined);
-      if (mounted.current) { setSession(next); setAnswer(""); }
+      if (mounted.current) { setSession(next); setAnswer(""); if (data?.sessionId) setSessionId(data.sessionId); if (next.done) void loadHistory(); }
     } catch (e) { if (mounted.current) setError(e instanceof Error ? e.message : "Could not reach the examiner. Please try again."); }
     finally { inFlight.current = false; if (mounted.current) setBusy(false); }
   };
+  const loadHistory = async () => {
+    if (!user) return;
+    const { data } = await supabase.from("maritime_interview_sessions").select("id, rank, target_rank, technical_pct, verdict, completed_at").eq("crew_id", user.id).eq("status", "completed").order("completed_at", { ascending: false }).limit(5);
+    if (mounted.current) setHistory(data || []);
+  };
+  useEffect(() => { void loadHistory(); }, [user?.id]);
+  const toggleShare = async (v: boolean) => {
+    if (!sessionId) return;
+    const { data, error: e } = await supabase.rpc("set_maritime_interview_share", { p_session: sessionId, p_share: v });
+    if (e || !data) { toast.error("Could not update sharing. Please try again."); return; }
+    setShared(v); toast.success(v ? "Report shared with companies you apply to." : "Report is now private.");
+  };
   const back = () => { if (active || busy) setLeaving(true); else navigate("/training"); };
-  const reset = () => { voice.stop(); voice.stopSpeaking(); setSession(emptyInterview()); setAnswer(""); setError(""); setConsent(false); };
+  const reset = () => { voice.stop(); voice.stopSpeaking(); setSession(emptyInterview()); setSessionId(null); setShared(false); setAnswer(""); setError(""); setConsent(false); };
 
   return <main className="min-h-dvh bg-background text-foreground pb-8">
     <div className="mx-auto max-w-3xl px-4 sm:px-6">
@@ -97,9 +112,10 @@ export default function MaritimeInterview() {
           <p className="text-sm text-muted-foreground">Practice only — not a certificate, promotion decision or onboard operating instruction. Check the vessel’s manuals and safety procedures.</p>
           <div className="flex items-start gap-3 border-t border-border pt-5">
             <Checkbox id="interview-consent" checked={consent} disabled={busy} onCheckedChange={v => setConsent(v === true)} className="mt-1" />
-            <label htmlFor="interview-consent" className="text-sm text-muted-foreground">I agree to AI processing of my answers. This practice session is not saved or shared with managers. Refreshing or leaving clears it. Optional voice may use my browser’s speech service.</label>
+            <label htmlFor="interview-consent" className="text-sm text-muted-foreground">I agree to AI processing of my answers. Results are saved privately to my account and shared with companies only if I choose to at the end. Optional voice may use my browser’s speech service.</label>
           </div>
           <Button className="w-full sm:w-auto rounded-xl font-bold h-12" disabled={!consent || busy} onClick={() => void submit()}>{busy ? <><Loader2 className="animate-spin motion-reduce:animate-none" /> Preparing…</> : "Start interview"}</Button>
+          {history.length > 0 && <div className="space-y-2 border-t border-border pt-4"><h3 className="text-sm font-semibold text-primary">Your past interviews</h3><ul className="space-y-1 text-sm">{history.map(h => <li key={h.id} className="flex justify-between gap-3"><span>{h.rank}{h.target_rank ? ` → ${h.target_rank}` : ""} · {h.completed_at ? new Date(h.completed_at).toLocaleDateString() : ""}</span><span className="text-muted-foreground">{h.technical_pct ?? 0}% · {verdictLabel(h.verdict)}</span></li>)}</ul></div>}
         </section>}
         {active && <section className="space-y-5">
           <div className="flex items-center justify-between text-xs text-muted-foreground"><span>Scenario {session.turns.length + 1} of {MAX_TURNS}</span><span>{languages.find(([id]) => id === locale)?.[1]}</span></div>
@@ -123,14 +139,15 @@ export default function MaritimeInterview() {
         </section>}
         {error && <p role="alert" className="mt-5 rounded-lg border border-destructive/40 p-3 text-sm text-destructive">{error}</p>}
         {review && <section className="space-y-6">
-          <div className="border-y border-border py-5 space-y-2"><h2 className="text-xl font-bold">Practice interview complete</h2><p className="text-sm text-muted-foreground">{review.turns.length} scenarios answered · {review.safety_flags} safety concerns identified. This AI review is provisional and is not saved.</p></div>
+          <div className="border-y border-border py-5 space-y-2"><h2 className="text-xl font-bold">Practice interview complete</h2><p className="text-sm text-muted-foreground">{review.turns.length} scenarios answered · {review.safety_flags} safety concerns identified. This AI review is provisional and saved privately to your account.</p></div>
           {review.gaps.length > 0 && <div className="space-y-2"><h3 className="font-semibold text-primary">Topics to strengthen</h3><ul className="list-disc pl-5 space-y-2 text-sm">{review.gaps.map(g => <li key={g}>{g}</li>)}</ul></div>}
           <div className="space-y-3">{review.turns.map((t, i) => <details key={i} className="border-b border-border pb-3"><summary className="cursor-pointer text-sm font-semibold py-2">{i + 1}. {t.topic?.replace(/_/g, " ") || "Scenario"}{t.safety_flag ? " · Safety review" : ""}</summary><div className="space-y-3 py-3 text-sm break-words"><p>{t.question}</p><p className="text-muted-foreground">Your answer: {t.answer}</p><p>{t.feedback || "Revisit this topic using your approved vessel manuals and training materials."}</p></div></details>)}</div>
+          {sessionId && <label className="flex items-start gap-3 rounded-xl border border-primary/30 p-4 text-sm cursor-pointer"><input type="checkbox" className="mt-1 accent-primary" checked={shared} onChange={e => void toggleShare(e.target.checked)} /><span><span className="font-semibold">Share this report with companies I apply to</span><br /><span className="text-muted-foreground">Off by default. Only companies whose vacancies you applied to can see the score, gaps and your answers. You can switch it off any time.</span></span></label>}
           <p className="text-xs text-muted-foreground">AI feedback may be incomplete. Confirm technical details against current rules, your company’s safety system and maker manuals.</p>
           <div className="flex flex-wrap gap-3"><Button onClick={() => navigate("/training")}>Open training</Button><Button variant="outline" onClick={reset}><RotateCcw /> New practice</Button></div>
         </section>}
       </>}
     </div>
-    <AlertDialog open={leaving} onOpenChange={setLeaving}><AlertDialogContent className="max-w-[calc(100%-2rem)] sm:max-w-lg"><AlertDialogTitle>Leave this practice interview?</AlertDialogTitle><AlertDialogDescription>Your answers and review are not saved. Leaving clears this session.</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel>Keep practising</AlertDialogCancel><AlertDialogAction disabled={busy} onClick={() => navigate("/training")}>Leave interview</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+    <AlertDialog open={leaving} onOpenChange={setLeaving}><AlertDialogContent className="max-w-[calc(100%-2rem)] sm:max-w-lg"><AlertDialogTitle>Leave this practice interview?</AlertDialogTitle><AlertDialogDescription>Answers so far are saved, but an unfinished interview cannot be resumed yet. Leaving ends this session.</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel>Keep practising</AlertDialogCancel><AlertDialogAction disabled={busy} onClick={() => navigate("/training")}>Leave interview</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
   </main>;
 }

@@ -1,3 +1,4 @@
+import TechnicalInterviewReport from "@/components/manager/TechnicalInterviewReport";
 import LineupTickets from "@/components/LineupTickets";
 import { matchApplicantToVacancy } from "@/lib/smartMatch";
 import VacancyCleanupPanel from "@/components/manager/VacancyCleanupPanel";
@@ -802,6 +803,7 @@ const ManagerDashboard = () => {
         {a.available_from && (
           <p className="text-xs text-muted-foreground">Available from {new Date(a.available_from).toLocaleDateString()}</p>
         )}
+        <TechnicalInterviewReport applicationId={a.application_id} />
       </div>
       {renderApplicantActions(a)}
     </div>

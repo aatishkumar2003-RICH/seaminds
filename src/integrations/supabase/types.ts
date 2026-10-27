@@ -3870,6 +3870,66 @@ export type Database = {
         }
         Relationships: []
       }
+      maritime_interview_sessions: {
+        Row: {
+          completed_at: string | null
+          crew_id: string
+          gaps: Json | null
+          id: string
+          language: string | null
+          pending_question: string | null
+          rank: string
+          safety_flags: number | null
+          share_with_managers: boolean
+          started_at: string
+          status: string
+          target_rank: string | null
+          technical_pct: number | null
+          turns: Json
+          updated_at: string
+          verdict: string | null
+          vessel: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          crew_id: string
+          gaps?: Json | null
+          id?: string
+          language?: string | null
+          pending_question?: string | null
+          rank: string
+          safety_flags?: number | null
+          share_with_managers?: boolean
+          started_at?: string
+          status?: string
+          target_rank?: string | null
+          technical_pct?: number | null
+          turns?: Json
+          updated_at?: string
+          verdict?: string | null
+          vessel?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          crew_id?: string
+          gaps?: Json | null
+          id?: string
+          language?: string | null
+          pending_question?: string | null
+          rank?: string
+          safety_flags?: number | null
+          share_with_managers?: boolean
+          started_at?: string
+          status?: string
+          target_rank?: string | null
+          technical_pct?: number | null
+          turns?: Json
+          updated_at?: string
+          verdict?: string | null
+          vessel?: string | null
+        }
+        Relationships: []
+      }
       market_content: {
         Row: {
           active: boolean | null
@@ -6900,6 +6960,21 @@ export type Database = {
         Returns: undefined
       }
       make_invite_token: { Args: never; Returns: string }
+      manager_maritime_report: {
+        Args: { p_application: string }
+        Returns: {
+          completed_at: string
+          gaps: Json
+          id: string
+          rank: string
+          safety_flags: number
+          target_rank: string
+          technical_pct: number
+          turns: Json
+          verdict: string
+          vessel: string
+        }[]
+      }
       manager_schedule_interview: {
         Args: {
           p_flex_hours?: number
@@ -7120,6 +7195,10 @@ export type Database = {
       set_lineup_ticket_status: {
         Args: { p_action: string; p_note?: string; p_ticket_id: string }
         Returns: Json
+      }
+      set_maritime_interview_share: {
+        Args: { p_session: string; p_share: boolean }
+        Returns: boolean
       }
       ship_photo_visible: { Args: { _path: string }; Returns: boolean }
       start_or_resume_assessment: { Args: never; Returns: Json }
