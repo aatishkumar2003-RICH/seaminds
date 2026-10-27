@@ -6261,6 +6261,39 @@ export type Database = {
         }
         Relationships: []
       }
+      vacancy_promotions: {
+        Row: {
+          batch_id: string
+          campaign: string
+          created_at: string
+          ends_at: string
+          id: string
+          manager_id: string
+          posting_id: string
+          starts_at: string
+        }
+        Insert: {
+          batch_id: string
+          campaign: string
+          created_at?: string
+          ends_at: string
+          id?: string
+          manager_id: string
+          posting_id: string
+          starts_at?: string
+        }
+        Update: {
+          batch_id?: string
+          campaign?: string
+          created_at?: string
+          ends_at?: string
+          id?: string
+          manager_id?: string
+          posting_id?: string
+          starts_at?: string
+        }
+        Relationships: []
+      }
       vacancy_sources: {
         Row: {
           active: boolean
@@ -7016,6 +7049,10 @@ export type Database = {
       process_answer_scoring_queue: { Args: never; Returns: string }
       process_recovery_queue: { Args: never; Returns: string }
       process_scoring_jobs: { Args: never; Returns: string }
+      promote_vacancies: {
+        Args: { p_campaign: string; p_ids: string[] }
+        Returns: Json
+      }
       public_training_tracks: { Args: { p_limit?: number }; Returns: Json }
       raise_lineup_ticket: {
         Args: {
@@ -7202,6 +7239,22 @@ export type Database = {
         Returns: boolean
       }
       ship_photo_visible: { Args: { _path: string }; Returns: boolean }
+      sponsored_vacancies: {
+        Args: never
+        Returns: {
+          campaign: string
+          company_name: string
+          ends_at: string
+          joining_port: string
+          manager_id: string
+          monthly_salary: string
+          posting_id: string
+          rank_required: string
+          recruiter_name: string
+          rotation: number
+          vessel_type: string
+        }[]
+      }
       start_or_resume_assessment: { Args: never; Returns: Json }
       submit_application: {
         Args: {
@@ -7385,6 +7438,7 @@ export type Database = {
         }
         Returns: Json
       }
+      vacancy_market_stats: { Args: never; Returns: Json }
       vacancy_origin_counts: { Args: never; Returns: Json }
       vacancy_origin_of: {
         Args: { email: string; rname: string; wa: string }

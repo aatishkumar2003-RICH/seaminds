@@ -708,6 +708,13 @@
       "when": 1793108592243,
       "tag": "0100_normalize_job_posting_admin_safe",
       "breakpoints": true
+    },
+    {
+      "idx": 101,
+      "version": "7",
+      "when": 1793116505502,
+      "tag": "0101_vacancy_promotions",
+      "breakpoints": true
     }
   ]
 }
