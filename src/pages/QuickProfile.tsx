@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { resilientSave, saveErrorMessage } from "@/lib/resilientSave";
 import { toast } from "sonner";
 import { useT } from "@/i18n";
-import MobileVerify from "@/components/cv/MobileVerify";
+import ContactVerify from "@/components/cv/ContactVerify";
 import { toE164, validatePhone } from "@/lib/verification/mobileProviders";
 
 /** Nationality → WhatsApp dial code, used only to pre-fill an empty number field. */
@@ -139,6 +139,9 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
   const [whatsapp, setWhatsapp] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [fullName, setFullName] = useState("");
+  const [verifiedEmail, setVerifiedEmail] = useState("");
+  const [verifiedPhone, setVerifiedPhone] = useState("");
+  const [showVerifyAlarm, setShowVerifyAlarm] = useState(false);
 
   // step 2
   const [families, setFamilies] = useState<Record<string, string>>({}); // family -> band (saved rows)
@@ -173,7 +176,7 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
 
       const [{ data: prof }, { data: fam }, { data: cl }] = await Promise.all([
         supabase.from("crew_profiles")
-          .select("first_name, last_name, email, nationality, whatsapp_number, rank, role, is_available, available_from, years_in_rank_band, contracts_in_rank_band, total_sea_service_band" as any)
+          .select("first_name, last_name, email, email_verified, whatsapp_verified, nationality, whatsapp_number, rank, role, is_available, available_from, years_in_rank_band, contracts_in_rank_band, total_sea_service_band" as any)
           .eq("id", user.id).maybeSingle(),
         supabase.from("crew_vessel_experience" as any).select("vessel_family, sea_time_band").eq("crew_id", user.id),
         supabase.from("crew_claims" as any).select("claim_key, value").eq("crew_id", user.id),
@@ -184,6 +187,15 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
       setFirstName(p.first_name || "Sailor");
       setFullName([p.first_name, p.last_name].filter(Boolean).join(" "));
       setContactEmail(p.email || user.email || "");
+      if (p.email_verified && p.email) setVerifiedEmail(p.email);
+      if (p.whatsapp_verified && p.whatsapp_number) setVerifiedPhone(p.whatsapp_number);
+      // Sign-in email is already proven by the login provider: confirm it silently (no code needed)
+      const candidateEmail = String(p.email || user.email || "").trim().toLowerCase();
+      if (!p.email_verified && candidateEmail && user.email && user.email_confirmed_at && candidateEmail === user.email.toLowerCase()) {
+        supabase.functions.invoke("contact-verify", { body: { action: "sync_login_email", target: candidateEmail } })
+          .then(({ data: r }) => { if (active && (r as any)?.success) setVerifiedEmail(candidateEmail); })
+          .catch(() => { /* falls back to code verification */ });
+      }
       setWhatsapp(p.whatsapp_number || DIAL_BY_NATIONALITY[String(p.nationality || "").trim().toLowerCase()] || "");
       // Generic "role" (e.g. "Seafarer") is never treated as a professional rank
       setRank(p.rank || "");
@@ -281,8 +293,8 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
         } catch { /* silent */ }
       }
     } else {
-      // selection alone only reveals the sea-time chips — no save yet
-      setPendingFamilies((s) => [...s, key]);
+      // save immediately with a default sea time so a selection is never lost; crew can change the band
+      await setFamily(key, families[key] || "<1");
     }
   };
 
@@ -313,6 +325,7 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
       rank, years_in_rank_band: yearsBand, contracts_in_rank_band: contractsBand,
       whatsapp_number: toE164(whatsapp), email: contactEmail.trim(),
       total_sea_service_band: seaBand,
+      vessel_type: Object.keys(families).map((k) => FAMILIES.find((f) => f.key === k)?.label || k).join(", ").slice(0, 200) || null,
     } as any).eq("id", uid));
     const entries = Object.entries(families).map(([vessel_family, sea_time_band]) => ({ crew_id: uid, vessel_family, sea_time_band }));
     const familyResult = entries.length ? await resilientSave("quick_profile_vessels", () => supabase.from("crew_vessel_experience" as any)
@@ -416,7 +429,9 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
 
   const phoneError = validatePhone(whatsapp);
   const emailOk = EMAIL_RE.test(contactEmail.trim());
-  const contactDone = !phoneError && emailOk;
+  const emailVerifiedNow = emailOk && !!verifiedEmail && contactEmail.trim().toLowerCase() === verifiedEmail.trim().toLowerCase();
+  const phoneVerifiedNow = !phoneError && !!verifiedPhone && toE164(whatsapp) === toE164(verifiedPhone);
+  const contactDone = !phoneError && emailOk && emailVerifiedNow && phoneVerifiedNow;
   const step1Done = !!rank && !!yearsBand && !!contractsBand && !!seaBand && contactDone;
   const inputStyle: React.CSSProperties = { width: "100%", padding: "11px 12px", borderRadius: 10, background: NAVY, color: "#fff", border: `1px solid ${BORDER}`, fontSize: 14 };
   const step2Done = selectedFamilies.length > 0 || cadetSkipped;
@@ -517,6 +532,16 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
               </Row>
             </Q>
 
+            {showVerifyAlarm && (!emailVerifiedNow || !phoneVerifiedNow) && (
+              <div role="alert" style={{ background: "rgba(245,158,11,0.12)", border: "1px solid #f59e0b", borderRadius: 14, padding: 12 }}>
+                <p style={{ color: "#f59e0b", fontSize: 13, fontWeight: 800, marginBottom: 4 }}>⚠️ Official verification required</p>
+                <p style={{ color: "#e5e7eb", fontSize: 12, lineHeight: 1.6 }}>
+                  Ship managers, manning agencies and the SeaMinds AI interview contact you only through verified details.
+                  Please verify {[!phoneVerifiedNow && "your WhatsApp number", !emailVerifiedNow && "your email"].filter(Boolean).join(" and ")} below with the 6-digit code to continue.
+                </p>
+              </div>
+            )}
+
             <Q title="WhatsApp number (required)">
               <input
                 type="tel" inputMode="tel" autoComplete="tel" maxLength={20}
@@ -529,7 +554,7 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
                 <p style={{ color: "#f87171", fontSize: 11 }}>{phoneError}</p>
               )}
               {!phoneError && (
-                <MobileVerify phone={toE164(whatsapp)} email={contactEmail} fullName={fullName || firstName} />
+                <ContactVerify channel="whatsapp" value={toE164(whatsapp)} verifiedValue={verifiedPhone} onVerified={(v) => { setVerifiedPhone(v); setShowVerifyAlarm(false); }} />
               )}
             </Q>
 
@@ -542,6 +567,9 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
                 style={inputStyle}
               />
               {contactEmail && !emailOk && <p style={{ color: "#f87171", fontSize: 11 }}>Enter a valid email address</p>}
+              {emailOk && (
+                <ContactVerify channel="email" value={contactEmail.trim()} verifiedValue={verifiedEmail} onVerified={(v) => { setVerifiedEmail(v); setShowVerifyAlarm(false); }} />
+              )}
             </Q>
 
             <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: 12 }}>
@@ -576,7 +604,13 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
             <button
               style={{ ...goldBtn, opacity: step1Done ? 1 : 0.5 }}
               onClick={async () => {
-                if (!contactDone) return toast.error(phoneError ? "Please enter your WhatsApp number with country code." : "Please enter a valid contact email.");
+                if (phoneError) return toast.error("Please enter your WhatsApp number with country code.");
+                if (!emailOk) return toast.error("Please enter a valid contact email.");
+                if (!emailVerifiedNow || !phoneVerifiedNow) {
+                  setShowVerifyAlarm(true);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                  return toast.error("Verification required: please verify your " + [!phoneVerifiedNow && "WhatsApp", !emailVerifiedNow && "email"].filter(Boolean).join(" and ") + " to continue.");
+                }
                 if (!step1Done) return toast(t("qpNeedFour"));
                 saveProfile({ whatsapp_number: toE164(whatsapp), email: contactEmail.trim() });
                 if (!(await confirmCanonicalRank())) return toast.error("Please choose your official rank from the list.");
