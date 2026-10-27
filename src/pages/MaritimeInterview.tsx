@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { useInterviewVoice } from "@/hooks/useInterviewVoice";
-import { applyInterviewStep, completedReview, emptyInterview, requestTranscript, MAX_ANSWER_CHARS, MAX_TURNS } from "@/lib/maritimeInterview";
+import { applyInterviewStep, completedReview, emptyInterview, verdictLabel, MAX_ANSWER_CHARS, MAX_TURNS } from "@/lib/maritimeInterview";
 import type { ExamStep } from "../../supabase/functions/_shared/maritimeExaminer";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 
