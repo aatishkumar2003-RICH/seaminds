@@ -599,10 +599,17 @@ const ManagerDashboard = () => {
     joiningDate?: string,
     contractMonths?: number
   ) => {
-    const params: { p_application_id: string; p_action: string; p_joining_date?: string; p_contract_months?: number } = {
+    const params: { p_application_id: string; p_action: string; p_joining_date?: string; p_contract_months?: number; p_offer?: any } = {
       p_application_id: applicationId,
       p_action: action,
     };
+    if (action === "decline") {
+      const reasons = ["Sea-time / experience below requirement", "Position already filled", "Certificates missing or expired (STCW)", "Rank or vessel type mismatch", "Flag state / visa constraint"];
+      const pick = window.prompt(`Reason shown to the crew (they may reapply after updating):\n${reasons.map((r, i) => `${i + 1}. ${r}`).join("\n")}\n\nType 1-5 or write your own note:`, "1");
+      if (pick === null) return;
+      const n = parseInt(pick.trim(), 10);
+      params.p_offer = { reason: n >= 1 && n <= reasons.length ? reasons[n - 1] : pick.trim().slice(0, 300) };
+    }
     if (action === "offer") {
       params.p_joining_date = joiningDate;
       params.p_contract_months = contractMonths;

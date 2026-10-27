@@ -19,6 +19,7 @@ interface AssessmentFlowProps {
   yearsExperience?: number;
   onComplete: () => void;
   onExit?: () => void;
+  onRestart?: () => void | Promise<void>;
   mode?: 'interview' | 'learn';
 }
 
@@ -45,7 +46,7 @@ interface FlatQuestion {
   prompt_text?: string;
 }
 
-const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assessmentId, vesselType, yearsExperience, onComplete, onExit, mode = 'learn' }: AssessmentFlowProps) => {
+const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assessmentId, vesselType, yearsExperience, onComplete, onExit, onRestart, mode = 'learn' }: AssessmentFlowProps) => {
   const sealed = mode === 'interview';
   // Company-commissioned interview vs the crew's own SeaMinds Competency Assessment
   const interviewMode: 'company' | 'self' = mode === 'interview' ? 'company' : 'self';
@@ -1004,7 +1005,8 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
             </div>
             {onExit && (
               <button onClick={() => {
-                if (window.confirm('Pause and exit? Your answers are saved — you can resume the same paper later.')) onExit();
+                if (window.confirm('Pause and exit? Your answers are saved — you can resume the same paper later.')) { onExit(); return; }
+                if (onRestart && window.confirm('Restart instead? This discards this paper and starts a fresh one.')) onRestart();
               }} style={{ background:'transparent', border:'1px solid #444', color:'#888', padding:'4px 12px', borderRadius:'6px', fontSize:'11px', cursor:'pointer' }}>
                 ✕ Exit
               </button>

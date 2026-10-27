@@ -75,7 +75,7 @@ export const routeLabel = (v: UnifiedVacancy): string => {
 export const routeToast = (
   route: ApplyRoute,
   company: string,
-  r: { ok: boolean; duplicate: boolean; emailSent?: boolean },
+  r: { ok: boolean; duplicate: boolean; emailSent?: boolean; underReview?: boolean },
 ): { title: string; description: string; tone: "success" | "warning" | "error" } => {
   if (!r.ok) {
     return route.url
