@@ -112,9 +112,10 @@ export default function MaritimeInterview() {
           <p className="text-sm text-muted-foreground">Practice only — not a certificate, promotion decision or onboard operating instruction. Check the vessel’s manuals and safety procedures.</p>
           <div className="flex items-start gap-3 border-t border-border pt-5">
             <Checkbox id="interview-consent" checked={consent} disabled={busy} onCheckedChange={v => setConsent(v === true)} className="mt-1" />
-            <label htmlFor="interview-consent" className="text-sm text-muted-foreground">I agree to AI processing of my answers. This practice session is not saved or shared with managers. Refreshing or leaving clears it. Optional voice may use my browser’s speech service.</label>
+            <label htmlFor="interview-consent" className="text-sm text-muted-foreground">I agree to AI processing of my answers. Results are saved privately to my account and shared with companies only if I choose to at the end. Optional voice may use my browser’s speech service.</label>
           </div>
           <Button className="w-full sm:w-auto rounded-xl font-bold h-12" disabled={!consent || busy} onClick={() => void submit()}>{busy ? <><Loader2 className="animate-spin motion-reduce:animate-none" /> Preparing…</> : "Start interview"}</Button>
+          {history.length > 0 && <div className="space-y-2 border-t border-border pt-4"><h3 className="text-sm font-semibold text-primary">Your past interviews</h3><ul className="space-y-1 text-sm">{history.map(h => <li key={h.id} className="flex justify-between gap-3"><span>{h.rank}{h.target_rank ? ` → ${h.target_rank}` : ""} · {h.completed_at ? new Date(h.completed_at).toLocaleDateString() : ""}</span><span className="text-muted-foreground">{h.technical_pct ?? 0}% · {verdictLabel(h.verdict)}</span></li>)}</ul></div>}
         </section>}
         {active && <section className="space-y-5">
           <div className="flex items-center justify-between text-xs text-muted-foreground"><span>Scenario {session.turns.length + 1} of {MAX_TURNS}</span><span>{languages.find(([id]) => id === locale)?.[1]}</span></div>
