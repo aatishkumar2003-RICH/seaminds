@@ -581,12 +581,49 @@ export default function CVDatabaseTab() {
       </div>
 
       {/* Table */}
-      <div style={{ ...card, padding: 0, overflowX: "auto" }}>
+      <div style={{ ...card, padding: 0 }}>
         <div style={{ padding: 16, color: "#D4AF37", fontWeight: 700 }}>
           CV Database {loading ? "(Loading…)" : `(${filtered.length})`}
         </div>
-        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 900 }}>
-          <thead>
+        {/* Phone fallback: compact cards (desktop/laptop/tablet keep the full table) */}
+        <div className="md:hidden" style={{ padding: "0 12px 12px", display: "grid", gap: 10 }}>
+          {filtered.map((r) => {
+            const matches = countMatches(r, vacancies);
+            const btn = { padding: "6px 10px", borderRadius: 6, fontWeight: 600, fontSize: 12, cursor: "pointer" } as const;
+            return (
+              <div key={`m-${r.user_id}`} style={{ border: "1px solid #1e3a5f", borderRadius: 10, padding: 12 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ color: "#E0E0E0", fontWeight: 700 }}>{getFullName(r) || "—"}</div>
+                    <div style={{ color: "#94A3B8", fontSize: 12 }}>{[r.role, r.nationality].filter(Boolean).join(" · ") || "—"}</div>
+                  </div>
+                  <span style={{ color: "#D4AF37", fontFamily: "monospace", fontSize: 11, fontWeight: 700 }}>{r.cv_uid || "—"}</span>
+                </div>
+                <div style={{ color: "#94A3B8", fontSize: 12, marginTop: 6, wordBreak: "break-all" }}>
+                  {r.whatsapp_number || "—"} · {r.email || "—"}
+                </div>
+                <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap", fontSize: 11 }}>
+                  <span style={{ color: matches ? "#0D1B2A" : "#6b7280", background: matches ? "#D4AF37" : "transparent", padding: "2px 8px", borderRadius: 999, fontWeight: 700 }}>
+                    {matches ? `${matches} ${matches === 1 ? "match" : "matches"}` : "No match"}
+                  </span>
+                  <span style={{ color: r.source === "built" ? "#10b981" : "#D4AF37", fontWeight: 600 }}>
+                    {r.source === "both" ? "Built + PDF" : r.source === "built" ? "Built CV" : "PDF"}
+                  </span>
+                </div>
+                <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
+                  {r.path && <button onClick={() => openCV(r.path)} style={{ ...btn, background: "#D4AF37", color: "#0D1B2A", border: "none" }}>View PDF</button>}
+                  {r.parsed && <button onClick={() => downloadBuiltCV(r)} style={{ ...btn, background: "#D4AF37", color: "#0D1B2A", border: "none" }}>Generate PDF</button>}
+                  {r.parsed && <button onClick={() => setSelected(r)} style={{ ...btn, background: "transparent", color: "#D4AF37", border: "1px solid #D4AF37" }}>Data</button>}
+                  <button onClick={() => regenerateId(r)} style={{ ...btn, background: "transparent", color: "#94a3b8", border: "1px solid #334155" }}>Regenerate ID</button>
+                  <button onClick={() => deleteCrew(r)} disabled={deletingId === r.user_id} style={{ ...btn, background: "transparent", color: "#ef4444", border: "1px solid #ef4444" }}>Delete</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="hidden md:block" style={{ overflow: "auto", maxHeight: "72vh" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1100 }}>
+          <thead style={{ position: "sticky", top: 0, zIndex: 1, background: "#112240" }}>
             <tr>
               <th style={th}>Name</th>
               <th style={th}>CV UID</th>

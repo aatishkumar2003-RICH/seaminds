@@ -28,42 +28,36 @@ const CookieConsent = () => {
     setVisible(false);
   };
 
+  // Only the crew app (/app) has a phone bottom menu; elsewhere dock flush to the bottom edge.
+  const hasBottomNav = typeof window !== "undefined" && window.location.pathname.startsWith("/app");
+
   return (
-    <div className="fixed left-0 right-0 z-[200] p-4 animate-in slide-in-from-bottom-4 duration-500 bottom-[calc(4rem+env(safe-area-inset-bottom))] lg:bottom-0">
-      <div className="mx-auto max-w-2xl rounded-xl border border-border bg-card/95 backdrop-blur-md shadow-2xl p-5">
-        <div className="flex items-start gap-3">
-          <div className="rounded-lg bg-primary/10 p-2 mt-0.5 shrink-0">
-            <Cookie size={20} className="text-primary" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-foreground mb-1">We value your privacy</p>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              We use cookies for analytics to improve your experience. No personal data is shared with third parties.{" "}
-              <a href="/privacy" className="text-primary underline underline-offset-2 hover:text-primary/80 transition-colors">
-                Privacy Policy
-              </a>
-            </p>
-          </div>
+    <div
+      className={`fixed left-0 right-0 z-[200] px-3 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-0 animate-in slide-in-from-bottom-4 duration-500 lg:bottom-4 lg:px-4 ${
+        hasBottomNav ? "bottom-16" : "bottom-0"
+      }`}
+    >
+      <div className="mx-auto max-w-2xl rounded-xl border border-border bg-card/95 backdrop-blur-md shadow-2xl px-3 py-2.5 sm:p-4">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Cookie size={18} className="text-primary shrink-0 hidden sm:block" />
+          <p className="flex-1 min-w-0 text-[11px] sm:text-xs text-muted-foreground leading-snug">
+            We use analytics cookies to improve SeaMinds.{" "}
+            <a href="/privacy" className="text-primary underline underline-offset-2">Privacy</a>
+          </p>
           <button
             onClick={handleDecline}
-            className="p-1 rounded-md hover:bg-secondary transition-colors shrink-0"
-            aria-label="Close"
-          >
-            <X size={16} className="text-muted-foreground" />
-          </button>
-        </div>
-        <div className="flex items-center justify-end gap-2 mt-4">
-          <button
-            onClick={handleDecline}
-            className="px-4 py-1.5 text-xs font-medium rounded-lg border border-border text-muted-foreground hover:bg-secondary transition-colors"
+            className="px-2.5 py-1.5 text-[11px] sm:text-xs font-medium rounded-lg border border-border text-muted-foreground hover:bg-secondary transition-colors shrink-0"
           >
             Decline
           </button>
           <button
             onClick={handleAccept}
-            className="px-4 py-1.5 text-xs font-bold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+            className="px-3 py-1.5 text-[11px] sm:text-xs font-bold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shrink-0"
           >
-            Accept cookies
+            Accept
+          </button>
+          <button onClick={handleDecline} className="p-1 rounded-md hover:bg-secondary shrink-0" aria-label="Close">
+            <X size={14} className="text-muted-foreground" />
           </button>
         </div>
       </div>
