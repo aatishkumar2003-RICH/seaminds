@@ -16,6 +16,7 @@ import {
 } from "@/lib/managerVacancies";
 import { splitAdverts, MAX_PASTE_CHARS, MAX_ADVERT_CHARS } from "@/lib/advertSplitter";
 import { WhatsAppBroadcastPanel } from "./WhatsAppBroadcastPanel";
+import { AiReadingHud } from "./AiReadingHud";
 
 const MAX_FLIERS = 5;
 type Risk = "low" | "medium" | "high";
@@ -68,7 +69,7 @@ const downscaleImage = (file: File): Promise<string> =>
 
 const parseError = (error: unknown) => {
   const status = (error as { context?: { status?: number } })?.context?.status;
-  if (status === 403) return "Your company account is pending approval.";
+  if (status === 403) return "Please complete your company profile first, then retry.";
   if (status === 429) return "Too many adverts at once — wait a few minutes, then retry this one.";
   if (status === 401) return "Please sign in again.";
   return "Could not read this advert.";
@@ -439,6 +440,7 @@ const PostVacancy = () => {
           <li key={t} className={`flex-1 rounded-full px-3 py-1.5 text-center border ${step === i + 1 ? "border-[#D4AF37] text-[#0D1B2A] bg-[#D4AF37] font-bold" : "border-border text-muted-foreground"}`}>{i + 1}. {t}</li>
         ))}
       </ol>
+      <AiReadingHud sources={sources} />
 
       <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-5 lg:items-start">
       {/* ---------- Step 1: Intake ---------- */}
