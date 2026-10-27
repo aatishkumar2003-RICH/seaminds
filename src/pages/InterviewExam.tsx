@@ -231,8 +231,8 @@ const InterviewExam = () => {
           onComplete={finish}
           onExit={() => navigate(`/interview/${token}`)}
           onRestart={async () => {
-            const r = await openAssessmentV2(ctx.mode === "CV_BASED" ? "CV_BASED" : "PROFILE", { inviteId: ctx.inviteId, restart: true });
-            if (!r.ok) { setError(gatewayErrorMessage ? gatewayErrorMessage(r.error) : (r.error || "Restart failed")); setState("error"); return; }
+            const r = await openAssessmentV2(round2 ? "CV_BASED" : "PROFILE", { inviteId: ctx.inviteId, restart: true });
+            if (!r.ok) { setError(gatewayErrorMessage(r.error)); setState("error"); return; }
             window.location.reload();
           }}
         />
