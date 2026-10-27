@@ -35,5 +35,3 @@
 - Cert radar only via `crew_desk_certificate_radar` (crew-confirmed joinings); crew read own finalized/paid `portage_entries` via RLS. Why: consent gating, MLC A2.2.
 - Offer acceptance = outcome 'accepted' (Processing, no lock); only trigger `place_on_sea_signed` places crew on SEA signing. `submit_application` reopens closed applications, never re-alerts open ones. Why: crew free until signed; no recruiter spam.
 - Crew next steps via `get_my_action_hub()`; interview timing only via `manager_schedule_interview`/`respond_interview_schedule`. Why: both parties agree times; no direct client writes.
-- Vacancy posting is open to any manager with a `manager_profiles` row (RLS `managers_*_own_postings`); `normalize_job_posting` sets `verified` from admin_approved OR company_verified only. Approval gates only Crew Search and Crew Desk. Why: third-party agents must post; the badge, not a block, signals trust.
-- Bulk WhatsApp/Excel/PDF vacancy exports live in `src/lib/whatsappBroadcast.ts` (`buildDigests` splits by message length). Why: one tested place for broadcast text.
