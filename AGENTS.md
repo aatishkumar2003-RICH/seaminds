@@ -1,6 +1,6 @@
 # Architecture rules
 
-- Subdirectories (e.g. `supabase/functions/`) have their own `AGENTS.md`; read it before changing files there.
+- Read subdirectory `AGENTS.md` before edits, including `src/` and `supabase/functions/`.
 - Heartbeat `save_checkpoint` never clears an interruption; only `confirm_resume` (same paper + persisted answer) does. Why: a reconnect is not proof of recovery.
 - Final scoring is single-flight via `final_scoring_lease` on `scoring_jobs`; a validated AI result is cached before commit and reused. Why: polling and concurrent requests must not trigger repeated AI calls.
 - Pre-paper start failures are recorded in `assessment_start_incidents` (owner-bound, server-classified); no fake checkpoint or paper. Why: failures before issuance must be visible and recoverable without bypassing readiness.
