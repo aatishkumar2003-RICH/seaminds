@@ -32,18 +32,21 @@ export default function SeaProfile() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setState("signin"); return; }
       setUid(user.id);
-      const [{ data: p }, { data: rt }] = await Promise.all([
-        supabase.from("crew_profiles").select("first_name, last_name, crew_unique_id, nationality, whatsapp_number, email, is_available, availability_status, placed_until, rank, vessel_type, years_in_rank_band, contracts_in_rank_band, total_sea_service_band" as any).eq("id", user.id).maybeSingle(),
+      const [{ data: p }, { data: rt }, { data: vx }] = await Promise.all([
+        supabase.from("crew_profiles").select("first_name, last_name, crew_unique_id, nationality, whatsapp_number, email, email_verified, whatsapp_verified, is_available, availability_status, placed_until, rank, vessel_type, years_in_rank_band, contracts_in_rank_band, total_sea_service_band" as any).eq("id", user.id).maybeSingle(),
         supabase.from("rank_taxonomy" as any).select("canonical_rank, department_label"),
+        supabase.from("crew_vessel_experience" as any).select("vessel_family, sea_time_band").eq("crew_id", user.id),
       ]);
       const seen = new Set<string>();
       setRanks(((rt as any[]) || []).filter((r) => !seen.has(r.canonical_rank) && seen.add(r.canonical_rank))
         .sort((a, b) => (a.department_label || "").localeCompare(b.department_label || "") || a.canonical_rank.localeCompare(b.canonical_rank)));
       const pp: any = p || {};
+      const VLABEL: Record<string, string> = { OIL_TANKER: "Oil Tanker", CHEM_TANKER: "Chemical Tanker", LPG: "LPG Carrier", LNG: "LNG Carrier", BULK: "Bulk Carrier", CONTAINER: "Container", GENERAL_CARGO: "General Cargo", RORO_PAX: "RORO / Passenger", PSV_OSV: "PSV / OSV", AHTS: "AHTS", OTHER: "Other" };
+      const vesselList = ((vx as any[]) || []).map((v) => `${VLABEL[v.vessel_family] || v.vessel_family}${v.sea_time_band ? ` (${v.sea_time_band}${/yr/.test(v.sea_time_band) ? "" : " yr"})` : ""}`).join(", ");
       setInfo(pp);
       const placed = pp.placed_until && new Date(pp.placed_until) > new Date();
       setAvail(pp.availability_status || (placed ? "joined" : pp.is_available ? "ready" : "not_available"));
-      setForm({ rank: pp.rank || "", vessel_type: pp.vessel_type || "", years_in_rank_band: pp.years_in_rank_band || "",
+      setForm({ rank: pp.rank || "", vessel_type: vesselList || pp.vessel_type || "", years_in_rank_band: pp.years_in_rank_band || "",
         contracts_in_rank_band: pp.contracts_in_rank_band || "", total_sea_service_band: pp.total_sea_service_band || "" });
       setState("ready");
     })();
@@ -116,7 +119,8 @@ export default function SeaProfile() {
               </div>
               {[["Rank", form.rank], ["Vessel type", form.vessel_type], ["Years in rank", form.years_in_rank_band],
                 ["Contracts in rank", form.contracts_in_rank_band], ["Total sea service", form.total_sea_service_band],
-                ["WhatsApp", info.whatsapp_number], ["Email", info.email]].map(([k, v]) => (
+                ["WhatsApp", info.whatsapp_number ? `${info.whatsapp_number}${info.whatsapp_verified ? " ✅" : " (not verified)"}` : ""],
+                ["Email", info.email ? `${info.email}${info.email_verified ? " ✅" : " (not verified)"}` : ""]].map(([k, v]) => (
                 <div key={k} className="flex justify-between gap-3 text-sm">
                   <span style={{ color: "#94A3B8" }}>{k}</span>
                   <span className="text-white font-semibold text-right break-all">{v || <span style={{ color: "#f59e0b" }}>Not set</span>}</span>
