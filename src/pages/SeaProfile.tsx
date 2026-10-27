@@ -5,6 +5,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { resilientSave, saveErrorMessage } from "@/lib/resilientSave";
 
 const YEARS_BANDS = ["0–1", "2–4", "5–8", "9–14", "15+"];
@@ -17,6 +18,7 @@ const EMPTY: Form = { rank: "", vessel_type: "", years_in_rank_band: "", contrac
 /** My Sea Profile — editable professional profile. Never touches existing assessments (they keep their frozen snapshot). */
 export default function SeaProfile() {
   const navigate = useNavigate();
+  const { user: authUser, isReady: authReady } = useAuth();
   const [params] = useSearchParams();
   const ret = params.get("return");
   const [uid, setUid] = useState<string | null>(null);
@@ -29,7 +31,8 @@ export default function SeaProfile() {
 
   useEffect(() => {
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      if (!authReady) return;
+      const user = authUser;
       if (!user) { setState("signin"); return; }
       setUid(user.id);
       const [{ data: p }, { data: rt }, { data: vx }] = await Promise.all([

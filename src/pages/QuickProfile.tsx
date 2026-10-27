@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { resilientSave, saveErrorMessage } from "@/lib/resilientSave";
 import { toast } from "sonner";
 import { useT } from "@/i18n";
@@ -121,6 +122,7 @@ const goldBtn: React.CSSProperties = {
 
 const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => void; embedded?: boolean } = {}) => {
   const navigate = useNavigate();
+  const { user: authUser, isReady: authReady } = useAuth();
   const { t } = useT();
   const [uid, setUid] = useState<string | null>(null);
   const [firstName, setFirstName] = useState("");
@@ -168,8 +170,8 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
   useEffect(() => {
     let active = true;
     (async () => {
-      const { data } = await supabase.auth.getUser();
-      const user = data?.user;
+      if (!authReady) return;
+      const user = authUser;
       if (!user) { navigate("/app"); return; }
       if (!active) return;
       setUid(user.id);
