@@ -7016,6 +7016,7 @@ export type Database = {
       process_answer_scoring_queue: { Args: never; Returns: string }
       process_recovery_queue: { Args: never; Returns: string }
       process_scoring_jobs: { Args: never; Returns: string }
+      public_training_tracks: { Args: { p_limit?: number }; Returns: Json }
       raise_lineup_ticket: {
         Args: {
           p_application_id: string
