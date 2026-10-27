@@ -687,6 +687,13 @@
       "when": 1793075745139,
       "tag": "0097_fix_interview_schedule_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 98,
+      "version": "7",
+      "when": 1793093931668,
+      "tag": "0098_maritime_interview_sessions",
+      "breakpoints": true
     }
   ]
 }
