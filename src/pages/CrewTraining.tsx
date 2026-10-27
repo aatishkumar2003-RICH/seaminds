@@ -170,6 +170,7 @@ const MyTraining = () => {
         <Button size="sm" role="tab" variant={english ? "outline" : "default"} aria-selected={!english} onClick={() => setParams({})}>📋 Training Matrix</Button>
         <Button size="sm" role="tab" variant={english ? "default" : "outline"} aria-selected={english} onClick={() => setParams({ tab: "english" })}>🎙️ English Classes</Button>
         <Button size="sm" variant="outline" role="tab" aria-selected="false" onClick={() => navigate("/app?tab=academy")}>🔬 Ask AI Technical Assistant</Button>
+        <Button size="sm" variant="outline" onClick={() => navigate("/maritime-interview")}>AI interview practice</Button>
       </div>
       {english ? <MaritimeEnglishLab /> : items === null ? <p className="text-muted-foreground">Loading…</p> : (
         <>

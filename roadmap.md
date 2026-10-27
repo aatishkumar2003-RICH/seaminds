@@ -1,5 +1,10 @@
 # SeaMinds — Global Vacancy Growth Roadmap
 
+## Maritime brain — Phase 3
+- [ ] Add candidate-only adaptive practice screen, language selection, optional browser speech and end-only feedback.
+- [ ] Verify authenticated complete interview, failure recovery, phone/desktop layout and regression tests; publish.
+- [ ] Phase 4: server-owned sessions, persisted competency gaps and manager reports (future phase, not Phase 3).
+
 ## Owner plan and reward controls
 - [x] Add private global plan editor for crew, ship managers and fleet management, with editable name, USD amount, credits, interval and archive state. Existing Pricing/Country Pricing links now use one editor; public paid-tier cards removed.
 - [x] Add owner-controlled reward amounts/reminders, evidence-based one-time CV/score grants and completion-only referrals; cross-role profile reward and referral reassignment protected.

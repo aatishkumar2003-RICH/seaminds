@@ -60,6 +60,7 @@ const CountryHub = lazy(() => import("./pages/CountryHub"));
 const FleetHome = lazy(() => import("./pages/FleetHome"));
 const FleetLogin = lazy(() => import("./pages/FleetLogin"));
 const CrewTraining = lazy(() => import("./pages/CrewTraining"));
+const MaritimeInterview = lazy(() => import("./pages/MaritimeInterview"));
 const SailorsCockpit = lazy(() => import("./pages/SailorsCockpit"));
 const MyPayslips = lazy(() => import("./pages/MyPayslips"));
 const MyResponses = lazy(() => import("./pages/MyResponses"));
@@ -185,6 +186,7 @@ const App = () => (
             <Route path="/interview/:token" element={<InterviewInvite />} />
             <Route path="/interview/:token/exam" element={<InterviewExam />} />
             <Route path="/training" element={<Suspense fallback={null}><CrewTraining /></Suspense>} />
+            <Route path="/maritime-interview" element={<Suspense fallback={null}><MaritimeInterview /></Suspense>} />
             <Route path="/training/:token" element={<Suspense fallback={null}><CrewTraining /></Suspense>} />
             <Route path="/my-payslips" element={<Suspense fallback={null}><MyPayslips /></Suspense>} />
             <Route path="/my-responses" element={<Suspense fallback={null}><MyResponses /></Suspense>} />
