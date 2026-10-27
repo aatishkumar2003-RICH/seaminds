@@ -3007,10 +3007,17 @@ export type Database = {
           invited_whatsapp: string | null
           manager_note: string | null
           overall_score: number | null
+          proposed_by: string | null
+          proposed_slots: Json
           round_2_assessment_id: string | null
+          schedule_mode: string
+          schedule_note: string | null
+          schedule_updated_at: string | null
+          scheduled_at: string | null
           shortlisted: boolean | null
           status: string
           token: string
+          window_ends_at: string | null
         }
         Insert: {
           assessment_id?: string | null
@@ -3025,10 +3032,17 @@ export type Database = {
           invited_whatsapp?: string | null
           manager_note?: string | null
           overall_score?: number | null
+          proposed_by?: string | null
+          proposed_slots?: Json
           round_2_assessment_id?: string | null
+          schedule_mode?: string
+          schedule_note?: string | null
+          schedule_updated_at?: string | null
+          scheduled_at?: string | null
           shortlisted?: boolean | null
           status?: string
           token: string
+          window_ends_at?: string | null
         }
         Update: {
           assessment_id?: string | null
@@ -3043,10 +3057,17 @@ export type Database = {
           invited_whatsapp?: string | null
           manager_note?: string | null
           overall_score?: number | null
+          proposed_by?: string | null
+          proposed_slots?: Json
           round_2_assessment_id?: string | null
+          schedule_mode?: string
+          schedule_note?: string | null
+          schedule_updated_at?: string | null
+          scheduled_at?: string | null
           shortlisted?: boolean | null
           status?: string
           token?: string
+          window_ends_at?: string | null
         }
         Relationships: [
           {
@@ -6841,6 +6862,7 @@ export type Database = {
       get_interview_by_token: { Args: { p_token: string }; Returns: Json }
       get_market_indices: { Args: never; Returns: Json }
       get_missing_answers: { Args: { p_assessment_id: string }; Returns: Json }
+      get_my_action_hub: { Args: never; Returns: Json }
       get_my_applicants: { Args: never; Returns: Json }
       get_my_applications: { Args: never; Returns: Json }
       get_my_credit_balance: { Args: never; Returns: Json }
@@ -6878,6 +6900,15 @@ export type Database = {
         Returns: undefined
       }
       make_invite_token: { Args: never; Returns: string }
+      manager_schedule_interview: {
+        Args: {
+          p_flex_hours?: number
+          p_invite_id: string
+          p_note?: string
+          p_slots: string[]
+        }
+        Returns: Json
+      }
       manager_update_application: {
         Args: {
           p_action: string
@@ -7033,6 +7064,15 @@ export type Database = {
         Returns: Json
       }
       resolve_rank: { Args: { p_rank: string }; Returns: Json }
+      respond_interview_schedule: {
+        Args: {
+          p_accept?: string
+          p_counter?: string[]
+          p_invite_id: string
+          p_note?: string
+        }
+        Returns: Json
+      }
       reveal_contact: { Args: { p_crew_id: string }; Returns: Json }
       rpc_submit_support_ticket: {
         Args: {

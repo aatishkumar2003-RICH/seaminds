@@ -673,6 +673,20 @@
       "when": 1793069545833,
       "tag": "0095_processing_until_sea_signed_and_reapply",
       "breakpoints": true
+    },
+    {
+      "idx": 96,
+      "version": "7",
+      "when": 1793075712704,
+      "tag": "0096_interview_scheduling_and_action_hub",
+      "breakpoints": true
+    },
+    {
+      "idx": 97,
+      "version": "7",
+      "when": 1793075745139,
+      "tag": "0097_fix_interview_schedule_notifications",
+      "breakpoints": true
     }
   ]
 }

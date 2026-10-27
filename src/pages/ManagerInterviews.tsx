@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, lazy, Suspense } from "react";
 const TrainingPlanner = lazy(() => import("@/components/manager/TrainingPlanner"));
+import InterviewScheduler from "@/components/manager/InterviewScheduler";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -417,6 +418,7 @@ const ManagerInterviews = () => {
                                 </span>}
                             </div>
                           )}
+                          {r.status !== "completed" && r.invite_id && <InterviewScheduler inviteId={r.invite_id} />}
                           {r.status === "completed" && (
                             trainFor === r.invite_id
                               ? <Suspense fallback={null}><TrainingPlanner inviteId={r.invite_id} name={r.name} whatsapp={r.whatsapp} company={companyName} onLedgerChange={(summary) => setTraining((previous) => ({ ...previous, [r.invite_id]: { invite_id: r.invite_id, ...summary } }))} /></Suspense>
