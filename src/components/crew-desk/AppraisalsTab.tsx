@@ -55,7 +55,7 @@ export default function AppraisalsTab({ rows }: { rows: Row[] | null }) {
   };
 
   if (!contracts) return <p className="text-sm text-muted-foreground">Loading…</p>;
-  if (!contracts.length) return <p className="text-sm text-muted-foreground rounded-xl border border-border p-4">No signed contracts yet. Appraisals open once a crew member has a signed contract in SEA Contracts.</p>;
+  if (!contracts.length) return <p className="text-sm text-muted-foreground rounded-xl border border-border p-4">No signed contracts yet. Appraisals open once a crew member has a signed contract in SEA Contracts. <a href="/manager/crew-desk?tab=contracts" className="ml-1 font-bold text-primary underline">Open SEA Contracts →</a></p>;
 
   const ro = draft?.status === "finalized";
   const c = contracts.find(x => x.id === openId);

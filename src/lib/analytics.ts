@@ -47,6 +47,7 @@ export function getConsent(): ConsentStatus {
 
 export function setConsent(status: "accepted" | "declined") {
   localStorage.setItem(CONSENT_KEY, status);
+  try { window.dispatchEvent(new Event("sm-consent-changed")); } catch { /* non-browser */ }
   if (status === "accepted") {
     loadGA4();
   } else {
