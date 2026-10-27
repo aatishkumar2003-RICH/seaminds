@@ -3352,7 +3352,10 @@ export type Database = {
           created_at: string
           crew_accepted_at: string | null
           crew_id: string
+          crew_remark: string | null
+          crew_remark_at: string | null
           cv_complete: boolean | null
+          decline_reason: string | null
           external_url: string | null
           had_cv: boolean | null
           id: string
@@ -3364,6 +3367,7 @@ export type Database = {
           outcome: string | null
           placement_end: string | null
           rank_applied: string | null
+          reapplied_at: string | null
           released_at: string | null
           vacancy_id: string | null
           vessel_type: string | null
@@ -3377,7 +3381,10 @@ export type Database = {
           created_at?: string
           crew_accepted_at?: string | null
           crew_id: string
+          crew_remark?: string | null
+          crew_remark_at?: string | null
           cv_complete?: boolean | null
+          decline_reason?: string | null
           external_url?: string | null
           had_cv?: boolean | null
           id?: string
@@ -3389,6 +3396,7 @@ export type Database = {
           outcome?: string | null
           placement_end?: string | null
           rank_applied?: string | null
+          reapplied_at?: string | null
           released_at?: string | null
           vacancy_id?: string | null
           vessel_type?: string | null
@@ -3402,7 +3410,10 @@ export type Database = {
           created_at?: string
           crew_accepted_at?: string | null
           crew_id?: string
+          crew_remark?: string | null
+          crew_remark_at?: string | null
           cv_complete?: boolean | null
+          decline_reason?: string | null
           external_url?: string | null
           had_cv?: boolean | null
           id?: string
@@ -3414,6 +3425,7 @@ export type Database = {
           outcome?: string | null
           placement_end?: string | null
           rank_applied?: string | null
+          reapplied_at?: string | null
           released_at?: string | null
           vacancy_id?: string | null
           vessel_type?: string | null
@@ -6710,6 +6722,10 @@ export type Database = {
       }
       crew_respond_offer: {
         Args: { p_accept: boolean; p_application_id: string }
+        Returns: Json
+      }
+      crew_send_remark: {
+        Args: { p_application_id: string; p_remark: string }
         Returns: Json
       }
       cv_interview_readiness: {
