@@ -646,7 +646,8 @@ const ConversionConsole = () => {
             <ul className="space-y-1.5 text-[11px] leading-snug text-muted-foreground mb-4">
               <li>✓ Upload the flier your crewing team already uses — SeaMinds turns it into searchable vacancies</li>
               <li>✓ Receive applications with verified Sea Profiles</li>
-              <li>✓ Run AI competency interviews and shortlist on evidence</li>
+              <li>✓ Maritime Brain technical interviews — deck &amp; engine, with safety checks</li>
+              <li>✓ Gaps found become targeted training, then a retest before joining</li>
             </ul>
             <div className="mt-auto flex flex-wrap items-center gap-2">
               <Link
