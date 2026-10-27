@@ -178,6 +178,21 @@ Deno.serve(async (req) => {
     }
 
     const payload = await req.json().catch(() => ({}));
+
+    // Login email already proven by the auth provider (Google / magic link): mark verified without a code.
+    if (payload.action === 'sync_login_email') {
+      const loginEmail = sanitizeEmail(user.email || '');
+      const wanted = sanitizeEmail(payload.target as string);
+      if (!loginEmail || !user.email_confirmed_at || wanted !== loginEmail) {
+        return json({ success: false, error: 'This email is different from your sign-in email. Please verify it with a code.' });
+      }
+      const now = new Date().toISOString();
+      const { data: upd, error: upErr } = await admin.from('crew_profiles')
+        .update({ email_verified: true, email_verified_at: now, email: loginEmail })
+        .eq('id', user.id).select('id');
+      if (upErr || !upd?.length) return json({ success: false, error: 'Could not confirm your email. Please verify with a code.' });
+      return json({ success: true, verified: true, channel: 'email' });
+    }
     const parsed = parseAction(payload);
     if (!parsed) return json({ success: false, error: 'Unknown verification action' });
     const { op, channel } = parsed;
@@ -191,12 +206,6 @@ Deno.serve(async (req) => {
     }
     if (channel === 'whatsapp' && !/^\+\d{7,15}$/.test(target)) {
       return json({ success: false, error: 'Enter the number in international format with country code (e.g. +639171234567)' });
-    }
-
-    // WhatsApp OTP delivery is disabled — mobile numbers are confirmed via the
-    // prefilled WhatsApp Business message + admin approval flow instead.
-    if (channel === 'whatsapp') {
-      return json({ success: false, error: 'WhatsApp code verification is no longer used. Use "Verify via WhatsApp" in the CV form, or verify your email.' });
     }
 
     if (op === 'send') {
