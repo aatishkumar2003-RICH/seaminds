@@ -628,7 +628,7 @@ const ConversionConsole = () => {
             <button onClick={() => openTraining("/maritime-interview")}
               className="sm-cta-pulse mt-auto w-full rounded-xl px-6 h-12 font-bold inline-flex items-center justify-center"
               style={{ background: GOLD, color: NAVY }}>
-              Start free training →
+              ⚡ Test my promotion readiness →
             </button>
           </div>
 
