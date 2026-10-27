@@ -544,7 +544,7 @@ const ConversionConsole = () => {
               className="relative h-10 rounded-lg text-[11px] font-bold transition"
               style={heroTab === k ? { background: GOLD, color: NAVY } : { color: "#E2E8F0" }}>
               {label}
-              {k === "train" && heroTab !== k && <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full animate-pulse" style={{ background: GREEN }} />}
+              {k === "train" && heroTab !== k && <span aria-hidden className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full animate-pulse" style={{ background: GREEN }} />}
             </button>
           ))}
         </div>
