@@ -15,6 +15,7 @@ import { VESSEL_GROUPS, vesselGroupBySlug, vesselMatches } from "@/lib/vesselGro
 import ApplyGateSheet from "@/components/ApplyGateSheet";
 import { toast } from "sonner";
 import { matchVacancy, rankVacancies, type MatchProfile } from "@/lib/smartMatch";
+import SponsoredStrip from "@/components/opportunities/SponsoredStrip";
 
 const NAVY = "#0D1B2A";
 const GOLD = "#D4AF37";
@@ -301,6 +302,8 @@ const JobFeed = () => {
               <button onClick={clearAll} aria-label="Reset filters to show all worldwide vacancies" title="Only removes your filters — no jobs are deleted" style={{ background: "transparent", border: `1px solid ${GOLD}`, color: GOLD, fontSize: 11, fontWeight: 700, borderRadius: 999, padding: "4px 10px", cursor: "pointer" }}>✕ Reset filters to Worldwide</button>
             </div>
           )}
+
+          <SponsoredStrip hub={rankHub || (matchProfile?.rank ? RANK_HUBS.find((h) => rankMatches(h, matchProfile.rank)) || null : null)} />
 
           <div style={{ display: "flex", gap: 7, marginTop: 9, overflowX: "auto", paddingBottom: 2 }}>
             {[...(matchProfile ? ["Matched"] : []), "All", "Deck", "Engine", "Cadet", "Catering"].map((f) => (

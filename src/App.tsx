@@ -81,6 +81,7 @@ import Join from "./pages/Join";
 import ResetPassword from "./pages/ResetPassword";
 import CompanyPost from "./pages/CompanyPost";
 import ManagerInterviews from "./pages/ManagerInterviews";
+const ManagerMarketFeed = lazy(() => import("./pages/ManagerMarketFeed"));
 const CrewDesk = lazy(() => import("./pages/CrewDesk"));
 const FleetWorkspace = lazy(() => import("./pages/FleetWorkspace"));
 import ShipManagerLayout from "./components/layout/ShipManagerLayout";
@@ -199,6 +200,7 @@ const App = () => (
             <Route element={<ShipManagerLayout />}>
               <Route path="/manager/dashboard" element={<ManagerDashboard />} />
               <Route path="/manager/interviews" element={<ManagerInterviews />} />
+              <Route path="/manager/market-feed" element={<Suspense fallback={null}><ManagerMarketFeed /></Suspense>} />
               <Route path="/manager/crew-desk" element={<Suspense fallback={null}><CrewDesk /></Suspense>} />
               <Route path="/manager/fleet-workspace" element={<Suspense fallback={null}><FleetWorkspace /></Suspense>} />
               <Route path="/fleet-workspace" element={<Navigate to="/manager/fleet-workspace" replace />} />

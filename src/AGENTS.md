@@ -7,3 +7,5 @@
 
 - Vacancy posting is open to any manager with a `manager_profiles` row (RLS `managers_*_own_postings`); `normalize_job_posting` sets `verified` from admin_approved OR company_verified only. Approval gates only Crew Search and Crew Desk. Why: third-party agents must post; the badge, not a block, signals trust.
 - Bulk WhatsApp/Excel/PDF vacancy exports live in `src/lib/whatsappBroadcast.ts` (`buildDigests` splits by message length). Why: one tested place for broadcast text.
+
+- Paid vacancy promotion only via RPC `promote_vacancies` (credits debited atomically, one active promotion per posting); crew see promoted ads via `sponsored_vacancies` (3-hour fair rotation) filtered by rank and one per recruiter in `src/lib/vacancyPromotion.ts`. Why: rank relevance and no agency flooding.
