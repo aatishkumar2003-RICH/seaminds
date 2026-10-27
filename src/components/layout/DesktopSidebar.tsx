@@ -43,10 +43,10 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
         </Tooltip>
       </div>
 
-      <a href="/profile" aria-label="Open My Sea Profile" className="mb-2 flex w-full flex-col gap-1 rounded-xl border border-primary/30 bg-card/60 px-2 py-2 hover:border-primary/60">
+      <Link to="/profile" aria-label="Open My Sea Profile" className="mb-2 flex w-full flex-col gap-1 rounded-xl border border-primary/30 bg-card/60 px-2 py-2 hover:border-primary/60">
         <span className="truncate text-sm font-semibold text-foreground">{firstName || "Seafarer"}</span>
         <span className="inline-flex w-fit items-center gap-1 rounded-full border border-primary/40 px-2 py-0.5 text-[10px] font-semibold text-primary">👤 My Sea Profile</span>
-      </a>
+      </Link>
 
       <GroupedNav screen={screen} active jobBadgeCount={jobBadgeCount} tourActiveScreen={tourActiveScreen} onNavClick={onNavClick} />
 

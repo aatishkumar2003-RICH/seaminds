@@ -505,7 +505,7 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
             All taps, no typing — unlock job applications and your SeaMinds Competency Assessment.
           </p>
           <button
-            onClick={() => (window.location.href = "/quick-profile")}
+            onClick={() => { window.history.pushState({}, "", "/quick-profile"); window.dispatchEvent(new PopStateEvent("popstate")); }}
             className="rounded-xl px-4 py-2 text-sm font-extrabold"
             style={{ background: GOLD, color: NAVY, border: "none", cursor: "pointer" }}
           >

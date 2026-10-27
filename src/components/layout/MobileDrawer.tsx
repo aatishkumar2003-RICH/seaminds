@@ -102,14 +102,14 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
         </div>
       </div>
       <div className="mb-3 flex shrink-0 items-start gap-1 rounded-xl border border-primary/30 bg-card/60 p-2">
-        <a href="/profile" onClick={() => setDrawerOpen(false)} aria-label="Open My Sea Profile" className="flex min-w-0 flex-1 flex-col gap-1">
+        <Link to="/profile" onClick={() => setDrawerOpen(false)} aria-label="Open My Sea Profile" className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="flex min-w-0 items-center gap-1.5">
             <span className="text-lg">{NATIONALITY_FLAGS[nationality] || "🌊"}</span>
             <span className="min-w-0 line-clamp-2 break-words text-sm font-semibold text-foreground" title={`${firstName} ${lastName}`}>{firstName || "Seafarer"} {lastName}</span>
           </span>
           {role && <span className="truncate text-[11px] text-muted-foreground">{role}</span>}
           <span className="mt-0.5 inline-flex w-fit items-center gap-1 rounded-full border border-primary/40 px-2 py-0.5 text-[10px] font-semibold text-primary">👤 My Sea Profile</span>
-        </a>
+        </Link>
         <Button variant="ghost" size="icon" onClick={() => setDrawerOpen(false)} aria-label="Close menu" title="Close menu" className="h-8 w-8 shrink-0 text-muted-foreground"><X aria-hidden="true" /></Button>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">

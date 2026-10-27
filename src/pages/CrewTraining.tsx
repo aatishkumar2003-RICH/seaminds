@@ -15,7 +15,7 @@ const Shell = ({ children, onBack, onQuit }: { children: React.ReactNode; onBack
         <Button variant="ghost" className="px-0 text-primary" onClick={onBack}><ChevronLeft /> Back</Button>
         <div className="flex items-center gap-1">
           {onQuit && <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={onQuit}><RotateCcw size={16} /> Quit / restart</Button>}
-          <Button variant="ghost" size="sm" className="text-primary" onClick={() => { window.location.assign("/app"); }} aria-label="Home"><Home size={16} /> Home</Button>
+          <Button asChild variant="ghost" size="sm" className="text-primary"><Link to="/app" aria-label="Home"><Home size={16} /> Home</Link></Button>
         </div>
       </div>
       {children}

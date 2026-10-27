@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import React from "react";
 import { type Screen, type AppState, NATIONALITY_FLAGS } from "./types";
 import seamindsLogo from "@/assets/seaminds-logo.png";
@@ -45,9 +46,9 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
       </div>
       <div className="flex items-center gap-1">
         {headerRight}
-        <a href="/profile" aria-label="My Sea Profile" className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary transition-transform active:scale-95">
+        <Link to="/profile" aria-label="My Sea Profile" className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary transition-transform active:scale-95">
           <span className="text-base">{flag}</span>
-        </a>
+        </Link>
       </div>
     </div>
   );
