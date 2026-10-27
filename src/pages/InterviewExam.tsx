@@ -229,7 +229,12 @@ const InterviewExam = () => {
           yearsExperience={ctx.yearsExperience}
           mode="interview"
           onComplete={finish}
-          onExit={() => navigate("/feed")}
+          onExit={() => navigate(`/interview/${token}`)}
+          onRestart={async () => {
+            const r = await openAssessmentV2(round2 ? "CV_BASED" : "PROFILE", { inviteId: ctx.inviteId, restart: true });
+            if (!r.ok) { setError(gatewayErrorMessage(r.error)); setState("error"); return; }
+            window.location.reload();
+          }}
         />
       </div>
     </div>

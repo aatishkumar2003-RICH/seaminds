@@ -75,7 +75,7 @@ export const routeLabel = (v: UnifiedVacancy): string => {
 export const routeToast = (
   route: ApplyRoute,
   company: string,
-  r: { ok: boolean; duplicate: boolean; emailSent?: boolean },
+  r: { ok: boolean; duplicate: boolean; emailSent?: boolean; underReview?: boolean },
 ): { title: string; description: string; tone: "success" | "warning" | "error" } => {
   if (!r.ok) {
     return route.url
@@ -85,7 +85,9 @@ export const routeToast = (
   if (r.duplicate && route.channel === "email" && !r.emailSent) {
     return { title: "Not sent yet", description: "Your application is saved, but the email could not be sent. Try again.", tone: "warning" };
   }
-  if (r.duplicate) return { title: "Already applied ✓", description: `You already applied to ${company}.`, tone: "success" };
+  if (r.duplicate) return r.underReview
+    ? { title: "Still under review ⏳", description: `${company} has not responded yet. Your latest profile and CV were refreshed — no repeat message was sent.`, tone: "success" }
+    : { title: "Already applied ✓", description: `You already applied to ${company}.`, tone: "success" };
   switch (route.channel) {
     case "whatsapp":
       return { title: "WhatsApp opened ✓", description: `Your Sea Profile message is ready. Tap Send in WhatsApp to deliver it to ${company}.`, tone: "success" };

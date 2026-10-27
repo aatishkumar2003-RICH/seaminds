@@ -599,10 +599,17 @@ const ManagerDashboard = () => {
     joiningDate?: string,
     contractMonths?: number
   ) => {
-    const params: { p_application_id: string; p_action: string; p_joining_date?: string; p_contract_months?: number } = {
+    const params: { p_application_id: string; p_action: string; p_joining_date?: string; p_contract_months?: number; p_offer?: any } = {
       p_application_id: applicationId,
       p_action: action,
     };
+    if (action === "decline") {
+      const reasons = ["Sea-time / experience below requirement", "Position already filled", "Certificates missing or expired (STCW)", "Rank or vessel type mismatch", "Flag state / visa constraint"];
+      const pick = window.prompt(`Reason shown to the crew (they may reapply after updating):\n${reasons.map((r, i) => `${i + 1}. ${r}`).join("\n")}\n\nType 1-5 or write your own note:`, "1");
+      if (pick === null) return;
+      const n = parseInt(pick.trim(), 10);
+      params.p_offer = { reason: n >= 1 && n <= reasons.length ? reasons[n - 1] : pick.trim().slice(0, 300) };
+    }
     if (action === "offer") {
       params.p_joining_date = joiningDate;
       params.p_contract_months = contractMonths;
@@ -696,7 +703,8 @@ const ManagerDashboard = () => {
       case "awaiting": return { cls: "bg-muted text-muted-foreground", label: "New" };
       case "shortlisted": return { cls: "bg-[#D4AF37]/15 text-[#D4AF37]", label: "⭐ Shortlisted" };
       case "offered": return { cls: "bg-blue-500/15 text-blue-400", label: "📨 Offered" };
-      case "placed": return { cls: "bg-green-500/15 text-green-400", label: "⚓ Placed" };
+      case "accepted": return { cls: "bg-[#D4AF37]/15 text-[#D4AF37]", label: "⏳ Processing — issue SEA" };
+      case "placed": return { cls: "bg-green-500/15 text-green-400", label: "⚓ Onboard (SEA signed)" };
       case "declined":
       case "offer_declined": return { cls: "bg-secondary text-muted-foreground/70", label: "Declined" };
       case "released": return { cls: "bg-muted text-muted-foreground", label: "Released" };
