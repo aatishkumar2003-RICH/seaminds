@@ -40,15 +40,7 @@ const CreditWallet = ({ audience, className = "" }: { audience: CreditAudience; 
         }
         if (!active || !w?.ok) return;
         setWallet(w);
-        const settings = w.settings ?? DEFAULT_REWARDS;
-        const key = `sm_credit_reminder_${w.user_id}_${audience}`;
-        let lastSeen = 0;
-        try { lastSeen = Number(localStorage.getItem(key)); } catch { /* storage unavailable */ }
-        const eligible = settings.referral_credits > 0 || (!w.profile_rewarded && settings.profile_credits > 0) || (audience === "crew" && !w.score_rewarded && settings.score_credits > 0);
-        if (eligible && reminderDue(settings, lastSeen, Date.now())) {
-          setOpen(true);
-          try { localStorage.setItem(key, String(Date.now())); } catch { /* session-only reminder */ }
-        }
+        // The wallet dialog opens only when the user taps the credits pill — never automatically.
       } finally {
         refreshing = false;
       }
