@@ -4,7 +4,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { authGate, aiPaused, aiPausedResponse, meterAi } from "../_shared/aiGuard.ts";
-import { validateInput, buildExamMessages, finalizeStep } from "../_shared/maritimeExaminer.ts";
+import { validateInput, buildExamMessages, finalizeStep, summarise, MAX_TURNS, type Turn } from "../_shared/maritimeExaminer.ts";
 
 const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { ...cors, "Content-Type": "application/json" } });
@@ -34,10 +34,23 @@ Deno.serve(async (req) => {
 
   let raw: any;
   try { raw = await req.json(); } catch { return json({ error: "invalid_json" }, 400); }
+  // Phase 4: the transcript is server-owned. Existing sessions ignore client-sent turns/questions.
+  const sessionId = typeof raw?.sessionId === "string" ? raw.sessionId : null;
+  let session: any = null;
+  if (sessionId) {
+    const { data } = await admin.from("maritime_interview_sessions").select("*").eq("id", sessionId).eq("crew_id", gate.userId).maybeSingle();
+    if (!data) return json({ error: "session_not_found", message: "This interview session was not found." }, 404);
+    if (data.status !== "in_progress") return json({ error: "session_closed", message: "This interview has already ended." }, 409);
+    session = data;
+    raw = { rank: data.rank, targetRank: data.target_rank, vessel: data.vessel, language: data.language, turns: data.turns, answer: raw?.answer };
+  } else {
+    raw = { ...raw, turns: [], answer: undefined };
+  }
   const v = validateInput(raw);
   if (!v.ok) return json({ error: v.error }, 400);
-  const pending = typeof raw.pendingQuestion === "string" ? raw.pendingQuestion.slice(0, 900) : null;
-  if (pending && v.value.answer === undefined) return json({ error: "answer_required" }, 400);
+  if (session) v.value.turns = (session.turns as Turn[]).slice(0, MAX_TURNS);
+  const pending: string | null = session?.pending_question ?? null;
+  if (session && (!pending || !v.value.answer)) return json({ error: "answer_required", message: "Please type an answer first." }, 400);
 
   const { messages, turnIndex } = buildExamMessages(v.value, pending);
   const started = Date.now();
@@ -55,5 +68,27 @@ Deno.serve(async (req) => {
   await meterAi(admin, { userId: gate.userId, feature: "maritime-examiner", model: MODEL, usage: data.usage, success: true, latencyMs: Date.now() - started });
   let parsed: unknown = {};
   try { parsed = JSON.parse(data.choices?.[0]?.message?.content ?? "{}"); } catch { /* handled by finalizeStep */ }
-  return json(finalizeStep(parsed, pending ? (v.value.answer ?? "") : undefined, turnIndex));
+  const step = finalizeStep(parsed, pending ? (v.value.answer ?? "") : undefined, turnIndex);
+  const nowIso = new Date().toISOString();
+  if (!session) {
+    if (step.done || !step.next_question) return json(step);
+    const { data: created, error } = await admin.from("maritime_interview_sessions").insert({
+      crew_id: gate.userId, rank: v.value.rank, target_rank: v.value.targetRank ?? null, vessel: v.value.vessel ?? null,
+      language: v.value.language ?? null, pending_question: step.next_question,
+    }).select("id").single();
+    if (error) return json({ error: "save_failed", message: "Could not start a saved session. Please try again." }, 500);
+    return json({ ...step, sessionId: created.id });
+  }
+  const turns: Turn[] = [...v.value.turns, { question: pending!, answer: v.value.answer!, ...(step.assessment ?? {}) } as Turn];
+  const done = step.done || turns.length >= MAX_TURNS;
+  const patch: Record<string, unknown> = { turns, updated_at: nowIso, pending_question: done ? null : step.next_question };
+  if (done) {
+    const sum = summarise(turns);
+    Object.assign(patch, { status: "completed", completed_at: nowIso, technical_pct: sum.technical_pct, safety_flags: sum.safety_flags, gaps: sum.gaps, verdict: sum.verdict });
+  }
+  // Optimistic guard: only advance if nobody else advanced this session meanwhile.
+  const { data: upd } = await admin.from("maritime_interview_sessions").update(patch)
+    .eq("id", session.id).eq("status", "in_progress").eq("updated_at", session.updated_at).select("id");
+  if (!upd?.length) return json({ error: "session_conflict", message: "This answer was already submitted. Please refresh." }, 409);
+  return json({ ...step, done, next_question: done ? null : step.next_question, sessionId: session.id });
 });
