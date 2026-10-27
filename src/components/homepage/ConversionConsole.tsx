@@ -595,23 +595,22 @@ const ConversionConsole = () => {
             style={{ background: `linear-gradient(160deg, ${PANEL}F2, ${NAVY}F2)`, border: `1px solid ${GOLD}` , boxShadow: "0 0 32px rgba(212,175,55,0.18)" }}
           >
             <div className="flex items-center justify-between mb-2">
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: GOLD }}>AI Interview &amp; Maritime Training</p>
-              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(34,197,94,0.15)", color: GREEN }}>● LIVE VOICE</span>
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: GOLD }}>🧠 Maritime Brain · Rank Upgradation</p>
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(34,197,94,0.15)", color: GREEN }}>● LIVE</span>
             </div>
             <h2 className="text-xl sm:text-2xl md:text-[26px] font-bold leading-tight text-foreground mb-3">
-              Speak like a pro on the radio. Pass your interview.
+              Test your promotion readiness. Fill your gaps. Prove your score.
             </h2>
-            <div className="flex items-end gap-[3px] h-6 mb-3" aria-hidden="true">
-              {[8, 16, 11, 22, 14, 24, 10, 18, 7, 20, 13, 9, 17, 12].map((h, i) => (
-                <span key={i} className="w-1 rounded-full animate-pulse" style={{ height: h, background: GOLD, opacity: 0.4 + (i % 4) * 0.15, animationDelay: `${i * 90}ms` }} />
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {["⚙️ 2/E → C/E", "🧭 2/O → C/O", "⚡ ETO · High Voltage", "🔥 Dual-Fuel & ME"].map((c) => (
+                <span key={c} className="text-[10px] font-bold px-2 py-1 rounded-lg" style={{ color: "#E2E8F0", border: `1px solid ${BORDER}`, background: "rgba(212,175,55,0.06)" }}>{c}</span>
               ))}
-              <span className="ml-2 text-[10px] font-mono" style={{ color: GOLD }}>VHF CH 16 · IMO SMCP</span>
             </div>
             <div className="space-y-2 mb-4">
               {[
-                ["🎙️", "Maritime English Voice Lab", "Push-to-talk radio drills, instant score", "/training?tab=english"],
-                ["🤖", "AI Competency Interview", "Rank-based questions, your own score", "/app?tab=smc"],
-                ["📚", "Training Matrix", "Recommended courses for your rank", "/training"],
+                ["🧠", "Adaptive AI Interview", "Rank-based, safety-checked, gaps found", "/maritime-interview"],
+                ["🎙️", "Maritime English Voice Lab", "VHF CH 16 · IMO SMCP radio drills", "/training?tab=english"],
+                ["📚", "Gap Training & Retest", "Courses matched to your weak areas", "/training"],
               ].map(([icon, title, sub, to]) => (
                 <button key={title} onClick={() => openTraining(to)}
                   className="w-full flex items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:opacity-90"
