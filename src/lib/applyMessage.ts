@@ -141,6 +141,10 @@ export interface RecordApplyArgs {
 export interface RecordApplyResult {
   ok: boolean;
   duplicate: boolean;
+  /** Duplicate that the company has not closed yet — no new alert was sent. */
+  underReview?: boolean;
+  /** A previously closed application was reopened and resent. */
+  reapplied?: boolean;
   applicationId?: string;
   /** True only when the notify-application call reported an accepted delivery. */
   emailSent?: boolean;
@@ -181,9 +185,9 @@ export const recordApplication = async (
 
   if (r.application_id && !r.duplicate && a.notify !== false) {
     const e = await notify(r.application_id);
-    return done({ ok: true, duplicate: false, applicationId: r.application_id, ...e });
+    return done({ ok: true, duplicate: false, reapplied: !!r.reapplied, applicationId: r.application_id, ...e });
   }
-  return done({ ok: true, duplicate: !!r.duplicate, applicationId: r.application_id });
+  return done({ ok: true, duplicate: !!r.duplicate, underReview: !!r.under_review, applicationId: r.application_id });
 };
 
 /** Opens a placeholder tab synchronously from a user click, so the later handoff is not blocked. */
