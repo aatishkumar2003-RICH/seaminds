@@ -27,6 +27,34 @@ Deno.serve(async (req) => {
     if (!uid) return json({ error: 'unauthorized' }, 401);
 
     const { data: cc } = await sb.from('company_compliance').select('*').eq('manager_user_id', uid).maybeSingle();
+    const input = await req.json().catch(() => ({}));
+
+    // Manager answers the AI's doubt → manual-review ticket emailed to admin.
+    if (input?.action === 'explain') {
+      const note = String(input.note ?? '').trim().slice(0, 1000);
+      if (note.length < 5) return json({ error: 'note_too_short' }, 400);
+      if (!cc || cc.status !== 'flagged') return json({ error: 'nothing_to_explain' }, 400);
+      if (cc.manager_note === note) return json({ ok: true, duplicate: true });
+      await sb.from('company_compliance').update({ manager_note: note, updated_at: new Date().toISOString() }).eq('manager_user_id', uid);
+      const [{ data: mp }, { data: au }] = await Promise.all([
+        sb.from('manager_profiles').select('company_name').eq('user_id', uid).maybeSingle(),
+        sb.auth.admin.getUserById(uid),
+      ]);
+      const flagsList = (cc.ai_result?.flags || []).map((f: string) => `<li>${esc(f)}</li>`).join('');
+      if (Deno.env.get('RESEND_API_KEY')) {
+        await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${Deno.env.get('RESEND_API_KEY')}` },
+          body: JSON.stringify({
+            from: 'SeaMinds <crew@seaminds.life>', reply_to: au?.user?.email || 'support@seaminds.life', to: [OWNER],
+            subject: `🎫 Manual verification ticket: ${mp?.company_name || au?.user?.email}`,
+            html: `<div style="font-family:system-ui;max-width:600px;margin:auto"><p><b>${esc(mp?.company_name)}</b> · ${esc(au?.user?.email)}</p><p><b>AI concerns:</b></p><ul>${flagsList}</ul><p><b>Manager explanation:</b><br/>${esc(note)}</p><p><a href="https://seaminds.life/admin?tab=company_approval">Review in Admin →</a></p></div>`,
+          }),
+        }).catch((e) => console.error('email', e));
+      }
+      return json({ ok: true });
+    }
+
     if (!cc || cc.status !== 'ai_review') return json({ error: 'nothing_to_check' }, 400);
     const today = new Date().toISOString().slice(0, 10);
     const runs = cc.ai_runs_day === today ? cc.ai_runs : 0;

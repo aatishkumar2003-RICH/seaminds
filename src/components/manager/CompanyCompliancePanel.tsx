@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 type Person = { name?: string; title?: string; email?: string; phone?: string };
 type C = {
   status: string; requested_items: string[]; admin_note: string | null; license_number: string | null; website: string | null;
-  document_paths: string[]; responsible_person: Person | null; ai_result: { flags?: string[] } | null;
+  document_paths: string[]; responsible_person: Person | null; ai_result: { flags?: string[] } | null; manager_note?: string | null;
 };
 
 const Field = ({ label, hint, req = true, children }: { label: string; hint: string; req?: boolean; children: React.ReactNode }) => (
@@ -46,6 +46,7 @@ export default function CompanyCompliancePanel() {
   const [crewFile, setCrewFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState(false);
+  const [explain, setExplain] = useState("");
 
   const load = async () => {
     if (!user) return;
@@ -100,6 +101,16 @@ export default function CompanyCompliancePanel() {
     } finally { setBusy(false); setBizFile(null); setCrewFile(null); load(); }
   };
 
+  const sendExplain = async () => {
+    setBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("verify-company", { body: { action: "explain", note: explain.trim().slice(0, 1000) } });
+      if (error || data?.error) throw new Error("Could not send. Please email support@seaminds.life.");
+      toast.success("Sent — a manual-review ticket is open. We reply by email.");
+      setExplain(""); load();
+    } catch (e) { toast.error((e as Error).message); } finally { setBusy(false); }
+  };
+
   const alarm = status === "requested" || status === "flagged";
   const label = status === "ai_review" ? "Checking your documents…"
     : status === "flagged" ? "Verification needs attention"
@@ -137,9 +148,15 @@ export default function CompanyCompliancePanel() {
           </div>
           {c?.admin_note && <p className="mt-2 text-xs text-primary">Note from SeaMinds: {c.admin_note}</p>}
           {status === "flagged" && flags.length > 0 && (
-            <div className="mt-2 rounded-lg border border-destructive/40 bg-destructive/10 p-2">
-              <p className="text-xs font-semibold text-destructive">Please fix and resubmit:</p>
+            <div className="mt-2 space-y-2 rounded-lg border border-destructive/40 bg-destructive/10 p-2">
+              <p className="text-xs font-semibold text-destructive">Our AI has a question about your documents:</p>
               <ul className="list-disc pl-5 text-[11px] text-destructive">{flags.map((f) => <li key={f}>{f}</li>)}</ul>
+              <p className="text-[11px] text-foreground">Explain below (e.g. "trade name of our parent company") and our team will check it by hand, or upload clearer documents further down. Your vacancies stay live meanwhile.</p>
+              <textarea className={input} rows={3} maxLength={1000} placeholder="Your explanation for our verification team…" value={explain} onChange={(e) => setExplain(e.target.value)} />
+              <button disabled={busy || explain.trim().length < 5} onClick={sendExplain} className="w-full rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground disabled:opacity-60 sm:w-auto">
+                {busy ? "Sending…" : "Send to verification team"}
+              </button>
+              {c?.manager_note && <p className="text-[11px] text-muted-foreground">Last explanation sent: “{c.manager_note}” — ticket open, we reply by email.</p>}
             </div>
           )}
 
