@@ -26,7 +26,7 @@ const TABS = [
   { id: "portage", label: "Portage Bill", icon: Wallet, soon: false },
   { id: "appraisals", label: "Appraisals", icon: Star },
 ];
-const STATUS: Record<string, string> = { shortlisted: "Shortlisted", offered: "Offer sent", placed: "Joining / Onboard" };
+const STATUS: Record<string, string> = { shortlisted: "Shortlisted", offered: "Offer sent", accepted: "Processing — awaiting SEA", placed: "Onboard (SEA signed)" };
 
 export default function CrewDesk() {
   const [params, setParams] = useSearchParams();
