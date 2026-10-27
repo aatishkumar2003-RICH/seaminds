@@ -694,6 +694,13 @@
       "when": 1793093931668,
       "tag": "0098_maritime_interview_sessions",
       "breakpoints": true
+    },
+    {
+      "idx": 99,
+      "version": "7",
+      "when": 1793108569790,
+      "tag": "0099_open_vacancy_posting_to_all_managers",
+      "breakpoints": true
     }
   ]
 }
