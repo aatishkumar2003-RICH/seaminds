@@ -79,72 +79,24 @@ export default function MarketPulseButton({
   const load = async () => {
     setLoading(true);
     try {
-      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      const lastMonth = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-
-      const nowIso = new Date().toISOString();
-      const [extVacRes, new24hRes, myVacRes,
-             topJobsRes, lastMonthVacRes] = await Promise.all([
-        supabase.from('external_vacancies').select('rank_required, vessel_type, salary_min, salary_max, joining_port, company_name').gte('quality_score', 40).gt('expires_at', nowIso),
-        supabase.from('external_vacancies').select('*', { count: 'exact', head: true }).gte('fetched_at', yesterday).gt('expires_at', nowIso),
-        // My rank vacancies
-        userRank ? supabase.from('external_vacancies').select('salary_max, joining_port').gt('expires_at', nowIso).ilike('rank_required', `%${userRank.split(' ')[0]}%`)
-          : supabase.from('external_vacancies').select('salary_max, joining_port').limit(0),
-        // Top paying jobs
-        supabase.from('external_vacancies').select('rank_required, vessel_type, salary_max, company_name, joining_port, company_website').not('salary_max', 'is', null).gt('expires_at', nowIso).order('salary_max', { ascending: false }).limit(5),
-        // Last month vacancies for trend
-        supabase.from('external_vacancies').select('*', { count: 'exact', head: true }).gte('fetched_at', lastMonth).lt('fetched_at', yesterday),
-      ]);
-
-      // All vacancies merged
-      const allVac = [...(extVacRes.data || [])];
-      const totalVacancies = allVac.length;
-
-      // By vessel
-      const vesselMap: Record<string, { count: number; salaries: number[] }> = {};
-      allVac.forEach((v: any) => {
-        const k = v.vessel_type || 'Other';
-        if (!vesselMap[k]) vesselMap[k] = { count: 0, salaries: [] };
-        vesselMap[k].count++;
-        if (v.salary_max) vesselMap[k].salaries.push(Number(v.salary_max));
-      });
-      const byVessel = Object.entries(vesselMap)
-        .sort((a, b) => b[1].count - a[1].count).slice(0, 7)
-        .map(([vessel, { count, salaries }]) => ({
-          vessel, icon: VESSEL_ICONS[vessel] || '🚢', count,
-          avgSalary: salaries.length ? Math.round(salaries.reduce((a, b) => a + b, 0) / salaries.length / 100) * 100 : 0,
-          trend: count > 5 ? '🔥' : count > 2 ? '📈' : '➡️',
-        }));
-
-      // My personal market
-      const myVacs = myVacRes.data || [];
-      const mySalaries = myVacs.map((v: any) => Number(v.salary_max)).filter(Boolean);
-      const myAvgSalary = mySalaries.length ? Math.round(mySalaries.reduce((a, b) => a + b, 0) / mySalaries.length / 100) * 100 : 0;
-      const myMaxSalary = mySalaries.length ? Math.max(...mySalaries) : 0;
-      const myMinSalary = mySalaries.length ? Math.min(...mySalaries) : 0;
-      // Top joining ports
-      const portMap: Record<string, number> = {};
-      allVac.forEach((v: any) => { if (v.joining_port) portMap[v.joining_port] = (portMap[v.joining_port] || 0) + 1; });
-      const topPorts = Object.entries(portMap).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([port, count]) => ({ port, count }));
-
-      // Top jobs
-      const topJobs = (topJobsRes.data || []).map((v: any) => ({
-        rank: v.rank_required || 'Officer', vessel: v.vessel_type || 'Various',
-        salary: Number(v.salary_max), company: v.company_name || 'Confidential', port: v.joining_port || 'Worldwide',
-        website: v.company_website || null,
-      }));
-
-      // Salary trend vs last month
-      const prevCount = lastMonthVacRes.count || 1;
-      const currCount = new24hRes.count || 0;
-      const salaryTrend = prevCount > 0 ? Math.round(((currCount - prevCount) / prevCount) * 100) : 0;
-
+      // Single source of truth shared with the manager Live Vacancy Feed.
+      const { data: m, error } = await (supabase.rpc as any)('market_pulse', { p_rank: userRank || null });
+      if (error) throw error;
+      const d: any = m || {};
+      const my = d.my || {};
       setData({
-        byVessel, totalVacancies,
-        myVacancies: myVacs.length,
-        myAvgSalary, myMaxSalary, myMinSalary,
-        topPorts, topJobs, salaryTrend,
-        newVacancies24h: new24hRes.count || 0,
+        byVessel: (d.byVessel || []).map((v: any) => ({
+          vessel: v.vessel, icon: VESSEL_ICONS[v.vessel] || '🚢', count: Number(v.count),
+          avgSalary: Number(v.avgSalary) || 0,
+          trend: v.count > 500 ? '🔥' : v.count > 100 ? '📈' : '➡️',
+        })),
+        totalVacancies: Number(d.active) || 0,
+        myVacancies: Number(my.count) || 0,
+        myAvgSalary: Number(my.avg) || 0, myMaxSalary: Number(my.max) || 0, myMinSalary: Number(my.min) || 0,
+        topPorts: (d.topPorts || []).map((p: any) => ({ port: p.port, count: Number(p.count) })),
+        topJobs: (d.topJobs || []).map((j: any) => ({ ...j, salary: Number(j.salary), website: null })),
+        salaryTrend: 0,
+        newVacancies24h: Number(d.new24h) || 0,
       });
     } catch (e) { console.error(e); }
     setLoading(false);
