@@ -85,7 +85,7 @@ const ManagerMarketFeed = () => {
     setFeedBusy(false);
   }, [cursor, feedBusy, feedDone]);
 
-  useEffect(() => { if (tab !== "mine" && !feed.length && !feedDone) loadMore(); }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (tab !== "mine" && !feed.length && !feedDone) loadMore(); }, [tab, feed.length, feedDone]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const promoOf = useMemo(() => new Map(promos.map((x) => [x.posting_id, x])), [promos]);
   const myIds = useMemo(() => new Set(mine.map((v) => v.id)), [mine]);
@@ -140,7 +140,7 @@ const ManagerMarketFeed = () => {
       <div className="flex items-center gap-2">
         <Link to="/manager/dashboard" aria-label="Back" className="p-2 rounded-lg hover:bg-secondary"><ChevronLeft className="h-5 w-5" /></Link>
         <h1 className="text-xl font-bold text-foreground flex-1">Live Vacancy Feed</h1>
-        <button aria-label="Refresh" onClick={() => { setFeed([]); setCursor(START_CURSOR); setFeedDone(false); setAppCounts({}); setReload((r) => r + 1); if (tab !== "mine") setTimeout(loadMore, 0); }}
+        <button aria-label="Refresh" onClick={() => { setFeed([]); setCursor(START_CURSOR); setFeedDone(false); setAppCounts({}); setReload((r) => r + 1); }}
           className="p-2 rounded-lg border border-primary/30 text-primary"><RefreshCw className="h-4 w-4" /></button>
       </div>
 
