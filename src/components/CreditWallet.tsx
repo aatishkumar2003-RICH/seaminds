@@ -80,7 +80,7 @@ const CreditWallet = ({ audience, className = "" }: { audience: CreditAudience; 
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-primary"><Gift size={18} /> {justGranted ? `Welcome aboard — ${justGranted} credits added` : "Your SeaMinds credits"}</DialogTitle>
             <DialogDescription className="text-left">
-              Founder Launch Program: complimentary credits, never charged. SeaMinds remains free today. Credits are reserved for future {audience !== "crew" ? "vacancy ranking and urgent boosts" : "priority profile visibility"}; they never unlock crew search or contacts.
+              Founder Launch Program: complimentary credits, never charged. SeaMinds remains free today. {audience !== "crew" ? "Use credits to promote your vacancies" : "Use credits to boost your profile to the top of recruiter searches"}; they never unlock crew search or contacts.
             </DialogDescription>
           </DialogHeader>
 

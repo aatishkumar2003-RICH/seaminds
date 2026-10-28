@@ -280,6 +280,16 @@ Deno.serve(async (req) => {
       (pz || []).forEach((r: any) => (pausedBy[r.id] = !!r.inquiries_paused));
     }
 
+    // Paid crew priority boosts (crew_boosts) float to the top, rotating every 3 hours for fairness.
+    const boosted: Record<string, boolean> = {};
+    if (ids.length) {
+      const { data: bz } = await admin.from("crew_boosts").select("crew_id")
+        .in("crew_id", ids).gt("boosted_until", new Date().toISOString());
+      (bz || []).forEach((b: any) => (boosted[b.crew_id] = true));
+    }
+    const slot = Math.floor(Date.now() / (3 * 3600000));
+    const rot = (id: string) => { let h = slot; for (const c of id) h = (h * 31 + c.charCodeAt(0)) | 0; return h; };
+
     const results = (profiles || []).map((p: any) => {
       const cv = cvByUser[p.id];
       const personal = cv?.medical?.personal || {};
