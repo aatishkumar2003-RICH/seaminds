@@ -503,7 +503,7 @@ const ResumeBuilder = () => {
   // ── Completion check ──
   const isNewJoinerRank = /cadet|trainee/i.test(personal.rank || '');
   const emailVerified = !!personal.email && personal.email.trim().toLowerCase() === verifiedEmail.trim().toLowerCase();
-  const phoneVerified = whatsappStatus === 'verified';
+  // WhatsApp OTP retired
   const phoneFormatError = personal.phone ? validatePhone(personal.phone) : '';
 
   const getCompletionStatus = () => {
@@ -1557,7 +1557,7 @@ const ResumeBuilder = () => {
                   {personal.dob && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Date of Birth: </span>{fmtDate(personal.dob)}</div>}
                   {(personal.passportNo || personal.passportApplied) && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Passport: </span>{personal.passportApplied ? 'Applied for (in process)' : personal.passportNo}</div>}
                   {(personal.cdcNo || personal.cdcApplied) && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>CDC/SB: </span>{personal.cdcApplied ? 'Applied for (in process)' : `${personal.cdcNo}${personal.cdcCountry ? ` (${personal.cdcCountry})` : ''}`}</div>}
-                  {personal.phone && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>WhatsApp: </span>{personal.phone}{phoneVerified ? <span style={{ color:'#0a7d3f', fontWeight:'bold' }}> 🟢 WhatsApp Verified</span> : <span style={{ color:'#8a6d00' }}> 🟡 Not verified</span>}</div>}
+                  {personal.phone && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>WhatsApp: </span>{personal.phone}</div>}
                   {personal.email && <div><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Email: </span>{personal.email}{emailVerified ? <span style={{ color:'#0a7d3f', fontWeight:'bold' }}> ✓ verified</span> : ''}</div>}
                   {personal.address && <div style={{ gridColumn:'span 2' }}><span style={{ color:'#555', fontWeight:'bold', textTransform:'uppercase' }}>Address: </span>{personal.address}</div>}
 

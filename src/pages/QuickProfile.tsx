@@ -436,7 +436,7 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
   const phoneError = validatePhone(whatsapp);
   const emailOk = EMAIL_RE.test(contactEmail.trim());
   const emailVerifiedNow = emailOk && !!verifiedEmail && contactEmail.trim().toLowerCase() === verifiedEmail.trim().toLowerCase();
-  const phoneVerifiedNow = !phoneError && !!verifiedPhone && toE164(whatsapp) === toE164(verifiedPhone);
+  const phoneVerifiedNow = !phoneError; // WhatsApp OTP removed: a valid number is enough
   const contactDone = !phoneError && emailOk && emailVerifiedNow && phoneVerifiedNow;
   const step1Done = !!rank && !!yearsBand && !!contractsBand && !!seaBand && contactDone;
   const inputStyle: React.CSSProperties = { width: "100%", padding: "11px 12px", borderRadius: 10, background: NAVY, color: "#fff", border: `1px solid ${BORDER}`, fontSize: 14 };
@@ -558,9 +558,6 @@ const QuickProfile = ({ onComplete, embedded = false }: { onComplete?: () => voi
               />
               {whatsapp && phoneError && whatsapp.replace(/\D/g, "").length > 4 && (
                 <p style={{ color: "#f87171", fontSize: 11 }}>{phoneError}</p>
-              )}
-              {!phoneError && (
-                <ContactVerify channel="whatsapp" value={toE164(whatsapp)} verifiedValue={verifiedPhone} onVerified={(v) => { setVerifiedPhone(v); setShowVerifyAlarm(false); }} />
               )}
             </Q>
 

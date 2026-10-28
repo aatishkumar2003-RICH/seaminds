@@ -182,8 +182,10 @@ function parseAction(payload: Record<string, unknown>) {
     send_whatsapp_code: { op: 'send', channel: 'whatsapp' },
     verify_whatsapp_code: { op: 'verify', channel: 'whatsapp' },
   };
-  if (map[raw]) return map[raw];
-  const channel = payload.channel === 'whatsapp' ? 'whatsapp' : 'email';
+  if (map[raw]) return map[raw].channel === 'whatsapp' ? null : map[raw];
+  // WhatsApp OTP retired (Twilio cost); only email codes are supported.
+  if (payload.channel === 'whatsapp') return null;
+  const channel = 'email' as const;
   if (raw === 'send' || raw === 'verify') return { op: raw as 'send' | 'verify', channel };
   return null;
 }
