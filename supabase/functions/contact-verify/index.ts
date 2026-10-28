@@ -316,6 +316,21 @@ Deno.serve(async (req) => {
     const profileUpdate = channel === 'email'
       ? { email_verified: true, email_verified_at: now, email: target }
       : { whatsapp_verified: true, whatsapp_verified_at: now, whatsapp_number: target };
+    // A correct OTP proves current possession of the number (SIMs get recycled,
+    // phones get lost). Release it from any other profile so ownership moves
+    // to the verifier instead of hitting the unique index.
+    if (channel === 'whatsapp') {
+      const { data: released, error: relErr } = await admin
+        .from('crew_profiles')
+        .update({ whatsapp_number: '', whatsapp_verified: false, whatsapp_verified_at: null })
+        .eq('whatsapp_number', target)
+        .neq('id', user.id)
+        .select('id');
+      if (relErr) log('release previous owner warning', relErr.message);
+      if (released && released.length > 0) {
+        log('whatsapp ownership transferred', { to: user.id, from: released.map((r: { id: string }) => r.id) });
+      }
+    }
     // crew_profiles.id IS the auth user id; user_id is legacy and often NULL.
     // Update by id first, then fall back to user_id for legacy rows.
     let saved = false;
