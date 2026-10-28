@@ -45,6 +45,16 @@ const isNewSince = (iso: string | null) =>
 export const vacancySalary = (v: UnifiedVacancy, suffix = "/month") =>
   formatSalaryText(v.salaryText, suffix);
 
+/** A manager's own live postings, mapped exactly like the crew feed cards. */
+export const loadMyPostings = async (managerId: string, limit = 300): Promise<UnifiedVacancy[]> => {
+  const { data, error } = await supabase.from("job_postings")
+    .select("id, rank_required, vessel_type, joining_port, joining_date, contract_duration, monthly_salary, company_name, verified, created_at, expires_at, additional_notes, contact_email, contact_whatsapp, positions, flier_url, posting_batch_id, recruiter_name")
+    .eq("manager_id", managerId).eq("status", "active")
+    .order("created_at", { ascending: false }).limit(limit);
+  if (error) throw error;
+  return ((data as any[]) || []).map(mapDirect);
+};
+
 const mapDirect = (r: Record<string, any>): UnifiedVacancy => ({
   id: String(r.id),
   kind: "direct",
