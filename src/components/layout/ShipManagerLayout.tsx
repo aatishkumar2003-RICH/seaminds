@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
+const MarketPulseButton = lazy(() => import("@/components/MarketPulseButton"));
 import ReleaseBadge from "@/components/ReleaseBadge";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, LogOut, LayoutDashboard, Users, Search, GraduationCap, Ship, ShieldCheck, CreditCard, Megaphone, LifeBuoy, BookOpen, ClipboardList } from "lucide-react";
@@ -143,6 +144,9 @@ const ShipManagerLayout = () => {
       <div className="lg:pl-64">
         <Outlet />
       </div>
+      <Suspense fallback={null}>
+        <MarketPulseButton onNavigateJobs={() => navigate("/manager/market-feed")} />
+      </Suspense>
       <LegalConsentGate role="manager" />
     </div>
   );
