@@ -119,6 +119,7 @@ export default function MaritimeInterview() {
           <p className="text-sm text-muted-foreground">{active ? `${rank} → ${targetRank} · ${vessels.find(([id]) => id === vessel)?.[1]}` : review ? "Your practice review" : "Promotion preparation · About 12–15 minutes · Up to 7 scenarios"}</p>
         </section>
         {!active && !review && <section className="space-y-6">
+          {promo && <p className="rounded-xl border-2 border-primary p-3 text-sm">🎓 Promotion assessment requested by <b>{promo.company_name || "your company"}</b>. When you finish, the result goes only to this company.</p>}
           <div className="grid sm:grid-cols-2 gap-4">
             <Choice label="Your current rank" value={rank} choices={ranks.map(r => [r, r])} onChange={setRank} />
             <Choice label="Preparing for" value={targetRank} choices={ranks.map(r => [r, r])} onChange={setTargetRank} />
