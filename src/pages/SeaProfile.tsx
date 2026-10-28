@@ -122,7 +122,7 @@ export default function SeaProfile() {
               </div>
               {[["Rank", form.rank], ["Vessel type", form.vessel_type], ["Years in rank", form.years_in_rank_band],
                 ["Contracts in rank", form.contracts_in_rank_band], ["Total sea service", form.total_sea_service_band],
-                ["WhatsApp", info.whatsapp_number ? `${info.whatsapp_number}${info.whatsapp_verified ? " ✅" : " (not verified)"}` : ""],
+                ["WhatsApp", info.whatsapp_number ? info.whatsapp_number : ""],
                 ["Email", info.email ? `${info.email}${info.email_verified ? " ✅" : " (not verified)"}` : ""]].map(([k, v]) => (
                 <div key={k} className="flex justify-between gap-3 text-sm">
                   <span style={{ color: "#94A3B8" }}>{k}</span>
