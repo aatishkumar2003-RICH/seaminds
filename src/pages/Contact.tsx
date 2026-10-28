@@ -74,9 +74,17 @@ const Contact = () => {
           ))}
         </div>
 
+        <div className="rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">
+          <span className="block font-semibold text-primary mb-2">Corporate Entity</span>
+          <span className="block">Legal Name: PT INDOGLOBAL SERVICE SOLUTIONS</span>
+          <span className="block">NIB: 0105250010966</span>
+          <span className="block">Domain: seaminds.life</span>
+          <span className="block">Official Contact: <a href="mailto:admin@seaminds.life" className="underline">admin@seaminds.life</a></span>
+        </div>
+
         <div className="h-px w-full my-10" style={{ backgroundColor: goldColor, opacity: 0.25 }} />
         <p className="text-xs text-center" style={{ color: "#8899AA" }}>
-          © 2026 SeaMinds. Built by a Master Mariner. MLC 2006 Compliant.
+          © 2026 SeaMinds · Operated by PT INDOGLOBAL SERVICE SOLUTIONS (NIB: 0105250010966)
         </p>
       </div>
     </div>

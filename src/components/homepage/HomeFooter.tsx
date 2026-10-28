@@ -103,9 +103,10 @@ const HomeFooter = () => {
             </div>
           ))}
         </div>
-        <div className="border-t border-white/5 pt-6 flex items-center justify-between">
+        <div className="border-t border-white/5 pt-6 flex items-center justify-between gap-4">
           <p className="text-xs text-muted-foreground">
-            © 2024–{new Date().getFullYear()} SeaMinds. All rights reserved. MLC 2006 Compliant.
+            © 2024–{new Date().getFullYear()} SeaMinds is owned and operated by PT INDOGLOBAL SERVICE SOLUTIONS (NIB: 0105250010966). All rights reserved. Contact:{" "}
+            <a href="mailto:admin@seaminds.life" className="underline hover:text-foreground">admin@seaminds.life</a>
           </p>
           <button
             onClick={() => { setShowPin(true); setPin(""); setError(""); }}

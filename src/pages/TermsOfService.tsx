@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 const sections = [
   {
     title: "1. Acceptance of Terms",
-    body: "By accessing or using the SeaMinds platform, you agree to be bound by these Terms of Service. If you do not agree with any part of these terms, you must discontinue use of the platform immediately. These terms apply to all users including seafarers, maritime professionals, and company representatives.",
+    body: "SeaMinds (seaminds.life) is owned and operated by PT INDOGLOBAL SERVICE SOLUTIONS (NIB: 0105250010966), Indonesia. By accessing or using the SeaMinds platform, you agree to be bound by these Terms of Service. If you do not agree with any part of these terms, you must discontinue use of the platform immediately. These terms apply to all users including seafarers, maritime professionals, and company representatives.",
   },
   {
     title: "2. Use of Service",
@@ -96,7 +96,7 @@ const TermsOfService = () => {
           style={{ backgroundColor: "#D4AF37", opacity: 0.25 }}
         />
         <p className="text-xs text-center" style={{ color: "#8899AA" }}>
-          © 2026 SeaMinds. Built by a Master Mariner. MLC 2006 Compliant.
+          © 2026 SeaMinds · Operated by PT INDOGLOBAL SERVICE SOLUTIONS (NIB: 0105250010966) · admin@seaminds.life
         </p>
       </div>
     </div>
