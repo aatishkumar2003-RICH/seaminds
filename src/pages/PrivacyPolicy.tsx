@@ -8,7 +8,7 @@ import HomeFooter from "@/components/homepage/HomeFooter";
 const sections = [
   {
     title: "1. Introduction",
-    body: `SeaMinds ("we", "our", "us") operates the SeaMinds platform at seaminds.life. This Privacy Policy explains how we collect, use, store and protect your personal information when you use our services. By using SeaMinds you agree to the practices described here.`,
+    body: `SeaMinds ("we", "our", "us") is owned and operated by PT INDOGLOBAL SERVICE SOLUTIONS (NIB: 0105250010966), Indonesia, which is the data controller for the SeaMinds platform at seaminds.life. Contact: admin@seaminds.life. This Privacy Policy explains how we collect, use, store and protect your personal information when you use our services. By using SeaMinds you agree to the practices described here.`,
   },
   {
     title: "2. Information We Collect",
