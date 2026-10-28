@@ -3,6 +3,7 @@ import { ChevronLeft } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import CrewOffers from "@/components/CrewOffers";
 import ActionHub from "@/components/ActionHub";
+import EngagementDesk from "@/components/EngagementDesk";
 
 /** One place for every manager response: offers, shortlists, joinings and issue tickets. */
 export default function MyResponses() {
@@ -19,6 +20,7 @@ export default function MyResponses() {
       </header>
       <div className="pt-4">
         <ActionHub />
+        <EngagementDesk />
         <h2 className="mx-4 mb-2 text-sm font-bold text-primary">📬 Applications & offers</h2>
         <CrewOffers profileId={user?.id} highlightApplicationId={new URLSearchParams(window.location.search).get("offer")} />
       </div>

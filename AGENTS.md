@@ -35,3 +35,4 @@
 - Cert radar only via `crew_desk_certificate_radar` (crew-confirmed joinings); crew read own finalized/paid `portage_entries` via RLS. Why: consent gating, MLC A2.2.
 - Offer acceptance = outcome 'accepted' (Processing, no lock); only trigger `place_on_sea_signed` places crew on SEA signing. `submit_application` reopens closed applications, never re-alerts open ones. Why: crew free until signed; no recruiter spam.
 - Crew next steps via `get_my_action_hub()`; interview timing only via `manager_schedule_interview`/`respond_interview_schedule`. Why: both parties agree times; no direct client writes.
+- Crew pipeline transparency: managers see only aggregate in-talks counts (from `manager-search`), never competitor names; crew step back via RPC `crew_disengage` (outcome 'withdrawn') and `set_inquiries_paused`; trigger auto-withdraws other active applications on placement. Why: no wasted manager effort, crew control, privacy.
