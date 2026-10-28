@@ -1856,6 +1856,7 @@ export type Database = {
           home_country: string | null
           home_country_code: string | null
           id: string
+          inquiries_paused: boolean
           is_available: boolean | null
           is_test: boolean
           job_alerts_enabled: boolean
@@ -1913,6 +1914,7 @@ export type Database = {
           home_country?: string | null
           home_country_code?: string | null
           id?: string
+          inquiries_paused?: boolean
           is_available?: boolean | null
           is_test?: boolean
           job_alerts_enabled?: boolean
@@ -1970,6 +1972,7 @@ export type Database = {
           home_country?: string | null
           home_country_code?: string | null
           id?: string
+          inquiries_paused?: boolean
           is_available?: boolean | null
           is_test?: boolean
           job_alerts_enabled?: boolean
@@ -6830,6 +6833,10 @@ export type Database = {
         Returns: Json
       }
       crew_desk_roster: { Args: never; Returns: Json }
+      crew_disengage: {
+        Args: { p_application_id: string; p_reason: string }
+        Returns: Json
+      }
       crew_respond_fleet_link: {
         Args: { p_accept: boolean; p_link_id: string }
         Returns: Json
@@ -6959,6 +6966,7 @@ export type Database = {
       get_my_applicants: { Args: never; Returns: Json }
       get_my_applications: { Args: never; Returns: Json }
       get_my_credit_balance: { Args: never; Returns: Json }
+      get_my_engagements: { Args: never; Returns: Json }
       get_my_english_summary: { Args: never; Returns: Json }
       get_my_fleet: { Args: never; Returns: Json }
       get_my_offers: { Args: never; Returns: Json }
@@ -7230,6 +7238,7 @@ export type Database = {
           title: string
         }[]
       }
+      set_inquiries_paused: { Args: { p_paused: boolean }; Returns: Json }
       set_lineup_ticket_status: {
         Args: { p_action: string; p_note?: string; p_ticket_id: string }
         Returns: Json

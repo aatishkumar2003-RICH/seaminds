@@ -715,6 +715,13 @@
       "when": 1793116505502,
       "tag": "0101_vacancy_promotions",
       "breakpoints": true
+    },
+    {
+      "idx": 102,
+      "version": "7",
+      "when": 1793159118649,
+      "tag": "0102_crew_pipeline_transparency",
+      "breakpoints": true
     }
   ]
 }
