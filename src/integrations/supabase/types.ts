@@ -4590,6 +4590,54 @@ export type Database = {
         }
         Relationships: []
       }
+      promotion_invites: {
+        Row: {
+          application_id: string
+          company_name: string | null
+          completed_at: string | null
+          created_at: string
+          crew_id: string
+          current_rank: string
+          id: string
+          manager_id: string
+          note: string | null
+          session_id: string | null
+          status: string
+          target_rank: string
+          vessel: string
+        }
+        Insert: {
+          application_id: string
+          company_name?: string | null
+          completed_at?: string | null
+          created_at?: string
+          crew_id: string
+          current_rank: string
+          id?: string
+          manager_id: string
+          note?: string | null
+          session_id?: string | null
+          status?: string
+          target_rank: string
+          vessel?: string
+        }
+        Update: {
+          application_id?: string
+          company_name?: string | null
+          completed_at?: string | null
+          created_at?: string
+          crew_id?: string
+          current_rank?: string
+          id?: string
+          manager_id?: string
+          note?: string | null
+          session_id?: string | null
+          status?: string
+          target_rank?: string
+          vessel?: string
+        }
+        Relationships: []
+      }
       question_bank: {
         Row: {
           active: boolean | null
@@ -6846,6 +6894,11 @@ export type Database = {
       }
       credit_cv_ready: { Args: { p_uid: string }; Returns: boolean }
       credit_profile_ready: { Args: { p_uid: string }; Returns: boolean }
+      crew_complete_promotion: {
+        Args: { p_invite: string; p_session: string }
+        Returns: boolean
+      }
+      crew_decline_promotion: { Args: { p_invite: string }; Returns: boolean }
       crew_desk_certificate_radar: { Args: never; Returns: Json }
       crew_desk_master_record: {
         Args: { _application_id: string }
@@ -7021,6 +7074,15 @@ export type Database = {
         Returns: undefined
       }
       make_invite_token: { Args: never; Returns: string }
+      manager_invite_promotion: {
+        Args: {
+          p_application: string
+          p_note?: string
+          p_target_rank: string
+          p_vessel: string
+        }
+        Returns: string
+      }
       manager_maritime_report: {
         Args: { p_application: string }
         Returns: {
@@ -7029,6 +7091,24 @@ export type Database = {
           id: string
           rank: string
           safety_flags: number
+          target_rank: string
+          technical_pct: number
+          turns: Json
+          verdict: string
+          vessel: string
+        }[]
+      }
+      manager_promotion_board: {
+        Args: never
+        Returns: {
+          completed_at: string
+          created_at: string
+          crew_name: string
+          current_rank: string
+          gaps: Json
+          id: string
+          safety_flags: number
+          status: string
           target_rank: string
           technical_pct: number
           turns: Json
@@ -7059,6 +7139,7 @@ export type Database = {
         Args: { p_id: string; p_status: string }
         Returns: Json
       }
+      market_pulse: { Args: { p_rank?: string }; Returns: Json }
       marketing_pack_daily: { Args: never; Returns: string }
       open_assessment_v2: {
         Args: { p_invite_id?: string; p_mode: string; p_restart?: boolean }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { ChevronLeft, FileDown, Lock, Users, FileText, ScrollText, Wallet, LayoutDashboard, Star, ShieldAlert } from "lucide-react";
+import { ChevronLeft, FileDown, Lock, Users, FileText, ScrollText, Wallet, LayoutDashboard, Star, ShieldAlert, GraduationCap } from "lucide-react";
+import PromotionTab from "@/components/crew-desk/PromotionTab";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { buildResumePdf } from "@/lib/resumePdf";
@@ -25,6 +26,7 @@ const TABS = [
   { id: "contracts", label: "SEA Contracts", icon: ScrollText },
   { id: "portage", label: "Portage Bill", icon: Wallet, soon: false },
   { id: "appraisals", label: "Appraisals", icon: Star },
+  { id: "promotion", label: "Promotion", icon: GraduationCap },
 ];
 const STATUS: Record<string, string> = { shortlisted: "Shortlisted", offered: "Offer sent", accepted: "Processing — awaiting SEA", placed: "Onboard (SEA signed)" };
 
@@ -124,6 +126,7 @@ export default function CrewDesk() {
                 {r.crew_remark && <p className="text-xs italic text-primary/80">💬 “{r.crew_remark}”</p>}
               </div>
               <span className="text-[11px] rounded-full border border-primary/40 text-primary px-2 py-0.5">{STATUS[r.outcome] || r.outcome}</span>
+              <button onClick={() => setParams({ tab: "promotion" })} className="rounded-xl border border-primary text-primary px-3 min-h-[40px] text-sm">🎓 Assess for promotion</button>
               {r.crew_confirmed
                 ? <button onClick={() => openCv(r.application_id)} className="rounded-xl bg-primary text-primary-foreground font-bold px-3 min-h-[40px] text-sm">Open CV Studio</button>
                 : <span className="flex items-center gap-1 text-[11px] text-muted-foreground"><Lock size={12} /> Full record opens after crew confirms joining</span>}
@@ -154,6 +157,7 @@ export default function CrewDesk() {
       {tab === "portage" && <PortageBillTab rows={rows} />}
       {tab === "radar" && <CertificateRadarTab />}
       {tab === "appraisals" && <AppraisalsTab rows={rows} />}
+      {tab === "promotion" && <PromotionTab rows={rows} />}
       </>}
     </div>
   );

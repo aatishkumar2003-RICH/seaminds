@@ -14,3 +14,5 @@
 
 - Crew menu = `NAV_ITEMS` sections rendered by `GroupedNav`. Why: one menu.
 - Crew priority boost only via RPC `boost_my_profile` (1d=1cr, 7d=5cr, extends) into read-only `crew_boosts`; `manager-search` floats boosted crew within each page with 3-hour rotation. Why: crew cannot forge visibility.
+
+- Promotion assessments: manager requests via RPC `manager_invite_promotion` (own roster only) into `promotion_invites`; crew finishes `/maritime-interview?promo=` and `crew_complete_promotion` links the session; managers read only via `manager_promotion_board`. Why: result goes only to the inviting company, no client-forged links.

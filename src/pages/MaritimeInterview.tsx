@@ -44,6 +44,18 @@ export default function MaritimeInterview() {
   const active = Boolean(session.question) && !session.done;
   const review = completedReview(session);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  const promoId = new URLSearchParams(window.location.search).get("promo");
+  const [promo, setPromo] = useState<{ id: string; company_name: string | null } | null>(null);
+  useEffect(() => {
+    if (!promoId || !user) return;
+    (supabase as any).from("promotion_invites").select("id, company_name, current_rank, target_rank, vessel, status").eq("id", promoId).maybeSingle().then(({ data }: any) => {
+      if (!data || data.status !== "pending") { toast.error("This promotion request is no longer open."); return; }
+      if (ranks.includes(data.current_rank)) setRank(data.current_rank);
+      if (ranks.includes(data.target_rank)) setTargetRank(data.target_rank);
+      if (vessels.some(([v]) => v === data.vessel)) setVessel(data.vessel);
+      setPromo({ id: data.id, company_name: data.company_name });
+    });
+  }, [promoId, user?.id]);
   useEffect(() => { if (isReady && !user) navigate(`/join?next=${encodeURIComponent("/maritime-interview")}`, { replace: true }); }, [isReady, user, navigate]);
   useEffect(() => {
     if (!active && !busy) return;
@@ -70,6 +82,10 @@ export default function MaritimeInterview() {
         throw new Error(message || "The examiner could not respond. Your current answer is still here. Please try again.");
       }
       const next = applyInterviewStep(session, data as ExamStep, session.question ? response ?? answer.trim() : undefined);
+      if (next.done && promo && (data?.sessionId || sessionId)) {
+        const { data: ok } = await supabase.rpc("crew_complete_promotion" as any, { p_invite: promo.id, p_session: data?.sessionId || sessionId });
+        if (ok) toast.success(`Result sent to ${promo.company_name || "the company"}.`); else toast.error("Your result is saved, but could not be sent to the company. Please contact support@seaminds.life.");
+      }
       if (mounted.current) { setSession(next); setAnswer(""); if (data?.sessionId) setSessionId(data.sessionId); if (next.done) void loadHistory(); }
     } catch (e) { if (mounted.current) setError(e instanceof Error ? e.message : "Could not reach the examiner. Please try again."); }
     finally { inFlight.current = false; if (mounted.current) setBusy(false); }
@@ -103,6 +119,7 @@ export default function MaritimeInterview() {
           <p className="text-sm text-muted-foreground">{active ? `${rank} → ${targetRank} · ${vessels.find(([id]) => id === vessel)?.[1]}` : review ? "Your practice review" : "Promotion preparation · About 12–15 minutes · Up to 7 scenarios"}</p>
         </section>
         {!active && !review && <section className="space-y-6">
+          {promo && <p className="rounded-xl border-2 border-primary p-3 text-sm">🎓 Promotion assessment requested by <b>{promo.company_name || "your company"}</b>. When you finish, the result goes only to this company.</p>}
           <div className="grid sm:grid-cols-2 gap-4">
             <Choice label="Your current rank" value={rank} choices={ranks.map(r => [r, r])} onChange={setRank} />
             <Choice label="Preparing for" value={targetRank} choices={ranks.map(r => [r, r])} onChange={setTargetRank} />
