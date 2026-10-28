@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { InterviewSchedule } from "@/lib/interviewSchedule";
+import PromotionInvites from "@/components/PromotionInvites";
 
 interface Hub {
   interviews: (InterviewSchedule & { id: string; token: string; company_name: string | null; rank: string | null; schedule_note: string | null })[];
@@ -51,6 +52,8 @@ export default function ActionHub() {
           <button onClick={() => navigate("/feed")} className="mt-3 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">Browse vacancies</button>
         </div>
       )}
+
+      <PromotionInvites />
 
       {hub.contracts.map((c) => (
         <div key={c.id} className="rounded-2xl border-2 border-primary bg-card p-4 space-y-2">

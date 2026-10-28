@@ -126,6 +126,7 @@ export default function CrewDesk() {
                 {r.crew_remark && <p className="text-xs italic text-primary/80">💬 “{r.crew_remark}”</p>}
               </div>
               <span className="text-[11px] rounded-full border border-primary/40 text-primary px-2 py-0.5">{STATUS[r.outcome] || r.outcome}</span>
+              <button onClick={() => setParams({ tab: "promotion" })} className="rounded-xl border border-primary text-primary px-3 min-h-[40px] text-sm">🎓 Assess for promotion</button>
               {r.crew_confirmed
                 ? <button onClick={() => openCv(r.application_id)} className="rounded-xl bg-primary text-primary-foreground font-bold px-3 min-h-[40px] text-sm">Open CV Studio</button>
                 : <span className="flex items-center gap-1 text-[11px] text-muted-foreground"><Lock size={12} /> Full record opens after crew confirms joining</span>}
