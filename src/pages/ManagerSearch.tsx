@@ -57,6 +57,8 @@ interface CrewResult {
   total_sea_service_band?: string | null;
   quick_profile_done?: boolean;
   english_avg?: number | null;
+  active_talks?: number;
+  pipeline_status?: "open" | "in_talks" | "high_demand" | "offer_pending" | "paused";
 }
 
 const REFILL_MAILTO = "mailto:admin@seaminds.life?subject=Credit%20refill%20request";
@@ -207,6 +209,7 @@ const ManagerSearch = () => {
   const [nationality, setNationality] = useState("");
   const [vesselType, setVesselType] = useState("");
   const [availability, setAvailability] = useState<"all" | "available">("all");
+  const [freeOnly, setFreeOnly] = useState(false);
   const [minScore, setMinScore] = useState("");
   const [minEnglish, setMinEnglish] = useState("");
   const [results, setResults] = useState<CrewResult[]>([]);
@@ -525,10 +528,14 @@ const ManagerSearch = () => {
         <p style={{ color: "#94A3B8", fontSize: 12, lineHeight: 1.6, marginTop: -8 }}>
           Contacts are protected for seafarer privacy. Crew Search is free for verified ship managers.
         </p>
+        <label style={{ display: "flex", alignItems: "center", gap: 8, color: GOLD, fontSize: 13, marginTop: -4 }}>
+          <input type="checkbox" checked={freeOnly} onChange={(e) => setFreeOnly(e.target.checked)} />
+          Only show crew not in talks with other companies
+        </label>
 
         {/* Results */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 14 }}>
-          {results.map((r) => (
+          {results.filter((r) => !freeOnly || (r.pipeline_status || "open") === "open").map((r) => (
             <article key={r.user_id} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
                 <div>
@@ -544,6 +551,18 @@ const ManagerSearch = () => {
                   {r.is_available ? "Available now" : "Availability on request"}
                 </span>
               </div>
+              {(() => {
+                const s = r.pipeline_status || "open"; const n = r.active_talks || 0;
+                const m: Record<string, [string, string]> = {
+                  open: ["🟢 Not in talks with other companies", "#22c55e"],
+                  in_talks: [`🟡 In talks with ${n} compan${n > 1 ? "ies" : "y"}`, "#f59e0b"],
+                  high_demand: [`🟠 High demand · ${n} companies`, "#f97316"],
+                  offer_pending: ["🟣 Offer under consideration", "#a78bfa"],
+                  paused: ["⏸️ Paused new inquiries", "#94A3B8"],
+                };
+                const [t, c] = m[s] || m.open;
+                return <div style={{ fontSize: 11, fontWeight: 700, color: c, border: `1px solid ${c}55`, borderRadius: 8, padding: "4px 8px" }}>{t}</div>;
+              })()}
 
               <dl style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, fontSize: 12 }}>
                 <div><dt style={{ color: "#6b7280" }}>Rank</dt><dd style={{ color: "#e5e7eb" }}>{r.rank || "—"}</dd></div>
