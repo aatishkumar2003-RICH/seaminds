@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { CreditAudience, DEFAULT_REWARDS, RewardSettings, creditReasonLabel } from "@/lib/creditProgram";
 import CompanyProfileEditor from "@/components/CompanyProfileEditor";
+import CrewCreditUses from "@/components/CrewCreditUses";
 
 type Wallet = { ok: boolean; user_id: string; balance: number; welcome_claimed: boolean; code: string; link: string; referrals: number; verified_referrals?: number; referral_credits?: number; profile_rewarded?: boolean; score_rewarded?: boolean; settings?: RewardSettings; recent?: { delta: number; reason: string; created_at: string }[] };
 
@@ -101,6 +102,7 @@ const CreditWallet = ({ audience, className = "" }: { audience: CreditAudience; 
             {editingProfile && audience !== "crew" && <CompanyProfileEditor userId={wallet.user_id} onSaved={async () => { const updated = await load(); if (updated?.ok) setWallet(updated); setEditingProfile(false); }} />}
             {audience === "crew" && settings.score_credits > 0 && <div className="flex items-center justify-between gap-2 text-xs border-b border-border py-2"><span>Complete your first score · +{settings.score_credits}</span>{wallet.score_rewarded ? <span className="text-primary">Earned</span> : <Button size="sm" variant="outline" onClick={() => { setOpen(false); navigate("/app?tab=smc"); }}>My Score</Button>}</div>}
           </div>
+          {audience === "crew" && <CrewCreditUses balance={wallet.balance} onSpent={async () => { const u = await load(); if (u?.ok) setWallet(u); }} />}
           <div className="space-y-2">
             <p className="text-sm font-semibold text-foreground">Invite shipmates, earn credits</p>
             <p className="text-xs text-muted-foreground">{settings.referral_credits > 0 ? `Earn ${settings.referral_credits} credit${settings.referral_credits === 1 ? "" : "s"} for every seafarer who joins` : "Invite a seafarer to join"} with your code <span className="font-mono font-bold text-primary">{wallet.code}</span> and completes their profile. Joining alone earns nothing.</p>
