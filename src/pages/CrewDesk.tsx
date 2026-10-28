@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { ChevronLeft, FileDown, Lock, Users, FileText, ScrollText, Wallet, LayoutDashboard, Star, ShieldAlert } from "lucide-react";
+import { ChevronLeft, FileDown, Lock, Users, FileText, ScrollText, Wallet, LayoutDashboard, Star, ShieldAlert, GraduationCap } from "lucide-react";
+import PromotionTab from "@/components/crew-desk/PromotionTab";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { buildResumePdf } from "@/lib/resumePdf";
@@ -25,6 +26,7 @@ const TABS = [
   { id: "contracts", label: "SEA Contracts", icon: ScrollText },
   { id: "portage", label: "Portage Bill", icon: Wallet, soon: false },
   { id: "appraisals", label: "Appraisals", icon: Star },
+  { id: "promotion", label: "Promotion", icon: GraduationCap },
 ];
 const STATUS: Record<string, string> = { shortlisted: "Shortlisted", offered: "Offer sent", accepted: "Processing — awaiting SEA", placed: "Onboard (SEA signed)" };
 
@@ -154,6 +156,7 @@ export default function CrewDesk() {
       {tab === "portage" && <PortageBillTab rows={rows} />}
       {tab === "radar" && <CertificateRadarTab />}
       {tab === "appraisals" && <AppraisalsTab rows={rows} />}
+      {tab === "promotion" && <PromotionTab rows={rows} />}
       </>}
     </div>
   );
