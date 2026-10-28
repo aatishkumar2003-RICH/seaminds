@@ -7059,6 +7059,7 @@ export type Database = {
         Args: { p_id: string; p_status: string }
         Returns: Json
       }
+      market_pulse: { Args: { p_rank?: string }; Returns: Json }
       marketing_pack_daily: { Args: never; Returns: string }
       open_assessment_v2: {
         Args: { p_invite_id?: string; p_mode: string; p_restart?: boolean }
