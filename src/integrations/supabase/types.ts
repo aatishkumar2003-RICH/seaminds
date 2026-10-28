@@ -6896,6 +6896,7 @@ export type Database = {
       }
       english_summary_for: { Args: { p_uid: string }; Returns: Json }
       enqueue_scoring: { Args: { p_assessment_id: string }; Returns: Json }
+      ensure_crew_profile_for: { Args: { p_id: string }; Returns: undefined }
       expire_old_vacancies: { Args: never; Returns: string }
       final_scoring_lease: {
         Args: {

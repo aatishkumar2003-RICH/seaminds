@@ -722,6 +722,13 @@
       "when": 1793159118649,
       "tag": "0102_crew_pipeline_transparency",
       "breakpoints": true
+    },
+    {
+      "idx": 103,
+      "version": "7",
+      "when": 1793161750598,
+      "tag": "0103_self_heal_crew_profile_fk",
+      "breakpoints": true
     }
   ]
 }
