@@ -263,6 +263,23 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Pipeline transparency: count of companies actively engaging each crew (names never returned).
+    const talks: Record<string, number> = {};
+    const offers: Record<string, boolean> = {};
+    const pausedBy: Record<string, boolean> = {};
+    if (ids.length) {
+      const [{ data: apps }, { data: pz }] = await Promise.all([
+        admin.from("job_applications").select("crew_id, outcome").in("crew_id", ids)
+          .in("outcome", ["shortlisted", "offered", "accepted"]).limit(5000),
+        admin.from("crew_profiles").select("id, inquiries_paused").in("id", ids),
+      ]);
+      (apps || []).forEach((a: any) => {
+        talks[a.crew_id] = (talks[a.crew_id] || 0) + 1;
+        if (a.outcome === "offered" || a.outcome === "accepted") offers[a.crew_id] = true;
+      });
+      (pz || []).forEach((r: any) => (pausedBy[r.id] = !!r.inquiries_paused));
+    }
+
     const results = (profiles || []).map((p: any) => {
       const cv = cvByUser[p.id];
       const personal = cv?.medical?.personal || {};
@@ -291,6 +308,8 @@ Deno.serve(async (req) => {
         total_sea_service_band: p.total_sea_service_band ?? null,
         quick_profile_done: !!p.quick_profile_completed_at,
         english_avg: engByUser[p.id] ?? null,
+        active_talks: talks[p.id] || 0,
+        pipeline_status: pausedBy[p.id] ? "paused" : offers[p.id] ? "offer_pending" : (talks[p.id] || 0) >= 4 ? "high_demand" : (talks[p.id] || 0) > 0 ? "in_talks" : "open",
       };
     });
 
