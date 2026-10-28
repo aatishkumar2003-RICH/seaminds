@@ -59,6 +59,7 @@ interface CrewResult {
   english_avg?: number | null;
   active_talks?: number;
   pipeline_status?: "open" | "in_talks" | "high_demand" | "offer_pending" | "paused";
+  priority_boost?: boolean;
 }
 
 const REFILL_MAILTO = "mailto:admin@seaminds.life?subject=Credit%20refill%20request";
@@ -551,6 +552,7 @@ const ManagerSearch = () => {
                   {r.is_available ? "Available now" : "Availability on request"}
                 </span>
               </div>
+              {r.priority_boost && <div style={{ fontSize: 11, fontWeight: 800, color: NAVY, background: GOLD, borderRadius: 8, padding: "4px 8px" }}>⚡ PRIORITY BERTH SEEKER · READY NOW</div>}
               {(() => {
                 const s = r.pipeline_status || "open"; const n = r.active_talks || 0;
                 const m: Record<string, [string, string]> = {

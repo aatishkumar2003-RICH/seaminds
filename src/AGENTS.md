@@ -13,3 +13,4 @@
 - Principal CV templates: owner-private `principal_cv_templates` + `principal-templates` storage; reviewed mappings populate original DOCX/XLSX locally, declaration-gated. Why: no repeated AI cost or cross-manager access.
 
 - Crew menu = `NAV_ITEMS` sections rendered by `GroupedNav`. Why: one menu.
+- Crew priority boost only via RPC `boost_my_profile` (1d=1cr, 7d=5cr, extends) into read-only `crew_boosts`; `manager-search` floats boosted crew within each page with 3-hour rotation. Why: crew cannot forge visibility.

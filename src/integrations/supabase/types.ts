@@ -1658,6 +1658,24 @@ export type Database = {
           },
         ]
       }
+      crew_boosts: {
+        Row: {
+          boosted_until: string
+          crew_id: string
+          updated_at: string
+        }
+        Insert: {
+          boosted_until: string
+          crew_id: string
+          updated_at?: string
+        }
+        Update: {
+          boosted_until?: string
+          crew_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       crew_claims: {
         Row: {
           assessed_at: string | null
@@ -6717,6 +6735,7 @@ export type Database = {
         Args: { p_bp: string; p_rank: string }
         Returns: Json
       }
+      boost_my_profile: { Args: { p_days: number }; Returns: Json }
       build_daily_notifications: { Args: never; Returns: string }
       build_evidence_snapshot: {
         Args: {
