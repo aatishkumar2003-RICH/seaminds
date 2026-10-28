@@ -503,7 +503,7 @@ const ResumeBuilder = () => {
   // ── Completion check ──
   const isNewJoinerRank = /cadet|trainee/i.test(personal.rank || '');
   const emailVerified = !!personal.email && personal.email.trim().toLowerCase() === verifiedEmail.trim().toLowerCase();
-  const phoneVerified = whatsappStatus === 'verified';
+  // WhatsApp OTP retired
   const phoneFormatError = personal.phone ? validatePhone(personal.phone) : '';
 
   const getCompletionStatus = () => {
