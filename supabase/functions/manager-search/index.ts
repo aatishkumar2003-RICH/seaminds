@@ -173,6 +173,15 @@ Deno.serve(async (req) => {
     }
 
 
+    // "My Unlocked Candidates": only crew this manager already paid to reveal (never charged again).
+    const isRoster = action === "unlocked";
+    if (isRoster) {
+      const { data: rv } = await admin.from("contact_reveals").select("crew_id")
+        .eq("manager_user_id", authUser.id).limit(5000);
+      const rids = (rv || []).map((r: any) => r.crew_id).filter(Boolean);
+      query = query.in("id", rids.length ? rids : ["00000000-0000-0000-0000-000000000000"]);
+    }
+
     if (filters.rank) query = query.or(`rank.ilike.%${filters.rank}%,role.ilike.%${filters.rank}%`);
     if (filters.nationality) query = query.ilike("nationality", `%${filters.nationality}%`);
 
@@ -225,7 +234,7 @@ Deno.serve(async (req) => {
     }
 
     // Availability defaults to available-only unless the manager asks for "all"
-    if (filters.availability === undefined || filters.availability === null || filters.availability === "" || filters.availability === "available") {
+    if (!isRoster && (filters.availability === undefined || filters.availability === null || filters.availability === "" || filters.availability === "available")) {
       query = query.eq("is_available", true);
     }
 
@@ -287,6 +296,12 @@ Deno.serve(async (req) => {
         .in("crew_id", ids).gt("boosted_until", new Date().toISOString());
       (bz || []).forEach((b: any) => (boosted[b.crew_id] = true));
     }
+    const unlocked: Record<string, boolean> = {};
+    if (ids.length) {
+      const { data: mine } = await admin.from("contact_reveals").select("crew_id")
+        .eq("manager_user_id", authUser.id).in("crew_id", ids);
+      (mine || []).forEach((m: any) => (unlocked[m.crew_id] = true));
+    }
     const slot = Math.floor(Date.now() / (3 * 3600000));
     const rot = (id: string) => { let h = slot; for (const c of id) h = (h * 31 + c.charCodeAt(0)) | 0; return h; };
 
@@ -303,8 +318,11 @@ Deno.serve(async (req) => {
         rank: p.rank || personal.rank || personal.applyingFor || p.role || "—",
         nationality: p.nationality || personal.nationality || "—",
         vessel_type: p.vessel_type || latest?.vesselType || latest?.vessel_type || (p.preferred_vessel_types || [])[0] || "—",
-        whatsapp_number: maskPhone(p.whatsapp_number || personal.phone || personal.whatsapp || null),
-        email: maskEmail(p.email || personal.email || null),
+        whatsapp_number: unlocked[p.id] ? (p.whatsapp_number || personal.phone || personal.whatsapp || null) : maskPhone(p.whatsapp_number || personal.phone || personal.whatsapp || null),
+        email: unlocked[p.id] ? (p.email || personal.email || null) : maskEmail(p.email || personal.email || null),
+        is_unlocked: !!unlocked[p.id] || isOwner,
+        placed_until: p.placed_until || null,
+        priority_boost: !!boosted[p.id],
         is_available: !!p.is_available,
         available_from: p.available_from || personal.availableFrom || null,
         years_at_sea: p.years_at_sea || null,
