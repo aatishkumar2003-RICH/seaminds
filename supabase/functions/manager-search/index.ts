@@ -340,6 +340,8 @@ Deno.serve(async (req) => {
         pipeline_status: pausedBy[p.id] ? "paused" : offers[p.id] ? "offer_pending" : (talks[p.id] || 0) >= 4 ? "high_demand" : (talks[p.id] || 0) > 0 ? "in_talks" : "open",
       };
     });
+    results.sort((a: any, b: any) => (b.priority_boost ? 1 : 0) - (a.priority_boost ? 1 : 0)
+      || (a.priority_boost && b.priority_boost ? rot(a.user_id) - rot(b.user_id) : 0));
 
     return json({ success: true, count: results.length, total: total ?? results.length, results });
   } catch (e) {
