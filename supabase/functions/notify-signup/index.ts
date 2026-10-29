@@ -187,11 +187,11 @@ Deno.serve(async (req) => {
       if (kind === 'crew_new') {
         rows.push(['🛳️', 'Ship', ship_name]);
         subject = `🆕 New Crew: ${email} — ${[rank, name].filter(Boolean).join(' ')}${nat ? ` (${nat})` : ''} — ${count ?? '?'} total`;
-        html = renderEmail({ title: '⚓ New Crew Member Registered', band: 'linear-gradient(135deg,#D4AF37,#B8860B)', ink: '#0D1B2A', time: t, rows, stat: [String(count ?? '?'), 'total crew on SeaMinds'], button: ['View in Admin Dashboard →', `${ADMIN_URL}?tab=crew`] });
+        html = renderEmail({ title: '⚓ New Crew Member Registered', band: 'linear-gradient(135deg,#D4AF37,#B8860B)', ink: '#0D1B2A', time: t, rows, stat: [String(count ?? '?'), 'total crew on SeaMinds'], button: ['View in Admin Dashboard →', `${ADMIN_URL}?tab=crew&q=${encodeURIComponent(email)}`] });
       } else {
         rows.push(['🔑', 'Signed in with', provider]);
         subject = `⚓ First Crew Sign-In: ${email}${rank ? ` — ${rank}` : ''}${nat ? ` (${nat})` : ''}`;
-        html = renderEmail({ title: '⚓ Seafarer — First Sign-In', band: 'linear-gradient(135deg,#1e3a5f,#0D1B2A)', ink: '#D4AF37', time: t, rows, button: ['View in Admin Dashboard →', `${ADMIN_URL}?tab=crew`] });
+        html = renderEmail({ title: '⚓ Seafarer — First Sign-In', band: 'linear-gradient(135deg,#1e3a5f,#0D1B2A)', ink: '#D4AF37', time: t, rows, button: ['View in Admin Dashboard →', `${ADMIN_URL}?tab=crew&q=${encodeURIComponent(email)}`] });
       }
     }
 
