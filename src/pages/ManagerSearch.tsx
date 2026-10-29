@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ChevronLeft } from "lucide-react";
 import { generateCvPdf } from "@/lib/cvPdf";
+import { resolveNationality, manningStatus, STATUS_META, type ManningStatus } from "@/lib/crewManning";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 const NAVY = "#0D1B2A";
 const GOLD = "#D4AF37";
@@ -60,7 +62,26 @@ interface CrewResult {
   active_talks?: number;
   pipeline_status?: "open" | "in_talks" | "high_demand" | "offer_pending" | "paused";
   priority_boost?: boolean;
+  is_unlocked?: boolean;
+  placed_until?: string | null;
 }
+
+const RANK_PILLS: [string, string][] = [
+  ["Master", "Captain / Master"], ["Ch Off", "Chief Officer"], ["2/O", "2nd Officer"], ["3/O", "3rd Officer"],
+  ["C/E", "Chief Engineer"], ["2/E", "2nd Engineer"], ["3/E", "3rd Engineer"], ["ETO", "ETO / EEO"],
+  ["Bosun", "Bosun"], ["AB", "AB Seaman"], ["Oiler", "Oiler"], ["Cook", "Cook"],
+];
+const VESSEL_PILLS: [string, string][] = [
+  ["Oil Tanker", "Oil Tanker"], ["Chemical", "Chemical Tanker"], ["LNG", "LNG Carrier"], ["LPG", "LPG Carrier"],
+  ["Bulk", "Bulk Carrier"], ["Container", "Container Ship"], ["Gen Cargo", "General Cargo"], ["Offshore", "Offshore Supply Vessel"],
+];
+const natOf = (r: CrewResult) => resolveNationality({
+  nationality: r.nationality && r.nationality !== "—" ? r.nationality : null,
+  whatsapp_number: r.whatsapp_number, email: r.email,
+});
+const statusOf = (r: CrewResult): ManningStatus => manningStatus({
+  is_available: r.is_available, placed_until: r.placed_until, available_from: r.available_from,
+});
 
 const REFILL_MAILTO = "mailto:admin@seaminds.life?subject=Credit%20refill%20request";
 
@@ -224,6 +245,13 @@ const ManagerSearch = () => {
   const [balance, setBalance] = useState<number | null>(null);
   const [planOpen, setPlanOpen] = useState(false);
   const [revealBusy, setRevealBusy] = useState<string | null>(null);
+  const [tab, setTab] = useState<"find" | "roster">("find");
+  const [view, setView] = useState<"table" | "cards">(() => (window.innerWidth >= 900 ? "table" : "cards"));
+  const [natPick, setNatPick] = useState("");
+  const [statusPick, setStatusPick] = useState<ManningStatus | "">("");
+  const [quick, setQuick] = useState<CrewResult | null>(null);
+  const [confirmRow, setConfirmRow] = useState<CrewResult | null>(null);
+  const [rosterCount, setRosterCount] = useState<number | null>(null);
   const [revealed, setRevealed] = useState<Record<string, { email: string | null; whatsapp: string | null }>>({});
 
   // Platform is free during the growth phase: access is gated by admin approval only (server-enforced).
@@ -237,13 +265,13 @@ const ManagerSearch = () => {
     return 0;
   };
 
-  const search = async (bypassGate = false) => {
+  const search = async (bypassGate = false, which: "find" | "roster" = tab) => {
     if (!bypassGate && !subscribed) { setPlanOpen(true); return; }
 
     setLoading(true);
     try {
       const data = await callFn({
-        action: "search",
+        action: which === "roster" ? "unlocked" : "search",
         filters: { rank, nationality, vesselType, availability, minScore, minEnglish },
         page: 0,
         pageSize: 50,
@@ -251,6 +279,7 @@ const ManagerSearch = () => {
 
       setResults(data.results || []);
       setTotal(data.total ?? (data.results || []).length);
+      if (which === "roster") setRosterCount(data.total ?? (data.results || []).length);
       setPage(0);
       setPending(false);
       setSearched(true);
@@ -269,7 +298,7 @@ const ManagerSearch = () => {
     setLoadingMore(true);
     try {
       const data = await callFn({
-        action: "search",
+        action: tab === "roster" ? "unlocked" : "search",
         filters: { rank, nationality, vesselType, availability, minScore, minEnglish },
         page: next,
         pageSize: 50,
@@ -293,8 +322,13 @@ const ManagerSearch = () => {
       const res: any = data;
       if (res?.ok) {
         setRevealed((prev) => ({ ...prev, [crewId]: { email: res.email ?? null, whatsapp: res.whatsapp ?? null } }));
+        const patch = (x: CrewResult) => (x.crewId || x.user_id) === crewId
+          ? { ...x, is_unlocked: true, email: res.email ?? x.email, whatsapp_number: res.whatsapp ?? x.whatsapp_number } : x;
+        setResults((prev) => prev.map(patch));
+        setQuick((q) => (q ? patch(q) : q));
+        if (res.charged) setRosterCount((n) => (n == null ? n : n + 1));
         if (typeof res.balance === "number") setBalance(res.balance);
-        toast("Contact revealed");
+        toast.success(res.charged ? "Unlocked — added to My Unlocked Candidates" : "Already in your roster — no credit used");
       } else if (res?.error === "no_credits") {
         toast.error("Monthly reveal limit reached", {
           description: "Ask SeaMinds Admin to extend your free access.",
@@ -318,6 +352,8 @@ const ManagerSearch = () => {
       await loadBalance();
       if (!active) return;
       search(true);
+      callFn({ action: "unlocked", filters: {}, page: 0, pageSize: 1 })
+        .then((d) => active && setRosterCount(d.total ?? 0)).catch(() => {});
     })();
     return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -363,7 +399,7 @@ const ManagerSearch = () => {
 
   const contactWhatsApp = (row: CrewResult) => {
     const crewId = row.crewId || row.user_id;
-    const revealedWa = revealed[crewId]?.whatsapp;
+    const revealedWa = revealed[crewId]?.whatsapp || (row.is_unlocked ? row.whatsapp_number : null);
     if (!revealedWa) return toast.error("Reveal the contact first");
     const digits = revealedWa.replace(/[^\d]/g, "");
     if (!digits) return toast.error("No WhatsApp number on file");
@@ -371,6 +407,19 @@ const ManagerSearch = () => {
       `Hello ${row.name}, we found your SeaMinds profile (${row.cv_uid || "CV"}) and would like to discuss a ${row.rank} opportunity.`,
     );
     window.open(`https://wa.me/${digits}?text=${msg}`, "_blank");
+  };
+
+  // Rank / vessel pills and tab switches re-query the server immediately.
+  const firstRun = useRef(true);
+  useEffect(() => {
+    if (firstRun.current) { firstRun.current = false; return; }
+    if (ready) search(true, tab);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rank, vesselType, tab, availability]);
+
+  const askUnlock = (r: CrewResult) => {
+    if (r.is_unlocked || revealed[r.crewId || r.user_id]) { revealContact(r); return; }
+    setConfirmRow(r);
   };
 
   if (!ready) return null;
