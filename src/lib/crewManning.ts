@@ -21,7 +21,7 @@ const NAT_ALIASES: Record<string, string> = {
   ukrainian: "Ukraine", russian: "Russia", chinese: "China", burmese: "Myanmar",
   bangladeshi: "Bangladesh", "sri lankan": "Sri Lanka", pakistani: "Pakistan", greek: "Greece",
   turkish: "Turkey", romanian: "Romania", polish: "Poland", croatian: "Croatia", german: "Germany",
-  british: "United Kingdom", dutch: "Netherlands", "viet nam": "Vietnam",
+  british: "United Kingdom", dutch: "Netherlands", "viet nam": "Vietnam", french: "France", egyptian: "Egypt", liberian: "Liberia", italian: "Italy", norwegian: "Norway", malaysian: "Malaysia", nigerian: "Nigeria", ghanaian: "Ghana", georgian: "Georgia",
 };
 
 /** Declared nationality first, then WhatsApp dial code, then email country domain. */
