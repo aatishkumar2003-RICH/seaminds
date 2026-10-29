@@ -80,6 +80,11 @@ Deno.serve(async (req) => {
     const isOwner = OWNER_EMAILS.includes(String(authUser.email || "").trim().toLowerCase())
       || authUser.id === "492ee966-e015-4440-a415-6ad6275a4a9b";
 
+    // Private preview: Crew Search is locked to the owner account until the owner opens it.
+    if (!isOwner) {
+      return json({ success: false, pending_approval: true, error: "Crew Search is currently in private preview with select partner fleets. Request early access at admin@seaminds.life." }, 403);
+    }
+
     const { data: managerRow } = await admin
       .from("manager_profiles")
       .select("company_name, admin_approved, company_verified")

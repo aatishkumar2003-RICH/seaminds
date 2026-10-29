@@ -51,6 +51,7 @@ import ProfileStart from "./pages/ProfileStart";
 import ManagerAuth from "./pages/ManagerAuth";
 import ManagerDashboard from "./pages/ManagerDashboard";
 import ManagerSearch from "./pages/ManagerSearch";
+import OwnerPreviewGate from "./components/OwnerPreviewGate";
 import NotFound from "./pages/NotFound";
 const JobDetail = lazy(() => import("./pages/JobDetail"));
 const TakeoverInspections = lazy(() => import("./pages/TakeoverInspections"));
@@ -192,8 +193,8 @@ const App = () => (
             <Route path="/my-payslips" element={<Suspense fallback={null}><MyPayslips /></Suspense>} />
             <Route path="/my-responses" element={<Suspense fallback={null}><MyResponses /></Suspense>} />
             <Route path="/cockpit" element={<Suspense fallback={null}><SailorsCockpit /></Suspense>} />
-            <Route path="/marketplace" element={<Suspense fallback={null}><Marketplace /></Suspense>} />
-            <Route path="/marketplace/post" element={<Suspense fallback={null}><MarketplacePost /></Suspense>} />
+            <Route path="/marketplace" element={<OwnerPreviewGate feature="Ship Marketplace"><Suspense fallback={null}><Marketplace /></Suspense></OwnerPreviewGate>} />
+            <Route path="/marketplace/post" element={<OwnerPreviewGate feature="Ship Marketplace"><Suspense fallback={null}><MarketplacePost /></Suspense></OwnerPreviewGate>} />
             <Route path="/join" element={<Join />} />
             <Route path="/join-free" element={<JoinLanding />} />
             <Route path="/manager" element={<ManagerAuth />} />
@@ -204,7 +205,7 @@ const App = () => (
               <Route path="/manager/crew-desk" element={<Suspense fallback={null}><CrewDesk /></Suspense>} />
               <Route path="/manager/fleet-workspace" element={<Suspense fallback={null}><FleetWorkspace /></Suspense>} />
               <Route path="/fleet-workspace" element={<Navigate to="/manager/fleet-workspace" replace />} />
-              <Route path="/manager-search" element={<ManagerSearch />} />
+              <Route path="/manager-search" element={<OwnerPreviewGate feature="Crew Search"><ManagerSearch /></OwnerPreviewGate>} />
               <Route path="/post-vacancy" element={<PostVacancyPage />} />
             </Route>
             <Route path="/company-post" element={<CompanyPost />} />
