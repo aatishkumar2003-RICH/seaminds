@@ -11,9 +11,9 @@ export const isPreviewOwner = (user: { id?: string; email?: string | null } | nu
   !!user && (user.id === OWNER_UID || OWNER_EMAILS.includes(String(user.email || "").trim().toLowerCase()));
 
 const OwnerPreviewGate = ({ feature, children }: { feature: string; children: ReactNode }) => {
-  const { user, loading } = useAuth() as any;
+  const { user, isReady } = useAuth();
   const navigate = useNavigate();
-  if (loading) return null;
+  if (!isReady) return null;
   if (isPreviewOwner(user)) return <>{children}</>;
 
   const subject = encodeURIComponent(`Early access request: ${feature}`);
