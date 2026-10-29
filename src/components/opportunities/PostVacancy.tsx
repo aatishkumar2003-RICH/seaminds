@@ -88,7 +88,7 @@ const PostVacancy = () => {
   const [batchExpanded, setBatchExpanded] = useState(false);
   const [uncertain, setUncertain] = useState<{ batchId: string; expected: number; message: string } | null>(null);
   const [lastResult, setLastResult] = useState<PublishResult | null>(null);
-  const [showPrev, setShowPrev] = useState(false);
+  const [tab, setTab] = useState<"studio" | "broadcast">("studio");
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { loadManagerIdentity().then(setIdentity); }, []);
@@ -435,6 +435,22 @@ const PostVacancy = () => {
 
   return (
     <div className="space-y-4 pt-3">
+      <div role="tablist" className="flex gap-2">
+        {([["studio", "✍️ Vacancy Studio"], ["broadcast", "📢 Broadcast & Export"]] as const).map(([k, label]) => (
+          <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
+            className={`flex-1 rounded-xl px-3 py-2 text-sm border font-semibold ${tab === k ? "bg-[#D4AF37] text-[#0D1B2A] border-[#D4AF37]" : "border-[#D4AF37]/40 text-[#D4AF37]"}`}>
+            {label}
+          </button>
+        ))}
+      </div>
+      {tab === "broadcast" ? (
+        <div className="rounded-xl bg-card border border-border p-4 space-y-4">
+          {lastResult?.status === "published" && lastResult.batchId && (
+            <WhatsAppBroadcastPanel batchId={lastResult.batchId} title="📢 Latest published batch" />
+          )}
+          <WhatsAppBroadcastPanel title="📚 Previous vacancies & broadcast links" />
+        </div>
+      ) : (<>
       <ol className="flex gap-2 text-[11px] sm:text-xs" aria-label="Studio steps">
         {["Add adverts", "Review vacancies", "Publish selected"].map((t, i) => (
           <li key={t} className={`flex-1 rounded-full px-3 py-1.5 text-center border ${step === i + 1 ? "border-[#D4AF37] text-[#0D1B2A] bg-[#D4AF37] font-bold" : "border-border text-muted-foreground"}`}>{i + 1}. {t}</li>
@@ -775,16 +791,15 @@ const PostVacancy = () => {
           )}
           {lastResult?.status === "published" && <p className="text-[11px] text-[#22c55e]">{publishSummary(lastResult)}</p>}
           {lastResult?.status === "published" && lastResult.batchId && (
-            <WhatsAppBroadcastPanel batchId={lastResult.batchId} title="📢 Broadcast to WhatsApp Channel / Group" />
+            <Button variant="outline" className="w-full h-11 border-[#D4AF37] text-[#D4AF37]" onClick={() => setTab("broadcast")}>
+              📢 Open Broadcast tab →
+            </Button>
           )}
-          <button className="text-xs text-[#D4AF37] underline" onClick={() => setShowPrev((x) => !x)}>
-            {showPrev ? "Hide previous vacancies" : "📚 Previous vacancies & broadcast links"}
-          </button>
-          {showPrev && <WhatsAppBroadcastPanel title="Previous vacancies & broadcast links" />}
         </section>
       )}
       </div>
       </div>
+      </>)}
     </div>
   );
 };
