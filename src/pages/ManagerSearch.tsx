@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -516,7 +516,7 @@ const ManagerSearch = () => {
             <span style={{ color: GOLD, fontWeight: 800, fontSize: 13, border: `1px solid rgba(212,175,55,0.3)`, borderRadius: 999, padding: "6px 12px" }}>
               🪙 {balance ?? "…"} credits
             </span>
-            <button onClick={() => navigate("/manager/credits")} style={{ ...ghostBtn, padding: "6px 12px", borderRadius: 999 }}>Refill</button>
+            <button onClick={() => window.open(REFILL_MAILTO)} style={{ ...ghostBtn, padding: "6px 12px", borderRadius: 999 }}>Refill</button>
           </div>
         </div>
         <p style={{ color: "#94A3B8", fontSize: 12, marginTop: -8 }}>
