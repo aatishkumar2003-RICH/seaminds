@@ -503,189 +503,167 @@ const ManagerSearch = () => {
         </div>
         ) : (
         <>
-        {/* Filters */}
-        <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 16 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 12 }}>
-            <div>
-              <span style={label}>Rank</span>
-              <select value={rank} onChange={(e) => setRank(e.target.value)} style={input}>
-                <option value="">All ranks</option>
-                {RANKS.map((r) => <option key={r} value={r}>{r}</option>)}
-              </select>
-            </div>
-            <div>
-              <span style={label}>Nationality</span>
-              <select
-                value={nationality}
-                onChange={(e) => {
-                  if (!subscribed) { setPlanOpen(true); return; }
-                  setNationality(e.target.value);
-                }}
-                onMouseDown={(e) => { if (!subscribed) { e.preventDefault(); setPlanOpen(true); } }}
-                style={input}
-              >
-                <option value="">All nationalities</option>
-                {NATIONALITIES.map((n) => <option key={n} value={n}>{n}</option>)}
-              </select>
-            </div>
-
-            <div>
-              <span style={label}>Vessel Type</span>
-              <select value={vesselType} onChange={(e) => setVesselType(e.target.value)} style={input}>
-                <option value="">All vessel types</option>
-                {VESSEL_TYPES.map((v) => <option key={v} value={v}>{v}</option>)}
-              </select>
-            </div>
-            <div>
-              <span style={label}>Availability</span>
-              <select value={availability} onChange={(e) => setAvailability(e.target.value as any)} style={input}>
-                <option value="all">All crew</option>
-                <option value="available">Available now</option>
-              </select>
-            </div>
-            <div>
-              <span style={label}>Competency Score</span>
-              <select value={minScore} onChange={(e) => setMinScore(e.target.value)} style={input}>
-                <option value="">Any score</option>
-                <option value="4">Top performers (4.00+)</option>
-                <option value="3.5">Competent (3.50+)</option>
-                <option value="3">3.00+</option>
-              </select>
-            </div>
-            <div>
-              <span style={label}>Maritime English</span>
-              <select value={minEnglish} onChange={(e) => setMinEnglish(e.target.value)} style={input}>
-                <option value="">Any level</option>
-                <option value="85">Ready for sea (85%+)</option>
-                <option value="70">Confident (70%+)</option>
-                <option value="50">Developing (50%+)</option>
-              </select>
-            </div>
-            <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
-              <button onClick={() => search()} disabled={loading} style={{ ...goldBtn, flex: 1, opacity: loading ? 0.6 : 1 }}>
-                {loading ? "Searching…" : "Search"}
-              </button>
-              <button
-                onClick={() => { setRank(""); setNationality(""); setVesselType(""); setAvailability("all"); setMinScore(""); setMinEnglish(""); }}
-                style={ghostBtn}
-              >
-                Clear
-              </button>
-            </div>
+        {/* Workspace tabs + wallet */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: 6, background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 4 }}>
+            {([["find", "🔍 Find New Crew"], ["roster", `📂 My Unlocked Candidates${rosterCount != null ? ` (${rosterCount})` : ""}`]] as const).map(([k, l]) => (
+              <button key={k} onClick={() => { setTab(k); setNatPick(""); setStatusPick(""); }}
+                style={{ padding: "8px 14px", borderRadius: 9, border: "none", cursor: "pointer", fontWeight: 700, fontSize: 13,
+                  background: tab === k ? GOLD : "transparent", color: tab === k ? NAVY : "#cbd5e1" }}>{l}</button>
+            ))}
+          </div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <span style={{ color: GOLD, fontWeight: 800, fontSize: 13, border: `1px solid rgba(212,175,55,0.3)`, borderRadius: 999, padding: "6px 12px" }}>
+              🪙 {balance ?? "…"} credits
+            </span>
+            <button onClick={() => navigate("/manager/credits")} style={{ ...ghostBtn, padding: "6px 12px", borderRadius: 999 }}>Refill</button>
           </div>
         </div>
-
-        <p style={{ color: "#94A3B8", fontSize: 12, lineHeight: 1.6, marginTop: -8 }}>
-          Contacts are protected for seafarer privacy. Crew Search is free for verified ship managers.
+        <p style={{ color: "#94A3B8", fontSize: 12, marginTop: -8 }}>
+          {tab === "find"
+            ? "Browsing and Quick CV are free. Unlocking contact + full CV costs 1 credit, once per seafarer — never charged twice."
+            : "Crew you have already unlocked. Contacts and full CVs stay open for you at no extra cost."}
         </p>
-        <label style={{ display: "flex", alignItems: "center", gap: 8, color: GOLD, fontSize: 13, marginTop: -4 }}>
-          <input type="checkbox" checked={freeOnly} onChange={(e) => setFreeOnly(e.target.checked)} />
-          Only show crew not in talks with other companies
-        </label>
 
-        {/* Results */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 14 }}>
-          {results.filter((r) => !freeOnly || (r.pipeline_status || "open") === "open").map((r) => (
-            <article key={r.user_id} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-                <div>
-                  <div style={{ color: "#fff", fontWeight: 700, fontSize: 15 }}>{r.name}</div>
-                  <div style={{ color: GOLD, fontFamily: "monospace", fontSize: 12 }}>{r.cv_uid || "ID pending"}</div>
-                </div>
-                <span style={{
-                  fontSize: 11, fontWeight: 700, padding: "4px 8px", borderRadius: 999,
-                  background: r.is_available ? "rgba(16,185,129,0.15)" : "rgba(212,175,55,0.15)",
-                  color: r.is_available ? "#10b981" : GOLD,
-                  whiteSpace: "nowrap",
-                }}>
-                  {r.is_available ? "Available now" : "Availability on request"}
-                </span>
+        {/* Manning filter ribbon */}
+        <div style={{ position: "sticky", top: 0, zIndex: 5, background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+          {(() => {
+            const pill = (on: boolean, color = GOLD): React.CSSProperties => ({
+              padding: "5px 11px", borderRadius: 999, fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap",
+              border: `1px solid ${on ? color : "rgba(212,175,55,0.3)"}`, background: on ? color : "transparent", color: on ? NAVY : "#cbd5e1",
+            });
+            const natCounts: Record<string, { n: number; flag: string }> = {};
+            results.forEach((r) => { const x = natOf(r); (natCounts[x.name] ||= { n: 0, flag: x.flag }).n++; });
+            const nats = Object.entries(natCounts).sort((a, b) => b[1].n - a[1].n);
+            const stCounts: Record<string, number> = {};
+            results.filter((r) => !natPick || natOf(r).name === natPick).forEach((r) => { const k = statusOf(r); stCounts[k] = (stCounts[k] || 0) + 1; });
+            const row = (t: string, children: React.ReactNode) => (
+              <div style={{ display: "flex", gap: 6, alignItems: "center", overflowX: "auto", paddingBottom: 2 }}>
+                <span style={{ ...label, marginBottom: 0, minWidth: 74 }}>{t}</span>{children}
               </div>
-              {r.priority_boost && <div style={{ fontSize: 11, fontWeight: 800, color: NAVY, background: GOLD, borderRadius: 8, padding: "4px 8px" }}>⚡ PRIORITY BERTH SEEKER · READY NOW</div>}
-              {(() => {
-                const s = r.pipeline_status || "open"; const n = r.active_talks || 0;
-                const m: Record<string, [string, string]> = {
-                  open: ["🟢 Not in talks with other companies", "#22c55e"],
-                  in_talks: [`🟡 In talks with ${n} compan${n > 1 ? "ies" : "y"}`, "#f59e0b"],
-                  high_demand: [`🟠 High demand · ${n} companies`, "#f97316"],
-                  offer_pending: ["🟣 Offer under consideration", "#a78bfa"],
-                  paused: ["⏸️ Paused new inquiries", "#94A3B8"],
-                };
-                const [t, c] = m[s] || m.open;
-                return <div style={{ fontSize: 11, fontWeight: 700, color: c, border: `1px solid ${c}55`, borderRadius: 8, padding: "4px 8px" }}>{t}</div>;
-              })()}
-
-              <dl style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, fontSize: 12 }}>
-                <div><dt style={{ color: "#6b7280" }}>Rank</dt><dd style={{ color: "#e5e7eb" }}>{r.rank || "—"}</dd></div>
-                <div><dt style={{ color: "#6b7280" }}>Nationality</dt><dd style={{ color: "#e5e7eb" }}>{r.nationality || "—"}</dd></div>
-                <div><dt style={{ color: "#6b7280" }}>Vessel Type</dt><dd style={{ color: "#e5e7eb" }}>{r.vessel_type || "—"}</dd></div>
-                <div>
-                  <dt style={{ color: "#6b7280" }}>SeaMinds Score</dt>
-                  <dd style={{ color: r.smc_score != null ? GOLD : "#6b7280", fontWeight: 700 }}>
-                    {r.smc_score != null ? `${r.smc_score}${r.smc_band ? ` · ${r.smc_band}` : ""}` : "Not assessed"}
-                  </dd>
+            );
+            return (<>
+              {row("⚓ Rank", <>
+                <button style={pill(!rank)} onClick={() => setRank("")}>All</button>
+                {RANK_PILLS.map(([s, v]) => <button key={v} style={pill(rank === v)} onClick={() => setRank(rank === v ? "" : v)}>{s}</button>)}
+                <select value={RANK_PILLS.some(([, v]) => v === rank) ? "" : rank} onChange={(e) => setRank(e.target.value)} style={{ ...input, width: 150, padding: "5px 8px", fontSize: 12 }}>
+                  <option value="">More ranks…</option>
+                  {RANKS.map((r) => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </>)}
+              {row("🚢 Vessel", <>
+                <button style={pill(!vesselType)} onClick={() => setVesselType("")}>All</button>
+                {VESSEL_PILLS.map(([s, v]) => <button key={v} style={pill(vesselType === v)} onClick={() => setVesselType(vesselType === v ? "" : v)}>{s}</button>)}
+              </>)}
+              {row("🌍 Nationality", <>
+                <button style={pill(!natPick)} onClick={() => setNatPick("")}>All ({results.length})</button>
+                {nats.map(([n, x]) => <button key={n} style={pill(natPick === n)} onClick={() => setNatPick(natPick === n ? "" : n)}>{x.flag} {n} ({x.n})</button>)}
+              </>)}
+              {row("🟢 Status", <>
+                <button style={pill(!statusPick)} onClick={() => setStatusPick("")}>All</button>
+                {(Object.keys(STATUS_META) as ManningStatus[]).map((k) => (
+                  <button key={k} style={pill(statusPick === k, STATUS_META[k].color)} onClick={() => setStatusPick(statusPick === k ? "" : k)}>
+                    {STATUS_META[k].label} ({stCounts[k] || 0})
+                  </button>
+                ))}
+                <button style={pill(freeOnly, "#22c55e")} onClick={() => setFreeOnly(!freeOnly)}>Not in other talks</button>
+              </>)}
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                {tab === "find" && (
+                  <select value={availability} onChange={(e) => setAvailability(e.target.value as any)} style={{ ...input, width: 170, padding: "6px 8px", fontSize: 12 }}>
+                    <option value="all">All crew (incl. on board)</option>
+                    <option value="available">Available now only</option>
+                  </select>
+                )}
+                <select value={minScore} onChange={(e) => setMinScore(e.target.value)} style={{ ...input, width: 170, padding: "6px 8px", fontSize: 12 }}>
+                  <option value="">Any competency score</option>
+                  <option value="4">Score 4.00+</option>
+                  <option value="3.5">Score 3.50+</option>
+                  <option value="3">Score 3.00+</option>
+                </select>
+                <select value={minEnglish} onChange={(e) => setMinEnglish(e.target.value)} style={{ ...input, width: 170, padding: "6px 8px", fontSize: 12 }}>
+                  <option value="">Any English level</option>
+                  <option value="85">English 85%+</option>
+                  <option value="70">English 70%+</option>
+                  <option value="50">English 50%+</option>
+                </select>
+                <button onClick={() => search()} disabled={loading} style={{ ...goldBtn, padding: "7px 14px", opacity: loading ? 0.6 : 1 }}>{loading ? "Searching…" : "Apply"}</button>
+                <button onClick={() => { setRank(""); setVesselType(""); setNatPick(""); setStatusPick(""); setFreeOnly(false); setMinScore(""); setMinEnglish(""); setAvailability("all"); }} style={{ ...ghostBtn, padding: "7px 12px" }}>Clear</button>
+                <div style={{ marginLeft: "auto", display: "flex", gap: 4 }}>
+                  {(["table", "cards"] as const).map((v) => (
+                    <button key={v} onClick={() => setView(v)} style={pill(view === v)}>{v === "table" ? "☷ Table" : "⊞ Cards"}</button>
+                  ))}
                 </div>
-                <div>
-                  <dt style={{ color: "#6b7280" }}>Maritime English</dt>
-                  <dd style={{ color: r.english_avg != null ? GOLD : "#6b7280", fontWeight: 700 }}>
-                    {r.english_avg != null ? `${r.english_avg}% · ${r.english_avg >= 85 ? "Ready for sea" : r.english_avg >= 70 ? "Confident" : r.english_avg >= 50 ? "Developing" : "Starter"}` : "No practice yet"}
-                  </dd>
-                </div>
-              </dl>
-
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {r.email_verified && <span style={{ fontSize: 11, color: "#10b981" }}>✅ Email verified</span>}
-                {r.whatsapp_verified && <span style={{ fontSize: 11, color: "#10b981" }}>🟢 WhatsApp verified</span>}
-                {!r.has_cv && <span style={{ fontSize: 11, color: "#f59e0b" }}>No CV built yet</span>}
               </div>
-
-              <QuickProfileLine
-                crewId={r.crewId || r.user_id}
-                rank={r.rank}
-                bands={{
-                  years_in_rank_band: r.years_in_rank_band,
-                  contracts_in_rank_band: r.contracts_in_rank_band,
-                  total_sea_service_band: r.total_sea_service_band,
-                }}
-              />
-
-              {(() => {
-                const crewId = r.crewId || r.user_id;
-                const rev = revealed[crewId];
-                return (
-                  <div style={{ background: "rgba(212,175,55,0.06)", border: `1px solid rgba(212,175,55,0.25)`, borderRadius: 10, padding: 10, display: "flex", flexDirection: "column", gap: 8 }}>
-                    <div style={{ fontSize: 12, color: "#e5e7eb", fontFamily: "monospace" }}>
-                      <div>📧 {rev ? (rev.email || "—") : (r.email || "•••••")}</div>
-                      <div>📱 {rev ? (rev.whatsapp || "—") : (r.whatsapp_number || "•••••")}</div>
-                    </div>
-                    {!rev && (
-                      <button
-                        onClick={() => revealContact(r)}
-                        disabled={revealBusy === crewId}
-                        style={{ ...goldBtn, padding: "8px 10px", opacity: revealBusy === crewId ? 0.6 : 1 }}
-                      >
-                        {revealBusy === crewId ? "Revealing…" : "🔓 Reveal contact"}
-                      </button>
-                    )}
-                  </div>
-                );
-              })()}
-
-              <div style={{ display: "flex", gap: 8, marginTop: "auto" }}>
-                <button onClick={() => contactWhatsApp(r)} style={{ ...goldBtn, flex: 1, padding: "8px 10px" }}>
-                  Contact via WhatsApp
-                </button>
-                <button
-                  onClick={() => viewFullCv(r)}
-                  disabled={pdfBusy === r.user_id}
-                  style={{ ...ghostBtn, flex: 1, padding: "8px 10px", opacity: pdfBusy === r.user_id ? 0.6 : 1 }}
-                >
-                  {pdfBusy === r.user_id ? "Preparing…" : "View Full CV"}
-                </button>
-              </div>
-            </article>
-          ))}
+            </>);
+          })()}
         </div>
+
+        {(() => {
+          const shown = results.filter((r) =>
+            (!freeOnly || (r.pipeline_status || "open") === "open")
+            && (!natPick || natOf(r).name === natPick)
+            && (!statusPick || statusOf(r) === statusPick));
+          const unlockedOf = (r: CrewResult) => !!(r.is_unlocked || revealed[r.crewId || r.user_id]);
+          const statusChip = (r: CrewResult) => { const m = STATUS_META[statusOf(r)]; return <span style={{ color: m.color, fontWeight: 700, fontSize: 12, whiteSpace: "nowrap" }}>● {m.label}</span>; };
+          const unlockBtn = (r: CrewResult, compact = false) => unlockedOf(r)
+            ? <button onClick={() => contactWhatsApp(r)} style={{ ...goldBtn, padding: compact ? "5px 10px" : "8px 10px", fontSize: 12 }}>💬 WhatsApp</button>
+            : <button onClick={() => askUnlock(r)} disabled={revealBusy === (r.crewId || r.user_id)} style={{ ...goldBtn, padding: compact ? "5px 10px" : "8px 10px", fontSize: 12 }}>🔓 Unlock · 1 cr</button>;
+          if (!loading && searched && shown.length === 0) return (
+            <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 32, textAlign: "center", color: "#94A3B8" }}>
+              {tab === "roster" ? "You haven't unlocked any crew yet. Use Find New Crew, open a Quick CV and unlock the right candidate." : "No crew match these filters."}
+            </div>
+          );
+          if (view === "table") return (
+            <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 900 }}>
+                <thead><tr style={{ color: "#94A3B8", textAlign: "left", fontSize: 11, textTransform: "uppercase" }}>
+                  {["Seafarer", "Rank", "Nationality", "Experience", "Vessel", "Score / English", "Status", "Pipeline", ""].map((h) => <th key={h} style={{ padding: "10px 12px", borderBottom: `1px solid ${BORDER}` }}>{h}</th>)}
+                </tr></thead>
+                <tbody>
+                  {shown.map((r) => { const n = natOf(r); const s = r.pipeline_status || "open"; return (
+                    <tr key={r.user_id} onClick={() => setQuick(r)} style={{ cursor: "pointer", borderBottom: `1px solid ${BORDER}`, color: "#e5e7eb" }}>
+                      <td style={{ padding: "10px 12px" }}>
+                        <div style={{ fontWeight: 700 }}>{r.priority_boost && <span title="Priority berth seeker">⚡ </span>}{r.name}</div>
+                        <div style={{ color: GOLD, fontFamily: "monospace", fontSize: 11 }}>{r.cv_uid || "ID pending"} {unlockedOf(r) && <span style={{ color: "#22c55e" }}>· ✓ In your roster</span>}</div>
+                      </td>
+                      <td style={{ padding: "10px 12px" }}>{r.rank}</td>
+                      <td style={{ padding: "10px 12px" }}>{n.flag} {n.name}{n.source !== "declared" && n.source !== "none" && <span style={{ color: "#64748b", fontSize: 10 }}> (auto)</span>}</td>
+                      <td style={{ padding: "10px 12px", fontSize: 12 }}>{[r.total_sea_service_band && `${r.total_sea_service_band}y sea`, r.years_in_rank_band && `${r.years_in_rank_band}y rank`].filter(Boolean).join(" · ") || r.years_at_sea || "—"}</td>
+                      <td style={{ padding: "10px 12px", fontSize: 12 }}>{r.vessel_type}</td>
+                      <td style={{ padding: "10px 12px", fontSize: 12, color: GOLD }}>{r.smc_score != null ? r.smc_score : "—"} / {r.english_avg != null ? `${r.english_avg}%` : "—"}</td>
+                      <td style={{ padding: "10px 12px" }}>{statusChip(r)}</td>
+                      <td style={{ padding: "10px 12px", fontSize: 11, color: s === "open" ? "#22c55e" : "#f59e0b" }}>{s === "open" ? "Free" : s === "paused" ? "Paused" : s === "offer_pending" ? "Offer pending" : `${r.active_talks} in talks`}</td>
+                      <td style={{ padding: "10px 12px" }} onClick={(e) => e.stopPropagation()}>{unlockBtn(r, true)}</td>
+                    </tr>
+                  ); })}
+                </tbody>
+              </table>
+            </div>
+          );
+          return (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
+              {shown.map((r) => { const n = natOf(r); return (
+                <article key={r.user_id} onClick={() => setQuick(r)} style={{ cursor: "pointer", background: CARD, border: `1px solid ${unlockedOf(r) ? "#22c55e66" : BORDER}`, borderRadius: 12, padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+                  {r.priority_boost && <div style={{ fontSize: 11, fontWeight: 800, color: NAVY, background: GOLD, borderRadius: 8, padding: "3px 8px" }}>⚡ PRIORITY BERTH SEEKER</div>}
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+                    <div>
+                      <div style={{ color: "#fff", fontWeight: 700 }}>{r.name}</div>
+                      <div style={{ color: GOLD, fontSize: 12 }}>{r.rank} · {n.flag} {n.name}</div>
+                    </div>
+                    {statusChip(r)}
+                  </div>
+                  <div style={{ color: "#94A3B8", fontSize: 12 }}>{r.vessel_type} · {r.total_sea_service_band ? `${r.total_sea_service_band}y sea` : "sea time on CV"}</div>
+                  {unlockedOf(r) && <div style={{ color: "#22c55e", fontSize: 11, fontWeight: 700 }}>✓ In your roster · {r.whatsapp_number || r.email || "contact on CV"}</div>}
+                  <div style={{ display: "flex", gap: 6, marginTop: "auto" }} onClick={(e) => e.stopPropagation()}>
+                    <button onClick={() => setQuick(r)} style={{ ...ghostBtn, flex: 1, padding: "8px 10px", fontSize: 12 }}>Quick CV</button>
+                    <div style={{ flex: 1, display: "flex" }}>{unlockBtn(r)}</div>
+                  </div>
+                </article>
+              ); })}
+            </div>
+          );
+        })()}
 
         {total > results.length && results.length > 0 && (
           <div style={{ display: "flex", justifyContent: "center" }}>
@@ -695,9 +673,71 @@ const ManagerSearch = () => {
           </div>
         )}
 
-        {!loading && searched && results.length === 0 && (
-          <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 32, textAlign: "center", color: "#6b7280" }}>
-            No crew match these filters.
+        {/* Quick CV drawer — free need-to-know screening */}
+        <Sheet open={!!quick} onOpenChange={(o) => !o && setQuick(null)}>
+          <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto" style={{ background: NAVY, borderColor: "rgba(212,175,55,0.3)", color: "#e5e7eb" }}>
+            {quick && (() => { const r = quick; const n = natOf(r); const un = !!(r.is_unlocked || revealed[r.crewId || r.user_id]); const rv = revealed[r.crewId || r.user_id]; return (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <SheetHeader>
+                  <SheetTitle style={{ color: GOLD }}>Quick CV</SheetTitle>
+                </SheetHeader>
+                <div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: "#fff" }}>{r.name}</div>
+                  <div style={{ color: GOLD, fontFamily: "monospace", fontSize: 12 }}>{r.cv_uid || "ID pending"}</div>
+                  <div style={{ marginTop: 6, display: "flex", gap: 10, flexWrap: "wrap", fontSize: 12 }}>
+                    <span>{r.rank}</span><span>{n.flag} {n.name}</span>{(() => { const m = STATUS_META[statusOf(r)]; return <span style={{ color: m.color, fontWeight: 700 }}>● {m.label}</span>; })()}
+                  </div>
+                  {r.available_from && <div style={{ fontSize: 12, color: "#94A3B8", marginTop: 4 }}>Available from {new Date(r.available_from).toLocaleDateString()}</div>}
+                </div>
+                <dl style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, fontSize: 12, background: CARD, borderRadius: 10, padding: 12 }}>
+                  <div><dt style={{ color: "#94A3B8" }}>Total sea time</dt><dd>{r.total_sea_service_band ? `${r.total_sea_service_band} yrs` : r.years_at_sea || "—"}</dd></div>
+                  <div><dt style={{ color: "#94A3B8" }}>Time in rank</dt><dd>{r.years_in_rank_band ? `${r.years_in_rank_band} yrs` : "—"}</dd></div>
+                  <div><dt style={{ color: "#94A3B8" }}>Contracts in rank</dt><dd>{r.contracts_in_rank_band || "—"}</dd></div>
+                  <div><dt style={{ color: "#94A3B8" }}>Vessel type</dt><dd>{r.vessel_type}</dd></div>
+                  <div><dt style={{ color: "#94A3B8" }}>Competency Score</dt><dd style={{ color: GOLD, fontWeight: 700 }}>{r.smc_score != null ? `${r.smc_score}${r.smc_band ? ` · ${r.smc_band}` : ""}` : "Not assessed"}</dd></div>
+                  <div><dt style={{ color: "#94A3B8" }}>Maritime English</dt><dd style={{ color: GOLD, fontWeight: 700 }}>{r.english_avg != null ? `${r.english_avg}%` : "No practice yet"}</dd></div>
+                </dl>
+                <QuickProfileLine crewId={r.crewId || r.user_id} rank={r.rank} bands={{ years_in_rank_band: r.years_in_rank_band, contracts_in_rank_band: r.contracts_in_rank_band, total_sea_service_band: r.total_sea_service_band }} />
+                <div style={{ fontSize: 12, color: "#cbd5e1" }}>
+                  {r.email_verified && "✅ Email verified  "}{r.whatsapp_verified && "🟢 WhatsApp verified  "}{!r.has_cv && <span style={{ color: "#f59e0b" }}>No full CV built yet</span>}
+                </div>
+                <div style={{ background: "rgba(212,175,55,0.06)", border: "1px solid rgba(212,175,55,0.3)", borderRadius: 10, padding: 12, fontSize: 12, fontFamily: "monospace" }}>
+                  <div>📧 {rv?.email ?? r.email ?? "•••••"}</div>
+                  <div>📱 {rv?.whatsapp ?? r.whatsapp_number ?? "•••••"}</div>
+                  {!un && <div style={{ color: "#94A3B8", fontFamily: "inherit", marginTop: 6 }}>Unlock once (1 credit) to see contact and full CV — it stays open for you forever.</div>}
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {un ? (<>
+                    <button onClick={() => contactWhatsApp(r)} style={goldBtn}>💬 Contact via WhatsApp</button>
+                    <button onClick={() => viewFullCv(r)} disabled={pdfBusy === r.user_id} style={ghostBtn}>{pdfBusy === r.user_id ? "Preparing…" : "📄 Download full CV (free — already unlocked)"}</button>
+                  </>) : (
+                    <button onClick={() => askUnlock(r)} style={goldBtn}>🔓 Unlock contact & full CV · 1 credit</button>
+                  )}
+                </div>
+                <p style={{ fontSize: 11, color: "#64748b" }}>Wellness and private chat data are never shared with companies.</p>
+              </div>
+            ); })()}
+          </SheetContent>
+        </Sheet>
+
+        {/* Unlock confirmation */}
+        {confirmRow && (
+          <div onClick={() => setConfirmRow(null)} style={{ position: "fixed", inset: 0, background: "rgba(5,10,20,0.78)", zIndex: 80, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+            <div onClick={(e) => e.stopPropagation()} style={{ background: CARD, border: "1px solid rgba(212,175,55,0.3)", borderRadius: 16, padding: 20, maxWidth: 400, width: "100%" }}>
+              <h2 style={{ color: GOLD, fontSize: 17, fontWeight: 800, marginBottom: 8 }}>Unlock {confirmRow.name}?</h2>
+              <p style={{ color: "#cbd5e1", fontSize: 13, lineHeight: 1.6 }}>
+                {confirmRow.rank} · {natOf(confirmRow).name}. You will see their WhatsApp, email and full CV, and they join <b>My Unlocked Candidates</b> permanently — you will never be charged for them again.
+              </p>
+              <div style={{ margin: "12px 0", fontSize: 13, color: "#e5e7eb", background: NAVY, borderRadius: 10, padding: 10 }}>
+                Cost: <b style={{ color: GOLD }}>1 credit</b> · Balance after: <b>{balance != null ? Math.max(0, balance - 1) : "…"}</b>
+              </div>
+              {balance != null && balance < 1 ? (
+                <button onClick={() => window.open(REFILL_MAILTO)} style={{ ...goldBtn, width: "100%" }}>Not enough credits — request refill</button>
+              ) : (
+                <button onClick={() => { const r = confirmRow; setConfirmRow(null); revealContact(r); }} style={{ ...goldBtn, width: "100%", borderRadius: 12 }}>Confirm unlock · 1 credit</button>
+              )}
+              <button onClick={() => setConfirmRow(null)} style={{ background: "transparent", border: "none", color: "#94A3B8", width: "100%", marginTop: 8, cursor: "pointer" }}>Cancel</button>
+            </div>
           </div>
         )}
         </>
