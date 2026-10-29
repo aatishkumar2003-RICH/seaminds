@@ -281,12 +281,22 @@ export default function CVDatabaseTab() {
       merged.sort((a, b) => (b.uploaded_at || "").localeCompare(a.uploaded_at || ""));
       setRows(merged);
 
-      // Auto-Match source data: open vacancies
-      const { data: openVacancies } = await supabase
-        .from("job_vacancies")
-        .select("id, rank_required, vessel_type, company_name, active")
-        .eq("active", true);
-      setVacancies(openVacancies || []);
+      // Auto-Match source data: the same live pool crew see (company postings + external).
+      const pool: any[] = [];
+      const nowIso = new Date().toISOString();
+      for (let from = 0; from < 60000; from += 1000) {
+        const { data } = await supabase.from("job_postings").select("rank_required, vessel_type")
+          .eq("status", "active").range(from, from + 999);
+        pool.push(...(data || []));
+        if (!data || data.length < 1000) break;
+      }
+      for (let from = 0; from < 20000; from += 1000) {
+        const { data } = await supabase.from("external_vacancies").select("rank_required, vessel_type")
+          .gt("expires_at", nowIso).eq("is_scam_flagged", false).range(from, from + 999);
+        pool.push(...(data || []));
+        if (!data || data.length < 1000) break;
+      }
+      setVacancies(pool);
     } catch (e: any) {
       console.error("CV load error:", e);
       toast.error("Failed to load CVs");

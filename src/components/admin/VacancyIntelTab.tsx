@@ -107,12 +107,15 @@ export default function VacancyIntelTab() {
       const withAny = contacts.filter((c: any) => c.apply_url || c.contact_email || c.contact_whatsapp || c.company_website).length;
       const noContact = contacts.length - withAny;
 
+      // Same live pool as the public feed and market panel: company postings + external.
+      const { data: ov } = await (supabase.rpc as any)('admin_vacancy_overview');
+      const direct = Number(ov?.direct) || 0;
       setStats({
-        total: total.count || 0,
-        bySource: bySourceArr,
+        total: ov ? direct + (Number(ov.external) || 0) : (total.count || 0),
+        bySource: direct ? [{ source: '🏢 Company postings', count: direct }, ...bySourceArr] : bySourceArr,
         byRank: byRankArr,
         byVessel: byVesselArr,
-        todayCount: todayRes.count || 0,
+        todayCount: (todayRes.count || 0) + (Number(ov?.direct_today) || 0),
         avgQuality,
         scamFlagged: scamRes.count || 0,
         recentRuns: (runs.data || []) as any[],

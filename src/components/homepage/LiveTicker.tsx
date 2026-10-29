@@ -24,12 +24,18 @@ export default function LiveTicker() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [vacancies, j] = await Promise.all([
+        const [vacancies, j, d] = await Promise.all([
           supabase.rpc('get_market_indices'),
-          supabase.from('external_vacancies').select('rank_required,vessel_type,salary_max,joining_port').gt('expires_at', new Date().toISOString()).order('created_at',{ascending:false}).limit(10),
+          supabase.from('external_vacancies').select('rank_required,vessel_type,salary_max,joining_port').gt('expires_at', new Date().toISOString()).eq('is_scam_flagged', false).order('created_at',{ascending:false}).limit(6),
+          supabase.from('job_postings').select('rank_required,vessel_type,monthly_salary,joining_port').eq('status','active').order('created_at',{ascending:false}).limit(6),
         ]);
         setTotalVacancies(Number((vacancies.data as any)?.total) || 0);
-        setJobs((j.data||[]).map((v:any)=>({rank:v.rank_required||'Officer',vessel:v.vessel_type||'Various',salary:v.salary_max?`$${Number(v.salary_max).toLocaleString()}`:'Competitive',port:v.joining_port||'Worldwide'})));
+        const clean = (s: any, fb: string) => (!s || /^not specified/i.test(String(s)) ? fb : String(s));
+        const ext = (j.data||[]).map((v:any)=>({rank:clean(v.rank_required,'Officer'),vessel:clean(v.vessel_type,'Various'),salary:v.salary_max?`$${Number(v.salary_max).toLocaleString()}`:'Competitive',port:clean(v.joining_port,'Worldwide')}));
+        const dir = (d.data||[]).map((v:any)=>({rank:clean(v.rank_required,'Officer'),vessel:clean(v.vessel_type,'Various'),salary:clean(v.monthly_salary,'Competitive'),port:clean(v.joining_port,'Worldwide')}));
+        const mixed: typeof ext = [];
+        for (let i = 0; i < Math.max(ext.length, dir.length); i++) { if (dir[i]) mixed.push(dir[i]); if (ext[i]) mixed.push(ext[i]); }
+        setJobs(mixed);
       } catch(e) { console.error(e); }
     };
     load();
