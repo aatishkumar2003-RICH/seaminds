@@ -33,6 +33,8 @@ import RecruiterOutreachTab from "@/components/admin/RecruiterOutreachTab";
 import PasswordInput from "@/components/PasswordInput";
 import PlansCreditsTab from "@/components/admin/PlansCreditsTab";
 import WhatsAppLeadsStudio from "@/components/admin/WhatsAppLeadsStudio";
+import CrewManningMatrix from "@/components/admin/CrewManningMatrix";
+import { resolveNationality } from "@/lib/crewManning";
 
 // Admin = the SeaMinds owner account. The browser only checks that this exact
 // authenticated user is signed in (it just hides the UI). Real enforcement is
@@ -94,7 +96,8 @@ function AdminLogin({ onAuth }: { onAuth: () => void }) {
 }
 
 /* ─── Crew Search Tab ─── */
-function CrewSearchTab() {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function _LegacyCrewSearchTab() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -903,7 +906,7 @@ function ActivityTab() {
     const [c, l, s, a, ch] = await Promise.all([
       supabase
         .from("crew_profiles")
-        .select("id, first_name, last_name, role, nationality, vessel_type, ship_name, whatsapp_number, created_at")
+        .select("id, first_name, last_name, email, rank, role, nationality, vessel_type, ship_name, whatsapp_number, created_at" as any)
         .order("created_at", { ascending: false })
         .limit(500),
       supabase.from("email_leads").select("*").order("last_seen", { ascending: false }).limit(500),
@@ -975,8 +978,8 @@ function ActivityTab() {
               {crew.map((r) => (
                 <tr key={r.id} style={{ borderBottom: "1px solid #1B2838" }}>
                   <td className="p-2" style={td}>{r.first_name} {r.last_name}</td>
-                  <td className="p-2" style={td}>{r.role || "—"}</td>
-                  <td className="p-2" style={td}>{r.nationality || "—"}</td>
+                  <td className="p-2" style={td}>{r.rank || (r.role !== "Seafarer" && r.role) || "—"}</td>
+                  <td className="p-2" style={td}>{(() => { const n = resolveNationality(r); return n.source === "none" ? "—" : `${n.flag} ${n.name}`; })()}</td>
                   <td className="p-2" style={td}>{r.vessel_type || "—"}</td>
                   <td className="p-2" style={td}>{r.ship_name || "—"}</td>
                   <td className="p-2" style={td}>{r.whatsapp_number || "—"}</td>
@@ -1055,7 +1058,7 @@ function ActivityTab() {
           <table className="w-full text-sm">
             <thead>
               <tr style={{ borderBottom: "1px solid #D4AF3744" }}>
-                {["Email", "Name", "Role", "Source", "Visits", "Converted", "Last Seen"].map((h) => (
+                {["Email", "Name", "Sign-in method", "Source", "Visits", "Converted", "Last Seen"].map((h) => (
                   <th key={h} className="text-left p-2" style={th}>{h}</th>
                 ))}
               </tr>
@@ -1507,7 +1510,7 @@ export default function AdminDashboard() {
       { id: "applications" as const, label: "Applications" },
     ] },
     { name: "⚓ Crew", tabs: [
-      { id: "crew" as const, label: "Crew Search" },
+      { id: "crew" as const, label: "Crew Manning Matrix" },
       { id: "cv_database" as const, label: "CV Database" },
       { id: "mobile_verify" as const, label: "Mobile Verification" },
       { id: "assessment_ops" as const, label: "Assessment Ops" },
@@ -1618,7 +1621,7 @@ export default function AdminDashboard() {
 
       {tab === "content_studio" && <ContentStudioTab />}
       {tab === "company_approval" && <CompanyApprovalTab />}
-      {tab === "crew" && <CrewSearchTab />}
+      {tab === "crew" && <CrewManningMatrix />}
       {tab === "activity" && <ActivityTab />}
       {tab === "activity_full" && <ActivityFullTab />}
       {tab === "cv_database" && <CVDatabaseTab />}
