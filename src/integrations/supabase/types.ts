@@ -6742,6 +6742,7 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_vacancy_overview: { Args: never; Returns: Json }
       ai_spend_sentinel: { Args: never; Returns: string }
       answer_scoring_complete: {
         Args: {
