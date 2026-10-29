@@ -17,3 +17,4 @@
 
 - Promotion assessments: manager requests via RPC `manager_invite_promotion` (own roster only) into `promotion_invites`; crew finishes `/maritime-interview?promo=` and `crew_complete_promotion` links the session; managers read only via `manager_promotion_board`. Why: result goes only to the inviting company, no client-forged links.
 - Admin Crew Manning Matrix (`src/components/admin/CrewManningMatrix.tsx`) derives nationality/status via `src/lib/crewManning.ts` (declared → WhatsApp code → email domain) at read time; no stored guesses. Why: never overwrite what crew declared.
+- Manager Crew Search (`/manager-search`): free browse + Quick CV; contact/full CV only after `reveal_contact` (1 credit, once per manager per crew via `contact_reveals`); `manager-search` returns `is_unlocked` + real contacts only for revealed crew and action `unlocked` lists the manager's roster. Why: never charge twice, no contact leaks.
