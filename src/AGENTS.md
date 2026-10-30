@@ -19,3 +19,5 @@
 - Admin Crew Manning Matrix (`src/components/admin/CrewManningMatrix.tsx`) derives nationality/status via `src/lib/crewManning.ts` (declared → WhatsApp code → email domain) at read time; no stored guesses. Why: never overwrite what crew declared.
 - Manager Crew Search (`/manager-search`): free browse + Quick CV; contact/full CV only after `reveal_contact` (1 credit, once per manager per crew via `contact_reveals`); `manager-search` returns `is_unlocked` + real contacts only for revealed crew and action `unlocked` lists the manager's roster. Why: never charge twice, no contact leaks.
 - Crew Search and Ship Marketplace are owner-only private previews (`OwnerPreviewGate` + owner check in `manager-search`) until the owner opens them. Why: monetisation launch timing.
+
+- Maritime Brain is one component (`MaritimeMasterBrain`) used in Training and the main-menu Brain screen; photos go to `diagnose-equipment`, documents are read to text in the browser (`src/lib/brainAttachments.ts`) and sent to `bridge-chat`, never stored. Why: one AI hub, no duplicate screens, no file retention.
