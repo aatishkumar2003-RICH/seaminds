@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import MaritimeEnglishLab from "@/components/training/MaritimeEnglishLab";
+import MaritimeMasterBrain from "@/components/training/MaritimeMasterBrain";
 import { Helmet } from "react-helmet-async";
 import { ChevronLeft, ExternalLink, Loader2, CheckCircle2, GraduationCap, Clock, Home, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
@@ -248,7 +249,7 @@ const MyTraining = () => {
               })}
             </div>
           )}
-          {catalog.length > 0 && (
+          {tab === "matrix" && catalog.length > 0 && (
             <div className="space-y-3">
               <h2 className="font-bold text-primary">Browse all training (optional)</h2>
               <div className="grid grid-cols-3 gap-1 rounded-xl border border-border bg-card p-1" role="tablist">
@@ -293,7 +294,7 @@ const CrewTraining = () => {
 
   return (
     <Shell
-      onBack={() => (token ? navigate("/training", { replace: true }) : navigate("/app", { replace: true }))}
+      onBack={() => (token ? navigate("/training", { replace: true }) : window.history.state?.idx > 0 ? navigate(-1) : navigate("/app", { replace: true }))}
       onQuit={token ? () => {
         if (window.confirm("Quit this module? Your unsaved answers will be cleared and you can restart it any time.")) navigate("/training", { replace: true });
       } : undefined}
