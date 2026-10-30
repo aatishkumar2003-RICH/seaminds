@@ -339,6 +339,13 @@ const FindWork = ({ profileId, firstName, lastName, role, nationality, yearsAtSe
     <div className="space-y-5">
       <ApplyGateSheet open={gateOpen} onClose={() => setGateOpen(false)} next="/app?tab=jobs" />
 
+      <div className="rounded-xl border border-primary/30 bg-primary/5 px-3 py-2 text-[11.5px] text-muted-foreground">
+        <span className="font-semibold text-foreground">🛡️ MLC 2006 protected · Zero recruitment fees.</span>{" "}
+        Applying for jobs on SeaMinds is 100% free. If any recruiter asks you for money, do not pay — report them to{" "}
+        <a href="mailto:support@seaminds.life" className="underline">support@seaminds.life</a>.{" "}
+        <a href="/terms" className="underline">Our policy</a>
+      </div>
+
       {!visible && (
         <div className="rounded-xl border border-primary/40 bg-primary/10 p-4 space-y-2">
           <p className="text-sm font-semibold text-foreground">Companies cannot find you yet</p>
