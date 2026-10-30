@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import MaritimeEnglishLab from "@/components/training/MaritimeEnglishLab";
+import MaritimeMasterBrain from "@/components/training/MaritimeMasterBrain";
 import { Helmet } from "react-helmet-async";
 import { ChevronLeft, ExternalLink, Loader2, CheckCircle2, GraduationCap, Clock, Home, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
@@ -138,7 +139,8 @@ const Module = ({ token }: { token: string }) => {
 const MyTraining = () => {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const english = params.get("tab") === "english";
+  const tab = (params.get("tab") || "required") as "required" | "matrix" | "records" | "english" | "brain";
+  const english = tab === "english";
   const [items, setItems] = useState<LedgerItem[] | null>(null);
   const [recs, setRecs] = useState<Recommendation[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
@@ -161,48 +163,62 @@ const MyTraining = () => {
     navigate(`/training/${d.assigned[0].token}`);
   };
   const openItem = (c: CatalogItem) => (c.token ? navigate(`/training/${c.token}`) : start(c.slug));
+  const requiredCount = (items || []).filter((i) => i.company?.trim() && i.status !== "completed" && i.token).length;
+  const TABS = [
+    ["required", "⭐ Required", requiredCount],
+    ["matrix", "📋 Matrix", 0],
+    ["records", "📊 Records", 0],
+    ["english", "🎙️ English", 0],
+    ["brain", "🧠 Brain", 0],
+  ] as const;
 
   return (
-    <section className="space-y-5">
+    <section className="space-y-4">
       <Helmet><title>My Training | SeaMinds</title></Helmet>
-      <h1 className="text-2xl font-bold">My training</h1>
-      <div role="tablist" className="flex flex-wrap gap-2">
-        <Button size="sm" role="tab" variant={english ? "outline" : "default"} aria-selected={!english} onClick={() => setParams({})}>📋 Training Matrix</Button>
-        <Button size="sm" role="tab" variant={english ? "default" : "outline"} aria-selected={english} onClick={() => setParams({ tab: "english" })}>🎙️ English Classes</Button>
-        <Button size="sm" variant="outline" role="tab" aria-selected="false" onClick={() => navigate("/app?tab=academy")}>🔬 Ask AI Technical Assistant</Button>
-        <Button size="sm" variant="outline" onClick={() => navigate("/maritime-interview")}>AI interview practice</Button>
+      <div className="flex items-center justify-between gap-2">
+        <h1 className="text-xl font-bold">My training</h1>
+        <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => navigate("/maritime-interview")}>AI interview practice</Button>
       </div>
-      {english ? <MaritimeEnglishLab /> : items === null ? <p className="text-muted-foreground">Loading…</p> : (
+      <div role="tablist" className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 no-scrollbar">
+        {TABS.map(([k, label, n]) => (
+          <button key={k} role="tab" aria-selected={tab === k} onClick={() => setParams(k === "required" ? {} : { tab: k }, { replace: true })}
+            className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-bold ${tab === k ? "border-primary bg-primary text-primary-foreground" : "border-primary/40 text-primary"}`}>
+            {label}{n > 0 && <span className={`ml-1.5 rounded-full px-1.5 text-[10px] ${tab === k ? "bg-background text-primary" : "bg-primary text-primary-foreground"}`}>{n}</span>}
+          </button>
+        ))}
+      </div>
+      {tab === "brain" ? <MaritimeMasterBrain /> : english ? <MaritimeEnglishLab /> : items === null ? <p className="text-muted-foreground">Loading…</p> : (
         <>
-          {(() => {
+          {tab === "required" && (() => {
             const required = items.filter((i) => i.company?.trim() && i.status !== "completed" && i.token);
             return (
               <div className="space-y-2">
-                <h2 className="font-bold text-primary">⭐ Required & recommended for you</h2>
                 {required.length === 0 && recs.length === 0 && (
-                  <p className="text-sm text-muted-foreground">Nothing required right now. Complete your profile or an assessment for personal suggestions — or pick any module from the matrix below.</p>
+                  <p className="text-sm text-muted-foreground">Nothing required right now. Pick any module from the Matrix tab.</p>
                 )}
                 {required.map((i) => (
-                  <div key={`req-${i.slug}`} className="rounded-xl border-2 border-primary bg-card p-4 space-y-2">
-                    <span className="inline-block rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground">REQUIRED · Assigned by {i.company}</span>
-                    <p className="font-semibold">{i.title}</p>
-                    <Button className="w-full rounded-xl font-bold" onClick={() => navigate(`/training/${i.token}`)}>{i.status === "opened" ? "Continue" : "Start now"}</Button>
+                  <div key={`req-${i.slug}`} className="flex items-center gap-3 rounded-xl border border-primary bg-card p-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[10px] font-bold uppercase text-primary">Required · {i.company}</p>
+                      <p className="text-sm font-semibold leading-snug">{i.title}</p>
+                    </div>
+                    <Button size="sm" className="shrink-0 rounded-lg font-bold" onClick={() => navigate(`/training/${i.token}`)}>{i.status === "opened" ? "Continue" : "Start"}</Button>
                   </div>
                 ))}
                 {recs.map((r) => (
-                  <div key={`rec-${r.slug}`} className="rounded-xl border border-primary/60 bg-card p-4 space-y-2">
-                    <span className="inline-block rounded-full border border-primary px-2 py-0.5 text-[10px] font-bold text-primary">RECOMMENDED · From your profile & assessment</span>
-                    <p className="font-semibold">{r.title}</p>
-                    <p className="text-xs text-muted-foreground">{r.summary}</p>
-                    {r.reasons.length > 0 && <p className="text-xs text-primary">{r.reasons.join(" · ")}</p>}
-                    <Button className="w-full rounded-xl font-bold" disabled={busy === r.slug} onClick={() => start(r.slug)}>{busy === r.slug ? "Starting…" : "Start now"}</Button>
+                  <div key={`rec-${r.slug}`} className="flex items-center gap-3 rounded-xl border border-primary/40 bg-card p-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] font-bold uppercase text-muted-foreground">Recommended for you</p>
+                      <p className="text-sm font-semibold leading-snug">{r.title}</p>
+                    </div>
+                    <Button size="sm" variant="outline" className="shrink-0 rounded-lg border-primary text-primary" disabled={busy === r.slug} onClick={() => start(r.slug)}>{busy === r.slug ? "…" : "Start"}</Button>
                   </div>
                 ))}
               </div>
             );
           })()}
-          {items.length > 0 && <h2 className="font-bold text-primary pt-2">My progress</h2>}
-          {items.length > 0 && (
+          {tab === "records" && items.length === 0 && <p className="text-sm text-muted-foreground">No training records yet.</p>}
+          {tab === "records" && items.length > 0 && (
             <div className="space-y-4">
               {Object.entries(items.reduce<Record<string, LedgerItem[]>>((g, i) => {
                 const k = i.company?.trim() || "";
@@ -233,7 +249,7 @@ const MyTraining = () => {
               })}
             </div>
           )}
-          {catalog.length > 0 && (
+          {tab === "matrix" && catalog.length > 0 && (
             <div className="space-y-3">
               <h2 className="font-bold text-primary">Browse all training (optional)</h2>
               <div className="grid grid-cols-3 gap-1 rounded-xl border border-border bg-card p-1" role="tablist">
@@ -278,7 +294,7 @@ const CrewTraining = () => {
 
   return (
     <Shell
-      onBack={() => (token ? navigate("/training", { replace: true }) : navigate("/app", { replace: true }))}
+      onBack={() => (token ? navigate("/training", { replace: true }) : window.history.state?.idx > 0 ? navigate(-1) : navigate("/app", { replace: true }))}
       onQuit={token ? () => {
         if (window.confirm("Quit this module? Your unsaved answers will be cleared and you can restart it any time.")) navigate("/training", { replace: true });
       } : undefined}
