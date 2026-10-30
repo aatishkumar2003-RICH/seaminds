@@ -32,7 +32,7 @@ export const NAV_ITEMS: NavItem[] = [
   { icon: "🧾", label: "Contracts & Payslips", screen: "home", href: "/my-payslips", section: "career" },
   { icon: "🏆", label: "My Score", screen: "smc", section: "career" },
   { icon: "🎓", label: "Training & English", screen: "home", href: "/training", section: "career" },
-  { icon: "🔬", label: "Maritime Research & PSC", screen: "academy", section: "career" },
+  { icon: "🧠", label: "SeaMinds Brain & Diagnosis", screen: "academy", section: "career" },
   { icon: "🚢", label: "Ship Marketplace", screen: "home", href: "/marketplace", section: "market" },
   { icon: "📰", label: "News", screen: "news", section: "market" },
   { icon: "🛟", label: "Help & Support", screen: "support", section: "help" },

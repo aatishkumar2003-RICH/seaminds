@@ -91,7 +91,14 @@ Deno.serve(async (req) => {
   } catch (_e) { /* never block on limit lookup failure */ }
 
   try {
-    const { image_base64, mime_type } = await req.json();
+    const { image_base64, mime_type, question, language } = await req.json();
+    if (typeof image_base64 !== "string" || !image_base64 || image_base64.length > 12_000_000) {
+      return new Response(JSON.stringify({ error: "Please attach a valid photo." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    const LANGS = ["Bahasa Indonesia", "Tagalog", "Tiếng Việt", "Hindi", "Russian", "Español", "Ukrainian", "Myanmar", "Chinese"];
+    const langRule = typeof language === "string" && LANGS.includes(language)
+      ? `\n\nLANGUAGE: Reply in ${language}. Keep equipment names and IMO/SOLAS/MARPOL terms in English in brackets.` : "";
+    const userQ = typeof question === "string" && question.trim() ? `\n\nCrew question: ${question.trim().slice(0, 1000)}` : "";
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -105,11 +112,11 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-2.5-pro",
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: SYSTEM_PROMPT + langRule },
           {
             role: "user",
             content: [
-              { type: "text", text: "Analyze this ship equipment image. Provide a full technical diagnosis." },
+              { type: "text", text: "Analyze this ship equipment image. Provide a full technical diagnosis." + userQ },
               {
                 type: "image_url",
                 image_url: {
