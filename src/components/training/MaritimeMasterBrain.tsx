@@ -21,28 +21,65 @@ const MaritimeMasterBrain = () => {
   const [speakingIdx, setSpeakingIdx] = useState<number | null>(null);
   const [autoSpeak, setAutoSpeak] = useState(() => localStorage.getItem("brain_autospeak") !== "0");
   useEffect(() => () => { if ("speechSynthesis" in window) window.speechSynthesis.cancel(); }, []);
-  const voice = useInterviewVoice(LOCALES[lang] || "en-GB", (t) => setInput((p) => `${p} ${t}`.trim()));
+  const inputRef = useRef("");
+  inputRef.current = input;
+  const askRef = useRef<(t: string) => void>(() => {});
+  const voiceTurn = useRef(false);
+  const voice = useInterviewVoice(
+    LOCALES[lang] || "en-GB",
+    (t) => setInput((p) => { const n = `${p} ${t}`.trim(); inputRef.current = n; return n; }),
+    {
+      autoStopMs: 1800,
+      onEnd: () => {
+        if (!voiceTurn.current) return;
+        voiceTurn.current = false;
+        // let the final transcript state settle, then send automatically
+        setTimeout(() => { const q = inputRef.current.trim(); if (q) askRef.current(q); else toast.info("I didn't catch that — tap 🎤 and try again."); }, 120);
+      },
+    },
+  );
   const { listening, interim } = voice;
+  // iOS only allows speech audio that was unlocked by a direct tap.
+  const unlockAudio = () => {
+    if (!("speechSynthesis" in window)) return;
+    try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; window.speechSynthesis.speak(u); } catch { /* noop */ }
+  };
   const toggleMic = () => {
     if (!voice.supported) { toast.info("Voice input isn't supported in this browser — please type."); return; }
-    if (listening) voice.stop(); else { window.speechSynthesis?.cancel(); setSpeakingIdx(null); voice.start(); }
+    if (listening) { voice.stop(); return; }
+    window.speechSynthesis?.cancel(); setSpeakingIdx(null);
+    unlockAudio();
+    voiceTurn.current = true;
+    voice.start();
   };
 
-  const speak = (md: string, idx: number) => {
+  const speak = (md: string, idx: number, force = false) => {
     if (!("speechSynthesis" in window)) { toast.info("Audio is not available in this browser."); return; }
     const synth = window.speechSynthesis;
     synth.cancel();
-    if (speakingIdx === idx) { setSpeakingIdx(null); return; }
-    const text = md.replace(/```[\s\S]*?```/g, " ").replace(/[#*_>`|~-]+/g, " ").replace(/\[([^\]]+)\]\([^)]*\)/g, "$1").replace(/\s+/g, " ").trim();
+    if (!force && speakingIdx === idx) { setSpeakingIdx(null); return; }
+    const text = md.replace(/```[\s\S]*?```/g, " ").replace(/[#*_>`|~]+/g, " ").replace(/\[([^\]]+)\]\([^)]*\)/g, "$1").replace(/\s+/g, " ").trim();
+    if (!text) return;
     const locale = LOCALES[lang] || "en-GB";
     const voices = synth.getVoices();
-    const voice = voices.find((v) => v.lang.toLowerCase() === locale.toLowerCase()) || voices.find((v) => v.lang.split("-")[0] === locale.split("-")[0]);
-    if (voices.length && !voice && locale !== "en-GB") toast.info(`No ${lang} voice on this phone — reading in default voice.`);
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = voice?.lang || locale; if (voice) u.voice = voice; u.rate = 0.95;
-    u.onend = u.onerror = () => setSpeakingIdx(null);
-    setSpeakingIdx(idx); synth.speak(u);
+    const v = voices.find((x) => x.lang.toLowerCase() === locale.toLowerCase()) || voices.find((x) => x.lang.split("-")[0] === locale.split("-")[0]);
+    if (voices.length && !v && locale !== "en-GB") toast.info(`No ${lang} voice on this phone — reading in default voice.`);
+    // iOS cuts off long utterances — read sentence-sized chunks in a queue.
+    const chunks = (text.match(/[^.!?。！？]+[.!?。！？]*/g) || [text]).reduce<string[]>((a, s) => {
+      const last = a[a.length - 1];
+      if (last && (last + s).length < 220) a[a.length - 1] = last + s; else a.push(s);
+      return a;
+    }, []).map((s) => s.trim()).filter(Boolean);
+    setSpeakingIdx(idx);
+    chunks.forEach((c, n) => {
+      const u = new SpeechSynthesisUtterance(c);
+      u.lang = v?.lang || locale; if (v) u.voice = v; u.rate = 0.95;
+      if (n === chunks.length - 1) u.onend = () => setSpeakingIdx((cur) => (cur === idx ? null : cur));
+      u.onerror = () => setSpeakingIdx((cur) => (cur === idx ? null : cur));
+      synth.speak(u);
+    });
   };
+  const stopAudio = () => { window.speechSynthesis?.cancel(); setSpeakingIdx(null); };
 
 
   const ask = async (text: string) => {
