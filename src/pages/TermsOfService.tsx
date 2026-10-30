@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 const sections = [
   {
     title: "1. Acceptance of Terms",
-    body: "SeaMinds (seaminds.life) is owned and operated by PT INDOGLOBAL SERVICE SOLUTIONS (NIB: 0105250010966), Indonesia. By accessing or using the SeaMinds platform, you agree to be bound by these Terms of Service. If you do not agree with any part of these terms, you must discontinue use of the platform immediately. These terms apply to all users including seafarers, maritime professionals, and company representatives.",
+    body: "SeaMinds (seaminds.life) is owned and operated by PT INDOGLOBAL SERVICE SOLUTIONS (NIB: 0105250010966). By accessing or using the SeaMinds platform, you agree to be bound by these Terms of Service. If you do not agree with any part of these terms, you must discontinue use of the platform immediately. These terms apply to all users including seafarers, maritime professionals, and company representatives.",
   },
   {
     title: "2. Use of Service",
@@ -82,7 +82,7 @@ const TermsOfService = () => {
           Terms of Service
         </h1>
         <p className="text-sm mb-8" style={{ color: "#8899AA" }}>
-          Last updated: March 2026
+          Last updated: October 2026
         </p>
         <div
           className="h-px w-full mb-8"
