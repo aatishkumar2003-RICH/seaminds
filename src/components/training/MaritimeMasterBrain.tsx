@@ -110,9 +110,10 @@ const MaritimeMasterBrain = () => {
       }
     } finally {
       setBusy(false); setTimeout(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
-      if (autoSpeak && acc) speak(acc, next.length);
+      if (autoSpeak && acc) speak(acc, next.length, true);
     }
   };
+  askRef.current = (t: string) => { void ask(t); };
 
   return (
     <section className="space-y-3">
@@ -149,13 +150,26 @@ const MaritimeMasterBrain = () => {
         {busy && msgs[msgs.length - 1]?.role === "user" && <p className="flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="animate-spin" size={14} /> Thinking…</p>}
         <div ref={endRef} />
       </div>
-      <form className="sticky bottom-2 flex gap-2 rounded-xl border border-primary/40 bg-card p-2" onSubmit={(e) => { e.preventDefault(); void ask(input); }}>
-        <input value={listening ? `${input} ${interim}`.trim() : input} onChange={(e) => setInput(e.target.value)} placeholder={listening ? "Listening… speak now" : "Ask or tap 🎤 to speak…"} className="flex-1 bg-transparent px-2 text-sm outline-none" />
-        <Button type="button" size="sm" variant={listening ? "default" : "outline"} onClick={toggleMic} aria-label={listening ? "Stop microphone" : "Speak your question"}>
-          {listening ? <MicOff size={16} /> : <Mic size={16} />}
-        </Button>
-        <Button type="submit" size="sm" disabled={busy || !input.trim()} aria-label="Send"><Send size={16} /></Button>
-      </form>
+      <div className="sticky bottom-2 space-y-1.5">
+        {(listening || busy || speakingIdx !== null) && (
+          <div className="flex items-center justify-between gap-2 rounded-lg border border-primary/40 bg-card px-3 py-1.5 text-xs" aria-live="polite">
+            <span className="flex items-center gap-2 text-primary">
+              {listening ? <><span className="h-2 w-2 animate-pulse rounded-full bg-destructive" /> Listening… pause when done and I'll send it</>
+                : busy ? <><Loader2 className="animate-spin" size={12} /> Thinking…</>
+                : <><Volume2 size={12} /> Speaking answer…</>}
+            </span>
+            {listening ? <button type="button" onClick={() => voice.stop()} className="font-semibold text-primary underline">Done</button>
+              : speakingIdx !== null ? <button type="button" onClick={stopAudio} className="font-semibold text-primary underline">Stop</button> : null}
+          </div>
+        )}
+        <form className="flex gap-2 rounded-xl border border-primary/40 bg-card p-2" onSubmit={(e) => { e.preventDefault(); if (listening) { voiceTurn.current = false; voice.stop(); } setTimeout(() => void ask(inputRef.current), listening ? 150 : 0); }}>
+          <input value={listening ? `${input} ${interim}`.trim() : input} onChange={(e) => setInput(e.target.value)} placeholder={listening ? "Listening… speak now" : "Ask or tap 🎤 to speak…"} className="flex-1 bg-transparent px-2 text-sm outline-none" />
+          <Button type="button" size="sm" variant={listening ? "default" : "outline"} onClick={toggleMic} aria-label={listening ? "Stop microphone" : "Speak your question"}>
+            {listening ? <MicOff size={16} /> : <Mic size={16} />}
+          </Button>
+          <Button type="submit" size="sm" disabled={busy || !(input.trim() || interim.trim())} aria-label="Send"><Send size={16} /></Button>
+        </form>
+      </div>
       <p className="text-[10px] text-muted-foreground">Guidance only — always follow your company SMS, flag/class rules and maker manuals.</p>
     </section>
   );
