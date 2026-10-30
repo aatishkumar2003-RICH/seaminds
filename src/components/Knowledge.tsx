@@ -1,24 +1,24 @@
 import { useState } from "react";
-import Bridge from "@/components/Bridge";
+import MaritimeMasterBrain from "@/components/training/MaritimeMasterBrain";
 import Academy from "@/components/Academy";
 
 interface Props {
   profileId: string;
 }
 
-const Knowledge = ({ profileId }: Props) => {
+const Knowledge = (_props: Props) => {
   const [mode, setMode] = useState<"ask" | "guides">("ask");
 
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 pt-3 pb-2 border-b border-border">
-        <h1 className="text-lg font-semibold text-foreground">Learn</h1>
+        <h1 className="text-lg font-semibold text-foreground">🧠 SeaMinds Maritime Brain</h1>
         <p className="text-xs text-muted-foreground mt-0.5">
-          Ask about any equipment or rule — or browse the guides
+          Ask, speak, diagnose a photo or check a document — or browse the guides
         </p>
         <div className="flex gap-2 mt-3">
           {([
-            { id: "ask", label: "🔧 Ask a Question" },
+            { id: "ask", label: "🧠 Ask & Diagnose" },
             { id: "guides", label: "📚 Guides" },
           ] as const).map((m) => (
             <button
@@ -37,8 +37,8 @@ const Knowledge = ({ profileId }: Props) => {
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-hidden">
-        {mode === "ask" ? <Bridge profileId={profileId} /> : <Academy />}
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        {mode === "ask" ? <div className="p-3"><MaritimeMasterBrain /></div> : <Academy />}
       </div>
     </div>
   );

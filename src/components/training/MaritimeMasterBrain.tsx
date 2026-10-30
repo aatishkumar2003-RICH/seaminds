@@ -1,13 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { Loader2, Send, Brain, Volume2, VolumeX, Square, Mic, MicOff } from "lucide-react";
+import { Loader2, Send, Brain, Volume2, VolumeX, Square, Mic, MicOff, Paperclip, X, FileText } from "lucide-react";
+import { ACCEPT, imageToJpeg, isImage, readDocumentText } from "@/lib/brainAttachments";
 import { useInterviewVoice } from "@/hooks/useInterviewVoice";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { authedFunctionHeaders, handleAuthError } from "@/lib/authFetch";
 
-type Msg = { role: "user" | "assistant"; content: string };
+type Msg = { role: "user" | "assistant"; content: string; label?: string; image?: string };
+type Attach = { name: string; image?: string; text?: string; truncated?: boolean };
 const URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bridge-chat`;
+const DIAGNOSE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/diagnose-equipment`;
 const LANGS = ["English", "Bahasa Indonesia", "Tagalog", "Tiếng Việt", "Hindi", "Russian", "Español", "Ukrainian", "Myanmar", "Chinese"];
 const LOCALES: Record<string, string> = { English: "en-GB", "Bahasa Indonesia": "id-ID", Tagalog: "fil-PH", "Tiếng Việt": "vi-VN", Hindi: "hi-IN", Russian: "ru-RU", "Español": "es-ES", Ukrainian: "uk-UA", Myanmar: "my-MM", Chinese: "zh-CN" };
 const QUICK = ["SIRE 2.0 inspection questions for my rank", "MARPOL Annex VI & CII basics", "Scavenge fire — immediate actions", "COLREGs Rule 19 in restricted visibility", "Enclosed space entry checklist", "Top PSC deficiencies (Tokyo / Paris MoU)"];
@@ -17,6 +20,20 @@ const MaritimeMasterBrain = () => {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [attach, setAttach] = useState<Attach | null>(null);
+  const [reading, setReading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const onFile = async (f?: File) => {
+    if (fileRef.current) fileRef.current.value = "";
+    if (!f) return;
+    if (f.size > 15 * 1024 * 1024) { toast.error("File is too large (max 15 MB)."); return; }
+    setReading(true);
+    try {
+      if (isImage(f)) setAttach({ name: f.name, image: await imageToJpeg(f) });
+      else { const d = await readDocumentText(f); setAttach({ name: f.name, ...d }); if (d.truncated) toast.info("Long file — the Brain will read the first part."); }
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Could not read this file."); }
+    finally { setReading(false); }
+  };
   const endRef = useRef<HTMLDivElement>(null);
   const [speakingIdx, setSpeakingIdx] = useState<number | null>(null);
   const [autoSpeak, setAutoSpeak] = useState(() => localStorage.getItem("brain_autospeak") !== "0");
@@ -110,19 +127,29 @@ const MaritimeMasterBrain = () => {
 
 
   const ask = async (text: string) => {
-    const q = text.trim();
-    if (!q || busy) return;
-    const next = [...msgs, { role: "user" as const, content: q }];
-    setMsgs(next); setInput(""); setBusy(true);
+    const typed = text.trim();
+    const a = attach;
+    if ((!typed && !a) || busy) return;
+    const q = typed || (a?.image ? "Diagnose this equipment photo." : "Review this document: summarise it, list any problems, missing items or non-compliance, and the actions I should take.");
+    const userMsg: Msg = a?.text
+      ? { role: "user", label: `📎 ${a.name}\n${q}`, content: `${q}\n\n--- Attached file: ${a.name}${a.truncated ? " (first part only)" : ""} ---\n${a.text}\n--- End of file ---` }
+      : { role: "user", content: q, image: a?.image };
+    const next = [...msgs, userMsg];
+    setMsgs(next); setInput(""); setAttach(null); setBusy(true);
     let acc = "";
     const push = (c: string) => setMsgs([...next, { role: "assistant", content: c }]);
     try {
-      const resp = await fetch(URL, { method: "POST", headers: await authedFunctionHeaders(), body: JSON.stringify({ messages: next.slice(-12), language: lang }) });
+      // Photos go to the vision diagnosis engine; text and documents go to the Brain chat.
+      const history = next.slice(-12).map(({ role, content }) => ({ role, content }));
+      const resp = a?.image
+        ? await fetch(DIAGNOSE_URL, { method: "POST", headers: await authedFunctionHeaders(), body: JSON.stringify({ image_base64: a.image.split(",")[1], mime_type: "image/jpeg", question: typed, language: lang }) })
+        : await fetch(URL, { method: "POST", headers: await authedFunctionHeaders(), body: JSON.stringify({ messages: history, language: lang }) });
       if (!resp.ok || !resp.body) {
         if (handleAuthError(resp.status)) return push("Please sign in again.");
         const b = await resp.json().catch(() => ({}));
         return push(b.message || b.error || "The Brain could not answer right now. Try again.");
       }
+      if (a?.image) next[next.length - 1] = { ...userMsg, content: `${q} [photo attached]` };
       const reader = resp.body.getReader(); const dec = new TextDecoder(); let buf = "";
       for (;;) {
         const { done, value } = await reader.read(); if (done) break;
@@ -146,7 +173,7 @@ const MaritimeMasterBrain = () => {
     <section className="space-y-3">
       <div className="space-y-2 rounded-xl border border-primary/40 bg-card p-3">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0"><Brain className="text-primary shrink-0" size={20} /><div className="min-w-0"><p className="text-sm font-bold leading-tight">Maritime Master Brain</p><p className="text-[11px] text-muted-foreground leading-tight">Ask any technical, rules or career question</p></div></div>
+          <div className="flex items-center gap-2 min-w-0"><Brain className="text-primary shrink-0" size={20} /><div className="min-w-0"><p className="text-sm font-bold leading-tight">Maritime Master Brain</p><p className="text-[11px] text-muted-foreground leading-tight">Ask, speak, or attach a photo, PDF, Word or Excel file</p></div></div>
           <select aria-label="Answer language" value={lang} onChange={(e) => { setLang(e.target.value); localStorage.setItem("brain_lang", e.target.value); }}
             className="rounded-lg border border-primary/40 bg-background px-2 py-1.5 text-xs text-foreground">
             {LANGS.map((l) => <option key={l} value={l}>{l}</option>)}
@@ -163,7 +190,10 @@ const MaritimeMasterBrain = () => {
       <div className="space-y-2">
         {msgs.map((m, i) => (
           <div key={i} className={`rounded-xl p-3 text-sm ${m.role === "user" ? "ml-8 bg-primary/15" : "mr-2 border border-border bg-card prose prose-sm prose-invert max-w-none"}`}>
-            {m.role === "user" ? m.content : <>
+            {m.role === "user" ? <>
+              {m.image && <img src={m.image} alt="Attached equipment photo" className="mb-2 max-h-48 rounded-lg" />}
+              <span className="whitespace-pre-line">{m.label ?? m.content}</span>
+            </> : <>
               <ReactMarkdown>{m.content}</ReactMarkdown>
               {!(busy && i === msgs.length - 1) && (
                 <button type="button" onClick={() => speak(m.content, i)} aria-label={speakingIdx === i ? "Stop audio" : "Listen to answer"}
@@ -189,12 +219,24 @@ const MaritimeMasterBrain = () => {
               : speakingIdx !== null ? <button type="button" onClick={stopAudio} className="font-semibold text-primary underline">Stop</button> : null}
           </div>
         )}
+        {(attach || reading) && (
+          <div className="flex items-center gap-2 rounded-lg border border-primary/40 bg-card px-2 py-1.5 text-xs">
+            {reading ? <><Loader2 className="animate-spin text-primary" size={14} /> Reading file…</> : attach && <>
+              {attach.image ? <img src={attach.image} alt="" className="h-8 w-8 rounded object-cover" /> : <FileText size={16} className="text-primary" />}
+              <span className="min-w-0 flex-1 truncate">{attach.name}</span>
+              <span className="text-muted-foreground">{attach.image ? "Photo diagnosis" : "Document"}</span>
+              <button type="button" onClick={() => setAttach(null)} aria-label="Remove attachment"><X size={14} /></button>
+            </>}
+          </div>
+        )}
+        <input ref={fileRef} type="file" accept={ACCEPT} className="hidden" onChange={(e) => void onFile(e.target.files?.[0])} />
         <form className="flex gap-2 rounded-xl border border-primary/40 bg-card p-2" onSubmit={(e) => { e.preventDefault(); if (listening) { voiceTurn.current = false; voice.stop(); } setTimeout(() => void ask(inputRef.current), listening ? 150 : 0); }}>
-          <input value={listening ? `${input} ${interim}`.trim() : input} onChange={(e) => setInput(e.target.value)} placeholder={listening ? "Listening… speak now" : "Ask or tap 🎤 to speak…"} className="flex-1 bg-transparent px-2 text-sm outline-none" />
+          <Button type="button" size="sm" variant="outline" onClick={() => fileRef.current?.click()} disabled={busy || reading} aria-label="Attach photo or document"><Paperclip size={16} /></Button>
+          <input value={listening ? `${input} ${interim}`.trim() : input} onChange={(e) => setInput(e.target.value)} placeholder={listening ? "Listening… speak now" : "Ask or tap 🎤 to speak…"} className="min-w-0 flex-1 bg-transparent px-1 text-sm outline-none" />
           <Button type="button" size="sm" variant={listening ? "default" : "outline"} onClick={toggleMic} aria-label={listening ? "Stop microphone" : "Speak your question"}>
             {listening ? <MicOff size={16} /> : <Mic size={16} />}
           </Button>
-          <Button type="submit" size="sm" disabled={busy || !(input.trim() || interim.trim())} aria-label="Send"><Send size={16} /></Button>
+          <Button type="submit" size="sm" disabled={busy || reading || !(input.trim() || interim.trim() || attach)} aria-label="Send"><Send size={16} /></Button>
         </form>
       </div>
       <p className="text-[10px] text-muted-foreground">Guidance only — always follow your company SMS, flag/class rules and maker manuals.</p>
