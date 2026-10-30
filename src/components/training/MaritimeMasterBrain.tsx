@@ -1,12 +1,14 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { Loader2, Send, Brain } from "lucide-react";
+import { Loader2, Send, Brain, Volume2, Square } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { authedFunctionHeaders, handleAuthError } from "@/lib/authFetch";
 
 type Msg = { role: "user" | "assistant"; content: string };
 const URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bridge-chat`;
 const LANGS = ["English", "Bahasa Indonesia", "Tagalog", "Tiếng Việt", "Hindi", "Russian", "Español", "Ukrainian", "Myanmar", "Chinese"];
+const LOCALES: Record<string, string> = { English: "en-GB", "Bahasa Indonesia": "id-ID", Tagalog: "fil-PH", "Tiếng Việt": "vi-VN", Hindi: "hi-IN", Russian: "ru-RU", "Español": "es-ES", Ukrainian: "uk-UA", Myanmar: "my-MM", Chinese: "zh-CN" };
 const QUICK = ["SIRE 2.0 inspection questions for my rank", "MARPOL Annex VI & CII basics", "Scavenge fire — immediate actions", "COLREGs Rule 19 in restricted visibility", "Enclosed space entry checklist", "Top PSC deficiencies (Tokyo / Paris MoU)"];
 
 const MaritimeMasterBrain = () => {
@@ -15,6 +17,25 @@ const MaritimeMasterBrain = () => {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+  const [speakingIdx, setSpeakingIdx] = useState<number | null>(null);
+  useEffect(() => () => { if ("speechSynthesis" in window) window.speechSynthesis.cancel(); }, []);
+
+  const speak = (md: string, idx: number) => {
+    if (!("speechSynthesis" in window)) { toast.info("Audio is not available in this browser."); return; }
+    const synth = window.speechSynthesis;
+    synth.cancel();
+    if (speakingIdx === idx) { setSpeakingIdx(null); return; }
+    const text = md.replace(/```[\s\S]*?```/g, " ").replace(/[#*_>`|~-]+/g, " ").replace(/\[([^\]]+)\]\([^)]*\)/g, "$1").replace(/\s+/g, " ").trim();
+    const locale = LOCALES[lang] || "en-GB";
+    const voices = synth.getVoices();
+    const voice = voices.find((v) => v.lang.toLowerCase() === locale.toLowerCase()) || voices.find((v) => v.lang.split("-")[0] === locale.split("-")[0]);
+    if (voices.length && !voice && locale !== "en-GB") toast.info(`No ${lang} voice on this phone — reading in default voice.`);
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = voice?.lang || locale; if (voice) u.voice = voice; u.rate = 0.95;
+    u.onend = u.onerror = () => setSpeakingIdx(null);
+    setSpeakingIdx(idx); synth.speak(u);
+  };
+
 
   const ask = async (text: string) => {
     const q = text.trim();
@@ -60,7 +81,15 @@ const MaritimeMasterBrain = () => {
       <div className="space-y-2">
         {msgs.map((m, i) => (
           <div key={i} className={`rounded-xl p-3 text-sm ${m.role === "user" ? "ml-8 bg-primary/15" : "mr-2 border border-border bg-card prose prose-sm prose-invert max-w-none"}`}>
-            {m.role === "user" ? m.content : <ReactMarkdown>{m.content}</ReactMarkdown>}
+            {m.role === "user" ? m.content : <>
+              <ReactMarkdown>{m.content}</ReactMarkdown>
+              {!(busy && i === msgs.length - 1) && (
+                <button type="button" onClick={() => speak(m.content, i)} aria-label={speakingIdx === i ? "Stop audio" : "Listen to answer"}
+                  className="not-prose mt-2 inline-flex items-center gap-1.5 rounded-full border border-primary/40 px-3 py-1 text-xs text-primary">
+                  {speakingIdx === i ? <><Square size={12} /> Stop</> : <><Volume2 size={14} /> Listen</>}
+                </button>
+              )}
+            </>}
           </div>
         ))}
         {busy && msgs[msgs.length - 1]?.role === "user" && <p className="flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="animate-spin" size={14} /> Thinking…</p>}
