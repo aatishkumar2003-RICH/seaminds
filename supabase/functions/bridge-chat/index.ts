@@ -83,7 +83,11 @@ Deno.serve(async (req) => {
   const startedAt = Date.now();
 
   try {
-    const { messages } = await req.json();
+    const { messages, language } = await req.json();
+    const LANGS = ["English", "Bahasa Indonesia", "Tagalog", "Tiếng Việt", "Hindi", "Russian", "Español", "Ukrainian", "Myanmar", "Chinese"];
+    const langRule = typeof language === "string" && LANGS.includes(language) && language !== "English"
+      ? `\n\nLANGUAGE: Reply in ${language}. Keep official IMO/STCW/SOLAS/MARPOL terms and equipment names in English in brackets.`
+      : "";
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
     if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not configured");
 
@@ -96,7 +100,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         model: "gpt-4o-mini",
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: SYSTEM_PROMPT + langRule },
           ...messages,
         ],
         stream: true,
