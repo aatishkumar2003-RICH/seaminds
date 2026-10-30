@@ -1,6 +1,11 @@
 // Candidate-only practice state. Never writes assessment scores or manager records.
-import { MAX_TURNS, MAX_ANSWER_CHARS, summarise, type ExamStep, type Turn, type Assessment } from "../../supabase/functions/_shared/maritimeExaminer";
-export { MAX_TURNS, MAX_ANSWER_CHARS };
+import { MAX_TURNS, MIN_TURNS, MIN_FINISH_TURNS, MAX_ANSWER_CHARS, summarise, type ExamStep, type Turn, type Assessment } from "../../supabase/functions/_shared/maritimeExaminer";
+export { MAX_TURNS, MIN_TURNS, MIN_FINISH_TURNS, MAX_ANSWER_CHARS };
+/** Quick-decision questions carry options on lines "A) …" to "D) …". */
+export function pickupOptions(q: string | null): { key: string; text: string }[] | null {
+  const opts = (q ?? "").split("\n").map(l => l.trim().match(/^([A-D])[).:]\s*(.+)$/)).filter(Boolean).map(m => ({ key: m![1], text: m![2] }));
+  return opts.length === 4 ? opts : null;
+}
 export interface InterviewTurn extends Turn { feedback?: string }
 export interface InterviewSession { turns: InterviewTurn[]; question: string | null; done: boolean }
 export const emptyInterview = (): InterviewSession => ({ turns: [], question: null, done: false });

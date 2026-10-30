@@ -4,7 +4,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { authGate, aiPaused, aiPausedResponse, meterAi } from "../_shared/aiGuard.ts";
-import { validateInput, buildExamMessages, finalizeStep, summarise, MAX_TURNS, type Turn } from "../_shared/maritimeExaminer.ts";
+import { validateInput, buildExamMessages, finalizeStep, summarise, MAX_TURNS, MIN_FINISH_TURNS, type Turn } from "../_shared/maritimeExaminer.ts";
 
 const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { ...cors, "Content-Type": "application/json" } });
@@ -19,12 +19,12 @@ Deno.serve(async (req) => {
   if (!gate.ok) return gate.response;
   if (await aiPaused(admin)) return aiPausedResponse(cors);
 
-  // Rate limit: 40 turns / 10 min per user (≈5 sessions).
+  // Rate limit: 60 turns / 10 min per user (long adaptive interviews up to 40 turns).
   const key = `maritime-examiner:user:${gate.userId}`;
   const now = Date.now();
   const { data: rl } = await admin.from("auth_rate_limits").select("*").eq("ip_address", key).maybeSingle();
   if (rl && now - new Date(rl.window_start).getTime() < 600_000) {
-    if (rl.attempt_count >= 40) return json({ error: "rate_limited", message: "Please wait a few minutes before continuing." }, 429);
+    if (rl.attempt_count >= 60) return json({ error: "rate_limited", message: "Please wait a few minutes before continuing." }, 429);
     await admin.from("auth_rate_limits").update({ attempt_count: rl.attempt_count + 1, last_attempt: new Date().toISOString() }).eq("ip_address", key);
   } else if (rl) {
     await admin.from("auth_rate_limits").update({ attempt_count: 1, window_start: new Date().toISOString(), last_attempt: new Date().toISOString() }).eq("ip_address", key);
@@ -36,6 +36,7 @@ Deno.serve(async (req) => {
   try { raw = await req.json(); } catch { return json({ error: "invalid_json" }, 400); }
   // Phase 4: the transcript is server-owned. Existing sessions ignore client-sent turns/questions.
   const sessionId = typeof raw?.sessionId === "string" ? raw.sessionId : null;
+  const raw0Finish = raw?.finish === true;
   let session: any = null;
   if (sessionId) {
     const { data } = await admin.from("maritime_interview_sessions").select("*").eq("id", sessionId).eq("crew_id", gate.userId).maybeSingle();
@@ -50,9 +51,17 @@ Deno.serve(async (req) => {
   if (!v.ok) return json({ error: v.error }, 400);
   if (session) v.value.turns = (session.turns as Turn[]).slice(0, MAX_TURNS);
   const pending: string | null = session?.pending_question ?? null;
-  if (session && (!pending || !v.value.answer)) return json({ error: "answer_required", message: "Please type an answer first." }, 400);
+  // Candidate chooses to finish after enough evidence: close without another AI call.
+  if (session && raw0Finish && (session.turns as Turn[]).length >= MIN_FINISH_TURNS) {
+    const turns = session.turns as Turn[]; const sum = summarise(turns); const nowIso = new Date().toISOString();
+    const { data: upd } = await admin.from("maritime_interview_sessions").update({ status: "completed", completed_at: nowIso, updated_at: nowIso, pending_question: null, technical_pct: sum.technical_pct, safety_flags: sum.safety_flags, gaps: sum.gaps, verdict: sum.verdict })
+      .eq("id", session.id).eq("status", "in_progress").select("id");
+    if (!upd?.length) return json({ error: "session_conflict", message: "This interview was already closed." }, 409);
+    return json({ assessment: null, next_question: null, phase: null, done: true, finished: true, sessionId: session.id });
+  }
+  if (session && (!pending || !v.value.answer) && !raw0Finish) return json({ error: "answer_required", message: "Please type an answer first." }, 400);
 
-  const { messages, turnIndex } = buildExamMessages(v.value, pending);
+  const { messages, turnIndex, dept } = buildExamMessages(v.value, pending, Math.floor(Math.random() * 100000));
   const started = Date.now();
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -68,7 +77,7 @@ Deno.serve(async (req) => {
   await meterAi(admin, { userId: gate.userId, feature: "maritime-examiner", model: MODEL, usage: data.usage, success: true, latencyMs: Date.now() - started });
   let parsed: unknown = {};
   try { parsed = JSON.parse(data.choices?.[0]?.message?.content ?? "{}"); } catch { /* handled by finalizeStep */ }
-  const step = finalizeStep(parsed, pending ? (v.value.answer ?? "") : undefined, turnIndex);
+  const step = finalizeStep(parsed, pending ? (v.value.answer ?? "") : undefined, turnIndex, pending ? { turns: v.value.turns, question: pending, dept } : undefined);
   const nowIso = new Date().toISOString();
   if (!session) {
     if (step.done || !step.next_question) return json(step);

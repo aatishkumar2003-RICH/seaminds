@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { useInterviewVoice } from "@/hooks/useInterviewVoice";
-import { applyInterviewStep, completedReview, emptyInterview, verdictLabel, MAX_ANSWER_CHARS, MAX_TURNS } from "@/lib/maritimeInterview";
+import { applyInterviewStep, completedReview, emptyInterview, verdictLabel, pickupOptions, MAX_ANSWER_CHARS, MAX_TURNS, MIN_TURNS, MIN_FINISH_TURNS } from "@/lib/maritimeInterview";
 import type { ExamStep } from "../../supabase/functions/_shared/maritimeExaminer";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 
@@ -102,6 +102,18 @@ export default function MaritimeInterview() {
     if (e || !data) { toast.error("Could not update sharing. Please try again."); return; }
     setShared(v); toast.success(v ? "Report shared with companies you apply to." : "Report is now private.");
   };
+  const finishNow = async () => {
+    if (inFlight.current || !sessionId || !accessToken) return;
+    inFlight.current = true; setBusy(true); setError(""); voice.stop(); voice.stopSpeaking();
+    try {
+      const { data, error: failure } = await supabase.functions.invoke("maritime-examiner", { headers: { Authorization: `Bearer ${accessToken}` }, body: { sessionId, finish: true } });
+      if (failure || data?.error || !data?.done) throw new Error(data?.message || "Could not finish the interview. Please try again.");
+      if (promo) { const { data: ok } = await supabase.rpc("crew_complete_promotion" as any, { p_invite: promo.id, p_session: sessionId }); if (ok) toast.success(`Result sent to ${promo.company_name || "the company"}.`); }
+      if (mounted.current) { setSession(s => ({ ...s, question: null, done: true })); setAnswer(""); void loadHistory(); }
+    } catch (e) { if (mounted.current) setError(e instanceof Error ? e.message : "Could not finish the interview."); }
+    finally { inFlight.current = false; if (mounted.current) setBusy(false); }
+  };
+  const options = pickupOptions(session.question);
   const back = () => { if (active || busy) setLeaving(true); else navigate("/training"); };
   const reset = () => { voice.stop(); voice.stopSpeaking(); setSession(emptyInterview()); setSessionId(null); setShared(false); setAnswer(""); setError(""); setConsent(false); };
 
@@ -116,7 +128,7 @@ export default function MaritimeInterview() {
         <section className="py-7 space-y-2">
           <p className="flex items-center gap-2 text-xs font-semibold text-primary"><ShieldCheck size={16} /> Deck & Engine</p>
           <h1 className="text-2xl sm:text-3xl font-bold">Maritime AI interview</h1>
-          <p className="text-sm text-muted-foreground">{active ? `${rank} → ${targetRank} · ${vessels.find(([id]) => id === vessel)?.[1]}` : review ? "Your practice review" : "Promotion preparation · About 12–15 minutes · Up to 7 scenarios"}</p>
+          <p className="text-sm text-muted-foreground">{active ? `${rank} → ${targetRank} · ${vessels.find(([id]) => id === vessel)?.[1]}` : review ? "Your practice review" : "Oral board + quick-decision questions · 15–50 minutes · Strong answers finish early (12 questions), otherwise up to 40"}</p>
         </section>
         {!active && !review && <section className="space-y-6">
           {promo && <p className="rounded-xl border-2 border-primary p-3 text-sm">🎓 Promotion assessment requested by <b>{promo.company_name || "your company"}</b>. When you finish, the result goes only to this company.</p>}
@@ -135,13 +147,14 @@ export default function MaritimeInterview() {
           {history.length > 0 && <div className="space-y-2 border-t border-border pt-4"><h3 className="text-sm font-semibold text-primary">Your past interviews</h3><ul className="space-y-1 text-sm">{history.map(h => <li key={h.id} className="flex justify-between gap-3"><span>{h.rank}{h.target_rank ? ` → ${h.target_rank}` : ""} · {h.completed_at ? new Date(h.completed_at).toLocaleDateString() : ""}</span><span className="text-muted-foreground">{h.technical_pct ?? 0}% · {verdictLabel(h.verdict)}</span></li>)}</ul></div>}
         </section>}
         {active && <section className="space-y-5">
-          <div className="flex items-center justify-between text-xs text-muted-foreground"><span>Scenario {session.turns.length + 1} of {MAX_TURNS}</span><span>{languages.find(([id]) => id === locale)?.[1]}</span></div>
-          <div className="flex gap-1" aria-label={`${session.turns.length} scenarios answered`}>{Array.from({ length: MAX_TURNS }, (_, i) => <span key={i} className={`h-1 flex-1 rounded-full ${i < session.turns.length ? "bg-primary" : "bg-border"}`} />)}</div>
+          <div className="flex items-center justify-between text-xs text-muted-foreground"><span>Question {session.turns.length + 1}{options ? " · Quick decision" : " · Oral"} · {session.turns.length < MIN_TURNS ? `at least ${MIN_TURNS}` : `up to ${MAX_TURNS}`}</span><span>{languages.find(([id]) => id === locale)?.[1]}</span></div>
+          <div className="flex gap-1" aria-label={`${session.turns.length} scenarios answered`}>{Array.from({ length: Math.max(MIN_TURNS, session.turns.length + 1) }, (_, i) => <span key={i} className={`h-1 flex-1 rounded-full ${i < session.turns.length ? "bg-primary" : "bg-border"}`} />)}</div>
           <article className="border-l-2 border-primary pl-4 py-2 space-y-4">
             <p className="text-xs font-semibold text-primary">SeaMinds examiner</p>
             <p className="text-lg leading-relaxed whitespace-pre-wrap break-words" aria-live="polite">{session.question}</p>
             {voice.canSpeak && <Button variant="ghost" size="sm" disabled={busy} onClick={() => voice.speaking ? voice.stopSpeaking() : voice.speak(session.question || "")} title={voice.speaking ? "Stop audio" : "Listen to question"}>{voice.speaking ? <Square /> : <Volume2 />}{voice.speaking ? "Stop audio" : "Listen"}</Button>}
           </article>
+          {options && <div className="grid gap-2" role="group" aria-label="Choose the best first action">{options.map(o => <Button key={o.key} variant={answer.startsWith(`Option ${o.key}`) ? "default" : "outline"} className="h-auto justify-start whitespace-normal text-left py-3 rounded-xl" disabled={busy} onClick={() => setAnswer(`Option ${o.key}: ${o.text}. Reason: `)}><b className="mr-2">{o.key})</b>{o.text}</Button>)}<p className="text-xs text-muted-foreground">Pick one, then add a short reason below.</p></div>}
           <div className="space-y-2">
             <label htmlFor="interview-answer" className="text-sm font-semibold">Your answer</label>
             <Textarea id="interview-answer" value={answer} disabled={busy || voice.listening} maxLength={MAX_ANSWER_CHARS} onChange={e => setAnswer(e.target.value)} className="min-h-40 text-base leading-relaxed resize-y" />
@@ -152,11 +165,13 @@ export default function MaritimeInterview() {
             <Button variant="outline" disabled={busy || !voice.supported} onClick={() => voice.listening ? voice.stop() : voice.start()} title={voice.supported ? "Dictate answer" : "Voice input is unavailable in this browser"}>{voice.listening ? <MicOff /> : <Mic />}{voice.listening ? "Stop microphone" : "Speak"}</Button>
             <Button className="flex-1 rounded-xl font-bold" disabled={busy || voice.listening || !answer.trim()} onClick={() => void submit()}>{busy ? <><Loader2 className="animate-spin motion-reduce:animate-none" /> Checking…</> : <><Send /> Send answer</>}</Button>
             <Button variant="ghost" disabled={busy || voice.listening} onClick={() => void submit("I don't know")}>I don’t know</Button>
+            {session.turns.length >= MIN_FINISH_TURNS && <Button variant="ghost" className="text-primary" disabled={busy || voice.listening} onClick={() => void finishNow()}>Finish & get result</Button>}
           </div>
         </section>}
         {error && <p role="alert" className="mt-5 rounded-lg border border-destructive/40 p-3 text-sm text-destructive">{error}</p>}
         {review && <section className="space-y-6">
-          <div className="border-y border-border py-5 space-y-2"><h2 className="text-xl font-bold">Practice interview complete</h2><p className="text-sm text-muted-foreground">{review.turns.length} scenarios answered · {review.safety_flags} safety concerns identified. This AI review is provisional and saved privately to your account.</p></div>
+          <div className="border-y border-border py-5 space-y-2"><h2 className="text-xl font-bold">Practice interview complete</h2><p className="text-sm text-muted-foreground">{review.turns.length} questions answered · {review.technical_pct}% · {verdictLabel(review.verdict)} · {review.safety_flags} safety concerns identified. This AI review is provisional and saved privately to your account.</p></div>
+          {review.strengths.length > 0 && <div className="space-y-2"><h3 className="font-semibold text-primary">Your strengths</h3><ul className="list-disc pl-5 space-y-1 text-sm">{review.strengths.map(g => <li key={g} className="capitalize">{g.replace(/_/g, " ")}</li>)}</ul></div>}
           {review.gaps.length > 0 && <div className="space-y-2"><h3 className="font-semibold text-primary">Topics to strengthen</h3><ul className="list-disc pl-5 space-y-2 text-sm">{review.gaps.map(g => <li key={g}>{g}</li>)}</ul></div>}
           <div className="space-y-3">{review.turns.map((t, i) => <details key={i} className="border-b border-border pb-3"><summary className="cursor-pointer text-sm font-semibold py-2">{i + 1}. {t.topic?.replace(/_/g, " ") || "Scenario"}{t.safety_flag ? " · Safety review" : ""}</summary><div className="space-y-3 py-3 text-sm break-words"><p>{t.question}</p><p className="text-muted-foreground">Your answer: {t.answer}</p><p>{t.feedback || "Revisit this topic using your approved vessel manuals and training materials."}</p></div></details>)}</div>
           {sessionId && <label className="flex items-start gap-3 rounded-xl border border-primary/30 p-4 text-sm cursor-pointer"><input type="checkbox" className="mt-1 accent-primary" checked={shared} onChange={e => void toggleShare(e.target.checked)} /><span><span className="font-semibold">Share this report with companies I apply to</span><br /><span className="text-muted-foreground">Off by default. Only companies whose vacancies you applied to can see the score, gaps and your answers. You can switch it off any time.</span></span></label>}
