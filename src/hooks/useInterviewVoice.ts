@@ -50,22 +50,29 @@ export function useInterviewVoice(locale: string, onTranscript: (text: string) =
     stopSpeaking();
     if (recognition.current) { recognition.current.onend = null; recognition.current.onresult = null; recognition.current.onerror = null; try { recognition.current.abort(); } catch { /* noop */ } }
     pending.current = "";
+    const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     const r = new Constructor();
-    r.lang = locale; r.continuous = true; r.interimResults = true;
+    // iOS Safari's continuous mode drops/duplicates phrases; single-utterance mode is reliable there.
+    r.lang = locale; r.continuous = !isIOS; r.interimResults = true;
+    let heard = false;
     const armSilence = () => {
       const ms = opts.current.autoStopMs;
       if (!ms) return;
       clearSilence();
-      silence.current = setTimeout(() => { try { r.stop(); } catch { /* noop */ } }, ms);
+      // Give the speaker time to start talking; only use the short pause once words arrive.
+      silence.current = setTimeout(() => { try { r.stop(); } catch { /* noop */ } }, heard ? ms : Math.max(ms, 7000));
     };
     r.onresult = (event) => {
+      // Rebuild the whole transcript every event — immune to resultIndex quirks on iOS/Android.
+      let full = "";
       let live = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const result = event.results[i];
-        if (result.isFinal) callback.current(result[0].transcript);
-        else live += result[0].transcript;
+      for (let i = 0; i < event.results.length; i++) {
+        const t = event.results[i][0].transcript;
+        full += `${t} `;
+        if (!event.results[i].isFinal) live += t;
       }
-      pending.current = live;
+      pending.current = full.trim();
+      if (pending.current) heard = true;
       setInterim(live);
       armSilence();
     };
@@ -73,7 +80,6 @@ export function useInterviewVoice(locale: string, onTranscript: (text: string) =
     const finish = () => {
       if (ended) return; ended = true;
       clearSilence();
-      // iOS Safari often ends without marking the last phrase final — keep those words.
       const left = pending.current.trim();
       pending.current = "";
       if (left) callback.current(left);

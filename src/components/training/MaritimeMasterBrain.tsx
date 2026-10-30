@@ -39,9 +39,12 @@ const MaritimeMasterBrain = () => {
     },
   );
   const { listening, interim } = voice;
-  // iOS only allows speech audio that was unlocked by a direct tap.
+  // iOS only allows speech audio that was unlocked by a direct tap. Do it once —
+  // repeating it right before the mic opens fights over the audio session and kills recognition.
+  const unlocked = useRef(false);
   const unlockAudio = () => {
-    if (!("speechSynthesis" in window)) return;
+    if (unlocked.current || !("speechSynthesis" in window)) return;
+    unlocked.current = true;
     try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; window.speechSynthesis.speak(u); } catch { /* noop */ }
   };
   const toggleMic = () => {
@@ -50,36 +53,60 @@ const MaritimeMasterBrain = () => {
     window.speechSynthesis?.cancel(); setSpeakingIdx(null);
     unlockAudio();
     voiceTurn.current = true;
-    voice.start();
+    // small delay lets the speaker release the audio session before the mic opens
+    setTimeout(() => voice.start(), unlocked.current ? 250 : 0);
   };
 
+  // Hold utterances so Safari doesn't garbage-collect them mid-speech (which silently stops audio).
+  const utterances = useRef<SpeechSynthesisUtterance[]>([]);
+  const keepAlive = useRef<ReturnType<typeof setInterval> | null>(null);
+  const clearKeepAlive = () => { if (keepAlive.current) { clearInterval(keepAlive.current); keepAlive.current = null; } };
+  useEffect(() => clearKeepAlive, []);
+  const pickVoice = (locale: string) => {
+    const voices = window.speechSynthesis.getVoices();
+    return { voices, v: voices.find((x) => x.lang.toLowerCase().replace("_", "-") === locale.toLowerCase()) || voices.find((x) => x.lang.split(/[-_]/)[0] === locale.split("-")[0]) };
+  };
   const speak = (md: string, idx: number, force = false) => {
     if (!("speechSynthesis" in window)) { toast.info("Audio is not available in this browser."); return; }
     const synth = window.speechSynthesis;
-    synth.cancel();
+    synth.cancel(); clearKeepAlive();
     if (!force && speakingIdx === idx) { setSpeakingIdx(null); return; }
     const text = md.replace(/```[\s\S]*?```/g, " ").replace(/[#*_>`|~]+/g, " ").replace(/\[([^\]]+)\]\([^)]*\)/g, "$1").replace(/\s+/g, " ").trim();
     if (!text) return;
     const locale = LOCALES[lang] || "en-GB";
-    const voices = synth.getVoices();
-    const v = voices.find((x) => x.lang.toLowerCase() === locale.toLowerCase()) || voices.find((x) => x.lang.split("-")[0] === locale.split("-")[0]);
-    if (voices.length && !v && locale !== "en-GB") toast.info(`No ${lang} voice on this phone — reading in default voice.`);
-    // iOS cuts off long utterances — read sentence-sized chunks in a queue.
     const chunks = (text.match(/[^.!?。！？]+[.!?。！？]*/g) || [text]).reduce<string[]>((a, s) => {
       const last = a[a.length - 1];
       if (last && (last + s).length < 220) a[a.length - 1] = last + s; else a.push(s);
       return a;
     }, []).map((s) => s.trim()).filter(Boolean);
     setSpeakingIdx(idx);
-    chunks.forEach((c, n) => {
-      const u = new SpeechSynthesisUtterance(c);
-      u.lang = v?.lang || locale; if (v) u.voice = v; u.rate = 0.95;
-      if (n === chunks.length - 1) u.onend = () => setSpeakingIdx((cur) => (cur === idx ? null : cur));
-      u.onerror = () => setSpeakingIdx((cur) => (cur === idx ? null : cur));
-      synth.speak(u);
-    });
+    const run = (attempt: number) => {
+      const { voices, v } = pickVoice(locale);
+      if (attempt === 0 && voices.length && !v && locale !== "en-GB") toast.info(`No ${lang} voice on this phone — reading in default voice.`);
+      const done = () => { clearKeepAlive(); utterances.current = []; setSpeakingIdx((cur) => (cur === idx ? null : cur)); };
+      let started = false;
+      utterances.current = chunks.map((c, n) => {
+        const u = new SpeechSynthesisUtterance(c);
+        u.lang = v?.lang || locale; if (v) u.voice = v; u.rate = 0.95;
+        u.onstart = () => { started = true; };
+        if (n === chunks.length - 1) u.onend = done;
+        u.onerror = (e) => { if (e.error !== "interrupted" && e.error !== "canceled") done(); };
+        return u;
+      });
+      synth.resume();
+      utterances.current.forEach((u) => synth.speak(u));
+      // Chrome/Android pause long speech after ~15s; nudge it.
+      keepAlive.current = setInterval(() => { if (synth.speaking) synth.resume(); }, 5000);
+      // Watchdog: if the engine silently ignored us (common on iOS after the mic), retry once.
+      setTimeout(() => {
+        if (!started && !synth.speaking && attempt === 0) { synth.cancel(); clearKeepAlive(); run(1); }
+        else if (!started && !synth.speaking) done();
+      }, 1500);
+    };
+    // Speaking immediately after cancel() is dropped by Safari — wait a beat.
+    setTimeout(() => run(0), 120);
   };
-  const stopAudio = () => { window.speechSynthesis?.cancel(); setSpeakingIdx(null); };
+  const stopAudio = () => { window.speechSynthesis?.cancel(); clearKeepAlive(); setSpeakingIdx(null); };
 
 
   const ask = async (text: string) => {
