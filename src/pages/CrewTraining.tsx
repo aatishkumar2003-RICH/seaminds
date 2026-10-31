@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import MaritimeEnglishLab from "@/components/training/MaritimeEnglishLab";
 import MaritimeMasterBrain from "@/components/training/MaritimeMasterBrain";
+import FleetDrills from "@/components/training/FleetDrills";
 import { Helmet } from "react-helmet-async";
 import { ChevronLeft, ExternalLink, Loader2, CheckCircle2, GraduationCap, Clock, Home, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
@@ -139,7 +140,7 @@ const Module = ({ token }: { token: string }) => {
 const MyTraining = () => {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const tab = (params.get("tab") || "required") as "required" | "matrix" | "records" | "english" | "brain";
+  const tab = (params.get("tab") || "required") as "required" | "drills" | "matrix" | "records" | "english" | "brain";
   const english = tab === "english";
   const [items, setItems] = useState<LedgerItem[] | null>(null);
   const [recs, setRecs] = useState<Recommendation[]>([]);
@@ -166,6 +167,7 @@ const MyTraining = () => {
   const requiredCount = (items || []).filter((i) => i.company?.trim() && i.status !== "completed" && i.token).length;
   const TABS = [
     ["required", "⭐ Required", requiredCount],
+    ["drills", "🚢 Fleet Drills", 0],
     ["matrix", "📋 Matrix", 0],
     ["records", "📊 Records", 0],
     ["english", "🎙️ English", 0],
@@ -187,7 +189,7 @@ const MyTraining = () => {
           </button>
         ))}
       </div>
-      {tab === "brain" ? <MaritimeMasterBrain /> : english ? <MaritimeEnglishLab /> : items === null ? <p className="text-muted-foreground">Loading…</p> : (
+      {tab === "drills" ? <FleetDrills /> : tab === "brain" ? <MaritimeMasterBrain /> : english ? <MaritimeEnglishLab /> : items === null ? <p className="text-muted-foreground">Loading…</p> : (
         <>
           {tab === "required" && (() => {
             const required = items.filter((i) => i.company?.trim() && i.status !== "completed" && i.token);
