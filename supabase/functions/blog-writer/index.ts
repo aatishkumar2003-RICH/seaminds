@@ -19,7 +19,54 @@ const LANGUAGES = [
   { code: "id", name: "Indonesian", note: "Write entirely in Bahasa Indonesia, natural for Indonesian seafarers." },
 ];
 
+// High-intent search topics first (what seafarers and managers actually type into Google),
+// then the original feature explainers. English for every topic is written before translations.
+const SEO_TOPICS = [
+  // India — DG Shipping / MMD orals
+  "DG Shipping MMD 2nd Mate (OOW) oral exam questions and how to prepare in 2026",
+  "MMD Chief Mate oral exam: Function 1, 2 and 3 questions examiners ask",
+  "MMD Master oral exam preparation: what surveyors ask about ISM, PSC and emergencies",
+  "MEO Class IV oral exam questions for marine engineers and how to answer them",
+  "MEO Class II (Second Engineer) oral exam: most asked questions and model answers",
+  "MEO Class I (Chief Engineer) oral exam preparation: management-level questions",
+  "Common reasons candidates fail MMD orals and how to avoid them",
+  "How to practise MMD oral questions out loud with an AI voice examiner",
+  // Philippines — MARINA / promotion
+  "MARINA OIC-NW assessment and promotion: questions and preparation tips",
+  "MARINA OIC-EW engineering officer assessment: practical questions to prepare",
+  "Filipino seafarers: preparing for your promotion interview with the manning agency",
+  // Rank responsibilities / promotion interviews
+  "Chief Engineer job responsibilities: fuel consumption, reports and what interviewers ask",
+  "Second Engineer responsibilities: planned maintenance, purifiers and interview questions",
+  "Third Engineer responsibilities: generators and auxiliary machinery interview questions",
+  "Fourth Engineer responsibilities: bunkering procedure and interview questions",
+  "Chief Officer responsibilities: cargo, stability and ballast interview questions",
+  "Second Officer responsibilities: passage planning and ECDIS interview questions",
+  "Third Officer responsibilities: LSA, FFA and bridge watch interview questions",
+  "ETO interview questions: alarms, automation and high-voltage safety",
+  // Vessel-type technical
+  "LPG carrier reliquefaction plant explained: BOG compressor trip actions",
+  "LPG and LNG emergency shutdown (ESD) systems: what every officer must know",
+  "LNG carrier boil-off gas management explained for engineers",
+  "Tanker inert gas system and deck seal: failures, checks and SIRE 2.0 questions",
+  "SIRE 2.0 crew interview questions and how to answer inspectors",
+  "Bulk carrier cargo liquefaction: IMSBC can test and what to do before loading",
+  "Container ship parametric rolling and lashing failures: precautions for officers",
+  "Reefer ship ammonia leak response: safety steps for engineers",
+  "Enclosed space entry: permit, gas testing and common mistakes on ships",
+  "Hot work permit on ships: correct procedure and why accidents happen",
+  // English & PSC
+  "Maritime English for PSC inspections: questions inspectors ask crew",
+  "SMCP phrases every officer must use on the bridge and radio",
+  // Managers
+  "For ship managers: how AI oral interviews test real crew competence before joining",
+  "For ship managers: replacing slide-based CBT with vessel-specific incident drills",
+  "For ship managers: preparing crew for SIRE 2.0 and TMSA vetting with digital training",
+  "For manning agencies: shortlisting crew faster with AI competency scores",
+];
+
 const TOPICS = [
+  ...SEO_TOPICS,
   "How to prepare for DG Shipping MMD oral exams with the SeaMinds AI voice examiner — Class IV, Class II, Class I, 2nd Mate, Chief Mate, Master",
   "MARINA promotion and assessment preparation for Filipino seafarers — practise oral questions with SeaMinds AI",
   "Preparing for your promotion interview: how SeaMinds AI asks rank-specific job-responsibility questions (C/E, 2/E, 3/E, 4/E, C/O, 2/O, 3/O)",
@@ -46,6 +93,44 @@ const TOPICS = [
   "How certificate verification works on SeaMinds — scan the QR, verify any SeaMinds Score certificate",
 ];
 
+// The one SeaMinds action that matches the reader's intent.
+function ctaFor(topic: string): { label: string; href: string } {
+  const t = topic.toLowerCase();
+  const drill = /lpg|lng|gas carrier|boil-off|esd/.test(t) ? "gas"
+    : /tanker|inert gas|sire/.test(t) ? "tanker"
+    : /bulk|imsbc|liquefaction/.test(t) ? "bulk"
+    : /container|lashing|parametric/.test(t) ? "container"
+    : /reefer|ammonia/.test(t) ? "reefer" : null;
+  if (/ship managers|manning agenc/.test(t)) return { label: "See SeaMinds for fleets →", href: "https://seaminds.life/for-companies" };
+  if (drill) return { label: "Try the free incident drill →", href: `https://seaminds.life/training?tab=drills&drill=${drill}` };
+  if (/english|smcp|psc/.test(t)) return { label: "Practise Maritime English free →", href: "https://seaminds.life/training?tab=english" };
+  if (/oral|interview|promotion|marina|mmd|meo|responsibilit/.test(t)) return { label: "Practise this oral with the SeaMinds AI examiner →", href: "https://seaminds.life/maritime-interview" };
+  return { label: "Create your free Sea Profile →", href: "https://seaminds.life/join" };
+}
+
+const escHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const inline = (s: string) => escHtml(s).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+
+// Minimal markdown → HTML so articles render cleanly once HTML blocks are appended.
+function mdToHtml(md: string): string {
+  const out: string[] = [];
+  let list = false;
+  for (const raw of md.split("\n")) {
+    const l = raw.trim();
+    if (/^[-*]\s+/.test(l)) {
+      if (!list) { out.push("<ul>"); list = true; }
+      out.push(`<li>${inline(l.replace(/^[-*]\s+/, ""))}</li>`);
+      continue;
+    }
+    if (list) { out.push("</ul>"); list = false; }
+    if (!l) continue;
+    const h = l.match(/^(#{1,4})\s+(.*)$/);
+    if (h) { const n = Math.max(2, h[1].length); out.push(`<h${n}>${inline(h[2])}</h${n}>`); }
+    else out.push(`<p>${inline(l)}</p>`);
+  }
+  if (list) out.push("</ul>");
+  return out.join("\n");
+}
 
 const slugify = (s: string) =>
   s.toLowerCase().replace(/[^a-z0-9\s-]/g, "").trim().replace(/\s+/g, "-").slice(0, 80);
