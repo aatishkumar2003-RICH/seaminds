@@ -107,7 +107,7 @@ const FleetSimulatorPreview = ({ open, onClose }: { open: boolean; onClose: () =
         <p className="text-[11px] text-muted-foreground">Full drills add a voice oral check and a gap report for the superintendent. Training guidance only — not an STCW certificate.</p>
         <div className="grid grid-cols-2 gap-2">
           <Link to="/for-companies#fleet-drills" onClick={onClose} className="rounded-xl bg-primary py-2.5 text-center text-xs font-bold text-primary-foreground no-underline">Fleet trial for my ships →</Link>
-          <Link to="/training" onClick={onClose} className="rounded-xl border border-primary py-2.5 text-center text-xs font-bold text-primary no-underline">I'm crew — train now</Link>
+          <Link to="/training?tab=drills" onClick={onClose} className="rounded-xl border border-primary py-2.5 text-center text-xs font-bold text-primary no-underline">I'm crew — train now</Link>
         </div>
       </div>
     </div>
