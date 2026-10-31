@@ -2,9 +2,56 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { X, CheckCircle2, AlertTriangle } from "lucide-react";
 
+export type DrillStage = { label: string; situation: string; question: string; options: string[]; correct: number; why: string };
 type Drill = {
   key: string; tab: string; title: string; source: string; ranks: string;
   params: string[]; question: string; options: string[]; correct: number; why: string;
+  /** Follow-up stages (2: stabilise, 3: report/compliance). Correct answer kept at index 1 to match server grading. */
+  next?: DrillStage[];
+};
+
+/** Stages 2–3 per drill — guidance-level, to be reviewed by a Master/C/E before enterprise demos. */
+export const DRILL_FOLLOWUPS: Record<string, DrillStage[]> = {
+  bulk: [
+    { label: "Stabilise", situation: "Loading stopped. Two holds already contain part cargo; a wet sample shows a flow surface.", question: "What do you do with the cargo already loaded?",
+      options: ["Sail — the holds are only part full", "Arrange independent sampling/testing and plan discharge if above TML, with stability review", "Cover the holds with tarpaulins and sail", "Add more dry cargo on top to absorb the water"], correct: 1,
+      why: "Cargo above TML must not be carried. Independent testing and discharge planning, with a stability check, removes the liquefaction risk." },
+    { label: "Report", situation: "Owners ask for documentation before the charterer disputes the delay.", question: "What must be recorded and reported?",
+      options: ["Nothing — it was the shipper's error", "Log bridge/deck entries, issue Note of Protest, notify owners, P&I and flag as per SMS", "Only a WhatsApp to the agent", "Ask the crew to keep quiet until arrival"], correct: 1,
+      why: "A Note of Protest, log entries and P&I/owner notification protect the vessel and evidence the Master's IMSBC decision." },
+  ],
+  gas: [
+    { label: "Stabilise", situation: "Standby compressor running, but tank pressure still creeping up slowly.", question: "Next action to control pressure?",
+      options: ["Raise the relief valve set point", "Use GCU / send BOG to engines as fuel, reduce cargo heat input, keep monitoring", "Shut all tank valves and wait", "Bypass the seal-oil trip on the tripped unit"], correct: 1,
+      why: "Alternative BOG consumers (GCU / dual-fuel engines) keep pressure within limits. Relief valve settings and trips must never be altered." },
+    { label: "Report", situation: "Pressure stable. The tripped compressor is isolated for inspection.", question: "What follow-up is required?",
+      options: ["Restart it at next watch without records", "Root-cause the seal-oil trip, log it, report to office/terminal as per SMS and PMS", "Remove the trip alarm to avoid repeats", "Only tell the next C/E at handover"], correct: 1,
+      why: "Recorded root-cause analysis and office/terminal reporting are expected by SIGTTO practice and vetting inspectors." },
+  ],
+  container: [
+    { label: "Stabilise", situation: "Course altered; rolling reducing. Bridge reports possible lashing failure in bay 34.", question: "When is it safe to inspect the lashings?",
+      options: ["Send crew immediately while still rolling", "After motions settle, with risk assessment, PPE, communication and no lone working", "Never — wait for port", "Only at night to avoid delays"], correct: 1,
+      why: "Crew safety first: inspect only when motions are controlled, under a risk assessment and with proper supervision." },
+    { label: "Report", situation: "Two containers are found missing overboard.", question: "What is required?",
+      options: ["Record nothing until discharge port", "Broadcast navigational warning, notify coastal state, flag, owners and P&I; log details", "Ask the agent to inform the shipper later", "Only update the cargo plan"], correct: 1,
+      why: "Lost containers are a hazard to navigation; SOLAS and MARPOL require prompt reporting, especially for any dangerous goods." },
+  ],
+  tanker: [
+    { label: "Stabilise", situation: "Cargo stopped; seal water restored. O₂ in IG main now reads 6%.", question: "Can discharge resume?",
+      options: ["Yes — the seal is fixed", "No — restore IG quality to ≤5% O₂ and confirm positive tank pressure first", "Yes, at reduced rate", "Yes, if the terminal agrees"], correct: 1,
+      why: "Inert gas must be ≤5% O₂ with tanks kept at positive pressure before cargo operations resume (SOLAS II-2 / ISGOTT)." },
+    { label: "Report", situation: "Operations resumed safely after 40 minutes.", question: "What follow-up is expected for vetting?",
+      options: ["Nothing — it was fixed", "Record in IG log and cargo log, report to office, review PMS of seal and alarms", "Only inform the terminal verbally", "Delete the alarm history"], correct: 1,
+      why: "SIRE 2.0 inspectors check that defects and alarms are recorded, reported and followed up through the PMS." },
+  ],
+  reefer: [
+    { label: "Stabilise", situation: "Ventilation running; SCBA team ready. Leak located at a compressor valve.", question: "How should the team stop the leak?",
+      options: ["Work without suits — ventilation is on", "Isolate the section via remote/emergency valves, team in gas-tight suits, standby team ready", "Restart the plant to pump out ammonia", "Open all doors to the accommodation"], correct: 1,
+      why: "Isolate remotely where possible; entry only with proper protection and a standby team. Never vent toward accommodation." },
+    { label: "Report", situation: "Leak isolated, levels below alarm.", question: "Before the plant restarts?",
+      options: ["Restart immediately to protect cargo", "Gas-free check, repair, record in logs, report to office and class if required", "Top up ammonia and run", "Leave detectors muted"], correct: 1,
+      why: "Confirm safe atmosphere, repair properly, record and report — cargo temperature never outranks crew safety." },
+  ],
 };
 
 /** Public demo drills — guidance-level, sourced to well-known industry codes/cases. */
