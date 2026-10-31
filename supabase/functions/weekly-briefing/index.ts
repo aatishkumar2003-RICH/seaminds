@@ -1,7 +1,7 @@
 // Weekly Maritime Briefing: one blog article per user per week, staggered by weekday so the
 // free email quota never spikes. Tue = Indonesia/Vietnam, Wed = Philippines, Thu = India +
 // everyone else, Fri = ShipManagers. Topic matched to department; no repeat within 90 days.
-// Quota gate: only sends while 24h total stays under 80; max 20 per run.
+// Quota gate: only sends while 24h total stays under CEILING; max RUN_CAP per run.
 // GET ?u=<user_id>&s=<sig> = one-click unsubscribe. POST {dry:true} = report only.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
@@ -11,8 +11,25 @@ const SVC_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const svc = createClient(Deno.env.get("SUPABASE_URL")!, SVC_KEY);
 const RESEND_KEY = Deno.env.get("RESEND_API_KEY") || "";
 const FN_URL = `${Deno.env.get("SUPABASE_URL")}/functions/v1/weekly-briefing`;
-const RUN_CAP = 20;
-const CEILING = 80; // leaves ~20/day of the 100 free emails for alerts and applications
+const RUN_CAP = 200;
+const CEILING = 1400; // paid Resend (50k/month ≈ 1,600/day); leaves headroom for alerts and applications
+// Rotating "feature of the week" so crew discover what SeaMinds can do.
+function featureBlock(nat: string | null, rank: string | null) {
+  const n = (nat || "").toLowerCase();
+  const orals = /india/.test(n)
+    ? "Preparing for DG Shipping MMD orals or your next promotion? Practise with the SeaMinds AI voice examiner."
+    : /filip|philipp/.test(n)
+    ? "Preparing for MARINA assessment or promotion? Practise oral questions with the SeaMinds AI voice examiner."
+    : "Preparing for a promotion or company interview? Practise with the SeaMinds AI voice examiner.";
+  const list = [
+    { t: "🎓 Orals & promotion practice", d: orals, u: `${SITE}/maritime-interview` },
+    { t: "🧠 SeaMinds Brain", d: "Ask any machinery or navigation question by voice, photo or document — in your language.", u: `${SITE}/training?tab=brain` },
+    { t: "🚢 Fleet incident drills", d: "LPG, tanker, bulk, container and reefer drills built on real casualty cases.", u: `${SITE}/training?tab=drills` },
+  ];
+  const week = Math.floor(Date.now() / (7 * 86400000));
+  const f = /engineer|officer|master|mate|\d\/[eo]|c\/[eo]/i.test(rank || "") && week % 2 === 0 ? list[0] : list[week % list.length];
+  return `<div style="background:#0D1B2A;border-radius:10px;padding:12px;margin-top:8px"><b style="color:#D4AF37">${f.t}</b><br><span style="color:#CBD5E1;font-size:13px">${f.d}</span><br><a href="${f.u}" style="color:#D4AF37">Try it free →</a></div>`;
+}
 const esc = (s: unknown) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
@@ -156,6 +173,7 @@ Deno.serve(async (req) => {
     } else {
       const v = await vacancies(r.rank);
       if (v.length) extra = `<div style="background:#0D1B2A;border-radius:10px;padding:12px;margin-top:8px"><b style="color:#D4AF37">Berths for your rank</b>${v.map((j: any) => `<div style="color:#CBD5E1;font-size:13px;margin-top:6px">• ${esc(j.rank_required)}${j.vessel_type ? ` — ${esc(j.vessel_type)}` : ""}${j.company_name ? ` (${esc(j.company_name)})` : ""}</div>`).join("")}<a href="${SITE}/jobs" style="color:#D4AF37;font-size:13px">See all vacancies →</a></div>`;
+      extra += featureBlock(r.nat, r.rank);
     }
     const unsub = `${FN_URL}?u=${r.id}&s=${await sign(r.id)}`;
     let ok = false, error: string | null = null;
