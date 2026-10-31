@@ -177,7 +177,7 @@ const BlogPost = () => {
             description: desc,
             url: `https://seaminds.life/blog/${slug}`,
             datePublished: post.created_at,
-            dateModified: post.updated_at || post.created_at,
+            dateModified: post.created_at,
             author: { "@type": "Organization", name: "SeaMinds", url: "https://seaminds.life" },
             publisher: {
               "@type": "Organization",
