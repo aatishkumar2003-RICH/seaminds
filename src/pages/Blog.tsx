@@ -113,6 +113,39 @@ const Blog = () => {
           Maritime insights, updates &amp; knowledge for seafarers worldwide.
         </p>
 
+        {/* Feature showcase */}
+        <div className="grid gap-3 sm:grid-cols-2 mb-8">
+          {FEATURES.map((f) => (
+            <button
+              key={f.to}
+              onClick={() => navigate(f.to)}
+              className="text-left rounded-xl p-4 border transition-all hover:opacity-90"
+              style={{ background: "#112240", borderColor: "rgba(212,175,55,0.3)" }}
+            >
+              <div className="font-bold mb-1" style={{ color: "#D4AF37" }}>{f.icon} {f.title}</div>
+              <div className="text-sm" style={{ color: "#94A3B8" }}>{f.text}</div>
+            </button>
+          ))}
+        </div>
+
+        {/* Section tabs */}
+        <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
+          {BLOG_CATEGORIES.map((c) => (
+            <button
+              key={c.value}
+              onClick={() => setCat(c.value)}
+              className="px-3 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap border"
+              style={{
+                background: cat === c.value ? "#D4AF37" : "transparent",
+                color: cat === c.value ? "#0D1B2A" : "#D4AF37",
+                borderColor: "#D4AF37",
+              }}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+
         {/* Language filter bar */}
         <div className="flex flex-wrap gap-2 mb-10">
           {LANGUAGES.map((l) => (
