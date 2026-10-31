@@ -9,3 +9,4 @@ Disallow: /crew
 Disallow: /verify
 
 Sitemap: https://seaminds.life/sitemap.xml
+Sitemap: https://luomzexqgcjtcmdlbevo.supabase.co/functions/v1/sitemap
