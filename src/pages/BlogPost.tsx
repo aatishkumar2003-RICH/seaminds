@@ -177,12 +177,13 @@ const BlogPost = () => {
             description: desc,
             url: `https://seaminds.life/blog/${slug}`,
             datePublished: post.created_at,
-            dateModified: post.created_at,
+            dateModified: post.updated_at || post.created_at,
             author: { "@type": "Organization", name: "SeaMinds", url: "https://seaminds.life" },
             publisher: {
               "@type": "Organization",
               name: "SeaMinds",
               url: "https://seaminds.life",
+              logo: { "@type": "ImageObject", url: "https://seaminds.life/icon-512.png" },
             },
             ...(post.image_url ? { image: post.image_url } : {}),
           };
@@ -198,6 +199,7 @@ const BlogPost = () => {
           return (
             <>
               <html lang={post.language || "en"} />
+              <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
               <meta property="og:locale" content={
                 ({ en: "en_US", vi: "vi_VN", tl: "tl_PH", hi: "hi_IN", id: "id_ID" } as Record<string, string>)[post.language || "en"] || "en_US"
               } />
