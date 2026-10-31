@@ -217,6 +217,16 @@ const BlogPost = () => {
               {post.image_url && <meta name="twitter:image" content={post.image_url} />}
               <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
               <script type="application/ld+json">{JSON.stringify(breadcrumbLd)}</script>
+              {(() => {
+                // Question headings (<h3>…?</h3><p>…</p>) become FAQ rich results in Google.
+                const strip = (s: string) => s.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").trim();
+                const items = [...post.content.matchAll(/<h3[^>]*>([^<]*?[?？])\s*<\/h3>\s*<p[^>]*>([\s\S]*?)<\/p>/gi)]
+                  .slice(0, 8)
+                  .map((m) => ({ "@type": "Question", name: strip(m[1]), acceptedAnswer: { "@type": "Answer", text: strip(m[2]) } }));
+                return items.length >= 2 ? (
+                  <script type="application/ld+json">{JSON.stringify({ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: items })}</script>
+                ) : null;
+              })()}
             </>
           );
         })()}
