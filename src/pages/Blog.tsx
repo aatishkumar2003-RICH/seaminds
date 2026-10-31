@@ -7,6 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "lucide-react";
 import HomeNav from "@/components/homepage/HomeNav";
 import HomeFooter from "@/components/homepage/HomeFooter";
+import { BLOG_CATEGORIES, blogCategoryOf, type BlogCategory } from "@/lib/blogCategories";
+
+const FEATURES = [
+  { icon: "🎓", title: "Prepare for your orals & promotion", text: "India DG Shipping MMD and Philippines MARINA style oral practice with the AI voice examiner.", to: "/maritime-interview" },
+  { icon: "🧠", title: "Ask the SeaMinds Brain", text: "Any machinery or navigation doubt — voice, photo or document, in your language.", to: "/training?tab=brain" },
+  { icon: "🚢", title: "Fleet incident drills", text: "LPG, tanker, bulk, container and reefer drills built on real casualty cases.", to: "/training?tab=drills" },
+  { icon: "🏢", title: "For ship managers", text: "AI oral interviews, vacancy posting and crew training for your fleet.", to: "/for-companies" },
+];
 
 interface BlogPost {
   id: string;
@@ -54,7 +62,12 @@ const Blog = () => {
     fetchPosts();
   }, []);
 
-  const filtered = langFilter === "all" ? posts : posts.filter((p) => p.language === langFilter);
+  const [cat, setCat] = useState<BlogCategory>("all");
+  const filtered = posts.filter(
+    (p) =>
+      (langFilter === "all" || p.language === langFilter) &&
+      (cat === "all" || blogCategoryOf(`${p.title} ${p.excerpt || ""}`) === cat),
+  );
 
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
