@@ -20,6 +20,16 @@ const LANGUAGES = [
 ];
 
 const TOPICS = [
+  "How to prepare for DG Shipping MMD oral exams with the SeaMinds AI voice examiner — Class IV, Class II, Class I, 2nd Mate, Chief Mate, Master",
+  "MARINA promotion and assessment preparation for Filipino seafarers — practise oral questions with SeaMinds AI",
+  "Preparing for your promotion interview: how SeaMinds AI asks rank-specific job-responsibility questions (C/E, 2/E, 3/E, 4/E, C/O, 2/O, 3/O)",
+  "LPG carrier engineers: reliquefaction plant, BOG compressor trips and ESD — practise with SeaMinds Fleet Drills",
+  "LNG and gas carrier training on your phone — SeaMinds incident drills based on real casualty reports",
+  "Tanker crew: inert gas system and deck seal failures — what SIRE 2.0 inspectors ask, and how to practise",
+  "For ship managers: AI oral interviews that test real competence before joining — SeaMinds for fleets",
+  "For ship managers: digital vessel-type training for LPG, LNG, tanker, bulk, container and reefer fleets",
+  "Maritime English for PSC inspections — practise answering inspectors with SeaMinds",
+  "Meet the SeaMinds Brain — ask by voice, photo or document in Hindi, Tagalog, Bahasa, Vietnamese or English",
   "How to create your free Sea Profile on SeaMinds in 2 minutes — just taps, no typing",
   "How to find and apply for seafarer jobs on SeaMinds — live vacancies updated daily",
   "What is the SeaMinds Score — AI competency assessment scored 0.00–5.00 for seafarers",

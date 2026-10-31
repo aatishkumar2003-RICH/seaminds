@@ -1,7 +1,7 @@
 // Weekly Maritime Briefing: one blog article per user per week, staggered by weekday so the
 // free email quota never spikes. Tue = Indonesia/Vietnam, Wed = Philippines, Thu = India +
 // everyone else, Fri = ShipManagers. Topic matched to department; no repeat within 90 days.
-// Quota gate: only sends while 24h total stays under 80; max 20 per run.
+// Quota gate: only sends while 24h total stays under CEILING; max RUN_CAP per run.
 // GET ?u=<user_id>&s=<sig> = one-click unsubscribe. POST {dry:true} = report only.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
@@ -173,6 +173,7 @@ Deno.serve(async (req) => {
     } else {
       const v = await vacancies(r.rank);
       if (v.length) extra = `<div style="background:#0D1B2A;border-radius:10px;padding:12px;margin-top:8px"><b style="color:#D4AF37">Berths for your rank</b>${v.map((j: any) => `<div style="color:#CBD5E1;font-size:13px;margin-top:6px">• ${esc(j.rank_required)}${j.vessel_type ? ` — ${esc(j.vessel_type)}` : ""}${j.company_name ? ` (${esc(j.company_name)})` : ""}</div>`).join("")}<a href="${SITE}/jobs" style="color:#D4AF37;font-size:13px">See all vacancies →</a></div>`;
+      extra += featureBlock(r.nat, r.rank);
     }
     const unsub = `${FN_URL}?u=${r.id}&s=${await sign(r.id)}`;
     let ok = false, error: string | null = null;
