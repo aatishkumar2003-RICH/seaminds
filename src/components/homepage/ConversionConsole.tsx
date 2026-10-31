@@ -1,3 +1,4 @@
+import FleetDrillsTeaser from "./FleetDrillsTeaser";
 import { buildJobPostingLd } from "@/lib/jobPostingLd";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
@@ -624,6 +625,7 @@ const ConversionConsole = () => {
                 </button>
               ))}
             </div>
+            <div className="mb-4"><FleetDrillsTeaser /></div>
             <p className="text-[10px] text-muted-foreground mb-3">Voice or chat · 6 languages · Free practice · Sign in &amp; quick profile required</p>
             <button onClick={() => openTraining("/maritime-interview")}
               className="sm-cta-pulse mt-auto w-full rounded-xl px-6 h-12 font-bold inline-flex items-center justify-center"

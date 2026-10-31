@@ -750,6 +750,13 @@
       "when": 1793247726010,
       "tag": "0106_unify_vacancy_counts",
       "breakpoints": true
+    },
+    {
+      "idx": 107,
+      "version": "7",
+      "when": 1793422626277,
+      "tag": "0107_cache_vacancy_origin_counts",
+      "breakpoints": true
     }
   ]
 }

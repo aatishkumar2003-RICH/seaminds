@@ -11,12 +11,17 @@ type Counts = { total: number; by: Record<string, number> };
 
 /** Hero tiles: live vacancies grouped by the recruiter's country (WhatsApp dial code). */
 const CountryGateway = () => {
-  const [c, setC] = useState<Counts | null>(null);
+  const [c, setC] = useState<Counts | null>(() => {
+    try { return JSON.parse(localStorage.getItem("sm_origin_counts") || "null"); } catch { return null; }
+  });
 
   useEffect(() => {
     let alive = true;
     supabase.rpc("vacancy_origin_counts" as never).then(({ data }) => {
-      if (alive && data) setC(data as unknown as Counts);
+      if (alive && data) {
+        setC(data as unknown as Counts);
+        try { localStorage.setItem("sm_origin_counts", JSON.stringify(data)); } catch { /* ignore */ }
+      }
     });
     return () => { alive = false; };
   }, []);

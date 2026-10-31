@@ -7244,6 +7244,7 @@ export type Database = {
       recruiter_outreach_sync: { Args: never; Returns: Json }
       redeem_recovery_token: { Args: { p_token: string }; Returns: Json }
       refresh_ticker_stats: { Args: never; Returns: undefined }
+      refresh_vacancy_origin_counts: { Args: never; Returns: undefined }
       reply_lineup_ticket: {
         Args: { p_body: string; p_ticket_id: string }
         Returns: Json
@@ -7551,6 +7552,7 @@ export type Database = {
       }
       vacancy_market_stats: { Args: never; Returns: Json }
       vacancy_origin_counts: { Args: never; Returns: Json }
+      vacancy_origin_counts_compute: { Args: never; Returns: Json }
       vacancy_origin_of: {
         Args: { email: string; rname: string; wa: string }
         Returns: string
