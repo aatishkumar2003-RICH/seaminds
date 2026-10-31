@@ -121,6 +121,14 @@ export function buildExamMessages(input: ExamInput, pendingQuestion: string | nu
   return { messages, nextPhase, turnIndex, dept };
 }
 
+// A described unsafe action (e.g. "we grind without a permit", "I bypassed the 15 ppm alarm").
+// Sentences that describe preventing/refusing the action ("I would stop anyone working without a permit") are not flagged.
+const VIOLATION = /\b(without\s+(an?\s+|the\s+|any\s+)?(hot[\s-]?work\s+|work\s+)?(permit|ptw|isolat\w*|lock[\s-]?out|loto|ventilat\w*|gas[\s-]?test\w*|atmosphere\s+test\w*|testing)|bypass(ed|ing)?|overrid(e|den|ing)|disabl(e|ed|ing)\s+(the\s+)?(alarm|trip|interlock|sensor|monitor)|ignor(e|ed|ing)\s+(the\s+)?alarm|(pump|discharg|dump)\w*\s+(\w+\s+){0,3}(directly\s+)?overboard|vent(ed|ing)?\s+(the\s+)?cargo\s+to\s+(the\s+)?atmosphere)\b/i;
+const PREVENTIVE = /\b(never|not|no\s+one|nobody|don'?t|do\s+not|won'?t|will\s+not|must\s+not|cannot|can'?t|should\s+not|shouldn'?t|stop\w*|prohibit\w*|forbid\w*|refuse\w*|suspend\w*|report\w*|prevent\w*|avoid\w*|under\s+no|not\s+allowed|illegal|violation|unsafe|wrong)\b/i;
+export function unsafeAction(answer: string): boolean {
+  return (answer || "").split(/(?<=[.!?;])\s+|\n+/).some((s) => VIOLATION.test(s) && !PREVENTIVE.test(s));
+}
+
 /** Validates AI JSON and applies deterministic safety rules on top of it. */
 export function finalizeStep(aiRaw: unknown, answer: string | undefined, turnIndex: number, prior?: { turns: Turn[]; question: string; dept: "engine" | "deck" }): ExamStep {
   const o = (aiRaw ?? {}) as any;
