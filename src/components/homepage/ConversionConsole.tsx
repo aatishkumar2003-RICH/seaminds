@@ -624,6 +624,7 @@ const ConversionConsole = () => {
                 </button>
               ))}
             </div>
+            <div className="mb-4"><FleetDrillsTeaser /></div>
             <p className="text-[10px] text-muted-foreground mb-3">Voice or chat · 6 languages · Free practice · Sign in &amp; quick profile required</p>
             <button onClick={() => openTraining("/maritime-interview")}
               className="sm-cta-pulse mt-auto w-full rounded-xl px-6 h-12 font-bold inline-flex items-center justify-center"
