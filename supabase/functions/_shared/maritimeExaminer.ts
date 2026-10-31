@@ -134,6 +134,7 @@ export function finalizeStep(aiRaw: unknown, answer: string | undefined, turnInd
     // Deterministic net: a safety-gate scenario answered without any core precaution is flagged.
     const gates = detectSafetyGates(answer);
     if (!blank && gates.length && !/(permit|isolat|ventilat|gas test|test the atmosphere|lock|tag|standby|inform|stop)/i.test(answer)) safety = true;
+    if (!blank && unsafeAction(answer)) safety = true;
     if (safety) depth = Math.min(depth, 1);
     assessment = {
       topic: String(a.topic ?? "general").slice(0, 80),

@@ -28,6 +28,11 @@ export const ENGINE_TOPICS: Topic[] = [
   { id: "aux_systems", title: "Auxiliary machinery", dept: "engine", points: ["steering gear (hydraulics, tests, emergency steering)", "compressors, refrigeration & AC", "fixed fire-fighting (CO2, water mist) maintenance", "pumps, valves, heat exchangers"] },
   { id: "automation", title: "Automation, UMS & cyber", dept: "engine", points: ["alarm & monitoring, UMS requirements", "PLC/control loops, sensor faults", "IACS UR E26/E27 and cyber hygiene"] },
   { id: "eng_management", title: "Engine management", dept: "engine", points: ["PMS & condition monitoring, spares planning", "class surveys, CoC, dry-dock specification", "budget, superintendent reporting, CII/EEXI technical measures", "MLC rest hours, ER team leadership"] },
+  // Vessel-specific cargo machinery owned by the engine department (STCW engine responsibilities).
+  { id: "gas_plant", title: "Gas cargo plant machinery (LNG/LPG)", dept: "engine", vessels: ["gas_carrier"], points: ["reliquefaction compressors (screw/labyrinth/reciprocating): suction superheat, intercooling, discharge temperature trips", "cargo condensers & seawater cooling, BOG handling and LD/HD compressors, FGSS", "N2 generator and inert gas plant: dew point, O2 content", "ESD-1/ESD-2 interlocks, submerged pump & seal-oil systems, barrier space purge", "IGC Code: never vent as routine pressure control; relief valve settings"] },
+  { id: "tanker_aux", title: "Tanker auxiliary machinery", dept: "engine", vessels: ["oil_tanker", "chemical_tanker"], points: ["hydraulic deepwell cargo pumps (Framo type) and power packs", "inert gas plant: scrubber, deck seal, PV breaker, O2 analyser ≤ limits per SOLAS II-2", "cargo heating, steam-driven cargo pump turbines", "ODME interface and pump room safety"] },
+  { id: "bulk_aux", title: "Bulk carrier auxiliary machinery", dept: "engine", vessels: ["bulk", "general_cargo"], points: ["high-capacity ballast pumps, eductors & stripping during fast loading", "hydraulic hatch cover power packs and seals", "deck crane / grab electro-hydraulics and limit switches", "hold & bilge alarm systems (SOLAS XII water ingress detection)"] },
+  { id: "box_power", title: "Container & ro-ro power management", dept: "engine", vessels: ["container", "ro_ro"], points: ["reefer socket load and generator auto-start/synchronising", "bow thruster & shaft generator interlocks during manoeuvring", "anti-heeling pump system", "ro-ro deck ventilation and drencher/fire systems"] },
 ];
 
 export const DECK_TOPICS: Topic[] = [
@@ -87,7 +92,7 @@ export function topicsFor(rank: string, vessel?: VesselType): Topic[] {
   return pool.filter((t) => {
     if (t.vessels && vessel && !t.vessels.includes(vessel)) return false;
     if (r.level !== "management" && /management/.test(t.id)) return false;
-    if (r.level === "support" && ["dual_fuel", "automation", "stability", "cargo_gas"].includes(t.id)) return false;
+    if (r.level === "support" && ["dual_fuel", "automation", "stability", "cargo_gas", "gas_plant"].includes(t.id)) return false;
     return true;
   });
 }
