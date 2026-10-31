@@ -9,6 +9,7 @@ const BORDER = "rgba(212,175,55,0.3)";
 type Post = { id: string; title: string; slug: string };
 
 const CARDS: { id?: string; title: string; body: string; link: string; cta: string }[] = [
+  { title: "🚢 ENTERPRISE FLEET DRILLS · SIRE 2.0 & TMSA", body: "Replace slide CBTs with real incident drills for Bulk, Gas, Container, Tanker & Reefer fleets.", link: "/for-companies#fleet-drills", cta: "SEE FLEET TRAINING →" },
   { title: "SEA PROFILE", body: "One profile, reused for every application — recruiters find you.", link: "/profile-start", cta: "START →" },
   { id: "smc-score", title: "AI INTERVIEW & SEAMINDS SCORE", body: "Scored 0.00–5.00 on Technical · Judgment · English · Behaviour.", link: "/app?tab=smc", cta: "TAKE ASSESSMENT →" },
   { title: "MARKET & SALARY", body: "Live vacancy indices and salary benchmarks by rank and vessel.", link: "/app?tab=home", cta: "OPEN MARKET →" },
