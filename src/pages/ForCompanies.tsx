@@ -9,6 +9,7 @@ import HomeNav from "@/components/homepage/HomeNav";
 import HomeFooter from "@/components/homepage/HomeFooter";
 import ManagerWorkflow from "@/components/homepage/ManagerWorkflow";
 import EvidenceSection from "@/components/companies/EvidenceSection";
+import FleetDrillsSection from "@/components/companies/FleetDrillsSection";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -158,6 +159,7 @@ const ForCompanies = () => {
           </div>
         </div>
       </section>
+      <FleetDrillsSection />
 
       <ManagerWorkflow />
       <EvidenceSection />

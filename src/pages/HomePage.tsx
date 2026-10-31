@@ -8,6 +8,7 @@ import TestimonialsSection from "@/components/homepage/TestimonialsSection";
 import HomeFooter from "@/components/homepage/HomeFooter";
 import HomeBento from "@/components/homepage/HomeBento";
 import TrainingTracksStrip from "@/components/homepage/TrainingTracksStrip";
+import FleetDrillsTeaser from "@/components/homepage/FleetDrillsTeaser";
 
 import { useTimeOfDay } from "@/hooks/useTimeOfDay";
 import { useAuth } from "@/contexts/AuthContext";
@@ -138,6 +139,7 @@ const HomePage = () => {
       <OceanBackground timeOfDay={timeOfDay} />
       <div className="relative z-10">
         <ConversionConsole />
+        <FleetDrillsTeaser />
         <TrainingTracksStrip />
         <HomeBento />
 
