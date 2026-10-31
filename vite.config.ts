@@ -77,7 +77,8 @@ export default defineConfig(({ mode }) => ({
         globPatterns: ["**/*.{js,css,html,ico,png,svg,jpg,jpeg,woff,woff2}"],
         globIgnores: ["**/version.json"],
         cleanupOutdatedCaches: true,
-        navigateFallbackDenylist: [/^\/~oauth/, /^\/\.lovable\/oauth/],
+        // Raw files (sitemap, RSS, robots) must load from the server, never the app screen.
+        navigateFallbackDenylist: [/^\/~oauth/, /^\/\.lovable\/oauth/, /\.(xml|txt|json)$/],
         // Personal data (auth, profiles, applications, takeover) is never cached; see src/lib/pwaCacheRules.ts
         runtimeCaching: runtimeCachingRules,
       },
