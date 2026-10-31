@@ -65,9 +65,10 @@ export default function CrewManningMatrix() {
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
+    // A typed search looks across every crew member, so filter chips never hide an exact match.
+    if (s) return rows.filter((r) => [r.first_name, r.last_name, `${r.first_name} ${r.last_name}`, r.email, r.whatsapp_number, r.crew_unique_id, r.passport_number, r.date_of_birth]
+      .some((v) => String(v || "").toLowerCase().includes(s)));
     return base.filter((r) => {
-      if (s && ![r.first_name, r.last_name, `${r.first_name} ${r.last_name}`, r.email, r.whatsapp_number, r.crew_unique_id, r.passport_number, r.date_of_birth]
-        .some((v) => String(v || "").toLowerCase().includes(s))) return false;
       if (rank && !rankMatch(r._rank, rank)) return false;
       if (nat && r._nat.name !== nat) return false;
       if (vessel && !`${r.vessel_type || ""} ${(r.preferred_vessel_types || []).join?.(" ") || ""}`.toLowerCase().includes(vessel.toLowerCase())) return false;
