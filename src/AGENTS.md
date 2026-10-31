@@ -21,3 +21,4 @@
 - Crew Search and Ship Marketplace are owner-only private previews (`OwnerPreviewGate` + owner check in `manager-search`) until the owner opens them. Why: monetisation launch timing.
 
 - Maritime Brain is one component (`MaritimeMasterBrain`) used in Training and the main-menu Brain screen; photos go to `diagnose-equipment`, documents are read to text in the browser (`src/lib/brainAttachments.ts`) and sent to `bridge-chat`, never stored. Why: one AI hub, no duplicate screens, no file retention.
+- Fleet drill results are written only via RPC `record_fleet_drill` (server grades the choice) into own-read `fleet_drill_results`; interview gaps map to drills in `src/lib/drillPrescription.ts`. Why: crew cannot forge passes; one tested gap→drill map.

@@ -757,6 +757,20 @@
       "when": 1793422626277,
       "tag": "0107_cache_vacancy_origin_counts",
       "breakpoints": true
+    },
+    {
+      "idx": 108,
+      "version": "7",
+      "when": 1793428062287,
+      "tag": "0108_fleet_drill_results",
+      "breakpoints": true
+    },
+    {
+      "idx": 109,
+      "version": "7",
+      "when": 1793428081244,
+      "tag": "0109_fix_fleet_drill_keys",
+      "breakpoints": true
     }
   ]
 }

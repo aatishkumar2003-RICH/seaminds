@@ -1,24 +1,45 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { CheckCircle2, AlertTriangle, RotateCcw } from "lucide-react";
 import { DRILLS } from "@/components/homepage/FleetSimulatorPreview";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const KEY = "seaminds_fleet_drills_v1";
 type Done = Record<string, { correct: boolean; at: string }>;
 const readDone = (): Done => { try { return JSON.parse(localStorage.getItem(KEY) || "{}"); } catch { return {}; } };
 
-/** Crew-facing vessel-type incident drills. Progress is practice only, kept on this device. */
+/** Crew-facing vessel-type incident drills. Signed-in results are saved to the crew's training record. */
 const FleetDrills = () => {
-  const [k, setK] = useState(DRILLS[0].key);
+  const { user } = useAuth();
+  const [params] = useSearchParams();
+  const initial = DRILLS.find((x) => x.key === params.get("drill"))?.key ?? DRILLS[0].key;
+  const [k, setK] = useState(initial);
   const [pick, setPick] = useState<number | null>(null);
   const [done, setDone] = useState<Done>(readDone);
   const d = DRILLS.find((x) => x.key === k)!;
   const passed = Object.values(done).filter((v) => v.correct).length;
 
+  useEffect(() => {
+    if (!user) return;
+    void supabase.from("fleet_drill_results").select("drill_key, correct, updated_at").then(({ data }) => {
+      if (!data?.length) return;
+      setDone((prev) => {
+        const next = { ...prev };
+        for (const r of data) next[r.drill_key] = { correct: r.correct || !!prev[r.drill_key]?.correct, at: r.updated_at };
+        try { localStorage.setItem(KEY, JSON.stringify(next)); } catch { /* storage full */ }
+        return next;
+      });
+    });
+  }, [user]);
+
   const choose = (i: number) => {
     setPick(i);
-    const next = { ...done, [d.key]: { correct: i === d.correct, at: new Date().toISOString() } };
+    const ok = i === d.correct;
+    const next = { ...done, [d.key]: { correct: ok || !!done[d.key]?.correct, at: new Date().toISOString() } };
     setDone(next);
     try { localStorage.setItem(KEY, JSON.stringify(next)); } catch { /* storage full */ }
+    if (user) void supabase.rpc("record_fleet_drill", { p_drill: d.key, p_choice: i });
   };
 
   return (
@@ -64,7 +85,7 @@ const FleetDrills = () => {
           </div>
         )}
       </article>
-      <p className="text-[11px] text-muted-foreground">Practice guidance only — not an STCW certificate. Results stay on this phone.</p>
+      <p className="text-[11px] text-muted-foreground">Practice guidance only — not an STCW certificate. {user ? "Results are saved to your private training record." : "Sign in to save results to your training record."}</p>
     </div>
   );
 };
