@@ -75,7 +75,7 @@ export default function CrewManningMatrix() {
       if (status && r._status !== status) return false;
       return true;
     });
-  }, [base, q, rank, nat, vessel, status]);
+  }, [rows, base, q, rank, nat, vessel, status]);
 
   // Nationality tabs auto-grow from data, counted within the other active filters
   const natCounts = useMemo(() => {
