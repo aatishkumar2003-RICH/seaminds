@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, RotateCcw, MessageCircle, Mail } from "lucide-react";
+import { Search, RotateCcw, MessageCircle, Mail, X } from "lucide-react";
 import { resolveNationality, manningStatus, STATUS_META, type ManningStatus } from "@/lib/crewManning";
 import CrewDossierDrawer from "./CrewDossierDrawer";
 
