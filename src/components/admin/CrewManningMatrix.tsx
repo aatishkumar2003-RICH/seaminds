@@ -186,7 +186,7 @@ export default function CrewManningMatrix() {
               );
             })}
             {!loading && filtered.length === 0 && (
-              <tr><td colSpan={8} className="px-3 py-8 text-center" style={{ color: "#94A3B8" }}>No crew match these filters.</td></tr>
+              <tr><td colSpan={8} className="px-3 py-8 text-center" style={{ color: "#94A3B8" }}>No crew match. <button onClick={reset} className="font-bold underline" style={{ color: GOLD }}>Clear search &amp; filters</button></td></tr>
             )}
           </tbody>
         </table>
