@@ -402,15 +402,15 @@ Deno.serve(async (req) => {
 
 
   try {
-    // Pick the first topic+language pair that has not been published yet
+    // Pick the first unpublished topic+language pair: every topic in English first, then translations.
     const { data: existing } = await supabase.from("blog_posts").select("slug");
     const used = new Set((existing || []).map((r: any) => r.slug));
 
     let topic: string | null = null;
     let lang = LANGUAGES[0];
     outer:
-    for (const t of TOPICS) {
-      for (const L of LANGUAGES) {
+    for (const L of LANGUAGES) {
+      for (const t of TOPICS) {
         const candidate = L.code === "en" ? slugify(t) : `${slugify(t)}-${L.code}`;
         if (!used.has(candidate)) { topic = t; lang = L; break outer; }
       }
@@ -422,6 +422,7 @@ Deno.serve(async (req) => {
       });
     }
     const slug = lang.code === "en" ? slugify(topic) : `${slugify(topic)}-${lang.code}`;
+    const cta = ctaFor(topic);
 
     // Write the article with GPT-4o-mini
     const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -432,25 +433,29 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
-        max_tokens: 1800,
+        max_tokens: 2400,
         messages: [{
           role: "user",
-          content: `Write a warm, clear, factual article about this SeaMinds feature for seafarers and maritime companies.
+          content: `You are a senior marine officer and examiner writing a practical guide for seafarers and ship managers.
 
 Topic: "${topic}"
 
-LANGUAGE: ${lang.note} The title, excerpt and the entire article body must be in ${lang.name}.
+LANGUAGE: ${lang.note} The title, excerpt, article and FAQ must all be in ${lang.name}.
 
 Rules:
-- 700-900 words, written for seafarers whose first language may not be English. Use simple, clear sentences.
-- Describe ONLY what the feature actually does as stated in the topic — never invent statistics, user counts, success rates, partnerships or capabilities.
-- Include practical step-by-step usage where natural.
-- Keep maritime rank names, vessel types and certificate terms (STCW, SMC, CoC, DP) in English in every language.
-- Structure with 4-6 short section headings using markdown ##.
-- End with a short practical checklist of 3-5 bullet points.
+- 900-1200 words. Simple, clear sentences for readers whose first language may not be English.
+- Answer the reader's real question first (the first paragraph must directly answer what someone searching this topic wants).
+- Technical content must follow SOLAS, MARPOL, STCW, ISM, IGC, IMSBC, ISGOTT and SIRE 2.0 as generally known. If unsure of a detail, say "follow your company SMS and maker's manual" instead of inventing numbers.
+- Never invent statistics, user counts, pass rates, partnerships, exam dates or official syllabus claims.
+- Where it fits naturally, mention that readers can practise orals by voice with the SeaMinds AI examiner, or try incident drills on SeaMinds — describe only these, no other claims.
+- Keep rank names, vessel types and certificate terms (STCW, CoC, MMD, MARINA, SIRE, PSC) in English in every language.
+- 4-6 section headings using markdown ##, bullet lists with "- ".
+- End with a short practical checklist of 3-5 bullets.
+- Title: under 65 characters, contains the main search phrase, no emoji.
 
 Return ONLY valid JSON, no markdown fences:
-{"title": "...", "excerpt": "one sentence summary under 160 characters", "content": "the full article in markdown"}`,
+{"title": "...", "excerpt": "one sentence under 155 characters", "content": "the article in markdown", "faq": [{"q": "question ending with ?", "a": "2-3 sentence answer"}]}
+Give 4 FAQ items that people commonly search.`,
         }],
       }),
     });
@@ -459,15 +464,34 @@ Return ONLY valid JSON, no markdown fences:
     const raw = aiData.choices?.[0]?.message?.content || "";
     const parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
 
+    const faq = (Array.isArray(parsed.faq) ? parsed.faq : [])
+      .filter((f: any) => f?.q && f?.a)
+      .slice(0, 6)
+      .map((f: any) => {
+        const q = String(f.q).trim();
+        return `<h3>${inline(q.endsWith("?") || q.endsWith("？") ? q : q + "?")}</h3>\n<p>${inline(String(f.a).trim())}</p>`;
+      })
+      .join("\n");
+
+    const ctaBox = `
+<div style="background:#112240;border:1px solid rgba(212,175,55,0.3);border-radius:14px;padding:18px;margin:22px 0">
+  <a href="${cta.href}" style="display:inline-block;background:#D4AF37;color:#0D1B2A;font-weight:700;padding:10px 18px;border-radius:12px;text-decoration:none">${cta.label}</a>
+</div>`.trim();
+
     const footerRow = `
 <div style="border-top:1px solid rgba(212,175,55,0.3);margin-top:24px;padding-top:14px;color:#94A3B8;font-size:14px">
+  <a href="https://seaminds.life/maritime-interview" style="color:#D4AF37;text-decoration:none">Practise orals with AI</a> ·
+  <a href="https://seaminds.life/training?tab=drills" style="color:#D4AF37;text-decoration:none">Fleet incident drills</a> ·
   <a href="https://seaminds.life/feed" style="color:#D4AF37;text-decoration:none">Browse all live vacancies</a> ·
   <a href="https://seaminds.life/join" style="color:#D4AF37;text-decoration:none">Create your free Sea Profile</a> ·
-  <a href="https://seaminds.life/for-companies" style="color:#D4AF37;text-decoration:none">Hire crew with AI interviews</a> ·
-  <a href="https://seaminds.life/manager" style="color:#D4AF37;text-decoration:none">Post a vacancy</a> ·
-  <a href="https://seaminds.life" style="color:#D4AF37;text-decoration:none">SeaMinds Maritime Exchange</a>
+  <a href="https://seaminds.life/for-companies" style="color:#D4AF37;text-decoration:none">Hire crew with AI interviews</a>
 </div>`.trim();
-    parsed.content = (parsed.content || "") + "\n\n" + footerRow;
+    parsed.content = [
+      mdToHtml(parsed.content || ""),
+      ctaBox,
+      faq ? `<h2>FAQ</h2>\n${faq}` : "",
+      footerRow,
+    ].filter(Boolean).join("\n\n");
 
     // Fetch a maritime image (optional)
     let imageUrl: string | null = null;
