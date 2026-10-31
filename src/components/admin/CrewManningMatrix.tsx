@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, RotateCcw, MessageCircle, Mail } from "lucide-react";
+import { Search, RotateCcw, MessageCircle, Mail, X } from "lucide-react";
 import { resolveNationality, manningStatus, STATUS_META, type ManningStatus } from "@/lib/crewManning";
 import CrewDossierDrawer from "./CrewDossierDrawer";
 
@@ -63,8 +63,16 @@ export default function CrewManningMatrix() {
   const todayStart = useMemo(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); }, []);
   const base = useMemo(() => rows.filter((r) => !activeToday || (r.last_seen && new Date(r.last_seen).getTime() >= todayStart)), [rows, activeToday, todayStart]);
 
+  // Every rank present in the data, quick ranks first, so ranks like 4th Engineer are selectable.
+  const allRanks = useMemo(() => {
+    const extra = [...new Set(rows.map((r) => r._rank).filter(Boolean))]
+      .filter((r) => !QUICK_RANKS.some((qr) => rankMatch(r, qr))).sort();
+    return [...QUICK_RANKS, ...extra];
+  }, [rows]);
+
   const filtered = useMemo(() => {
-    const s = q.trim().toLowerCase();
+    // Strip stray punctuation like "name(" so a typo never hides an exact match.
+    const s = q.trim().toLowerCase().replace(/^[\s()[\]{}.,;:'"]+|[\s()[\]{}.,;:'"]+$/g, "");
     // A typed search looks across every crew member, so filter chips never hide an exact match.
     if (s) return rows.filter((r) => [r.first_name, r.last_name, `${r.first_name} ${r.last_name}`, r.email, r.whatsapp_number, r.crew_unique_id, r.passport_number, r.date_of_birth]
       .some((v) => String(v || "").toLowerCase().includes(s)));
@@ -91,7 +99,7 @@ export default function CrewManningMatrix() {
   }, [base, rank, nat]);
 
   const reset = () => { setQ(""); setRank(""); setNat(""); setVessel(""); setStatus(""); setActiveToday(false); };
-  const summary = [filtered.length, status ? STATUS_META[status].label : "", rank || "crew", nat ? `from ${nat}` : ""].filter(Boolean).join(" ");
+  const summary = [String(filtered.length), status ? STATUS_META[status].label : "", rank || "crew", nat ? `from ${nat}` : ""].filter(Boolean).join(" ");
 
   return (
     <div className="space-y-4">
@@ -100,7 +108,8 @@ export default function CrewManningMatrix() {
           <div className="relative flex-1">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: GOLD }} />
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, Crew ID, WhatsApp, email, passport…"
-              className="w-full pl-9 pr-3 py-2 rounded-lg text-sm outline-none" style={{ background: "#0D1B2A", color: "#E0E0E0", border: `1px solid ${BORDER}` }} />
+              className="w-full pl-9 pr-8 py-2 rounded-lg text-sm outline-none" style={{ background: "#0D1B2A", color: "#E0E0E0", border: `1px solid ${BORDER}` }} />
+            {q && <button onClick={() => setQ("")} aria-label="Clear search" className="absolute right-2 top-1/2 -translate-y-1/2 p-1"><X className="w-4 h-4" style={{ color: GOLD }} /></button>}
           </div>
           <Pill active={activeToday} onClick={() => setActiveToday((v) => !v)}>Active today</Pill>
           <button onClick={reset} className="flex items-center gap-1 text-xs font-bold px-3 py-2 rounded-lg" style={{ color: GOLD, border: `1px solid ${BORDER}` }}>
@@ -109,12 +118,12 @@ export default function CrewManningMatrix() {
         </div>
 
         <Row label="⚓ Rank">
-          <select value={QUICK_RANKS.includes(rank) ? rank : rank ? "__other" : ""} onChange={(e) => setRank(e.target.value === "__other" ? rank : e.target.value)}
+          <select value={rank} onChange={(e) => { setRank(e.target.value); setQ(""); }}
             className="text-xs rounded-lg px-2 py-1" style={{ background: "#0D1B2A", color: GOLD, border: `1px solid ${BORDER}` }}>
             <option value="">All ranks</option>
-            {QUICK_RANKS.map((r) => <option key={r} value={r}>{r}</option>)}
+            {allRanks.map((r) => <option key={r} value={r}>{r}</option>)}
           </select>
-          {QUICK_RANKS.map((r) => <Pill key={r} active={rank === r} onClick={() => setRank(rank === r ? "" : r)}>{r}</Pill>)}
+          {QUICK_RANKS.map((r) => <Pill key={r} active={rank === r} onClick={() => { setRank(rank === r ? "" : r); setQ(""); }}>{r}</Pill>)}
         </Row>
         <Row label="🌍 Nationality">
           <Pill active={!nat} onClick={() => setNat("")}>All</Pill>
@@ -177,7 +186,7 @@ export default function CrewManningMatrix() {
               );
             })}
             {!loading && filtered.length === 0 && (
-              <tr><td colSpan={8} className="px-3 py-8 text-center" style={{ color: "#94A3B8" }}>No crew match these filters.</td></tr>
+              <tr><td colSpan={8} className="px-3 py-8 text-center" style={{ color: "#94A3B8" }}>No crew match. <button onClick={reset} className="font-bold underline" style={{ color: GOLD }}>Clear search &amp; filters</button></td></tr>
             )}
           </tbody>
         </table>
