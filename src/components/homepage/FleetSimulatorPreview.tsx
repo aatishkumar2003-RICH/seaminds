@@ -76,11 +76,16 @@ const FleetSimulatorPreview = ({ open, onClose }: { open: boolean; onClose: () =
           </div>
           <button onClick={onClose} aria-label="Close" className="text-muted-foreground"><X size={20} /></button>
         </div>
-        <div className="-mx-1 flex gap-1.5 overflow-x-auto no-scrollbar px-1">
-          {DRILLS.map((x) => (
-            <button key={x.key} onClick={() => { setK(x.key); setPick(null); }}
-              className={`shrink-0 rounded-full border px-3 py-1 text-xs font-bold ${x.key === k ? "border-primary bg-primary text-primary-foreground" : "border-primary/40 text-primary"}`}>{x.tab}</button>
-          ))}
+        <div className="grid grid-cols-5 gap-1">
+          {DRILLS.map((x) => {
+            const [icon, ...name] = x.tab.split(" ");
+            return (
+              <button key={x.key} onClick={() => { setK(x.key); setPick(null); }} aria-pressed={x.key === k}
+                className={`flex flex-col items-center rounded-xl border py-1 text-[10px] font-bold leading-tight ${x.key === k ? "border-primary bg-primary text-primary-foreground" : "border-primary/40 text-primary"}`}>
+                <span className="text-sm">{icon}</span>{name.join(" ")}
+              </button>
+            );
+          })}
         </div>
         <p className="text-[11px] text-muted-foreground">📚 {d.source} · 👥 {d.ranks}</p>
         <ul className="rounded-xl border border-border bg-background/50 p-3 text-xs space-y-1">
