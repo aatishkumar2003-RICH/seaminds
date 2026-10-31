@@ -19,7 +19,54 @@ const LANGUAGES = [
   { code: "id", name: "Indonesian", note: "Write entirely in Bahasa Indonesia, natural for Indonesian seafarers." },
 ];
 
+// High-intent search topics first (what seafarers and managers actually type into Google),
+// then the original feature explainers. English for every topic is written before translations.
+const SEO_TOPICS = [
+  // India — DG Shipping / MMD orals
+  "DG Shipping MMD 2nd Mate (OOW) oral exam questions and how to prepare in 2026",
+  "MMD Chief Mate oral exam: Function 1, 2 and 3 questions examiners ask",
+  "MMD Master oral exam preparation: what surveyors ask about ISM, PSC and emergencies",
+  "MEO Class IV oral exam questions for marine engineers and how to answer them",
+  "MEO Class II (Second Engineer) oral exam: most asked questions and model answers",
+  "MEO Class I (Chief Engineer) oral exam preparation: management-level questions",
+  "Common reasons candidates fail MMD orals and how to avoid them",
+  "How to practise MMD oral questions out loud with an AI voice examiner",
+  // Philippines — MARINA / promotion
+  "MARINA OIC-NW assessment and promotion: questions and preparation tips",
+  "MARINA OIC-EW engineering officer assessment: practical questions to prepare",
+  "Filipino seafarers: preparing for your promotion interview with the manning agency",
+  // Rank responsibilities / promotion interviews
+  "Chief Engineer job responsibilities: fuel consumption, reports and what interviewers ask",
+  "Second Engineer responsibilities: planned maintenance, purifiers and interview questions",
+  "Third Engineer responsibilities: generators and auxiliary machinery interview questions",
+  "Fourth Engineer responsibilities: bunkering procedure and interview questions",
+  "Chief Officer responsibilities: cargo, stability and ballast interview questions",
+  "Second Officer responsibilities: passage planning and ECDIS interview questions",
+  "Third Officer responsibilities: LSA, FFA and bridge watch interview questions",
+  "ETO interview questions: alarms, automation and high-voltage safety",
+  // Vessel-type technical
+  "LPG carrier reliquefaction plant explained: BOG compressor trip actions",
+  "LPG and LNG emergency shutdown (ESD) systems: what every officer must know",
+  "LNG carrier boil-off gas management explained for engineers",
+  "Tanker inert gas system and deck seal: failures, checks and SIRE 2.0 questions",
+  "SIRE 2.0 crew interview questions and how to answer inspectors",
+  "Bulk carrier cargo liquefaction: IMSBC can test and what to do before loading",
+  "Container ship parametric rolling and lashing failures: precautions for officers",
+  "Reefer ship ammonia leak response: safety steps for engineers",
+  "Enclosed space entry: permit, gas testing and common mistakes on ships",
+  "Hot work permit on ships: correct procedure and why accidents happen",
+  // English & PSC
+  "Maritime English for PSC inspections: questions inspectors ask crew",
+  "SMCP phrases every officer must use on the bridge and radio",
+  // Managers
+  "For ship managers: how AI oral interviews test real crew competence before joining",
+  "For ship managers: replacing slide-based CBT with vessel-specific incident drills",
+  "For ship managers: preparing crew for SIRE 2.0 and TMSA vetting with digital training",
+  "For manning agencies: shortlisting crew faster with AI competency scores",
+];
+
 const TOPICS = [
+  ...SEO_TOPICS,
   "How to prepare for DG Shipping MMD oral exams with the SeaMinds AI voice examiner — Class IV, Class II, Class I, 2nd Mate, Chief Mate, Master",
   "MARINA promotion and assessment preparation for Filipino seafarers — practise oral questions with SeaMinds AI",
   "Preparing for your promotion interview: how SeaMinds AI asks rank-specific job-responsibility questions (C/E, 2/E, 3/E, 4/E, C/O, 2/O, 3/O)",
@@ -46,6 +93,44 @@ const TOPICS = [
   "How certificate verification works on SeaMinds — scan the QR, verify any SeaMinds Score certificate",
 ];
 
+// The one SeaMinds action that matches the reader's intent.
+function ctaFor(topic: string): { label: string; href: string } {
+  const t = topic.toLowerCase();
+  const drill = /lpg|lng|gas carrier|boil-off|esd/.test(t) ? "gas"
+    : /tanker|inert gas|sire/.test(t) ? "tanker"
+    : /bulk|imsbc|liquefaction/.test(t) ? "bulk"
+    : /container|lashing|parametric/.test(t) ? "container"
+    : /reefer|ammonia/.test(t) ? "reefer" : null;
+  if (/ship managers|manning agenc/.test(t)) return { label: "See SeaMinds for fleets →", href: "https://seaminds.life/for-companies" };
+  if (drill) return { label: "Try the free incident drill →", href: `https://seaminds.life/training?tab=drills&drill=${drill}` };
+  if (/english|smcp|psc/.test(t)) return { label: "Practise Maritime English free →", href: "https://seaminds.life/training?tab=english" };
+  if (/oral|interview|promotion|marina|mmd|meo|responsibilit/.test(t)) return { label: "Practise this oral with the SeaMinds AI examiner →", href: "https://seaminds.life/maritime-interview" };
+  return { label: "Create your free Sea Profile →", href: "https://seaminds.life/join" };
+}
+
+const escHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const inline = (s: string) => escHtml(s).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+
+// Minimal markdown → HTML so articles render cleanly once HTML blocks are appended.
+function mdToHtml(md: string): string {
+  const out: string[] = [];
+  let list = false;
+  for (const raw of md.split("\n")) {
+    const l = raw.trim();
+    if (/^[-*]\s+/.test(l)) {
+      if (!list) { out.push("<ul>"); list = true; }
+      out.push(`<li>${inline(l.replace(/^[-*]\s+/, ""))}</li>`);
+      continue;
+    }
+    if (list) { out.push("</ul>"); list = false; }
+    if (!l) continue;
+    const h = l.match(/^(#{1,4})\s+(.*)$/);
+    if (h) { const n = Math.max(2, h[1].length); out.push(`<h${n}>${inline(h[2])}</h${n}>`); }
+    else out.push(`<p>${inline(l)}</p>`);
+  }
+  if (list) out.push("</ul>");
+  return out.join("\n");
+}
 
 const slugify = (s: string) =>
   s.toLowerCase().replace(/[^a-z0-9\s-]/g, "").trim().replace(/\s+/g, "-").slice(0, 80);
@@ -317,15 +402,15 @@ Deno.serve(async (req) => {
 
 
   try {
-    // Pick the first topic+language pair that has not been published yet
+    // Pick the first unpublished topic+language pair: every topic in English first, then translations.
     const { data: existing } = await supabase.from("blog_posts").select("slug");
     const used = new Set((existing || []).map((r: any) => r.slug));
 
     let topic: string | null = null;
     let lang = LANGUAGES[0];
     outer:
-    for (const t of TOPICS) {
-      for (const L of LANGUAGES) {
+    for (const L of LANGUAGES) {
+      for (const t of TOPICS) {
         const candidate = L.code === "en" ? slugify(t) : `${slugify(t)}-${L.code}`;
         if (!used.has(candidate)) { topic = t; lang = L; break outer; }
       }
@@ -337,6 +422,7 @@ Deno.serve(async (req) => {
       });
     }
     const slug = lang.code === "en" ? slugify(topic) : `${slugify(topic)}-${lang.code}`;
+    const cta = ctaFor(topic);
 
     // Write the article with GPT-4o-mini
     const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -347,25 +433,29 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
-        max_tokens: 1800,
+        max_tokens: 2400,
         messages: [{
           role: "user",
-          content: `Write a warm, clear, factual article about this SeaMinds feature for seafarers and maritime companies.
+          content: `You are a senior marine officer and examiner writing a practical guide for seafarers and ship managers.
 
 Topic: "${topic}"
 
-LANGUAGE: ${lang.note} The title, excerpt and the entire article body must be in ${lang.name}.
+LANGUAGE: ${lang.note} The title, excerpt, article and FAQ must all be in ${lang.name}.
 
 Rules:
-- 700-900 words, written for seafarers whose first language may not be English. Use simple, clear sentences.
-- Describe ONLY what the feature actually does as stated in the topic — never invent statistics, user counts, success rates, partnerships or capabilities.
-- Include practical step-by-step usage where natural.
-- Keep maritime rank names, vessel types and certificate terms (STCW, SMC, CoC, DP) in English in every language.
-- Structure with 4-6 short section headings using markdown ##.
-- End with a short practical checklist of 3-5 bullet points.
+- 900-1200 words. Simple, clear sentences for readers whose first language may not be English.
+- Answer the reader's real question first (the first paragraph must directly answer what someone searching this topic wants).
+- Technical content must follow SOLAS, MARPOL, STCW, ISM, IGC, IMSBC, ISGOTT and SIRE 2.0 as generally known. If unsure of a detail, say "follow your company SMS and maker's manual" instead of inventing numbers.
+- Never invent statistics, user counts, pass rates, partnerships, exam dates or official syllabus claims.
+- Where it fits naturally, mention that readers can practise orals by voice with the SeaMinds AI examiner, or try incident drills on SeaMinds — describe only these, no other claims.
+- Keep rank names, vessel types and certificate terms (STCW, CoC, MMD, MARINA, SIRE, PSC) in English in every language.
+- 4-6 section headings using markdown ##, bullet lists with "- ".
+- End with a short practical checklist of 3-5 bullets.
+- Title: under 65 characters, contains the main search phrase, no emoji.
 
 Return ONLY valid JSON, no markdown fences:
-{"title": "...", "excerpt": "one sentence summary under 160 characters", "content": "the full article in markdown"}`,
+{"title": "...", "excerpt": "one sentence under 155 characters", "content": "the article in markdown", "faq": [{"q": "question ending with ?", "a": "2-3 sentence answer"}]}
+Give 4 FAQ items that people commonly search.`,
         }],
       }),
     });
@@ -374,15 +464,34 @@ Return ONLY valid JSON, no markdown fences:
     const raw = aiData.choices?.[0]?.message?.content || "";
     const parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
 
+    const faq = (Array.isArray(parsed.faq) ? parsed.faq : [])
+      .filter((f: any) => f?.q && f?.a)
+      .slice(0, 6)
+      .map((f: any) => {
+        const q = String(f.q).trim();
+        return `<h3>${inline(q.endsWith("?") || q.endsWith("？") ? q : q + "?")}</h3>\n<p>${inline(String(f.a).trim())}</p>`;
+      })
+      .join("\n");
+
+    const ctaBox = `
+<div style="background:#112240;border:1px solid rgba(212,175,55,0.3);border-radius:14px;padding:18px;margin:22px 0">
+  <a href="${cta.href}" style="display:inline-block;background:#D4AF37;color:#0D1B2A;font-weight:700;padding:10px 18px;border-radius:12px;text-decoration:none">${cta.label}</a>
+</div>`.trim();
+
     const footerRow = `
 <div style="border-top:1px solid rgba(212,175,55,0.3);margin-top:24px;padding-top:14px;color:#94A3B8;font-size:14px">
+  <a href="https://seaminds.life/maritime-interview" style="color:#D4AF37;text-decoration:none">Practise orals with AI</a> ·
+  <a href="https://seaminds.life/training?tab=drills" style="color:#D4AF37;text-decoration:none">Fleet incident drills</a> ·
   <a href="https://seaminds.life/feed" style="color:#D4AF37;text-decoration:none">Browse all live vacancies</a> ·
   <a href="https://seaminds.life/join" style="color:#D4AF37;text-decoration:none">Create your free Sea Profile</a> ·
-  <a href="https://seaminds.life/for-companies" style="color:#D4AF37;text-decoration:none">Hire crew with AI interviews</a> ·
-  <a href="https://seaminds.life/manager" style="color:#D4AF37;text-decoration:none">Post a vacancy</a> ·
-  <a href="https://seaminds.life" style="color:#D4AF37;text-decoration:none">SeaMinds Maritime Exchange</a>
+  <a href="https://seaminds.life/for-companies" style="color:#D4AF37;text-decoration:none">Hire crew with AI interviews</a>
 </div>`.trim();
-    parsed.content = (parsed.content || "") + "\n\n" + footerRow;
+    parsed.content = [
+      mdToHtml(parsed.content || ""),
+      ctaBox,
+      faq ? `<h2>FAQ</h2>\n${faq}` : "",
+      footerRow,
+    ].filter(Boolean).join("\n\n");
 
     // Fetch a maritime image (optional)
     let imageUrl: string | null = null;
