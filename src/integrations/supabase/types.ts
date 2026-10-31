@@ -2784,6 +2784,33 @@ export type Database = {
         }
         Relationships: []
       }
+      fleet_drill_results: {
+        Row: {
+          attempts: number
+          correct: boolean
+          crew_id: string
+          drill_key: string
+          first_passed_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          correct: boolean
+          crew_id: string
+          drill_key: string
+          first_passed_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          correct?: boolean
+          crew_id?: string
+          drill_key?: string
+          first_passed_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       fleet_staff_members: {
         Row: {
           approval_limit_usd: number
@@ -7176,6 +7203,10 @@ export type Database = {
       record_english_attempt: {
         Args: { p_daily: boolean; p_scenario: string; p_score: number }
         Returns: Json
+      }
+      record_fleet_drill: {
+        Args: { p_choice: number; p_drill: string }
+        Returns: boolean
       }
       record_interruption: {
         Args: { p_assessment_id: string; p_kind: string; p_reason?: string }

@@ -757,6 +757,13 @@
       "when": 1793422626277,
       "tag": "0107_cache_vacancy_origin_counts",
       "breakpoints": true
+    },
+    {
+      "idx": 108,
+      "version": "7",
+      "when": 1793428062287,
+      "tag": "0108_fleet_drill_results",
+      "breakpoints": true
     }
   ]
 }
