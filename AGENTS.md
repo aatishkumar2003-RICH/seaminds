@@ -34,3 +34,4 @@
 - Crew next steps via `get_my_action_hub()`; interview timing only via `manager_schedule_interview`/`respond_interview_schedule`. Why: both parties agree times; no direct client writes.
 - Crew pipeline transparency: managers see only aggregate in-talks counts (from `manager-search`), never competitor names; crew step back via RPC `crew_disengage` (outcome 'withdrawn') and `set_inquiries_paused`; trigger auto-withdraws other active applications on placement. Why: no wasted manager effort, crew control, privacy.
 - Crew child tables self-heal missing `crew_profiles` via trigger `aa_ensure_crew_profile` (auth.uid() only). Why: no FK save errors.
+- Search-engine feeds (/rss.xml, /sitemap.xml) are regenerated from published articles on every build in vite.config.ts via scripts/seoFeeds.ts; live jobs sitemap is the sitemap function listed in robots.txt. Why: static files go stale.
