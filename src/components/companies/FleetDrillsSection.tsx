@@ -8,6 +8,14 @@ const ROWS = [
   ["Annual certificate only", "Gap report mapped to SIRE 2.0, DryBMS and TMSA"],
 ];
 
+const COMPLIANCE = [
+  ["SeaMinds tool", "SIRE 2.0 evidence", "TMSA element"],
+  ["Vessel-type incident drills", "Human factors — procedure & hardware knowledge", "3A · Crew competence & training"],
+  ["Adaptive oral interview", "Human factors — crew interview readiness", "3 · Recruitment & competence assessment"],
+  ["Gap → prescribed drill loop", "Corrective follow-up on observed gaps", "3A · Training gap closure"],
+  ["Promotion assessment", "Rank-specific responsibility checks", "3 · Promotion & familiarisation"],
+];
+
 /** For-companies advert: legacy CBT vs SeaMinds drills + fleet coverage + live preview. */
 const FleetDrillsSection = () => {
   const [open, setOpen] = useState(false);
@@ -36,6 +44,17 @@ const FleetDrillsSection = () => {
               <p className="text-[11px] text-muted-foreground">{d.title}</p>
             </div>
           ))}
+        </div>
+        <div className="space-y-2">
+          <h3 className="text-center text-sm font-bold text-primary">TMSA & SIRE 2.0 compliance map</h3>
+          <div className="overflow-hidden rounded-xl border border-primary/30 text-xs">
+            {COMPLIANCE.map(([tool, sire, tmsa]) => (
+              <div key={tool} className="grid grid-cols-3 border-t border-border first:border-t-0">
+                <p className="p-3 font-semibold">{tool}</p><p className="p-3 text-muted-foreground">{sire}</p><p className="p-3 text-muted-foreground">{tmsa}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-center text-[11px] text-muted-foreground">Supports your vetting evidence; it does not replace STCW certification or your SMS.</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 justify-center">
           <button onClick={() => setOpen(true)} className="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">Try a drill now</button>
