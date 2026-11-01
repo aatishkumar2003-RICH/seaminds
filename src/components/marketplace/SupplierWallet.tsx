@@ -34,25 +34,34 @@ const SupplierWallet = ({ wallet, reload }: { wallet: MarketWallet | null; reloa
     setOpen(false); setReason(""); reload();
   };
   return (
-    <div className="rounded-2xl border border-primary/30 bg-card p-4">
-      <div className="flex items-center justify-between">
-        <div>
+    <div className="rounded-2xl border border-primary/30 bg-card p-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">Supplier wallet</p>
-          <p className="flex items-center gap-1.5 text-2xl font-bold text-foreground"><Coins size={20} className="text-primary" />{wallet.balance} credits</p>
-          <p className="text-[11px] text-muted-foreground">Includes {wallet.welcome} free welcome credits. No payment needed during launch.</p>
+          <p className="flex items-center gap-1.5 text-lg font-bold text-foreground"><Coins size={16} className="text-primary" />{wallet.balance} credits</p>
         </div>
-        <button disabled={wallet.pending} onClick={() => setOpen(!open)} className="flex items-center gap-1 rounded-xl border border-primary px-3 py-2 text-xs font-bold text-primary disabled:opacity-60">
-          <Gift size={14} />{wallet.pending ? "Request pending" : "Request free credits"}
+        <button disabled={wallet.pending} onClick={() => setOpen(!open)} className="flex shrink-0 items-center gap-1 rounded-xl border border-primary px-2.5 py-1.5 text-[11px] font-bold text-primary disabled:opacity-60">
+          <Gift size={12} />{wallet.pending ? "Pending" : "Free credits"}
         </button>
       </div>
-      <div className="mt-3 space-y-1 border-t border-primary/20 pt-3">
-        <p className="text-xs font-bold text-foreground">What credits are used for</p>
+      <div className="mt-2 flex flex-wrap gap-1.5">
         {CREDIT_USES.map((u) => (
-          <div key={u.key} className="flex justify-between gap-2 text-[11px] text-muted-foreground"><span>{u.label}</span><b className="shrink-0 text-primary">{wallet[u.key]} cr</b></div>
+          <span key={u.key} title={u.label} className="rounded-full border border-primary/30 px-2 py-0.5 text-[10px] text-muted-foreground">
+            {u.key === "ship" ? "Vessel" : u.key === "spare" ? "Spare" : "Yard/service"} <b className="text-primary">{wallet[u.key]} cr</b>
+          </span>
         ))}
-        <p className="text-[10px] text-muted-foreground">Credits are taken once when a listing is published. Editing or withdrawing your listing is free.</p>
       </div>
-      <div className="mt-3 border-t border-primary/20 pt-3"><TopUpPlans audience="manager" /></div>
+      <details className="mt-2 text-[11px] text-muted-foreground">
+        <summary className="cursor-pointer font-bold text-primary">Details & top-up offers</summary>
+        <div className="mt-2 space-y-1">
+          <p>Includes {wallet.welcome} free welcome credits. No payment needed during launch.</p>
+          {CREDIT_USES.map((u) => (
+            <div key={u.key} className="flex justify-between gap-2"><span>{u.label}</span><b className="shrink-0 text-primary">{wallet[u.key]} cr</b></div>
+          ))}
+          <p className="text-[10px]">Credits are taken once when a listing is published. Editing or withdrawing is free.</p>
+        </div>
+        <div className="mt-2 border-t border-primary/20 pt-2"><TopUpPlans audience="manager" /></div>
+      </details>
       {open && (
         <div className="mt-3 space-y-2 border-t border-primary/20 pt-3">
           <label className="block space-y-1 text-[11px] text-muted-foreground">Credits needed
