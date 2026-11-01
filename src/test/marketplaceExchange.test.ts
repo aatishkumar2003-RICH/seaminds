@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { filterItems, buildRfqText } from "@/lib/marketplaceExchange";
+import { filterItems, buildRfqText, buildInquiryPayload } from "@/lib/marketplaceExchange";
 
 const base = { maker: null, part_number: null, company: "X", description: null, stock_ports: ["Singapore"], condition: "new_oem" };
 const rows = [
@@ -16,9 +16,19 @@ describe("marketplace filters", () => {
 });
 
 describe("RFQ text", () => {
-  it("includes vessel, port and quantity", () => {
-    const t = buildRfqText({ title: "Seal kit", origin_country: "Singapore" }, { vessel: "MT A", imo: "9482103", port: "Singapore", quantity: "2" });
-    expect(t).toContain("IMO 9482103");
-    expect(t).toContain("Quantity: 2");
+  it("supports shore procurement without vessel or IMO", () => {
+    const t = buildRfqText({ title: "Seal kit", origin_country: "Singapore" }, { company: "Shore Trading", port: "Singapore warehouse", quantity: "5 sets" });
+    expect(t).toContain("Buyer / company: Shore Trading");
+    expect(t).toContain("Delivery: Singapore warehouse");
+    expect(t).toContain("Quantity: 5 sets");
+    expect(t).not.toMatch(/Vessel:|IMO/);
+  });
+  it("preserves buyer identity and specifications in online inquiries", () => {
+    expect(buildInquiryPayload({ company: "Shore Trading", notes: "Viton, 20 mm", port: "Batam workshop", quantity: "20 pieces" })).toEqual({
+      port: "Batam workshop", quantity: "20 pieces", needed_by: undefined, notes: "Buyer / company: Shore Trading\nViton, 20 mm",
+    });
+  });
+  it("does not require a company or vessel reference", () => {
+    expect(buildInquiryPayload({ quantity: "2" })).toEqual({ port: undefined, quantity: "2", needed_by: undefined, notes: "" });
   });
 });

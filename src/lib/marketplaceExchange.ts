@@ -28,14 +28,22 @@ export const CONDITIONS: Record<string, string> = {
 export const EXCHANGE_NOTICE =
   "SeaMinds is an introductory noticeboard connecting maritime buyers and independent suppliers. SeaMinds is not a broker, manufacturer, stockist or inspection agency. Quality, class certification, export customs, delivery and payment are agreed strictly between buyer and seller.";
 
-export type Inquiry = { vessel?: string; imo?: string; port?: string; needed_by?: string; quantity?: string; notes?: string };
+export type Inquiry = { company?: string; port?: string; needed_by?: string; quantity?: string; notes?: string };
+
+// Preserve buyer identity in the existing inquiry notes field without schema changes.
+export function buildInquiryPayload(q: Inquiry) {
+  return {
+    port: q.port?.trim(), needed_by: q.needed_by || undefined, quantity: q.quantity?.trim(),
+    notes: [q.company?.trim() && `Buyer / company: ${q.company.trim()}`, q.notes?.trim()].filter(Boolean).join("\n"),
+  };
+}
 
 export function buildRfqText(item: { title: string; maker?: string | null; part_number?: string | null; origin_country: string }, q: Inquiry): string {
   const lines = [
     "Hello, I am requesting a quotation via SeaMinds Marketplace:",
     `• Item: ${item.title}${item.maker ? ` (${item.maker}${item.part_number ? ` / ${item.part_number}` : ""})` : ""} — origin ${item.origin_country}`,
   ];
-  if (q.vessel || q.imo) lines.push(`• Vessel: ${[q.vessel, q.imo && `IMO ${q.imo}`].filter(Boolean).join(" · ")}`);
+  if (q.company?.trim()) lines.push(`• Buyer / company: ${q.company.trim()}`);
   if (q.port || q.needed_by) lines.push(`• Delivery: ${[q.port, q.needed_by && `by ${q.needed_by}`].filter(Boolean).join(" ")}`);
   if (q.quantity) lines.push(`• Quantity: ${q.quantity}`);
   if (q.notes) lines.push(`• Notes: ${q.notes}`);
