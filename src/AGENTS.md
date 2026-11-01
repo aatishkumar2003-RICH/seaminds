@@ -25,3 +25,4 @@
 
 - Service-worker runtime caching rules live in `src/lib/pwaCacheRules.ts`: only listed public tables may be cached; every other backend call is NetworkOnly. Why: cached personal responses showed stale application state.
 - Maritime Marketplace hubs (spares/yards/tech) live in `marketplace_items`; supplier contacts in seller-only `marketplace_item_contacts`; every inquiry/WhatsApp/email contact goes through RPC `marketplace_contact` (owner-preview check, charges `market_contact_credits` once per buyer+item when monetization is on). Filters/RFQ text in `src/lib/marketplaceExchange.ts`. Why: no contact leaks, never charge twice.
+- Shore RFQs use `buildInquiryPayload` to preserve buyer/company in existing inquiry notes and delivery location in `port`; all channels share the same procurement fields. Why: online records retain buyer identity without changing legacy columns.

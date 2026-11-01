@@ -4,7 +4,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCreditPricing } from "@/hooks/useCreditPricing";
-import { ORIGINS, PORTS, CONDITIONS, EXCHANGE_NOTICE, flagOf, filterItems, buildRfqText, type ExchangeCategory, type Inquiry } from "@/lib/marketplaceExchange";
+import { Button } from "@/components/ui/button";
+import { ORIGINS, PORTS, CONDITIONS, EXCHANGE_NOTICE, flagOf, filterItems, buildRfqText, buildInquiryPayload, type ExchangeCategory, type Inquiry } from "@/lib/marketplaceExchange";
 
 type Item = {
   id: string; seller_id: string; category: ExchangeCategory; title: string; maker: string | null; part_number: string | null;
@@ -118,13 +119,13 @@ const MarketplaceExchange = ({ category, canPost }: { category: ExchangeCategory
 
 const Sheet = ({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) => (
   <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/80 backdrop-blur-sm sm:items-center" onClick={onClose}>
-    <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-primary/30 bg-card p-4 sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
-      <div className="mb-3 flex items-center justify-between"><h2 className="text-base font-bold text-foreground">{title}</h2><button onClick={onClose} aria-label="Close" className="text-muted-foreground"><X size={18} /></button></div>
+    <div role="dialog" aria-modal="true" aria-label={title} className="max-h-[90dvh] w-full max-w-lg overflow-y-auto overscroll-contain rounded-t-2xl border border-primary/30 bg-card p-4 pb-6 sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+      <div className="mb-3 flex items-center justify-between"><h2 className="text-base font-bold text-foreground">{title}</h2><Button variant="ghost" size="icon" onClick={onClose} aria-label="Close" className="shrink-0 text-muted-foreground"><X size={18} /></Button></div>
       {children}
     </div>
   </div>
 );
-const inp = "w-full rounded-xl border border-primary/30 bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none";
+const inp = "min-w-0 w-full rounded-xl border border-primary/30 bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none";
 
 const RfqSheet = ({ item, cost, onClose }: { item: Item; cost: number; onClose: () => void }) => {
   const [q, setQ] = useState<Inquiry>({});
@@ -132,9 +133,11 @@ const RfqSheet = ({ item, cost, onClose }: { item: Item; cost: number; onClose: 
   const set = (k: keyof Inquiry) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setQ({ ...q, [k]: e.target.value });
 
   const send = async (channel: "online" | "whatsapp" | "email") => {
+    if (busy) return;
     if (item.is_sample) return toast.info("This is a sample listing — real suppliers will receive your inquiry here.");
     setBusy(true);
-    const { data, error } = await db.rpc("marketplace_contact", { p_item: item.id, p_channel: channel, p_inquiry: q });
+    try {
+    const { data, error } = await db.rpc("marketplace_contact", { p_item: item.id, p_channel: channel, p_inquiry: buildInquiryPayload(q) });
     setBusy(false);
     if (error || !data?.ok) {
       const e = data?.error;
@@ -150,25 +153,39 @@ const RfqSheet = ({ item, cost, onClose }: { item: Item; cost: number; onClose: 
     } else toast.success("Inquiry sent to the supplier.");
     if (data.charged) toast.info(`${data.cost} credit(s) used. Further inquiries for this item are free.`);
     onClose();
+    } catch {
+      toast.error("Could not confirm your inquiry. Please check your connection before retrying.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
     <Sheet title="Request quotation" onClose={onClose}>
       <p className="text-sm font-semibold text-foreground">{item.title}</p>
       <p className="mb-3 text-[11px] text-muted-foreground">{item.company} · {flagOf(item.origin_country)} {item.origin_country}</p>
-      <div className="grid grid-cols-2 gap-2">
-        <input className={inp} placeholder="Vessel name" maxLength={80} onChange={set("vessel")} />
-        <input className={inp} placeholder="IMO" inputMode="numeric" maxLength={10} onChange={set("imo")} />
-        <input className={inp} placeholder="Delivery port" maxLength={80} onChange={set("port")} />
-        <input className={inp} type="date" aria-label="Needed by" onChange={set("needed_by")} />
-        <input className={`${inp} col-span-2`} placeholder="Quantity" maxLength={60} onChange={set("quantity")} />
-        <textarea className={`${inp} col-span-2`} rows={3} placeholder="Notes (certificates, lead time…)" maxLength={800} onChange={set("notes")} />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <label className="space-y-1 text-xs text-muted-foreground sm:col-span-2">Buyer / company name
+          <input className={inp} placeholder="Company or individual buyer" maxLength={100} value={q.company ?? ""} onChange={set("company")} autoComplete="organization" />
+        </label>
+        <label className="space-y-1 text-xs text-muted-foreground sm:col-span-2">Delivery location
+          <input className={inp} placeholder="Warehouse, address, city or port" maxLength={80} value={q.port ?? ""} onChange={set("port")} />
+        </label>
+        <label className="min-w-0 space-y-1 text-xs text-muted-foreground">Quantity & unit
+          <input className={inp} placeholder="e.g. 5 sets or 20 pieces" maxLength={60} value={q.quantity ?? ""} onChange={set("quantity")} />
+        </label>
+        <label className="min-w-0 space-y-1 text-xs text-muted-foreground">Required by (optional)
+          <input className={`${inp} min-h-10`} type="date" value={q.needed_by ?? ""} onChange={set("needed_by")} />
+        </label>
+        <label className="space-y-1 text-xs text-muted-foreground sm:col-span-2">Specifications / notes
+          <textarea className={inp} rows={3} placeholder="Part number, dimensions, certification or lead time…" maxLength={650} value={q.notes ?? ""} onChange={set("notes")} />
+        </label>
       </div>
       <p className="mt-2 text-[11px] text-muted-foreground">{cost > 0 ? `${cost} credit(s) once per item; then all channels are free.` : "Free during launch."}</p>
       <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
-        <button disabled={busy} onClick={() => send("online")} className="flex items-center justify-center gap-1.5 rounded-xl bg-primary px-3 py-3 text-sm font-bold text-primary-foreground disabled:opacity-60"><Send size={15} />Send online</button>
-        <button disabled={busy} onClick={() => send("whatsapp")} className="flex items-center justify-center gap-1.5 rounded-xl border border-primary px-3 py-3 text-sm font-bold text-primary disabled:opacity-60"><MessageCircle size={15} />WhatsApp</button>
-        <button disabled={busy} onClick={() => send("email")} className="flex items-center justify-center gap-1.5 rounded-xl border border-primary px-3 py-3 text-sm font-bold text-primary disabled:opacity-60"><Mail size={15} />Email</button>
+        <Button disabled={busy} onClick={() => send("online")} className="rounded-xl font-bold"><Send size={15} />Send online</Button>
+        <Button variant="outline" disabled={busy} onClick={() => send("whatsapp")} className="rounded-xl border-primary text-primary font-bold"><MessageCircle size={15} />WhatsApp</Button>
+        <Button variant="outline" disabled={busy} onClick={() => send("email")} className="rounded-xl border-primary text-primary font-bold"><Mail size={15} />Email</Button>
       </div>
     </Sheet>
   );

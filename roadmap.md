@@ -1,5 +1,9 @@
 # SeaMinds — Global Vacancy Growth Roadmap
 
+## Marketplace shore procurement
+- [x] Replace vessel/IMO fields with labeled buyer, delivery location, quantity/unit, required date and specifications; preserve buyer details for online inquiries.
+- [ ] Verify owner quote form, sample safeguards, phone/desktop layout and procurement regression tests; keep marketplace locked.
+
 ## Monetization standby
 - [x] Persist owner-only default-OFF switches and editable feature credit costs, with audited changes.
 - [x] Seed seven editable private packages and add Admin controls; connect existing boost/promotion charges to free/paid settings. Contact reveal remains owner-preview-only.
