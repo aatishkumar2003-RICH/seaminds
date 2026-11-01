@@ -57,7 +57,7 @@ const MarketplacePost = () => {
       }).select("id").single();
       if (error) throw error;
       toast.success("Your vessel is now listed.");
-      navigate(`/marketplace?id=${data.id}`, { replace: true });
+      navigate("/marketplace/vendor", { replace: true });
     } catch (e) {
       console.error(e);
       toast.error("Could not publish the listing. Please check your connection and try again.");
@@ -67,7 +67,7 @@ const MarketplacePost = () => {
   return (
     <div className="min-h-screen bg-background pb-24 text-foreground">
       <header className="sticky top-0 z-10 flex items-center gap-2 border-b border-primary/30 bg-background/95 px-3 py-3 backdrop-blur">
-        <button onClick={() => navigate("/marketplace")} aria-label="Back" className="flex h-10 w-10 items-center justify-center rounded-full text-primary hover:bg-secondary"><ChevronLeft /></button>
+        <button onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/marketplace/vendor"))} aria-label="Back" className="flex h-10 w-10 items-center justify-center rounded-full text-primary hover:bg-secondary"><ChevronLeft /></button>
         <h1 className="text-base font-bold">List a vessel for sale</h1>
       </header>
       <main className="mx-auto max-w-2xl space-y-5 p-4">

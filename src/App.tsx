@@ -67,6 +67,8 @@ const MyPayslips = lazy(() => import("./pages/MyPayslips"));
 const MyResponses = lazy(() => import("./pages/MyResponses"));
 const Marketplace = lazy(() => import("./pages/Marketplace"));
 const MarketplacePost = lazy(() => import("./pages/MarketplacePost"));
+const MarketplaceVendor = lazy(() => import("./pages/MarketplaceVendor"));
+import MarketplaceGate from "./components/marketplace/MarketplaceGate";
 const UserGuide = lazy(() => import("./pages/UserGuide"));
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -193,8 +195,9 @@ const App = () => (
             <Route path="/my-payslips" element={<Suspense fallback={null}><MyPayslips /></Suspense>} />
             <Route path="/my-responses" element={<Suspense fallback={null}><MyResponses /></Suspense>} />
             <Route path="/cockpit" element={<Suspense fallback={null}><SailorsCockpit /></Suspense>} />
-            <Route path="/marketplace" element={<Suspense fallback={null}><Marketplace /></Suspense>} />
-            <Route path="/marketplace/post" element={<OwnerPreviewGate feature="Ship Marketplace"><Suspense fallback={null}><MarketplacePost /></Suspense></OwnerPreviewGate>} />
+            <Route path="/marketplace" element={<MarketplaceGate><Suspense fallback={null}><Marketplace /></Suspense></MarketplaceGate>} />
+            <Route path="/marketplace/vendor" element={<Suspense fallback={null}><MarketplaceVendor /></Suspense>} />
+            <Route path="/marketplace/post" element={<Suspense fallback={null}><MarketplacePost /></Suspense>} />
             <Route path="/join" element={<Join />} />
             <Route path="/join-free" element={<JoinLanding />} />
             <Route path="/manager" element={<ManagerAuth />} />
