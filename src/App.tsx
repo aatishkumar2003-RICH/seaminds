@@ -193,7 +193,7 @@ const App = () => (
             <Route path="/my-payslips" element={<Suspense fallback={null}><MyPayslips /></Suspense>} />
             <Route path="/my-responses" element={<Suspense fallback={null}><MyResponses /></Suspense>} />
             <Route path="/cockpit" element={<Suspense fallback={null}><SailorsCockpit /></Suspense>} />
-            <Route path="/marketplace" element={<OwnerPreviewGate feature="Ship Marketplace"><Suspense fallback={null}><Marketplace /></Suspense></OwnerPreviewGate>} />
+            <Route path="/marketplace" element={<Suspense fallback={null}><Marketplace /></Suspense>} />
             <Route path="/marketplace/post" element={<OwnerPreviewGate feature="Ship Marketplace"><Suspense fallback={null}><MarketplacePost /></Suspense></OwnerPreviewGate>} />
             <Route path="/join" element={<Join />} />
             <Route path="/join-free" element={<JoinLanding />} />
