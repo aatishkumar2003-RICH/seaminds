@@ -138,7 +138,7 @@ const MarketplaceVendor = () => {
               {mode === "register" && <CompanyFields f={f} set={set} />}
               {mode === "register" && <label className={lbl}>Your name<input className={inp} maxLength={100} value={f.name} onChange={set("name")} autoComplete="name" /></label>}
               <label className={lbl}>Business email<input className={inp} type="email" value={f.email} onChange={set("email")} autoComplete="email" placeholder="sales@yourcompany.com" /></label>
-              <label className={lbl}>Password<PasswordInput value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} className={inp} autoComplete={mode === "register" ? "new-password" : "current-password"} /></label>
+              <label className={lbl}>Password<PasswordInput value={f.password} onChange={(v: string) => setF({ ...f, password: v })} className={inp} autoComplete={mode === "register" ? "new-password" : "current-password"} /></label>
               <button disabled={busy} onClick={mode === "register" ? signUp : signIn} className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground disabled:opacity-60">
                 {mode === "register" ? "Create supplier account (free)" : "Sign in to my desk"}
               </button>
