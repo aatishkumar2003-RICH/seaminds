@@ -44,7 +44,7 @@ interface SafetyReport {
 }
 
 /** Seafarer-side alert kinds that must never appear in the manager bell (same account may hold both roles). */
-const CREW_ONLY_KINDS = "(jobs_daily,cv_view,contact_viewed,job_offer,placement,cert_expiry,marketing_pack)";
+const CREW_ONLY_KINDS = "(jobs_daily,cv_view,contact_viewed,job_offer,placement,cert_expiry)";
 
 interface Applicant {
   application_id: string;
@@ -807,7 +807,7 @@ const ManagerDashboard = () => {
     <div key={a.application_id} className="bg-secondary/50 rounded-xl border border-border/50 p-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
       <div className="space-y-1">
         <p className="text-sm font-bold text-foreground">
-          {a.crew_name} <span className="font-normal text-muted-foreground">· {a.nationality}</span>
+          {a.crew_name} <span className="font-normal text-muted-foreground">· {a.nationality}</span>{a.outcome === "interested" && <span className="ml-1 rounded-full border border-primary/40 px-1.5 text-[10px] font-semibold text-primary">Post interest · not an application</span>}
         </p>
         <p className="text-xs text-muted-foreground">{a.rank} · {a.vessel} · {relTime(a.applied_at)}</p>
         {a.available_from && (
@@ -1278,7 +1278,7 @@ const ManagerDashboard = () => {
                   <div key={a.application_id} className="rounded-xl border border-border/60 bg-background/40 p-3 space-y-2">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="text-sm font-bold text-foreground truncate">{a.crew_name} <span className="font-normal text-muted-foreground">· {a.nationality}</span></p>
+                        <p className="text-sm font-bold text-foreground truncate">{a.crew_name} <span className="font-normal text-muted-foreground">· {a.nationality}</span>{a.outcome === "interested" && <span className="ml-1 rounded-full border border-primary/40 px-1.5 text-[10px] font-semibold text-primary">Post interest · not an application</span>}</p>
                         <p className="text-[11px] text-muted-foreground truncate">{a.crew_rank || a.rank} → {title}</p>
                       </div>
                       <span className="shrink-0 text-xs font-bold px-2 py-1 rounded-lg bg-primary text-primary-foreground">{m.score}%</span>
