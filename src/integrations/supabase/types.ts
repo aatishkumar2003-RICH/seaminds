@@ -4128,6 +4128,145 @@ export type Database = {
         }
         Relationships: []
       }
+      marketplace_inquiries: {
+        Row: {
+          buyer_id: string
+          channel: string
+          created_at: string
+          id: string
+          imo: string | null
+          item_id: string
+          needed_by: string | null
+          notes: string | null
+          port: string | null
+          quantity: string | null
+          vessel: string | null
+        }
+        Insert: {
+          buyer_id: string
+          channel: string
+          created_at?: string
+          id?: string
+          imo?: string | null
+          item_id: string
+          needed_by?: string | null
+          notes?: string | null
+          port?: string | null
+          quantity?: string | null
+          vessel?: string | null
+        }
+        Update: {
+          buyer_id?: string
+          channel?: string
+          created_at?: string
+          id?: string
+          imo?: string | null
+          item_id?: string
+          needed_by?: string | null
+          notes?: string | null
+          port?: string | null
+          quantity?: string | null
+          vessel?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_inquiries_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_item_contacts: {
+        Row: {
+          email: string | null
+          item_id: string
+          whatsapp: string | null
+        }
+        Insert: {
+          email?: string | null
+          item_id: string
+          whatsapp?: string | null
+        }
+        Update: {
+          email?: string | null
+          item_id?: string
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_item_contacts_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: true
+            referencedRelation: "marketplace_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_items: {
+        Row: {
+          category: string
+          certification: string | null
+          company: string
+          condition: string
+          created_at: string
+          description: string | null
+          featured: boolean
+          id: string
+          is_sample: boolean
+          maker: string | null
+          moq: string | null
+          origin_country: string
+          part_number: string | null
+          price_text: string | null
+          seller_id: string
+          status: string
+          stock_ports: string[]
+          title: string
+        }
+        Insert: {
+          category: string
+          certification?: string | null
+          company: string
+          condition?: string
+          created_at?: string
+          description?: string | null
+          featured?: boolean
+          id?: string
+          is_sample?: boolean
+          maker?: string | null
+          moq?: string | null
+          origin_country?: string
+          part_number?: string | null
+          price_text?: string | null
+          seller_id?: string
+          status?: string
+          stock_ports?: string[]
+          title: string
+        }
+        Update: {
+          category?: string
+          certification?: string | null
+          company?: string
+          condition?: string
+          created_at?: string
+          description?: string | null
+          featured?: boolean
+          id?: string
+          is_sample?: boolean
+          maker?: string | null
+          moq?: string | null
+          origin_country?: string
+          part_number?: string | null
+          price_text?: string | null
+          seller_id?: string
+          status?: string
+          stock_ports?: string[]
+          title?: string
+        }
+        Relationships: []
+      }
       marketplace_sellers: {
         Row: {
           approved_at: string
@@ -4145,6 +4284,32 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      marketplace_unlocks: {
+        Row: {
+          created_at: string
+          item_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          item_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          item_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_unlocks_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       mobile_verifications: {
         Row: {
@@ -4207,6 +4372,7 @@ export type Database = {
           fleet_block_credits: number
           id: boolean
           manager_enabled: boolean
+          market_contact_credits: number
           updated_at: string
           urgent_block_credits: number
         }
@@ -4219,6 +4385,7 @@ export type Database = {
           fleet_block_credits?: number
           id?: boolean
           manager_enabled?: boolean
+          market_contact_credits?: number
           updated_at?: string
           urgent_block_credits?: number
         }
@@ -4231,6 +4398,7 @@ export type Database = {
           fleet_block_credits?: number
           id?: boolean
           manager_enabled?: boolean
+          market_contact_credits?: number
           updated_at?: string
           urgent_block_credits?: number
         }
@@ -7219,6 +7387,10 @@ export type Database = {
       }
       market_pulse: { Args: { p_rank?: string }; Returns: Json }
       marketing_pack_daily: { Args: never; Returns: string }
+      marketplace_contact: {
+        Args: { p_channel: string; p_inquiry?: Json; p_item: string }
+        Returns: Json
+      }
       open_assessment_v2: {
         Args: { p_invite_id?: string; p_mode: string; p_restart?: boolean }
         Returns: Json

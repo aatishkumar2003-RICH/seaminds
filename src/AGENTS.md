@@ -24,3 +24,4 @@
 - Fleet drill results are written only via RPC `record_fleet_drill` (server grades the choice) into own-read `fleet_drill_results`; interview gaps map to drills in `src/lib/drillPrescription.ts`. Why: crew cannot forge passes; one tested gap→drill map.
 
 - Service-worker runtime caching rules live in `src/lib/pwaCacheRules.ts`: only listed public tables may be cached; every other backend call is NetworkOnly. Why: cached personal responses showed stale application state.
+- Maritime Marketplace hubs (spares/yards/tech) live in `marketplace_items`; supplier contacts in seller-only `marketplace_item_contacts`; every inquiry/WhatsApp/email contact goes through RPC `marketplace_contact` (owner-preview check, charges `market_contact_credits` once per buyer+item when monetization is on). Filters/RFQ text in `src/lib/marketplaceExchange.ts`. Why: no contact leaks, never charge twice.

@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { VESSEL_TYPES, MARKETPLACE_NOTICE, signPhotos } from "@/lib/shipMarketplace";
+import { HUBS, type HubId } from "@/lib/marketplaceExchange";
+import MarketplaceExchange from "@/components/marketplace/MarketplaceExchange";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Listing = Tables<"ship_listings">;
@@ -62,11 +64,15 @@ const Marketplace = () => {
   useEffect(() => {
     if (!user) return;
     supabase.rpc("is_approved_manager", { _uid: user.id }).then(({ data }) => setCanPost(!!data));
+    supabase.rpc("is_marketplace_seller", { _uid: user.id }).then(({ data }) => setCanSell(!!data));
   }, [user]);
+  const [canSell, setCanSell] = useState(false);
+  const hubParam = params.get("hub");
+  const hub: HubId = HUBS.some((h) => h.id === hubParam) ? (hubParam as HubId) : id ? "ships" : "spares";
 
   const filtered = useMemo(() => rows.filter((r) => type === "All" || r.vessel_type === type), [rows, type]);
   const sel = id ? rows.find((r) => r.id === id) : null;
-  const back = () => (id ? setParams({}) : window.history.length > 1 ? navigate(-1) : navigate("/app"));
+  const back = () => (id ? setParams({ hub: "ships" }) : window.history.length > 1 ? navigate(-1) : navigate("/app"));
   const title = (l: Listing) => (l.show_identity && l.vessel_name ? l.vessel_name : `${l.vessel_type}${l.dwt ? ` · ${l.dwt.toLocaleString()} DWT` : ""}`);
 
   const report = async (l: Listing) => {
@@ -82,10 +88,10 @@ const Marketplace = () => {
       <header className="sticky top-0 z-10 flex items-center gap-2 border-b border-primary/30 bg-background/95 px-3 py-3 backdrop-blur">
         <button onClick={back} aria-label="Back" className="flex h-10 w-10 items-center justify-center rounded-full text-primary hover:bg-secondary"><ChevronLeft /></button>
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-base font-bold">{sel ? title(sel) : "Ship Marketplace"}</h1>
-          <p className="text-[11px] text-muted-foreground">Vessels for sale · direct from owners & managers</p>
+          <h1 className="truncate text-base font-bold">{sel ? title(sel) : "Maritime Marketplace"}</h1>
+          <p className="text-[11px] text-muted-foreground">Spares · yards · ships · safety gear — direct from makers & owners</p>
         </div>
-        {canPost && !sel && (
+        {canPost && !sel && hub === "ships" && (
           <Link to="/marketplace/post" className="flex items-center gap-1 rounded-xl bg-primary px-3 py-2 text-xs font-bold text-primary-foreground"><Plus size={14} />List a vessel</Link>
         )}
       </header>
@@ -135,6 +141,15 @@ const Marketplace = () => {
           </>
         ) : (
           <>
+            <div className="grid grid-cols-4 gap-1.5">
+              {HUBS.map((h) => (
+                <button key={h.id} onClick={() => setParams(h.id === "spares" ? {} : { hub: h.id })}
+                  className={`flex flex-col items-center gap-0.5 rounded-xl border px-1 py-2 text-[10px] font-semibold leading-tight ${hub === h.id ? "border-primary bg-primary text-primary-foreground" : "border-primary/30 text-muted-foreground"}`}>
+                  <span className="text-lg">{h.icon}</span>{h.label}
+                </button>
+              ))}
+            </div>
+            {hub !== "ships" ? <MarketplaceExchange category={hub} canPost={canSell} /> : <>
             <div className="flex gap-2 overflow-x-auto pb-1">
               {canPost && <button onClick={() => setMine(!mine)} className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold ${mine ? "border-primary bg-primary text-primary-foreground" : "border-primary/30 text-primary"}`}>My listings</button>}
               {["All", ...VESSEL_TYPES].map((t) => (
@@ -162,6 +177,7 @@ const Marketplace = () => {
               </div>
             )}
             <Notice />
+            </>}
           </>
         )}
       </main>
