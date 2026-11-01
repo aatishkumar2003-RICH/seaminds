@@ -28,7 +28,7 @@ const TopUpPlans = ({ audience }: { audience: string }) => {
           <div key={p.id} className="rounded-xl border border-primary/30 bg-background/50 p-2 text-center">
             <p className="text-xs font-semibold text-foreground">{p.name}</p>
             <p className="text-lg font-bold text-primary">{p.credits} cr</p>
-            <p className="text-[11px] text-muted-foreground">US${Number(p.price_usd)}{p.interval && p.interval !== "one_time" ? ` / ${p.interval}` : ""} + tax</p>
+            <p className="text-[11px] text-muted-foreground">US${Number(p.price_usd)}{p.interval && p.interval !== "once" ? ` / ${p.interval}` : ""} + tax</p>
           </div>
         ))}
       </div>
