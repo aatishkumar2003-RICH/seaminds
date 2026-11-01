@@ -43,6 +43,9 @@ interface SafetyReport {
   created_at: string;
 }
 
+/** Seafarer-side alert kinds that must never appear in the manager bell (same account may hold both roles). */
+const CREW_ONLY_KINDS = "(jobs_daily,cv_view,contact_viewed,job_offer,placement,cert_expiry,marketing_pack)";
+
 interface Applicant {
   application_id: string;
   applied_at: string;
@@ -151,6 +154,7 @@ const ManagerDashboard = () => {
       .from("notifications")
       .select("id, kind, title, link, read, created_at")
       .eq("crew_id", managerUserId)
+      .not("kind", "in", CREW_ONLY_KINDS)
       .order("created_at", { ascending: false })
       .limit(20);
     const rows = (data || []) as ManagerNotif[];
@@ -170,6 +174,7 @@ const ManagerDashboard = () => {
       .from("notifications")
       .select("id", { count: "exact", head: true })
       .eq("crew_id", managerUserId)
+      .not("kind", "in", CREW_ONLY_KINDS)
       .eq("read", false);
     setUnreadCount(count || 0);
   };
@@ -476,10 +481,15 @@ const ManagerDashboard = () => {
     setApplicants(((data as unknown) as Applicant[]) || []);
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
+      // Own-company vacancies only: third-party agency adverts (distinct recruiter_name) are broadcasts, not this manager's hiring.
+      const { data: mp } = await supabase.from("manager_profiles").select("company_name").eq("user_id", user.id).maybeSingle();
+      const co = (mp?.company_name || "").trim().replace(/[,()*%]/g, "");
+      const ownFilter = co ? `recruiter_name.is.null,recruiter_name.eq.,recruiter_name.ilike.${co}` : "recruiter_name.is.null,recruiter_name.eq.";
       const { data: jp } = await supabase
         .from("job_postings")
         .select("id, rank_required, vessel_type, joining_port, status, created_at, joining_date, contract_duration, monthly_salary, positions, contact_email, contact_whatsapp, additional_notes, expires_at, posting_batch_id, source_type, flier_url")
         .eq("manager_id", user.id)
+        .or(ownFilter)
         .order("created_at", { ascending: false });
       setMyPostings(((jp as unknown) as MyPosting[]) || []);
     }
