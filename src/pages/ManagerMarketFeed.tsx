@@ -8,6 +8,8 @@ import { CAMPAIGNS, promotionCost, type Campaign } from "@/lib/vacancyPromotion"
 import { loadMyPostings, loadVacancyPage, START_CURSOR, type UnifiedVacancy, type VacancyCursor } from "@/lib/vacancyFeed";
 import JobCard from "@/components/JobCard";
 import SponsoredStrip from "@/components/opportunities/SponsoredStrip";
+import { useCreditPricing } from "@/hooks/useCreditPricing";
+import { Button } from "@/components/ui/button";
 
 type Promo = { posting_id: string; campaign: Campaign; ends_at: string };
 type Tab = "mine" | "industry" | "crew";
@@ -22,6 +24,7 @@ const previewApply = () => toast.info("Preview only — crew apply from this but
 /** Manager feed: own adverts as crew see them, the whole market, and a rank-by-rank crew preview. */
 const ManagerMarketFeed = () => {
   const [params, setParams] = useSearchParams();
+  const pricing = useCreditPricing();
   const tab = (TABS.find((t) => t.key === params.get("tab"))?.key || "mine") as Tab;
   const setTab = (t: Tab) => setParams((p) => { p.set("tab", t); return p; }, { replace: true });
 
@@ -235,11 +238,11 @@ const ManagerMarketFeed = () => {
             <p className="text-xs text-foreground font-bold">{sel.size} selected — choose how to promote (from your credit wallet)</p>
             <div className="grid grid-cols-2 gap-2">
               {(Object.keys(CAMPAIGNS) as Campaign[]).map((c) => (
-                <button key={c} disabled={busy} onClick={() => promote(c)}
+                <Button key={c} disabled={busy || !pricing} onClick={() => promote(c)}
                   className="rounded-xl bg-primary text-primary-foreground font-bold py-2 px-2 text-xs disabled:opacity-50">
-                  {CAMPAIGNS[c].label} · {promotionCost(c, sel.size)} cr
+                  {CAMPAIGNS[c].label} · {pricing ? (pricing.manager_paid ? `${(c === 'urgent' ? pricing.urgent_block_credits : pricing.fleet_block_credits) * Math.ceil(sel.size / CAMPAIGNS[c].perBlock)} cr` : 'Free') : '…'}
                   <span className="block font-normal opacity-80">{CAMPAIGNS[c].blurb}</span>
-                </button>
+                </Button>
               ))}
             </div>
           </div>
