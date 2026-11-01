@@ -4311,6 +4311,51 @@ export type Database = {
           },
         ]
       }
+      marketplace_vendors: {
+        Row: {
+          city: string | null
+          company_name: string
+          contact_email: string | null
+          contact_name: string | null
+          country: string | null
+          created_at: string
+          status: string
+          updated_at: string
+          user_id: string
+          vendor_type: string
+          website: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          city?: string | null
+          company_name: string
+          contact_email?: string | null
+          contact_name?: string | null
+          country?: string | null
+          created_at?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          vendor_type?: string
+          website?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          city?: string | null
+          company_name?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          country?: string | null
+          created_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          vendor_type?: string
+          website?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
       mobile_verifications: {
         Row: {
           created_at: string
@@ -7313,6 +7358,7 @@ export type Database = {
       is_approved_manager: { Args: { _uid: string }; Returns: boolean }
       is_marketing_member: { Args: never; Returns: boolean }
       is_marketplace_seller: { Args: { _uid: string }; Returns: boolean }
+      is_marketplace_vendor: { Args: { _uid: string }; Returns: boolean }
       issue_paper: { Args: { p_assessment_id: string }; Returns: Json }
       lineup_party_role: { Args: { p_application_id: string }; Returns: string }
       log_marketing_action: {
@@ -7391,6 +7437,7 @@ export type Database = {
         Args: { p_channel: string; p_inquiry?: Json; p_item: string }
         Returns: Json
       }
+      marketplace_is_open: { Args: never; Returns: boolean }
       open_assessment_v2: {
         Args: { p_invite_id?: string; p_mode: string; p_restart?: boolean }
         Returns: Json
