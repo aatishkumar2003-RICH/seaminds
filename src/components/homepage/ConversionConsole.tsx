@@ -124,7 +124,7 @@ const ConversionConsole = () => {
 
   const [needsQuickProfile, setNeedsQuickProfile] = useState(false);
   const [gateOpen, setGateOpen] = useState(false);
-  const [heroTab, setHeroTab] = useState<"crew" | "train" | "company">("train");
+  const [heroTab, setHeroTab] = useState<"crew" | "train" | "company" | "market">("train");
   // Training & AI interview need sign-in + Quick Profile; return to the chosen tool afterwards.
   const openTraining = (dest: string) => {
     const qp = `/quick-profile?next=${encodeURIComponent(dest)}`;
@@ -542,8 +542,8 @@ const ConversionConsole = () => {
 
         <CountryGateway />
 
-        <div role="tablist" aria-label="Choose your path" className="relative md:hidden grid grid-cols-3 gap-1 p-1 mb-3 rounded-xl" style={{ background: `${PANEL}CC`, border: `1px solid ${BORDER}` }}>
-          {([["crew", "⚓ Jobs"], ["train", "🎙️ AI Training"], ["company", "🏢 Companies"]] as const).map(([k, label]) => (
+        <div role="tablist" aria-label="Choose your path" className="relative md:hidden grid grid-cols-4 gap-1 p-1 mb-3 rounded-xl" style={{ background: `${PANEL}CC`, border: `1px solid ${BORDER}` }}>
+          {([["crew", "⚓ Jobs"], ["train", "🎙️ Training"], ["company", "🏢 Companies"], ["market", "⚙️ Market"]] as const).map(([k, label]) => (
             <button key={k} role="tab" aria-selected={heroTab === k} onClick={() => setHeroTab(k)}
               className="relative h-10 rounded-lg text-[11px] font-bold transition"
               style={heroTab === k ? { background: GOLD, color: NAVY } : { color: "#E2E8F0" }}>
@@ -629,11 +629,6 @@ const ConversionConsole = () => {
               ))}
             </div>
             <div className="mb-4"><FleetDrillsTeaser /></div>
-            <Link to="/marketplace" className="mb-4 block rounded-xl border border-primary/50 bg-card/70 p-3 text-left no-underline hover:bg-primary/10">
-              <p className="text-[10px] font-bold tracking-wider text-primary">⚙️ NEW · MARITIME INDUSTRIAL EXCHANGE</p>
-              <p className="text-sm font-semibold text-foreground">OEM spares, shipyards, workshops & safety stores in one search</p>
-              <p className="text-[11px] text-muted-foreground">🇯🇵 🇸🇬 🇩🇪 🇰🇷 🇮🇳 🇨🇳 Filter by origin & stock port · Request quotes →</p>
-            </Link>
             <p className="text-[10px] text-muted-foreground mb-3">Voice or chat · 6 languages · Free practice · Sign in &amp; quick profile required</p>
             <button onClick={() => openTraining("/maritime-interview")}
               className="sm-cta-pulse mt-auto w-full rounded-xl px-6 h-12 font-bold inline-flex items-center justify-center"
@@ -673,6 +668,32 @@ const ConversionConsole = () => {
                 style={{ border: `1px solid ${GOLD}`, color: GOLD }}
               >
                 ShipManager Login
+              </Link>
+            </div>
+          </div>
+
+          {/* MARKETPLACE — suppliers, yards, brokers (private partner phase) */}
+          <div
+            className={`rounded-2xl p-4 sm:p-5 flex-col md:col-span-3 md:flex-row md:items-center md:gap-6 ${heroTab === "market" ? "flex" : "hidden md:flex"}`}
+            style={{ background: `${PANEL}CC`, border: `1px solid ${BORDER}` }}
+          >
+            <div className="flex-1">
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] mb-2" style={{ color: GOLD }}>
+                ⚙️ Maritime Industrial Exchange · 🔒 Partner preview
+              </p>
+              <h2 className="text-xl sm:text-2xl font-bold leading-tight text-foreground mb-2">
+                Spares, shipyards, workshops, ship brokers &amp; marine stores — one search.
+              </h2>
+              <p className="text-[11px] text-muted-foreground mb-3 md:mb-0">
+                Suppliers and yards are listing now. Your listings stay private to your company until the exchange opens to buyers. Free listing · No commission.
+              </p>
+            </div>
+            <div className="mt-auto flex flex-wrap items-center gap-2 md:mt-0">
+              <Link to="/marketplace/vendor" className="rounded-xl px-6 h-12 font-bold no-underline inline-flex items-center justify-center" style={{ background: GOLD, color: NAVY }}>
+                Supplier / Yard Login
+              </Link>
+              <Link to="/marketplace" className="rounded-xl px-5 h-12 font-semibold text-sm no-underline inline-flex items-center justify-center" style={{ border: `1px solid ${GOLD}`, color: GOLD }}>
+                Buyer early access
               </Link>
             </div>
           </div>
