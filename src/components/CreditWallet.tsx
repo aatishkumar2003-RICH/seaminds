@@ -11,6 +11,33 @@ import CrewCreditUses from "@/components/CrewCreditUses";
 
 type Wallet = { ok: boolean; user_id: string; balance: number; welcome_claimed: boolean; code: string; link: string; referrals: number; verified_referrals?: number; referral_credits?: number; profile_rewarded?: boolean; score_rewarded?: boolean; settings?: RewardSettings; recent?: { delta: number; reason: string; created_at: string }[] };
 
+type Plan = { id: string; name: string; price_usd: number; credits: number; interval: string };
+
+/** Top-up packages from owner-controlled credit_plans; purchase opens only once checkout is live. */
+const TopUpPlans = ({ audience }: { audience: string }) => {
+  const [plans, setPlans] = useState<Plan[]>([]);
+  useEffect(() => {
+    void supabase.rpc("get_active_credit_plans" as never, { p_audience: audience } as never).then(({ data }) => setPlans((data as unknown as Plan[]) || []));
+  }, [audience]);
+  if (!plans.length) return null;
+  return (
+    <div className="space-y-2">
+      <p className="text-sm font-semibold text-foreground">Top up credits{audience === "fleet" ? " · Fleet" : ""}</p>
+      <div className="grid grid-cols-2 gap-2">
+        {plans.map(p => (
+          <div key={p.id} className="rounded-xl border border-primary/30 bg-background/50 p-2 text-center">
+            <p className="text-xs font-semibold text-foreground">{p.name}</p>
+            <p className="text-lg font-bold text-primary">{p.credits} cr</p>
+            <p className="text-[11px] text-muted-foreground">US${Number(p.price_usd)}{p.interval && p.interval !== "once" ? ` / ${p.interval}` : ""} + tax</p>
+          </div>
+        ))}
+      </div>
+      <Button disabled className="w-full rounded-xl font-bold">Online payment opening soon</Button>
+      <p className="text-[10px] text-muted-foreground">Prices exclude taxes and bank charges. Credits are for training and visibility tools only — SeaMinds never charges seafarers for jobs.</p>
+    </div>
+  );
+};
+
 /** Gold wallet pill + Founder Launch dialog. Credits are complimentary; nothing is charged today. */
 const CreditWallet = ({ audience, className = "" }: { audience: CreditAudience; className?: string }) => {
   const navigate = useNavigate();
@@ -103,6 +130,8 @@ const CreditWallet = ({ audience, className = "" }: { audience: CreditAudience; 
             {audience === "crew" && settings.score_credits > 0 && <div className="flex items-center justify-between gap-2 text-xs border-b border-border py-2"><span>Complete your first score · +{settings.score_credits}</span>{wallet.score_rewarded ? <span className="text-primary">Earned</span> : <Button size="sm" variant="outline" onClick={() => { setOpen(false); navigate("/app?tab=smc"); }}>My Score</Button>}</div>}
           </div>
           {audience === "crew" && <CrewCreditUses balance={wallet.balance} onSpent={async () => { const u = await load(); if (u?.ok) setWallet(u); }} />}
+          <TopUpPlans audience={audience === "crew" ? "crew" : "manager"} />
+          {audience !== "crew" && <TopUpPlans audience="fleet" />}
           <div className="space-y-2">
             <p className="text-sm font-semibold text-foreground">Invite shipmates, earn credits</p>
             <p className="text-xs text-muted-foreground">{settings.referral_credits > 0 ? `Earn ${settings.referral_credits} credit${settings.referral_credits === 1 ? "" : "s"} for every seafarer who joins` : "Invite a seafarer to join"} with your code <span className="font-mono font-bold text-primary">{wallet.code}</span> and completes their profile. Joining alone earns nothing.</p>
