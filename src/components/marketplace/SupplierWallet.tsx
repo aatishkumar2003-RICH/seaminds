@@ -3,9 +3,11 @@ import { Coins, Gift } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { CREDIT_USES } from "@/lib/marketplaceSpecs";
+import { TopUpPlans } from "@/components/CreditWallet";
 
 export type MarketWallet = { balance: number; ship: number; spare: number; service: number; welcome: number; pending: boolean };
-const rpc = supabase.rpc as unknown as (f: string, a?: unknown) => Promise<{ data: any; error: any }>;
+// Must stay bound to the client: a detached supabase.rpc throws "reading 'rest'" and hides the wallet.
+const rpc = ((f: string, a?: unknown) => (supabase.rpc as any).call(supabase, f, a)) as (f: string, a?: unknown) => Promise<{ data: any; error: any }>;
 
 export function useMarketWallet() {
   const [w, setW] = useState<MarketWallet | null>(null);
@@ -50,6 +52,7 @@ const SupplierWallet = ({ wallet, reload }: { wallet: MarketWallet | null; reloa
         ))}
         <p className="text-[10px] text-muted-foreground">Credits are taken once when a listing is published. Editing or withdrawing your listing is free.</p>
       </div>
+      <div className="mt-3 border-t border-primary/20 pt-3"><TopUpPlans audience="manager" /></div>
       {open && (
         <div className="mt-3 space-y-2 border-t border-primary/20 pt-3">
           <label className="block space-y-1 text-[11px] text-muted-foreground">Credits needed
