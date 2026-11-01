@@ -141,7 +141,7 @@ const RfqSheet = ({ item, cost, onClose }: { item: Item; cost: number; onClose: 
     setBusy(false);
     if (error || !data?.ok) {
       const e = data?.error;
-      return toast.error(e === "no_credits" ? `You need ${data.cost} credit(s). Top up from your credit wallet.` : e === "owner_preview_only" ? "Marketplace is in private preview." : "Could not send the inquiry.");
+      return toast.error(e === "no_credits" ? `You need ${data.cost} credit(s). Top up from your credit wallet.` : e === "not_signed_in" ? "Please sign in to request a quotation." : e === "owner_preview_only" ? "Supplier quotations open soon — browsing is live now." : "Could not send the inquiry.");
     }
     const text = buildRfqText(item, q);
     if (channel === "whatsapp") {

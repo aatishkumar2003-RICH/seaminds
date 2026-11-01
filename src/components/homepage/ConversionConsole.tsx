@@ -87,6 +87,7 @@ const inMarket = (v: Vacancy, m: string) => {
 const MENU_LINKS: { label: string; to: string; external?: boolean }[] = [
   { label: "For Seafarers", to: "/join" },
   { label: "Find Crew — For Companies", to: "/for-companies" },
+  { label: "⚙️ Marketplace — Spares, Yards & Tech", to: "/marketplace" },
   { label: "Post Vacancy", to: "/post-vacancy" },
   { label: "Create AI Interview", to: "/manager/interviews" },
   { label: "ShipManager Login", to: "/manager" },
@@ -284,7 +285,7 @@ const ConversionConsole = () => {
     { key: "profile", label: t("dockProfile"), value: profileActive ? "✓" : t("dockStart"), to: "/quick-profile" },
     { key: "ai", label: t("dockAi"), value: t("dockTry"), to: "/app?tab=smc" },
     { key: "feed", label: t("dockFeed"), value: t("dockOpen"), to: "/app?tab=home" },
-    { key: "market", label: t("dockMarket"), value: t("dockLive"), to: "/app?tab=home" },
+    { key: "market", label: t("dockMarket"), value: t("dockLive"), to: "/marketplace" },
   ];
 
 
@@ -345,6 +346,8 @@ const ConversionConsole = () => {
 
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             <div className="hidden md:flex items-center gap-2 mr-1 text-[11px] font-semibold">
+              <Link to="/marketplace" className="text-muted-foreground hover:text-foreground no-underline">Marketplace</Link>
+              <span className="text-muted-foreground/40">·</span>
               <Link to="/for-companies" className="text-muted-foreground hover:text-foreground no-underline">Find Crew</Link>
               <span className="text-muted-foreground/40">·</span>
               <Link to="/manager" className="text-muted-foreground hover:text-foreground no-underline">ShipManager Login</Link>
@@ -626,6 +629,11 @@ const ConversionConsole = () => {
               ))}
             </div>
             <div className="mb-4"><FleetDrillsTeaser /></div>
+            <Link to="/marketplace" className="mb-4 block rounded-xl border border-primary/50 bg-card/70 p-3 text-left no-underline hover:bg-primary/10">
+              <p className="text-[10px] font-bold tracking-wider text-primary">⚙️ NEW · MARITIME INDUSTRIAL EXCHANGE</p>
+              <p className="text-sm font-semibold text-foreground">OEM spares, shipyards, workshops & safety stores in one search</p>
+              <p className="text-[11px] text-muted-foreground">🇯🇵 🇸🇬 🇩🇪 🇰🇷 🇮🇳 🇨🇳 Filter by origin & stock port · Request quotes →</p>
+            </Link>
             <p className="text-[10px] text-muted-foreground mb-3">Voice or chat · 6 languages · Free practice · Sign in &amp; quick profile required</p>
             <button onClick={() => openTraining("/maritime-interview")}
               className="sm-cta-pulse mt-auto w-full rounded-xl px-6 h-12 font-bold inline-flex items-center justify-center"
