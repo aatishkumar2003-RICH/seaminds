@@ -4,7 +4,7 @@ import { ChevronLeft, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { RANK_HUBS, rankMatches } from "@/lib/jobSlug";
-import { CAMPAIGNS, promotionCost, type Campaign } from "@/lib/vacancyPromotion";
+import { CAMPAIGNS, type Campaign } from "@/lib/vacancyPromotion";
 import { loadMyPostings, loadVacancyPage, START_CURSOR, type UnifiedVacancy, type VacancyCursor } from "@/lib/vacancyFeed";
 import JobCard from "@/components/JobCard";
 import SponsoredStrip from "@/components/opportunities/SponsoredStrip";
@@ -239,7 +239,7 @@ const ManagerMarketFeed = () => {
             <div className="grid grid-cols-2 gap-2">
               {(Object.keys(CAMPAIGNS) as Campaign[]).map((c) => (
                 <Button key={c} disabled={busy || !pricing} onClick={() => promote(c)}
-                  className="rounded-xl bg-primary text-primary-foreground font-bold py-2 px-2 text-xs disabled:opacity-50">
+                  className="h-auto flex-col rounded-xl bg-primary text-primary-foreground font-bold py-2 px-2 text-xs disabled:opacity-50">
                   {CAMPAIGNS[c].label} · {pricing ? (pricing.manager_paid ? `${(c === 'urgent' ? pricing.urgent_block_credits : pricing.fleet_block_credits) * Math.ceil(sel.size / CAMPAIGNS[c].perBlock)} cr` : 'Free') : '…'}
                   <span className="block font-normal opacity-80">{CAMPAIGNS[c].blurb}</span>
                 </Button>
