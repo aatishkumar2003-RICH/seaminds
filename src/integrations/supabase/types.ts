@@ -4050,6 +4050,39 @@ export type Database = {
         }
         Relationships: []
       }
+      market_credit_requests: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          granted: number | null
+          id: string
+          reason: string
+          requested: number
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          granted?: number | null
+          id?: string
+          reason: string
+          requested: number
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          granted?: number | null
+          id?: string
+          reason?: string
+          requested?: number
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       marketing_activity_log: {
         Row: {
           action: string
@@ -4212,6 +4245,7 @@ export type Database = {
           condition: string
           created_at: string
           description: string | null
+          documents: string[]
           featured: boolean
           id: string
           is_sample: boolean
@@ -4219,8 +4253,10 @@ export type Database = {
           moq: string | null
           origin_country: string
           part_number: string | null
+          photos: string[]
           price_text: string | null
           seller_id: string
+          specifications: Json
           status: string
           stock_ports: string[]
           title: string
@@ -4232,6 +4268,7 @@ export type Database = {
           condition?: string
           created_at?: string
           description?: string | null
+          documents?: string[]
           featured?: boolean
           id?: string
           is_sample?: boolean
@@ -4239,8 +4276,10 @@ export type Database = {
           moq?: string | null
           origin_country?: string
           part_number?: string | null
+          photos?: string[]
           price_text?: string | null
           seller_id?: string
+          specifications?: Json
           status?: string
           stock_ports?: string[]
           title: string
@@ -4252,6 +4291,7 @@ export type Database = {
           condition?: string
           created_at?: string
           description?: string | null
+          documents?: string[]
           featured?: boolean
           id?: string
           is_sample?: boolean
@@ -4259,8 +4299,10 @@ export type Database = {
           moq?: string | null
           origin_country?: string
           part_number?: string | null
+          photos?: string[]
           price_text?: string | null
           seller_id?: string
+          specifications?: Json
           status?: string
           stock_ports?: string[]
           title?: string
@@ -4418,6 +4460,10 @@ export type Database = {
           id: boolean
           manager_enabled: boolean
           market_contact_credits: number
+          market_service_listing_credits: number
+          market_ship_listing_credits: number
+          market_spare_listing_credits: number
+          market_vendor_welcome_credits: number
           updated_at: string
           urgent_block_credits: number
         }
@@ -4431,6 +4477,10 @@ export type Database = {
           id?: boolean
           manager_enabled?: boolean
           market_contact_credits?: number
+          market_service_listing_credits?: number
+          market_ship_listing_credits?: number
+          market_spare_listing_credits?: number
+          market_vendor_welcome_credits?: number
           updated_at?: string
           urgent_block_credits?: number
         }
@@ -4444,6 +4494,10 @@ export type Database = {
           id?: boolean
           manager_enabled?: boolean
           market_contact_credits?: number
+          market_service_listing_credits?: number
+          market_ship_listing_credits?: number
+          market_spare_listing_credits?: number
+          market_vendor_welcome_credits?: number
           updated_at?: string
           urgent_block_credits?: number
         }
@@ -5677,6 +5731,7 @@ export type Database = {
           created_at: string
           delivery_window: string | null
           description: string | null
+          documents: string[]
           dwt: number | null
           eexi_cii: string | null
           featured: boolean
@@ -5693,6 +5748,7 @@ export type Database = {
           seller_company: string | null
           seller_id: string
           show_identity: boolean
+          specifications: Json
           status: string
           updated_at: string
           vessel_name: string | null
@@ -5713,6 +5769,7 @@ export type Database = {
           created_at?: string
           delivery_window?: string | null
           description?: string | null
+          documents?: string[]
           dwt?: number | null
           eexi_cii?: string | null
           featured?: boolean
@@ -5729,6 +5786,7 @@ export type Database = {
           seller_company?: string | null
           seller_id?: string
           show_identity?: boolean
+          specifications?: Json
           status?: string
           updated_at?: string
           vessel_name?: string | null
@@ -5749,6 +5807,7 @@ export type Database = {
           created_at?: string
           delivery_window?: string | null
           description?: string | null
+          documents?: string[]
           dwt?: number | null
           eexi_cii?: string | null
           featured?: boolean
@@ -5765,6 +5824,7 @@ export type Database = {
           seller_company?: string | null
           seller_id?: string
           show_identity?: boolean
+          specifications?: Json
           status?: string
           updated_at?: string
           vessel_name?: string | null
@@ -6956,6 +7016,10 @@ export type Database = {
         Args: { p_offset?: number; p_search?: string }
         Returns: Json
       }
+      admin_decide_credit_request: {
+        Args: { p_amount?: number; p_approve: boolean; p_id: string }
+        Returns: Json
+      }
       admin_get_incident_diagnostic_bundle: {
         Args: { p_incident_id: string }
         Returns: Json
@@ -7333,6 +7397,7 @@ export type Database = {
       get_my_engagements: { Args: never; Returns: Json }
       get_my_english_summary: { Args: never; Returns: Json }
       get_my_fleet: { Args: never; Returns: Json }
+      get_my_market_wallet: { Args: never; Returns: Json }
       get_my_offers: { Args: never; Returns: Json }
       get_my_recovery: { Args: never; Returns: Json }
       get_my_referral_stats: { Args: never; Returns: Json }
@@ -7555,6 +7620,10 @@ export type Database = {
       }
       report_rank_mismatch: {
         Args: { p_assessment_id: string; p_note?: string }
+        Returns: Json
+      }
+      request_market_credits: {
+        Args: { p_amount: number; p_reason: string }
         Returns: Json
       }
       resolve_canonical_rank: { Args: { p_rank: string }; Returns: Json }
