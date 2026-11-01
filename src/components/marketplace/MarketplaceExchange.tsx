@@ -17,7 +17,8 @@ const db = supabase as unknown as { from: (t: string) => any; rpc: (f: string, a
 const QUICK = ["O-ring", "Purifier", "Piston ring", "Drydock", "Turbocharger", "Boiler suit", "Gas detector"];
 const sel = "rounded-xl border border-primary/30 bg-card px-2 py-2 text-xs text-foreground";
 
-const MarketplaceExchange = ({ category, canPost }: { category: ExchangeCategory; canPost: boolean }) => {
+type Defaults = { company?: string; whatsapp?: string; email?: string };
+const MarketplaceExchange = ({ category, canPost, defaults }: { category: ExchangeCategory; canPost: boolean; defaults?: Defaults }) => {
   const { user } = useAuth();
   const pricing = useCreditPricing() as unknown as { market_contact_credits?: number } | null;
   const cost = Number(pricing?.market_contact_credits ?? 0);
@@ -112,7 +113,7 @@ const MarketplaceExchange = ({ category, canPost }: { category: ExchangeCategory
         <ShieldAlert size={16} className="mt-0.5 shrink-0 text-primary" /><p>{EXCHANGE_NOTICE}</p>
       </div>
       {rfq && <RfqSheet item={rfq} cost={cost} onClose={() => setRfq(null)} />}
-      {posting && <PostSheet category={category} onClose={() => setPosting(false)} onDone={() => { setPosting(false); setTick((t) => t + 1); }} />}
+      {posting && <PostSheet category={category} defaults={defaults} onClose={() => setPosting(false)} onDone={() => { setPosting(false); setTick((t) => t + 1); }} />}
     </div>
   );
 };
@@ -191,9 +192,9 @@ const RfqSheet = ({ item, cost, onClose }: { item: Item; cost: number; onClose: 
   );
 };
 
-const PostSheet = ({ category, onClose, onDone }: { category: ExchangeCategory; onClose: () => void; onDone: () => void }) => {
+const PostSheet = ({ category, defaults, onClose, onDone }: { category: ExchangeCategory; defaults?: Defaults; onClose: () => void; onDone: () => void }) => {
   const { user } = useAuth();
-  const [v, setV] = useState({ title: "", maker: "", part_number: "", origin_country: "China", ports: "", condition: category === "yards" ? "service" : "new_oem", price_text: "", moq: "", certification: "", company: "", description: "", whatsapp: "", email: "" });
+  const [v, setV] = useState({ title: "", maker: "", part_number: "", origin_country: "China", ports: "", condition: category === "yards" ? "service" : "new_oem", price_text: "", moq: "", certification: "", company: defaults?.company ?? "", description: "", whatsapp: defaults?.whatsapp ?? "", email: defaults?.email ?? "" });
   const [ok, setOk] = useState(false);
   const [busy, setBusy] = useState(false);
   const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => setV({ ...v, [k]: e.target.value });
@@ -215,7 +216,7 @@ const PostSheet = ({ category, onClose, onDone }: { category: ExchangeCategory; 
     }
     setBusy(false);
     if (error) return toast.error("Could not publish. Your account may need marketplace seller approval.");
-    toast.success("Listing published."); onDone();
+    toast.success("Listing saved to your desk."); onDone();
   };
 
   return (
@@ -232,11 +233,11 @@ const PostSheet = ({ category, onClose, onDone }: { category: ExchangeCategory; 
         </div>
         <input className={inp} placeholder="Stock ports, comma separated" onChange={set("ports")} />
         <input className={inp} placeholder="Certification (class, ISO…)" onChange={set("certification")} />
-        <input className={inp} placeholder="Company name" onChange={set("company")} />
+        <input className={inp} placeholder="Company name" value={v.company} onChange={set("company")} />
         <textarea className={inp} rows={3} placeholder="Description" maxLength={2000} onChange={set("description")} />
         <div className="grid grid-cols-2 gap-2">
-          <input className={inp} placeholder="WhatsApp (+code)" inputMode="tel" onChange={set("whatsapp")} />
-          <input className={inp} placeholder="Sales email" type="email" onChange={set("email")} />
+          <input className={inp} placeholder="WhatsApp (+code)" inputMode="tel" value={v.whatsapp} onChange={set("whatsapp")} />
+          <input className={inp} placeholder="Sales email" type="email" value={v.email} onChange={set("email")} />
         </div>
         <label className="flex gap-2 text-[11px] text-muted-foreground"><input type="checkbox" checked={ok} onChange={(e) => setOk(e.target.checked)} className="mt-0.5" />I confirm I am authorised to sell this, the details are accurate, and the goods are not subject to sanctions. SeaMinds is not a party to any sale.</label>
         <button disabled={busy} onClick={submit} className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground disabled:opacity-60">Publish listing (free)</button>

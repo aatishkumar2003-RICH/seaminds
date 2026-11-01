@@ -62,3 +62,17 @@ export function filterItems<T extends Filterable>(rows: T[], f: { q: string; ori
     return terms.every((t) => hay.includes(t));
   });
 }
+
+// Third-party sellers (separate from crew and ship managers) and the hubs each type posts into.
+export const VENDOR_TYPES = [
+  { id: "spares_supplier", label: "Spares supplier / OEM / stockist", icon: "⚙️" },
+  { id: "shipyard_workshop", label: "Shipyard / repair workshop", icon: "🛠️" },
+  { id: "ship_broker", label: "Ship broker (vessel S&P)", icon: "🚢" },
+  { id: "tech_stores", label: "Marine tech, PPE & stores", icon: "🦺" },
+] as const;
+export function vendorHubs(type: string): ExchangeCategory[] {
+  if (type === "shipyard_workshop") return ["yards", "spares"];
+  if (type === "tech_stores") return ["tech", "spares"];
+  if (type === "ship_broker") return ["spares", "yards", "tech"];
+  return ["spares", "tech", "yards"];
+}

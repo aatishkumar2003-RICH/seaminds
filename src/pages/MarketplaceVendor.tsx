@@ -33,7 +33,7 @@ const CompanyFields = ({ f, set }: { f: typeof emptyForm; set: (k: keyof typeof 
 
 const MarketplaceVendor = () => {
   const navigate = useNavigate();
-  const { user, isReady, signOut } = useAuth() as ReturnType<typeof useAuth> & { signOut?: () => Promise<void> };
+  const { user, isReady } = useAuth();
   const [vendor, setVendor] = useState<Vendor | null | undefined>(undefined);
   const [mode, setMode] = useState<"register" | "signin">("register");
   const [f, setF] = useState(emptyForm);
@@ -173,7 +173,7 @@ const MarketplaceVendor = () => {
     <div className="min-h-screen bg-background p-4">
       <div className="flex items-center justify-between">
         {Header}
-        {signOut && <button onClick={() => signOut()} className="flex items-center gap-1 text-xs text-muted-foreground"><LogOut size={14} /> Sign out</button>}
+        <button onClick={() => supabase.auth.signOut()} className="flex items-center gap-1 text-xs text-muted-foreground"><LogOut size={14} /> Sign out</button>
       </div>
       <div className="mx-auto mt-4 max-w-3xl space-y-3">
         <div className="rounded-2xl border border-primary/30 bg-card p-4">
@@ -201,6 +201,9 @@ const MarketplaceVendor = () => {
                   return <button key={h} onClick={() => setHub(h)} className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold ${hub === h ? "border-primary bg-primary text-primary-foreground" : "border-primary/30 text-muted-foreground"}`}>{meta}</button>;
                 })}
               </div>
+            )}
+            {vendor.vendor_type === "ship_broker" && (
+              <button onClick={() => navigate("/marketplace/post")} className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground">🚢 List a vessel for sale</button>
             )}
             <MarketplaceExchange key={hub} category={hub} canPost defaults={{ company: vendor.company_name, whatsapp: vendor.whatsapp ?? "", email: vendor.contact_email ?? "" }} />
           </>
