@@ -4197,6 +4197,45 @@ export type Database = {
         }
         Relationships: []
       }
+      monetization_settings: {
+        Row: {
+          boost_day_credits: number
+          boost_week_credits: number
+          contact_credits: number
+          crew_enabled: boolean
+          enabled: boolean
+          fleet_block_credits: number
+          id: boolean
+          manager_enabled: boolean
+          updated_at: string
+          urgent_block_credits: number
+        }
+        Insert: {
+          boost_day_credits?: number
+          boost_week_credits?: number
+          contact_credits?: number
+          crew_enabled?: boolean
+          enabled?: boolean
+          fleet_block_credits?: number
+          id?: boolean
+          manager_enabled?: boolean
+          updated_at?: string
+          urgent_block_credits?: number
+        }
+        Update: {
+          boost_day_credits?: number
+          boost_week_credits?: number
+          contact_credits?: number
+          crew_enabled?: boolean
+          enabled?: boolean
+          fleet_block_credits?: number
+          id?: boolean
+          manager_enabled?: boolean
+          updated_at?: string
+          urgent_block_credits?: number
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           body: string | null
@@ -7043,6 +7082,7 @@ export type Database = {
         }[]
       }
       get_cert_readiness: { Args: never; Returns: Json }
+      get_credit_pricing: { Args: never; Returns: Json }
       get_crew_card: { Args: { p_token: string }; Returns: Json }
       get_crew_card_by_link: { Args: { p_token: string }; Returns: Json }
       get_cta_block: {
