@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import PasswordInput from "@/components/PasswordInput";
 import MarketplaceExchange from "@/components/marketplace/MarketplaceExchange";
+import SupplierWallet, { useMarketWallet } from "@/components/marketplace/SupplierWallet";
 import { VENDOR_TYPES, vendorHubs, type ExchangeCategory } from "@/lib/marketplaceExchange";
 
 type Vendor = { user_id: string; company_name: string; vendor_type: string; contact_email: string | null; whatsapp: string | null; city: string | null; country: string | null; status: string };
@@ -42,6 +43,7 @@ const MarketplaceVendor = () => {
   const [hub, setHub] = useState<ExchangeCategory>("spares");
   const [tab, setTab] = useState<"listings" | "inquiries">("listings");
   const [inqs, setInqs] = useState<Inq[]>([]);
+  const { wallet, reload: reloadWallet } = useMarketWallet();
   const set = (k: keyof typeof emptyForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value });
   const back = () => (window.history.length > 1 ? navigate(-1) : navigate("/"));
 
@@ -49,8 +51,9 @@ const MarketplaceVendor = () => {
     if (!user) { setVendor(null); return; }
     const { data } = await db.from("marketplace_vendors").select("*").eq("user_id", user.id).maybeSingle();
     setVendor(data ?? null);
+    reloadWallet();
     if (data) setHub(vendorHubs(data.vendor_type)[0]);
-  }, [user]);
+  }, [user, reloadWallet]);
   useEffect(() => { if (isReady) loadVendor(); }, [isReady, loadVendor]);
 
   useEffect(() => {
@@ -184,6 +187,7 @@ const MarketplaceVendor = () => {
             {vendor.status === "verified" ? "✓ Verified partner" : "Verification pending"}
           </span>
         </div>
+        <SupplierWallet wallet={wallet} reload={reloadWallet} />
         <div className="flex gap-2 rounded-xl border border-primary/30 bg-card p-3 text-[11px] leading-snug text-muted-foreground">
           <Lock size={16} className="mt-0.5 shrink-0 text-primary" />
           <p>Private partner phase: your listings, prices and contacts are visible only to your company and the SeaMinds team. Buyers can search them once the exchange opens.</p>

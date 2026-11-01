@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ImagePlus, X, Lock, Mail } from "lucide-react";
+import { ChevronLeft, Lock, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { VESSEL_TYPES, MAX_PHOTOS, MARKETPLACE_NOTICE, SELLER_DECLARATION, compressPhoto, marketplaceApprovalMailto } from "@/lib/shipMarketplace";
+import { VESSEL_TYPES, MARKETPLACE_NOTICE, SELLER_DECLARATION, marketplaceApprovalMailto } from "@/lib/shipMarketplace";
+import { SHIP_SPEC, SHIP_PHOTO_SLOTS, missingRequired } from "@/lib/marketplaceSpecs";
+import { SpecFields, PhotoSlots, DocUpload, uploadListingMedia } from "@/components/marketplace/ListingSpecForm";
+import { useMarketWallet } from "@/components/marketplace/SupplierWallet";
 
 const inp = "w-full rounded-xl border border-primary/30 bg-card px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary";
 const num = (v: string) => (v.trim() === "" ? null : Number(v.replace(/,/g, "")) || null);
@@ -17,7 +20,11 @@ const MarketplacePost = () => {
   const [showId, setShowId] = useState(false);
   const [authority, setAuthority] = useState("");
   const [agree, setAgree] = useState(false);
-  const [photos, setPhotos] = useState<File[]>([]);
+  const [photos, setPhotos] = useState<Record<string, File>>({});
+  const [spec, setSpec] = useState<Record<string, string>>({});
+  const [docs, setDocs] = useState<File[]>([]);
+  const { wallet, reload } = useMarketWallet();
+  const cost = wallet?.ship ?? 0;
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -33,17 +40,15 @@ const MarketplacePost = () => {
   const submit = async () => {
     if (!user) return;
     if (!f.contact_whatsapp && !f.contact_email) return toast.error("Add a WhatsApp number or email so buyers can reach you.");
+    if (!f.dwt || !f.year_built || !f.main_engine || !f.class_society) return toast.error("Please add DWT, year built, main engine and class society.");
+    const miss = missingRequired(SHIP_SPEC, spec, SHIP_PHOTO_SLOTS, photos);
+    if (miss.length) return toast.error(`Please complete: ${miss.slice(0, 4).join(", ")}${miss.length > 4 ? "…" : ""}`);
+    if (!docs.length) return toast.error("Attach at least the GA plan or vessel particulars (Q88 / Form C) as PDF.");
     if (!authority || !agree) return toast.error("Please confirm your authority to sell and accept the marketplace notice.");
+    if (wallet && wallet.balance < cost) return toast.error(`A vessel listing needs ${cost} credits. Request free credits from your supplier wallet.`);
     setBusy(true);
     try {
-      const paths: string[] = [];
-      for (const file of photos.slice(0, MAX_PHOTOS)) {
-        const blob = await compressPhoto(file);
-        const path = `${user.id}/${crypto.randomUUID()}.webp`;
-        const { error } = await supabase.storage.from("ship-listings").upload(path, blob, { contentType: "image/webp" });
-        if (error) throw error;
-        paths.push(path);
-      }
+      const { photoPaths: paths, docPaths } = await uploadListingMedia(user.id, photos, docs);
       const { data, error } = await supabase.from("ship_listings").insert({
         vessel_type: f.vessel_type, vessel_name: f.vessel_name || null, imo: f.imo || null, show_identity: showId,
         flag: f.flag || null, class_society: f.class_society || null, year_built: num(f.year_built ?? ""), builder: f.builder || null,
@@ -53,14 +58,15 @@ const MarketplacePost = () => {
         price_text: f.price_text || "On request", location: f.location || null, delivery_window: f.delivery_window || null,
         description: f.description || null, seller_company: f.seller_company || null,
         contact_whatsapp: f.contact_whatsapp || null, contact_email: f.contact_email || null,
-        authority_basis: authority, photos: paths,
+        authority_basis: authority, photos: paths, specifications: spec, documents: docPaths,
       }).select("id").single();
       if (error) throw error;
-      toast.success("Your vessel is now listed.");
+      reload();
+      toast.success(cost > 0 ? `Your vessel is now listed · ${cost} credits used.` : "Your vessel is now listed.");
       navigate("/marketplace/vendor", { replace: true });
     } catch (e) {
       console.error(e);
-      toast.error("Could not publish the listing. Please check your connection and try again.");
+      toast.error(/INSUFFICIENT_CREDITS/.test((e as Error)?.message ?? "") ? "Not enough credits. Request free credits from your supplier wallet." : "Could not publish the listing. Please check your connection and try again.");
     } finally { setBusy(false); }
   };
 
@@ -82,36 +88,22 @@ const MarketplacePost = () => {
             <section className="space-y-3"><h2 className="text-sm font-bold text-primary">Identity</h2>
               <label className="space-y-1 text-xs text-muted-foreground"><span>Vessel type</span>
                 <select className={inp} value={f.vessel_type} onChange={set("vessel_type")}>{VESSEL_TYPES.map((t) => <option key={t}>{t}</option>)}</select></label>
-              <div className="grid grid-cols-2 gap-3">{field("vessel_name", "Vessel name")}{field("imo", "IMO number")}{field("flag", "Flag")}{field("class_society", "Class society")}</div>
+              <div className="grid grid-cols-2 gap-3">{field("vessel_name", "Vessel name")}{field("imo", "IMO number")}{field("flag", "Flag")}{field("class_society", "Class society *")}</div>
               <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={showId} onChange={(e) => setShowId(e.target.checked)} />Show name & IMO publicly (otherwise "On request")</label>
             </section>
             <section className="space-y-3"><h2 className="text-sm font-bold text-primary">Build & size</h2>
-              <div className="grid grid-cols-2 gap-3">{field("year_built", "Year built", "2012")}{field("builder", "Builder / yard")}{field("dwt", "DWT")}{field("gt", "GT")}{field("loa_m", "LOA (m)")}{field("beam_m", "Beam (m)")}</div>
+              <div className="grid grid-cols-2 gap-3">{field("year_built", "Year built *", "2012")}{field("builder", "Builder / yard")}{field("dwt", "DWT *")}{field("gt", "GT")}{field("loa_m", "LOA (m)")}{field("beam_m", "Beam (m)")}</div>
             </section>
             <section className="space-y-3"><h2 className="text-sm font-bold text-primary">Machinery, green & cargo</h2>
-              <div className="grid grid-cols-2 gap-3">{field("main_engine", "Main engine")}{field("bwts", "BWTS")}{field("scrubber", "Scrubber")}{field("eexi_cii", "EEXI / CII")}{field("cargo_capacity", "Cargo capacity")}{field("cargo_gear", "Cranes / gear")}</div>
+              <div className="grid grid-cols-2 gap-3">{field("main_engine", "Main engine maker & model *")}{field("bwts", "BWTS")}{field("scrubber", "Scrubber")}{field("eexi_cii", "EEXI / CII")}{field("cargo_capacity", "Cargo capacity")}{field("cargo_gear", "Cranes / gear")}</div>
             </section>
             <section className="space-y-3"><h2 className="text-sm font-bold text-primary">Commercial</h2>
               <div className="grid grid-cols-2 gap-3">{field("price_text", "Price idea", "On request")}{field("location", "Current location")}{field("delivery_window", "Delivery window")}{field("seller_company", "Your company")}</div>
               <label className="space-y-1 text-xs text-muted-foreground"><span>Description</span><textarea rows={4} className={inp} value={f.description ?? ""} onChange={set("description")} placeholder="Surveys due, trading history, condition…" /></label>
             </section>
-            <section className="space-y-3"><h2 className="text-sm font-bold text-primary">Photos ({photos.length}/{MAX_PHOTOS})</h2>
-              <div className="flex flex-wrap gap-2">
-                {photos.map((p, i) => (
-                  <div key={i} className="relative h-20 w-20 overflow-hidden rounded-lg border border-primary/30">
-                    <img src={URL.createObjectURL(p)} alt="" className="h-full w-full object-cover" />
-                    <button onClick={() => setPhotos(photos.filter((_, j) => j !== i))} aria-label="Remove photo" className="absolute right-0.5 top-0.5 rounded-full bg-background p-0.5"><X size={12} /></button>
-                  </div>
-                ))}
-                {photos.length < MAX_PHOTOS && (
-                  <label className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-primary/50 text-[10px] text-primary">
-                    <ImagePlus size={18} />Add
-                    <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => setPhotos([...photos, ...Array.from(e.target.files ?? [])].slice(0, MAX_PHOTOS))} />
-                  </label>
-                )}
-              </div>
-              <p className="text-[10px] text-muted-foreground">Photos are auto-compressed for slow ship connections. Only upload photos you own or have permission to use.</p>
-            </section>
+            <SpecFields groups={SHIP_SPEC} spec={spec} onChange={(k, v) => setSpec((p) => ({ ...p, [k]: v }))} />
+            <PhotoSlots slots={SHIP_PHOTO_SLOTS} photos={photos} onChange={setPhotos} />
+            <DocUpload label="GA plan, Q88 / Form C, class survey status" docs={docs} onChange={setDocs} />
             <section className="space-y-3"><h2 className="text-sm font-bold text-primary">Buyer contact</h2>
               <div className="grid grid-cols-2 gap-3">{field("contact_whatsapp", "WhatsApp", "+65…")}{field("contact_email", "Email")}</div>
             </section>
@@ -125,7 +117,7 @@ const MarketplacePost = () => {
                 <ol className="list-decimal space-y-1 pl-4 text-[11px] leading-snug text-muted-foreground">{SELLER_DECLARATION.map((d) => <li key={d}>{d}</li>)}</ol></div>
               <label className="flex items-start gap-2 text-xs"><input type="checkbox" className="mt-0.5" checked={agree} onChange={(e) => setAgree(e.target.checked)} />I confirm and warrant each statement in the seller's declaration above, and I accept the marketplace notice and the <a href="/terms" target="_blank" rel="noreferrer" className="text-primary underline">Terms of Service</a>.</label>
             </section>
-            <button disabled={busy} onClick={submit} className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground disabled:opacity-60">{busy ? "Publishing…" : "Publish listing (free)"}</button>
+            <button disabled={busy} onClick={submit} className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground disabled:opacity-60">{busy ? "Publishing…" : cost > 0 ? `Publish vessel · ${cost} credits${wallet ? ` (you have ${wallet.balance})` : ""}` : "Publish listing (free)"}</button>
           </>
         )}
       </main>
