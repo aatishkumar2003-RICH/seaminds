@@ -52,7 +52,7 @@ const SupplierWallet = ({ wallet, reload }: { wallet: MarketWallet | null; reloa
         ))}
         <p className="text-[10px] text-muted-foreground">Credits are taken once when a listing is published. Editing or withdrawing your listing is free.</p>
       </div>
-      <div className="mt-3 border-t border-primary/20 pt-3"><TopUpPlans audience="supplier" /></div>
+      <div className="mt-3 border-t border-primary/20 pt-3"><TopUpPlans audience="manager" /></div>
       {open && (
         <div className="mt-3 space-y-2 border-t border-primary/20 pt-3">
           <label className="block space-y-1 text-[11px] text-muted-foreground">Credits needed
