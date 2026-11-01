@@ -2,6 +2,19 @@ import { useState, useEffect } from "react";
 import { CreditCard, TrendingUp, Clock, DollarSign, X, FileText, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import jsPDF from "jspdf";
+import { TopUpPlans } from "@/components/CreditWallet";
+import CompanyProfileEditor from "@/components/CompanyProfileEditor";
+import { creditReasonLabel } from "@/lib/creditProgram";
+import { useCreditPricing } from "@/hooks/useCreditPricing";
+
+type LedgerRow = { id: string; delta: number; reason: string; created_at: string };
+
+const managerReasonLabel = (r: string) =>
+  r.startsWith("contact_reveal") || r.startsWith("reveal") ? "Crew contact revealed"
+  : r.startsWith("promo") || r.includes("promotion") ? "Vacancy promotion"
+  : r.startsWith("interview") ? "AI interview invite"
+  : r.startsWith("topup") || r.startsWith("purchase") ? "Credit package purchase"
+  : creditReasonLabel(r);
 
 interface Payment {
   id: string;
@@ -58,6 +71,21 @@ const ManagerPaymentHistory = ({ managerUserId }: ManagerPaymentHistoryProps) =>
   const [assessments, setAssessments] = useState<Record<string, AssessmentData>>({});
   const [loading, setLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState<{ assessment: AssessmentData; crew: CrewInfo } | null>(null);
+  const [ledger, setLedger] = useState<LedgerRow[]>([]);
+  const [balance, setBalance] = useState(0);
+  const [editCompany, setEditCompany] = useState(false);
+  const pricing = useCreditPricing();
+
+  useEffect(() => {
+    void Promise.all([
+      supabase.rpc("get_my_credit_balance" as never),
+      supabase.from("credit_ledger").select("id,delta,reason,created_at").eq("manager_user_id", managerUserId).order("created_at", { ascending: false }).limit(200),
+    ]).then(([b, l]) => {
+      const v = (b.data as { balance?: number } | null)?.balance;
+      setBalance(typeof v === "number" ? v : 0);
+      setLedger((l.data as LedgerRow[]) || []);
+    });
+  }, [managerUserId]);
 
   useEffect(() => {
     const load = async () => {
@@ -105,19 +133,15 @@ const ManagerPaymentHistory = ({ managerUserId }: ManagerPaymentHistoryProps) =>
 
   const completedPayments = payments.filter(p => p.status === "completed");
   const totalSpend = completedPayments.reduce((sum, p) => sum + p.amount_paid, 0);
-  const bulkCredits = completedPayments
-    .filter(p => p.payment_type === "bulk")
-    .reduce((sum, p) => {
-      if (p.amount_paid === 39900) return sum + 10;
-      if (p.amount_paid === 84900) return sum + 25;
-      if (p.amount_paid === 149900) return sum + 50;
-      return sum;
-    }, 0);
-  const usedThisMonth = completedPayments.filter(p => {
-    const d = new Date(p.created_at);
-    const now = new Date();
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && p.payment_type !== "bulk";
-  }).length;
+  const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
+  const usedThisMonth = ledger.filter(l => l.delta < 0 && new Date(l.created_at) >= monthStart).reduce((n, l) => n - l.delta, 0);
+  const paid = !!pricing?.manager_paid;
+  const costs: [string, string][] = [
+    ["Crew contact reveal", paid ? `${pricing!.contact_credits} cr` : "Free"],
+    ["Urgent promotion · 5 vacancies / 48h", paid ? `${pricing!.urgent_block_credits} cr` : "Free"],
+    ["Fleet promotion · 10 vacancies / 7 days", paid ? `${pricing!.fleet_block_credits} cr` : "Free"],
+    ["AI interview invites", "Free"],
+  ];
 
   if (loading) {
     return (
@@ -485,7 +509,7 @@ const ManagerPaymentHistory = ({ managerUserId }: ManagerPaymentHistoryProps) =>
             <CreditCard size={14} className="text-primary" />
             <p className="text-xs text-muted-foreground">Available Credits</p>
           </div>
-          <p className="text-2xl font-bold text-primary">{bulkCredits}</p>
+          <p className="text-2xl font-bold text-primary">{balance}</p>
         </div>
         <div className="bg-secondary rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
@@ -506,14 +530,49 @@ const ManagerPaymentHistory = ({ managerUserId }: ManagerPaymentHistoryProps) =>
             <TrendingUp size={14} className="text-muted-foreground" />
             <p className="text-xs text-muted-foreground">Total Transactions</p>
           </div>
-          <p className="text-2xl font-bold text-foreground">{payments.length}</p>
+          <p className="text-2xl font-bold text-foreground">{ledger.length + payments.length}</p>
         </div>
+      </div>
+
+      <div className="rounded-xl border border-primary/30 bg-secondary p-4 space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">Credit costs</h3>
+          <span className={`text-[10px] font-bold rounded-full px-2 py-0.5 border ${paid ? "border-primary/40 text-primary" : "border-emerald-400/40 text-emerald-400"}`}>{paid ? "Paid plan active" : "Free launch phase"}</span>
+        </div>
+        {costs.map(([k, v]) => <div key={k} className="flex justify-between text-sm"><span className="text-muted-foreground">{k}</span><span className="font-semibold text-foreground">{v}</span></div>)}
+      </div>
+
+      <div className="rounded-xl border border-primary/30 bg-secondary p-4 space-y-4">
+        <TopUpPlans audience="manager" />
+        <TopUpPlans audience="fleet" />
+      </div>
+
+      <div className="rounded-xl border border-border bg-secondary p-4 space-y-2">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">Company account</h3>
+          <button onClick={() => setEditCompany(v => !v)} className="text-xs font-bold text-primary border border-primary/40 rounded-xl px-3 py-1.5">{editCompany ? "Close" : "Edit details"}</button>
+        </div>
+        {editCompany && <CompanyProfileEditor userId={managerUserId} onSaved={() => setEditCompany(false)} />}
+      </div>
+
+      <div className="bg-secondary/50 rounded-xl border border-border overflow-hidden">
+        <div className="px-4 py-3 border-b border-border"><h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">Credit activity</h3></div>
+        {ledger.length === 0 ? <p className="px-4 py-6 text-center text-sm text-muted-foreground">No credit activity yet.</p> : (
+          <ul className="divide-y divide-border/50">
+            {ledger.map(l => (
+              <li key={l.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+                <span className="min-w-0"><span className="block text-foreground truncate">{managerReasonLabel(l.reason)}</span><span className="block text-xs text-muted-foreground">{new Date(l.created_at).toLocaleDateString()}</span></span>
+                <span className={`font-bold shrink-0 ${l.delta >= 0 ? "text-emerald-400" : "text-amber-400"}`}>{l.delta > 0 ? "+" : ""}{l.delta}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       {/* Transaction table */}
       <div className="bg-secondary/50 rounded-xl border border-border overflow-hidden">
         <div className="px-4 py-3 border-b border-border">
-          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">Transaction History</h3>
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">Assessment Payments & Reports</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
