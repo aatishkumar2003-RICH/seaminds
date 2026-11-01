@@ -7074,6 +7074,16 @@ export type Database = {
         Args: { p_mp: Database["public"]["Tables"]["manager_profiles"]["Row"] }
         Returns: boolean
       }
+      get_active_credit_plans: {
+        Args: { p_audience: string }
+        Returns: {
+          credits: number
+          id: string
+          interval: string
+          name: string
+          price_usd: number
+        }[]
+      }
       get_admin_settings: {
         Args: { p_keys: string[] }
         Returns: {
