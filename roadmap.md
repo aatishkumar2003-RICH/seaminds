@@ -2,7 +2,7 @@
 
 ## Marketplace shore procurement
 - [x] Replace vessel/IMO fields with labeled buyer, delivery location, quantity/unit, required date and specifications; preserve buyer details for online inquiries.
-- [ ] Verify owner quote form, sample safeguards, phone/desktop layout and procurement regression tests; keep marketplace locked.
+- [x] Verified owner quote form and sample-send safeguard on desktop and phone; no page overflow, six regression tests passed and build OK. Marketplace remains locked; real supplier delivery not tested because current listings are samples.
 
 ## Monetization standby
 - [x] Persist owner-only default-OFF switches and editable feature credit costs, with audited changes.
