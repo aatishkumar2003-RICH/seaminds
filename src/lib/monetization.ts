@@ -2,10 +2,12 @@ export type MonetizationSettings = {
   enabled: boolean; crew_enabled: boolean; manager_enabled: boolean;
   boost_day_credits: number; boost_week_credits: number; urgent_block_credits: number;
   fleet_block_credits: number; contact_credits: number; market_contact_credits: number;
+  market_ship_listing_credits: number; market_spare_listing_credits: number; market_service_listing_credits: number; market_vendor_welcome_credits: number;
 };
 export const DEFAULT_MONETIZATION: MonetizationSettings = {
   enabled: false, crew_enabled: true, manager_enabled: true,
   boost_day_credits: 1, boost_week_credits: 5, urgent_block_credits: 5, fleet_block_credits: 5, contact_credits: 1, market_contact_credits: 1,
+  market_ship_listing_credits: 25, market_spare_listing_credits: 5, market_service_listing_credits: 10, market_vendor_welcome_credits: 500,
 };
 export const COST_FIELDS = [
   ['boost_day_credits', 'Crew priority · 24 hours'],
@@ -14,6 +16,10 @@ export const COST_FIELDS = [
   ['fleet_block_credits', 'Fleet promotion · per 10 vacancies / 7 days'],
   ['contact_credits', 'Contact reveal · owner preview only'],
   ['market_contact_credits', 'Marketplace inquiry / supplier contact · once per item'],
+  ['market_ship_listing_credits', 'Marketplace vessel listing (always charged; 0 = free)'],
+  ['market_spare_listing_credits', 'Marketplace spare / product listing (always charged; 0 = free)'],
+  ['market_service_listing_credits', 'Marketplace yard / service listing (always charged; 0 = free)'],
+  ['market_vendor_welcome_credits', 'New supplier welcome credits'],
 ] as const;
 export function validateMonetization(s: MonetizationSettings): string | null {
   if ([s.enabled, s.crew_enabled, s.manager_enabled].some(v => typeof v !== 'boolean')) return 'Select valid payment switches';
