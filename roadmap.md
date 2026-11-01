@@ -1,5 +1,11 @@
 # SeaMinds — Global Vacancy Growth Roadmap
 
+## Monetization standby
+- [x] Persist owner-only default-OFF switches and editable feature credit costs, with audited changes.
+- [x] Seed seven editable private packages and add Admin controls; connect existing boost/promotion charges to free/paid settings. Contact reveal remains owner-preview-only.
+- [x] Verify owner cost/price save/reload and restoration, live zero effective costs, disabled checkout, anonymous denial and 19 regression tests. No real boost or contact reveal performed.
+- [ ] Tazapay checkout, buyer tax/fee calculation, verified webhook grants and recurring subscriptions: await provider onboarding and credentials. No public payment launch or paid-feature marketing until ready.
+
 ## Maritime brain — Phase 3
 - [x] Add candidate-only adaptive practice screen, six language choices, optional browser speech and end-only feedback.
 - [x] Verify authenticated seven-turn completion, simulated outage recovery, training entry, phone/desktop layout and 17 regression checks. Voice audibility/transcription remain device-dependent and were not verified with real microphone audio.

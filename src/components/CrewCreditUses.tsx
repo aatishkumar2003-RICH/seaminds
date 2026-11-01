@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useCreditPricing } from "@/hooks/useCreditPricing";
 
 const REASONS: Record<string, string> = {
   insufficient_credits: "Not enough credits — invite shipmates or complete your profile to earn more.",
@@ -18,6 +19,7 @@ const CrewCreditUses = ({ balance, onSpent }: { balance: number; onSpent: () => 
   const [until, setUntil] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [code, setCode] = useState("");
+  const pricing = useCreditPricing();
 
   useEffect(() => {
     supabase.from("crew_boosts").select("boosted_until").maybeSingle().then(({ data }) => setUntil(data?.boosted_until ?? null));
@@ -50,10 +52,10 @@ const CrewCreditUses = ({ balance, onSpent }: { balance: number; onSpent: () => 
       <div className="space-y-2 rounded-xl border border-primary/30 p-3">
         <p className="text-sm font-semibold text-primary">⚡ Top-of-Desk Priority</p>
         <p className="text-xs text-muted-foreground">Appear at the top of every recruiter's crew search for your rank, with a gold "Priority · Ready now" badge. Recruiters still need approval to see your contacts.</p>
-        {active && <p className="text-xs font-bold text-primary">Active until {new Date(until!).toLocaleString()}</p>}
+        {active && until && <p className="text-xs font-bold text-primary">Active until {new Date(until).toLocaleString()}</p>}
         <div className="flex gap-2">
-          <Button size="sm" className="flex-1 rounded-xl font-bold" disabled={busy || balance < 1} onClick={() => boost(1)}>24h · 1 credit</Button>
-          <Button size="sm" variant="outline" className="flex-1 rounded-xl border-primary text-primary font-bold" disabled={busy || balance < 5} onClick={() => boost(7)}>7 days · 5 credits</Button>
+          <Button size="sm" className="flex-1 rounded-xl font-bold" disabled={busy || !pricing || balance < pricing.boost_day_credits} onClick={() => boost(1)}>24h · {pricing ? pricing.boost_day_credits ? `${pricing.boost_day_credits} credits` : 'Free' : '…'}</Button>
+          <Button size="sm" variant="outline" className="flex-1 rounded-xl border-primary text-primary font-bold" disabled={busy || !pricing || balance < pricing.boost_week_credits} onClick={() => boost(7)}>7 days · {pricing ? pricing.boost_week_credits ? `${pricing.boost_week_credits} credits` : 'Free' : '…'}</Button>
         </div>
         {active && <p className="text-[10px] text-muted-foreground">Buying again extends your current boost.</p>}
       </div>
