@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import MarketCreditRequests from './MarketCreditRequests';
 import { COST_FIELDS, DEFAULT_MONETIZATION, validateMonetization, type MonetizationSettings } from '@/lib/monetization';
 
 export default function MonetizationControls({ onSaved }: { onSaved: () => void }) {
@@ -41,6 +42,7 @@ export default function MonetizationControls({ onSaved }: { onSaved: () => void 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{COST_FIELDS.map(([key, label]) => <label key={key} className="text-sm space-y-2">{label}<Input aria-label={label} type="number" min="0" max="1000000" step="1" value={Number.isNaN(settings[key]) ? '' : settings[key]} onChange={e => setSettings({ ...settings, [key]: e.target.value === '' ? NaN : Number(e.target.value) })} /></label>)}</div>
       <p className="text-sm text-muted-foreground">Package prices exclude tax. Applicable tax and banking/payment charges are added for the customer before checkout. Tazapay rates and payment confirmation are not connected yet.</p>
       <Button onClick={save} disabled={busy}><Save />{busy ? 'Saving…' : 'Save monetization settings'}</Button>
+      <MarketCreditRequests />
     </>}
   </section>;
 }
