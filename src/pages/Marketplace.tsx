@@ -72,7 +72,7 @@ const Marketplace = () => {
 
   const filtered = useMemo(() => rows.filter((r) => type === "All" || r.vessel_type === type), [rows, type]);
   const sel = id ? rows.find((r) => r.id === id) : null;
-  const back = () => (id ? setParams({}) : window.history.length > 1 ? navigate(-1) : navigate("/app"));
+  const back = () => (id ? setParams({ hub: "ships" }) : window.history.length > 1 ? navigate(-1) : navigate("/app"));
   const title = (l: Listing) => (l.show_identity && l.vessel_name ? l.vessel_name : `${l.vessel_type}${l.dwt ? ` · ${l.dwt.toLocaleString()} DWT` : ""}`);
 
   const report = async (l: Listing) => {
