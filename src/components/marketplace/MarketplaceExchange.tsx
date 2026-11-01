@@ -6,6 +6,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCreditPricing } from "@/hooks/useCreditPricing";
 import { Button } from "@/components/ui/button";
 import { ORIGINS, PORTS, CONDITIONS, EXCHANGE_NOTICE, flagOf, filterItems, buildRfqText, buildInquiryPayload, type ExchangeCategory, type Inquiry } from "@/lib/marketplaceExchange";
+import { specFor, missingRequired, listingCost } from "@/lib/marketplaceSpecs";
+import { SpecFields, PhotoSlots, DocUpload, uploadListingMedia } from "@/components/marketplace/ListingSpecForm";
+import { useMarketWallet } from "@/components/marketplace/SupplierWallet";
 
 type Item = {
   id: string; seller_id: string; category: ExchangeCategory; title: string; maker: string | null; part_number: string | null;
@@ -194,53 +197,71 @@ const RfqSheet = ({ item, cost, onClose }: { item: Item; cost: number; onClose: 
 
 const PostSheet = ({ category, defaults, onClose, onDone }: { category: ExchangeCategory; defaults?: Defaults; onClose: () => void; onDone: () => void }) => {
   const { user } = useAuth();
+  const { wallet, reload } = useMarketWallet();
+  const { groups, slots } = specFor(category);
   const [v, setV] = useState({ title: "", maker: "", part_number: "", origin_country: "China", ports: "", condition: category === "yards" ? "service" : "new_oem", price_text: "", moq: "", certification: "", company: defaults?.company ?? "", description: "", whatsapp: defaults?.whatsapp ?? "", email: defaults?.email ?? "" });
+  const [spec, setSpec] = useState<Record<string, string>>({});
+  const [photos, setPhotos] = useState<Record<string, File>>({});
+  const [docs, setDocs] = useState<File[]>([]);
   const [ok, setOk] = useState(false);
   const [busy, setBusy] = useState(false);
   const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => setV({ ...v, [k]: e.target.value });
+  const cost = wallet ? listingCost(category, wallet) : 0;
 
   const submit = async () => {
+    if (!user) return;
     if (v.title.trim().length < 3 || !v.company.trim()) return toast.error("Add a title and company name.");
+    if (category !== "yards" && !v.maker.trim()) return toast.error("Add the maker / brand.");
+    const miss = missingRequired(groups, spec, slots, photos);
+    if (miss.length) return toast.error(`Please complete: ${miss.slice(0, 4).join(", ")}${miss.length > 4 ? "…" : ""}`);
     if (!v.whatsapp.trim() && !v.email.trim()) return toast.error("Add a WhatsApp number or email for inquiries.");
     if (!ok) return toast.error("Please confirm the declaration.");
+    if (wallet && wallet.balance < cost) return toast.error(`This listing needs ${cost} credits. Request free credits from your wallet.`);
     setBusy(true);
-    const { data, error } = await db.from("marketplace_items").insert({
-      seller_id: user?.id, category, title: v.title.trim(), maker: v.maker || null, part_number: v.part_number || null,
-      origin_country: v.origin_country, stock_ports: v.ports.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 8),
-      condition: v.condition, price_text: v.price_text || null, moq: v.moq || null, certification: v.certification || null,
-      company: v.company.trim(), description: v.description || null,
-    }).select("id").single();
-    if (!error && data) {
+    try {
+      const { photoPaths, docPaths } = await uploadListingMedia(user.id, photos, docs);
+      const { data, error } = await db.from("marketplace_items").insert({
+        seller_id: user.id, category, title: v.title.trim(), maker: v.maker || null, part_number: v.part_number || null,
+        origin_country: v.origin_country, stock_ports: v.ports.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 8),
+        condition: v.condition, price_text: v.price_text || null, moq: v.moq || null, certification: spec.class_cert || spec.accreditation || spec.standard || v.certification || null,
+        company: v.company.trim(), description: v.description || null, specifications: spec, photos: photoPaths, documents: docPaths,
+      }).select("id").single();
+      if (error) throw error;
       const { error: e2 } = await db.from("marketplace_item_contacts").insert({ item_id: data.id, whatsapp: v.whatsapp || null, email: v.email || null });
-      if (e2) { await db.from("marketplace_items").update({ status: "withdrawn" }).eq("id", data.id); setBusy(false); return toast.error("Could not save contact details."); }
-    }
-    setBusy(false);
-    if (error) return toast.error("Could not publish. Your account may need marketplace seller approval.");
-    toast.success("Listing saved to your desk."); onDone();
+      if (e2) { await db.from("marketplace_items").update({ status: "withdrawn" }).eq("id", data.id); throw e2; }
+      toast.success(cost > 0 ? `Listing published · ${cost} credits used.` : "Listing published.");
+      reload(); onDone();
+    } catch (e: any) {
+      toast.error(/INSUFFICIENT_CREDITS/.test(e?.message ?? "") ? "Not enough credits. Request free credits from your wallet." : "Could not publish. Please check your connection and try again.");
+    } finally { setBusy(false); }
   };
 
   return (
     <Sheet title="List your item / service" onClose={onClose}>
-      <div className="space-y-2">
-        <input className={inp} placeholder="Title (e.g. Purifier O-ring kit)" maxLength={160} onChange={set("title")} />
+      <div className="space-y-3">
+        <input className={inp} placeholder={category === "yards" ? "Title (e.g. Graving dock 220m, Mumbai)" : "Title (e.g. Exhaust valve spindle MAN 6S50ME-C)"} maxLength={160} onChange={set("title")} />
         <div className="grid grid-cols-2 gap-2">
-          <input className={inp} placeholder="Maker / brand" onChange={set("maker")} />
-          <input className={inp} placeholder="Part no. / model" onChange={set("part_number")} />
+          <input className={inp} placeholder={category === "yards" ? "Yard / workshop name" : "Maker / brand *"} onChange={set("maker")} />
+          <input className={inp} placeholder="Maker part no." onChange={set("part_number")} />
           <select className={inp} value={v.origin_country} onChange={set("origin_country")} aria-label="Made in">{ORIGINS.map((o) => <option key={o.name} value={o.name}>{o.flag} {o.name}</option>)}</select>
           <select className={inp} value={v.condition} onChange={set("condition")} aria-label="Condition">{Object.entries(CONDITIONS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select>
-          <input className={inp} placeholder="Price (e.g. On request)" onChange={set("price_text")} />
+          <input className={inp} placeholder="Price (e.g. USD 1,200 / On request)" onChange={set("price_text")} />
           <input className={inp} placeholder="MOQ" onChange={set("moq")} />
         </div>
-        <input className={inp} placeholder="Stock ports, comma separated" onChange={set("ports")} />
-        <input className={inp} placeholder="Certification (class, ISO…)" onChange={set("certification")} />
+        <input className={inp} placeholder="Stock / service ports, comma separated" onChange={set("ports")} />
+        <SpecFields groups={groups} spec={spec} onChange={(k, val) => setSpec((s) => ({ ...s, [k]: val }))} />
+        <PhotoSlots slots={slots} photos={photos} onChange={setPhotos} />
+        <DocUpload label="Certificates / test reports" docs={docs} onChange={setDocs} />
         <input className={inp} placeholder="Company name" value={v.company} onChange={set("company")} />
-        <textarea className={inp} rows={3} placeholder="Description" maxLength={2000} onChange={set("description")} />
+        <textarea className={inp} rows={3} placeholder="Description, condition notes, delivery terms" maxLength={2000} onChange={set("description")} />
         <div className="grid grid-cols-2 gap-2">
           <input className={inp} placeholder="WhatsApp (+code)" inputMode="tel" value={v.whatsapp} onChange={set("whatsapp")} />
           <input className={inp} placeholder="Sales email" type="email" value={v.email} onChange={set("email")} />
         </div>
         <label className="flex gap-2 text-[11px] text-muted-foreground"><input type="checkbox" checked={ok} onChange={(e) => setOk(e.target.checked)} className="mt-0.5" />I confirm I am authorised to sell this, the details are accurate, and the goods are not subject to sanctions. SeaMinds is not a party to any sale.</label>
-        <button disabled={busy} onClick={submit} className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground disabled:opacity-60">Publish listing (free)</button>
+        <button disabled={busy} onClick={submit} className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground disabled:opacity-60">
+          {busy ? "Publishing…" : cost > 0 ? `Publish listing · ${cost} credits${wallet ? ` (you have ${wallet.balance})` : ""}` : "Publish listing (free)"}
+        </button>
       </div>
     </Sheet>
   );

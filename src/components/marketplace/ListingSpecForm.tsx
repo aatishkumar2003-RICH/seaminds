@@ -1,6 +1,28 @@
 import { ImagePlus, X, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { MAX_DOCS, MAX_DOC_BYTES, type PhotoSlot, type SpecGroup } from "@/lib/marketplaceSpecs";
+import { supabase } from "@/integrations/supabase/client";
+import { compressPhoto } from "@/lib/shipMarketplace";
+
+/** Uploads slot photos (compressed, slot-named) and PDFs into the seller's own folder. */
+export async function uploadListingMedia(uid: string, photos: Record<string, File>, docs: File[]) {
+  const bucket = supabase.storage.from("ship-listings");
+  const photoPaths: string[] = [];
+  for (const [slot, file] of Object.entries(photos)) {
+    const path = `${uid}/${slot}-${crypto.randomUUID()}.webp`;
+    const { error } = await bucket.upload(path, await compressPhoto(file), { contentType: "image/webp" });
+    if (error) throw error;
+    photoPaths.push(path);
+  }
+  const docPaths: string[] = [];
+  for (const d of docs) {
+    const path = `${uid}/doc-${crypto.randomUUID()}.pdf`;
+    const { error } = await bucket.upload(path, d, { contentType: "application/pdf" });
+    if (error) throw error;
+    docPaths.push(path);
+  }
+  return { photoPaths, docPaths };
+}
 
 const inp = "w-full rounded-xl border border-primary/30 bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none";
 
