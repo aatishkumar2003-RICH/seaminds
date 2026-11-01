@@ -2,6 +2,19 @@ import { useState, useEffect } from "react";
 import { CreditCard, TrendingUp, Clock, DollarSign, X, FileText, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import jsPDF from "jspdf";
+import { TopUpPlans } from "@/components/CreditWallet";
+import CompanyProfileEditor from "@/components/CompanyProfileEditor";
+import { creditReasonLabel } from "@/lib/creditProgram";
+import { useCreditPricing } from "@/hooks/useCreditPricing";
+
+type LedgerRow = { id: string; delta: number; reason: string; created_at: string };
+
+const managerReasonLabel = (r: string) =>
+  r.startsWith("contact_reveal") || r.startsWith("reveal") ? "Crew contact revealed"
+  : r.startsWith("promo") || r.includes("promotion") ? "Vacancy promotion"
+  : r.startsWith("interview") ? "AI interview invite"
+  : r.startsWith("topup") || r.startsWith("purchase") ? "Credit package purchase"
+  : creditReasonLabel(r);
 
 interface Payment {
   id: string;

@@ -14,7 +14,7 @@ type Wallet = { ok: boolean; user_id: string; balance: number; welcome_claimed: 
 type Plan = { id: string; name: string; price_usd: number; credits: number; interval: string };
 
 /** Top-up packages from owner-controlled credit_plans; purchase opens only once checkout is live. */
-const TopUpPlans = ({ audience }: { audience: string }) => {
+export const TopUpPlans = ({ audience }: { audience: string }) => {
   const [plans, setPlans] = useState<Plan[]>([]);
   useEffect(() => {
     void supabase.rpc("get_active_credit_plans" as never, { p_audience: audience } as never).then(({ data }) => setPlans((data as unknown as Plan[]) || []));
