@@ -62,7 +62,7 @@ export default function DoraChat({ sourceScreen, routePathname, audience = "crew
   };
 
   return (
-    <div className="space-y-3 rounded-xl border border-primary/30 bg-card p-4">
+    <div className="min-w-0 space-y-3 rounded-xl border border-primary/30 bg-card p-4">
       <div className="flex items-center gap-2">
         <Sparkles size={18} className="text-primary" />
         <h2 className="text-sm font-bold text-foreground">Ask DORA</h2>
@@ -90,7 +90,7 @@ export default function DoraChat({ sourceScreen, routePathname, audience = "crew
       )}
 
       <div className="flex gap-2">
-        <Input aria-label="Question for DORA" value={input} maxLength={600} disabled={busy} onChange={(e) => setInput(e.target.value)}
+        <Input className="min-w-0 flex-1" aria-label="Question for DORA" value={input} maxLength={600} disabled={busy} onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") ask(input); }} placeholder="Type your question…" />
         <Button size="icon" className="rounded-xl" disabled={busy || !input.trim()} onClick={() => ask(input)} aria-label="Ask DORA">
           <Send size={16} />

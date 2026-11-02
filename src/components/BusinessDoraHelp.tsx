@@ -27,7 +27,7 @@ export default function BusinessDoraHelp() {
       <TooltipContent side="left">Ask DORA · Help & reports</TooltipContent>
     </Tooltip>
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-h-[85dvh] w-[calc(100%-1.5rem)] max-w-xl overflow-y-auto p-4">
+      <DialogContent className="max-h-[85dvh] w-[calc(100%-1.5rem)] max-w-xl overflow-y-auto p-4 [&>*]:min-w-0">
         <DialogTitle className="pr-8 text-primary">DORA · Help & Support</DialogTitle>
         <DialogDescription>{audience === "marketplace" ? "Marketplace support" : "Company support"}</DialogDescription>
         <Suspense fallback={<p className="py-4 text-sm text-muted-foreground">Loading help…</p>}>

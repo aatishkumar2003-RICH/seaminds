@@ -106,7 +106,7 @@ export default function SupportCenter({ sourceScreen, routePathname, audience = 
   const labelFor = (c: string) => CATEGORIES.find((x) => x.value === c)?.label ?? c;
 
   return (
-    <div className="mx-auto w-full max-w-xl space-y-5 px-4 py-4">
+    <div className="mx-auto min-w-0 w-full max-w-xl space-y-5 px-4 py-4">
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="icon" onClick={onBack} aria-label="Back" className="rounded-full text-primary">
           <ChevronLeft size={22} />
