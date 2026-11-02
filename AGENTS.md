@@ -4,14 +4,15 @@
 - Heartbeat `save_checkpoint` never clears an interruption; only `confirm_resume` (same paper + persisted answer) does. Why: a reconnect is not proof of recovery.
 - Final scoring is single-flight via `final_scoring_lease` on `scoring_jobs`; a validated AI result is cached before commit and reused. Why: polling and concurrent requests must not trigger repeated AI calls.
 - Pre-paper start failures are recorded in `assessment_start_incidents` (owner-bound, server-classified); no fake checkpoint or paper. Why: failures before issuance must be visible and recoverable without bypassing readiness.
-- Readiness uses exact rank/context `blueprint_coverage*`, not global counts. Why: rows alone do not prove readiness.
+- Readiness uses rank/context `blueprint_coverage*`, not global counts; rows alone prove nothing.
 - Assessment `scoring_tier` (QUICK_PROFILE / CV_VERIFIED) and `assessment_round` are set server-side by trigger `trg_set_assessment_scoring_tier` at creation; clients never choose them. Why: a score's evidence basis must not be forgeable.
 - DORA help knowledge lives in `dora_articles` (Postgres FTS via `dora_search_articles`, max 4 published hits); own-user context only via `dora_get_my_context()` keyed by auth.uid(); metrics/gaps store no raw conversation text. Why: grounded retrieval, no cross-user leakage.
 - Every Apply button routes through `src/lib/applicationRouter.ts` (WhatsApp → recruiter email → official site → flyer); SeaMinds-published adverts keep the agency in `job_postings.recruiter_name` and `notify-application` never falls back to the publishing account's email. Why: applications must reach the actual recruiter, and toasts claim only what happened.
 - Feeds use keyset cursors per source (`loadVacancyPage`); no vacancy is hidden by age (old external = "hiring not confirmed"). Inventory pages and lifecycle actions go via `src/lib/vacancyLifecycle.ts`. Why: no false removals; one secure delete path.
 - Build metadata comes from vite.config.ts (/version.json NetworkOnly, not precached); UI reads src/lib/releaseInfo.ts. Why: identifiable builds, no stale update checks.
 - Assessments are created/resumed only via `open_assessment_v2(mode, invite_id, restart)` (client wrapper `src/lib/assessmentGateway.ts`); mode is explicit (PROFILE / CV_BASED), context is server-derived, one in_progress row per (crew, mode, context), evidence snapshot frozen at creation, preflight confirmation never automatic. Why: no client-forged tiers, no duplicates, old certificates stay truthful.
-- Manager pages share `ShipManagerLayout`; pages keep auth/logic, tabs use URL queries. Why: one shell
+- Manager pages share `ShipManagerLayout`; tabs use URL queries. Why: one shell.
+- Business help uses floating DORA and support-submit; only submitted reports reach admins with ticket-keyed alerts. Why: private, consistent help.
 - Interview profile preparation stays on the token page with embedded QuickProfile/CvUpload; only confirmed saves advance, never client-selected scoring tiers. Why: truthful evidence.
 - Vacancy ownership lives in `job_postings.recruiter_name` (own company vs distinct agency; NULL = legacy); routing uses raw `recruiterName` (`isThirdPartyAdvert`). Publishing is one atomic INSERT per batch; uncertain batches reconcile by `posting_batch_id`. Why: no routing-mode field; a timeout is not proof of no commit.
 - Vacancies never auto-expire: feeds filter `status = 'active'`; `expires_at` = `NO_EXPIRY_COMPAT`. Delete is blocked when applications exist. Why: retention is an owner decision.

@@ -1,12 +1,9 @@
 // Public support ticket gateway. Zero AI. Only path for creating support tickets.
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { sendAdminSupportAlert } from "../_shared/supportAlert.ts";
 
-const cors = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+const cors = corsHeaders;
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
 
@@ -148,6 +145,9 @@ Deno.serve(async (req) => {
 
   // Ticket is committed. Acknowledgement is best-effort and never affects the response.
   const RESEND = Deno.env.get("RESEND_API_KEY");
+  // Await acceptance before reporting email status. Replays use the same provider key.
+  // The stored ticket reference, not client text, determines the email contents.
+  const adminAlertSent = RESEND ? await sendAdminSupportAlert(RESEND, result.ticket_ref) : false;
   if (contactEmail && RESEND && !result.idempotent_replay) {
     const send = (async () => {
       try {
@@ -172,5 +172,5 @@ Deno.serve(async (req) => {
     if (er?.waitUntil) er.waitUntil(send); else send.catch(() => {});
   }
 
-  return json({ ok: true, ticket_ref: result.ticket_ref, incident_ref: result.incident_ref, idempotent_replay: result.idempotent_replay });
+  return json({ ok: true, ticket_ref: result.ticket_ref, incident_ref: result.incident_ref, idempotent_replay: result.idempotent_replay, admin_alert_status: adminAlertSent ? "sent" : "pending" });
 });

@@ -1,5 +1,9 @@
 # SeaMinds — Global Vacancy Growth Roadmap
 
+## Business DORA help
+- [x] Add floating manager/marketplace DORA, contextual guides and explicit problem/suggestion reporting.
+- [x] Verify real signed-in supplier DORA answer, controlled report saved/read back, admin email accepted by provider, manager help and nine tests. Inbox delivery remains unverified; no public deployment requested.
+
 ## Marketplace shore procurement
 - [x] Replace vessel/IMO fields with labeled buyer, delivery location, quantity/unit, required date and specifications; preserve buyer details for online inquiries.
 - [x] Verified owner quote form and sample-send safeguard on desktop and phone; no page overflow, six regression tests passed and build OK. Marketplace remains locked; real supplier delivery not tested because current listings are samples.

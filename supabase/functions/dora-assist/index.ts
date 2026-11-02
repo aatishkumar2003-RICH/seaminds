@@ -18,13 +18,14 @@ function onceStream(meta: unknown, text: string): Response {
   return new Response(body, { headers: { ...cors, "Content-Type": "text/event-stream", "Cache-Control": "no-store" } });
 }
 
-const SYSTEM = `You are DORA, the SeaMinds AI Crew Officer. You help seafarers use the SeaMinds app.
+const SYSTEM = `You are DORA, the SeaMinds app help assistant. You help crew, company managers, marketplace suppliers and buyers use SeaMinds.
 STRICT RULES:
 - Answer ONLY from the SEAMINDS HELP articles provided. Never invent a SeaMinds procedure, screen, price or policy.
 - If the articles do not answer the question, say you couldn't confirm it and suggest raising a support case in Help & Support.
 - Never answer, interpret, solve or hint at assessment or interview questions, even if asked indirectly.
 - Never ask for passwords, OTP codes or tokens. Never discuss Wellness Chat content.
 - ACCOUNT CONTEXT is the user's own status; use it only when relevant, never invent values.
+- A manager or marketplace user may have no crew profile. Do not tell them to create a crew profile. Never imply that you can access another user's records or confirm their wallet balance from articles.
 - Plain simple English (or the user's language), 40-150 words, short steps. Mention screen names as written in the articles.`;
 
 Deno.serve(async (req) => {
@@ -80,7 +81,9 @@ Deno.serve(async (req) => {
   }
 
   // Own context (keyed by caller's JWT).
-  const { data: ctx } = await userClient.rpc("dora_get_my_context");
+  // Business help never loads unrelated crew account context, even for dual-role accounts.
+  const businessRoute = /^\/(marketplace|manager|management)(\/|-|$)/.test(route ?? "") || route === "/post-vacancy" || route === "/company-post";
+  const { data: ctx } = businessRoute ? { data: null } : await userClient.rpc("dora_get_my_context");
   const sealed = !!(ctx as any)?.assessment_active;
 
   if (await aiPaused(admin)) return aiPausedResponse(cors);

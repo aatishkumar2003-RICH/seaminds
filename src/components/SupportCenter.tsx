@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import DoraChat from "@/components/DoraChat";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { type HelpAudience } from "@/lib/businessHelp";
+import { CURRENT_RELEASE } from "@/lib/releaseInfo";
 
 const CATEGORIES = [
   { value: "ASSESSMENT", label: "Assessment / SeaMinds Score" },
@@ -21,11 +23,11 @@ const CATEGORIES = [
 
 interface MyTicket { ticket_ref: string; category: string; status: string; subject: string; created_at: string }
 
-interface Props { sourceScreen: string; onBack: () => void; onOpenSafety?: () => void }
+interface Props { sourceScreen: string; routePathname?: string; audience?: HelpAudience; onBack: () => void; onOpenSafety?: () => void }
 
 const newId = () => crypto.randomUUID();
 
-export default function SupportCenter({ sourceScreen, onBack, onOpenSafety }: Props) {
+export default function SupportCenter({ sourceScreen, routePathname, audience = "crew", onBack, onOpenSafety }: Props) {
   const { user } = useAuth();
   const submissionId = useRef<string>(newId());
   const [category, setCategory] = useState<string>("SYSTEM");
@@ -37,6 +39,9 @@ export default function SupportCenter({ sourceScreen, onBack, onOpenSafety }: Pr
   const [error, setError] = useState<string | null>(null);
   const [ticketRef, setTicketRef] = useState<string | null>(null);
   const [tickets, setTickets] = useState<MyTicket[]>([]);
+  const [reportType, setReportType] = useState("Problem");
+  const [adminAlert, setAdminAlert] = useState<string | null>(null);
+  useEffect(() => { if (user?.email) setEmail(user.email); }, [user?.email]);
 
   const loadTickets = useCallback(async () => {
     if (!user) return;
@@ -60,12 +65,12 @@ export default function SupportCenter({ sourceScreen, onBack, onOpenSafety }: Pr
         body: {
           submission_id: submissionId.current,
           category,
-          subject: subject.trim(),
+          subject: audience === "crew" ? subject.trim() : `[${audience === "manager" ? "Company" : "Marketplace"} ${reportType}] ${subject.trim()}`.slice(0, 200),
           description: description.trim(),
           contact_email: email.trim() || null,
           contact_whatsapp: whatsapp.trim() || null,
-          route_pathname: `/app/${sourceScreen.replace(/[^a-z]/gi, "")}`,
-          client_build: null,
+          route_pathname: routePathname || `/app/${sourceScreen.replace(/[^a-z]/gi, "")}`,
+          client_build: CURRENT_RELEASE.buildId,
         },
       });
       if (fnError) {
@@ -82,6 +87,7 @@ export default function SupportCenter({ sourceScreen, onBack, onOpenSafety }: Pr
       }
       if (!data?.ok || !data?.ticket_ref) { setError("Could not send right now. Tap Send again — it will not create a duplicate."); return; }
       setTicketRef(data.ticket_ref);
+      setAdminAlert(data.admin_alert_status ?? null);
       submissionId.current = newId();
       setSubject(""); setDescription("");
       loadTickets();
@@ -100,17 +106,17 @@ export default function SupportCenter({ sourceScreen, onBack, onOpenSafety }: Pr
   const labelFor = (c: string) => CATEGORIES.find((x) => x.value === c)?.label ?? c;
 
   return (
-    <div className="mx-auto w-full max-w-xl space-y-5 px-4 py-4">
+    <div className="mx-auto min-w-0 w-full max-w-xl space-y-5 px-4 py-4">
       <div className="flex items-center gap-2">
-        <button onClick={onBack} aria-label="Back" className="flex h-9 w-9 items-center justify-center rounded-full text-primary hover:bg-secondary">
+        <Button variant="ghost" size="icon" onClick={onBack} aria-label="Back" className="rounded-full text-primary">
           <ChevronLeft size={22} />
-        </button>
+        </Button>
         <LifeBuoy size={20} className="text-primary" />
         <h1 className="text-lg font-bold text-foreground">Help & Support</h1>
       </div>
 
       <div className="rounded-xl border border-primary/30 bg-card p-3 text-xs leading-relaxed text-muted-foreground">
-        Never send passwords, OTP codes, or wellness chat messages here. For an urgent safety problem or emergency, use the SOS button.
+        Never send passwords, OTP codes, or wellness chat messages here.{audience === "crew" ? " For an urgent safety problem or emergency, use the SOS button." : " Only the report you choose to submit is sent to the support team."}
       </div>
 
       {onOpenSafety && (
@@ -123,6 +129,8 @@ export default function SupportCenter({ sourceScreen, onBack, onOpenSafety }: Pr
       {user && (
         <DoraChat
           sourceScreen={sourceScreen}
+          routePathname={routePathname}
+          audience={audience}
           onEscalate={(q) => {
             setTicketRef(null);
             if (!subject) setSubject(q.slice(0, 200));
@@ -136,6 +144,8 @@ export default function SupportCenter({ sourceScreen, onBack, onOpenSafety }: Pr
         <div className="space-y-2 rounded-xl border border-primary/40 bg-card p-4 text-center">
           <p className="text-sm text-foreground">Your report was received. Keep this reference:</p>
           <p className="font-mono text-base font-bold tracking-wide text-primary break-all">{ticketRef}</p>
+          {adminAlert === "sent" && <p className="text-xs text-muted-foreground">Admin email alert accepted for sending.</p>}
+          {adminAlert === "pending" && <p className="text-xs text-muted-foreground">Your report is saved. Email alert is pending; contact <a href="mailto:support@seaminds.life" className="text-primary underline">support@seaminds.life</a> if urgent.</p>}
           <div className="flex justify-center gap-2">
             <Button size="sm" variant="outline" onClick={copyRef}><Copy size={14} className="mr-1" /> Copy</Button>
             <Button size="sm" variant="ghost" onClick={() => setTicketRef(null)}>New report</Button>
@@ -145,6 +155,7 @@ export default function SupportCenter({ sourceScreen, onBack, onOpenSafety }: Pr
 
       {!ticketRef && (
         <div id="support-form" className="space-y-3 rounded-xl border border-border bg-card p-4">
+          {audience !== "crew" && <div className="space-y-1"><Label>Problem or idea?</Label><Select value={reportType} onValueChange={setReportType}><SelectTrigger aria-label="Report type"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Problem">Report a problem</SelectItem><SelectItem value="Suggestion">Suggest an improvement</SelectItem></SelectContent></Select></div>}
           <div className="space-y-1">
             <Label>What is it about?</Label>
             <Select value={category} onValueChange={setCategory}>
@@ -156,11 +167,11 @@ export default function SupportCenter({ sourceScreen, onBack, onOpenSafety }: Pr
           </div>
           <div className="space-y-1">
             <Label>Subject</Label>
-            <Input value={subject} maxLength={200} onChange={(e) => setSubject(e.target.value)} placeholder="Short title" />
+            <Input aria-label="Report subject" value={subject} maxLength={200} onChange={(e) => setSubject(e.target.value)} placeholder="Short title" />
           </div>
           <div className="space-y-1">
             <Label>Describe the problem</Label>
-            <Textarea value={description} maxLength={2000} rows={5} onChange={(e) => setDescription(e.target.value)} placeholder="What happened? What were you trying to do?" />
+            <Textarea aria-label="Report description" value={description} maxLength={2000} rows={5} onChange={(e) => setDescription(e.target.value)} placeholder="What happened? What were you trying to do?" />
             <p className="text-right text-[10px] text-muted-foreground">{description.length}/2000</p>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
