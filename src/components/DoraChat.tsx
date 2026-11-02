@@ -3,14 +3,13 @@ import { Send, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { authedFunctionHeaders } from "@/lib/authFetch";
+import { HELP_PROMPTS, type HelpAudience } from "@/lib/businessHelp";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
-const CHIPS = ["My exam was interrupted", "What do I need for CV-based scoring?", "How do I set availability?", "Paper not ready"];
+interface Props { sourceScreen: string; routePathname?: string; audience?: HelpAudience; onEscalate: (question: string) => void }
 
-interface Props { sourceScreen: string; onEscalate: (question: string) => void }
-
-export default function DoraChat({ sourceScreen, onEscalate }: Props) {
+export default function DoraChat({ sourceScreen, routePathname, audience = "crew", onEscalate }: Props) {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -31,7 +30,7 @@ export default function DoraChat({ sourceScreen, onEscalate }: Props) {
       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/dora-assist`, {
         method: "POST",
         headers: await authedFunctionHeaders(),
-        body: JSON.stringify({ question, history, language: localStorage.getItem("sm_lang") || "en", route_template: `/app/${sourceScreen.replace(/[^a-z]/gi, "")}` }),
+        body: JSON.stringify({ question, history, language: localStorage.getItem("sm_lang") || "en", route_template: routePathname || `/app/${sourceScreen.replace(/[^a-z]/gi, "")}` }),
       });
       if (!res.ok || !res.body) {
         let msg = "DORA is unavailable right now. Please raise a support request below.";
@@ -72,10 +71,10 @@ export default function DoraChat({ sourceScreen, onEscalate }: Props) {
 
       {msgs.length === 0 && (
         <div className="flex flex-wrap gap-2">
-          {CHIPS.map((c) => (
-            <button key={c} onClick={() => ask(c)} className="rounded-full border border-primary/40 px-3 py-1 text-xs text-primary hover:bg-primary/10">
+          {HELP_PROMPTS[audience].map((c) => (
+            <Button variant="outline" size="sm" key={c} onClick={() => ask(c)} className="h-auto whitespace-normal text-left text-xs text-primary">
               {c}
-            </button>
+            </Button>
           ))}
         </div>
       )}
@@ -91,7 +90,7 @@ export default function DoraChat({ sourceScreen, onEscalate }: Props) {
       )}
 
       <div className="flex gap-2">
-        <Input value={input} maxLength={600} disabled={busy} onChange={(e) => setInput(e.target.value)}
+        <Input aria-label="Question for DORA" value={input} maxLength={600} disabled={busy} onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") ask(input); }} placeholder="Type your question…" />
         <Button size="icon" className="rounded-xl" disabled={busy || !input.trim()} onClick={() => ask(input)} aria-label="Ask DORA">
           <Send size={16} />

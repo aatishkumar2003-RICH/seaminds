@@ -102,6 +102,7 @@ import InstallPrompt from "./components/InstallPrompt";
 import UpdateNotice from "./components/UpdateNotice";
 import { AuthProvider } from "./contexts/AuthContext";
 import { initMetaPixel, captureAdSource, trackPixel } from "@/lib/metaPixel";
+import BusinessDoraHelp from "./components/BusinessDoraHelp";
 
 const queryClient = new QueryClient();
 const APP_THEME_COLOR = "#0D1B2A";
@@ -240,6 +241,7 @@ const App = () => (
             <Route path="/recover/:token" element={<Recover />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <BusinessDoraHelp />
           <RecoveryBanner />
           <CookieConsent />
           <InstallPrompt />
