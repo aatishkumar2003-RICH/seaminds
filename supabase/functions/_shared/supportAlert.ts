@@ -10,14 +10,17 @@ export function adminSupportAlert(ticketRef: string) {
 }
 
 export async function sendAdminSupportAlert(key: string, ticketRef: string, fetcher: typeof fetch = fetch): Promise<boolean> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
   try {
     const response = await fetcher("https://api.resend.com/emails", {
       method: "POST",
-      signal: AbortSignal.timeout(8000),
+      signal: controller.signal,
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json", "Idempotency-Key": `support-admin-${ticketRef}` },
       body: JSON.stringify(adminSupportAlert(ticketRef)),
     });
     if (!response.ok) { console.warn("support admin alert not accepted:", response.status); return false; }
     return true;
   } catch { console.warn("support admin alert unavailable"); return false; }
+  finally { clearTimeout(timeout); }
 }
