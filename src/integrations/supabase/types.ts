@@ -1760,6 +1760,66 @@ export type Database = {
         }
         Relationships: []
       }
+      crew_dispatches: {
+        Row: {
+          anchor_count: number
+          author_first_name: string | null
+          author_id: string
+          author_nationality: string | null
+          author_rank: string | null
+          author_vessel_type: string | null
+          body: string
+          category: string
+          confidentiality_confirmed: boolean
+          created_at: string
+          id: string
+          like_count: number
+          photo_path: string | null
+          salute_count: number
+          status: string
+          title: string
+          youtube_url: string | null
+        }
+        Insert: {
+          anchor_count?: number
+          author_first_name?: string | null
+          author_id?: string
+          author_nationality?: string | null
+          author_rank?: string | null
+          author_vessel_type?: string | null
+          body?: string
+          category?: string
+          confidentiality_confirmed?: boolean
+          created_at?: string
+          id?: string
+          like_count?: number
+          photo_path?: string | null
+          salute_count?: number
+          status?: string
+          title: string
+          youtube_url?: string | null
+        }
+        Update: {
+          anchor_count?: number
+          author_first_name?: string | null
+          author_id?: string
+          author_nationality?: string | null
+          author_rank?: string | null
+          author_vessel_type?: string | null
+          body?: string
+          category?: string
+          confidentiality_confirmed?: boolean
+          created_at?: string
+          id?: string
+          like_count?: number
+          photo_path?: string | null
+          salute_count?: number
+          status?: string
+          title?: string
+          youtube_url?: string | null
+        }
+        Relationships: []
+      }
       crew_documents: {
         Row: {
           ai_confidence: number | null

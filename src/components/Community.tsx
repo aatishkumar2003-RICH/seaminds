@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Compass, Shield, Users, Ship, AlertTriangle, CheckCircle, Heart, Send, Mail, Anchor, FileText, Download, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import DispatchPublisher from "@/components/community/DispatchPublisher";
 
 interface CommunityProps {
   shipName: string;
@@ -85,6 +86,9 @@ const Community = ({ shipName, manningAgency, profileId, firstName, voyageStartD
 
         {/* SECTION — Anonymous Safety Reporting (moved to top: this is a legal MLC 2006 / ISM right and must not be buried) */}
         <SafetyReportSection shipName={shipName} manningAgency={manningAgency} />
+
+        {/* SECTION — Voice of the Sea dispatch publisher */}
+        <DispatchPublisher profileId={profileId} />
 
         {/* SECTION 1 — My Company */}
         {manningAgency && (
