@@ -85,11 +85,17 @@ function postSplit(text: string): string[] | null {
   lines.forEach((l, i) => { if (isHead(i) && cur.join("").trim()) { parts.push(cur.join("\n")); cur = []; } cur.push(l); });
   parts.push(cur.join("\n"));
   const out = parts.map((p) => p.trim()).filter(Boolean);
-  // Merge heading-only fragments with no contact into the next post.
+  // Contact envelope: posts with no contact belong to the next post that carries one
+  // (e.g. vessel list → "📢 APPLY NOW … 📱 WA +62…" footer). Trailing contactless posts join the last advert.
   const merged: string[] = [];
+  let pending: string[] = [];
   for (const p of out) {
-    if (merged.length && !hasContact(merged[merged.length - 1]) && merged[merged.length - 1].length < 200) merged[merged.length - 1] += "\n\n" + p;
-    else merged.push(p);
+    pending.push(p);
+    if (hasContact(p)) { merged.push(pending.join("\n\n")); pending = []; }
+  }
+  if (pending.length) {
+    if (merged.length) merged[merged.length - 1] += "\n\n" + pending.join("\n\n");
+    else merged.push(pending.join("\n\n"));
   }
   return merged.length > 1 ? merged : null;
 }
