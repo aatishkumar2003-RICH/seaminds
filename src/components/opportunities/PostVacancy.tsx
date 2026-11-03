@@ -15,6 +15,7 @@ import {
   validateContactFormats, validateAttribution, ACCEPTED_FLIER_TYPES as ACCEPTED,
 } from "@/lib/managerVacancies";
 import { splitAdverts, MAX_PASTE_CHARS, MAX_ADVERT_CHARS } from "@/lib/advertSplitter";
+import { withCountryCode } from "@/lib/whatsappCc";
 import { WhatsAppBroadcastPanel } from "./WhatsAppBroadcastPanel";
 import { AiReadingHud } from "./AiReadingHud";
 
@@ -286,11 +287,7 @@ const PostVacancy = () => {
   const blank = (v?: string) => !v?.trim() || isPlaceholder(v);
   const needsContact = (r: Row) => blank(r.contact_email) && blank(r.contact_whatsapp);
   const digitsOf = (w?: string) => (w || "").replace(/\D/g, "").replace(/^00/, "");
-  const withCc = (w: string) => {
-    const c = w.replace(/[\s()\-.]/g, "");
-    if (!c || c.startsWith("+") || c.startsWith("00") || !batchCc) return w;
-    return /^0\d{6,14}$/.test(c) ? `${batchCc}${c.slice(1)}` : w;
-  };
+  const withCc = (w: string) => withCountryCode(w, batchCc);
   const effective = (r: Row): Row => {
     let o: Row = { ...r, contact_email: blank(r.contact_email) ? "" : r.contact_email, contact_whatsapp: blank(r.contact_whatsapp) ? "" : r.contact_whatsapp };
     if (fill && needsContact(o)) {
@@ -584,23 +581,23 @@ const PostVacancy = () => {
             )}
           </div>
           <div className="border-t border-border pt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <label className="block space-y-1">
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-[#D4AF37]">WhatsApp country code (all adverts)</span>
-              <select value={batchCc} onChange={(e) => { setScan(null); setBatchCc(e.target.value); }}
-                className="w-full h-11 rounded-xl border border-border bg-background px-3 text-sm text-foreground">
-                {[["+62", "🇮🇩 Indonesia +62"], ["+91", "🇮🇳 India +91"], ["+63", "🇵🇭 Philippines +63"], ["+84", "🇻🇳 Vietnam +84"], ["+60", "🇲🇾 Malaysia +60"], ["+65", "🇸🇬 Singapore +65"], ["+971", "🇦🇪 UAE +971"], ["+380", "🇺🇦 Ukraine +380"], ["+7", "🇷🇺 Russia +7"], ["+86", "🇨🇳 China +86"], ["+880", "🇧🇩 Bangladesh +880"], ["+94", "🇱🇰 Sri Lanka +94"], ["+44", "🇬🇧 UK +44"], ["", "Don't add a code"]].map(([v, t]) => <option key={t} value={v}>{t}</option>)}
-              </select>
-              <span className="block text-[10px] text-muted-foreground">Local numbers like 0813… become {batchCc || "+XX"}813…</span>
-            </label>
+            <div className="block space-y-1">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-[#D4AF37]">Batch WhatsApp number</span>
+              <div className="flex gap-2">
+                <select aria-label="WhatsApp country code" value={batchCc} onChange={(e) => { setScan(null); setBatchCc(e.target.value); }}
+                  className="w-[104px] shrink-0 h-11 rounded-xl border border-border bg-background px-2 text-sm text-foreground">
+                  {[["+62", "🇮🇩 +62"], ["+91", "🇮🇳 +91"], ["+63", "🇵🇭 +63"], ["+84", "🇻🇳 +84"], ["+60", "🇲🇾 +60"], ["+65", "🇸🇬 +65"], ["+971", "🇦🇪 +971"], ["+380", "🇺🇦 +380"], ["+7", "🇷🇺 +7"], ["+86", "🇨🇳 +86"], ["+880", "🇧🇩 +880"], ["+94", "🇱🇰 +94"], ["+44", "🇬🇧 +44"], ["", "No code"]].map(([v, t]) => <option key={t} value={v}>{t}</option>)}
+                </select>
+                <Input aria-label="Batch WhatsApp number" inputMode="tel" value={batchPhone} onChange={(e) => { setScan(null); setBatchPhone(e.target.value); }} placeholder="813 8597 8097" className="h-11 text-sm flex-1 min-w-0" />
+              </div>
+              <span className="block text-[10px] text-muted-foreground">
+                {batchPhone.trim() ? `Will be saved as ${withCc(batchPhone)}` : "Type with or without the country code — 0813…, 813… or +62813… all work."} The code also applies to numbers inside adverts. Filled only where an advert has no contact.
+              </span>
+            </div>
             <label className="block space-y-1">
               <span className="text-[11px] font-semibold uppercase tracking-wide text-[#D4AF37]">Recruiting company (all adverts)</span>
               <Input value={batchAgency} onChange={(e) => { setScan(null); setBatchAgency(e.target.value); }} placeholder="e.g. PT. Diva Marina Indonesia" className="h-11 text-sm" />
               <span className="block text-[10px] text-muted-foreground">Used only where an advert has no company name. Optional for your own vacancies.</span>
-            </label>
-            <label className="block space-y-1">
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-[#D4AF37]">Batch WhatsApp number</span>
-              <Input aria-label="Batch WhatsApp number" inputMode="tel" value={batchPhone} onChange={(e) => { setScan(null); setBatchPhone(e.target.value); }} placeholder="e.g. 0919 006 1411" className="h-11 text-sm" />
-              <span className="block text-[10px] text-muted-foreground">Uses the country code above. Filled only where an advert has no contact.</span>
             </label>
             <label className="block space-y-1">
               <span className="text-[11px] font-semibold uppercase tracking-wide text-[#D4AF37]">Batch email</span>
