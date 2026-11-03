@@ -15,6 +15,7 @@ import {
   validateContactFormats, validateAttribution, ACCEPTED_FLIER_TYPES as ACCEPTED,
 } from "@/lib/managerVacancies";
 import { splitAdverts, MAX_PASTE_CHARS, MAX_ADVERT_CHARS } from "@/lib/advertSplitter";
+import { withCountryCode } from "@/lib/whatsappCc";
 import { WhatsAppBroadcastPanel } from "./WhatsAppBroadcastPanel";
 import { AiReadingHud } from "./AiReadingHud";
 
@@ -286,11 +287,7 @@ const PostVacancy = () => {
   const blank = (v?: string) => !v?.trim() || isPlaceholder(v);
   const needsContact = (r: Row) => blank(r.contact_email) && blank(r.contact_whatsapp);
   const digitsOf = (w?: string) => (w || "").replace(/\D/g, "").replace(/^00/, "");
-  const withCc = (w: string) => {
-    const c = w.replace(/[\s()\-.]/g, "");
-    if (!c || c.startsWith("+") || c.startsWith("00") || !batchCc) return w;
-    return /^0\d{6,14}$/.test(c) ? `${batchCc}${c.slice(1)}` : w;
-  };
+  const withCc = (w: string) => withCountryCode(w, batchCc);
   const effective = (r: Row): Row => {
     let o: Row = { ...r, contact_email: blank(r.contact_email) ? "" : r.contact_email, contact_whatsapp: blank(r.contact_whatsapp) ? "" : r.contact_whatsapp };
     if (fill && needsContact(o)) {
