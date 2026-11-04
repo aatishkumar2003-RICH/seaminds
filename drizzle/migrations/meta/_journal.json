@@ -813,6 +813,13 @@
       "when": 1793719318917,
       "tag": "0115_crew_dispatch_photo_read",
       "breakpoints": true
+    },
+    {
+      "idx": 116,
+      "version": "7",
+      "when": 1793756661060,
+      "tag": "0116_admin_bulk_import_vacancies",
+      "breakpoints": true
     }
   ]
 }

@@ -7072,6 +7072,7 @@ export type Database = {
         Args: { p_campaign_id: string; p_people: Json }
         Returns: Json
       }
+      admin_bulk_import_vacancies: { Args: { _rows: Json }; Returns: number }
       admin_credit_report: {
         Args: { p_offset?: number; p_search?: string }
         Returns: Json
