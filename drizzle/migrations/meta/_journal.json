@@ -820,6 +820,13 @@
       "when": 1793756661060,
       "tag": "0116_admin_bulk_import_vacancies",
       "breakpoints": true
+    },
+    {
+      "idx": 117,
+      "version": "7",
+      "when": 1793756691867,
+      "tag": "0117_admin_bulk_import_vacancies_fix_log",
+      "breakpoints": true
     }
   ]
 }
