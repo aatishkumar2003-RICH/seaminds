@@ -102,6 +102,11 @@ Deno.serve(async (req) => {
   const cid = url.searchParams.get("c");
   if (cid) {
     const ok = url.searchParams.get("s") === (await sign(cid));
+    // GET only shows a confirm button (security scanners pre-open links); the real opt-out is a POST
+    // (button submit or the mail client's RFC 8058 one-click POST).
+    if (req.method === "GET" && ok) {
+      return new Response(`<html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="font-family:Arial;background:#0D1B2A;color:#e2e8f0;text-align:center;padding:60px"><h2 style="color:#D4AF37">Stop SeaMinds emails?</h2><p>Tap below to confirm. Your public vacancies stay visible to seafarers.</p><form method="POST" action="${FN_URL}?c=${esc(cid)}&s=${esc(url.searchParams.get("s"))}"><button type="submit" style="background:#D4AF37;color:#0D1B2A;border:0;padding:12px 22px;border-radius:10px;font-weight:bold;font-size:15px">Confirm unsubscribe</button></form></body></html>`, { headers: { "Content-Type": "text/html" } });
+    }
     if (ok) await svc.from("recruiter_outreach_contacts").update({ stage: "unsubscribed", updated_at: new Date().toISOString() }).eq("id", cid);
     return new Response(`<html><body style="font-family:Arial;background:#0D1B2A;color:#e2e8f0;text-align:center;padding:60px"><h2 style="color:#D4AF37">${ok ? "You're unsubscribed" : "Invalid link"}</h2><p>${ok ? "SeaMinds will not email you again." : "Please reply to the email instead."}</p></body></html>`, { headers: { "Content-Type": "text/html" } });
   }
