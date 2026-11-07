@@ -43,7 +43,8 @@ export const resolveApplyRoute = (v: UnifiedVacancy, card: CrewCardInfo | null):
   if (v.kind === "direct" && (houseOwned || (!house && !isThirdPartyAdvert(v)))) return { channel: "seaminds", url: null, record: true };
   if (wa) return { channel: "whatsapp", url: wa, record: true };
   if (v.email) return { channel: "email", url: null, record: true };
-  if (v.applyUrl) return { channel: "portal", url: v.applyUrl, record: true };
+  // Owner rule: applications go by Email or WhatsApp only. A company website is never
+  // an application route and opening it never records "Applied".
   if (v.flierUrl) return { channel: "flyer", url: null, record: false };
   return { channel: "none", url: null, record: false };
 };
@@ -67,7 +68,7 @@ export const routeLabel = (v: UnifiedVacancy): string => {
     case "email": return "✉️ SEND MY SEA PROFILE BY EMAIL";
     case "portal": return "APPLY ON COMPANY WEBSITE ↗";
     case "flyer": return "📄 VIEW FLYER TO APPLY";
-    default: return "NO CONTACT LISTED";
+    default: return "RECRUITER CONTACT PENDING";
   }
 };
 
@@ -130,7 +131,7 @@ export const applyToVacancy = async (v: UnifiedVacancy, card: CrewCardInfo | nul
       route, ok: false, duplicate: false,
       toast: route.channel === "flyer"
         ? { title: "Check the flyer", description: "This advert has no contact we could read. Open the original flyer for the recruiter's details.", tone: "warning" }
-        : { title: "No contact listed", description: "This vacancy has no way to apply yet.", tone: "warning" },
+        : { title: "Recruiter contact pending", description: "We are verifying this recruiter's email or WhatsApp. Nothing was sent.", tone: "warning" },
     };
   }
   // Email-only: success means the recruiter email was accepted, so Apply stays retryable

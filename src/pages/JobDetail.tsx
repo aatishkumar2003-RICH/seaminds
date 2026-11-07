@@ -343,9 +343,8 @@ const JobDetail = () => {
                     : ch === "whatsapp" ? <><MessageCircle size={16} /> Apply via WhatsApp</>
                     : ch === "seaminds" ? <>Apply on SeaMinds →</>
                     : ch === "email" ? <>✉️ Send my Sea Profile by email</>
-                    : ch === "portal" ? <><ExternalLink size={16} /> Apply on company website</>
                     : ch === "flyer" ? <>📄 View flyer to apply</>
-                    : <>No contact listed</>}
+                    : <>Recruiter contact pending</>}
                 </button>
                 {reopen && <p style={{ textAlign: "center", fontSize: 11.5, color: "#94A3B8", marginTop: 6 }}>WhatsApp opened ✓ — not sent yet? Tap to re-open.</p>}
                 {unified && hasSecondaryEmail(unified) && emailDone && (
