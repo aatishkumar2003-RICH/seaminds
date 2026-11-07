@@ -39,7 +39,7 @@ export default function RecruiterOutreachTab() {
     <div className="space-y-4">
       <div className="rounded-xl p-4" style={{ background: "#112240", border: "1px solid rgba(212,175,55,0.3)" }}>
         <h2 className="text-lg font-bold" style={{ color: gold }}>Recruiter Outreach</h2>
-        <p className="text-sm" style={{ color: "#94A3B8" }}>Runs daily: up to 30 personal emails from admin@seaminds.life. 4 intro touches, then every 14 days a vacancy report, blog digest or new idea. Stops automatically on join or unsubscribe. Replies land in your Zoho inbox — mark them "replied" here to stop the sequence.</p>
+        <p className="text-sm" style={{ color: "#94A3B8" }}>Runs twice daily: up to 60 personal emails per run (~120/day) from admin@seaminds.life. 4 intro touches, then every 7 days a vacancy report, blog digest or new idea. Stops automatically on join or unsubscribe. Replies land in your Zoho inbox — mark them "replied" here to stop the sequence.</p>
         <div className="flex flex-wrap gap-2 mt-3">
           <input value={testEmail} onChange={(e) => setTestEmail(e.target.value)} className="px-3 py-2 rounded-xl text-sm bg-transparent" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#fff" }} />
           <button disabled={busy} onClick={async () => { const d = await call({ test_email: testEmail }); if (d) toast.success("7 sample emails sent"); }} className="px-4 py-2 rounded-xl font-bold text-sm" style={{ background: gold, color: "#0D1B2A" }}>Send me all samples</button>
