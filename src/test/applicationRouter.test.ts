@@ -41,3 +41,16 @@ describe("secondary email option", () => {
     expect(hasSecondaryEmail({ ...base, publisherName: "Synergy Marine", whatsapp: "+6512345678", email: "a@b.c" })).toBe(false);
   });
 });
+
+describe("owner rule: Email or WhatsApp only", () => {
+  it("a company website alone is never an application route and records nothing", () => {
+    const r = resolveApplyRoute({ ...base, kind: "external", publisherName: null, applyUrl: "https://company.com", email: null, whatsapp: null }, null);
+    expect(r.channel).toBe("none");
+    expect(r.record).toBe(false);
+    expect(r.url).toBeNull();
+  });
+  it("email wins over a website link", () => {
+    const r = resolveApplyRoute({ ...base, kind: "external", publisherName: null, applyUrl: "https://company.com", email: "crew@company.com", whatsapp: null }, null);
+    expect(r.channel).toBe("email");
+  });
+});

@@ -343,7 +343,7 @@ const JobDetail = () => {
                     : ch === "whatsapp" ? <><MessageCircle size={16} /> Apply via WhatsApp</>
                     : ch === "seaminds" ? <>Apply on SeaMinds →</>
                     : ch === "email" ? <>✉️ Send my Sea Profile by email</>
-                    : ch === "portal" ? <><ExternalLink size={16} /> Apply on company website</>
+                    : false ? null
                     : ch === "flyer" ? <>📄 View flyer to apply</>
                     : <>No contact listed</>}
                 </button>
