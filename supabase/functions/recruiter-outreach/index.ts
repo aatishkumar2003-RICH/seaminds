@@ -11,9 +11,9 @@ const SVC_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const svc = createClient(Deno.env.get("SUPABASE_URL")!, SVC_KEY);
 const RESEND_KEY = Deno.env.get("RESEND_API_KEY") || "";
 const FN_URL = `${Deno.env.get("SUPABASE_URL")}/functions/v1/recruiter-outreach`;
-const DAILY_CAP = 30;
-const GAP_DAYS = [0, 4, 5, 7]; // wait before touch 2,3,4 (index = touches already sent)
-const NURTURE_DAYS = 14;
+const DAILY_CAP = 60; // per run; cron runs twice daily => ~120/day
+const GAP_DAYS = [0, 3, 4, 5]; // wait before touch 2,3,4 (index = touches already sent)
+const NURTURE_DAYS = 7;
 const esc = (s: unknown) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
@@ -153,7 +153,7 @@ Deno.serve(async (req) => {
       const bounced = /invalid|not.*valid|bounce/i.test(r.error || "");
       await svc.from("recruiter_outreach_contacts").update({ stage: bounced ? "bounced" : undefined, next_due_at: new Date(Date.now() + 86400000).toISOString() }).eq("id", c.id);
     }
-    await new Promise((res) => setTimeout(res, 800));
+    await new Promise((res) => setTimeout(res, 600));
   }
   console.log("recruiter-outreach", stats);
   return json(stats);
