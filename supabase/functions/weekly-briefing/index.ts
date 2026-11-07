@@ -39,6 +39,13 @@ async function sign(id: string) {
   return Array.from(new Uint8Array(sig)).slice(0, 16).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+const REC_FN = `${Deno.env.get("SUPABASE_URL")}/functions/v1/recruiter-outreach`;
+async function recSign(id: string) {
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(SVC_KEY), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(`rec-unsub:${id}`));
+  return Array.from(new Uint8Array(sig)).slice(0, 16).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 // Region of a crew member from nationality text.
 function region(nat?: string | null): "idvn" | "ph" | "rest" {
   const n = (nat || "").toLowerCase();
@@ -142,7 +149,7 @@ Deno.serve(async (req) => {
   const { data: recent } = await svc.from("briefing_log").select("user_id").gte("sent_at", weekAgo);
   const doneWeek = new Set((recent || []).map((r: any) => r.user_id));
 
-  type R = { id: string; email: string; name: string; rank: string | null; nat: string | null; manager: boolean };
+  type R = { id: string; email: string; name: string; rank: string | null; nat: string | null; manager: boolean; recruiter?: boolean };
   const list: R[] = [];
   if (group === "manager") {
     const { data } = await svc.from("manager_profiles").select("user_id,full_name,company_name,marketing_emails").eq("marketing_emails", true);
@@ -150,6 +157,14 @@ Deno.serve(async (req) => {
       if (!m.user_id || optedOut.has(m.user_id) || doneWeek.has(m.user_id)) continue;
       const { data: u } = await svc.auth.admin.getUserById(m.user_id);
       if (u?.user?.email) list.push({ id: m.user_id, email: u.user.email, name: m.full_name || m.company_name || "", rank: null, nat: null, manager: true });
+    }
+    // Recruiters in the outreach pipeline also get the Friday briefing (their own opt-out is honoured).
+    const seen = new Set(list.map((r) => r.email.toLowerCase()));
+    const { data: rec } = await svc.from("recruiter_outreach_contacts").select("id,email,recruiter_name").in("stage", ["engaging", "nurture"]);
+    for (const c of rec || []) {
+      if (!c.email || seen.has(c.email.toLowerCase()) || doneWeek.has(c.id)) continue;
+      seen.add(c.email.toLowerCase());
+      list.push({ id: c.id, email: c.email, name: c.recruiter_name || "", rank: null, nat: null, manager: true, recruiter: true });
     }
   } else {
     const { data } = await svc.from("crew_profiles").select("id,email,first_name,rank,role,nationality,is_test").not("email", "is", null);
@@ -175,7 +190,8 @@ Deno.serve(async (req) => {
       if (v.length) extra = `<div style="background:#0D1B2A;border-radius:10px;padding:12px;margin-top:8px"><b style="color:#D4AF37">Berths for your rank</b>${v.map((j: any) => `<div style="color:#CBD5E1;font-size:13px;margin-top:6px">• ${esc(j.rank_required)}${j.vessel_type ? ` — ${esc(j.vessel_type)}` : ""}${j.company_name ? ` (${esc(j.company_name)})` : ""}</div>`).join("")}<a href="${SITE}/jobs" style="color:#D4AF37;font-size:13px">See all vacancies →</a></div>`;
       extra += featureBlock(r.nat, r.rank);
     }
-    const unsub = `${FN_URL}?u=${r.id}&s=${await sign(r.id)}`;
+    // Recruiters use the outreach opt-out (confirm button, scanner-safe) so one click stops all emails.
+    const unsub = r.recruiter ? `${REC_FN}?c=${r.id}&s=${await recSign(r.id)}` : `${FN_URL}?u=${r.id}&s=${await sign(r.id)}`;
     let ok = false, error: string | null = null;
     try {
       const res = await fetch("https://api.resend.com/emails", {
