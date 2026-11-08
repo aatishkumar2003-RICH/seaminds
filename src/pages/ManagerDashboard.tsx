@@ -780,6 +780,14 @@ const ManagerDashboard = () => {
                               </button>
                             </div>
                           )}
+                          {a.outcome === "accepted" && (
+                            <button
+                              onClick={() => navigate(`/manager/crew-desk?tab=contracts&crew=${a.application_id}`)}
+                              className="text-xs font-bold px-3 py-1.5 rounded-xl bg-[#D4AF37] text-[#0D1B2A] border border-[#D4AF37] hover:opacity-90 transition-opacity"
+                            >
+                              Draft SEA Contract →
+                            </button>
+                          )}
                           {a.outcome === "placed" && (
                             <p className="text-xs text-green-400">🎉 Placed — congratulations!</p>
                           )}
