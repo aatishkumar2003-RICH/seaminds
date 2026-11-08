@@ -41,19 +41,11 @@ const MaritimeMasterBrain = () => {
   const inputRef = useRef("");
   inputRef.current = input;
   const askRef = useRef<(t: string) => void>(() => {});
-  const voiceTurn = useRef(false);
+  // Natural dictation: words stream into the box, pauses never cut you off, nothing sends until you tap Send.
   const voice = useInterviewVoice(
     LOCALES[lang] || "en-GB",
     (t) => setInput((p) => { const n = `${p} ${t}`.trim(); inputRef.current = n; return n; }),
-    {
-      autoStopMs: 1800,
-      onEnd: () => {
-        if (!voiceTurn.current) return;
-        voiceTurn.current = false;
-        // let the final transcript state settle, then send automatically
-        setTimeout(() => { const q = inputRef.current.trim(); if (q) askRef.current(q); else toast.info("I didn't catch that — tap 🎤 and try again."); }, 120);
-      },
-    },
+    { dictation: true },
   );
   const { listening, interim } = voice;
   // iOS only allows speech audio that was unlocked by a direct tap. Do it once —
@@ -67,11 +59,11 @@ const MaritimeMasterBrain = () => {
   const toggleMic = () => {
     if (!voice.supported) { toast.info("Voice input isn't supported in this browser — please type."); return; }
     if (listening) { voice.stop(); return; }
-    window.speechSynthesis?.cancel(); setSpeakingIdx(null);
+    const wasSpeaking = speakingIdx !== null || Boolean(window.speechSynthesis?.speaking);
+    window.speechSynthesis?.cancel(); clearKeepAlive(); utterances.current = []; setSpeakingIdx(null);
     unlockAudio();
-    voiceTurn.current = true;
-    // small delay lets the speaker release the audio session before the mic opens
-    setTimeout(() => voice.start(), unlocked.current ? 250 : 0);
+    // Give iOS time to hand the audio session from the speaker to the microphone.
+    setTimeout(() => voice.start(), wasSpeaking ? 400 : 150);
   };
 
   // Hold utterances so Safari doesn't garbage-collect them mid-speech (which silently stops audio).
@@ -230,7 +222,7 @@ const MaritimeMasterBrain = () => {
           </div>
         )}
         <input ref={fileRef} type="file" accept={ACCEPT} className="hidden" onChange={(e) => void onFile(e.target.files?.[0])} />
-        <form className="flex gap-2 rounded-xl border border-primary/40 bg-card p-2" onSubmit={(e) => { e.preventDefault(); if (listening) { voiceTurn.current = false; voice.stop(); } setTimeout(() => void ask(inputRef.current), listening ? 150 : 0); }}>
+        <form className="flex gap-2 rounded-xl border border-primary/40 bg-card p-2" onSubmit={(e) => { e.preventDefault(); if (listening) voice.stop(); setTimeout(() => void ask(inputRef.current), listening ? 150 : 0); }}>
           <Button type="button" size="sm" variant="outline" onClick={() => fileRef.current?.click()} disabled={busy || reading} aria-label="Attach photo or document"><Paperclip size={16} /></Button>
           <input value={listening ? `${input} ${interim}`.trim() : input} onChange={(e) => setInput(e.target.value)} placeholder={listening ? "Listening… speak now" : "Ask or tap 🎤 to speak…"} className="min-w-0 flex-1 bg-transparent px-1 text-sm outline-none" />
           <Button type="button" size="sm" variant={listening ? "default" : "outline"} onClick={toggleMic} aria-label={listening ? "Stop microphone" : "Speak your question"}>
