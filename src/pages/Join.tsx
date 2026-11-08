@@ -4,6 +4,7 @@ import { Helmet } from "react-helmet-async";
 import { ChevronLeft, ShieldCheck, Anchor, Globe } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
 import PasswordInput from "@/components/PasswordInput";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 import { useT } from "@/i18n";
@@ -78,10 +79,8 @@ const Join = () => {
   }, [navigate, dest, params]);
 
   const google = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}${dest}` },
-    });
+    const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.href });
+    if (r.error) toast.error(r.error.message || "Google sign-in failed");
   };
 
   const createAccount = async () => {

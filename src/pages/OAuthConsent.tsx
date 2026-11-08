@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 
 type AuthzDetails = {
@@ -81,7 +82,7 @@ const OAuthConsent = () => {
   };
 
   const signInGoogle = async () => {
-    await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: returnUrl } });
+    await lovable.auth.signInWithOAuth("google", { redirect_uri: returnUrl });
   };
 
   const signInEmail = async () => {

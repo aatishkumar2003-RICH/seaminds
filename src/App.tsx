@@ -54,6 +54,7 @@ import ManagerSearch from "./pages/ManagerSearch";
 import OwnerPreviewGate from "./components/OwnerPreviewGate";
 import NotFound from "./pages/NotFound";
 const JobDetail = lazy(() => import("./pages/JobDetail"));
+const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const TakeoverInspections = lazy(() => import("./pages/TakeoverInspections"));
 const TakeoverInspection = lazy(() => import("./pages/TakeoverInspection"));
 const RankHub = lazy(() => import("./pages/RankHub"));
@@ -221,6 +222,7 @@ const App = () => (
             <Route path="/colleges" element={<CollegePage />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
+            <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/marketing" element={<Marketing />} />
             <Route path="/management/fleet" element={<Suspense fallback={null}><FleetHome /></Suspense>} />

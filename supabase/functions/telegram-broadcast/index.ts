@@ -53,7 +53,7 @@ const buildMessage = (v: any) => {
   }
   if (v.applyUrl) lines.push(`🔗 ${esc(v.applyUrl)}`);
   lines.push("");
-  lines.push(`🌊 More jobs: ${Deno.env.get("SUPABASE_URL")}/functions/v1/share?type=jobs`);
+  lines.push(`🌊 More jobs: https://seaminds.life/feed`);
   lines.push("");
   lines.push("🏢 Is this your company's vacancy? Your applicants are waiting on SeaMinds — claim your free company account: https://seaminds.life/for-companies");
   return lines.join("\n");
@@ -81,7 +81,7 @@ const buildCompanyMessage = (p: any) => {
   }
   if (p.link_url) lines.push(`🔗 ${esc(p.link_url)}`);
   lines.push("");
-  lines.push(`🌊 More jobs: ${Deno.env.get("SUPABASE_URL")}/functions/v1/share?type=jobs`);
+  lines.push(`🌊 More jobs: https://seaminds.life/feed`);
   return lines.join("\n");
 };
 

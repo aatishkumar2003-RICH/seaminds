@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Shield, Heart, Globe, ArrowLeft } from "lucide-react";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
+import { toast } from "sonner";
 
 interface LandingScreenProps {
   onGetStarted: () => void;
@@ -12,12 +14,8 @@ interface LandingScreenProps {
 const LandingScreen = ({ onGetStarted, onManagerLogin }: LandingScreenProps) => {
   const navigate = useNavigate();
   const handleGoogleLogin = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: 'https://seaminds.life/app',
-      },
-    });
+    const r = await lovable.auth.signInWithOAuth('google', { redirect_uri: window.location.origin });
+    if (r.error) toast.error(r.error.message || 'Google sign-in failed');
   };
 
   const [showEmail, setShowEmail] = useState(false);

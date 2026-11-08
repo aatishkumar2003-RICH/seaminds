@@ -11,6 +11,8 @@ const SVC_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const svc = createClient(Deno.env.get("SUPABASE_URL")!, SVC_KEY);
 const RESEND_KEY = Deno.env.get("RESEND_API_KEY") || "";
 const FN_URL = `${Deno.env.get("SUPABASE_URL")}/functions/v1/manager-engagement`;
+
+const brandUnsub = (u: string) => { const x = new URL(u); return `https://seaminds.life/unsubscribe?f=${x.pathname.split("/").pop()}&${x.searchParams.toString()}`; };
 const esc = (s: unknown) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 
 async function sign(id: string) {
@@ -115,7 +117,7 @@ Deno.serve(async (req) => {
     if (dry) { type === "match" ? stats.match_alerts++ : stats.series++; continue; }
 
     const unsub = `${FN_URL}?u=${m.user_id}&s=${await sign(m.user_id)}`;
-    const html = card(`${inner}<p style="color:#94A3B8;font-size:12px;margin-top:18px">You get this because you have a ShipManager account${m.company_name ? ` for ${esc(m.company_name)}` : ""}. Reply to this email if you need help. <a href="${unsub}" style="color:#94A3B8">Unsubscribe</a></p>`);
+    const html = card(`${inner}<p style="color:#94A3B8;font-size:12px;margin-top:18px">You get this because you have a ShipManager account${m.company_name ? ` for ${esc(m.company_name)}` : ""}. Reply to this email if you need help. <a href="${brandUnsub(unsub)}" style="color:#94A3B8">Unsubscribe</a></p>`);
     try {
       const r = await fetch("https://api.resend.com/emails", {
         method: "POST",
