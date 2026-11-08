@@ -30,7 +30,9 @@ const Join = () => {
   const [params] = useSearchParams();
   const { t } = useT();
   const nextParam = params.get("next");
-  const dest = nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : "/app";
+  const storedDest = (() => { try { return sessionStorage.getItem("sm_post_auth_dest"); } catch { return null; } })();
+  const rawDest = nextParam || storedDest;
+  const dest = rawDest && rawDest.startsWith("/") && !rawDest.startsWith("//") ? rawDest : "/app";
   const [tab, setTab] = useState<"create" | "signin">("create");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
