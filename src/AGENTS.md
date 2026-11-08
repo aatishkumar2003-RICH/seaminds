@@ -32,3 +32,4 @@
 - Admin vacancy batches go only via RPC `admin_bulk_import_vacancies` (owner UID check, dedup_key skip, max 300) into `external_vacancies`. Why: agent can publish for the owner without opening insert rights.
 - Apply routes are Email or WhatsApp only (plus internal SeaMinds/flyer view); a company website is never an application route and never records 'Applied'. Why: owner rule — applications must reach a real recruiter inbox.
 - Email footers link to branded `/unsubscribe?f=<function>` (page POSTs to the function); List-Unsubscribe headers keep the direct function URL for one-click. Public links (Telegram, blog) use seaminds.life only. Why: never show the backend host to users.
+- Route metadata uses Helmet; static overridable tags use `data-rh="true"`, with route-owned canonicals. Why: prevent duplicate tags and incorrect page identity.

@@ -17,7 +17,7 @@ describe("Contact page (email-only)", () => {
     renderContact();
     expect(screen.getByText("support@seaminds.life").closest("a")?.getAttribute("href"))
       .toBe("mailto:support@seaminds.life?subject=SeaMinds%20support%20request");
-    expect(screen.getByText("admin@seaminds.life").closest("a")?.getAttribute("href"))
+    expect(screen.getAllByRole("link", { name: "admin@seaminds.life" }).find(link => link.getAttribute("href")?.includes("subject="))?.getAttribute("href"))
       .toBe("mailto:admin@seaminds.life?subject=SeaMinds%20commercial%20enquiry");
   });
 
