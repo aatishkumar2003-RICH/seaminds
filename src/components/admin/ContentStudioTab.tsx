@@ -26,7 +26,7 @@ const AI_ANGLES = [
   { id: "company", label: "🏢 For Companies" },
 ];
 
-const DIGEST = "https://luomzexqgcjtcmdlbevo.supabase.co/functions/v1/vacancy-card?mode=digest&secret=sm-agt-7Qk4Xv92Rb1Ld6Zt5Wn3Hy8Pc";
+const DIGEST = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/vacancy-card?mode=digest&secret=sm-agt-7Qk4Xv92Rb1Ld6Zt5Wn3Hy8Pc`;
 
 const ContentStudioTab = () => {
   const [loading, setLoading] = useState(false);
