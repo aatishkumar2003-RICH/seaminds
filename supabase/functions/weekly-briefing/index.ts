@@ -11,7 +11,9 @@ const SVC_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const svc = createClient(Deno.env.get("SUPABASE_URL")!, SVC_KEY);
 const RESEND_KEY = Deno.env.get("RESEND_API_KEY") || "";
 const FN_URL = `${Deno.env.get("SUPABASE_URL")}/functions/v1/weekly-briefing`;
-const RUN_CAP = 200;
+
+const brandUnsub = (u: string) => { const x = new URL(u); return `https://seaminds.life/unsubscribe?f=${x.pathname.split("/").pop()}&${x.searchParams.toString()}`; };
+const RUN_CAP = 450;
 const CEILING = 1400; // paid Resend (50k/month ≈ 1,600/day); leaves headroom for alerts and applications
 // Rotating "feature of the week" so crew discover what SeaMinds can do.
 function featureBlock(nat: string | null, rank: string | null) {
@@ -118,7 +120,7 @@ function html(name: string, p: Post, extra: string, unsub: string, manager: bool
   <p style="color:#CBD5E1">${esc((p.excerpt || "").slice(0, 320))}</p>
   <p style="margin:18px 0"><a href="${link}" style="background:#D4AF37;color:#0D1B2A;padding:11px 20px;border-radius:10px;text-decoration:none;font-weight:bold;display:inline-block">Read Full Insight (3 min) →</a></p>
   ${extra}
-  <p style="color:#94A3B8;font-size:12px;margin-top:20px">One article a week from SeaMinds. <a href="${unsub}" style="color:#94A3B8">Unsubscribe</a></p>
+  <p style="color:#94A3B8;font-size:12px;margin-top:20px">One article a week from SeaMinds. <a href="${brandUnsub(unsub)}" style="color:#94A3B8">Unsubscribe</a></p>
   </div></div>`;
 }
 
@@ -126,7 +128,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   const url = new URL(req.url);
 
-  if (req.method === "GET" && url.searchParams.get("u")) {
+  if ((req.method === "GET" || req.method === "POST") && url.searchParams.get("u")) {
     const u = url.searchParams.get("u")!;
     if (!/^[0-9a-f-]{36}$/i.test(u) || url.searchParams.get("s") !== await sign(u)) return new Response("Invalid link", { status: 400 });
     await svc.from("briefing_optout").upsert({ user_id: u });
@@ -196,7 +198,7 @@ Deno.serve(async (req) => {
     try {
       const res = await fetch("https://api.resend.com/emails", {
         method: "POST", headers: { Authorization: `Bearer ${RESEND_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ from: "SeaMinds Briefing <crew@seaminds.life>", reply_to: "support@seaminds.life", to: [r.email],
+        body: JSON.stringify({ from: "SeaMinds Briefing <crew@seaminds.life>", reply_to: "support@seaminds.life", to: [r.email], ...(r.recruiter || r.manager ? { bcc: ["admin@seaminds.life"] } : {}),
           subject: `⚓ This week: ${p.title}`.slice(0, 150), html: html(r.name, p, extra, unsub, r.manager),
           headers: { "List-Unsubscribe": `<${unsub}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" } }),
       });

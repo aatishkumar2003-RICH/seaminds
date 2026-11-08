@@ -228,12 +228,22 @@ async function marketReport() {
     return { success: true, skipped: "not enough vacancies" };
   }
 
+  // Live total (row fetch above is capped at 1,000 by the API); count server-side instead.
+  let liveCount = matching.length;
+  if (focusKind !== "region") {
+    let q = supabase.from("external_vacancies").select("id", { count: "exact", head: true })
+      .gt("expires_at", now.toISOString()).or("is_scam_flagged.is.null,is_scam_flagged.eq.false");
+    if (focusKind === "rank") q = q.eq("rank_required", focus);
+    const { count } = await q;
+    if (typeof count === "number" && count > liveCount) liveCount = count;
+  }
+
   const dateStr = fmtDate(now);
   const focusLabel = focusKind === "rank" ? focus : focusKind === "region" ? focus : "crew";
   let title: string;
-  if (focusKind === "rank") title = `${focus} Jobs & Vacancies — ${matching.length} Live Openings (${dateStr})`;
-  else if (focusKind === "region") title = `Seafarer Jobs ${focus} — ${matching.length} Live Maritime Vacancies (${dateStr})`;
-  else title = `⚓ ${matching.length} New Seafarer Jobs Today — ${topRanks.slice(0, 3).map(([r]) => r).join(", ")} (${dateStr})`;
+  if (focusKind === "rank") title = `${focus} Jobs & Vacancies — ${liveCount} Live Openings (${dateStr})`;
+  else if (focusKind === "region") title = `Seafarer Jobs ${focus} — ${liveCount} Live Maritime Vacancies (${dateStr})`;
+  else title = `⚓ ${liveCount} New Seafarer Jobs Today — ${topRanks.slice(0, 3).map(([r]) => r).join(", ")} (${dateStr})`;
 
   let slug = slugify(title);
   const { data: clash } = await supabase.from("blog_posts").select("slug").eq("slug", slug).maybeSingle();
@@ -275,8 +285,8 @@ async function marketReport() {
     : "";
 
   // intro via gpt-4o-mini
-  const factLine = `Focus: ${focusKind === "digest" ? "general daily digest" : focusLabel}. Matching live vacancies: ${matching.length}. Top ranks hiring: ${topRanks.map(([r, n]) => `${r} (${n})`).join(", ")}. Regions: ${regions.map(([r, n]) => `${r} (${n})`).join(", ") || "n/a"}.`;
-  let intro = `There are ${matching.length} live ${focusKind === "digest" ? "seafarer" : focusLabel} vacancies on SeaMinds today.`;
+  const factLine = `Focus: ${focusKind === "digest" ? "general daily digest" : focusLabel}. Matching live vacancies: ${liveCount}. Top ranks hiring: ${topRanks.map(([r, n]) => `${r} (${n})`).join(", ")}. Regions: ${regions.map(([r, n]) => `${r} (${n})`).join(", ") || "n/a"}.`;
+  let intro = `There are ${liveCount} live ${focusKind === "digest" ? "seafarer" : focusLabel} vacancies on SeaMinds today.`;
   try {
     const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -532,7 +542,7 @@ Give 4 FAQ items that people commonly search.`,
           body: JSON.stringify({
             chat_id: CHANNEL,
             parse_mode: "HTML",
-            text: `⚓ <b>New Article</b>\n\n<b>${parsed.title || topic}</b>\n\n${parsed.excerpt || ""}\n\n#seafarer #maritime #seaminds #crewlife${lang.code !== "en" ? ` #${lang.name.toLowerCase()}` : ""}\n\n👉 ${Deno.env.get("SUPABASE_URL")}/functions/v1/share?type=blog&slug=${slug}`,
+            text: `⚓ <b>New Article</b>\n\n<b>${parsed.title || topic}</b>\n\n${parsed.excerpt || ""}\n\n#seafarer #maritime #seaminds #crewlife${lang.code !== "en" ? ` #${lang.name.toLowerCase()}` : ""}\n\n👉 https://seaminds.life/blog/${slug}`,
           }),
         });
       } catch { /* telegram is optional */ }

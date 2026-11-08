@@ -11,6 +11,8 @@ const svc = createClient(Deno.env.get("SUPABASE_URL")!, SVC_KEY);
 const RESEND_KEY = Deno.env.get("RESEND_API_KEY") || "";
 const FN_URL = `${Deno.env.get("SUPABASE_URL")}/functions/v1/crew-job-digest`;
 
+const brandUnsub = (u: string) => { const x = new URL(u); return `https://seaminds.life/unsubscribe?f=${x.pathname.split("/").pop()}&${x.searchParams.toString()}`; };
+
 const esc = (s: unknown) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 const slug = (s?: string | null) => (s || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
 const jobUrl = (id: string, rank?: string | null, vessel?: string | null, port?: string | null) =>
@@ -166,7 +168,7 @@ Deno.serve(async (req) => {
         <a href="${utmD("/app?tab=profile", "profile_hook")}" style="color:#D4AF37;font-weight:bold;text-decoration:none">Update my Sea Profile →</a>
       </div>
       <p style="margin-top:14px;color:#94A3B8;font-size:13px">Know a shipmate looking for a berth? Forward this email — joining SeaMinds is free.</p>
-      <p style="color:#94A3B8;font-size:12px;margin-top:18px">Counts include every active advert on SeaMinds; always confirm details with the recruiter. SeaMinds never charges seafarers for jobs.<br>You get this because job alerts are on in your SeaMinds profile. <a href="${unsub}" style="color:#94A3B8">Unsubscribe</a></p>`);
+      <p style="color:#94A3B8;font-size:12px;margin-top:18px">Counts include every active advert on SeaMinds; always confirm details with the recruiter. SeaMinds never charges seafarers for jobs.<br>You get this because job alerts are on in your SeaMinds profile. <a href="${brandUnsub(unsub)}" style="color:#94A3B8">Unsubscribe</a></p>`);
 
     try {
       const r = await fetch("https://api.resend.com/emails", {
