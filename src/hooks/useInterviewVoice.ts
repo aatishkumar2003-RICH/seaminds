@@ -38,7 +38,8 @@ export function useInterviewVoice(locale: string, onTranscript: (text: string) =
 
   const clearSilence = () => { if (silence.current) { clearTimeout(silence.current); silence.current = null; } };
   const detach = (r: Recognition | null) => { if (r) { r.onresult = null; r.onend = null; r.onerror = null; } };
-  const stop = () => { userStopped.current = true; clearSilence(); try { recognition.current?.stop(); } catch { /* already stopped */ } setListening(false); setInterim(""); };
+  /** discard: drop words not yet delivered (caller already used the live text, e.g. on Send). */
+  const stop = (discard = false) => { userStopped.current = true; if (discard) { pending.current = ""; if (recognition.current) recognition.current.onresult = null; } clearSilence(); try { recognition.current?.stop(); } catch { /* already stopped */ } setListening(false); setInterim(""); };
   const stopSpeaking = () => { if (canSpeak) window.speechSynthesis.cancel(); setSpeaking(false); };
   useEffect(() => {
     return () => {

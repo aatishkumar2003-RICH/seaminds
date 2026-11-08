@@ -222,7 +222,7 @@ const MaritimeMasterBrain = () => {
           </div>
         )}
         <input ref={fileRef} type="file" accept={ACCEPT} className="hidden" onChange={(e) => void onFile(e.target.files?.[0])} />
-        <form className="flex gap-2 rounded-xl border border-primary/40 bg-card p-2" onSubmit={(e) => { e.preventDefault(); if (listening) voice.stop(); setTimeout(() => void ask(inputRef.current), listening ? 150 : 0); }}>
+        <form className="flex gap-2 rounded-xl border border-primary/40 bg-card p-2" onSubmit={(e) => { e.preventDefault(); const q = listening ? `${inputRef.current} ${interim}`.trim() : inputRef.current; if (listening) voice.stop(true); void ask(q); }}>
           <Button type="button" size="sm" variant="outline" onClick={() => fileRef.current?.click()} disabled={busy || reading} aria-label="Attach photo or document"><Paperclip size={16} /></Button>
           <input value={listening ? `${input} ${interim}`.trim() : input} onChange={(e) => setInput(e.target.value)} placeholder={listening ? "Listening… speak now" : "Ask or tap 🎤 to speak…"} className="min-w-0 flex-1 bg-transparent px-1 text-sm outline-none" />
           <Button type="button" size="sm" variant={listening ? "default" : "outline"} onClick={toggleMic} aria-label={listening ? "Stop microphone" : "Speak your question"}>
