@@ -91,7 +91,7 @@ async function send(to: string, c: Contact, kind: string, s: Stats) {
   const r = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${RESEND_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: "SeaMinds Team <admin@seaminds.life>", reply_to: "admin@seaminds.life", to: [to], bcc: ["admin@seaminds.life"], subject, html,
+    body: JSON.stringify({ from: "SeaMinds Team <admin@seaminds.life>", reply_to: "admin@seaminds.life", to: [to], subject, html,
       headers: { "List-Unsubscribe": `<${unsub}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" } }),
   });
   const body = await r.json().catch(() => ({}));
