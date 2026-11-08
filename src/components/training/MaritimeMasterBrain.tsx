@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { Loader2, Send, Brain, Volume2, VolumeX, Square, Mic, MicOff, Paperclip, X, FileText } from "lucide-react";
 import { ACCEPT, imageToJpeg, isImage, readDocumentText } from "@/lib/brainAttachments";
-import { useInterviewVoice } from "@/hooks/useInterviewVoice";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { authedFunctionHeaders, handleAuthError } from "@/lib/authFetch";
@@ -41,29 +40,36 @@ const MaritimeMasterBrain = () => {
   const inputRef = useRef("");
   inputRef.current = input;
   const askRef = useRef<(t: string) => void>(() => {});
-  // Natural dictation: words stream into the box, pauses never cut you off, nothing sends until you tap Send.
-  const voice = useInterviewVoice(
-    LOCALES[lang] || "en-GB",
-    (t) => setInput((p) => { const n = `${p} ${t}`.trim(); inputRef.current = n; return n; }),
-    { dictation: true },
-  );
-  const { listening, interim } = voice;
-  // iOS only allows speech audio that was unlocked by a direct tap. Do it once —
-  // repeating it right before the mic opens fights over the audio session and kills recognition.
-  const unlocked = useRef(false);
-  const unlockAudio = () => {
-    if (unlocked.current || !("speechSynthesis" in window)) return;
-    unlocked.current = true;
-    try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; window.speechSynthesis.speak(u); } catch { /* noop */ }
-  };
+  // Same simple speech pattern as the Maritime English Lab: press Speak, words appear, press Stop, then Send.
+  // No restart loops, no silent speaker "unlock", no auto-send.
+  const [listening, setListening] = useState(false);
+  const interim = "";
+  const recRef = useRef<any>(null);
+  const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+  useEffect(() => () => { try { recRef.current?.abort?.(); } catch { /* noop */ } }, []);
+  const stopMic = () => { try { recRef.current?.stop(); } catch { /* noop */ } setListening(false); };
   const toggleMic = () => {
-    if (!voice.supported) { toast.info("Voice input isn't supported in this browser — please type."); return; }
-    if (listening) { voice.stop(); return; }
-    const wasSpeaking = speakingIdx !== null || Boolean(window.speechSynthesis?.speaking);
+    if (!SR) { toast.info("Voice input isn't supported in this browser — please type."); return; }
+    if (listening) { stopMic(); return; }
     window.speechSynthesis?.cancel(); clearKeepAlive(); utterances.current = []; setSpeakingIdx(null);
-    unlockAudio();
-    // Give iOS time to hand the audio session from the speaker to the microphone.
-    setTimeout(() => voice.start(), wasSpeaking ? 400 : 150);
+    const base = inputRef.current.trim();
+    const r = new SR(); r.lang = LOCALES[lang] || "en-GB"; r.interimResults = true; r.continuous = true;
+    let finalText = "";
+    r.onresult = (e: any) => {
+      let live = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) finalText += e.results[i][0].transcript + " "; else live += e.results[i][0].transcript;
+      }
+      const n = `${base} ${finalText}${live}`.trim();
+      inputRef.current = n; setInput(n);
+    };
+    r.onend = () => setListening(false);
+    r.onerror = (e: any) => {
+      setListening(false);
+      if (e?.error === "not-allowed" || e?.error === "service-not-allowed") toast.error("Microphone permission was denied. You can type instead.");
+    };
+    recRef.current = r;
+    try { r.start(); setListening(true); } catch { toast.error("Voice input is unavailable. Please type."); }
   };
 
   // Hold utterances so Safari doesn't garbage-collect them mid-speech (which silently stops audio).
@@ -207,7 +213,7 @@ const MaritimeMasterBrain = () => {
                 : busy ? <><Loader2 className="animate-spin" size={12} /> Thinking…</>
                 : <><Volume2 size={12} /> Speaking answer…</>}
             </span>
-            {listening ? <button type="button" onClick={() => voice.stop()} className="font-semibold text-primary underline">Done</button>
+            {listening ? <button type="button" onClick={stopMic} className="font-semibold text-primary underline">Done</button>
               : speakingIdx !== null ? <button type="button" onClick={stopAudio} className="font-semibold text-primary underline">Stop</button> : null}
           </div>
         )}
@@ -222,7 +228,7 @@ const MaritimeMasterBrain = () => {
           </div>
         )}
         <input ref={fileRef} type="file" accept={ACCEPT} className="hidden" onChange={(e) => void onFile(e.target.files?.[0])} />
-        <form className="flex gap-2 rounded-xl border border-primary/40 bg-card p-2" onSubmit={(e) => { e.preventDefault(); const q = listening ? `${inputRef.current} ${interim}`.trim() : inputRef.current; if (listening) voice.stop(true); void ask(q); }}>
+        <form className="flex gap-2 rounded-xl border border-primary/40 bg-card p-2" onSubmit={(e) => { e.preventDefault(); const q = inputRef.current; if (listening) { if (recRef.current) recRef.current.onresult = null; stopMic(); } void ask(q); }}>
           <Button type="button" size="sm" variant="outline" onClick={() => fileRef.current?.click()} disabled={busy || reading} aria-label="Attach photo or document"><Paperclip size={16} /></Button>
           <input value={listening ? `${input} ${interim}`.trim() : input} onChange={(e) => setInput(e.target.value)} placeholder={listening ? "Listening… speak now" : "Ask or tap 🎤 to speak…"} className="min-w-0 flex-1 bg-transparent px-1 text-sm outline-none" />
           <Button type="button" size="sm" variant={listening ? "default" : "outline"} onClick={toggleMic} aria-label={listening ? "Stop microphone" : "Speak your question"}>
