@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Shield, Heart, Globe, ArrowLeft } from "lucide-react";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
+import { toast } from "sonner";
 
 interface LandingScreenProps {
   onGetStarted: () => void;
