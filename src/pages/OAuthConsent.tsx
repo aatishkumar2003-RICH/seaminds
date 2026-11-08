@@ -82,7 +82,7 @@ const OAuthConsent = () => {
   };
 
   const signInGoogle = async () => {
-    await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: returnUrl, queryParams: { prompt: "select_account" } } });
+    await lovable.auth.signInWithOAuth("google", { redirect_uri: returnUrl, extraParams: { prompt: "select_account" } });
   };
 
   const signInEmail = async () => {
