@@ -141,3 +141,8 @@ No slice starts without a written instruction naming it.
 - [ ] Revamped crew Responses page (thanks/accept with remark, request badges)
 - [ ] Reapply anti-spam + structured rejection reasons
 - [ ] Placement only at SEA signing (accept = Processing)
+
+## SEO findings corrections (November 2026)
+- [x] Connect Google Search Console and confirm the live ownership tag and existing sitemap.
+- [x] Correct affected page metadata, menu/share names and college heading hierarchy; verify before publication.
+- [ ] Merchant Seaman Jobs landing-page opportunity: needs owner selection before creating a new public page.

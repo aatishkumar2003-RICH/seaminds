@@ -300,14 +300,16 @@ const BlogPost = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   title={`Share on ${s.name}`}
+                  aria-label={`Share on ${s.name}`}
                   className="p-2 rounded-full transition-all hover:scale-110"
                   style={{ color: "#94A3B8", background: "#112240" }}
                 >
                   {s.icon}
                 </a>
               ))}
-              <button
+              <Button variant="ghost" size="icon"
                 onClick={handleCopy}
+                aria-label={copied ? "Link copied" : "Copy article link"}
                 title="Copy link"
                 className="p-2 rounded-full transition-all hover:scale-110"
                 style={{ color: copied ? "#22c55e" : "#94A3B8", background: "#112240", border: "none", cursor: "pointer" }}
@@ -317,7 +319,7 @@ const BlogPost = () => {
                 ) : (
                   <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
                 )}
-              </button>
+              </Button>
             </div>
           );
         })()}

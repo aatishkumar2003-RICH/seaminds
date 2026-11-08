@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -59,12 +59,21 @@ const sections = [
 
 
 const TermsOfService = () => {
-  useEffect(() => {
-    document.title = "SeaMinds | Terms of Service";
-  }, []);
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#0D1B2A" }}>
+      <Helmet>
+        <title>Terms of Service | SeaMinds</title>
+        <meta name="description" content="Read the SeaMinds terms covering platform use, privacy, maritime tools, recruiter responsibilities and our zero-recruitment-fee guarantee for seafarers." />
+        <link rel="canonical" href="https://seaminds.life/terms" />
+        <meta property="og:title" content="Terms of Service | SeaMinds" />
+        <meta property="og:description" content="Read the SeaMinds terms covering platform use, privacy, maritime tools, recruiter responsibilities and our zero-recruitment-fee guarantee for seafarers." />
+        <meta property="og:url" content="https://seaminds.life/terms" />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Terms of Service | SeaMinds" />
+        <meta name="twitter:description" content="Read the SeaMinds terms covering platform use, privacy, maritime tools, recruiter responsibilities and our zero-recruitment-fee guarantee for seafarers." />
+      </Helmet>
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
         <Button
           variant="ghost"

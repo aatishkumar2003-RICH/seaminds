@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import HomeNav from "@/components/homepage/HomeNav";
 import HomeFooter from "@/components/homepage/HomeFooter";
@@ -18,10 +18,21 @@ const steps = [
 const countries = ["India", "Philippines", "Indonesia", "Malaysia", "Vietnam", "Pakistan", "Bangladesh", "Sri Lanka"];
 
 const CollegePage = () => {
-  useEffect(() => { document.title = "SeaMinds — For Maritime Colleges"; }, []);
 
   return (
     <div className="min-h-screen animated-gradient-bg text-foreground">
+      <Helmet>
+        <title>Maritime College Partnerships | SeaMinds</title>
+        <meta name="description" content="Partner with SeaMinds to give maritime cadets competency assessments, verified certificates and career tools. Contact us about your college partnership." />
+        <link rel="canonical" href="https://seaminds.life/colleges" />
+        <meta property="og:title" content="Maritime College Partnerships | SeaMinds" />
+        <meta property="og:description" content="Partner with SeaMinds to give maritime cadets competency assessments, verified certificates and career tools. Contact us about your college partnership." />
+        <meta property="og:url" content="https://seaminds.life/colleges" />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Maritime College Partnerships | SeaMinds" />
+        <meta name="twitter:description" content="Partner with SeaMinds to give maritime cadets competency assessments, verified certificates and career tools. Contact us about your college partnership." />
+      </Helmet>
       <HomeNav />
 
       {/* Hero */}
@@ -59,7 +70,7 @@ const CollegePage = () => {
               onMouseLeave={(e) => (e.currentTarget.style.borderColor = "hsl(var(--primary) / 0.15)")}
             >
               <span className="text-3xl block mb-3">{b.icon}</span>
-              <h3 className="text-foreground font-semibold mb-1">{b.title}</h3>
+              <h2 className="text-foreground font-semibold mb-1">{b.title}</h2>
               <p className="text-muted-foreground text-sm leading-relaxed">{b.desc}</p>
             </div>
           ))}
@@ -83,7 +94,7 @@ const CollegePage = () => {
 
       {/* Partner countries */}
       <section className="max-w-3xl mx-auto px-6 py-12 text-center">
-        <h3 className="text-lg font-semibold text-foreground mb-4">Join institutions from:</h3>
+        <h2 className="text-lg font-semibold text-foreground mb-4">Join institutions from:</h2>
         <p className="text-muted-foreground text-sm">
           {countries.join(" · ")}
         </p>
