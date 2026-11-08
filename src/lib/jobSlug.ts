@@ -54,6 +54,14 @@ export const RANK_HUBS: RankHub[] = [
 export const rankHubBySlug = (slug: string | undefined) =>
   RANK_HUBS.find((r) => r.slug === (slug || "").toLowerCase()) || null;
 
+/** Full job list link for any search text: a known rank opens its rank filter, anything else a text search. */
+export const feedSearchPath = (text: string): string => {
+  const q = text.trim();
+  if (!q) return "/feed";
+  const hub = RANK_HUBS.find((h) => rankMatches(h, q));
+  return hub ? `/feed?rank=${hub.slug}` : `/feed?q=${encodeURIComponent(q)}`;
+};
+
 export const rankMatches = (hub: RankHub, rank: string | null | undefined): boolean => {
   const r = (rank || "").toLowerCase();
   if (!r) return false;

@@ -11,7 +11,7 @@ import { useT, LANGS, type LangCode } from "@/i18n";
 import { fetchCrewCardInfo, getCachedCrewCardInfo, fetchQuickProfileDone, type CrewCardInfo } from "@/lib/applyMessage";
 import { applyToVacancy } from "@/lib/applicationRouter";
 import ApplyGateSheet from "@/components/ApplyGateSheet";
-import { jobPath } from "@/lib/jobSlug";
+import { jobPath, feedSearchPath } from "@/lib/jobSlug";
 import JobCard from "@/components/JobCard";
 import { loadVacancies, loadMyApplicationTargets, onAppResume, type UnifiedVacancy } from "@/lib/vacancyFeed";
 import SignInSheet from "@/components/homepage/SignInSheet";
@@ -124,7 +124,7 @@ const ConversionConsole = () => {
 
   const [needsQuickProfile, setNeedsQuickProfile] = useState(false);
   const [gateOpen, setGateOpen] = useState(false);
-  const [heroTab, setHeroTab] = useState<"crew" | "train" | "company" | "market">("train");
+  const [heroTab, setHeroTab] = useState<"crew" | "train" | "company" | "market">("crew");
   // Training & AI interview need sign-in + Quick Profile; return to the chosen tool afterwards.
   const openTraining = (dest: string) => {
     const qp = `/quick-profile?next=${encodeURIComponent(dest)}`;
@@ -711,12 +711,20 @@ const ConversionConsole = () => {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && query.trim()) navigate(feedSearchPath(query)); }}
+              enterKeyHint="search"
               placeholder="Search rank, vessel type or location…"
               aria-label="Search rank, vessel type or location"
               className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
             />
             {query && (
               <button type="button" aria-label={t("close")} onClick={() => setQuery("")}><X className="w-4 h-4 text-muted-foreground" /></button>
+            )}
+            {query.trim() && (
+              <button type="button" onClick={() => navigate(feedSearchPath(query))}
+                className="shrink-0 rounded-lg px-3 py-1.5 text-[11px] font-bold" style={{ background: GOLD, color: NAVY }}>
+                Search all
+              </button>
             )}
           </div>
           {suggestion && (
@@ -741,7 +749,7 @@ const ConversionConsole = () => {
           {topRanks.map((r) => (
             <Link
               key={r.rank}
-              to={`/profile-start?rank=${encodeURIComponent(r.rank)}`}
+              to={feedSearchPath(r.rank)}
               className="rounded-full px-3 py-1.5 text-[11px] font-semibold no-underline"
               style={{ border: `1px solid ${BORDER}`, background: "rgba(212,175,55,0.08)", color: GOLD }}
             >
@@ -819,9 +827,13 @@ const ConversionConsole = () => {
               </span>
             </div>
           ))}
-          {filtered.length === 0 && (
+          {filtered.length === 0 && (query.trim() && vacancies.length > 0 ? (
+            <Link to={feedSearchPath(query)} className="block py-6 text-center text-xs font-bold no-underline" style={{ color: GOLD }}>
+              Search all {market?.total ?? ""} live vacancies for “{query.trim()}” →
+            </Link>
+          ) : (
             <p className="text-xs text-muted-foreground py-6 text-center">{t("loadingVacancies")}</p>
-          )}
+          ))}
           <Link
             to={jobsTo}
             className="block w-full py-2.5 text-center text-[11px] font-bold no-underline"
