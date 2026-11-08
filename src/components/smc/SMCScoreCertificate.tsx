@@ -498,7 +498,7 @@ const SMCScoreCertificate = ({ data: hint, onImproveScore }: SMCScoreCertificate
               {/* Issuer */}
               <div style={{ marginTop: '12px', textAlign: 'center', fontSize: '8px', color: '#64748b', lineHeight: 1.4 }}>
                 Issued by<br />
-                <span style={{ color: '#94a3b8', fontWeight: 600 }}>PT Indoglobal Service Solutions</span>
+                <span style={{ color: '#94a3b8', fontWeight: 600 }}>SeaMinds Maritime Platform</span>
               </div>
             </div>
           </div>

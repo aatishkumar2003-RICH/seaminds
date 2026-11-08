@@ -203,7 +203,7 @@ const Verify = () => {
 
               <div style={{ borderTop:'1px solid rgba(212,175,55,0.2)', paddingTop:'16px', marginTop:'20px' }}>
                 <div style={{ color:'#888', fontSize:'11px' }}>Verified by SeaMinds · seaminds.life</div>
-                <div style={{ color:'#666', fontSize:'10px', marginTop:'2px' }}>PT Indoglobal Service Solutions</div>
+                <div style={{ color:'#666', fontSize:'10px', marginTop:'2px' }}>SeaMinds Maritime Platform</div>
               </div>
             </div>
             <div style={{ display:'flex', gap:10, marginTop:16 }}>

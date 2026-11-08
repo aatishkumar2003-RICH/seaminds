@@ -1867,7 +1867,7 @@ const ResumeBuilder = () => {
                 <img src="/seaminds-logo.png" style={{ width:'28px', height:'28px', borderRadius:'4px', objectFit:'contain' }} alt="SeaMinds" />
                 <div>
                   <div style={{ fontSize:'9px', fontWeight:'bold', color:'#0D1B2A', letterSpacing:'0.5px' }}>SEAMINDS VERIFIED CV</div>
-                  <div style={{ fontSize:'8px', color:'#888' }}>seaminds.life · PT Indoglobal Service Solutions</div>
+                  <div style={{ fontSize:'8px', color:'#888' }}>seaminds.life · SeaMinds Maritime Platform</div>
                 </div>
               </div>
               <div style={{ textAlign:'right' }}>

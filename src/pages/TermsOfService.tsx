@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 const sections = [
   {
     title: "1. Acceptance of Terms",
-    body: "SeaMinds (seaminds.life) is owned and operated by PT INDOGLOBAL SERVICE SOLUTIONS (NIB: 0105250010966). By accessing or using the SeaMinds platform, you agree to be bound by these Terms of Service. If you do not agree with any part of these terms, you must discontinue use of the platform immediately. These terms apply to all users including seafarers, maritime professionals, and company representatives.",
+    body: "SeaMinds (seaminds.life) is an international maritime technology platform. Merchant, licensing and billing services for the platform are provided by PT Indoglobal Service Solutions. By accessing or using the SeaMinds platform, you agree to be bound by these Terms of Service. If you do not agree with any part of these terms, you must discontinue use of the platform immediately. These terms apply to all users including seafarers, maritime professionals, and company representatives.",
   },
   {
     title: "2. Use of Service",
@@ -29,7 +29,7 @@ const sections = [
   },
   {
     title: "7. Governing Law",
-    body: "These Terms of Service shall be governed by and construed in accordance with the laws of the Republic of Indonesia. Any disputes arising from or relating to these terms or your use of the platform shall be subject to the exclusive jurisdiction of the courts of Jakarta, Indonesia. Where applicable, the Maritime Labour Convention (MLC) 2006 provisions shall supplement these terms in matters relating to seafarer welfare and rights.",
+    body: "These Terms of Service shall be governed by internationally recognised commercial principles and applicable maritime standards. Any dispute arising from or relating to these terms or your use of the platform shall first be addressed through good-faith consultation and, failing resolution, by recognised international commercial arbitration. Where applicable, the Maritime Labour Convention (MLC) 2006 provisions shall supplement these terms in matters relating to seafarer welfare and rights.",
   },
   {
     title: "8. Contact",
@@ -113,7 +113,7 @@ const TermsOfService = () => {
           style={{ backgroundColor: "#D4AF37", opacity: 0.25 }}
         />
         <p className="text-xs text-center" style={{ color: "#8899AA" }}>
-          © 2026 SeaMinds · Operated by PT INDOGLOBAL SERVICE SOLUTIONS (NIB: 0105250010966) · admin@seaminds.life
+          © 2026 SeaMinds · Billing by PT Indoglobal Service Solutions · admin@seaminds.life
         </p>
       </div>
     </div>

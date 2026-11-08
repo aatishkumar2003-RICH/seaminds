@@ -108,7 +108,7 @@ const HomeFooter = () => {
             <span className="block mb-1">International Maritime EdTech &amp; Competency SaaS · MLC 2006 Reg. 1.4 compliant · Seafarers are never charged recruitment or placement fees — job applications are 100% free.{" "}
               <a href="/terms" className="underline hover:text-foreground">Anti-exploitation policy</a>
             </span>
-            © 2024–{new Date().getFullYear()} SeaMinds is owned and operated by PT INDOGLOBAL SERVICE SOLUTIONS (NIB: 0105250010966). All rights reserved. Contact:{" "}
+            © 2024–{new Date().getFullYear()} SeaMinds (seaminds.life) · International Maritime Platform. All rights reserved. Contact:{" "}
             <a href="mailto:admin@seaminds.life" className="underline hover:text-foreground">admin@seaminds.life</a>
           </p>
           <button

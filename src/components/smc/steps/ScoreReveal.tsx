@@ -415,7 +415,7 @@ const ScoreReveal = ({ assessmentId, firstName, lastName, rank, onComplete, onBa
             <div style={{ fontSize:'14px', color:'#666', marginTop:'4px' }}>AI-Verified Maritime Competency Assessment</div>
           </div>
           <div style={{ textAlign:'right', fontSize:'12px', color:'#888' }}>
-            <div>PT Indoglobal Service Solutions</div>
+            <div>SeaMinds Maritime Platform</div>
             <div>seaminds.life</div>
           </div>
         </div>
