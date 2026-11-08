@@ -175,7 +175,12 @@ const JobFeed = () => {
   const vesselChips = useMemo(() => VESSEL_GROUPS
     .map((g) => ({ ...g, n: byRank.filter((v) => vesselMatches(g, v.vessel)).length }))
     .filter((g) => g.n > 0 || g.slug === vesselGroup?.slug), [byRank, vesselGroup]);
-  const faceted = useMemo(() => (rankHub ? byVessel.filter((v) => rankMatches(rankHub, v.rank)) : byVessel), [byVessel, rankHub]);
+  const textQ = (params.get("q") || "").trim().toLowerCase();
+  const faceted = useMemo(() => {
+    const base = rankHub ? byVessel.filter((v) => rankMatches(rankHub, v.rank)) : byVessel;
+    if (!textQ) return base;
+    return base.filter((v) => `${v.rank || ""} ${v.vessel || ""} ${v.port || ""} ${(v as any).company || ""}`.toLowerCase().includes(textQ));
+  }, [byVessel, rankHub, textQ]);
 
   const shown = useMemo(() => {
     if (filter === "Matched") {
@@ -186,7 +191,7 @@ const JobFeed = () => {
     const keys = GROUPS[filter] || [];
     return faceted.filter((i) => keys.some((k) => (i.rank || "").toLowerCase().includes(k)));
   }, [faceted, filter, matchProfile]);
-  const anyFacet = !!(origin || rankHub || vesselGroup);
+  const anyFacet = !!(origin || rankHub || vesselGroup || textQ);
   const chip = (on: boolean) => ({
     flexShrink: 0, padding: "5px 11px", borderRadius: 999, fontSize: 11, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" as const,
     background: on ? GOLD : "transparent", color: on ? NAVY : GOLD, border: `1px solid ${GOLD}${on ? "" : "55"}`,
@@ -297,7 +302,7 @@ const JobFeed = () => {
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
               <span style={{ color: "#fff", fontSize: 12, fontWeight: 800 }}>
                 🎯 {faceted.length} {faceted.length === 1 ? "job" : "jobs"}
-                {rankHub ? ` for ${rankHub.name}` : ""}{vesselGroup ? ` · ${vesselGroup.name}` : ""}{origin ? ` · ${origin.name}` : ""}
+                {textQ ? ` matching “${params.get("q")}”` : ""}{rankHub ? ` for ${rankHub.name}` : ""}{vesselGroup ? ` · ${vesselGroup.name}` : ""}{origin ? ` · ${origin.name}` : ""}
               </span>
               <button onClick={clearAll} aria-label="Reset filters to show all worldwide vacancies" title="Only removes your filters — no jobs are deleted" style={{ background: "transparent", border: `1px solid ${GOLD}`, color: GOLD, fontSize: 11, fontWeight: 700, borderRadius: 999, padding: "4px 10px", cursor: "pointer" }}>✕ Reset filters to Worldwide</button>
             </div>

@@ -8,6 +8,12 @@ describe("Business DORA placement", () => {
   it("includes seller and buyer workflows", () => {
     for (const path of ["/marketplace", "/marketplace/vendor", "/marketplace/post"]) expect(businessHelpAudience(path)).toBe("marketplace");
   });
+  it("helps crew on job and profile pages", () => {
+    for (const path of ["/feed", "/jobs/chief-officer-abc", "/quick-profile", "/profile"]) expect(businessHelpAudience(path)).toBe("crew");
+  });
+  it("helps companies on public company pages", () => {
+    for (const path of ["/for-companies", "/pricing", "/contact"]) expect(businessHelpAudience(path)).toBe("manager");
+  });
   it("does not open business help over crew assessments or wellness", () => {
     for (const path of ["/app", "/interview/secret/exam", "/training", "/maritime-interview", "/admin", "/marketplace-other"]) expect(businessHelpAudience(path)).toBeNull();
   });
