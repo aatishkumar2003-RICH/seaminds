@@ -119,17 +119,17 @@ const HomePage = () => {
     <div className="min-h-screen animated-gradient-bg text-foreground relative">
       <Helmet>
         <title>Seafarer Jobs & Maritime Vacancies Worldwide | SeaMinds</title>
-        <meta name="description" content="Find live seafarer jobs, build one reusable Sea Profile, manage STCW certificates and get matched with maritime employers. Free for crew. Companies: post vacancies and hire with evidence." />
+        <meta name="description" content="Find seafarer jobs worldwide, apply by email or WhatsApp, build your Sea Profile and practise maritime interviews with SeaMinds. Free for crew." />
         <meta name="keywords" content="seafarer jobs, maritime jobs, ship jobs, seaman jobs, crew recruitment, manning agency, hire seafarers, seafarer CV, maritime brain, AI maritime interview, chief engineer promotion interview, chief officer oral exam preparation, second engineer to chief engineer, dual fuel engine training, MAN ME engine training, ETO high voltage training, maritime crew pre-joining screening, seafarer competency score, maritime training" />
         <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
         <link rel="canonical" href="https://seaminds.life/" />
         <meta property="og:title" content="Seafarer Jobs & Maritime Vacancies Worldwide | SeaMinds" />
-        <meta property="og:description" content="Find live seafarer jobs, build one reusable Sea Profile, manage STCW certificates and get matched with maritime employers. Free for crew. Companies: post vacancies and hire with evidence." />
+        <meta property="og:description" content="Find seafarer jobs worldwide, apply by email or WhatsApp, build your Sea Profile and practise maritime interviews with SeaMinds. Free for crew." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://seaminds.life/" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Seafarer Jobs & Maritime Vacancies Worldwide | SeaMinds" />
-        <meta name="twitter:description" content="Find live seafarer jobs, build one reusable Sea Profile, manage STCW certificates and get matched with maritime employers. Free for crew. Companies: post vacancies and hire with evidence." />
+        <meta name="twitter:description" content="Find seafarer jobs worldwide, apply by email or WhatsApp, build your Sea Profile and practise maritime interviews with SeaMinds. Free for crew." />
         <script type="application/ld+json">{JSON.stringify(organizationLd)}</script>
         <script type="application/ld+json">{JSON.stringify(faqLd)}</script>
         <script type="application/ld+json">{JSON.stringify(websiteLd)}</script>

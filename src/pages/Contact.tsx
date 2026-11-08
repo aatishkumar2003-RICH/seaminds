@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { ArrowLeft, Mail, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -19,7 +20,6 @@ const contacts = [
 ];
 
 const Contact = () => {
-  useEffect(() => { document.title = "SeaMinds | Contact Us"; }, []);
   const [copied, setCopied] = useState<string | null>(null);
 
   const copyEmail = async (email: string) => {
@@ -38,6 +38,18 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#0D1B2A" }}>
+      <Helmet>
+        <title>Contact SeaMinds | Crew Support & Company Enquiries</title>
+        <meta name="description" content="Contact SeaMinds for crew support, account help, company enquiries and maritime partnerships. Find the right email address for your request." />
+        <link rel="canonical" href="https://seaminds.life/contact" />
+        <meta property="og:title" content="Contact SeaMinds | Crew Support & Company Enquiries" />
+        <meta property="og:description" content="Contact SeaMinds for crew support, account help, company enquiries and maritime partnerships. Find the right email address for your request." />
+        <meta property="og:url" content="https://seaminds.life/contact" />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Contact SeaMinds | Crew Support & Company Enquiries" />
+        <meta name="twitter:description" content="Contact SeaMinds for crew support, account help, company enquiries and maritime partnerships. Find the right email address for your request." />
+      </Helmet>
       <div className="max-w-xl mx-auto px-4 sm:px-6 py-12">
         <Button
           variant="ghost"

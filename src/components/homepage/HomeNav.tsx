@@ -26,7 +26,7 @@ const HomeNav = () => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5" style={{ background: '#0D1B2A' }}>
+    <nav aria-label="Main navigation" className="fixed top-0 left-0 right-0 z-50 border-b border-white/5" style={{ background: '#0D1B2A' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-2 cursor-pointer" role="link" aria-label="SeaMinds home" onClick={() => { navigate("/"); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
@@ -54,14 +54,14 @@ const HomeNav = () => {
           </Button>
           </div>
 
-          <button className="md:hidden text-foreground" onClick={() => setMobileOpen(!mobileOpen)}>
+          <Button variant="ghost" size="icon" className="md:hidden text-foreground" aria-label={mobileOpen ? "Close menu" : "Open menu"} aria-expanded={mobileOpen} aria-controls="home-mobile-menu" onClick={() => setMobileOpen(!mobileOpen)}>
             {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          </Button>
         </div>
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden border-t border-white/5 px-4 pb-4 space-y-2" style={{ background: '#0D1B2A' }}>
+        <div id="home-mobile-menu" className="md:hidden border-t border-white/5 px-4 pb-4 space-y-2" style={{ background: '#0D1B2A' }}>
           {navLinks.map((l) => (
             <button key={l.label} onClick={() => handleNav(l)} className="block w-full text-left py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
               {l.label}
