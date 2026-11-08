@@ -14,8 +14,8 @@ interface LandingScreenProps {
 const LandingScreen = ({ onGetStarted, onManagerLogin }: LandingScreenProps) => {
   const navigate = useNavigate();
   const handleGoogleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: 'https://seaminds.life/app', queryParams: { prompt: 'select_account' } } });
-    if (error) toast.error(error.message || 'Google sign-in failed');
+    const result = await lovable.auth.signInWithOAuth('google', { redirect_uri: window.location.origin, extraParams: { prompt: 'select_account' } });
+    if (result.error) toast.error(result.error.message || 'Google sign-in failed');
   };
 
   const [showEmail, setShowEmail] = useState(false);
