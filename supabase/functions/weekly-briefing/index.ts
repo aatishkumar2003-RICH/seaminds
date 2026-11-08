@@ -198,7 +198,7 @@ Deno.serve(async (req) => {
     try {
       const res = await fetch("https://api.resend.com/emails", {
         method: "POST", headers: { Authorization: `Bearer ${RESEND_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ from: "SeaMinds Briefing <crew@seaminds.life>", reply_to: "support@seaminds.life", to: [r.email], ...(r.recruiter || r.manager ? { bcc: ["admin@seaminds.life"] } : {}),
+        body: JSON.stringify({ from: "SeaMinds Briefing <crew@seaminds.life>", reply_to: "support@seaminds.life", to: [r.email],
           subject: `⚓ This week: ${p.title}`.slice(0, 150), html: html(r.name, p, extra, unsub, r.manager),
           headers: { "List-Unsubscribe": `<${unsub}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" } }),
       });
