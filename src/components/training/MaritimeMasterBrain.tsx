@@ -203,7 +203,7 @@ const MaritimeMasterBrain = () => {
         {(listening || busy || speakingIdx !== null) && (
           <div className="flex items-center justify-between gap-2 rounded-lg border border-primary/40 bg-card px-3 py-1.5 text-xs" aria-live="polite">
             <span className="flex items-center gap-2 text-primary">
-              {listening ? <><span className="h-2 w-2 animate-pulse rounded-full bg-destructive" /> Listening… pause when done and I'll send it</>
+              {listening ? <><span className="h-2 w-2 animate-pulse rounded-full bg-destructive" /> Listening… take your time, tap Send when ready</>
                 : busy ? <><Loader2 className="animate-spin" size={12} /> Thinking…</>
                 : <><Volume2 size={12} /> Speaking answer…</>}
             </span>
