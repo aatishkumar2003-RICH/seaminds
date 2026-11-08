@@ -128,7 +128,7 @@ const JoinLanding = () => {
             Join Free — No Card Needed
           </button>
           <p className="text-[10px] mt-3" style={{ color: "#64748b" }}>
-            SeaMinds · PT Indoglobal Service Solutions
+            SeaMinds · SeaMinds Maritime Platform
           </p>
         </section>
       </main>
