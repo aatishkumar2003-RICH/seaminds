@@ -42,7 +42,7 @@ export default function MaritimeInterview() {
   const [history, setHistory] = useState<{ id: string; target_rank: string | null; rank: string; technical_pct: number | null; verdict: string | null; completed_at: string | null }[]>([]);
   const inFlight = useRef(false);
   const mounted = useRef(true);
-  const voice = useInterviewVoice(locale, text => setAnswer(a => `${a}${a ? " " : ""}${text}`.slice(0, MAX_ANSWER_CHARS)));
+  const voice = useInterviewVoice(locale, text => setAnswer(a => `${a}${a ? " " : ""}${text}`.slice(0, MAX_ANSWER_CHARS)), { dictation: true });
   const active = Boolean(session.question) && !session.done;
   const review = completedReview(session);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
