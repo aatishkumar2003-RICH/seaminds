@@ -79,8 +79,8 @@ const Join = () => {
   }, [navigate, dest, params]);
 
   const google = async () => {
-    const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.href });
-    if (r.error) toast.error(r.error.message || "Google sign-in failed");
+    const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${window.location.origin}${dest}`, queryParams: { prompt: "select_account" } } });
+    if (error) toast.error(error.message || "Google sign-in failed");
   };
 
   const createAccount = async () => {
