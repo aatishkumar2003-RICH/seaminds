@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 
 // Branded unsubscribe: GET only shows a button (mail scanners pre-open links); the opt-out is a POST.
-const ALLOWED = new Set(["recruiter-outreach", "weekly-briefing", "crew-job-digest", "manager-engagement"]);
+const ALLOWED = new Set(["recruiter-outreach", "weekly-briefing", "crew-job-digest", "manager-engagement", "vessel-briefing"]);
 
 const Unsubscribe = () => {
   const navigate = useNavigate();

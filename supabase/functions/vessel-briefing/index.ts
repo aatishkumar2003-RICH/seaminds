@@ -97,7 +97,6 @@ Deno.serve(async (req) => {
     const r = await send(c.email, c.id, c.vessel_name, ctx);
     if (r.ok) {
       stats.sent++;
-      await svc.rpc("noop").catch(() => {});
       const { data: cur } = await svc.from("vessel_outreach_contacts").select("sends_count").eq("id", c.id).single();
       await svc.from("vessel_outreach_contacts").update({ sends_count: (cur?.sends_count || 0) + 1, last_sent_at: new Date().toISOString(), last_error: null, updated_at: new Date().toISOString() }).eq("id", c.id);
     } else {
