@@ -14,7 +14,7 @@ const LANGS = ["English", "Bahasa Indonesia", "Tagalog", "Tiếng Việt", "Hind
 const LOCALES: Record<string, string> = { English: "en-GB", "Bahasa Indonesia": "id-ID", Tagalog: "fil-PH", "Tiếng Việt": "vi-VN", Hindi: "hi-IN", Russian: "ru-RU", "Español": "es-ES", Ukrainian: "uk-UA", Myanmar: "my-MM", Chinese: "zh-CN" };
 const QUICK = ["SIRE 2.0 inspection questions for my rank", "MARPOL Annex VI & CII basics", "Scavenge fire — immediate actions", "COLREGs Rule 19 in restricted visibility", "Enclosed space entry checklist", "Top PSC deficiencies (Tokyo / Paris MoU)"];
 
-const MaritimeMasterBrain = () => {
+const MaritimeMasterBrain = ({ title = "Maritime Training Brain", subtitle = "Your AI tutor for ranks, exams & STCW — ask, speak, or attach a file" }: { title?: string; subtitle?: string } = {}) => {
   const [lang, setLang] = useState(() => localStorage.getItem("brain_lang") || "English");
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -53,7 +53,7 @@ const MaritimeMasterBrain = () => {
     if (listening) { stopMic(); return; }
     window.speechSynthesis?.cancel(); clearKeepAlive(); utterances.current = []; setSpeakingIdx(null);
     const base = inputRef.current.trim();
-    const r = new SR(); r.lang = LOCALES[lang] || "en-GB"; r.interimResults = true; r.continuous = true;
+    const r = new SR(); r.lang = lang === "English" || !LOCALES[lang] ? "en-US" : LOCALES[lang]; r.interimResults = true; r.continuous = true;
     let finalText = "";
     r.onresult = (e: any) => {
       let live = "";
@@ -171,7 +171,7 @@ const MaritimeMasterBrain = () => {
     <section className="space-y-3">
       <div className="space-y-2 rounded-xl border border-primary/40 bg-card p-3">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0"><Brain className="text-primary shrink-0" size={20} /><div className="min-w-0"><p className="text-sm font-bold leading-tight">Maritime Master Brain</p><p className="text-[11px] text-muted-foreground leading-tight">Ask, speak, or attach a photo, PDF, Word or Excel file</p></div></div>
+          <div className="flex items-center gap-2 min-w-0"><Brain className="text-primary shrink-0" size={20} /><div className="min-w-0"><p className="text-sm font-bold leading-tight">{title}</p><p className="text-[11px] text-muted-foreground leading-tight">{subtitle}</p></div></div>
           <select aria-label="Answer language" value={lang} onChange={(e) => { setLang(e.target.value); localStorage.setItem("brain_lang", e.target.value); }}
             className="rounded-lg border border-primary/40 bg-background px-2 py-1.5 text-xs text-foreground">
             {LANGS.map((l) => <option key={l} value={l}>{l}</option>)}
