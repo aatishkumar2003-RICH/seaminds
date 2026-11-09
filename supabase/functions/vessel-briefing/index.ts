@@ -9,8 +9,8 @@ const SVC_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const svc = createClient(Deno.env.get("SUPABASE_URL")!, SVC_KEY);
 const RESEND_KEY = Deno.env.get("RESEND_API_KEY") || "";
 const FN_URL = `${Deno.env.get("SUPABASE_URL")}/functions/v1/vessel-briefing`;
-const RUN_CAP = 300; // per run
-const MIN_GAP_HOURS = 60; // never more than twice a week per ship
+const RUN_CAP = 400; // per daily run (raise or add a second daily run past ~1,400 ships)
+const MIN_GAP_HOURS = 68; // never more than twice a week per ship
 const esc = (s: unknown) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
@@ -89,9 +89,15 @@ Deno.serve(async (req) => {
     return json(r);
   }
 
+  // Daily run: spread each ship's twice-weekly email evenly over 7 days, random order.
+  const { count: active } = await svc.from("vessel_outreach_contacts").select("id", { count: "exact", head: true }).eq("stage", "active");
+  const quota = Math.min(RUN_CAP, Math.ceil(((active || 0) * 2) / 7));
   const cutoff = new Date(Date.now() - MIN_GAP_HOURS * 3600000).toISOString();
-  const { data: due } = await svc.from("vessel_outreach_contacts").select("id,email,vessel_name").eq("stage", "active")
-    .or(`last_sent_at.is.null,last_sent_at.lt.${cutoff}`).order("last_sent_at", { ascending: true, nullsFirst: true }).limit(RUN_CAP);
+  const { data: pool } = await svc.from("vessel_outreach_contacts").select("id,email,vessel_name").eq("stage", "active")
+    .or(`last_sent_at.is.null,last_sent_at.lt.${cutoff}`).limit(5000);
+  const shuffled = [...(pool || [])];
+  for (let i = shuffled.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; }
+  const due = shuffled.slice(0, quota);
   const stats = { sent: 0, failed: 0 };
   for (const c of due || []) {
     const r = await send(c.email, c.id, c.vessel_name, ctx);
@@ -104,7 +110,7 @@ Deno.serve(async (req) => {
       const bounced = /invalid|not.*valid|bounce/i.test(r.error || "");
       await svc.from("vessel_outreach_contacts").update({ stage: bounced ? "bounced" : "active", last_error: r.error, last_sent_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", c.id);
     }
-    await new Promise((res) => setTimeout(res, 600));
+    await new Promise((res) => setTimeout(res, 250));
   }
   console.log("vessel-briefing", stats);
   return json(stats);
