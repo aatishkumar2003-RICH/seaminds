@@ -42,6 +42,7 @@ const Join = () => {
   /** Meta Pixel signup conversion — must never block or break signup. */
   const fireRegistration = () => {
     try { (window as any).fbq?.("track", "CompleteRegistration"); } catch { /* ignore */ }
+    trackAdsSignup();
   };
 
   /** Referral attribution — best effort, never blocks auth. */
