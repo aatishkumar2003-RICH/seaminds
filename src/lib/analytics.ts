@@ -16,6 +16,19 @@ export function loadGA4() {
   (window as any).gtag = gtag;
   gtag("js", new Date());
   gtag("config", GA_ID);
+  gtag("set", "developer_id.dZjgwMW", true);
+  gtag("config", ADS_ID);
+}
+
+const ADS_ID = "AW-18307689729";
+const ADS_SIGNUP_SEND_TO = "AW-18307689729/4tbaCK-xirUdEIHa5JlE";
+
+/** Google Ads crew sign-up conversion — only fires when the user accepted cookies. */
+export function trackAdsSignup() {
+  try {
+    const g = (window as any).gtag;
+    if (typeof g === "function") g("event", "conversion", { send_to: ADS_SIGNUP_SEND_TO });
+  } catch { /* never block signup */ }
 }
 
 /** Remove GA cookies and reload-proof */
