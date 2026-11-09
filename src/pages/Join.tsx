@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { trackAdsSignup } from "@/lib/analytics";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { ChevronLeft, ShieldCheck, Anchor, Globe } from "lucide-react";
