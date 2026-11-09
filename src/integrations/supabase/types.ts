@@ -6837,6 +6837,57 @@ export type Database = {
         }
         Relationships: []
       }
+      vessel_outreach_contacts: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          imo: string | null
+          last_error: string | null
+          last_sent_at: string | null
+          mailbox_role: string | null
+          operator: string | null
+          sends_count: number
+          source_batch: string | null
+          stage: string
+          updated_at: string
+          vessel_name: string | null
+          vessel_type: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          imo?: string | null
+          last_error?: string | null
+          last_sent_at?: string | null
+          mailbox_role?: string | null
+          operator?: string | null
+          sends_count?: number
+          source_batch?: string | null
+          stage?: string
+          updated_at?: string
+          vessel_name?: string | null
+          vessel_type?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          imo?: string | null
+          last_error?: string | null
+          last_sent_at?: string | null
+          mailbox_role?: string | null
+          operator?: string | null
+          sends_count?: number
+          source_batch?: string | null
+          stage?: string
+          updated_at?: string
+          vessel_name?: string | null
+          vessel_type?: string | null
+        }
+        Relationships: []
+      }
       vessel_ratings: {
         Row: {
           accommodation: number
