@@ -12,7 +12,7 @@ const Knowledge = (_props: Props) => {
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 pt-3 pb-2 border-b border-border">
-        <h1 className="text-lg font-semibold text-foreground">🧠 SeaMinds Maritime Brain</h1>
+        <h1 className="text-lg font-semibold text-foreground">🧠 Maritime Technical &amp; Research Brain</h1>
         <p className="text-xs text-muted-foreground mt-0.5">
           Ask, speak, diagnose a photo or check a document — or browse the guides
         </p>
@@ -38,7 +38,7 @@ const Knowledge = (_props: Props) => {
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto">
-        {mode === "ask" ? <div className="p-3"><MaritimeMasterBrain /></div> : <Academy />}
+        {mode === "ask" ? <div className="p-3"><MaritimeMasterBrain title="Maritime Technical &amp; Research Brain" subtitle="Shipboard diagnostics, machinery reference &amp; regulations" /></div> : <Academy />}
       </div>
     </div>
   );
