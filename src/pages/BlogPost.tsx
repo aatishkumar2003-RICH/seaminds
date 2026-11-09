@@ -289,7 +289,21 @@ const BlogPost = () => {
               setTimeout(() => setCopied(false), 2000);
             });
           };
+          const crewMsg = `⚓ ${post.title}\n\n${post.excerpt ? post.excerpt.slice(0, 180) + "\n\n" : ""}Read on SeaMinds Maritime Intelligence Desk 👇\n${fullUrl}`;
           return (
+            <>
+            <p className="text-xs mb-3" style={{ color: "#94A3B8" }}>
+              Reported by <span style={{ color: "#D4AF37" }} className="font-semibold">SeaMinds Maritime Intelligence Desk</span> · updated daily 04:00 UTC
+            </p>
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(crewMsg)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full rounded-xl font-bold py-3 mb-4"
+              style={{ background: "linear-gradient(135deg,#D4AF37,#C5941F)", color: "#0D1B2A" }}
+            >
+              Share to your Sea Crew WhatsApp group
+            </a>
             <div className="flex items-center gap-3 mb-10">
               <Share2 className="w-4 h-4" style={{ color: "#64748B" }} />
               <span className="text-xs font-medium" style={{ color: "#64748B" }}>Share:</span>
