@@ -53,7 +53,7 @@ const MaritimeMasterBrain = ({ title = "Maritime Training Brain", subtitle = "Yo
     if (listening) { stopMic(); return; }
     window.speechSynthesis?.cancel(); clearKeepAlive(); utterances.current = []; setSpeakingIdx(null);
     const base = inputRef.current.trim();
-    const r = new SR(); r.lang = lang === "en" || !LOCALES[lang] ? "en-US" : LOCALES[lang]; r.interimResults = true; r.continuous = true;
+    const r = new SR(); r.lang = lang === "English" || !LOCALES[lang] ? "en-US" : LOCALES[lang]; r.interimResults = true; r.continuous = true;
     let finalText = "";
     r.onresult = (e: any) => {
       let live = "";
