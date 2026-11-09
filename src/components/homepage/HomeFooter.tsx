@@ -105,6 +105,11 @@ const HomeFooter = () => {
         </div>
         <div className="border-t border-white/5 pt-6 flex items-center justify-between gap-4">
           <p className="text-xs text-muted-foreground">
+            <span className="flex flex-wrap gap-2 mb-2">
+              {["STCW 2010", "MLC 2006", "IMO SMCP", "SIRE 2.0 ready"].map((b) => (
+                <span key={b} className="px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ color: "#D4AF37", border: "1px solid rgba(212,175,55,0.3)", background: "#112240" }}>⚓ {b}</span>
+              ))}
+            </span>
             <span className="block mb-1">International Maritime EdTech &amp; Competency SaaS · MLC 2006 Reg. 1.4 compliant · Seafarers are never charged recruitment or placement fees — job applications are 100% free.{" "}
               <a href="/terms" className="underline hover:text-foreground">Anti-exploitation policy</a>
             </span>

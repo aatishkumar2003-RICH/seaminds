@@ -16,6 +16,7 @@ import ApplyGateSheet from "@/components/ApplyGateSheet";
 import CrewResponsesBar from "@/components/CrewResponsesBar";
 import CreditWallet from "@/components/CreditWallet";
 import HomeStatusConsole from "@/components/HomeStatusConsole";
+import VoiceOfTheSeaTicker from "@/components/VoiceOfTheSeaTicker";
 
 type NewsItem = { title: string; link: string; pubDate: string; source: string };
 
@@ -500,6 +501,7 @@ const HomeFeed = ({ profileId, rank = "", nationality = "", onNavigate }: Props)
       <ApplyGateSheet open={gateOpen} onClose={() => setGateOpen(false)} next="/app?tab=jobs" />
 
       <HomeStatusConsole profileId={profileId} rank={rank} />
+      <VoiceOfTheSeaTicker />
 
       {needsQuickProfile && (
         <div className="mx-4 mb-3 rounded-2xl p-4" style={{ background: CARD, border: `1px solid ${GOLD}` }}>
