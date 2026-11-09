@@ -51,6 +51,7 @@ async function logSaveFailure(label: string, error: any) {
 /** Plain-language message for crew, based on why the save failed. */
 export function saveErrorMessage(error: any): string {
   if (typeof navigator !== "undefined" && !navigator.onLine) return "You appear to be offline. Your answers are kept — tap Finish again once connected.";
+  if (error?.code === "23505" && /whatsapp/i.test(String(error?.message))) return "This WhatsApp number is already linked to another SeaMinds profile. Please enter your own number.";
   if (isPermanent(error)) return "Some details could not be accepted. Please check your answers and try again.";
   return "Saving took too long. Your answers are kept — please tap Finish again.";
 }

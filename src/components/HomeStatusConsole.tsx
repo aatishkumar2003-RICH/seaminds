@@ -31,7 +31,7 @@ const HomeStatusConsole = ({ profileId, rank }: { profileId: string; rank?: stri
     (async () => {
       const [p, cv, av] = await Promise.all([
         supabase.from("crew_profiles").select("is_available, availability_status, placed_until, quick_profile_completed_at" as any).eq("id", profileId).maybeSingle(),
-        supabase.from("crew_cv_data").select("id").eq("crew_profile_id" as any, profileId).limit(1),
+        supabase.from("crew_cv_data").select("id").eq("user_id", profileId).limit(1),
         supabase.from("crew_availability").select("visible_to_employers").eq("crew_profile_id", profileId).maybeSingle(),
       ]);
       const d: any = p.data || {};
