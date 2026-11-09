@@ -372,6 +372,172 @@ ${snapshot}
   return { success: true, mode: "market_report", title, slug, vacancies: matching.length };
 }
 
+// ---------------- news_briefing mode ----------------
+// Once a day: pick the hottest maritime story from trusted feeds, write an SEO briefing,
+// and attach the one SeaMinds tool that matches the story.
+const NEWS_FEEDS = [
+  "https://gcaptain.com/feed/",
+  "https://splash247.com/feed/",
+  "https://maritime-executive.com/articles.rss",
+  "https://www.offshore-energy.biz/feed/",
+  "https://safety4sea.com/feed/",
+];
+
+const tagText = (xml: string, tag: string) => {
+  const m = xml.match(new RegExp(`<${tag}[^>]*>\\s*(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?\\s*</${tag}>`, "i"));
+  return m ? m[1].replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&#8217;|&rsquo;/g, "'").replace(/&#8216;|&#8220;|&#8221;|&quot;/g, '"').replace(/&[a-z#0-9]+;/gi, " ").replace(/\s+/g, " ").trim() : "";
+};
+
+async function fetchHeadlines() {
+  const out: { title: string; summary: string; link: string; source: string; date: number }[] = [];
+  const cutoff = Date.now() - 48 * 3600e3;
+  await Promise.all(NEWS_FEEDS.map(async (url) => {
+    try {
+      const r = await fetch(url, { headers: { "User-Agent": "SeaMindsNewsDesk/1.0" }, signal: AbortSignal.timeout(10000) });
+      if (!r.ok) return;
+      const xml = await r.text();
+      const source = new URL(url).hostname.replace(/^www\./, "");
+      for (const m of [...xml.matchAll(/<item[\s>]([\s\S]*?)<\/item>/gi)].slice(0, 12)) {
+        const title = tagText(m[1], "title");
+        const date = Date.parse(tagText(m[1], "pubDate")) || Date.now();
+        if (title && date >= cutoff) out.push({ title, summary: tagText(m[1], "description").slice(0, 400), link: tagText(m[1], "link"), source, date });
+      }
+    } catch { /* one slow feed must not stop the desk */ }
+  }));
+  return out;
+}
+
+function newsCta(text: string) {
+  const t = text.toLowerCase();
+  if (/wage|salary|shortage|recruit|crew change|manning|hiring|seafarers? (pay|jobs)/.test(t))
+    return { label: "Create your free Sea Profile and get found by recruiters →", href: "https://seaminds.life/join", tool: "Sea Profile & live jobs" };
+  if (/psc|port state|detain|detention|sire|vetting|inspection|mou|stcw|exam|oral/.test(t))
+    return { label: "Practise inspector and oral questions with the AI examiner →", href: "https://seaminds.life/maritime-interview", tool: "AI Voice Examiner" };
+  if (/collision|grounding|fire|explosion|sank|sinking|capsiz|casualty|accident|man overboard|allision|piracy|attack|drone|houthi|jamming|spoofing/.test(t))
+    return { label: "Test your emergency response with a free incident drill →", href: "https://seaminds.life/training?tab=drills", tool: "Fleet Incident Drills" };
+  return { label: "Ask the Maritime Technical & Research Brain →", href: "https://seaminds.life/app", tool: "Maritime Technical & Research Brain" };
+}
+
+async function newsBriefing() {
+  const headlines = await fetchHeadlines();
+  if (headlines.length < 3) return { success: true, skipped: "not enough fresh headlines" };
+
+  // No repeats: skip sources already used in the last 30 days.
+  const since = new Date(Date.now() - 30 * 864e5).toISOString();
+  const { data: past } = await supabase.from("app_events").select("metadata")
+    .eq("event_type", "blog_published").gte("created_at", since).contains("metadata", { mode: "news_briefing" });
+  const usedLinks = new Set((past || []).map((p: any) => p.metadata?.source_link).filter(Boolean));
+  const { data: recent } = await supabase.from("blog_posts").select("title").gte("created_at", since).limit(60);
+  const pool = headlines.filter((h) => !usedLinks.has(h.link)).slice(0, 40);
+  if (!pool.length) return { success: true, skipped: "all fresh headlines already covered" };
+
+  const ai = async (prompt: string, max: number) => {
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${Deno.env.get("OPENAI_API_KEY")}` },
+      body: JSON.stringify({ model: "gpt-4o-mini", max_tokens: max, response_format: { type: "json_object" }, messages: [{ role: "user", content: prompt }] }),
+    });
+    if (!res.ok) throw new Error(`AI ${res.status}`);
+    const j = await res.json();
+    return JSON.parse(j.choices?.[0]?.message?.content || "{}");
+  };
+
+  // 1. Editor picks the story seafarers will search for and share today.
+  const pick = await ai(`You are the editor of a maritime news desk read by deck officers, marine engineers and ship managers in India, the Philippines, Indonesia and Vietnam.
+Pick the ONE story from today's headlines with the highest impact on seafarers' safety, routes, inspections, careers or ship technology (geopolitics, security, innovation, new ship design, alternative fuels, regulation, PSC, crew welfare, accidents). Skip pure finance, earnings and corporate PR. Avoid topics already covered recently.
+
+Recently covered: ${(recent || []).map((r: any) => r.title).join(" | ").slice(0, 2500)}
+
+Headlines:
+${pool.map((h, i) => `${i}. [${h.source}] ${h.title} — ${h.summary.slice(0, 220)}`).join("\n")}
+
+Return JSON: {"index": number, "keyword": "main search phrase people would type into Google, 3-6 words", "why": "one sentence"}`, 200);
+  const story = pool[Number(pick.index)] || pool[0];
+  const keyword = String(pick.keyword || story.title).slice(0, 80);
+  const cta = newsCta(`${story.title} ${story.summary}`);
+
+  // 2. Journalist writes the SEO briefing — facts only from the headline/summary.
+  const art = await ai(`You are a senior master mariner and chief engineer writing the SeaMinds Daily Maritime Briefing.
+
+Today's story (the ONLY source of facts about the event):
+Headline: ${story.title}
+Summary: ${story.summary}
+Source: ${story.source} (${story.link})
+Main SEO keyword: "${keyword}"
+
+Write a 900-1100 word analysis in clear, simple English for readers whose first language may not be English.
+SEO rules:
+- Title under 62 characters, contains the keyword, no emoji, no clickbait.
+- Keyword appears in the first sentence, in at least two ## headings, and naturally 3-5 times overall.
+- First paragraph answers "what happened and why it matters to seafarers" directly.
+Structure (markdown, ## headings, "- " bullets):
+## What happened
+## Why it matters for seafarers and ships
+## What deck officers should do
+## What engineers should do
+## What ship managers and manning agents should watch
+End with a checklist of 4-5 bullets.
+Rules: never invent numbers, names, dates, casualties or quotes beyond the summary; if a detail is unknown say it is still developing. General practice must follow SOLAS, MARPOL, STCW, ISM, ISPS, MLC and BMP as generally known; otherwise say "follow your company SMS". Do not mention SeaMinds — a call to action is added separately.
+
+Return JSON: {"title": "...", "excerpt": "meta description under 155 characters with the keyword", "takeaways": ["3 short bullet takeaways"], "content": "markdown article", "faq": [{"q": "question people search, ending with ?", "a": "2-3 sentence answer"}] } with 4 FAQ items.`, 2600);
+
+  const title = String(art.title || story.title).slice(0, 90);
+  let slug = slugify(title);
+  const { data: clash } = await supabase.from("blog_posts").select("slug").eq("slug", slug).maybeSingle();
+  if (clash) slug = `${slug}-${new Date().toISOString().slice(0, 10)}`;
+
+  const takeaways = (Array.isArray(art.takeaways) ? art.takeaways : []).slice(0, 3)
+    .map((t: string) => `<li style="margin:4px 0">${inline(String(t))}</li>`).join("");
+  const faq = (Array.isArray(art.faq) ? art.faq : []).filter((f: any) => f?.q && f?.a).slice(0, 5)
+    .map((f: any) => { const q = String(f.q).trim(); return `<h3>${inline(q.endsWith("?") ? q : q + "?")}</h3>\n<p>${inline(String(f.a).trim())}</p>`; }).join("\n");
+  const words = String(art.content || "").split(/\s+/).length;
+
+  const content = [
+    `<p style="color:${MUTED};font-size:13px">SeaMinds Maritime Intelligence Desk · ${Math.max(3, Math.round(words / 200))} min read · Source: <a href="${esc(story.link)}" rel="nofollow noopener" target="_blank" style="color:${GOLD}">${esc(story.source)}</a></p>`,
+    takeaways ? `<div style="background:${CARD};border-left:3px solid ${GOLD};border-radius:12px;padding:14px 18px;margin:16px 0"><div style="color:${GOLD};font-size:12px;letter-spacing:.12em;margin-bottom:6px">AT A GLANCE</div><ul style="margin:0;padding-left:18px">${takeaways}</ul></div>` : "",
+    mdToHtml(String(art.content || "")),
+    `<div style="background:${NAVY};border:1px solid rgba(212,175,55,0.3);border-radius:14px;padding:18px;margin:22px 0"><div style="color:${GOLD};font-size:12px;letter-spacing:.12em;margin-bottom:6px">BE READY ON BOARD · ${esc(cta.tool.toUpperCase())}</div><p style="margin:0 0 12px">Stories like this are why prepared crews stand out. SeaMinds is free for seafarers.</p><a href="${cta.href}" style="display:inline-block;background:${GOLD};color:${NAVY};font-weight:700;padding:10px 18px;border-radius:12px;text-decoration:none">${esc(cta.label)}</a></div>`,
+    faq ? `<h2>FAQ</h2>\n${faq}` : "",
+    `<div style="border-top:1px solid rgba(212,175,55,0.3);margin-top:24px;padding-top:14px;color:${MUTED};font-size:14px"><a href="https://seaminds.life/blog" style="color:${GOLD};text-decoration:none">More daily maritime briefings</a> · <a href="https://seaminds.life/feed" style="color:${GOLD};text-decoration:none">Live seafarer jobs</a> · <a href="https://seaminds.life/join" style="color:${GOLD};text-decoration:none">Create your free Sea Profile</a></div>`,
+  ].filter(Boolean).join("\n\n");
+
+  let imageUrl: string | null = null;
+  try {
+    const key = Deno.env.get("UNSPLASH_ACCESS_KEY");
+    if (key) {
+      const q = encodeURIComponent(`${keyword.split(" ").slice(0, 2).join(" ")} ship`);
+      const img = await (await fetch(`https://api.unsplash.com/photos/random?query=${q}&orientation=landscape&client_id=${key}`)).json();
+      imageUrl = img?.urls?.regular || null;
+    }
+  } catch { /* optional */ }
+
+  const { error } = await supabase.from("blog_posts").insert({
+    title, content, excerpt: String(art.excerpt || "").slice(0, 300) || null, slug,
+    image_url: imageUrl, language: "en", region: "global", published: true,
+  });
+  if (error) throw error;
+
+  const TG = Deno.env.get("TELEGRAM_BOT_TOKEN");
+  if (TG) {
+    try {
+      await fetch(`https://api.telegram.org/bot${TG}/sendMessage`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: Deno.env.get("TELEGRAM_BLOG_CHANNEL") || Deno.env.get("TELEGRAM_CHANNEL") || "@seamindsjobs",
+          parse_mode: "HTML",
+          text: `🌊 <b>Daily Maritime Briefing</b>\n\n<b>${esc(title)}</b>\n\n${esc(art.excerpt || "")}\n\n#maritime #seafarer #shipping\n\n👉 https://seaminds.life/blog/${slug}`,
+        }),
+      });
+    } catch { /* optional */ }
+  }
+
+  await supabase.from("app_events").insert({
+    event_type: "blog_published", message: `News briefing published: ${title}`, severity: "info",
+    metadata: { mode: "news_briefing", slug, source_link: story.link, keyword, tool: cta.tool },
+  });
+  return { success: true, mode: "news_briefing", title, slug, keyword, source: story.link };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -392,6 +558,21 @@ Deno.serve(async (req) => {
       reqMode = b?.mode || "";
     }
   } catch { /* no body */ }
+
+  if (reqMode === "news_briefing") {
+    try {
+      const out = await newsBriefing();
+      return new Response(JSON.stringify(out), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    } catch (e) {
+      await supabase.from("app_events").insert({
+        event_type: "blog_published", message: `News briefing FAILED: ${String(e).substring(0, 200)}`,
+        severity: "error", metadata: { mode: "news_briefing" },
+      });
+      return new Response(JSON.stringify({ success: false, error: String(e) }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+  }
 
   if (reqMode === "market_report") {
     try {
