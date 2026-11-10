@@ -1196,7 +1196,7 @@ const ManagerDashboard = () => {
               </div>
               <button onClick={() => navigate("/post-vacancy")} className="shrink-0 text-xs font-bold px-3 py-2 rounded-xl bg-primary text-primary-foreground min-h-[40px]">+ Post</button>
             </div>
-            {myPostings.length === 0 || !managerUserId ? (
+            {(myPostings.length === 0 && agencyActive === 0) || !managerUserId ? (
               <p className="text-xs text-muted-foreground">You have not posted any vacancies yet.</p>
             ) : (
               <>
