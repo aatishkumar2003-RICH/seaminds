@@ -747,7 +747,7 @@ const PostVacancy = () => {
 
       {/* ---------- Step 3: Preflight ---------- */}
       {/* Shown whenever a batch is unresolved — even after refresh with no adverts in memory. */}
-      {(sources.length > 0 || uncertain) && (
+      {(sources.length > 0 || uncertain || lastResult?.status === "published") && (
         <section className="rounded-xl border border-[#D4AF37]/30 bg-[#0D1B2A] p-4 space-y-2 sticky bottom-2" aria-label="Publish readiness">
           <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">3. Publish selected</h3>
           {sources.length > 0 && <p className="text-sm font-semibold text-[#D4AF37]">{engineRows.length} ready to publish{heldCount > 0 && <span className="text-[#f59e0b] font-normal"> · {heldCount} need attention (stay here to fix or remove)</span>}</p>}
@@ -781,7 +781,7 @@ const PostVacancy = () => {
                 </Button>
               </div>
             </div>
-          ) : (
+          ) : sources.length === 0 ? null : (
             <Button className="w-full h-11" onClick={runCheck} disabled={checking || !engineRows.length || problems.length > 0 || !identity?.userId || sources.some((s) => s.status === "reading")}>
               {checking ? "Checking…" : heldCount > 0 ? `Check & publish ${engineRows.length} ready →` : "Check & continue →"}
             </Button>
