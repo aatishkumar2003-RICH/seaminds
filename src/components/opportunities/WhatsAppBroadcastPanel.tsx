@@ -38,7 +38,7 @@ export const WhatsAppBroadcastPanel = ({ batchId, title }: { batchId?: string | 
       if (!user) { setRows([]); return; }
       let q = supabase.from("job_postings")
         .select("id, rank_required, vessel_type, joining_port, joining_date, monthly_salary, contract_duration, recruiter_name, contact_whatsapp, contact_email")
-        .eq("manager_id", user.id).eq("status", "active").order("created_at", { ascending: true }).limit(100);
+        .eq("manager_id", user.id).eq("status", "active").order("created_at", { ascending: false }).limit(batchId ? 1000 : 100);
       if (batchId) q = q.eq("posting_batch_id", batchId);
       const { data } = await q;
       if (!cancelled) setRows((data as BroadcastVacancy[]) || []);

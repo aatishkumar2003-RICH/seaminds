@@ -41,6 +41,12 @@ const timeAgo = (iso: string | null) => {
   return d < 30 ? `${d}d ago` : new Date(iso).toLocaleDateString();
 };
 
+/** Hide placeholder values like "Not specified" instead of printing them on cards. */
+export const realText = (s?: string | null) => {
+  const t = (s || "").trim();
+  return !t || /^(not specified|n\/?a|tba|tbc|unknown|-+)$/i.test(t) ? "" : t;
+};
+
 const joinDateText = (iso: string | null) => {
   if (!iso) return "";
   const d = new Date(`${iso}T00:00:00`);
@@ -180,13 +186,13 @@ const JobCard = ({ vacancy: v, variant, applied: appliedProp, busy, href, match,
       </div>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, fontSize: 11.5, color: "#cbd5e1" }}>
-        {(v.vessel || v.contractDuration) && (
+        {(realText(v.vessel) || realText(v.contractDuration)) && (
           <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
             <Ship size={12} style={{ color: "#94a3b8" }} />
-            {[v.vessel, v.contractDuration].filter(Boolean).join(" · ")}
+            {[realText(v.vessel), realText(v.contractDuration)].filter(Boolean).join(" · ")}
           </span>
         )}
-        {v.port && (
+        {realText(v.port) && (
           <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
             <MapPin size={12} style={{ color: "#94a3b8" }} />{v.port}
           </span>

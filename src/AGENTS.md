@@ -33,3 +33,4 @@
 - Apply routes are Email or WhatsApp only (plus internal SeaMinds/flyer view); a company website is never an application route and never records 'Applied'. Why: owner rule — applications must reach a real recruiter inbox.
 - Email footers link to branded `/unsubscribe?f=<function>` (page POSTs to the function); List-Unsubscribe headers keep the direct function URL for one-click. Public links (Telegram, blog) use seaminds.life only. Why: never show the backend host to users.
 - Route metadata uses Helmet; static overridable tags use `data-rh="true"`, with route-owned canonicals. Why: prevent duplicate tags and incorrect page identity.
+- Vacancy Studio regressions guard: broadcast/export queries order `created_at` DESC; the manager dashboard always shows a count of live agency broadcasts (never silently hidden); the post-publish receipt stays until "Start new batch"; job cards hide placeholder values via `realText`. Why: 411 published adverts once looked "missing".
