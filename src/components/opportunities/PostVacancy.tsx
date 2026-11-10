@@ -792,6 +792,9 @@ const PostVacancy = () => {
               📢 Open Broadcast tab →
             </Button>
           )}
+          {lastResult?.status === "published" && sources.length === 0 && (
+            <Button variant="ghost" className="w-full h-10 text-xs" onClick={() => setLastResult(null)}>Start new batch</Button>
+          )}
         </section>
       )}
       </div>

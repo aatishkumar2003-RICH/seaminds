@@ -192,6 +192,7 @@ const ManagerDashboard = () => {
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [applicantsLoading, setApplicantsLoading] = useState(false);
   const [myPostings, setMyPostings] = useState<MyPosting[]>([]);
+  const [agencyActive, setAgencyActive] = useState(0);
   const [flierView, setFlierView] = useState<string | null>(null);
   const [applicantQuery, setApplicantQuery] = useState("");
   const [showInventory, setShowInventory] = useState(false);
@@ -492,6 +493,11 @@ const ManagerDashboard = () => {
         .or(ownFilter)
         .order("created_at", { ascending: false });
       setMyPostings(((jp as unknown) as MyPosting[]) || []);
+      // Agency broadcasts are never hidden: count them so they stay visible on the dashboard.
+      const { count: total } = await supabase.from("job_postings").select("id", { count: "exact", head: true })
+        .eq("manager_id", user.id).eq("status", "active");
+      const ownActive = (((jp as unknown) as MyPosting[]) || []).filter((p) => p.status === "active").length;
+      setAgencyActive(Math.max((total || 0) - ownActive, 0));
     }
   };
 
@@ -1182,6 +1188,11 @@ const ManagerDashboard = () => {
                   {consoleStats.active} active · {consoleStats.openPositions} open positions · {consoleStats.applicants} applicants
                   {consoleStats.archived > 0 ? ` · ${consoleStats.archived} archived` : ""}
                 </p>
+                {agencyActive > 0 && (
+                  <p className="text-xs text-primary mt-1">
+                    + {agencyActive} live agency broadcasts — open "Manage vacancy inventory" below or the Broadcast tab
+                  </p>
+                )}
               </div>
               <button onClick={() => navigate("/post-vacancy")} className="shrink-0 text-xs font-bold px-3 py-2 rounded-xl bg-primary text-primary-foreground min-h-[40px]">+ Post</button>
             </div>
