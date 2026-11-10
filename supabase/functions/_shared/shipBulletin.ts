@@ -4,7 +4,7 @@
 const ENT: Record<string, string> = { "&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": '"', "&#39;": "'", "&nbsp;": " ", "&rsquo;": "'", "&lsquo;": "'", "&ldquo;": '"', "&rdquo;": '"', "&ndash;": "-", "&mdash;": "-" };
 export const toText = (html: string) =>
   String(html || "").replace(/<[^>]+>/g, " ").replace(/&[a-z#0-9]+;/gi, (m) => ENT[m] ?? " ")
-    .replace(/[’‘]/g, "'").replace(/[“”]/g, '"').replace(/[–—]/g, "-").replace(/\s+/g, " ").trim();
+    .replace(/[’‘]/g, "'").replace(/[“”]/g, '"').replace(/[–—]/g, "-").replace(/\s+/g, " ").replace(/ ([:;,.!?])/g, "$1").trim();
 
 type Section = { heading: string; paras: string[]; items: string[] };
 export function parseSections(html: string): { glance: string[]; sections: Section[] } {
