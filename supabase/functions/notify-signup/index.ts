@@ -71,18 +71,20 @@ Deno.serve(async (req) => {
     const safe = async (run: () => unknown) => { try { await run(); } catch { /* ignore */ } };
 
     // ── Who is this? (server-side lookup, never trusted from the client) ──
-    let kind: 'admin' | 'manager' | 'workspace' | 'crew_new' | 'crew_login' | 'link_request' = isLinkRequest ? 'link_request' : (isLogin ? 'crew_login' : 'crew_new');
-    let mgr: any = null; let staff: any = null; let crew: any = null;
+    let kind: 'admin' | 'manager' | 'marketplace' | 'workspace' | 'crew_new' | 'crew_login' | 'link_request' = isLinkRequest ? 'link_request' : (isLogin ? 'crew_login' : 'crew_new');
+    let mgr: any = null; let vendor: any = null; let staff: any = null; let crew: any = null;
     if (user) {
       if (user.id === ADMIN_UID) kind = 'admin';
       else {
-        const [m, s, c] = await Promise.all([
+        const [m, s, v, c] = await Promise.all([
           supabase.from('manager_profiles').select('company_name,company_type,full_name,designation,phone,country,admin_approved,created_at').eq('user_id', user.id).maybeSingle(),
           supabase.from('fleet_staff_members').select('full_name,approved_role,requested_role,company,status').eq('user_id', user.id).maybeSingle(),
+          supabase.from('marketplace_vendors').select('company_name,vendor_type,contact_name,whatsapp,country,status').eq('user_id', user.id).maybeSingle(),
           supabase.from('crew_profiles').select('first_name,last_name,role,nationality,whatsapp_number,vessel_type').eq('id', user.id).maybeSingle(),
         ]);
-        mgr = m.data; staff = s.data; crew = c.data;
+        mgr = m.data; staff = s.data; crew = c.data; vendor = v.data;
         if (mgr) kind = 'manager';
+        else if (vendor) kind = 'marketplace';
         else if (staff) kind = 'workspace';
       }
     }
@@ -91,7 +93,7 @@ Deno.serve(async (req) => {
     //    crew/workspace = first notified sign-in only; registrations always alert ──
     let send = true;
     if (kind !== 'crew_new' && kind !== 'link_request') {
-      const everyLogin = kind === 'admin' || kind === 'manager';
+      const everyLogin = kind === 'admin' || kind === 'manager' || kind === 'marketplace';
       let q = supabase.from('signup_log').select('id', { count: 'exact', head: true }).eq('email', email).eq('notified', true);
       if (everyLogin) q = q.gte('signed_up_at', new Date(Date.now() - 60_000).toISOString());
       const { count } = await q;
@@ -167,6 +169,11 @@ Deno.serve(async (req) => {
           rows: [['📧', 'Email', email], ['👤', 'Manager', mName], ['🏢', 'Company', mgr.company_name], ['🏷️', 'Type', mgr.company_type], ['✅', 'Status', status], ['📱', 'Phone / WhatsApp', mgr.phone], ['🌍', 'Registered country', mgr.country], ['🔑', 'Signed in with', provider], ...mgrGeo],
           button: ['View Companies →', `${ADMIN_URL}?tab=company_approval`] });
       }
+    } else if (kind === 'marketplace') {
+      subject = `🏪 Marketplace Sign-In: ${email} — ${vendor.company_name || 'Seller'} (${vendor.status || 'pending'})`;
+      html = renderEmail({ title: '🏪 Marketplace Seller Signed In', band: 'linear-gradient(135deg,#D4AF37,#0D1B2A)', ink: '#fff', time: t,
+        rows: [['📧', 'Email', email], ['🏢', 'Company', vendor.company_name], ['🏷️', 'Type', vendor.vendor_type], ['👤', 'Contact', vendor.contact_name || name], ['📱', 'WhatsApp', vendor.whatsapp], ['🌍', 'Country', vendor.country], ['✅', 'Status', vendor.status], ['🔑', 'Signed in with', provider], ...geoRows],
+        button: ['Open Admin Dashboard →', ADMIN_URL] });
     } else if (kind === 'workspace') {
       const r = staff.approved_role || staff.requested_role || 'Staff';
       subject = `🚢 Fleet Workspace Sign-In: ${email} — ${r}${staff.company ? ` (${staff.company})` : ''}`;
@@ -201,7 +208,7 @@ Deno.serve(async (req) => {
         const res = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${RESEND_KEY}` },
-          body: JSON.stringify({ from: 'SeaMinds <crew@seaminds.life>', to: ['aatishkumar2003@gmail.com'], subject, html }),
+          body: JSON.stringify({ from: 'SeaMinds <crew@seaminds.life>', to: ['admin@seaminds.life'], subject, html }),
         });
         if (res.ok) { lastError = null; break; }
         lastError = `HTTP ${res.status}: ${await res.text()}`;
