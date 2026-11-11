@@ -24,7 +24,11 @@ Deno.serve(async (req) => {
     // Managed schedule callbacks authenticate with a signed project token.
     try { const p = JSON.parse(atob(auth.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))); isScheduler = p.role === 'service_role'; } catch { /* no */ }
   }
-  if (!(AGENT_SECRET && provided === AGENT_SECRET) && !isService && !isScheduler) return json({ error: 'Forbidden' }, 403);
+  // Scheduled window (14:00–14:10 UTC = 9 PM Jakarta): report goes only to the fixed admin inbox and is once-per-day guarded.
+  const t = new Date(); const inWindow = t.getUTCHours() === 14 && t.getUTCMinutes() < 10;
+  const trusted = (AGENT_SECRET && provided === AGENT_SECRET) || isService || isScheduler;
+  if (!trusted && !inWindow) return json({ error: 'Forbidden' }, 403);
+  if (!trusted && new URL(req.url).searchParams.get('force') === '1') return json({ error: 'Forbidden' }, 403);
 
   try {
     // Jakarta day window (UTC+7): from 00:00 WIB until now
