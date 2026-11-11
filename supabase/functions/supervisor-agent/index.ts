@@ -151,7 +151,8 @@ ${errList.length ? `<h2 style="color:#ef4444;font-size:15px;margin:22px 0 6px;">
     }
 
     const stats = { totalSent, totalFailed, shipOk, mgrOk, crewBrief, crewLogins: crewLogins.length, crewFirst, mgrLogins: mgrLogins.length, venLogins: venLogins.length, adminLogins };
-    if (!sendError) await supabase.from('app_events').insert({ event_type: 'supervisor_daily_report', message: `Daily report sent: ${totalSent} emails`, severity: 'info', metadata: stats });
+    const isForce = new URL(req.url).searchParams.get('force') === '1';
+    if (!sendError && !isForce) await supabase.from('app_events').insert({ event_type: 'supervisor_daily_report', message: `Daily report sent: ${totalSent} emails`, severity: 'info', metadata: stats });
     return json({ success: !sendError, stats, ...(sendError ? { error: sendError } : {}) }, sendError ? 502 : 200);
   } catch (err) {
     return json({ success: false, error: String(err) }, 500);
