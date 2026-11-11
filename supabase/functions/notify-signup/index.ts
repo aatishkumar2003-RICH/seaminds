@@ -79,6 +79,7 @@ Deno.serve(async (req) => {
         const [m, s, c] = await Promise.all([
           supabase.from('manager_profiles').select('company_name,company_type,full_name,designation,phone,country,admin_approved,created_at').eq('user_id', user.id).maybeSingle(),
           supabase.from('fleet_staff_members').select('full_name,approved_role,requested_role,company,status').eq('user_id', user.id).maybeSingle(),
+          supabase.from('marketplace_vendors').select('company_name,vendor_type,contact_name,whatsapp,country,status').eq('user_id', user.id).maybeSingle(),
           supabase.from('crew_profiles').select('first_name,last_name,role,nationality,whatsapp_number,vessel_type').eq('id', user.id).maybeSingle(),
         ]);
         mgr = m.data; staff = s.data; crew = c.data;
@@ -201,7 +202,7 @@ Deno.serve(async (req) => {
         const res = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${RESEND_KEY}` },
-          body: JSON.stringify({ from: 'SeaMinds <crew@seaminds.life>', to: ['aatishkumar2003@gmail.com'], subject, html }),
+          body: JSON.stringify({ from: 'SeaMinds <crew@seaminds.life>', to: ['admin@seaminds.life'], subject, html }),
         });
         if (res.ok) { lastError = null; break; }
         lastError = `HTTP ${res.status}: ${await res.text()}`;
