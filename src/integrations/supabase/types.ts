@@ -3154,6 +3154,7 @@ export type Database = {
           language: string
           manager_id: string
           open_link_token: string | null
+          prep_tracks: string[]
           rank_required: string
           sections: string[] | null
           status: string
@@ -3170,6 +3171,7 @@ export type Database = {
           language?: string
           manager_id: string
           open_link_token?: string | null
+          prep_tracks?: string[]
           rank_required: string
           sections?: string[] | null
           status?: string
@@ -3186,6 +3188,7 @@ export type Database = {
           language?: string
           manager_id?: string
           open_link_token?: string | null
+          prep_tracks?: string[]
           rank_required?: string
           sections?: string[] | null
           status?: string
@@ -3203,13 +3206,18 @@ export type Database = {
           crew_profile_id: string | null
           cv_request_status: string
           id: string
+          improvement_reminders: number
+          improvement_sent_at: string | null
+          improvement_status: string
           invited_email: string | null
           invited_name: string | null
           invited_whatsapp: string | null
+          last_reminder_at: string | null
           manager_note: string | null
           overall_score: number | null
           proposed_by: string | null
           proposed_slots: Json
+          reminder_count: number
           round_2_assessment_id: string | null
           schedule_mode: string
           schedule_note: string | null
@@ -3228,13 +3236,18 @@ export type Database = {
           crew_profile_id?: string | null
           cv_request_status?: string
           id?: string
+          improvement_reminders?: number
+          improvement_sent_at?: string | null
+          improvement_status?: string
           invited_email?: string | null
           invited_name?: string | null
           invited_whatsapp?: string | null
+          last_reminder_at?: string | null
           manager_note?: string | null
           overall_score?: number | null
           proposed_by?: string | null
           proposed_slots?: Json
+          reminder_count?: number
           round_2_assessment_id?: string | null
           schedule_mode?: string
           schedule_note?: string | null
@@ -3253,13 +3266,18 @@ export type Database = {
           crew_profile_id?: string | null
           cv_request_status?: string
           id?: string
+          improvement_reminders?: number
+          improvement_sent_at?: string | null
+          improvement_status?: string
           invited_email?: string | null
           invited_name?: string | null
           invited_whatsapp?: string | null
+          last_reminder_at?: string | null
           manager_note?: string | null
           overall_score?: number | null
           proposed_by?: string | null
           proposed_slots?: Json
+          reminder_count?: number
           round_2_assessment_id?: string | null
           schedule_mode?: string
           schedule_note?: string | null
@@ -7632,6 +7650,24 @@ export type Database = {
       increment_discount_uses: {
         Args: { input_code: string }
         Returns: undefined
+      }
+      interview_followups_due: {
+        Args: { p_limit?: number }
+        Returns: {
+          attempt: number
+          company: string
+          crew_id: string
+          email: string
+          invite_id: string
+          kind: string
+          language: string
+          modules: Json
+          name: string
+          prep_tracks: string[]
+          rank: string
+          score: number
+          token: string
+        }[]
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_approved_manager: { Args: { _uid: string }; Returns: boolean }

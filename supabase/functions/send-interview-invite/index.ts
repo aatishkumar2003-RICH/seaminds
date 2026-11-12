@@ -110,13 +110,14 @@ Deno.serve(async (req) => {
   <p style="margin:0 0 4px"><strong style="color:#D4AF37">Rank:</strong> ${esc(camp.rank_required)}</p>
   <p style="margin:0 0 4px"><strong style="color:#D4AF37">Vessel type:</strong> ${esc(camp.vessel_type || "Any vessel")}</p>
   <p style="margin:0 0 4px"><strong style="color:#D4AF37">Mode:</strong> online written questions in ${esc(lang)} — Maritime English is assessed separately</p>
-  <p style="margin:0 0 4px"><strong style="color:#D4AF37">Estimated time:</strong> 15 minutes</p>
+  <p style="margin:0 0 4px"><strong style="color:#D4AF37">Estimated time:</strong> 15 minutes — self-paced, no fixed appointment. Do it when you are off watch.</p>
   <p style="margin:0 0 16px"><strong style="color:#D4AF37">Valid until:</strong> ${esc(validUntil)}</p>
   <h3 style="color:#D4AF37;font-size:16px">Prepare your profile — choose either option</h3>
   <p><strong>AI CV Scan (recommended):</strong> Upload your CV PDF or take a clear photo. SeaMinds AI extracts your sea time, vessels and certificates for you to confirm — no retyping your CV.</p>
   <p><strong>1-Minute Quick Profile:</strong> No CV on your phone? Select your rank, sea time and vessel types, then answer a few short experience questions.</p>
   <p>Once your chosen profile is saved, you can start your interview. Create your free account or sign in after opening the link.</p>
   <p><a href="${link}" style="background:#D4AF37;color:#0D1B2A;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block">Prepare my profile &amp; start interview</a></p>
+  ${camp.language === "vi" ? `<p style="border-top:1px solid rgba(212,175,55,0.3);padding-top:12px">${esc(camp.company_name)} mời bạn làm bài đánh giá AI cho chức danh <b>${esc(camp.rank_required)}</b>. Không có giờ cố định — hãy làm khi rảnh ca (khoảng 15 phút trên điện thoại). Bấm nút vàng ở trên để bắt đầu.</p>` : ""}
   <p style="color:#94A3B8;font-size:13px;margin-top:16px">Free for crew. AI extraction is not independent verification. Need help? Contact support@seaminds.life.</p>
   <p style="color:#94A3B8;font-size:12px;margin-top:22px">Sent via SeaMinds — seaminds.life · free crew platform, no agent fees</p>
 </div>`;
