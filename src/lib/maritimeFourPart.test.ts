@@ -52,7 +52,7 @@ describe("rank and evidence calibration", () => {
     expect(departmentOf("Chief Cook")).toBe("catering");
   });
   it("never claims to assess pronunciation from a typed English answer", () => {
-    const { messages } = buildExamMessages({ rank: "Chief Engineer", turns: turns(1), answer: "Typed answer", answerMode: "text" }, "Pending", 1, FOUR_PART_FRAMEWORK);
+    const { messages } = buildExamMessages({ rank: "Chief Engineer", turns: [], answer: "Typed answer", answerMode: "text" }, "Pending", 1, FOUR_PART_FRAMEWORK);
     expect(messages[0].content).toContain("never claim pronunciation or fluency was heard");
   });
   it("keeps composure occupational and bars wellness inference", () => {
