@@ -37,7 +37,7 @@ describe("four-part interview structure", () => {
     const step = finalizeStep({ assessment: { depth: 3 }, next_question: null }, "answer", 13,
       { turns: turns(12), question: "Q13", dept: "deck" }, FOUR_PART_FRAMEWORK);
     expect(step.done).toBe(false);
-    expect(step.next_question).toContain("two team members disagree");
+    expect(step.next_question).toContain("Several alarms sound");
     expect(step.module).toBe("composure");
   });
   it("does not finish after question 12, and finishes at question 14", () => {

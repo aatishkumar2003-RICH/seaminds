@@ -199,7 +199,9 @@ export function fallbackFourPartQuestion(turnIndex: number): string {
   if (stage === "investigation") return "Continue the incident in your previous answer. Which safe diagnostic checks would you make, in what order, and which readings or evidence would you verify before acting?";
   if (stage === "resolution") return "Continue the same incident. How would you coordinate recovery, notify the responsible parties, keep required records and confirm safe conditions before normal operations resume?";
   if (module === "writing") return "Write a concise report to your responsible officer about an operational defect or incident in your rank's duties. Include time, facts, immediate safety actions, people notified and recommended next steps.";
-  return "During a critical operation, two team members disagree and several tasks compete for attention. How would you restore safe teamwork, prioritise the work, communicate and comply with rest-hour requirements?";
+  return turnIndex % 2 === 0
+    ? "During a critical operation, two team members disagree and several tasks compete for attention. How would you restore safe teamwork, prioritise the work, communicate and comply with rest-hour requirements?"
+    : "Several alarms sound while a key team member reports exhaustion near the end of a watch. How would you prioritise the alarms, arrange safe relief, communicate with your senior officer and keep the operation under control?";
 }
 
 /** Validates AI JSON and applies deterministic safety rules on top of it. */
