@@ -341,7 +341,7 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
             </div>
             <div className="text-left">
               <p className="font-bold text-sm text-primary">Upload Your CV</p>
-              <p className="text-xs text-muted-foreground mt-0.5">PDF or photo — AI extracts certificates & sea service</p>
+              <p className="text-xs text-muted-foreground mt-0.5">PDF, Word, Excel, text or photo — AI extracts certificates & sea service</p>
             </div>
           </div>
         </button>
