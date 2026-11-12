@@ -20,7 +20,7 @@ const NAV = [
   { to: "/marketplace", label: "Ship Marketplace", icon: Ship, match: (p: string) => p.startsWith("/marketplace"), note: "Approval" },
   { to: "/manager/crew-desk?tab=company", label: "My Company Crew", icon: Users, match: (p: string, q: URLSearchParams) => p === "/manager/crew-desk" && q.get("tab") === "company" },
   { to: "/manager-search", label: "Crew Search", icon: Search, match: (p: string) => p === "/manager-search", ownerOnly: true },
-  { to: "/manager/interviews", label: "AI Interview Studio", icon: GraduationCap, match: (p: string) => p === "/manager/interviews" },
+  { to: "/manager/interviews", label: "AI Interview & Training", icon: GraduationCap, match: (p: string) => p === "/manager/interviews" },
   { to: "/manager/dashboard?tab=payments", label: "Account & Usage", icon: CreditCard, match: (p: string, q: URLSearchParams) => p === "/manager/dashboard" && q.get("tab") === "payments" },
 ];
 

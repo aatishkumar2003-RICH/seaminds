@@ -1,4 +1,5 @@
 import TechnicalInterviewReport from "@/components/manager/TechnicalInterviewReport";
+import UnifiedCrewBoard from "@/components/manager/UnifiedCrewBoard";
 import LineupTickets from "@/components/LineupTickets";
 import { matchApplicantToVacancy } from "@/lib/smartMatch";
 import VacancyCleanupPanel from "@/components/manager/VacancyCleanupPanel";
@@ -1091,7 +1092,7 @@ const ManagerDashboard = () => {
             { icon: "📢", title: "Post Vacancies", desc: "Paste adverts & flyers, publish in bulk.", cta: "Vacancy Studio", to: "/post-vacancy", primary: true },
             { icon: "✍️", title: "Create Post", desc: "Flyers, fleet news & updates to the feed.", cta: "Create Post", to: "/company-post", primary: false },
             { icon: "👥", title: "My Company Crew", desc: "Your own crew, applicants & roster.", cta: "Open Crew", to: "/manager/crew-desk?tab=company", primary: false },
-            { icon: "🎓", title: "Arrange Interview", desc: "Invite candidates to AI interviews.", cta: "Interviews", to: "/manager/interviews", primary: true },
+            { icon: "🎓", title: "AI Interview & Training", desc: "Invite candidates and crew to AI interviews & training.", cta: "Interviews & Training", to: "/manager/interviews", primary: true },
           ].map((c) => (
             <button key={c.to} onClick={() => navigate(c.to)}
               className="text-left rounded-2xl border border-primary/40 bg-secondary p-3 sm:p-5 hover:border-primary transition-colors flex flex-col min-h-[150px]">
@@ -1408,6 +1409,8 @@ const ManagerDashboard = () => {
           </div>
         ) : (
           <>
+
+            <div className="bg-secondary rounded-xl border border-border p-4"><UnifiedCrewBoard /></div>
 
             {/* My Fleet */}
             <div className="bg-secondary rounded-xl border border-border p-4 space-y-4">

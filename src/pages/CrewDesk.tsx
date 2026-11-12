@@ -14,6 +14,7 @@ import AppraisalsTab from "@/components/crew-desk/AppraisalsTab";
 import CertificateRadarTab from "@/components/crew-desk/CertificateRadarTab";
 import OperatingModelPicker from "@/components/crew-desk/OperatingModelPicker";
 import CompanyCrewTab from "@/components/crew-desk/CompanyCrewTab";
+import UnifiedCrewBoard from "@/components/manager/UnifiedCrewBoard";
 import type { OperatingModel } from "@/lib/fleetCockpit";
 import { Button } from "@/components/ui/button";
 
