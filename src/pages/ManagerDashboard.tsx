@@ -1090,7 +1090,7 @@ const ManagerDashboard = () => {
           {[
             { icon: "📢", title: "Post Vacancies", desc: "Paste adverts & flyers, publish in bulk.", cta: "Vacancy Studio", to: "/post-vacancy", primary: true },
             { icon: "✍️", title: "Create Post", desc: "Flyers, fleet news & updates to the feed.", cta: "Create Post", to: "/company-post", primary: false },
-            { icon: "🔍", title: "Search Crew", desc: "Find seafarers by rank & readiness.", cta: "Search Crew", to: "/manager-search", primary: false },
+            { icon: "👥", title: "My Company Crew", desc: "Your own crew, applicants & roster.", cta: "Open Crew", to: "/manager/crew-desk?tab=company", primary: false },
             { icon: "🎓", title: "Arrange Interview", desc: "Invite candidates to AI interviews.", cta: "Interviews", to: "/manager/interviews", primary: true },
           ].map((c) => (
             <button key={c.to} onClick={() => navigate(c.to)}
@@ -1134,7 +1134,7 @@ const ManagerDashboard = () => {
               <input
                 value={applicantQuery}
                 onChange={(e) => setApplicantQuery(e.target.value)}
-                placeholder="Search applicants by name, rank or nationality"
+                placeholder="Search your applicants by name, rank or nationality"
                 aria-label="Search applicants by name or rank"
                 className="w-full min-h-[44px] pl-9 pr-9 text-sm bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
               />
@@ -1142,25 +1142,7 @@ const ManagerDashboard = () => {
                 <button onClick={() => setApplicantQuery("")} aria-label="Clear search" className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-muted-foreground"><X size={14} /></button>
               )}
             </div>
-            <div>
-              <p className="text-[11px] text-muted-foreground mb-1.5">Search all SeaMinds crew by rank:</p>
-              <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
-                {[
-                  ["Master", "Captain / Master"], ["Ch. Officer", "Chief Officer"], ["2nd Officer", "2nd Officer"],
-                  ["Ch. Engineer", "Chief Engineer"], ["2nd Engineer", "2nd Engineer"], ["ETO", "ETO / EEO"],
-                  ["Bosun", "Bosun"], ["AB", "AB Seaman"], ["Oiler", "Oiler"], ["Cook", "Cook"],
-                ].map(([label, value]) => (
-                  <button key={value} onClick={() => navigate(`/manager-search?rank=${encodeURIComponent(value)}`)}
-                    className="shrink-0 text-xs font-medium px-3 py-2 rounded-full border border-primary/40 text-primary hover:bg-primary/10 min-h-[36px]">
-                    {label}
-                  </button>
-                ))}
-                <button onClick={() => navigate("/manager-search")}
-                  className="shrink-0 text-xs font-bold px-3 py-2 rounded-full bg-primary text-primary-foreground min-h-[36px]">
-                  All ranks →
-                </button>
-              </div>
-            </div>
+            <p className="text-[11px] text-muted-foreground">Only crew who applied to you, your company crew and your roster are shown. The main SeaMinds crew database is not searchable.</p>
           </div>
 
           {/* Pipeline summary */}
