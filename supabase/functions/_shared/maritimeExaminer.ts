@@ -70,7 +70,7 @@ export function pillarStats(turns: Turn[]) {
 }
 
 /** Ability-first routing: pick the least-tested pillar, skipping one the candidate just struggled on. */
-export function nextPillar(turns: Turn[], dept: "engine" | "deck"): string {
+export function nextPillar(turns: Turn[], dept: Department): string {
   const stats = pillarStats(turns);
   const last = turns[turns.length - 1];
   const weakLast = last && typeof last.depth === "number" && last.depth <= 1 ? last.pillar : undefined;
@@ -80,7 +80,7 @@ export function nextPillar(turns: Turn[], dept: "engine" | "deck"): string {
 
 export type StopReason = "mastery" | "standard" | "max" | null;
 /** Adaptive exit gates. ≥80% with no safety flag after 12 (all pillars seen) ends early; ≥65% after 25; hard cap 40. */
-export function examDecision(turns: Turn[], dept: "engine" | "deck" = "engine"): StopReason {
+export function examDecision(turns: Turn[], dept: Department = "engine"): StopReason {
   const n = turns.length;
   if (n >= MAX_TURNS) return "max";
   const { technical_pct, safety_flags } = summarise(turns);
@@ -105,11 +105,13 @@ export function validateInput(raw: unknown): { ok: true; value: ExamInput } | { 
     answer: String(t?.answer ?? "").slice(0, MAX_ANSWER_CHARS),
   }));
   const answer = typeof b.answer === "string" ? b.answer.slice(0, MAX_ANSWER_CHARS).trim() : undefined;
-  return { ok: true, value: { rank, targetRank, vessel, language, turns, answer } };
+  const answerMode = b.answerMode === "voice" ? "voice" as const : b.answerMode === "text" ? "text" as const : undefined;
+  return { ok: true, value: { rank, targetRank, vessel, language, turns, answer, answerMode } };
 }
 
 /** Builds chat messages: brain system prompt + examiner protocol + transcript. */
-export function buildExamMessages(input: ExamInput, pendingQuestion: string | null, seed = 0) {
+export function buildExamMessages(input: ExamInput, pendingQuestion: string | null, seed = 0, framework: InterviewFramework = "adaptive_v1") {
+  const four = framework === FOUR_PART_FRAMEWORK;
   const turnIndex = input.turns.length + (pendingQuestion ? 1 : 0);
   const userText = [...input.turns.map((t) => t.answer), input.answer ?? ""].join(" ");
   const system = buildBrainPrompt({
@@ -119,23 +121,53 @@ export function buildExamMessages(input: ExamInput, pendingQuestion: string | nu
   const nextPhase = phaseFor(turnIndex);
   const dept = departmentOf(input.rank);
   const known = input.turns.map((t) => ({ ...t }));
-  const pillar = nextPillar(known, dept);
-  const pickup = isPickup(turnIndex);
-  const protocol = [
-    `Examiner protocol: you are a senior superintendent running an oral (viva voce) board. One realistic shipboard question per turn, max 90 words. Assess ABILITIES, not disabilities: find what the candidate CAN do.`,
-    turnIndex <= 1 ? `Opening: first learn the candidate's last vessel, machinery/cargo, PSC findings and duties, then anchor later questions to that experience.` : `Anchor questions to the vessel and equipment the candidate described earlier when relevant.`,
-    `Responsibility pillars for this ${dept} rank: ${PILLARS[dept].join(", ")}. Include rank duties, statutory paperwork and SMS records, not only troubleshooting.`,
-    `Next question pillar: ${pillar}. Next phase: ${nextPhase}.`,
-    pickup
-      ? `This turn is a QUICK-DECISION PICKUP: give a short emergency/priority scenario then exactly 4 options on separate lines formatted "A) …", "B) …", "C) …", "D) …". Ask the candidate to pick the best FIRST action and give a one-line reason. Exactly one option is clearly best.`
-      : `This turn is ORAL: open question answered in the candidate's own words.`,
-    `If the last answer was strong (depth ≥3) go deeper on edge cases; if weak or "don't know" (depth ≤1) do NOT keep drilling it — move to a different pillar to find the candidate's strengths. Never repeat a question. Vary scenarios (variation key ${seed % 997}).`,
-    `If the last answer proposed an unsafe action, set safety_flag true, name the hazard in feedback, and make the next question test recovery.`,
-    `depth scale: 0 no answer, 1 unsafe/incorrect, 2 partial, 3 competent, 4 expert.`,
-    turnIndex >= MAX_TURNS ? `This is the final answer: set next_question to null.` : "",
-    `For a pickup answer, judge the chosen option and the reason; wrong option = depth ≤1.`,
-    `Return ONLY JSON: {"assessment": {"topic": string, "pillar": one of [${PILLARS[dept].join(", ")}], "depth": 0-4, "safety_flag": boolean, "gap": string|null, "feedback": string} | null, "next_question": string|null}. assessment is null when there is no answer to assess. The assessment pillar is the pillar of the question just answered.`,
-  ].filter(Boolean).join("\n");
+  const stage = four ? technicalStageFor(turnIndex) : null;
+  const continuingIncident = four && stage !== null && stage !== "immediate";
+  const lastPillar = known[known.length - 1]?.pillar;
+  const pillar = continuingIncident && lastPillar ? lastPillar : nextPillar(known, dept);
+  const pickup = four ? isFourPartPickup(turnIndex) : isPickup(turnIndex);
+  let protocol: string;
+  if (four) {
+    const currentModule = moduleFor(turnIndex);
+    const moduleInstruction = currentModule === "spoken_english"
+      ? `PART 1 — SPOKEN ENGLISH & MARITIME COMMUNICATION. Ask a rank-specific operational question requiring a spoken explanation, handover or standard maritime phrase. Score intelligibility of the transcript, vocabulary, sentence structure and role-appropriate communication. Never penalise accent, nationality or disability. Answer evidence: ${input.answerMode ?? "question generation"}; if text, assess written Maritime English only and never claim pronunciation or fluency was heard.`
+      : currentModule === "technical"
+        ? stage === "immediate"
+          ? `PART 2 — CASCADING TECHNICAL SCENARIO, IMMEDIATE REFLEX (25 seconds). Start a NEW realistic rank-specific incident with dynamic vessel, weather, cargo/machinery and alarm details. Ask for the best FIRST action. Give exactly 4 options on separate lines formatted "A) …", "B) …", "C) …", "D) …", with one clearly safest answer.`
+          : stage === "investigation"
+            ? `PART 2 — SAME INCIDENT, INVESTIGATION. Continue the immediately preceding incident; never start a new one. Ask for safe diagnostic checks, likely causes and priorities based on the candidate's first action.`
+            : `PART 2 — SAME INCIDENT, RESOLUTION. Continue the same incident; never start a new one. Ask for recovery, team/resource coordination, required notifications, SMS records and rank-appropriate operational or commercial resolution.`
+        : currentModule === "writing"
+          ? `PART 3 — WRITTEN REPORT. Give ONE rank-appropriate written task: management ranks write a concise formal email/report to the Master, superintendent or terminal; operational/support ranks write a handover, log entry or defect/incident report; catering ranks write a hygiene, provisions or allergy incident report. Require time, facts, immediate actions, notifications and next steps. Do not request private medical or family information.`
+          : `PART 4 — OCCUPATIONAL COMPOSURE. Ask a realistic work scenario involving simultaneous alarms, conflicting priorities, fatigue management or crew conflict. Score observable professional decisions: calm prioritisation, communication, rest-hour compliance, escalation and refusal of unsafe work. Never ask about or infer mental health, wellness, diagnosis, private feelings, family circumstances or medical history.`;
+    protocol = [
+      `Examiner protocol: senior superintendent conducting a four-part maritime interview. One question per turn, maximum 100 words. Complete all 14 turns: 2 spoken English, 9 cascading technical (3 incidents × immediate/investigation/resolution), 1 written report, 2 occupational composure.`,
+      `Dedicated rank track and vessel context in the Maritime Brain prompt are mandatory. Do not ask generic textbook definitions when a scenario can test the duty.`,
+      `Current part: ${currentModule}. Technical stage: ${stage ?? "not applicable"}. Responsibility pillar: ${pillar}.`,
+      moduleInstruction,
+      `Vary incidents and parameters using variation key ${seed % 997}; never repeat an earlier question. Do not reveal model answers or learning feedback during the interview.`,
+      `If an answer proposes an unsafe action, set safety_flag true, name the hazard in feedback and cap depth at 1. For pickup answers judge both the option and reason; a wrong option is depth ≤1.`,
+      `depth scale: 0 no answer, 1 unsafe/incorrect, 2 partial, 3 competent, 4 expert. For English score communication only; for writing score structure, clarity and maritime terminology; for composure score professional actions only.`,
+      turnIndex >= FOUR_PART_TURNS - 1 ? `This is the final answer: set next_question to null.` : `Never finish before all ${FOUR_PART_TURNS} answers.`,
+      `Return ONLY JSON: {"assessment": {"topic": string, "pillar": one of [${PILLARS[dept].join(", ")}], "depth": 0-4, "safety_flag": boolean, "gap": string|null, "feedback": string} | null, "next_question": string|null}. assessment is null when there is no answer to assess. The assessment pillar is the pillar of the question just answered.`,
+    ].join("\n");
+  } else {
+    protocol = [
+      `Examiner protocol: you are a senior superintendent running an oral (viva voce) board. One realistic shipboard question per turn, max 90 words. Assess ABILITIES, not disabilities: find what the candidate CAN do.`,
+      turnIndex <= 1 ? `Opening: first learn the candidate's last vessel, machinery/cargo, PSC findings and duties, then anchor later questions to that experience.` : `Anchor questions to the vessel and equipment the candidate described earlier when relevant.`,
+      `Responsibility pillars for this ${dept} rank: ${PILLARS[dept].join(", ")}. Include rank duties, statutory paperwork and SMS records, not only troubleshooting.`,
+      `Next question pillar: ${pillar}. Next phase: ${nextPhase}.`,
+      pickup
+        ? `This turn is a QUICK-DECISION PICKUP: give a short emergency/priority scenario then exactly 4 options on separate lines formatted "A) …", "B) …", "C) …", "D) …". Ask the candidate to pick the best FIRST action and give a one-line reason. Exactly one option is clearly best.`
+        : `This turn is ORAL: open question answered in the candidate's own words.`,
+      `If the last answer was strong (depth ≥3) go deeper on edge cases; if weak or "don't know" (depth ≤1) do NOT keep drilling it — move to a different pillar to find the candidate's strengths. Never repeat a question. Vary scenarios (variation key ${seed % 997}).`,
+      `If the last answer proposed an unsafe action, set safety_flag true, name the hazard in feedback, and make the next question test recovery.`,
+      `depth scale: 0 no answer, 1 unsafe/incorrect, 2 partial, 3 competent, 4 expert.`,
+      turnIndex >= MAX_TURNS ? `This is the final answer: set next_question to null.` : "",
+      `For a pickup answer, judge the chosen option and the reason; wrong option = depth ≤1.`,
+      `Return ONLY JSON: {"assessment": {"topic": string, "pillar": one of [${PILLARS[dept].join(", ")}], "depth": 0-4, "safety_flag": boolean, "gap": string|null, "feedback": string} | null, "next_question": string|null}. assessment is null when there is no answer to assess. The assessment pillar is the pillar of the question just answered.`,
+    ].filter(Boolean).join("\n");
+  }
   const messages: { role: "system" | "user" | "assistant"; content: string }[] = [{ role: "system", content: `${system}\n\n${protocol}` }];
   for (const t of input.turns) {
     messages.push({ role: "assistant", content: t.question });
