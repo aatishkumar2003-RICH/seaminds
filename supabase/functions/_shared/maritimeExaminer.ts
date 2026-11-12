@@ -191,12 +191,13 @@ export function unsafeAction(answer: string): boolean {
 }
 
 /** Validates AI JSON and applies deterministic safety rules on top of it. */
-export function finalizeStep(aiRaw: unknown, answer: string | undefined, turnIndex: number, prior?: { turns: Turn[]; question: string; dept: "engine" | "deck" }): ExamStep {
+export function finalizeStep(aiRaw: unknown, answer: string | undefined, turnIndex: number, prior?: { turns: Turn[]; question: string; dept: Department }, framework: InterviewFramework = "adaptive_v1"): ExamStep {
+  const four = framework === FOUR_PART_FRAMEWORK;
   const o = (aiRaw ?? {}) as any;
   let assessment: Assessment | null = null;
   if (answer !== undefined) {
     const a = o.assessment ?? {};
-    const blank = !answer || /^(i don'?t know|dont know|no idea|pass|skip|-)$/i.test(answer.trim());
+    const blank = !answer || /^(i don'?t know|dont know|no idea|pass|skip|-|\[no answer — time expired\])$/i.test(answer.trim());
     let depth = Math.max(0, Math.min(4, Math.round(Number(a.depth) || 0)));
     if (blank) depth = 0;
     let safety = a.safety_flag === true;
@@ -210,23 +211,40 @@ export function finalizeStep(aiRaw: unknown, answer: string | undefined, turnInd
       depth, safety_flag: safety,
       gap: blank ? "No answer given" : (a.gap ? String(a.gap).slice(0, 200) : null),
       feedback: String(a.feedback ?? "").slice(0, 400),
+      ...(four ? { module: moduleFor(Math.max(0, turnIndex - 1)) } : {}),
     };
-    const allowed = prior ? (PILLARS[prior.dept] as readonly string[]) : [...PILLARS.engine, ...PILLARS.deck];
+    const allowed = prior ? (PILLARS[prior.dept] as readonly string[]) : [...PILLARS.engine, ...PILLARS.deck, ...PILLARS.catering];
     if (typeof a.pillar === "string" && allowed.includes(a.pillar)) assessment.pillar = a.pillar;
   }
-  const stop = prior && assessment ? examDecision([...prior.turns, { question: prior.question, answer: answer ?? "", ...assessment }], prior.dept) : null;
-  const done = turnIndex >= MAX_TURNS || !!stop;
+  const stop = !four && prior && assessment ? examDecision([...prior.turns, { question: prior.question, answer: answer ?? "", ...assessment }], prior.dept) : null;
+  const cap = four ? FOUR_PART_TURNS : MAX_TURNS;
+  const done = turnIndex >= cap || !!stop;
   const q = !done && typeof o.next_question === "string" && o.next_question.trim() ? o.next_question.trim().slice(0, 900) : null;
-  return { assessment, next_question: q, phase: q ? phaseFor(turnIndex) : null, done: done || !q };
+  return { assessment, next_question: q, phase: q ? phaseFor(turnIndex) : null, done: done || !q, module: q && four ? moduleFor(turnIndex) : null };
 }
 
 export type Verdict = "ready" | "ready_with_training" | "not_ready";
-export function summarise(turns: Turn[]): { technical_pct: number; safety_flags: number; gaps: string[]; verdict: Verdict; strengths: string[] } {
-  const scored = turns.filter((t) => typeof t.depth === "number");
+export type ModuleScores = Partial<Record<InterviewModule, { pct: number; evidence?: "voice" | "mixed" | "text" }>>;
+export function summarise(turns: Turn[]): { technical_pct: number; safety_flags: number; gaps: string[]; verdict: Verdict; strengths: string[]; module_scores: ModuleScores | null } {
+  const allScored = turns.filter((t) => typeof t.depth === "number");
+  const fourPart = allScored.some((t) => t.module);
+  const scored = fourPart ? allScored.filter((t) => t.module === "technical") : allScored;
   const technical_pct = scored.length ? Math.round((scored.reduce((s, t) => s + (t.depth as number), 0) / (scored.length * 4)) * 100) : 0;
   const safety_flags = scored.filter((t) => t.safety_flag).length;
-  const gaps = [...new Set(scored.map((t) => t.gap).filter((g): g is string => !!g))];
+  const gaps = [...new Set(allScored.map((t) => t.gap).filter((g): g is string => !!g))];
   const verdict: Verdict = safety_flags >= 2 || technical_pct < 50 ? "not_ready" : safety_flags === 1 || technical_pct < 75 ? "ready_with_training" : "ready";
   const strengths = Object.entries(pillarStats(scored)).filter(([, v]) => v.pct >= 75).map(([k]) => k);
-  return { technical_pct, safety_flags, gaps, verdict, strengths };
+  let module_scores: ModuleScores | null = null;
+  if (fourPart) {
+    module_scores = {};
+    for (const module of ["spoken_english", "technical", "writing", "composure"] as const) {
+      const rows = allScored.filter((t) => t.module === module);
+      if (!rows.length) continue;
+      const pct = Math.round((rows.reduce((s, t) => s + (t.depth as number), 0) / (rows.length * 4)) * 100);
+      module_scores[module] = module === "spoken_english"
+        ? { pct, evidence: rows.every((t) => t.mode === "voice") ? "voice" : rows.some((t) => t.mode === "voice") ? "mixed" : "text" }
+        : { pct };
+    }
+  }
+  return { technical_pct, safety_flags, gaps, verdict, strengths, module_scores };
 }
