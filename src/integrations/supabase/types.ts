@@ -1038,6 +1038,99 @@ export type Database = {
         }
         Relationships: []
       }
+      company_crew_records: {
+        Row: {
+          accepted_at: string | null
+          available_from: string | null
+          cdc_no: string | null
+          certificates: Json
+          claim_token: string
+          company_name: string | null
+          created_at: string
+          crew_id: string | null
+          crew_unique_id: string
+          date_of_birth: string | null
+          declined_at: string | null
+          email: string | null
+          first_name: string
+          id: string
+          import_batch: string | null
+          invite_channel: string | null
+          invited_at: string | null
+          last_name: string
+          manager_id: string
+          nationality: string | null
+          notes: string | null
+          passport_no: string | null
+          rank: string
+          sea_service: Json
+          status: string
+          updated_at: string
+          vessel: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          available_from?: string | null
+          cdc_no?: string | null
+          certificates?: Json
+          claim_token?: string
+          company_name?: string | null
+          created_at?: string
+          crew_id?: string | null
+          crew_unique_id: string
+          date_of_birth?: string | null
+          declined_at?: string | null
+          email?: string | null
+          first_name?: string
+          id?: string
+          import_batch?: string | null
+          invite_channel?: string | null
+          invited_at?: string | null
+          last_name?: string
+          manager_id: string
+          nationality?: string | null
+          notes?: string | null
+          passport_no?: string | null
+          rank?: string
+          sea_service?: Json
+          status?: string
+          updated_at?: string
+          vessel?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          available_from?: string | null
+          cdc_no?: string | null
+          certificates?: Json
+          claim_token?: string
+          company_name?: string | null
+          created_at?: string
+          crew_id?: string | null
+          crew_unique_id?: string
+          date_of_birth?: string | null
+          declined_at?: string | null
+          email?: string | null
+          first_name?: string
+          id?: string
+          import_batch?: string | null
+          invite_channel?: string | null
+          invited_at?: string | null
+          last_name?: string
+          manager_id?: string
+          nationality?: string | null
+          notes?: string | null
+          passport_no?: string | null
+          rank?: string
+          sea_service?: Json
+          status?: string
+          updated_at?: string
+          vessel?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
       company_demo_requests: {
         Row: {
           company_name: string
@@ -7119,6 +7212,7 @@ export type Database = {
         }
         Returns: string
       }
+      accept_crew_claim: { Args: { p_token: string }; Returns: Json }
       add_interview_invites: {
         Args: { p_campaign_id: string; p_people: Json }
         Returns: Json
@@ -7323,6 +7417,12 @@ export type Database = {
       }
       claim_referral: { Args: { p_code: string }; Returns: Json }
       claim_welcome_credits: { Args: never; Returns: Json }
+      company_crew_import: { Args: { p_rows: Json }; Returns: Json }
+      company_crew_list: { Args: never; Returns: Json[] }
+      company_crew_mark_invited: {
+        Args: { p_channel: string; p_ids: string[] }
+        Returns: number
+      }
       complete_interview: {
         Args: { p_assessment_id: string; p_invite_id: string }
         Returns: Json
@@ -7381,6 +7481,7 @@ export type Database = {
         Args: { p_crew_id: string; p_target_rank?: string }
         Returns: Json
       }
+      decline_crew_claim: { Args: { p_token: string }; Returns: Json }
       digest_rank_stats: {
         Args: never
         Returns: {
@@ -7484,6 +7585,7 @@ export type Database = {
       get_credit_pricing: { Args: never; Returns: Json }
       get_crew_card: { Args: { p_token: string }; Returns: Json }
       get_crew_card_by_link: { Args: { p_token: string }; Returns: Json }
+      get_crew_claim: { Args: { p_token: string }; Returns: Json }
       get_cta_block: {
         Args: { p_audience?: string; p_count?: number; p_intents?: string[] }
         Returns: string
@@ -7615,6 +7717,7 @@ export type Database = {
         Returns: Json
       }
       marketplace_is_open: { Args: never; Returns: boolean }
+      next_crew_unique_id: { Args: never; Returns: string }
       open_assessment_v2: {
         Args: { p_invite_id?: string; p_mode: string; p_restart?: boolean }
         Returns: Json
