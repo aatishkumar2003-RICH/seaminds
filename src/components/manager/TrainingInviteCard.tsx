@@ -75,6 +75,17 @@ export default function TrainingInviteCard({ company }: { company: string }) {
   const link = () => { if (email.trim() || phone.trim()) void supabase.rpc("manager_link_training_crew" as any, { p_email: email.trim(), p_phone: phone.trim() }).then(({ data }: any) => data?.linked && toast.success("Crew added to your live training radar")); };
   const need = () => { if (!total) { toast.error("Choose at least one training item first."); return false; } link(); return true; };
   const full = () => { if (total >= MAX) { toast.error(`Up to ${MAX} items per invitation.`); return true; } return false; };
+  const [sending, setSending] = useState(false);
+  const sendEmail = async () => {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) { toast.error("Enter the crew email address first."); return; }
+    if (!need()) return;
+    setSending(true);
+    const { data, error } = await supabase.functions.invoke("send-training-invite", { body: { email: email.trim(), message: msg(), company } });
+    setSending(false);
+    const d = data as any;
+    if (!error && d?.ok) { toast.success(d.skipped ? `Already emailed to ${email.trim()} a few minutes ago` : `✅ Training invitation emailed to ${email.trim()}`); return; }
+    toast.error(d?.error || "Email could not be sent. Try WhatsApp, Zalo or Copy.");
+  };
   const C = CATS.find((c) => c.key === cat)!;
   const togglePick = (slug: string) => setPicked((p) => p.includes(slug) ? p.filter((s) => s !== slug) : full() ? p : [...p, slug]);
   const togglePractice = (x: Practice) => setPractice((p) => p.some((q) => q.title === x.title) ? p.filter((q) => q.title !== x.title) : full() ? p : [...p, x]);
@@ -156,7 +167,7 @@ export default function TrainingInviteCard({ company }: { company: string }) {
         <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Crew email (links an existing SeaMinds account on sign-in)" style={field} />
       </div>
       <div style={{ display: "flex", gap: 7, marginTop: 10, flexWrap: "wrap" }}>
-        <button style={btn(GOLD, NAVY)} onClick={() => need() && window.open(`mailto:${email.trim()}?subject=${encodeURIComponent(`${company || "Company"} — pre-joining training`)}&body=${encodeURIComponent(msg())}`)}>Email invite</button>
+        <button style={{ ...btn(GOLD, NAVY), opacity: sending ? 0.6 : 1 }} disabled={sending} onClick={() => void sendEmail()}>{sending ? "Sending…" : "📧 Email invite"}</button>
         <button style={btn("#25D366")} onClick={() => need() && window.open(`https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(msg())}`, "_blank")}>WhatsApp</button>
         <button style={btn("#0068FF")} onClick={() => need() && void shareZalo(msg(), phone || null)}>Send on Zalo</button>
         <button style={btn("transparent", GOLD)} onClick={() => need() && navigator.clipboard.writeText(msg()).then(() => toast.success("Training invitation copied"), () => toast.error("Could not copy"))}>Copy</button>
