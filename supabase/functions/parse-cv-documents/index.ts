@@ -25,6 +25,7 @@ const SYSTEM_PROMPT = `You are a maritime HR expert. Extract ALL information fro
   "sea_service": [
     {
       "vessel_name": "",
+      "imo": "7-digit IMO number only if written in the CV, else empty",
       "vessel_type": "Bulk Carrier/Tanker/Container/LNG/LPG/RORO/Offshore/General Cargo/Passenger/Chemical",
       "flag": "",
       "grt": "",
