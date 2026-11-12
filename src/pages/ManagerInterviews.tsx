@@ -1,5 +1,6 @@
 import { shareZalo } from "@/lib/zaloShare";
 import { useEffect, useState, useCallback, lazy, Suspense } from "react";
+import TrainingInviteCard from "@/components/manager/TrainingInviteCard";
 const TrainingPlanner = lazy(() => import("@/components/manager/TrainingPlanner"));
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -247,9 +248,10 @@ const ManagerInterviews = () => {
         {tab === "training" && (
           <div style={{ background: "rgba(212,175,55,0.07)", border: `1px solid rgba(212,175,55,0.3)`, borderRadius: 14, padding: 14, marginBottom: 16 }}>
             <p style={{ color: GOLD, fontSize: 13, fontWeight: 800, marginBottom: 5 }}>Crew training & briefings</p>
-            <p style={{ color: "#cbd5e1", fontSize: 12, lineHeight: 1.55 }}>Open an interview below to see candidates who finished. Plan training for each one and track briefings completed. Training for direct job applicants is under Recruitment & Applicants.</p>
+            <p style={{ color: "#cbd5e1", fontSize: 12, lineHeight: 1.55 }}>Invite any crew to training below. Or open an interview to plan training for each one and track briefings completed. Training for direct job applicants is under Recruitment & Applicants.</p>
           </div>
         )}
+        {tab === "training" && <TrainingInviteCard company={companyName} />}
         {tab === "interviews" && <div style={{ background: "rgba(212,175,55,0.07)", border: `1px solid rgba(212,175,55,0.3)`, borderRadius: 14, padding: 14, marginBottom: 16 }}>
           <p style={{ color: GOLD, fontSize: 13, fontWeight: 800, marginBottom: 5 }}>Free AI crew interviews</p>
           <p style={{ color: "#cbd5e1", fontSize: 12, lineHeight: 1.55 }}>
