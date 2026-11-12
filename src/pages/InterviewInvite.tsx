@@ -78,6 +78,12 @@ const InterviewInvite = () => {
     return () => { active = false; };
   }, [token]);
 
+  // Signed-in candidate opened the link: link them to the invite now so the manager sees them live.
+  useEffect(() => {
+    if (!user || !token || !info?.ok || info.already_done) return;
+    void supabase.rpc("claim_interview" as any, { p_token: token, p_assessment_id: null });
+  }, [user?.id, token, info?.ok]);
+
   const choose = (path: "cv" | "quick") => {
     if (!token) return;
     const params = new URLSearchParams({ prepare: path });
