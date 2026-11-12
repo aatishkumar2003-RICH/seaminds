@@ -100,6 +100,8 @@ const ManagerInterviews = () => {
   const [vessel, setVessel] = useState("");
   const [language, setLanguage] = useState("en");
   const [engineTypes, setEngineTypes] = useState<string[]>([]);
+  const [prepTracks, setPrepTracks] = useState<string[]>([]);
+  const [followup, setFollowup] = useState<Record<string, { reminder_count: number; improvement_status: string }>>({});
 
   const load = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -130,14 +132,14 @@ const ManagerInterviews = () => {
       if (error) throw error;
       const res: any = data;
       if (!res?.ok) throw new Error(res?.error || "Could not create");
-      if (engineTypes.length && res?.campaign_id) {
+      if ((engineTypes.length || prepTracks.length) && res?.campaign_id) {
         await supabase.from("interview_campaigns" as any)
-          .update({ engine_types: engineTypes } as any)
+          .update({ engine_types: engineTypes, prep_tracks: prepTracks } as any)
           .eq("id", res.campaign_id);
       }
       toast.success("Interview created. Share the link with your candidates.");
       setCreating(false);
-      setTitle(""); setRank(""); setVessel(""); setLanguage("en"); setEngineTypes([]);
+      setTitle(""); setRank(""); setVessel(""); setLanguage("en"); setEngineTypes([]); setPrepTracks([]);
       await load();
     } catch (e: any) {
       toast.error(e?.message || "Could not create the interview");
@@ -153,6 +155,8 @@ const ManagerInterviews = () => {
     if (board[id]) return;
     const { data } = await supabase.rpc("campaign_leaderboard" as any, { p_campaign_id: id });
     setBoard((s) => ({ ...s, [id]: (data as any[]) || [] }));
+    const { data: f } = await supabase.from("interview_invites" as any).select("id, reminder_count, improvement_status").eq("campaign_id", id);
+    setFollowup((s) => ({ ...s, ...Object.fromEntries(((f as any[]) || []).map((x) => [x.id, x])) }));
   };
 
   const requestRound2 = async (campaignId: string, inviteId: string) => {
@@ -299,6 +303,19 @@ const ManagerInterviews = () => {
                 Technical and scenario questions use this language. Marine English is always tested in English.
               </p>
             </div>
+            <div style={{ marginBottom: 12 }}>
+              <label style={label}>Preparation training (optional)</label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginTop: 7 }}>
+                {[["english", "Maritime English"], ["technical", "Rank-based technical"], ["vetting", "Vetting & approval"]].map(([k, l]) => {
+                  const on = prepTracks.includes(k);
+                  return <button key={k} type="button" onClick={() => setPrepTracks((s) => on ? s.filter((x) => x !== k) : [...s, k])}
+                    style={{ padding: "7px 13px", borderRadius: 999, fontSize: 12.5, fontWeight: 700, cursor: "pointer", background: on ? GOLD : "transparent", color: on ? NAVY : GOLD, border: `1px solid ${on ? GOLD : "rgba(212,175,55,0.45)"}` }}>{l}</button>;
+                })}
+              </div>
+              <p style={{ color: "#64748b", fontSize: 10.5, marginTop: 7, lineHeight: 1.5 }}>
+                Self-paced, no fixed time. Candidates get an email reminder every 24h (up to 3). After the interview, a low score (below 3.50) or any track you pick sends them a refresher plan by email, with reminders until done.
+              </p>
+            </div>
             <div style={{ marginBottom: 14 }}>
               <label style={label}>Title (optional)</label>
               <input value={title} onChange={(e) => setTitle(e.target.value)}
@@ -379,6 +396,9 @@ const ManagerInterviews = () => {
                                 {r.status === "completed"
                                   ? `Tech ${r.technical ?? "—"} · Judg ${r.judgment ?? "—"} · Eng ${r.english ?? "—"} · Behav ${r.behavioural ?? "—"}`
                                   : r.status === "in_progress" ? "In progress" : "Invited, not started"}
+                                {r.status !== "completed" && followup[r.invite_id]?.reminder_count ? ` · ${followup[r.invite_id].reminder_count} reminder${followup[r.invite_id].reminder_count === 1 ? "" : "s"} sent` : ""}
+                                {r.status === "completed" && followup[r.invite_id]?.improvement_status === "pending" ? " · Refresher plan sent" : ""}
+                                {r.status === "completed" && followup[r.invite_id]?.improvement_status === "done" ? " · Refresher plan finished" : ""}
                               </p>
                               {r.red_flag_count > 0 && (
                                 <p style={{ color: "#ef4444", fontSize: 10.5, marginTop: 3, fontWeight: 700 }}>
