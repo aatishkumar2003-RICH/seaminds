@@ -1415,15 +1415,13 @@ const ManagerDashboard = () => {
 
               {fleet?.error === "fleet_subscription_required" ? (
                 <div className="bg-secondary/50 rounded-xl border border-[#D4AF37]/30 p-4 space-y-2">
-                  <h3 className="text-base font-bold text-[#D4AF37]">Fleet Compliance Dashboard</h3>
-                  <p className="text-sm text-muted-foreground">
-                    See your crew's MLC rest hours, certificate expiry warnings and CVs in one audit-ready view. This feature needs approval — free for verified ship managers.
-                  </p>
+                  <h3 className="text-base font-bold text-[#D4AF37]">Crew Management Tools</h3>
+                  <p className="text-sm text-muted-foreground">Manage your roster, certificates and contracts in one place.</p>
                   <button
-                    onClick={() => window.open("mailto:admin@seaminds.life?subject=Fleet%20Dashboard%20access%20approval%20request")}
+                    onClick={() => navigate("/manager/crew-desk?tab=company")}
                     className="text-xs font-medium px-3 py-2 rounded-lg bg-transparent text-[#D4AF37] border border-[#D4AF37] hover:bg-[#D4AF37]/10 transition-colors"
                   >
-                    Request approval
+                    Open My Company Crew →
                   </button>
                 </div>
               ) : fleet?.ok ? (

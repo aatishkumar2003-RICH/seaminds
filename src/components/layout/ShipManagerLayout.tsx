@@ -12,7 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 /** Persistent ShipManager shell. Pure navigation — every page keeps its own logic and permission checks. */
 const NAV = [
-  { to: "/manager/dashboard?tab=crew", label: "Today's Overview", icon: LayoutDashboard, match: (p: string, q: URLSearchParams) => p === "/manager/dashboard" && (!q.get("tab") || q.get("tab") === "crew") && q.get("section") !== "safety" },
+  { to: "/manager/dashboard?tab=crew", label: "Today's Overview", icon: LayoutDashboard, match: (p: string, q: URLSearchParams) => p === "/manager/dashboard" && (!q.get("tab") || q.get("tab") === "crew") },
   { to: "/manager/dashboard?tab=applicants", label: "Recruitment & Applicants", icon: Users, match: (p: string, q: URLSearchParams) => p === "/manager/dashboard" && q.get("tab") === "applicants" },
   { to: "/post-vacancy", label: "Post Vacancy", icon: Megaphone, match: (p: string) => p === "/post-vacancy" },
   { to: "/manager/market-feed", label: "Live Vacancy Feed", icon: Megaphone, match: (p: string) => p === "/manager/market-feed" },
@@ -21,8 +21,6 @@ const NAV = [
   { to: "/manager/crew-desk?tab=company", label: "My Company Crew", icon: Users, match: (p: string, q: URLSearchParams) => p === "/manager/crew-desk" && q.get("tab") === "company" },
   { to: "/manager-search", label: "Crew Search", icon: Search, match: (p: string) => p === "/manager-search", ownerOnly: true },
   { to: "/manager/interviews", label: "AI Interview Studio", icon: GraduationCap, match: (p: string) => p === "/manager/interviews" },
-  { to: "/manager/dashboard?tab=crew&section=safety", label: "Safety & Compliance", icon: ShieldCheck, match: (p: string, q: URLSearchParams) => p === "/manager/dashboard" && q.get("section") === "safety" },
-  { to: "/manager/fleet-workspace", label: "Fleet Workspace", icon: Ship, match: (p: string) => p === "/manager/fleet-workspace" || p.startsWith("/management/"), note: "" },
   { to: "/manager/dashboard?tab=payments", label: "Account & Usage", icon: CreditCard, match: (p: string, q: URLSearchParams) => p === "/manager/dashboard" && q.get("tab") === "payments" },
 ];
 
@@ -69,7 +67,7 @@ const ShipManagerLayout = () => {
       {status && <span className={`inline-block text-[10px] font-semibold border rounded-full px-2 py-0.5 ${status.cls}`}>{status.text}</span>}
       <p className="text-[11px] text-emerald-400">Free for verified ship managers</p>
       <CreditWallet audience="manager" />
-      {!identity.approved && <p className="text-[10px] text-muted-foreground leading-snug">Crew Search and Fleet Workspace open after admin approval.</p>}
+      {!identity.approved && <p className="text-[10px] text-muted-foreground leading-snug">Some company tools open after admin approval.</p>}
     </div>
   );
 
