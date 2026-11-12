@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import ConnectedCompanies from "@/components/ConnectedCompanies";
 import { Radar, Anchor, PauseCircle, X, Zap, FileText } from "lucide-react";
 
 const GOLD = "#D4AF37";
@@ -76,6 +77,7 @@ const HomeStatusConsole = ({ profileId, rank }: { profileId: string; rank?: stri
 
   return (
     <div className="mx-4 mb-3 rounded-2xl p-3" style={{ background: `linear-gradient(145deg, ${CARD}, ${NAVY})`, border: `1px solid ${BORDER}`, boxShadow: "0 8px 24px -12px rgba(212,175,55,0.35)" }}>
+      <ConnectedCompanies />
       <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: "#94A3B8" }}>My joining status</p>
       <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl" style={{ background: "rgba(13,27,42,0.7)" }}>
         {OPTIONS.map((o) => {
