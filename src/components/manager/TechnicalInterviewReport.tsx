@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ShieldAlert, FileText, Loader2 } from "lucide-react";
 import { verdictLabel } from "@/lib/maritimeInterview";
+import FourPartScores from "@/components/interview/FourPartScores";
+import type { ModuleScores } from "../../../supabase/functions/_shared/maritimeExaminer";
 
-type Report = { rank: string; target_rank: string | null; vessel: string | null; technical_pct: number | null; safety_flags: number | null; gaps: string[] | null; verdict: string | null; completed_at: string | null; turns: { question: string; answer: string; topic?: string; depth?: number; safety_flag?: boolean; gap?: string | null }[] };
+type Report = { rank: string; target_rank: string | null; vessel: string | null; technical_pct: number | null; safety_flags: number | null; gaps: string[] | null; verdict: string | null; completed_at: string | null; framework?: string; module_scores?: ModuleScores | null; turns: { question: string; answer: string; topic?: string; depth?: number; safety_flag?: boolean; gap?: string | null; module?: string; mode?: string }[] };
 
 /** Superintendent gap report — only visible when the crew shared it and applied to this manager's vacancy (server-enforced). */
 export default function TechnicalInterviewReport({ applicationId }: { applicationId: string }) {
@@ -16,7 +18,7 @@ export default function TechnicalInterviewReport({ applicationId }: { applicatio
     setOpen(true);
     if (report !== undefined) return;
     setLoading(true);
-    const { data } = await supabase.rpc("manager_maritime_report", { p_application: applicationId });
+    const { data } = await supabase.rpc("manager_maritime_report_v2" as any, { p_application: applicationId });
     setReport(((data as unknown as Report[]) || [])[0] ?? null);
     setLoading(false);
   };
@@ -32,6 +34,7 @@ export default function TechnicalInterviewReport({ applicationId }: { applicatio
             <Stat label="Safety concerns" value={String(report.safety_flags ?? 0)} />
             <Stat label="Assessed for" value={`${report.rank}${report.target_rank ? ` → ${report.target_rank}` : ""}`} />
           </div>
+          {report.framework === "four_in_one_v1" && <div><h3 className="font-semibold text-primary mb-2">Four-part interview</h3><FourPartScores scores={report.module_scores} /><p className="mt-2 text-xs text-muted-foreground">English speech is assessed only where voice answers were used. Composure covers work decisions, never private wellness.</p></div>}
           {(report.safety_flags ?? 0) > 0 && <p className="flex gap-2 rounded-lg border border-destructive/40 p-3 text-destructive"><ShieldAlert className="h-4 w-4 shrink-0" /> One or more answers were flagged as unsafe. Review the transcript before deciding.</p>}
           {report.gaps?.length ? <div><h3 className="font-semibold text-primary mb-1">Gaps to train before joining</h3><ul className="list-disc pl-5 space-y-1">{report.gaps.map(g => <li key={g}>{g}</li>)}</ul></div> : null}
           <div><h3 className="font-semibold text-primary mb-1">Transcript</h3>{report.turns.map((t, i) => <details key={i} className="border-b border-border py-2"><summary className="cursor-pointer font-medium">{i + 1}. {t.topic?.replace(/_/g, " ") || "Scenario"} · depth {t.depth ?? "–"}/4{t.safety_flag ? " · ⚠ safety" : ""}</summary><p className="mt-2">{t.question}</p><p className="mt-1 text-muted-foreground">Answer: {t.answer}</p>{t.gap && <p className="mt-1">Gap: {t.gap}</p>}</details>)}</div>

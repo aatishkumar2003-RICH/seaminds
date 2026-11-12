@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Search, Loader2, ChevronLeft, ChevronRight, Clock, ShieldAlert } from "lucide-react";
+import { integrityStatus } from "@/lib/interviewIntegrity";
 
 const GOLD = "#D4AF37", NAVY = "#0D1B2A", CARD = "#112240", BORDER = "#1e3a5f";
 const PAGE = 25;
