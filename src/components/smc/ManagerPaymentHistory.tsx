@@ -542,10 +542,12 @@ const ManagerPaymentHistory = ({ managerUserId }: ManagerPaymentHistoryProps) =>
         {costs.map(([k, v]) => <div key={k} className="flex justify-between text-sm"><span className="text-muted-foreground">{k}</span><span className="font-semibold text-foreground">{v}</span></div>)}
       </div>
 
-      <div className="rounded-xl border border-primary/30 bg-secondary p-4 space-y-4">
-        <TopUpPlans audience="manager" />
-        <TopUpPlans audience="fleet" />
-      </div>
+      {paid && (
+        <div className="rounded-xl border border-primary/30 bg-secondary p-4 space-y-4">
+          <TopUpPlans audience="manager" />
+          <TopUpPlans audience="fleet" />
+        </div>
+      )}
 
       <div className="rounded-xl border border-border bg-secondary p-4 space-y-2">
         <div className="flex items-center justify-between">
