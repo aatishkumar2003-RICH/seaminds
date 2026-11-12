@@ -90,6 +90,7 @@ const CrewDesk = lazy(() => import("./pages/CrewDesk"));
 const FleetWorkspace = lazy(() => import("./pages/FleetWorkspace"));
 import ShipManagerLayout from "./components/layout/ShipManagerLayout";
 import InterviewInvite from "./pages/InterviewInvite";
+const ClaimProfile = lazy(() => import("./pages/ClaimProfile"));
 import InterviewExam from "./pages/InterviewExam";
 import AdminDashboard from "./pages/AdminDashboard";
 import Verify from "./pages/Verify";
@@ -189,6 +190,7 @@ const App = () => (
             <Route path="/profile-start" element={<ProfileStart />} />
             <Route path="/profile" element={<SeaProfile />} />
             <Route path="/feed" element={<JobFeed />} />
+            <Route path="/claim/:token" element={<Suspense fallback={null}><ClaimProfile /></Suspense>} />
             <Route path="/interview/:token" element={<InterviewInvite />} />
             <Route path="/interview/:token/exam" element={<InterviewExam />} />
             <Route path="/training" element={<Suspense fallback={null}><CrewTraining /></Suspense>} />
