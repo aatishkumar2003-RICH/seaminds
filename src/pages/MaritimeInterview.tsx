@@ -10,13 +10,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { useInterviewVoice } from "@/hooks/useInterviewVoice";
-import { applyInterviewStep, completedReview, emptyInterview, verdictLabel, pickupOptions, MAX_ANSWER_CHARS, MAX_TURNS, MIN_TURNS, MIN_FINISH_TURNS } from "@/lib/maritimeInterview";
-import type { ExamStep } from "../../supabase/functions/_shared/maritimeExaminer";
+import { applyInterviewStep, completedReview, emptyInterview, verdictLabel, pickupOptions, MAX_ANSWER_CHARS, FOUR_PART_TURNS } from "@/lib/maritimeInterview";
+import { moduleFor, technicalStageFor, fourPartTimeLimit, type ExamStep, type InterviewModule } from "../../supabase/functions/_shared/maritimeExaminer";
+import FourPartScores from "@/components/interview/FourPartScores";
 import seamindsLogo from "@/assets/seaminds-logo.png";
 import { prescribeDrills, drillLink } from "@/lib/drillPrescription";
 import { DRILLS } from "@/components/homepage/FleetSimulatorPreview";
 
-const ranks = ["Master", "Chief Officer", "Second Officer", "Third Officer", "Deck Cadet", "Bosun", "AB", "Chief Engineer", "Second Engineer", "Third Engineer", "Fourth Engineer", "ETO", "Engine Cadet", "Oiler"];
+const ranks = ["Master", "Chief Officer", "Second Officer", "Third Officer", "Deck Cadet", "Bosun", "AB", "Ordinary Seaman", "Chief Engineer", "Second Engineer", "Third Engineer", "Fourth Engineer", "ETO", "Engine Cadet", "Oiler", "Fitter", "Wiper", "Chief Cook", "Cook", "Steward", "Messman"];
+const PART_META: Record<InterviewModule, { label: string; short: string; icon: string }> = {
+  spoken_english: { label: "Spoken English & maritime communication", short: "English", icon: "🎙️" },
+  technical: { label: "Cascading operational scenarios", short: "Scenarios", icon: "⚙️" },
+  writing: { label: "Written report", short: "Writing", icon: "✍️" },
+  composure: { label: "Occupational composure", short: "Composure", icon: "🧭" },
+};
 const vessels = [["bulk", "Bulk carrier"], ["oil_tanker", "Oil tanker"], ["chemical_tanker", "Chemical tanker"], ["gas_carrier", "Gas carrier"], ["container", "Container ship"], ["general_cargo", "General cargo"], ["ro_ro", "Ro-ro"], ["offshore", "Offshore"], ["passenger", "Passenger ship"]];
 const languages = [["en-GB", "English"], ["vi-VN", "Tiếng Việt"], ["id-ID", "Bahasa Indonesia"], ["hi-IN", "हिन्दी"], ["ta-IN", "தமிழ்"], ["fil-PH", "Filipino / Tagalog"]];
 
@@ -40,11 +47,18 @@ export default function MaritimeInterview() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [shared, setShared] = useState(false);
   const [history, setHistory] = useState<{ id: string; target_rank: string | null; rank: string; technical_pct: number | null; verdict: string | null; completed_at: string | null }[]>([]);
+  const [timeLeft, setTimeLeft] = useState(90);
+  const [netDown, setNetDown] = useState(typeof navigator !== "undefined" ? !navigator.onLine : false);
   const inFlight = useRef(false);
   const mounted = useRef(true);
-  const voice = useInterviewVoice(locale, text => setAnswer(a => `${a}${a ? " " : ""}${text}`.slice(0, MAX_ANSWER_CHARS)), { dictation: true });
+  const voiceUsed = useRef(false);
+  const expired = useRef(false);
+  const voice = useInterviewVoice(locale, text => { voiceUsed.current = true; setAnswer(a => `${a}${a ? " " : ""}${text}`.slice(0, MAX_ANSWER_CHARS)); }, { dictation: true });
   const active = Boolean(session.question) && !session.done;
   const review = completedReview(session);
+  const questionIndex = session.turns.length;
+  const currentModule = active ? moduleFor(questionIndex) : null;
+  const currentStage = active ? technicalStageFor(questionIndex) : null;
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const promoId = new URLSearchParams(window.location.search).get("promo");
   const [promo, setPromo] = useState<{ id: string; company_name: string | null } | null>(null);
@@ -65,6 +79,22 @@ export default function MaritimeInterview() {
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
   }, [active, busy]);
+  useEffect(() => {
+    if (!active || !session.question) return;
+    setTimeLeft(fourPartTimeLimit(questionIndex));
+    expired.current = false;
+    voiceUsed.current = false;
+  }, [session.question]);
+  useEffect(() => {
+    const down = () => setNetDown(true); const up = () => setNetDown(false);
+    window.addEventListener("offline", down); window.addEventListener("online", up);
+    return () => { window.removeEventListener("offline", down); window.removeEventListener("online", up); };
+  }, []);
+  useEffect(() => {
+    if (!active || busy || netDown || timeLeft <= 0) return;
+    const timer = window.setTimeout(() => setTimeLeft(t => Math.max(0, t - 1)), 1000);
+    return () => window.clearTimeout(timer);
+  }, [active, busy, netDown, timeLeft]);
 
   const submit = async (response?: string) => {
     if (inFlight.current || !user || !accessToken || (!session.question && !consent)) return;
@@ -72,7 +102,7 @@ export default function MaritimeInterview() {
     try {
       const { data, error: failure } = await supabase.functions.invoke("maritime-examiner", {
         headers: { Authorization: `Bearer ${accessToken}` },
-        body: sessionId && session.question ? { sessionId, answer: response ?? answer.trim() } : { rank, targetRank, vessel, language: languages.find(([l]) => l === locale)?.[1] || "English" },
+        body: sessionId && session.question ? { sessionId, answer: response ?? answer.trim(), answerMode: voiceUsed.current ? "voice" : "text" } : { rank, targetRank, vessel, language: languages.find(([l]) => l === locale)?.[1] || "English" },
       });
       if (failure || data?.error) {
         let message = data?.message;
@@ -88,7 +118,7 @@ export default function MaritimeInterview() {
         const { data: ok } = await supabase.rpc("crew_complete_promotion" as any, { p_invite: promo.id, p_session: data?.sessionId || sessionId });
         if (ok) toast.success(`Result sent to ${promo.company_name || "the company"}.`); else toast.error("Your result is saved, but could not be sent to the company. Please contact support@seaminds.life.");
       }
-      if (mounted.current) { setSession(next); setAnswer(""); if (data?.sessionId) setSessionId(data.sessionId); if (next.done) void loadHistory(); }
+      if (mounted.current) { setSession(next); setAnswer(""); voiceUsed.current = false; if (data?.sessionId) setSessionId(data.sessionId); if (next.done) void loadHistory(); }
     } catch (e) { if (mounted.current) setError(e instanceof Error ? e.message : "Could not reach the examiner. Please try again."); }
     finally { inFlight.current = false; if (mounted.current) setBusy(false); }
   };
@@ -104,20 +134,15 @@ export default function MaritimeInterview() {
     if (e || !data) { toast.error("Could not update sharing. Please try again."); return; }
     setShared(v); toast.success(v ? "Report shared with companies you apply to." : "Report is now private.");
   };
-  const finishNow = async () => {
-    if (inFlight.current || !sessionId || !accessToken) return;
-    inFlight.current = true; setBusy(true); setError(""); voice.stop(); voice.stopSpeaking();
-    try {
-      const { data, error: failure } = await supabase.functions.invoke("maritime-examiner", { headers: { Authorization: `Bearer ${accessToken}` }, body: { sessionId, finish: true } });
-      if (failure || data?.error || !data?.done) throw new Error(data?.message || "Could not finish the interview. Please try again.");
-      if (promo) { const { data: ok } = await supabase.rpc("crew_complete_promotion" as any, { p_invite: promo.id, p_session: sessionId }); if (ok) toast.success(`Result sent to ${promo.company_name || "the company"}.`); }
-      if (mounted.current) { setSession(s => ({ ...s, question: null, done: true })); setAnswer(""); void loadHistory(); }
-    } catch (e) { if (mounted.current) setError(e instanceof Error ? e.message : "Could not finish the interview."); }
-    finally { inFlight.current = false; if (mounted.current) setBusy(false); }
-  };
+  useEffect(() => {
+    if (active && timeLeft === 0 && !busy && !netDown && !expired.current) {
+      expired.current = true;
+      void submit("[No answer — time expired]");
+    }
+  }, [active, timeLeft, busy, netDown]);
   const options = pickupOptions(session.question);
   const back = () => { if (active || busy) setLeaving(true); else navigate("/training"); };
-  const reset = () => { voice.stop(); voice.stopSpeaking(); setSession(emptyInterview()); setSessionId(null); setShared(false); setAnswer(""); setError(""); setConsent(false); };
+  const reset = () => { voice.stop(); voice.stopSpeaking(); voiceUsed.current = false; expired.current = false; setSession(emptyInterview()); setSessionId(null); setShared(false); setAnswer(""); setError(""); setConsent(false); };
 
   return <main className="min-h-dvh bg-background text-foreground pb-8">
     <div className="mx-auto max-w-3xl px-4 sm:px-6">
@@ -128,9 +153,9 @@ export default function MaritimeInterview() {
       </header>
       {!isReady || !user ? <p className="py-10 text-muted-foreground">Preparing your interview…</p> : <>
         <section className="py-7 space-y-2">
-          <p className="flex items-center gap-2 text-xs font-semibold text-primary"><ShieldCheck size={16} /> Deck & Engine</p>
+          <p className="flex items-center gap-2 text-xs font-semibold text-primary"><ShieldCheck size={16} /> Deck · Engine · Catering</p>
           <h1 className="text-2xl sm:text-3xl font-bold">Maritime AI interview</h1>
-          <p className="text-sm text-muted-foreground">{active ? `${rank} → ${targetRank} · ${vessels.find(([id]) => id === vessel)?.[1]}` : review ? "Your practice review" : "Oral board + quick-decision questions · 15–50 minutes · Strong answers finish early (12 questions), otherwise up to 40"}</p>
+          <p className="text-sm text-muted-foreground">{active ? `${rank} → ${targetRank} · ${vessels.find(([id]) => id === vessel)?.[1]}` : review ? "Your four-part interview review" : "4 parts · 14 questions · about 15–20 minutes · Rank-specific for deck, engine, ETO, ratings and catering"}</p>
         </section>
         {!active && !review && <section className="space-y-6">
           {promo && <p className="rounded-xl border-2 border-primary p-3 text-sm">🎓 Promotion assessment requested by <b>{promo.company_name || "your company"}</b>. When you finish, the result goes only to this company.</p>}
@@ -140,7 +165,8 @@ export default function MaritimeInterview() {
             <Choice label="Vessel type" value={vessel} choices={vessels} onChange={setVessel} />
             <Choice label="Which language feels comfortable?" value={locale} choices={languages} onChange={setLocale} />
           </div>
-          <p className="text-sm text-muted-foreground">Practice only — not a certificate, promotion decision or onboard operating instruction. Check the vessel’s manuals and safety procedures.</p>
+          <div className="grid grid-cols-2 gap-2">{(["spoken_english", "technical", "writing", "composure"] as InterviewModule[]).map((p, i) => <div key={p} className="rounded-xl border border-border p-3"><p className="text-xs font-semibold text-primary">{PART_META[p].icon} Part {i + 1} · {PART_META[p].short}</p><p className="mt-1 text-[11px] text-muted-foreground">{p === "spoken_english" ? "2 spoken answers, with typed fallback" : p === "technical" ? "3 incidents: reflex → investigation → resolution" : p === "writing" ? "1 rank-appropriate report" : "2 professional work-pressure scenarios"}</p></div>)}</div>
+          <p className="text-sm text-muted-foreground">Practice only — not a certificate, promotion decision or onboard operating instruction. Composure assesses work decisions only, never private wellness. Check the vessel’s manuals and safety procedures.</p>
           <div className="flex items-start gap-3 border-t border-border pt-5">
             <Checkbox id="interview-consent" checked={consent} disabled={busy} onCheckedChange={v => setConsent(v === true)} className="mt-1" />
             <label htmlFor="interview-consent" className="text-sm text-muted-foreground">I agree to AI processing of my answers. Results are saved privately to my account and shared with companies only if I choose to at the end. Optional voice may use my browser’s speech service.</label>
@@ -148,9 +174,10 @@ export default function MaritimeInterview() {
           <Button className="w-full sm:w-auto rounded-xl font-bold h-12" disabled={!consent || busy} onClick={() => void submit()}>{busy ? <><Loader2 className="animate-spin motion-reduce:animate-none" /> Preparing…</> : "Start interview"}</Button>
           {history.length > 0 && <div className="space-y-2 border-t border-border pt-4"><h3 className="text-sm font-semibold text-primary">Your past interviews</h3><ul className="space-y-1 text-sm">{history.map(h => <li key={h.id} className="flex justify-between gap-3"><span>{h.rank}{h.target_rank ? ` → ${h.target_rank}` : ""} · {h.completed_at ? new Date(h.completed_at).toLocaleDateString() : ""}</span><span className="text-muted-foreground">{h.technical_pct ?? 0}% · {verdictLabel(h.verdict)}</span></li>)}</ul></div>}
         </section>}
-        {active && <section className="space-y-5">
-          <div className="flex items-center justify-between text-xs text-muted-foreground"><span>Question {session.turns.length + 1}{options ? " · Quick decision" : " · Oral"} · {session.turns.length < MIN_TURNS ? `at least ${MIN_TURNS}` : `up to ${MAX_TURNS}`}</span><span>{languages.find(([id]) => id === locale)?.[1]}</span></div>
-          <div className="flex gap-1" aria-label={`${session.turns.length} scenarios answered`}>{Array.from({ length: Math.max(MIN_TURNS, session.turns.length + 1) }, (_, i) => <span key={i} className={`h-1 flex-1 rounded-full ${i < session.turns.length ? "bg-primary" : "bg-border"}`} />)}</div>
+        {active && currentModule && <section className="space-y-5">
+          <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground"><span>{PART_META[currentModule].icon} Part {(["spoken_english", "technical", "writing", "composure"] as InterviewModule[]).indexOf(currentModule) + 1} of 4 · {PART_META[currentModule].label}</span><span className="shrink-0">Q {questionIndex + 1}/{FOUR_PART_TURNS}</span></div>
+          <div className="flex gap-1" aria-label={`${session.turns.length} of ${FOUR_PART_TURNS} questions answered`}>{Array.from({ length: FOUR_PART_TURNS }, (_, i) => <span key={i} className={`h-1.5 flex-1 rounded-full ${i < session.turns.length ? "bg-primary" : i === questionIndex ? "bg-primary/40" : "bg-border"}`} />)}</div>
+          <div className="flex items-center justify-between text-xs"><span className="text-muted-foreground">{currentStage ? `${currentStage === "immediate" ? "Immediate reflex" : currentStage === "investigation" ? "Investigation" : "Resolution"} · incident ${Math.floor((questionIndex - 2) / 3) + 1} of 3` : currentModule === "spoken_english" ? "Voice recommended · typed fallback available" : currentModule === "composure" ? "Work decisions only — no private wellness questions" : "Formal, concise and factual"}</span><span className={timeLeft <= 10 ? "font-bold text-destructive" : "font-semibold text-primary"}>{netDown ? "Timer paused offline" : `${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, "0")}`}</span></div>
           <article className="border-l-2 border-primary pl-4 py-2 space-y-4">
             <p className="text-xs font-semibold text-primary">SeaMinds examiner</p>
             <p className="text-lg leading-relaxed whitespace-pre-wrap break-words" aria-live="polite">{session.question}</p>
@@ -158,21 +185,21 @@ export default function MaritimeInterview() {
           </article>
           {options && <div className="grid gap-2" role="group" aria-label="Choose the best first action">{options.map(o => <Button key={o.key} variant={answer.startsWith(`Option ${o.key}`) ? "default" : "outline"} className="h-auto justify-start whitespace-normal text-left py-3 rounded-xl" disabled={busy} onClick={() => setAnswer(`Option ${o.key}: ${o.text}. Reason: `)}><b className="mr-2">{o.key})</b>{o.text}</Button>)}<p className="text-xs text-muted-foreground">Pick one, then add a short reason below.</p></div>}
           <div className="space-y-2">
-            <label htmlFor="interview-answer" className="text-sm font-semibold">Your answer</label>
+            <label htmlFor="interview-answer" className="text-sm font-semibold">{currentModule === "writing" ? "Your written report" : "Your answer"}</label>
             <Textarea id="interview-answer" value={answer} disabled={busy || voice.listening} maxLength={MAX_ANSWER_CHARS} onChange={e => setAnswer(e.target.value)} className="min-h-40 text-base leading-relaxed resize-y" />
             {voice.interim && <p className="text-sm text-muted-foreground" aria-live="polite">{voice.interim}</p>}
-            <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground"><span>{voice.listening ? "Listening… Stop to review your answer." : "Review your answer before sending."}</span><span className="shrink-0">{answer.length}/{MAX_ANSWER_CHARS}</span></div>
+            <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground"><span>{voice.listening ? "Listening… Stop to review your answer." : currentModule === "spoken_english" && !voiceUsed.current ? "Typed fallback: pronunciation and spoken fluency will not be assessed." : "Review your answer before sending."}</span><span className="shrink-0">{answer.length}/{MAX_ANSWER_CHARS}</span></div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" disabled={busy || !voice.supported} onClick={() => voice.listening ? voice.stop() : voice.start()} title={voice.supported ? "Dictate answer" : "Voice input is unavailable in this browser"}>{voice.listening ? <MicOff /> : <Mic />}{voice.listening ? "Stop microphone" : "Speak"}</Button>
-            <Button className="flex-1 rounded-xl font-bold" disabled={busy || voice.listening || !answer.trim()} onClick={() => void submit()}>{busy ? <><Loader2 className="animate-spin motion-reduce:animate-none" /> Checking…</> : <><Send /> Send answer</>}</Button>
+            <Button className="flex-1 rounded-xl font-bold" disabled={busy || voice.listening || !answer.trim()} onClick={() => void submit()}>{busy ? <><Loader2 className="animate-spin motion-reduce:animate-none" /> Checking…</> : <><Send /> {currentModule === "writing" ? "Send report" : "Send answer"}</>}</Button>
             <Button variant="ghost" disabled={busy || voice.listening} onClick={() => void submit("I don't know")}>I don’t know</Button>
-            {session.turns.length >= MIN_FINISH_TURNS && <Button variant="ghost" className="text-primary" disabled={busy || voice.listening} onClick={() => void finishNow()}>Finish & get result</Button>}
           </div>
         </section>}
         {error && <p role="alert" className="mt-5 rounded-lg border border-destructive/40 p-3 text-sm text-destructive">{error}</p>}
         {review && <section className="space-y-6">
-          <div className="border-y border-border py-5 space-y-2"><h2 className="text-xl font-bold">Practice interview complete</h2><p className="text-sm text-muted-foreground">{review.turns.length} questions answered · {review.technical_pct}% · {verdictLabel(review.verdict)} · {review.safety_flags} safety concerns identified. This AI review is provisional and saved privately to your account.</p></div>
+          <div className="border-y border-border py-5 space-y-2"><h2 className="text-xl font-bold">Four-part interview complete</h2><p className="text-sm text-muted-foreground">{review.turns.length} questions answered · {review.technical_pct}% technical · {verdictLabel(review.verdict)} · {review.safety_flags} safety concerns identified. This AI review is provisional and saved privately to your account.</p></div>
+          <FourPartScores scores={review.module_scores} />
           {review.strengths.length > 0 && <div className="space-y-2"><h3 className="font-semibold text-primary">Your strengths</h3><ul className="list-disc pl-5 space-y-1 text-sm">{review.strengths.map(g => <li key={g} className="capitalize">{g.replace(/_/g, " ")}</li>)}</ul></div>}
           {review.gaps.length > 0 && <div className="space-y-2"><h3 className="font-semibold text-primary">Topics to strengthen</h3><ul className="list-disc pl-5 space-y-2 text-sm">{review.gaps.map(g => <li key={g}>{g}</li>)}</ul></div>}
           {(() => { const rx = prescribeDrills(review.gaps, vessel); return rx.length > 0 && <div className="space-y-2 rounded-xl border border-primary/40 p-4"><h3 className="font-semibold text-primary">⚡ Your prescribed practice</h3><p className="text-xs text-muted-foreground">Real-incident drills matched to your gaps and vessel type.</p><div className="flex flex-wrap gap-2">{rx.map(k => { const d = DRILLS.find(x => x.key === k)!; return <Button key={k} variant="outline" size="sm" className="rounded-xl" onClick={() => navigate(drillLink(k))}>{d.tab} · {d.title}</Button>; })}</div></div>; })()}

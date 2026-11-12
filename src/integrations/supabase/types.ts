@@ -4159,9 +4159,11 @@ export type Database = {
         Row: {
           completed_at: string | null
           crew_id: string
+          framework: string
           gaps: Json | null
           id: string
           language: string | null
+          module_scores: Json | null
           pending_question: string | null
           rank: string
           safety_flags: number | null
@@ -4178,9 +4180,11 @@ export type Database = {
         Insert: {
           completed_at?: string | null
           crew_id: string
+          framework?: string
           gaps?: Json | null
           id?: string
           language?: string | null
+          module_scores?: Json | null
           pending_question?: string | null
           rank: string
           safety_flags?: number | null
@@ -4197,9 +4201,11 @@ export type Database = {
         Update: {
           completed_at?: string | null
           crew_id?: string
+          framework?: string
           gaps?: Json | null
           id?: string
           language?: string | null
+          module_scores?: Json | null
           pending_question?: string | null
           rank?: string
           safety_flags?: number | null
@@ -7814,6 +7820,23 @@ export type Database = {
           completed_at: string
           gaps: Json
           id: string
+          rank: string
+          safety_flags: number
+          target_rank: string
+          technical_pct: number
+          turns: Json
+          verdict: string
+          vessel: string
+        }[]
+      }
+      manager_maritime_report_v2: {
+        Args: { p_application: string }
+        Returns: {
+          completed_at: string
+          framework: string
+          gaps: Json
+          id: string
+          module_scores: Json
           rank: string
           safety_flags: number
           target_rank: string

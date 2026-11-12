@@ -1,14 +1,14 @@
 // Candidate-only practice state. Never writes assessment scores or manager records.
-import { MAX_TURNS, MIN_TURNS, MIN_FINISH_TURNS, MAX_ANSWER_CHARS, summarise, type ExamStep, type Turn, type Assessment } from "../../supabase/functions/_shared/maritimeExaminer";
-export { MAX_TURNS, MIN_TURNS, MIN_FINISH_TURNS, MAX_ANSWER_CHARS };
+import { MAX_TURNS, MIN_TURNS, MIN_FINISH_TURNS, MAX_ANSWER_CHARS, FOUR_PART_TURNS, summarise, type ExamStep, type Turn, type Assessment, type InterviewModule } from "../../supabase/functions/_shared/maritimeExaminer";
+export { MAX_TURNS, MIN_TURNS, MIN_FINISH_TURNS, MAX_ANSWER_CHARS, FOUR_PART_TURNS };
 /** Quick-decision questions carry options on lines "A) …" to "D) …". */
 export function pickupOptions(q: string | null): { key: string; text: string }[] | null {
   const opts = (q ?? "").split("\n").map(l => l.trim().match(/^([A-D])[).:]\s*(.+)$/)).filter(Boolean).map(m => ({ key: m![1], text: m![2] }));
   return opts.length === 4 ? opts : null;
 }
 export interface InterviewTurn extends Turn { feedback?: string }
-export interface InterviewSession { turns: InterviewTurn[]; question: string | null; done: boolean }
-export const emptyInterview = (): InterviewSession => ({ turns: [], question: null, done: false });
+export interface InterviewSession { turns: InterviewTurn[]; question: string | null; done: boolean; module?: InterviewModule | null }
+export const emptyInterview = (): InterviewSession => ({ turns: [], question: null, done: false, module: null });
 
 export function applyInterviewStep(session: InterviewSession, step: ExamStep, answer?: string): InterviewSession {
   if (session.done) throw new Error("This interview has ended.");
@@ -20,7 +20,7 @@ export function applyInterviewStep(session: InterviewSession, step: ExamStep, an
     if (!Number.isFinite(a.depth) || a.depth < 0 || a.depth > 4) throw new Error("Invalid result received. Please try again.");
     turns = [...turns, { question: session.question, answer, ...a }];
   } else if (step.done) throw new Error("The interview could not start. Please try again.");
-  return { turns, question: step.done ? null : step.next_question, done: step.done };
+  return { turns, question: step.done ? null : step.next_question, done: step.done, module: step.done ? null : step.module };
 }
 
 // Do not expose learning feedback in the active interview presentation.
