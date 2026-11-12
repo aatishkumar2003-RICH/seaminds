@@ -862,6 +862,13 @@
       "when": 1794456150142,
       "tag": "0122_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 123,
+      "version": "7",
+      "when": 1794472278185,
+      "tag": "0123_candidate_dossier_and_paged_board",
+      "breakpoints": true
     }
   ]
 }
