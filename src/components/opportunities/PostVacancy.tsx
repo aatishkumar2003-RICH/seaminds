@@ -20,7 +20,7 @@ import { WhatsAppBroadcastPanel } from "./WhatsAppBroadcastPanel";
 import { AiReadingHud } from "./AiReadingHud";
 import { readDocumentText, isImage } from "@/lib/brainAttachments";
 
-const DOC_RE = /\.(xlsx|xls|csv|pdf|docx|txt|md)$/i;
+const DOC_RE = /\.(xlsx|csv|pdf|docx|txt|md)$/i;
 
 const MAX_FLIERS = 5;
 type Risk = "low" | "medium" | "high";
@@ -488,15 +488,14 @@ const PostVacancy = () => {
 
         <button
           type="button"
-          onClick={() => fliersUsed < MAX_FLIERS && fileRef.current?.click()}
-          disabled={fliersUsed >= MAX_FLIERS}
+          onClick={() => fileRef.current?.click()}
           className="w-full rounded-xl border-2 border-dashed border-[#D4AF37]/30 bg-secondary/40 flex flex-col items-center justify-center py-5 px-4 gap-1.5 disabled:opacity-50"
         >
           <UploadCloud size={26} className="text-muted-foreground" />
           <span className="text-sm font-medium text-foreground">Upload vacancy files — Excel, PDF, Word, text or flyer images</span>
           <span className="text-[11px] text-muted-foreground">{fliersUsed} of {MAX_FLIERS} flyer images · documents are read into adverts you review before publishing</span>
         </button>
-        <input ref={fileRef} type="file" multiple accept="image/jpeg,image/png,image/webp,.xlsx,.xls,.csv,.pdf,.docx,.txt" className="hidden" onChange={addFliers} />
+        <input ref={fileRef} type="file" multiple accept="image/jpeg,image/png,image/webp,.xlsx,.csv,.pdf,.docx,.txt" className="hidden" onChange={addFliers} />
 
         <div className="space-y-2">
           <label htmlFor="studio-paste" className="text-[11px] text-muted-foreground block">
