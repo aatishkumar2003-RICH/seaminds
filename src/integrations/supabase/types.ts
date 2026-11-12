@@ -4089,6 +4089,24 @@ export type Database = {
         }
         Relationships: []
       }
+      manager_training_invites: {
+        Row: {
+          created_at: string
+          email: string
+          manager_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          manager_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          manager_id?: string
+        }
+        Relationships: []
+      }
       manager_training_links: {
         Row: {
           created_at: string
@@ -7729,6 +7747,10 @@ export type Database = {
           p_vessel: string
         }
         Returns: string
+      }
+      manager_link_training_crew: {
+        Args: { p_email: string; p_phone?: string }
+        Returns: Json
       }
       manager_maritime_report: {
         Args: { p_application: string }
