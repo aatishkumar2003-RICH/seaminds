@@ -1,8 +1,8 @@
 # SeaMinds — Global Vacancy Growth Roadmap
 
 ## Four-part interviews and integrity reporting
-- [ ] Show Clean / Restarted / Locked integrity status and timestamped strike evidence on the paged candidate board and dossier.
-- [ ] Deliver the 14-question, rank-specific spoken English, cascading scenario, written report and occupational composure interview with server-owned scores and consent-gated manager results.
+- [x] Show Clean / Restarted / Locked integrity status and timestamped strike evidence on the paged candidate board and dossier.
+- [x] Deliver the 14-question, rank-specific spoken English, cascading scenario, written report and occupational composure interview with server-owned scores and consent-gated manager results. Verified all 14 turns and four score cards on a phone-sized signed-in session; 40 regression checks passed.
 
 ## Business DORA help
 - [x] Add floating manager/marketplace DORA, contextual guides and explicit problem/suggestion reporting.

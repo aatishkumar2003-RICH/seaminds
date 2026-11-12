@@ -153,7 +153,7 @@ export default function MaritimeInterview() {
       </header>
       {!isReady || !user ? <p className="py-10 text-muted-foreground">Preparing your interview…</p> : <>
         <section className="py-7 space-y-2">
-          <p className="flex items-center gap-2 text-xs font-semibold text-primary"><ShieldCheck size={16} /> Deck & Engine</p>
+          <p className="flex items-center gap-2 text-xs font-semibold text-primary"><ShieldCheck size={16} /> Deck · Engine · Catering</p>
           <h1 className="text-2xl sm:text-3xl font-bold">Maritime AI interview</h1>
           <p className="text-sm text-muted-foreground">{active ? `${rank} → ${targetRank} · ${vessels.find(([id]) => id === vessel)?.[1]}` : review ? "Your four-part interview review" : "4 parts · 14 questions · about 15–20 minutes · Rank-specific for deck, engine, ETO, ratings and catering"}</p>
         </section>
