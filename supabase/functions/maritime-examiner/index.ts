@@ -4,7 +4,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { authGate, aiPaused, aiPausedResponse, meterAi } from "../_shared/aiGuard.ts";
-import { validateInput, buildExamMessages, finalizeStep, summarise, MAX_TURNS, MIN_FINISH_TURNS, type Turn } from "../_shared/maritimeExaminer.ts";
+import { validateInput, buildExamMessages, finalizeStep, summarise, MAX_TURNS, MIN_FINISH_TURNS, FOUR_PART_FRAMEWORK, FOUR_PART_TURNS, type InterviewFramework, type Turn } from "../_shared/maritimeExaminer.ts";
 
 const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { ...cors, "Content-Type": "application/json" } });
@@ -38,12 +38,14 @@ Deno.serve(async (req) => {
   const sessionId = typeof raw?.sessionId === "string" ? raw.sessionId : null;
   const raw0Finish = raw?.finish === true;
   let session: any = null;
+  let framework: InterviewFramework = FOUR_PART_FRAMEWORK;
   if (sessionId) {
     const { data } = await admin.from("maritime_interview_sessions").select("*").eq("id", sessionId).eq("crew_id", gate.userId).maybeSingle();
     if (!data) return json({ error: "session_not_found", message: "This interview session was not found." }, 404);
     if (data.status !== "in_progress") return json({ error: "session_closed", message: "This interview has already ended." }, 409);
     session = data;
-    raw = { rank: data.rank, targetRank: data.target_rank, vessel: data.vessel, language: data.language, turns: data.turns, answer: raw?.answer };
+    framework = data.framework === FOUR_PART_FRAMEWORK ? FOUR_PART_FRAMEWORK : "adaptive_v1";
+    raw = { rank: data.rank, targetRank: data.target_rank, vessel: data.vessel, language: data.language, turns: data.turns, answer: raw?.answer, answerMode: raw?.answerMode };
   } else {
     raw = { ...raw, turns: [], answer: undefined };
   }
@@ -52,7 +54,8 @@ Deno.serve(async (req) => {
   if (session) v.value.turns = (session.turns as Turn[]).slice(0, MAX_TURNS);
   const pending: string | null = session?.pending_question ?? null;
   // Candidate chooses to finish after enough evidence: close without another AI call.
-  if (session && raw0Finish && (session.turns as Turn[]).length >= MIN_FINISH_TURNS) {
+  const finishMinimum = framework === FOUR_PART_FRAMEWORK ? FOUR_PART_TURNS : MIN_FINISH_TURNS;
+  if (session && raw0Finish && (session.turns as Turn[]).length >= finishMinimum) {
     const turns = session.turns as Turn[]; const sum = summarise(turns); const nowIso = new Date().toISOString();
     const { data: upd } = await admin.from("maritime_interview_sessions").update({ status: "completed", completed_at: nowIso, updated_at: nowIso, pending_question: null, technical_pct: sum.technical_pct, safety_flags: sum.safety_flags, gaps: sum.gaps, verdict: sum.verdict })
       .eq("id", session.id).eq("status", "in_progress").select("id");
@@ -61,7 +64,7 @@ Deno.serve(async (req) => {
   }
   if (session && (!pending || !v.value.answer) && !raw0Finish) return json({ error: "answer_required", message: "Please type an answer first." }, 400);
 
-  const { messages, turnIndex, dept } = buildExamMessages(v.value, pending, Math.floor(Math.random() * 100000));
+  const { messages, turnIndex, dept } = buildExamMessages(v.value, pending, Math.floor(Math.random() * 100000), framework);
   const started = Date.now();
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -77,23 +80,23 @@ Deno.serve(async (req) => {
   await meterAi(admin, { userId: gate.userId, feature: "maritime-examiner", model: MODEL, usage: data.usage, success: true, latencyMs: Date.now() - started });
   let parsed: unknown = {};
   try { parsed = JSON.parse(data.choices?.[0]?.message?.content ?? "{}"); } catch { /* handled by finalizeStep */ }
-  const step = finalizeStep(parsed, pending ? (v.value.answer ?? "") : undefined, turnIndex, pending ? { turns: v.value.turns, question: pending, dept } : undefined);
+  const step = finalizeStep(parsed, pending ? (v.value.answer ?? "") : undefined, turnIndex, pending ? { turns: v.value.turns, question: pending, dept } : undefined, framework);
   const nowIso = new Date().toISOString();
   if (!session) {
     if (step.done || !step.next_question) return json(step);
     const { data: created, error } = await admin.from("maritime_interview_sessions").insert({
       crew_id: gate.userId, rank: v.value.rank, target_rank: v.value.targetRank ?? null, vessel: v.value.vessel ?? null,
-      language: v.value.language ?? null, pending_question: step.next_question,
+      language: v.value.language ?? null, pending_question: step.next_question, framework,
     }).select("id").single();
     if (error) return json({ error: "save_failed", message: "Could not start a saved session. Please try again." }, 500);
     return json({ ...step, sessionId: created.id });
   }
-  const turns: Turn[] = [...v.value.turns, { question: pending!, answer: v.value.answer!, ...(step.assessment ?? {}) } as Turn];
-  const done = step.done || turns.length >= MAX_TURNS;
+  const turns: Turn[] = [...v.value.turns, { question: pending!, answer: v.value.answer!, mode: v.value.answerMode ?? "text", ...(step.assessment ?? {}) } as Turn];
+  const done = step.done || turns.length >= (framework === FOUR_PART_FRAMEWORK ? FOUR_PART_TURNS : MAX_TURNS);
   const patch: Record<string, unknown> = { turns, updated_at: nowIso, pending_question: done ? null : step.next_question };
   if (done) {
     const sum = summarise(turns);
-    Object.assign(patch, { status: "completed", completed_at: nowIso, technical_pct: sum.technical_pct, safety_flags: sum.safety_flags, gaps: sum.gaps, verdict: sum.verdict });
+    Object.assign(patch, { status: "completed", completed_at: nowIso, technical_pct: sum.technical_pct, safety_flags: sum.safety_flags, gaps: sum.gaps, verdict: sum.verdict, module_scores: sum.module_scores });
   }
   // Optimistic guard: only advance if nobody else advanced this session meanwhile.
   const { data: upd } = await admin.from("maritime_interview_sessions").update(patch)
