@@ -4,7 +4,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { authGate, aiPaused, aiPausedResponse, meterAi } from "../_shared/aiGuard.ts";
-import { validateInput, buildExamMessages, finalizeStep, summarise, MAX_TURNS, MIN_FINISH_TURNS, FOUR_PART_FRAMEWORK, FOUR_PART_TURNS, type InterviewFramework, type Turn } from "../_shared/maritimeExaminer.ts";
+import { validateInput, buildExamMessages, finalizeStep, summarise, MAX_TURNS, MIN_FINISH_TURNS, FOUR_PART_FRAMEWORK, FOUR_PART_TURNS, seaServiceContext, type InterviewFramework, type Turn } from "../_shared/maritimeExaminer.ts";
 
 const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { ...cors, "Content-Type": "application/json" } });
@@ -64,7 +64,12 @@ Deno.serve(async (req) => {
   }
   if (session && (!pending || !v.value.answer) && !raw0Finish) return json({ error: "answer_required", message: "Please type an answer first." }, 400);
 
-  const { messages, turnIndex, dept } = buildExamMessages(v.value, pending, Math.floor(Math.random() * 100000), framework);
+  let seaContext = "";
+  if (framework === FOUR_PART_FRAMEWORK) {
+    const { data: cv } = await admin.from("crew_cv_data").select("sea_service").eq("user_id", gate.userId).order("updated_at", { ascending: false }).limit(1).maybeSingle();
+    seaContext = seaServiceContext(cv?.sea_service);
+  }
+  const { messages, turnIndex, dept } = buildExamMessages(v.value, pending, Math.floor(Math.random() * 100000), framework, seaContext);
   const started = Date.now();
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
