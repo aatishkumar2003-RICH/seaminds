@@ -122,6 +122,13 @@ const InterviewInvite = () => {
               <p className="text-sm text-muted-foreground">Position: <strong className="text-foreground">{info.rank}</strong>{info.vessel ? ` · Vessel: ${info.vessel}` : ""}</p>
               <p className="text-xs text-muted-foreground">{LANG_LABEL[info.language] || "English"} · Maritime English assessed separately</p>
             </header>
+            {!user && (
+              <section className="rounded-xl border border-primary bg-card p-4 space-y-3">
+                <h2 className="font-bold text-primary">Step 1 — Sign in to accept this invitation</h2>
+                <p className="text-sm text-muted-foreground">Sign in with Google or your email (free). This links the interview, your CV and your score to you, so {info.company} sees the right person.</p>
+                <Button className="w-full rounded-xl font-bold" onClick={() => navigate(`/join?next=${encodeURIComponent(`/interview/${token}${round2 ? "?round=2" : ""}`)}`)}>Sign in or create free account <ArrowRight /></Button>
+              </section>
+            )}
             {user && (
               <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm">
                 <span className="text-muted-foreground">Taking this as <strong className="text-foreground break-all">{user.email}</strong></span>
