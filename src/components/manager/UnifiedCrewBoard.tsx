@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { buildResumePdf } from "@/lib/resumePdf";
 import { shareZalo } from "@/lib/zaloShare";
 import { ago, englishLevel } from "@/components/manager/TrainingRadar";
+import FourPartScores from "@/components/interview/FourPartScores";
 
 type Row = { key: string; record_id: string | null; crew_id: string | null; name: string; rank: string | null; nationality: string | null; vessel: string | null; status: string; sources: string[]; crew_unique_id: string | null; certs_total: number; certs_30: number; certs_90: number; certs_expired: number; sea_count: number; eng_avg: number | null; eng_last: string | null; mods_done: number; mods_total: number };
 type Res = { total: number; counts: Record<string, number>; vessels: { vessel: string; n: number }[]; rows: Row[] };
@@ -170,7 +171,7 @@ export function UnifiedCrewDossier({ k, onClose }: { k: string; onClose: () => v
             <div className="rounded-xl border border-border p-3"><p className="font-semibold text-foreground">🎓 Training modules</p>
               {(d.modules || []).length === 0 ? <p className="text-muted-foreground">None yet.</p> : d.modules.map((m: any, i: number) => <p key={i} className="text-muted-foreground">{m.status === "completed" ? "✓" : "•"} {m.title}{m.quiz_total ? ` — ${m.quiz_correct}/${m.quiz_total}` : ""}{m.completed_at ? ` · ${ago(m.completed_at)}` : ` · ${m.status}`}</p>)}</div>
             <div className="rounded-xl border border-border p-3"><p className="font-semibold text-foreground">🧭 AI interviews</p>
-              {(d.interviews || []).length === 0 ? <p className="text-muted-foreground">None yet.</p> : d.interviews.map((s: any, i: number) => <p key={i} className="text-muted-foreground">{s.rank || "Interview"} · {s.status}{s.started_at ? ` · ${ago(s.started_at)}` : ""}{s.shared ? (s.technical_pct != null ? ` · ${s.technical_pct}% technical` : "") : " · result not shared by crew"}</p>)}</div>
+              {(d.interviews || []).length === 0 ? <p className="text-muted-foreground">None yet.</p> : d.interviews.map((s: any, i: number) => <div key={i} className="border-b border-border pb-2 last:border-0"><p className="text-muted-foreground">{s.rank || "Interview"}{s.framework === "four_in_one_v1" ? " · 4-part" : ""} · {s.status}{s.started_at ? ` · ${ago(s.started_at)}` : ""}{s.shared ? (s.technical_pct != null ? ` · ${s.technical_pct}% technical` : "") : " · result not shared by crew"}</p>{s.shared && s.framework === "four_in_one_v1" && <div className="mt-2"><FourPartScores scores={s.module_scores} compact /></div>}</div>)}</div>
           </div>}
 
           {tab === "contract" && ((d.contracts || []).length === 0 ? <p className="text-sm text-muted-foreground">No SEA contract with your company yet.</p> :

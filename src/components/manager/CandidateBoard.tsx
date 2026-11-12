@@ -61,6 +61,7 @@ export default function CandidateBoard({ campaignId, renderActions }: { campaign
               <span style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ display: "block", color: "#fff", fontSize: 13, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}{r.nationality ? ` · ${r.nationality}` : ""}{r.rank ? ` · ${r.rank}` : ""}</span>
                 <span style={{ display: "block", color: "#94a3b8", fontSize: 10.5, marginTop: 2 }}>{progressLabel(r)}{r.red_flag_count > 0 ? ` · ⚠ ${r.red_flag_count} flag${r.red_flag_count === 1 ? "" : "s"}` : ""}</span>
+                {r.started_at && <span style={{ display: "block", marginTop: 3, fontSize: 10, fontWeight: 800, color: r.proctor_strikes >= 3 ? "#ef4444" : r.proctor_strikes > 0 ? "#f59e0b" : "#22c55e" }}>{integrityStatus(r.proctor_strikes).icon} Integrity: {integrityStatus(r.proctor_strikes).label}{r.proctor_strikes > 0 ? ` · ${r.proctor_strikes}/3` : ""}</span>}
               </span>
               <span style={{ textAlign: "right" }}>
                 <span style={{ display: "block", color: r.overall ? "#22c55e" : "#64748b", fontWeight: 900, fontSize: 16 }}>{r.overall ? n(r.overall) : "—"}</span>
@@ -86,7 +87,7 @@ export default function CandidateBoard({ campaignId, renderActions }: { campaign
 function Dossier({ row, actions, onBack }: { row: CandidateRow; actions: ReactNode; onBack: () => void }) {
   const [d, setD] = useState<any>(null);
   useEffect(() => { supabase.rpc("manager_candidate_dossier" as any, { p_invite_id: row.invite_id }).then(({ data }) => setD(data || { ok: false })); }, [row.invite_id]);
-  const s = d?.scores; const box = { background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 12 } as const;
+  const s = d?.scores; const integrity = integrityStatus(d?.integrity?.strikes); const box = { background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 12 } as const;
   const h = (t: string) => <p style={{ color: GOLD, fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>{t}</p>;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12, color: "#fff" }}>
@@ -106,6 +107,12 @@ function Dossier({ row, actions, onBack }: { row: CandidateRow; actions: ReactNo
             {d.progress?.resumed ? <span>Resumed: <b style={{ color: "#fff" }}>{d.progress.resumed}×</b></span> : null}
           </div>
         </div>
+        {(d.started_at || d.integrity?.strikes > 0) && <div style={{ ...box, borderColor: integrity.state === "locked" ? "#ef4444" : integrity.state === "restarted" ? "#f59e0b" : BORDER }}>
+          {h("Integrity & authenticity")}
+          <p style={{ fontSize: 16, fontWeight: 900, color: integrity.state === "locked" ? "#ef4444" : integrity.state === "restarted" ? "#f59e0b" : "#22c55e" }}>{integrity.icon} {integrity.label} <span style={{ fontSize: 12, color: "#cbd5e1" }}>· {d.integrity?.strikes || 0}/3 strikes</span></p>
+          <p style={{ color: "#94a3b8", fontSize: 11, marginTop: 4 }}>{integrity.state === "clean" ? "No proctoring strikes recorded during the last 30 days." : integrity.state === "restarted" ? "The interview was stopped and the candidate was told to restart from Question 1." : "Three strikes locked the interview. Review the evidence before considering any result."}</p>
+          {d.integrity?.events?.length > 0 && <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 5 }}>{d.integrity.events.map((e: any, i: number) => <p key={i} style={{ fontSize: 11.5, color: "#cbd5e1" }}>⚠ {e.reason === "paste" ? "Text paste" : "Interview screen left"} · Question {e.question_no || "—"} · {fmt(e.created_at)}</p>)}</div>}
+        </div>}
         {s && <div style={box}>
           {h("Assessment score")}
           <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}><span style={{ fontSize: 30, fontWeight: 900, color: "#22c55e" }}>{n(s.overall)}</span><span style={{ color: "#94a3b8", fontSize: 12 }}>/ 5.00 {s.band ? `· ${s.band}` : ""}</span></div>
