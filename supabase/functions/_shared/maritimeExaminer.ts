@@ -148,7 +148,7 @@ export function buildExamMessages(input: ExamInput, pendingQuestion: string | nu
       `Vary incidents and parameters using variation key ${seed % 997}; never repeat an earlier question. Do not reveal model answers or learning feedback during the interview.`,
       `If an answer proposes an unsafe action, set safety_flag true, name the hazard in feedback and cap depth at 1. For pickup answers judge both the option and reason; a wrong option is depth ≤1.`,
       `depth scale: 0 no answer, 1 unsafe/incorrect, 2 partial, 3 competent, 4 expert. For English score communication only; for writing score structure, clarity and maritime terminology; for composure score professional actions only.`,
-      turnIndex >= FOUR_PART_TURNS - 1 ? `This is the final answer: set next_question to null.` : `Never finish before all ${FOUR_PART_TURNS} answers.`,
+      turnIndex >= FOUR_PART_TURNS ? `This is the final answer: set next_question to null.` : `Never finish before all ${FOUR_PART_TURNS} answers. You are now generating question ${turnIndex + 1} of ${FOUR_PART_TURNS}.`,
       `Return ONLY JSON: {"assessment": {"topic": string, "pillar": one of [${PILLARS[dept].join(", ")}], "depth": 0-4, "safety_flag": boolean, "gap": string|null, "feedback": string} | null, "next_question": string|null}. assessment is null when there is no answer to assess. The assessment pillar is the pillar of the question just answered.`,
     ].join("\n");
   } else {
@@ -190,6 +190,18 @@ export function unsafeAction(answer: string): boolean {
   return (answer || "").split(/(?<=[.!?;])\s+|\n+/).some((s) => VIOLATION.test(s) && !PREVENTIVE.test(s));
 }
 
+/** A deterministic continuation backstop: an AI null response can never skip a required part. */
+export function fallbackFourPartQuestion(turnIndex: number): string {
+  const module = moduleFor(turnIndex);
+  const stage = technicalStageFor(turnIndex);
+  if (module === "spoken_english") return "Using clear Maritime English, explain how you would give a complete operational handover for your rank, including the current situation, hazards, actions taken and next steps.";
+  if (stage === "immediate") return "A critical alarm activates during your assigned shipboard operation. What is the safest FIRST action for your rank?\nA) Stop the operation, protect life, inform the responsible officer and follow the vessel SMS\nB) Continue at the same speed to avoid delay\nC) Silence the alarm before checking the cause\nD) Wait without informing anyone";
+  if (stage === "investigation") return "Continue the incident in your previous answer. Which safe diagnostic checks would you make, in what order, and which readings or evidence would you verify before acting?";
+  if (stage === "resolution") return "Continue the same incident. How would you coordinate recovery, notify the responsible parties, keep required records and confirm safe conditions before normal operations resume?";
+  if (module === "writing") return "Write a concise report to your responsible officer about an operational defect or incident in your rank's duties. Include time, facts, immediate safety actions, people notified and recommended next steps.";
+  return "During a critical operation, two team members disagree and several tasks compete for attention. How would you restore safe teamwork, prioritise the work, communicate and comply with rest-hour requirements?";
+}
+
 /** Validates AI JSON and applies deterministic safety rules on top of it. */
 export function finalizeStep(aiRaw: unknown, answer: string | undefined, turnIndex: number, prior?: { turns: Turn[]; question: string; dept: Department }, framework: InterviewFramework = "adaptive_v1"): ExamStep {
   const four = framework === FOUR_PART_FRAMEWORK;
@@ -219,8 +231,9 @@ export function finalizeStep(aiRaw: unknown, answer: string | undefined, turnInd
   const stop = !four && prior && assessment ? examDecision([...prior.turns, { question: prior.question, answer: answer ?? "", ...assessment }], prior.dept) : null;
   const cap = four ? FOUR_PART_TURNS : MAX_TURNS;
   const done = turnIndex >= cap || !!stop;
-  const q = !done && typeof o.next_question === "string" && o.next_question.trim() ? o.next_question.trim().slice(0, 900) : null;
-  return { assessment, next_question: q, phase: q ? phaseFor(turnIndex) : null, done: done || !q, module: q && four ? moduleFor(turnIndex) : null };
+  let q = !done && typeof o.next_question === "string" && o.next_question.trim() ? o.next_question.trim().slice(0, 900) : null;
+  if (four && !done && !q) q = fallbackFourPartQuestion(turnIndex);
+  return { assessment, next_question: q, phase: q ? phaseFor(turnIndex) : null, done: four ? done : done || !q, module: q && four ? moduleFor(turnIndex) : null };
 }
 
 export type Verdict = "ready" | "ready_with_training" | "not_ready";

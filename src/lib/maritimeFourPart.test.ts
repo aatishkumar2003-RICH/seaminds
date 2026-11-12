@@ -28,6 +28,18 @@ describe("four-part interview structure", () => {
     expect(fourPartTimeLimit(2)).toBe(25);
     expect(fourPartTimeLimit(11)).toBe(300);
   });
+  it("generates question 14 rather than closing after question 13", () => {
+    const { messages } = buildExamMessages({ rank: "Chief Officer", turns: turns(13), answer: "answer" }, "Q13", 1, FOUR_PART_FRAMEWORK);
+    expect(messages[0].content).toContain("generating question 14 of 14");
+    expect(messages[0].content).not.toContain("This is the final answer");
+  });
+  it("uses a continuation question if AI wrongly returns null before question 14", () => {
+    const step = finalizeStep({ assessment: { depth: 3 }, next_question: null }, "answer", 13,
+      { turns: turns(12), question: "Q13", dept: "deck" }, FOUR_PART_FRAMEWORK);
+    expect(step.done).toBe(false);
+    expect(step.next_question).toContain("two team members disagree");
+    expect(step.module).toBe("composure");
+  });
   it("does not finish after question 12, and finishes at question 14", () => {
     const at12 = finalizeStep({ assessment: { depth: 3 }, next_question: "Next" }, "answer", 12,
       { turns: turns(11), question: "Q12", dept: "deck" }, FOUR_PART_FRAMEWORK);
