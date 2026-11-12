@@ -1,30 +1,59 @@
 // Phase 2 — adaptive examiner logic (pure, no imports besides the brain; vitest-testable).
-import { buildBrainPrompt, detectSafetyGates, resolveRank, VESSEL_TYPES, type VesselType } from "./maritimeBrain.ts";
+import { buildBrainPrompt, detectSafetyGates, resolveRank, VESSEL_TYPES, type Department, type VesselType } from "./maritimeBrain.ts";
 
-// Adaptive length: early mastery exit at 12, standard close at 25, deep diagnostic up to 40 (≈15–50 min).
+// Legacy adaptive interviews remain resumable. New interviews use the fixed four-part framework below.
 export const MIN_TURNS = 12;
 export const STANDARD_TURNS = 25;
 export const MAX_TURNS = 40;
-export const MIN_FINISH_TURNS = 10;   // candidate may choose to finish after this many answers
+export const MIN_FINISH_TURNS = 10;
 export const MASTERY_PCT = 80;
 export const STANDARD_PCT = 65;
+export const FOUR_PART_FRAMEWORK = "four_in_one_v1" as const;
+export const FOUR_PART_TURNS = 14;
+export type InterviewFramework = "adaptive_v1" | typeof FOUR_PART_FRAMEWORK;
+export type InterviewModule = "spoken_english" | "technical" | "writing" | "composure";
+export type TechnicalStage = "immediate" | "investigation" | "resolution";
 
 export const PILLARS = {
   engine: ["main_propulsion", "aux_power_electrical", "aux_machinery", "safety_pollution", "paperwork_sms"],
   deck: ["navigation_colregs", "cargo_stability", "bridge_team_ecdis", "safety_security", "paperwork_sms"],
+  catering: ["galley_safety", "food_hygiene", "provisions_dietary", "teamwork_service", "paperwork_sms"],
 } as const;
-export const departmentOf = (rank: string): "engine" | "deck" =>
-  /(engineer|eto|oiler|engine_cadet)/.test(resolveRank(rank) ?? "") ? "engine" : "deck";
-/** Every 4th question (4, 8, 12…) is a quick-decision pickup with options A–D. */
+export const departmentOf = (rank: string): Department => {
+  const r = resolveRank(rank) ?? "";
+  if (/(cook|steward|messman)/.test(r)) return "catering";
+  return /(engineer|eto|oiler|fitter|wiper|engine_cadet)/.test(r) ? "engine" : "deck";
+};
+/** Legacy adaptive pickup rule. */
 export const isPickup = (turnIndex: number) => turnIndex > 0 && turnIndex % 4 === 3;
 export const MAX_ANSWER_CHARS = 2000;
 
-export type Phase = "baseline" | "troubleshooting" | "safety" | "leadership";
-export interface Turn { question: string; answer: string; phase?: Phase; depth?: number; safety_flag?: boolean; gap?: string | null; topic?: string; pillar?: string }
-export interface ExamInput { rank: string; targetRank?: string; vessel?: string; language?: string; turns: Turn[]; answer?: string }
+export function moduleFor(turnIndex: number): InterviewModule {
+  if (turnIndex < 2) return "spoken_english";
+  if (turnIndex < 11) return "technical";
+  if (turnIndex === 11) return "writing";
+  return "composure";
+}
+export function technicalStageFor(turnIndex: number): TechnicalStage | null {
+  if (turnIndex < 2 || turnIndex > 10) return null;
+  return (["immediate", "investigation", "resolution"] as const)[(turnIndex - 2) % 3];
+}
+export const isFourPartPickup = (turnIndex: number) => technicalStageFor(turnIndex) === "immediate";
+export function fourPartTimeLimit(turnIndex: number): number {
+  const stage = technicalStageFor(turnIndex);
+  if (stage === "immediate") return 25;
+  if (stage === "investigation") return 90;
+  if (stage === "resolution") return 120;
+  if (moduleFor(turnIndex) === "writing") return 300;
+  return 90;
+}
 
-export interface Assessment { topic: string; depth: number; safety_flag: boolean; gap: string | null; feedback: string; pillar?: string }
-export interface ExamStep { assessment: Assessment | null; next_question: string | null; phase: Phase | null; done: boolean }
+export type Phase = "baseline" | "troubleshooting" | "safety" | "leadership";
+export interface Turn { question: string; answer: string; phase?: Phase; depth?: number; safety_flag?: boolean; gap?: string | null; topic?: string; pillar?: string; module?: InterviewModule; mode?: "voice" | "text" }
+export interface ExamInput { rank: string; targetRank?: string; vessel?: string; language?: string; turns: Turn[]; answer?: string; answerMode?: "voice" | "text" }
+
+export interface Assessment { topic: string; depth: number; safety_flag: boolean; gap: string | null; feedback: string; pillar?: string; module?: InterviewModule }
+export interface ExamStep { assessment: Assessment | null; next_question: string | null; phase: Phase | null; done: boolean; module?: InterviewModule | null }
 
 export function phaseFor(turnIndex: number): Phase {
   if (turnIndex < 2) return "baseline";
