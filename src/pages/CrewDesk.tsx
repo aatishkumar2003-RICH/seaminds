@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { ChevronLeft, FileDown, Lock, Users, FileText, ScrollText, Wallet, LayoutDashboard, Star, ShieldAlert, GraduationCap } from "lucide-react";
+import { ChevronLeft, FileDown, Lock, Users, FileText, ScrollText, Wallet, LayoutDashboard, Star, ShieldAlert, GraduationCap, UserPlus } from "lucide-react";
 import PromotionTab from "@/components/crew-desk/PromotionTab";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,7 @@ import PortageBillTab from "@/components/crew-desk/PortageBillTab";
 import AppraisalsTab from "@/components/crew-desk/AppraisalsTab";
 import CertificateRadarTab from "@/components/crew-desk/CertificateRadarTab";
 import OperatingModelPicker from "@/components/crew-desk/OperatingModelPicker";
+import CompanyCrewTab from "@/components/crew-desk/CompanyCrewTab";
 import type { OperatingModel } from "@/lib/fleetCockpit";
 import { Button } from "@/components/ui/button";
 
@@ -20,6 +21,7 @@ type RosterRow = { application_id: string; outcome: string; crew_name: string; r
 
 const TABS = [
   { id: "fleet", label: "Fleet Overview", icon: LayoutDashboard },
+  { id: "company", label: "Company Crew", icon: UserPlus },
   { id: "roster", label: "Roster", icon: Users },
   { id: "cv", label: "Principal CV Studio", icon: FileText },
   { id: "radar", label: "Cert Radar", icon: ShieldAlert },
@@ -153,6 +155,7 @@ export default function CrewDesk() {
         </div>
       )}
 
+      {tab === "company" && <CompanyCrewTab />}
       {tab === "contracts" && <SeaContractsTab rows={rows} focusId={params.get("crew") || undefined} />}
       {tab === "portage" && <PortageBillTab rows={rows} />}
       {tab === "radar" && <CertificateRadarTab />}
