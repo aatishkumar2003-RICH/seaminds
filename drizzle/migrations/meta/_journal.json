@@ -841,6 +841,20 @@
       "when": 1794222703390,
       "tag": "0119_vessel_outreach_contacts",
       "breakpoints": true
+    },
+    {
+      "idx": 120,
+      "version": "7",
+      "when": 1794448830246,
+      "tag": "0120_company_crew_records",
+      "breakpoints": true
+    },
+    {
+      "idx": 121,
+      "version": "7",
+      "when": 1794448851822,
+      "tag": "0121_company_crew_docs_storage",
+      "breakpoints": true
     }
   ]
 }
