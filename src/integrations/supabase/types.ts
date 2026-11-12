@@ -3415,6 +3415,33 @@ export type Database = {
           },
         ]
       }
+      interview_proctor_strikes: {
+        Row: {
+          assessment_id: string | null
+          created_at: string
+          crew_id: string
+          id: string
+          question_no: number | null
+          reason: string
+        }
+        Insert: {
+          assessment_id?: string | null
+          created_at?: string
+          crew_id: string
+          id?: string
+          question_no?: number | null
+          reason: string
+        }
+        Update: {
+          assessment_id?: string | null
+          created_at?: string
+          crew_id?: string
+          id?: string
+          question_no?: number | null
+          reason?: string
+        }
+        Relationships: []
+      }
       interview_progress: {
         Row: {
           answers: Json | null
@@ -7860,6 +7887,7 @@ export type Database = {
         Returns: Json
       }
       marketplace_is_open: { Args: never; Returns: boolean }
+      my_proctor_strikes: { Args: never; Returns: number }
       next_crew_unique_id: { Args: never; Returns: string }
       open_assessment_v2: {
         Args: { p_invite_id?: string; p_mode: string; p_restart?: boolean }
@@ -7903,6 +7931,14 @@ export type Database = {
       record_interruption: {
         Args: { p_assessment_id: string; p_kind: string; p_reason?: string }
         Returns: Json
+      }
+      record_proctor_strike: {
+        Args: {
+          p_assessment_id: string
+          p_question_no: number
+          p_reason: string
+        }
+        Returns: number
       }
       record_referral: { Args: { p_code: string }; Returns: Json }
       record_start_incident: {

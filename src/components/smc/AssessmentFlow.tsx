@@ -230,7 +230,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
       return r && r.index === qIndex && r.elapsed > 0 ? Math.max(max - r.elapsed, 10) : max;
     };
     if (currentQ?.type === 'mcq') {
-      setTimeLeft(restore(60));
+      setTimeLeft(restore(sealed ? 25 : 60));
       setTimerActive(true);
     } else if (currentQ?.type === 'scenario') {
       setTimeLeft(restore(currentQ.time_seconds || 180));
@@ -288,17 +288,38 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     };
   }, [flowStep, assessmentId]);
 
-  // Tab switch detection
+  // 3-strike proctoring (company interviews only). Wi-Fi drops are never strikes; leaving the screen or pasting is.
+  const [strikes, setStrikes] = useState(0);
+  const [halt, setHalt] = useState<null | { n: number; reason: string }>(null);
+  const strikeBusy = useRef(false);
+  useEffect(() => {
+    if (!sealed) return;
+    (supabase as any).rpc('my_proctor_strikes').then(({ data }: any) => {
+      const n = Number(data) || 0; setStrikes(n);
+      if (n >= 3) setHalt({ n, reason: 'locked' });
+    });
+  }, [sealed]);
+  const strike = async (reason: string) => {
+    if (!sealed || flowStep !== 'questions' || halt || strikeBusy.current) return;
+    strikeBusy.current = true;
+    setTimerActive(false);
+    try {
+      try { const a = new AudioContext(); const o = a.createOscillator(); o.frequency.value = 880; o.connect(a.destination); o.start(); o.stop(a.currentTime + 0.4); } catch { /* sound optional */ }
+      const { data } = await (supabase as any).rpc('record_proctor_strike', { p_assessment_id: assessmentId, p_reason: reason, p_question_no: qIndex + 1 });
+      const n = Number(data) || strikes + 1;
+      setStrikes(n); setHalt({ n, reason });
+      setRedFlags(f => [...f, { category: 'INTEGRITY', evidence: `Proctoring strike ${n}/3 (${reason}) on question ${qIndex + 1}`, severity: n >= 3 ? 'HIGH' : 'MEDIUM' }]);
+    } finally { strikeBusy.current = false; }
+  };
   useEffect(() => {
     const handleVisibility = () => {
-      if (document.visibilityState === 'hidden') {
-        // Counted only; leaving the tab is a user pause, never an automatic integrity accusation.
-        setTabSwitches(prev => prev + 1);
-      }
+      if (document.visibilityState !== 'hidden') return;
+      setTabSwitches(prev => prev + 1);
+      if (navigator.onLine) strike('screen_left');
     };
     document.addEventListener('visibilitychange', handleVisibility);
     return () => document.removeEventListener('visibilitychange', handleVisibility);
-  }, []);
+  });
 
   // Countdown timer — the updater stays pure; expiry is handled in the effect below.
   useEffect(() => {
@@ -312,7 +333,8 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   }, [timeLeft, timerActive]);
 
   // Paste detection
-  const handlePaste = () => {
+  const handlePaste = (e?: { preventDefault: () => void }) => {
+    if (sealed) { e?.preventDefault(); toast.error('Pasting is not allowed in this interview.'); strike('paste'); return; }
     setRedFlags(f => [...f, { category: 'INTEGRITY', evidence: `Copy-paste detected on question ${qIndex + 1}`, severity: 'LOW' }]);
   };
 
@@ -634,7 +656,7 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
   const sectionNum = currentQ?.type === 'mcq' ? 'Section 1' : currentQ?.type === 'scenario' ? 'Section 2' : 'Section 3';
 
   // Timer max for progress bar
-  const timerMax = currentQ?.type === 'mcq' ? 60 : currentQ?.type === 'scenario' ? (currentQ.time_seconds || 180) : 90;
+  const timerMax = currentQ?.type === 'mcq' ? (sealed ? 25 : 60) : currentQ?.type === 'scenario' ? (currentQ.time_seconds || 180) : 90;
 
   // ── PRE-FORM ──
   if (preflight.status !== 'confirmed') {
@@ -989,9 +1011,32 @@ const AssessmentFlow = ({ profileId, firstName, lastName, rank, shipName, assess
     }
 
     return (
-      <div className="flex flex-col h-full" style={{ background: '#0b1929' }}>
+      <div className={`flex flex-col h-full ${sealed ? 'select-none' : ''}`} style={{ background: '#0b1929' }}
+        onCopy={sealed ? (e) => { e.preventDefault(); toast.error('Copying questions is not allowed.'); } : undefined}
+        onContextMenu={sealed ? (e) => e.preventDefault() : undefined}>
+        {sealed && !halt && (
+          <div className="px-4 py-1.5 text-[11px] text-center border-b" style={{ color: '#D4AF37', borderColor: 'rgba(212,175,55,0.3)' }}>
+            🛡️ Proctored interview — leaving this screen or pasting stops the test. Strikes: {strikes}/3
+          </div>
+        )}
+        {halt && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-5" style={{ background: 'rgba(5,12,22,0.92)' }}>
+            <div className="max-w-sm w-full rounded-2xl p-6 text-center space-y-4" style={{ background: '#112240', border: `2px solid ${halt.n >= 3 ? '#ef4444' : halt.n === 2 ? '#f97316' : '#f59e0b'}` }}>
+              <div className="text-4xl">{halt.n >= 3 ? '⛔' : '⚠️'}</div>
+              {halt.n >= 3 ? (<>
+                <h2 className="text-lg font-bold" style={{ color: '#ef4444' }}>Interview locked (3 of 3)</h2>
+                <p className="text-sm" style={{ color: '#cbd5e1' }}>Repeated proctoring violations were recorded. This is reported to the company. Please contact your crewing manager.</p>
+                <button className="w-full rounded-xl py-3 font-bold" style={{ background: 'transparent', color: '#D4AF37', border: '1px solid #D4AF37' }} onClick={() => onExit ? onExit() : window.history.back()}>Back</button>
+              </>) : (<>
+                <h2 className="text-lg font-bold" style={{ color: halt.n === 2 ? '#f97316' : '#f59e0b' }}>Warning {halt.n} of 3 — test stopped</h2>
+                <p className="text-sm" style={{ color: '#cbd5e1' }}>{halt.reason === 'paste' ? 'Pasted text was detected.' : 'You left the interview screen.'} Using other apps or ChatGPT is not allowed. {halt.n === 2 ? 'One more warning will lock your interview and alert the company.' : 'You can restart with a fresh set of questions.'}</p>
+                <button className="w-full rounded-xl py-3 font-bold" style={{ background: '#D4AF37', color: '#0D1B2A' }} onClick={async () => { if (onRestart) await onRestart(); else window.location.reload(); }}>Restart from Question 1</button>
+              </>)}
+            </div>
+          </div>
+        )}
         {/* Tab switch warning */}
-        {tabSwitches >= 3 && (
+        {!sealed && tabSwitches >= 3 && (
           <div className="px-4 py-2 text-xs text-center font-medium bg-destructive/20 text-destructive border-b border-destructive/30">
             ⚠️ Multiple tab switches detected. This is noted in your assessment record.
           </div>
