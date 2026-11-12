@@ -1,3 +1,4 @@
+import { shareZalo } from "@/lib/zaloShare";
 import { useEffect, useState, useCallback, lazy, Suspense } from "react";
 const TrainingPlanner = lazy(() => import("@/components/manager/TrainingPlanner"));
 import { useNavigate } from "react-router-dom";
@@ -187,6 +188,7 @@ const ManagerInterviews = () => {
     const msg = `⚓ You are invited to a SeaMinds crew assessment\n\n${c.title}\nRank: ${c.rank_required}${c.vessel_type ? `\nVessel: ${c.vessel_type}` : ""}\n\nPrepare your profile first: upload a CV PDF or clear photo for an easy AI scan, or fill a short Quick Profile without a CV. Confirm your details, then start your interview.\n\nFree for crew.\n\n${linkFor(c.open_link_token)}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
   };
+  const shareZaloInvite = (c: Campaign) => shareZalo(`⚓ You are invited to a SeaMinds crew assessment\n\n${c.title}\nRank: ${c.rank_required}${c.vessel_type ? `\nVessel: ${c.vessel_type}` : ""}\n\nPrepare your profile first (CV upload or Quick Profile), then start your interview when you are free. Free for crew.\n\n${linkFor(c.open_link_token)}`);
 
   const sendEmailInvite = async () => {
     if (!inviteFor) return;
@@ -363,6 +365,10 @@ const ManagerInterviews = () => {
                 <button onClick={() => shareWhatsApp(c)}
                   style={{ flex: 1, minWidth: 150, padding: "9px 0", borderRadius: 10, border: "none", background: "#25D366", color: "#fff", fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}>
                   Send on WhatsApp (optional)
+                </button>
+                <button onClick={() => shareZaloInvite(c)}
+                  style={{ flex: 1, minWidth: 150, padding: "9px 0", borderRadius: 10, border: "none", background: "#0068FF", color: "#fff", fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}>
+                  Send on Zalo
                 </button>
                 <button onClick={() => copyLink(c.open_link_token)}
                   style={{ padding: "9px 14px", borderRadius: 10, background: "transparent", color: GOLD, border: `1px solid ${GOLD}`, fontSize: 12.5, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>

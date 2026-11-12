@@ -6,6 +6,7 @@ import {
   broadcastText, vacancyUrl, whatsappShareUrl, buildDigests, vacanciesCsv, vacanciesPdf, downloadBlob,
   type BroadcastVacancy,
 } from "@/lib/whatsappBroadcast";
+import { shareZalo } from "@/lib/zaloShare";
 
 const btn = "text-[11px] px-2.5 py-1.5 min-h-[32px] rounded-xl border border-[#D4AF37]/60 text-[#D4AF37] font-semibold";
 const goldBtn = "flex-1 min-h-[44px] rounded-xl bg-[#D4AF37] px-3 text-sm font-bold text-[#0D1B2A] disabled:opacity-50";
@@ -20,6 +21,7 @@ export const copyBroadcast = async (v: BroadcastVacancy, linkOnly = false) => {
 export const ShareButtons = ({ v }: { v: BroadcastVacancy }) => (
   <>
     <a className={btn} href={whatsappShareUrl(broadcastText(v))} target="_blank" rel="noopener noreferrer">📱 Share to WhatsApp</a>
+    <button className={btn} onClick={() => shareZalo(broadcastText(v))}>💙 Zalo</button>
     <button className={btn} onClick={() => copyBroadcast(v)}>📋 Copy text</button>
     <button className={btn} onClick={() => copyBroadcast(v, true)}>🔗 Copy link</button>
   </>
@@ -83,6 +85,11 @@ export const WhatsAppBroadcastPanel = ({ batchId, title }: { batchId?: string | 
                   <a key={i} className={`${goldBtn} flex items-center justify-center`} href={whatsappShareUrl(d)} target="_blank" rel="noopener noreferrer">
                     📱 {digests.length > 1 ? `Send part ${i + 1} of ${digests.length} to WhatsApp` : `Send all ${chosen.length} to WhatsApp`}
                   </a>
+                ))}
+                {digests.map((d, i) => (
+                  <button key={`z${i}`} className={`${btn} min-h-[44px]`} onClick={() => shareZalo(d)}>
+                    💙 {digests.length > 1 ? `Send part ${i + 1} of ${digests.length} to Zalo` : `Send all ${chosen.length} to Zalo`}
+                  </button>
                 ))}
               </div>
               <div className="grid grid-cols-3 gap-2">

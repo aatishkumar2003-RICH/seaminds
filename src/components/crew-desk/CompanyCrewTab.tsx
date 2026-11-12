@@ -1,3 +1,4 @@
+import { shareZalo } from "@/lib/zaloShare";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Upload, UserPlus, Download, Mail, MessageCircle, Link2, ShieldCheck, Search, FileDown, Trash2, ScanLine, Paperclip, Loader2 } from "lucide-react";
@@ -74,6 +75,7 @@ export default function CompanyCrewTab() {
     window.open(`https://wa.me/${r.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(inviteMessage({ ...r, crew_unique_id: r.live_crew_unique_id }, company))}`, "_blank");
     void markInvited([r.id], "whatsapp");
   };
+  const zalo = (r: Rec) => { void shareZalo(inviteMessage({ ...r, crew_unique_id: r.live_crew_unique_id }, company), r.whatsapp); void markInvited([r.id], "link"); };
   const copyLink = (r: Rec) => navigator.clipboard.writeText(inviteMessage({ ...r, crew_unique_id: r.live_crew_unique_id }, company)).then(() => { toast.success("Invitation message copied"); void markInvited([r.id], "link"); }, () => toast.error("Could not copy"));
   const emailInvite = async (ids: string[]) => {
     if (!ids.length) { toast.error("Select crew to invite first."); return; }
@@ -150,6 +152,7 @@ export default function CompanyCrewTab() {
               <span className={`text-[11px] rounded-full border px-2 py-0.5 ${STATUS[r.status]?.cls}`}>{STATUS[r.status]?.label || r.status}</span>
               {r.status !== "accepted" && r.status !== "declined" && <>
                 <button onClick={() => whatsapp(r)} className="rounded-xl border border-primary text-primary px-2 min-h-[38px] text-xs flex items-center gap-1"><MessageCircle size={13} /> WhatsApp</button>
+                <button onClick={() => zalo(r)} className="rounded-xl border border-primary text-primary px-2 min-h-[38px] text-xs flex items-center gap-1">💙 Zalo</button>
                 <button onClick={() => emailInvite([r.id])} disabled={!r.email} className="rounded-xl border border-primary text-primary px-2 min-h-[38px] text-xs flex items-center gap-1 disabled:opacity-40"><Mail size={13} /> Email</button>
                 <button onClick={() => copyLink(r)} className="rounded-xl border border-border text-muted-foreground px-2 min-h-[38px] text-xs flex items-center gap-1"><Link2 size={13} /> Copy</button>
               </>}
