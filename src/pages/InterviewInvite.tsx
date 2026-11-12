@@ -122,6 +122,12 @@ const InterviewInvite = () => {
               <p className="text-sm text-muted-foreground">Position: <strong className="text-foreground">{info.rank}</strong>{info.vessel ? ` · Vessel: ${info.vessel}` : ""}</p>
               <p className="text-xs text-muted-foreground">{LANG_LABEL[info.language] || "English"} · Maritime English assessed separately</p>
             </header>
+            {user && (
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm">
+                <span className="text-muted-foreground">Taking this as <strong className="text-foreground break-all">{user.email}</strong></span>
+                <Button variant="link" className="h-auto px-0" onClick={async () => { await supabase.auth.signOut(); navigate(`/join?next=${encodeURIComponent(`/interview/${token}${round2 ? "?round=2" : ""}`)}`); }}>Not you? Switch account</Button>
+              </div>
+            )}
             {user && (prepare === "cv" || prepare === "quick") && !profileChecked ? <p className="text-muted-foreground">Loading your details…</p> : user && (prepare === "cv" || prepare === "quick") && !profileReady ? (
               <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); void saveBasics(); }}>
                 <h2 className="font-bold">Your contact details</h2>
@@ -146,7 +152,7 @@ const InterviewInvite = () => {
                 <h2 className="text-lg font-semibold">Choose how to prepare your profile</h2>
                 <article className="rounded-lg border border-primary/50 bg-card p-5 space-y-3">
                   <div className="flex items-center gap-2 text-primary"><FileText size={22} /><h3 className="font-bold">AI CV Scan</h3><span className="ml-auto text-xs">Recommended</span></div>
-                  <p className="text-sm text-muted-foreground">Take a clear photo or upload your CV PDF. SeaMinds AI extracts your sea time, vessels and certificates for you to confirm — no retyping your CV.</p>
+                  <p className="text-sm text-muted-foreground">Upload your CV as PDF, Word, Excel or a clear photo. SeaMinds AI extracts your sea time, vessels and certificates for you to confirm — no retyping your CV.</p>
                   <Button className="w-full h-auto py-3 whitespace-normal rounded-xl font-bold" onClick={() => choose("cv")}><FileText /> Upload or Scan My CV <ArrowRight /></Button>
                 </article>
                 {!round2 && <article className="rounded-lg border border-border bg-card p-5 space-y-3">

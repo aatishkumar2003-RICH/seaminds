@@ -36,6 +36,7 @@ const Module = ({ token }: { token: string }) => {
   useEffect(() => {
     (async () => {
       const d = await openTraining(token);
+      if (d?.error_code === "AUTH_REQUIRED") { navigate(`/join?next=${encodeURIComponent(`/training/${token}`)}`, { replace: true }); return; }
       setM(d);
       if (d.ok) {
         setAnswers(d.quiz.map(() => null));

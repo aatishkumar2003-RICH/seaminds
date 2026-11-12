@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { logEvent } from "@/lib/logEvent";
 import { Button } from "@/components/ui/button";
+import { readDocumentText } from "@/lib/brainAttachments";
 import { Check, Loader2, FileText, Ship, GraduationCap, Stethoscope, Upload } from "lucide-react";
 
 interface CvUploadProps {
@@ -87,8 +88,10 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
 
   const handleFile = async (file: File) => {
     if (!user || !accessToken) { setErrorMsg("Please sign in before uploading your CV."); setStatus("error"); return; }
-    if (!file.size || file.size > 20 * 1024 * 1024 || !(file.type === "application/pdf" || ["image/jpeg", "image/png", "image/webp"].includes(file.type))) {
-      setErrorMsg("Choose a non-empty PDF, JPG, PNG or WebP file up to 20 MB."); setStatus("error"); return;
+    const isTextDoc = /\.(docx|xlsx|csv|txt)$/i.test(file.name);
+    if (/\.(doc|xls)$/i.test(file.name)) { setErrorMsg("Old .doc/.xls files are not supported. Save as .docx, .xlsx or PDF."); setStatus("error"); return; }
+    if (!file.size || file.size > 20 * 1024 * 1024 || !(isTextDoc || file.type === "application/pdf" || ["image/jpeg", "image/png", "image/webp"].includes(file.type))) {
+      setErrorMsg("Choose a PDF, Word (.docx), Excel (.xlsx), text file or photo up to 20 MB."); setStatus("error"); return;
     }
     setFileName(file.name);
     sourceFile.current = file;
@@ -99,7 +102,8 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
     setCvSummary(null);
 
     try {
-      const base64 = await new Promise<string>((resolve, reject) => {
+      const textContent = isTextDoc ? (await readDocumentText(file)).text : null;
+      const base64 = textContent !== null ? "" : await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => {
           const result = reader.result as string;
@@ -113,7 +117,7 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
       let data: any, error: any;
       try {
         const result = await supabase.functions.invoke("parse-cv-documents", {
-          body: { file_base64: base64, mime_type: file.type },
+          body: textContent !== null ? { mime_type: "text/spreadsheet", text_content: textContent } : { file_base64: base64, mime_type: file.type },
           headers: { Authorization: `Bearer ${accessToken}` },
         });
         data = result.data;
@@ -214,7 +218,7 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
       <input
         ref={fileRef}
         type="file"
-        accept=".pdf,image/*"
+        accept=".pdf,.docx,.xlsx,.csv,.txt,image/*"
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];
@@ -337,7 +341,7 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
             </div>
             <div className="text-left">
               <p className="font-bold text-sm text-primary">Upload Your CV</p>
-              <p className="text-xs text-muted-foreground mt-0.5">PDF or photo — AI extracts certificates & sea service</p>
+              <p className="text-xs text-muted-foreground mt-0.5">PDF, Word, Excel, text or photo — AI extracts certificates & sea service</p>
             </div>
           </div>
         </button>

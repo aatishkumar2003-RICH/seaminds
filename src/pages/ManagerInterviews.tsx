@@ -1,7 +1,7 @@
 import { shareZalo } from "@/lib/zaloShare";
 import { useEffect, useState, useCallback, lazy, Suspense } from "react";
 const TrainingPlanner = lazy(() => import("@/components/manager/TrainingPlanner"));
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowLeft, Plus, Copy, Users, Mail } from "lucide-react";
@@ -43,6 +43,8 @@ interface Campaign {
 
 const ManagerInterviews = () => {
   const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
+  const tab = params.get("tab") === "training" ? "training" : "interviews";
   const [checking, setChecking] = useState(true);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [creating, setCreating] = useState(false);
@@ -236,22 +238,34 @@ const ManagerInterviews = () => {
       </header>
 
       <main style={{ maxWidth: 760, margin: "0 auto", padding: 16 }}>
-        <div style={{ background: "rgba(212,175,55,0.07)", border: `1px solid rgba(212,175,55,0.3)`, borderRadius: 14, padding: 14, marginBottom: 16 }}>
+        <div role="tablist" style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+          {([["interviews", "🎙️ Interview invitations"], ["training", "🎓 Crew training"]] as const).map(([k, l]) => (
+            <button key={k} role="tab" aria-selected={tab === k} onClick={() => setParams(k === "training" ? { tab: "training" } : {})}
+              style={{ flex: 1, padding: "11px 0", borderRadius: 12, fontWeight: 800, fontSize: 13.5, cursor: "pointer", border: `1px solid ${GOLD}`, background: tab === k ? GOLD : "transparent", color: tab === k ? NAVY : GOLD }}>{l}</button>
+          ))}
+        </div>
+        {tab === "training" && (
+          <div style={{ background: "rgba(212,175,55,0.07)", border: `1px solid rgba(212,175,55,0.3)`, borderRadius: 14, padding: 14, marginBottom: 16 }}>
+            <p style={{ color: GOLD, fontSize: 13, fontWeight: 800, marginBottom: 5 }}>Crew training & briefings</p>
+            <p style={{ color: "#cbd5e1", fontSize: 12, lineHeight: 1.55 }}>Open an interview below to see candidates who finished. Plan training for each one and track briefings completed. Training for direct job applicants is under Recruitment & Applicants.</p>
+          </div>
+        )}
+        {tab === "interviews" && <div style={{ background: "rgba(212,175,55,0.07)", border: `1px solid rgba(212,175,55,0.3)`, borderRadius: 14, padding: 14, marginBottom: 16 }}>
           <p style={{ color: GOLD, fontSize: 13, fontWeight: 800, marginBottom: 5 }}>Free AI crew interviews</p>
           <p style={{ color: "#cbd5e1", fontSize: 12, lineHeight: 1.55 }}>
             Send one link. Candidates answer in their own language — English is tested separately.
             You get a ranked shortlist with competency scores and red flags.
           </p>
-        </div>
+        </div>}
 
-        {!creating && (
+        {tab === "interviews" && !creating && (
           <button onClick={() => setCreating(true)}
             style={{ width: "100%", padding: "14px 0", borderRadius: 13, border: "none", background: GOLD, color: NAVY, fontWeight: 800, fontSize: 14.5, cursor: "pointer", marginBottom: 18, display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
             <Plus size={17} /> Arrange New Interview
           </button>
         )}
 
-        {creating && (
+        {tab === "interviews" && creating && (
           <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: 16, marginBottom: 18 }}>
             <div style={{ marginBottom: 12 }}>
               <label style={label}>Rank you are interviewing for *</label>
@@ -434,7 +448,7 @@ const ManagerInterviews = () => {
                               </button>
                             )
                           )}
-                          {r.status === "completed" && (
+                          {tab === "training" && r.status === "completed" && (
                             <div className="mt-2 flex flex-wrap items-center gap-2 text-xs" aria-live="polite">
                               {trainingError ? <Button variant="ghost" size="sm" onClick={() => refreshTraining(c.id)} className="text-gold">Retry training status</Button>
                                 : !training[r.invite_id] ? <span className="text-muted-foreground">Loading training…</span>
@@ -454,7 +468,7 @@ const ManagerInterviews = () => {
                               <p style={{ marginTop: 7, color: "#94a3b8", fontSize: 11 }}>Agree the interview time with the candidate by email.</p>
                             )
                           )}
-                          {r.status === "completed" && (
+                          {tab === "training" && r.status === "completed" && (
                             trainFor === r.invite_id
                               ? <Suspense fallback={null}><TrainingPlanner inviteId={r.invite_id} name={r.name} whatsapp={r.whatsapp} company={companyName} onLedgerChange={(summary) => setTraining((previous) => ({ ...previous, [r.invite_id]: { invite_id: r.invite_id, ...summary } }))} /></Suspense>
                               : <button onClick={() => setTrainFor(r.invite_id)}
