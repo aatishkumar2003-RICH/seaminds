@@ -3,7 +3,7 @@
 // Topics are syllabus anchors, NOT operational figures: the AI must defer exact limits to
 // current rule text, flag/class requirements, company SMS and the vessel's maker manuals.
 
-export type Department = "deck" | "engine";
+export type Department = "deck" | "engine" | "catering";
 export type BrainMode = "interview" | "training" | "guidance";
 export type Level = "support" | "operational" | "management";
 
@@ -49,6 +49,40 @@ export const DECK_TOPICS: Topic[] = [
   { id: "deck_management", title: "Deck management & vetting", dept: "deck", points: ["ISM/SMS, near-miss & root cause", "SIRE 2.0 (process/hardware/human), RightShip", "PSC readiness, CICs", "ISPS, MARPOL Annex V garbage, MLC compliance"] },
 ];
 
+export const CATERING_TOPICS: Topic[] = [
+  { id: "galley_safety", title: "Galley safety & fire prevention", dept: "catering", points: ["safe knife and machinery use", "burns, slips and manual handling", "galley fire response, extinguishing media and isolation", "clean-as-you-go and waste segregation"] },
+  { id: "food_hygiene", title: "Food safety & hygiene", dept: "catering", points: ["HACCP principles and cross-contamination control", "receiving, dry/cold/frozen storage and stock rotation", "cooking, cooling, reheating and temperature records per company SMS", "potable water, sanitation and pest control"] },
+  { id: "catering_management", title: "Provisions & multicultural catering", dept: "catering", points: ["menu planning, victualling and budget control", "allergies, religious and dietary requirements", "provisions ordering, bonding and inventory records", "crew service, complaint handling and teamwork"] },
+];
+
+export const RANK_INTERVIEW_TRACKS: Record<string, string> = {
+  master: "Master — command, collision and emergency response, coastal/port authorities, seaworthiness, commercial and legal decisions.",
+  chief_officer: "Chief Officer — cargo and ballast operations, stability, loading computer, terminal and stevedore coordination, deck maintenance, permits and port reporting.",
+  second_officer: "Second Officer — passage planning, ECDIS, navigational watchkeeping, pilot handover and GMDSS records.",
+  third_officer: "Third Officer — bridge watch, COLREGs, life-saving and fire-fighting appliances, checks and log entries.",
+  deck_cadet: "Deck Cadet — supervised watch support, basic navigation, mooring safety, LSA/FFA rounds and concise handovers.",
+  bosun: "Bosun — deck work party supervision, mooring, anchoring, rigging, maintenance and toolbox talks.",
+  ab: "Able Seafarer Deck — helm, lookout, mooring, gangway security, deck maintenance and safe handover.",
+  ordinary_seaman: "Ordinary Seaman — supervised lookout, gangway, cleaning, basic ropes and safe work-party behaviour.",
+  chief_engineer: "Chief Engineer — propulsion and plant casualties, blackout recovery, class/SMS, bunkering, superintendent reporting and engine-room resource management.",
+  second_engineer: "Second Engineer — engine-room watch and UMS alarms, PMS, isolations, spares, work permits and daily technical reporting.",
+  third_engineer: "Third Engineer — auxiliary engines, boilers, purifiers, pumps and pollution-control equipment.",
+  fourth_engineer: "Fourth Engineer — assigned auxiliary machinery, watch checks, soundings, basic maintenance and handover notes.",
+  eto: "ETO — switchboards, automation, sensors, high-voltage isolation, earth faults and electronics troubleshooting.",
+  engine_cadet: "Engine Cadet — supervised rounds, basic machinery identification, safe maintenance support and logbook entries.",
+  oiler: "Oiler — machinery rounds, lubrication, soundings, housekeeping, basic pump operation and abnormal-noise reporting.",
+  fitter: "Fitter — mechanical repair, measurements, welding/hot-work controls, isolation and workshop safety.",
+  wiper: "Wiper — supervised cleaning, lubrication, tank/bilge housekeeping and hazard reporting.",
+  chief_cook: "Chief Cook — provisions, menu and budget, HACCP, galley team supervision, allergies and victualling reports.",
+  cook: "Cook — safe food preparation, temperature control, hygiene, allergies, galley safety and stock rotation.",
+  steward: "Steward — accommodation and mess service, hygiene, laundry, stores and safe chemical handling.",
+  messman: "Messman — mess and pantry service, cleaning, food handling support and safe chemical handling.",
+};
+
+export function rankInterviewTrack(rank: string): string {
+  return RANK_INTERVIEW_TRACKS[resolveRank(rank) ?? ""] ?? "Rank-appropriate shipboard duties, safe actions, communication and records.";
+}
+
 export const SAFETY_GATES: SafetyGate[] = [
   { id: "enclosed_space", title: "Enclosed space entry", triggers: ["enclosed", "tank entry", "cargo hold", "void space", "ballast tank", "pump room"], mustMention: ["permit to work", "ventilation", "atmosphere testing (O2, flammable, toxic)", "standby person & rescue arrangements", "competent/authorised entrants only per SMS"], sources: ["SOLAS XI-1/7", "IMO Res. A.1050(27)", "company SMS"] },
   { id: "hot_work", title: "Hot work", triggers: ["weld", "cutting", "grinding", "hot work"], mustMention: ["hot work permit", "gas-free & atmosphere check", "fire watch & extinguishing ready", "adjacent space checks"], sources: ["ISGOTT", "company SMS"] },
@@ -63,19 +97,23 @@ export const SAFETY_GATES: SafetyGate[] = [
 export const RANK_LEVELS: Record<string, { dept: Department; level: Level }> = {
   master: { dept: "deck", level: "management" }, chief_officer: { dept: "deck", level: "management" },
   second_officer: { dept: "deck", level: "operational" }, third_officer: { dept: "deck", level: "operational" },
-  deck_cadet: { dept: "deck", level: "support" }, bosun: { dept: "deck", level: "support" }, ab: { dept: "deck", level: "support" },
+  deck_cadet: { dept: "deck", level: "support" }, bosun: { dept: "deck", level: "support" }, ab: { dept: "deck", level: "support" }, ordinary_seaman: { dept: "deck", level: "support" },
   chief_engineer: { dept: "engine", level: "management" }, second_engineer: { dept: "engine", level: "management" },
   third_engineer: { dept: "engine", level: "operational" }, fourth_engineer: { dept: "engine", level: "operational" },
   eto: { dept: "engine", level: "operational" }, engine_cadet: { dept: "engine", level: "support" }, oiler: { dept: "engine", level: "support" },
+  fitter: { dept: "engine", level: "support" }, wiper: { dept: "engine", level: "support" },
+  chief_cook: { dept: "catering", level: "management" }, cook: { dept: "catering", level: "operational" },
+  steward: { dept: "catering", level: "support" }, messman: { dept: "catering", level: "support" },
 };
 
 const RANK_ALIASES: [RegExp, string][] = [
   [/^(master|captain|capt)/, "master"], [/(chief off|c\/o|chief mate|1st off|first off)/, "chief_officer"],
   [/(2nd off|2\/o|second off|2nd mate)/, "second_officer"], [/(3rd off|3\/o|third off|3rd mate)/, "third_officer"],
-  [/deck cadet/, "deck_cadet"], [/(bosun|boatswain)/, "bosun"], [/(^ab$|able sea)/, "ab"],
+  [/deck cadet/, "deck_cadet"], [/(bosun|boatswain)/, "bosun"], [/(ordinary sea|^os$)/, "ordinary_seaman"], [/(^ab$|able sea)/, "ab"],
   [/(chief eng|c\/e)/, "chief_engineer"], [/(2nd eng|2\/e|second eng)/, "second_engineer"],
   [/(3rd eng|3\/e|third eng)/, "third_engineer"], [/(4th eng|4\/e|fourth eng|junior eng)/, "fourth_engineer"],
-  [/(eto|electro|electrical off)/, "eto"], [/engine cadet/, "engine_cadet"], [/(oiler|motorman|wiper)/, "oiler"],
+  [/(eto|electro|electrical off)/, "eto"], [/engine cadet/, "engine_cadet"], [/fitter/, "fitter"], [/wiper/, "wiper"], [/(oiler|motorman)/, "oiler"],
+  [/chief cook/, "chief_cook"], [/(^cook$|ship cook)/, "cook"], [/steward/, "steward"], [/messman/, "messman"],
 ];
 
 export function resolveRank(raw: string): string | null {
@@ -88,7 +126,7 @@ export function resolveRank(raw: string): string | null {
 export function topicsFor(rank: string, vessel?: VesselType): Topic[] {
   const r = RANK_LEVELS[rank];
   if (!r) return [];
-  const pool = r.dept === "deck" ? DECK_TOPICS : ENGINE_TOPICS;
+  const pool = r.dept === "deck" ? DECK_TOPICS : r.dept === "engine" ? ENGINE_TOPICS : CATERING_TOPICS;
   return pool.filter((t) => {
     if (t.vessels && vessel && !t.vessels.includes(vessel)) return false;
     if (r.level !== "management" && /management/.test(t.id)) return false;
@@ -111,7 +149,7 @@ export function buildBrainPrompt(ctx: BrainContext): string {
   const info = RANK_LEVELS[focusRank];
   const topics = topicsFor(focusRank, ctx.vessel);
   const gates = detectSafetyGates(ctx.userText ?? "");
-  const brain = info?.dept === "engine" ? "Engine & ETO specialist (Chief Engineer level)" : "Deck & Master specialist (Master Mariner level)";
+  const brain = info?.dept === "engine" ? "Engine & ETO specialist (Chief Engineer level)" : info?.dept === "catering" ? "Catering & hospitality specialist (Chief Cook level)" : "Deck & Master specialist (Master Mariner level)";
   const modeRules: Record<BrainMode, string> = {
     interview: "Ask ONE scenario question at a time, adapted to the previous answer. Escalate when strong; step down to locate the gap when weak or silent. Never reveal model answers during the interview. Any unsafe action is a critical flag: stop, state the hazard, and test recovery.",
     training: "Coach step by step: explain the why, give a short scenario, check understanding, then summarise the gap closed.",
@@ -120,6 +158,7 @@ export function buildBrainPrompt(ctx: BrainContext): string {
   return [
     `You are the SeaMinds Maritime Brain (${BRAIN_VERSION}) acting as ${brain}.`,
     `Candidate rank: ${rank}${target ? `; target rank: ${target}` : ""}${ctx.vessel ? `; vessel: ${ctx.vessel}` : ""}. Level: ${info?.level ?? "unknown"}.`,
+    `Dedicated rank track: ${rankInterviewTrack(focusRank)}`,
     `Mode: ${ctx.mode}. ${modeRules[ctx.mode]}`,
     `Syllabus focus:\n${topics.map((t) => `- ${t.title}: ${t.points.join("; ")}`).join("\n")}`,
     `Mandatory dual-pillar answers: every technical answer ends with a "Safety & compliance" section (relevant SOLAS, MARPOL, STCW, MLC, ISM/SMS, ISGOTT, IMSBC, MEG4, SIRE 2.0 points). Never suggest bypassing alarms, trips, interlocks, permits or monitoring equipment.`,
