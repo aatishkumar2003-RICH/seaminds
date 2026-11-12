@@ -43,13 +43,13 @@ const PRACTICE: Record<"english" | "drills" | "rank", Practice[]> = {
 const RANKS = ["Any rank", "Master", "Chief Officer", "2nd Officer", "3rd Officer", "Chief Engineer", "2nd Engineer", "3rd Engineer", "4th Engineer", "ETO", "Bosun", "AB", "Oiler", "Cadet"];
 const MAX = 10;
 
-export const trainingInviteText = (company: string, titles: string[], origin = "https://seaminds.life", drafts: Draft[] = [], practice: Practice[] = []) => {
-  let n = 0;
+export const trainingInviteText = (company: string, titles: string[], origin = "https://seaminds.life", drafts: Draft[] = [], practice: Practice[] = [], mt = "") => {
+  let n = 0; const tag = `utm_source=manager_invite${mt ? `&mt=${mt}` : ""}`;
   return [`Hello,`, `${company || "Our company"} invites you to complete pre-joining training on SeaMinds:`, "",
     ...titles.map((t) => `${++n}. ${t}`),
-    ...practice.map((p) => `${++n}. ${p.title}\n   ${origin}${p.path}${p.path.includes("?") ? "&" : "?"}utm_source=manager_invite`),
+    ...practice.map((p) => `${++n}. ${p.title}\n   ${origin}${p.path}${p.path.includes("?") ? "&" : "?"}${tag}`),
     ...drafts.flatMap((d) => ["", `📘 ${++n}. ${d.title}`, ...d.objectives.map((o) => `• ${o}`), "Key points:", ...d.key_points.map((p) => `- ${p}`), "Check yourself:", ...d.self_check.map((q) => `? ${q}`)]),
-    "", `Sign in free and open My training: ${origin}/training?utm_source=manager_invite`, "Free for crew."].join("\n");
+    "", `Sign in free and open My training: ${origin}/training?${tag}`, "Free for crew."].join("\n");
 };
 
 type Crew = { id: string; first_name: string; last_name: string; rank: string; email: string | null; whatsapp: string | null; vessel: string | null };
@@ -62,14 +62,16 @@ export default function TrainingInviteCard({ company }: { company: string }) {
   const [topic, setTopic] = useState(""); const [rank, setRank] = useState("Any rank");
   const [drafting, setDrafting] = useState(false); const [drafts, setDrafts] = useState<Draft[]>([]);
   const [phone, setPhone] = useState(""); const [email, setEmail] = useState("");
+  const [mt, setMt] = useState("");
   const [crew, setCrew] = useState<Crew[]>([]); const [cq, setCq] = useState(""); const [who, setWho] = useState<Crew | null>(null);
   useEffect(() => {
     void trainingCatalog().then((d: any) => d?.ok && setItems(d.items || []));
+    void supabase.auth.getUser().then(({ data: u }) => u.user && supabase.from("manager_profiles").select("id").eq("user_id", u.user.id).maybeSingle().then(({ data }) => data?.id && setMt(data.id)));
     void supabase.rpc("company_crew_list" as any).then(({ data }) => setCrew(((data as any[]) || []) as Crew[]));
   }, []);
   const titles = items.filter((i) => picked.includes(i.slug)).map((i) => i.title);
   const total = titles.length + practice.length + drafts.length;
-  const msg = () => trainingInviteText(company, titles, window.location.origin, drafts, practice);
+  const msg = () => trainingInviteText(company, titles, window.location.origin, drafts, practice, mt);
   const need = () => { if (!total) { toast.error("Choose at least one training item first."); return false; } return true; };
   const full = () => { if (total >= MAX) { toast.error(`Up to ${MAX} items per invitation.`); return true; } return false; };
   const C = CATS.find((c) => c.key === cat)!;

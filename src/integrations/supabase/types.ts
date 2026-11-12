@@ -4089,6 +4089,27 @@ export type Database = {
         }
         Relationships: []
       }
+      manager_training_links: {
+        Row: {
+          created_at: string
+          crew_id: string
+          manager_id: string
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          crew_id: string
+          manager_id: string
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          crew_id?: string
+          manager_id?: string
+          source?: string
+        }
+        Relationships: []
+      }
       maritime_interview_sessions: {
         Row: {
           completed_at: string | null
@@ -7506,6 +7527,10 @@ export type Database = {
         Args: { p_application_id: string; p_remark: string }
         Returns: Json
       }
+      crew_share_training: {
+        Args: { p_manager_profile: string }
+        Returns: Json
+      }
       cv_interview_readiness: {
         Args: { p_crew_id: string; p_target_rank?: string }
         Returns: Json
@@ -7745,6 +7770,11 @@ export type Database = {
           p_note?: string
           p_slots: string[]
         }
+        Returns: Json
+      }
+      manager_training_detail: { Args: { p_crew: string }; Returns: Json }
+      manager_training_radar: {
+        Args: { p_offset?: number; p_search?: string }
         Returns: Json
       }
       manager_update_application: {

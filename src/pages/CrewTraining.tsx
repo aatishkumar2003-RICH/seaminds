@@ -8,6 +8,7 @@ import { ChevronLeft, ExternalLink, Loader2, CheckCircle2, GraduationCap, Clock,
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { openTraining, completeTraining, trainingLedger, recommendTraining, assignTraining, trainingError, type LedgerItem, type Recommendation, trainingCatalog, trainingMatrix, type CatalogItem, type Segment } from "@/lib/training";
 
 const Shell = ({ children, onBack, onQuit }: { children: React.ReactNode; onBack: () => void; onQuit?: () => void }) => (
@@ -292,8 +293,21 @@ const CrewTraining = () => {
   const loading = !isReady;
 
   useEffect(() => {
-    if (!loading && !user) navigate(`/join?next=${encodeURIComponent(token ? `/training/${token}` : "/training")}`, { replace: true });
+    const mt = new URLSearchParams(window.location.search).get("mt");
+    if (mt && /^[0-9a-f-]{36}$/i.test(mt)) localStorage.setItem("sm_training_mt", mt);
+    if (!loading && !user) navigate(`/join?next=${encodeURIComponent((token ? `/training/${token}` : "/training") + window.location.search)}`, { replace: true });
   }, [loading, user, token, navigate]);
+
+  // Crew opened a company's training link: share training progress with that company (once).
+  useEffect(() => {
+    const mt = localStorage.getItem("sm_training_mt");
+    if (!user || !mt) return;
+    void supabase.rpc("crew_share_training" as any, { p_manager_profile: mt }).then(({ data }) => {
+      const d = data as any;
+      if (d?.ok || d?.error === "NOT_FOUND" || d?.error === "NOT_CREW") localStorage.removeItem("sm_training_mt");
+      if (d?.ok) toast.success(`Your training progress is now shared with ${d.company || "the company"}`);
+    });
+  }, [user]);
 
   return (
     <Shell
