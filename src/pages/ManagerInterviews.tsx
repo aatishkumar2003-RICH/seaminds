@@ -236,7 +236,7 @@ const ManagerInterviews = () => {
             style={{ background: "transparent", border: "none", color: "#94a3b8", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, fontSize: 13 }}>
             <ArrowLeft size={16} /> Dashboard
           </button>
-          <h1 style={{ marginLeft: "auto", color: GOLD, fontSize: 16, fontWeight: 800 }}>Crew Interviews</h1>
+          <h1 style={{ marginLeft: "auto", color: GOLD, fontSize: 16, fontWeight: 800 }}>AI Interview &amp; Training</h1>
         </div>
       </header>
 

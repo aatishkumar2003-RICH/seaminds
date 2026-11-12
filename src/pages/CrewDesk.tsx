@@ -14,6 +14,7 @@ import AppraisalsTab from "@/components/crew-desk/AppraisalsTab";
 import CertificateRadarTab from "@/components/crew-desk/CertificateRadarTab";
 import OperatingModelPicker from "@/components/crew-desk/OperatingModelPicker";
 import CompanyCrewTab from "@/components/crew-desk/CompanyCrewTab";
+import UnifiedCrewBoard from "@/components/manager/UnifiedCrewBoard";
 import type { OperatingModel } from "@/lib/fleetCockpit";
 import { Button } from "@/components/ui/button";
 
@@ -114,6 +115,7 @@ export default function CrewDesk() {
         ))}
       </div>
 
+      {tab === "fleet" && <div className="rounded-xl border border-border bg-card p-4 mb-4"><UnifiedCrewBoard /></div>}
       {tab === "fleet" && <FleetCockpit rows={rows} mode={model || "crewing_agency"} onOpen={(t, id) => { setSelected(id); setParams(t === "contracts" ? { tab: t, crew: id } : { tab: t }); }} />}
       {tab === "roster" && (
         <div className="space-y-2">

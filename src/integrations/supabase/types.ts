@@ -7255,8 +7255,37 @@ export type Database = {
       }
     }
     Functions: {
+      _cert_min_days: {
+        Args: { p: Json }
+        Returns: {
+          exp30: number
+          exp90: number
+          expired: number
+          total: number
+        }[]
+      }
       _crew_desk_app_owned: { Args: { _app: string }; Returns: boolean }
       _gen_public_ref: { Args: { p_prefix: string }; Returns: string }
+      _manager_crew_base: {
+        Args: { v_uid: string }
+        Returns: {
+          added_at: string
+          certs: Json
+          crew_id: string
+          crew_unique_id: string
+          email: string
+          k: string
+          name: string
+          nationality: string
+          rank: string
+          record_id: string
+          sea: Json
+          sources: string[]
+          status: string
+          vessel: string
+          whatsapp: string
+        }[]
+      }
       _start_incident_upsert: {
         Args: {
           p_assessment: string
@@ -7799,6 +7828,17 @@ export type Database = {
         Args: { p_offset?: number; p_search?: string }
         Returns: Json
       }
+      manager_unified_crew: {
+        Args: {
+          p_filter?: string
+          p_limit?: number
+          p_offset?: number
+          p_search?: string
+          p_vessel?: string
+        }
+        Returns: Json
+      }
+      manager_unified_crew_detail: { Args: { p_key: string }; Returns: Json }
       manager_update_application: {
         Args: {
           p_action: string
