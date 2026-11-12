@@ -918,6 +918,13 @@
       "when": 1794478067598,
       "tag": "0130_manager_unified_crew_detail_fix",
       "breakpoints": true
+    },
+    {
+      "idx": 131,
+      "version": "7",
+      "when": 1794486576917,
+      "tag": "0131_interview_proctor_strikes",
+      "breakpoints": true
     }
   ]
 }
