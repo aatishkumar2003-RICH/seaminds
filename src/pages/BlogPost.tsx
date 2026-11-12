@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Share2 } from "lucide-react";
 import HomeNav from "@/components/homepage/HomeNav";
 import HomeFooter from "@/components/homepage/HomeFooter";
+import CrewInviteBanner from "@/components/blog/CrewInviteBanner";
 
 interface BlogPostData {
   id: string;
@@ -241,6 +242,8 @@ const BlogPost = () => {
         >
           <ArrowLeft className="w-4 h-4 mr-1" /> Back to articles
         </Button>
+
+        <CrewInviteBanner />
 
         {/* Hero image */}
         {post.image_url && (

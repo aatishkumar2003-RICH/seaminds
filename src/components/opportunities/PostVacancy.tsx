@@ -18,6 +18,9 @@ import { splitAdverts, MAX_PASTE_CHARS, MAX_ADVERT_CHARS } from "@/lib/advertSpl
 import { withCountryCode } from "@/lib/whatsappCc";
 import { WhatsAppBroadcastPanel } from "./WhatsAppBroadcastPanel";
 import { AiReadingHud } from "./AiReadingHud";
+import { readDocumentText, isImage } from "@/lib/brainAttachments";
+
+const DOC_RE = /\.(xlsx|csv|pdf|docx|txt|md)$/i;
 
 const MAX_FLIERS = 5;
 type Risk = "low" | "medium" | "high";
@@ -121,9 +124,25 @@ const PostVacancy = () => {
   };
 
   const addFliers = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
+    const all = Array.from(e.target.files || []);
     e.target.value = "";
-    if (!files.length || !ready() || !identity) return;
+    if (!all.length || !ready() || !identity) return;
+    // Office documents (Excel, PDF, Word, text) are read to text in the browser, then split into adverts.
+    for (const doc of all.filter((f) => !isImage(f))) {
+      if (!DOC_RE.test(doc.name)) {
+        toast({ title: `${doc.name} not supported`, description: "Use Excel, CSV, PDF, Word (.docx), text or an image.", variant: "destructive" });
+        continue;
+      }
+      try {
+        const { text, truncated } = await readDocumentText(doc);
+        if (truncated) toast({ title: `${doc.name}: only the first part was read`, description: "Split very long files into smaller ones." });
+        await addText(text, doc.name);
+      } catch (err) {
+        toast({ title: `Could not read ${doc.name}`, description: err instanceof Error ? err.message : "Unreadable file.", variant: "destructive" });
+      }
+    }
+    const files = all.filter(isImage);
+    if (!files.length) return;
     const room = MAX_FLIERS - fliersUsed;
     if (files.length > room) toast({ title: `Up to ${MAX_FLIERS} flyers per batch`, description: `Only the first ${Math.max(room, 0)} were added.`, variant: "destructive" });
     for (const file of files.slice(0, Math.max(room, 0))) {
@@ -147,21 +166,22 @@ const PostVacancy = () => {
     }
   };
 
-  const addText = async () => {
-    if (!pasteText.trim() || !ready()) return;
-    const blocks = splitAdverts(pasteText);
+  const addText = async (raw?: string, fileLabel?: string) => {
+    const source = typeof raw === "string" ? raw : pasteText;
+    if (!source.trim() || !ready()) return;
+    const blocks = splitAdverts(source);
     const multi = blocks.length > 1;
     const queued = blocks.map((b, i) => ({
       b,
       src: {
         id: uid(), kind: "text" as const,
-        label: `${multi ? `Advert ${i + 1}: ` : ""}${b.text.slice(0, 48)}${b.text.length > 48 ? "…" : ""}`,
+        label: `${fileLabel ? `${fileLabel} · ` : ""}${multi ? `Advert ${i + 1}: ` : ""}${b.text.slice(0, 48)}${b.text.length > 48 ? "…" : ""}`,
         status: "reading" as const, flierUrl: null, risk: { level: "low" as Risk, flags: [] }, rows: [],
         boundary: b.uncertain ? b.reason : undefined, text: b.text,
       },
     }));
     setSources((p) => [...p, ...queued.map((q) => q.src)]);
-    setPasteText("");
+    if (typeof raw !== "string") setPasteText("");
     // Each advert is read on its own so contacts never mix between adverts; 4 at a time.
     let next = 0;
     const worker = async () => {
@@ -468,15 +488,14 @@ const PostVacancy = () => {
 
         <button
           type="button"
-          onClick={() => fliersUsed < MAX_FLIERS && fileRef.current?.click()}
-          disabled={fliersUsed >= MAX_FLIERS}
+          onClick={() => fileRef.current?.click()}
           className="w-full rounded-xl border-2 border-dashed border-[#D4AF37]/30 bg-secondary/40 flex flex-col items-center justify-center py-5 px-4 gap-1.5 disabled:opacity-50"
         >
           <UploadCloud size={26} className="text-muted-foreground" />
-          <span className="text-sm font-medium text-foreground">Upload recruitment flyers (JPG, PNG, WEBP)</span>
-          <span className="text-[11px] text-muted-foreground">{fliersUsed} of {MAX_FLIERS} flyers · each flyer stays linked to its own vacancies</span>
+          <span className="text-sm font-medium text-foreground">Upload vacancy files — Excel, PDF, Word, text or flyer images</span>
+          <span className="text-[11px] text-muted-foreground">{fliersUsed} of {MAX_FLIERS} flyer images · documents are read into adverts you review before publishing</span>
         </button>
-        <input ref={fileRef} type="file" multiple accept="image/jpeg,image/png,image/webp" className="hidden" onChange={addFliers} />
+        <input ref={fileRef} type="file" multiple accept="image/jpeg,image/png,image/webp,.xlsx,.csv,.pdf,.docx,.txt" className="hidden" onChange={addFliers} />
 
         <div className="space-y-2">
           <label htmlFor="studio-paste" className="text-[11px] text-muted-foreground block">
@@ -495,7 +514,7 @@ const PostVacancy = () => {
             </p>
           )}
           <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-2">
-            <Button className="h-11 flex-1" onClick={addText} disabled={!pasteText.trim()}>
+            <Button className="h-11 flex-1" onClick={() => addText()} disabled={!pasteText.trim()}>
               <FileText size={14} className="mr-1" /> {detected.length > 1 ? `Read ${detected.length} adverts` : "Read this advert"}
             </Button>
             <Button variant="outline" className="h-11 flex-1" onClick={addManual}><Plus size={14} className="mr-1" /> Type a vacancy manually</Button>

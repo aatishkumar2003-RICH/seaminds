@@ -21,13 +21,15 @@ async function sign(id: string) {
   return Array.from(new Uint8Array(sig)).slice(0, 16).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-type Ctx = { post: BulletinPost | null };
+type Ctx = { post: BulletinPost | null; jobs: number | null };
 async function loadCtx(): Promise<Ctx> {
   // Today's news-briefing story (latest English post from the last 36h).
   const since = new Date(Date.now() - 36 * 3600000).toISOString();
   const { data } = await svc.from("blog_posts").select("title,slug,excerpt,content,created_at")
     .eq("published", true).eq("language", "en").gte("created_at", since).order("created_at", { ascending: false }).limit(1);
-  return { post: (data?.[0] as any) || null };
+  const { data: oc } = await svc.rpc("vacancy_origin_counts");
+  const jobs = Number((oc as { total?: number } | null)?.total) || null;
+  return { post: (data?.[0] as any) || null, jobs };
 }
 
 const link = (p: string) => `${SITE}${p}${p.includes("?") ? "&" : "?"}utm_source=vessel_briefing&utm_medium=email`;
@@ -36,7 +38,7 @@ async function message(to: string, id: string, vessel: string | null, ctx: Ctx) 
   const sig = await sign(id);
   const unsub = `${FN_URL}?c=${id}&s=${sig}`;
   const branded = `${SITE}/unsubscribe?f=vessel-briefing&c=${id}&s=${sig}`;
-  const { subject, text } = buildShipBulletin(ctx.post!, { vessel, date: new Date(), readUrl: link(`/blog/${ctx.post!.slug}`), unsubUrl: branded });
+  const { subject, text } = buildShipBulletin(ctx.post!, { vessel, date: new Date(), readUrl: link(`/blog/${ctx.post!.slug}`), unsubUrl: branded, jobCount: ctx.jobs });
   return { from: "SeaMinds Team <admin@seaminds.life>", reply_to: "admin@seaminds.life", to: [to], subject, text,
     headers: { "List-Unsubscribe": `<${unsub}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" } };
 }

@@ -32,3 +32,11 @@ describe("ship bulletin", () => {
     expect(r.text).toContain("The SeaMinds Team");
   });
 });
+
+import { jobsLabel as _jl, crewInvite as _ci } from "../../supabase/functions/_shared/shipBulletin";
+import { it as _it, expect as _ex } from "vitest";
+_it("job count rounds down, never overstates", () => {
+  _ex(_jl(33743)).toBe("33,700+");
+  _ex(_jl(null)).toBe("Thousands of");
+  _ex(_ci(33743).join("\n")).toContain("Browse 33,700+ live deck");
+});

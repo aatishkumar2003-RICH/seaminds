@@ -43,9 +43,22 @@ const wrap = (s: string, w = 70, indent = "") => {
 };
 const bullet = (s: string) => wrap(s, 66, "  ").replace(/^  /, "• ").replace(/\n/g, "\n");
 
+/** Round down to a truthful "N,N00+" figure (never overstates the live count). */
+export const jobsLabel = (n?: number | null) => {
+  if (!n || n < 100) return "Thousands of";
+  return `${(Math.floor(n / 100) * 100).toLocaleString("en-US")}+`;
+};
+export const crewInvite = (n?: number | null) => [
+  "FIND YOUR NEXT CONTRACT DIRECT - FREE FOR ALL SEAFARERS",
+  wrap(`Browse ${jobsLabel(n)} live deck, engine & offshore jobs. Build a verified Sea Profile, train on maritime competencies, and apply direct to managers.`),
+  "Join free: https://seaminds.life/?utm_source=vessel_briefing&utm_medium=email&utm_campaign=crew_invite",
+  "-".repeat(62),
+  "",
+];
+
 export type BulletinPost = { title: string; slug: string; excerpt?: string | null; content: string; created_at?: string };
 
-export function buildShipBulletin(post: BulletinPost, opts: { vessel?: string | null; date: Date; readUrl: string; unsubUrl: string }) {
+export function buildShipBulletin(post: BulletinPost, opts: { vessel?: string | null; date: Date; readUrl: string; unsubUrl: string; jobCount?: number | null }) {
   const { glance, sections } = parseSections(post.content || "");
   const find = (re: RegExp) => sections.find((s) => re.test(s.heading));
   const what = find(/what happened/i);
@@ -74,6 +87,7 @@ export function buildShipBulletin(post: BulletinPost, opts: { vessel?: string | 
     `For: Master, Chief Engineer, Officers & Crew${opts.vessel ? ` of ${opts.vessel}` : ""}`,
     line,
     "",
+    ...crewInvite(opts.jobCount),
     "TODAY'S STORY",
     wrap(toText(post.title).toUpperCase()),
     "",
