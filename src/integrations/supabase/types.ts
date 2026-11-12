@@ -7591,10 +7591,15 @@ export type Database = {
         Returns: Json
       }
       crew_desk_roster: { Args: never; Returns: Json }
+      crew_disconnect_company: {
+        Args: { p_manager_uid: string }
+        Returns: Json
+      }
       crew_disengage: {
         Args: { p_application_id: string; p_reason: string }
         Returns: Json
       }
+      crew_my_companies: { Args: never; Returns: Json }
       crew_respond_fleet_link: {
         Args: { p_accept: boolean; p_link_id: string }
         Returns: Json
