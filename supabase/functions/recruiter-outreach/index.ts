@@ -109,7 +109,11 @@ Deno.serve(async (req) => {
     if (req.method === "GET" && ok) {
       return new Response(`<html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="font-family:Arial;background:#0D1B2A;color:#e2e8f0;text-align:center;padding:60px"><h2 style="color:#D4AF37">Stop SeaMinds emails?</h2><p>Tap below to confirm. Your public vacancies stay visible to seafarers.</p><form method="POST" action="${FN_URL}?c=${esc(cid)}&s=${esc(url.searchParams.get("s"))}"><button type="submit" style="background:#D4AF37;color:#0D1B2A;border:0;padding:12px 22px;border-radius:10px;font-weight:bold;font-size:15px">Confirm unsubscribe</button></form></body></html>`, { headers: { "Content-Type": "text/html" } });
     }
-    if (ok) await svc.from("recruiter_outreach_contacts").update({ stage: "unsubscribed", updated_at: new Date().toISOString() }).eq("id", cid);
+    if (ok) {
+      const reason = (url.searchParams.get("r") || "not_specified").replace(/[^a-z_]/g, "").slice(0, 40) || "not_specified";
+      await svc.from("recruiter_outreach_contacts").update({ stage: "unsubscribed", notes: `unsubscribed:${reason}`, updated_at: new Date().toISOString() }).eq("id", cid);
+      await svc.from("app_events").insert({ event_type: "email_unsubscribed", message: `Recruiter unsubscribed: ${reason}`, metadata: { audience: "recruiter", reason, contact_id: cid } });
+    }
     return new Response(`<html><body style="font-family:Arial;background:#0D1B2A;color:#e2e8f0;text-align:center;padding:60px"><h2 style="color:#D4AF37">${ok ? "You're unsubscribed" : "Invalid link"}</h2><p>${ok ? "SeaMinds will not email you again." : "Please reply to the email instead."}</p></body></html>`, { headers: { "Content-Type": "text/html" } });
   }
   if (!RESEND_KEY) return json({ error: "email not configured" }, 500);

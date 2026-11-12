@@ -55,7 +55,11 @@ Deno.serve(async (req) => {
   const cid = url.searchParams.get("c");
   if (cid) {
     const ok = url.searchParams.get("s") === (await sign(cid));
-    if (ok && req.method === "POST") await svc.from("vessel_outreach_contacts").update({ stage: "unsubscribed", updated_at: new Date().toISOString() }).eq("id", cid);
+    if (ok && req.method === "POST") {
+      const reason = (url.searchParams.get("r") || "not_specified").replace(/[^a-z_]/g, "").slice(0, 40) || "not_specified";
+      await svc.from("vessel_outreach_contacts").update({ stage: "unsubscribed", last_error: `unsubscribed:${reason}`, updated_at: new Date().toISOString() }).eq("id", cid);
+      await svc.from("app_events").insert({ event_type: "email_unsubscribed", message: `Ship unsubscribed: ${reason}`, metadata: { audience: "vessel", reason, contact_id: cid } });
+    }
     return new Response(`<html><body style="font-family:Arial;text-align:center;padding:60px">${ok ? (req.method === "POST" ? "<h2>You're unsubscribed</h2>" : `<h2>Stop SeaMinds emails?</h2><form method="POST"><button>Confirm unsubscribe</button></form>`) : "<h2>Invalid link</h2>"}</body></html>`, { headers: { "Content-Type": "text/html" } });
   }
   if (!RESEND_KEY) return json({ error: "email not configured" }, 500);
