@@ -65,6 +65,13 @@ Deno.serve(async (req) => {
       cnt(supabase.from('vessel_outreach_contacts').select('id', h).eq('stage', 'active')),
       supabase.from('crew_digest_log').select('crew_id').eq('sent_on', dayDate).limit(5000),
     ]);
+    const [{ data: unsubRows }, { data: bounceRows }] = await Promise.all([
+      supabase.from('app_events').select('metadata').eq('event_type', 'email_unsubscribed').gte('created_at', since).limit(1000),
+      supabase.from('app_events').select('metadata').eq('event_type', 'email_bounced').gte('created_at', since).limit(5000),
+    ]);
+    const unsubReasons: Record<string, number> = {};
+    for (const r of unsubRows || []) { const k = `${(r as any).metadata?.audience || '?'}: ${(r as any).metadata?.reason || 'not_specified'}`; unsubReasons[k] = (unsubReasons[k] || 0) + 1; }
+    const bounces = (bounceRows || []).length;
     const crewDigest = new Set(((digestCrew as any).data || []).map((r: any) => r.crew_id)).size;
     const { data: mgrEng } = await supabase.from('manager_engagement_log').select('kind').eq('sent_on', dayDate).limit(5000);
     const managerEngage = (mgrEng || []).length;
@@ -115,6 +122,9 @@ ${section('📧 Emails sent today', [
   row('📨 Applications sent to recruiters', appEmails),
   row('❌ Failed sends', totalFailed, totalFailed ? '#ef4444' : '#22c55e'),
   row('Total sent', totalSent, '#D4AF37'),
+  row('↩️ Bounced (auto-stopped)', bounces, bounces ? '#f59e0b' : '#22c55e'),
+  row('🚫 Unsubscribed', (unsubRows || []).length),
+  ...Object.entries(unsubReasons).map(([k, v]) => row(`   · ${k.replace(/_/g, ' ')}`, v)),
 ].join(''))}
 ${section('🔐 Sign-ins today', [
   row('🛡️ Admin', adminLogins),

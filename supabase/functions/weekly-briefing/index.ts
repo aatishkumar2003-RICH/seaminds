@@ -128,10 +128,13 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   const url = new URL(req.url);
 
-  if ((req.method === "GET" || req.method === "POST") && url.searchParams.get("u")) {
+  if (req.method === "GET" && url.searchParams.get("u")) return Response.redirect(`https://seaminds.life/unsubscribe?f=weekly-briefing&${url.searchParams.toString()}`, 302);
+  if (req.method === "POST" && url.searchParams.get("u")) {
     const u = url.searchParams.get("u")!;
     if (!/^[0-9a-f-]{36}$/i.test(u) || url.searchParams.get("s") !== await sign(u)) return new Response("Invalid link", { status: 400 });
+    const reason = (url.searchParams.get("r") || "not_specified").replace(/[^a-z_]/g, "").slice(0, 40) || "not_specified";
     await svc.from("briefing_optout").upsert({ user_id: u });
+    await svc.from("app_events").insert({ event_type: "email_unsubscribed", message: `Crew unsubscribed: ${reason}`, metadata: { audience: "crew", reason } });
     return new Response(`<html><body style="background:#0D1B2A;color:#D4AF37;font-family:Arial;text-align:center;padding:60px"><h2>You're unsubscribed</h2><p style="color:#CBD5E1">You will no longer receive the SeaMinds weekly briefing.</p></body></html>`, { headers: { "Content-Type": "text/html" } });
   }
   if (req.method === "POST" && url.searchParams.get("u")) return json({ ok: true }); // one-click POST
