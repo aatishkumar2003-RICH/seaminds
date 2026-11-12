@@ -1,6 +1,7 @@
 import { shareZalo } from "@/lib/zaloShare";
 import { useEffect, useState, useCallback, lazy, Suspense } from "react";
 import TrainingInviteCard from "@/components/manager/TrainingInviteCard";
+import CandidateBoard from "@/components/manager/CandidateBoard";
 const TrainingPlanner = lazy(() => import("@/components/manager/TrainingPlanner"));
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -398,43 +399,7 @@ const ManagerInterviews = () => {
 
               {openId === c.id && (
                 <div style={{ marginTop: 13 }}>
-                  {!board[c.id] && <p style={{ color: "#64748b", fontSize: 12 }}>Loading…</p>}
-                  {board[c.id] && board[c.id].length === 0 && (
-                    <p style={{ color: "#64748b", fontSize: 12, lineHeight: 1.6 }}>
-                      Nobody has taken this interview yet. Share the link on WhatsApp or in a seafarer group.
-                    </p>
-                  )}
-                  {board[c.id] && board[c.id].length > 0 && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                      {board[c.id].map((r: any, idx: number) => (
-                        <div key={r.invite_id} style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${r.red_flag_count > 0 ? "rgba(239,68,68,0.5)" : BORDER}`, borderRadius: 11, padding: 11 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-                            <span style={{ color: GOLD, fontSize: 14, fontWeight: 900, minWidth: 22 }}>{idx + 1}</span>
-                            <div style={{ minWidth: 0, flex: 1 }}>
-                              <p style={{ color: "#fff", fontSize: 13, fontWeight: 700 }}>
-                                {r.name}{r.nationality ? ` · ${r.nationality}` : ""}
-                              </p>
-                              <p style={{ color: "#94a3b8", fontSize: 10.5, marginTop: 2 }}>
-                                {r.status === "completed"
-                                  ? `Tech ${r.technical ?? "—"} · Judg ${r.judgment ?? "—"} · Eng ${r.english ?? "—"} · Behav ${r.behavioural ?? "—"}`
-                                  : r.status === "in_progress" ? "In progress" : "Invited, not started"}
-                                {r.status !== "completed" && followup[r.invite_id]?.reminder_count ? ` · ${followup[r.invite_id].reminder_count} reminder${followup[r.invite_id].reminder_count === 1 ? "" : "s"} sent` : ""}
-                                {r.status === "completed" && followup[r.invite_id]?.improvement_status === "pending" ? " · Refresher plan sent" : ""}
-                                {r.status === "completed" && followup[r.invite_id]?.improvement_status === "done" ? " · Refresher plan finished" : ""}
-                              </p>
-                              {r.red_flag_count > 0 && (
-                                <p style={{ color: "#ef4444", fontSize: 10.5, marginTop: 3, fontWeight: 700 }}>
-                                  ⚠ {r.red_flag_count} red flag{r.red_flag_count === 1 ? "" : "s"}
-                                </p>
-                              )}
-                            </div>
-                            <div style={{ textAlign: "right", flexShrink: 0 }}>
-                              <p style={{ color: r.overall ? "#22c55e" : "#64748b", fontSize: 17, fontWeight: 900 }}>
-                                {r.overall ? Number(r.overall).toFixed(2) : "—"}
-                              </p>
-                              {r.band && <p style={{ color: "#94a3b8", fontSize: 9.5 }}>{r.band}</p>}
-                            </div>
-                          </div>
+                  <CandidateBoard key={`${c.id}-${board[c.id]?.length ?? 0}`} campaignId={c.id} renderActions={(r: any) => (<>
                           {r.status === "completed" && (
                             <p style={{ marginTop: 7, fontSize: 10.5, fontWeight: 700, color: r.scoring_tier === "CV_VERIFIED" ? "#22c55e" : GOLD }}>
                               {r.scoring_tier === "CV_VERIFIED" ? `🟢 CV-Based score — CV evidence included, not independently verified${r.round === 2 ? " · Round 2" : ""}` : "🟡 Sea Profile score"}
@@ -484,10 +449,7 @@ const ManagerInterviews = () => {
                               Contact on WhatsApp
                             </a>
                           )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  </>)} />
                 </div>
               )}
             </div>

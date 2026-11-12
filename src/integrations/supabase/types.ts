@@ -7366,6 +7366,17 @@ export type Database = {
         Args: { p_audience?: string; p_id?: string; p_kind?: string }
         Returns: Json
       }
+      campaign_candidates_v2: {
+        Args: {
+          p_campaign_id: string
+          p_limit?: number
+          p_offset?: number
+          p_search?: string
+          p_sort?: string
+          p_status?: string
+        }
+        Returns: Json
+      }
       campaign_leaderboard: {
         Args: { p_campaign_id: string }
         Returns: {
@@ -7681,6 +7692,10 @@ export type Database = {
         Returns: undefined
       }
       make_invite_token: { Args: never; Returns: string }
+      manager_candidate_dossier: {
+        Args: { p_invite_id: string }
+        Returns: Json
+      }
       manager_invite_promotion: {
         Args: {
           p_application: string
