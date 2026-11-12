@@ -876,6 +876,13 @@
       "when": 1794472306223,
       "tag": "0124_candidate_dossier_safe_records",
       "breakpoints": true
+    },
+    {
+      "idx": 125,
+      "version": "7",
+      "when": 1794475856505,
+      "tag": "0125_manager_training_radar",
+      "breakpoints": true
     }
   ]
 }
