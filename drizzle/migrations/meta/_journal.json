@@ -897,6 +897,13 @@
       "when": 1794475910223,
       "tag": "0127_manager_training_radar_fix2",
       "breakpoints": true
+    },
+    {
+      "idx": 128,
+      "version": "7",
+      "when": 1794476710532,
+      "tag": "0128_training_invite_autolink",
+      "breakpoints": true
     }
   ]
 }
