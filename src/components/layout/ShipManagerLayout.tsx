@@ -7,6 +7,8 @@ import seamindsLogo from "@/assets/seaminds-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import LegalConsentGate from "@/components/legal/LegalConsentGate";
 import CreditWallet from "@/components/CreditWallet";
+import { isPreviewOwner } from "@/components/OwnerPreviewGate";
+import { useAuth } from "@/contexts/AuthContext";
 
 /** Persistent ShipManager shell. Pure navigation — every page keeps its own logic and permission checks. */
 const NAV = [
@@ -14,9 +16,10 @@ const NAV = [
   { to: "/manager/dashboard?tab=applicants", label: "Recruitment & Applicants", icon: Users, match: (p: string, q: URLSearchParams) => p === "/manager/dashboard" && q.get("tab") === "applicants" },
   { to: "/post-vacancy", label: "Post Vacancy", icon: Megaphone, match: (p: string) => p === "/post-vacancy" },
   { to: "/manager/market-feed", label: "Live Vacancy Feed", icon: Megaphone, match: (p: string) => p === "/manager/market-feed" },
-  { to: "/manager/crew-desk", label: "Crew Management Tools", icon: ClipboardList, match: (p: string) => p === "/manager/crew-desk" },
+  { to: "/manager/crew-desk", label: "Crew Management Tools", icon: ClipboardList, match: (p: string, q: URLSearchParams) => p === "/manager/crew-desk" && q.get("tab") !== "company" },
   { to: "/marketplace", label: "Ship Marketplace", icon: Ship, match: (p: string) => p.startsWith("/marketplace"), note: "Approval" },
-  { to: "/manager-search", label: "Crew Search", icon: Search, match: (p: string) => p === "/manager-search" },
+  { to: "/manager/crew-desk?tab=company", label: "My Company Crew", icon: Users, match: (p: string, q: URLSearchParams) => p === "/manager/crew-desk" && q.get("tab") === "company" },
+  { to: "/manager-search", label: "Crew Search", icon: Search, match: (p: string) => p === "/manager-search", ownerOnly: true },
   { to: "/manager/interviews", label: "AI Interview Studio", icon: GraduationCap, match: (p: string) => p === "/manager/interviews" },
   { to: "/manager/dashboard?tab=crew&section=safety", label: "Safety & Compliance", icon: ShieldCheck, match: (p: string, q: URLSearchParams) => p === "/manager/dashboard" && q.get("section") === "safety" },
   { to: "/manager/fleet-workspace", label: "Fleet Workspace", icon: Ship, match: (p: string) => p === "/manager/fleet-workspace" || p.startsWith("/management/"), note: "" },
@@ -33,6 +36,8 @@ const ShipManagerLayout = () => {
   const [open, setOpen] = useState(false);
   const [identity, setIdentity] = useState<Identity | null>(null);
   const q = new URLSearchParams(search);
+  const { user } = useAuth();
+  const owner = isPreviewOwner(user);
 
   useEffect(() => {
     let active = true;
@@ -70,7 +75,7 @@ const ShipManagerLayout = () => {
 
   const links = (
     <nav className="flex flex-col gap-1" aria-label="ShipManager navigation">
-      {NAV.map(({ to, label, icon: Icon, match, note }) => {
+      {NAV.filter((n: any) => !n.ownerOnly || owner).map(({ to, label, icon: Icon, match, note }: any) => {
         const active = match(pathname, q);
         return (
           <Link
