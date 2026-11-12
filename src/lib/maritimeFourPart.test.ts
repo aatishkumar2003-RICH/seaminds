@@ -29,7 +29,7 @@ describe("four-part interview structure", () => {
     expect(fourPartTimeLimit(11)).toBe(300);
   });
   it("generates question 14 rather than closing after question 13", () => {
-    const { messages } = buildExamMessages({ rank: "Chief Officer", turns: turns(13), answer: "answer" }, "Q13", 1, FOUR_PART_FRAMEWORK);
+    const { messages } = buildExamMessages({ rank: "Chief Officer", turns: turns(12), answer: "answer" }, "Q13", 1, FOUR_PART_FRAMEWORK);
     expect(messages[0].content).toContain("generating question 14 of 14");
     expect(messages[0].content).not.toContain("This is the final answer");
   });
