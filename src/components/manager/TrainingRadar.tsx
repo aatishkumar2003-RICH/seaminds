@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, RefreshCw, X } from "lucide-react";
+import EnglishFluencyReport from "./EnglishFluencyReport";
 import { dueStatus, rangeFor, type RangeKey } from "@/lib/targetDate";
 
 const GOLD = "#D4AF37", NAVY = "#0D1B2A", CARD = "#112240", BORDER = "#1e3a5f";
@@ -23,7 +24,7 @@ export default function TrainingRadar() {
   const [rank, setRank] = useState(""); const [status, setStatus] = useState("all"); const [ranks, setRanks] = useState<string[]>([]);
   const [vessel, setVessel] = useState(""); const [vessels, setVessels] = useState<string[]>([]);
   const [range, setRange] = useState<RangeKey>("any"); const [from, setFrom] = useState(""); const [to, setTo] = useState("");
-  const [open, setOpen] = useState<Row | null>(null); const [stamp, setStamp] = useState(Date.now());
+  const [open, setOpen] = useState<Row | null>(null); const [report, setReport] = useState<Record<string, unknown> | null>(null); const [stamp, setStamp] = useState(Date.now());
   const qRef = useRef(q); qRef.current = q;
   const load = useCallback(async () => {
     const { data } = await supabase.rpc("manager_training_radar" as any, { p_search: qRef.current.trim(), p_offset: off, p_rank: rank, p_status: status, p_vessel: vessel, p_from: rangeFor(range, from, to).from, p_to: rangeFor(range, from, to).to });
@@ -42,6 +43,7 @@ export default function TrainingRadar() {
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <p style={{ color: GOLD, fontSize: 14, fontWeight: 800, flex: 1 }}>📡 Live training radar</p>
         <span style={{ color: "#22c55e", fontSize: 11, fontWeight: 700 }}>● {live} active now</span>
+        <button onClick={() => setReport({ p_search: q.trim(), p_rank: rank, p_status: status, p_vessel: vessel, p_from: rangeFor(range, from, to).from, p_to: rangeFor(range, from, to).to })} style={{ background: GOLD, color: NAVY, border: "none", borderRadius: 10, padding: "4px 10px", fontSize: 11, fontWeight: 800, cursor: "pointer" }}>📋 English report</button>
         <button onClick={() => void load()} aria-label="Refresh" style={{ background: "none", border: "none", color: GOLD, cursor: "pointer" }}><RefreshCw size={14} /></button>
       </div>
       <p style={{ color: "#94a3b8", fontSize: 11, marginTop: 3 }}>Crew appear here once they open your training link while signed in. Updates every 20 seconds · last {new Date(stamp).toLocaleTimeString()}</p>
@@ -92,6 +94,7 @@ export default function TrainingRadar() {
             <button disabled={off + 25 >= total} onClick={() => setOff(off + 25)} style={pager}>Next ›</button>
           </div>}
         </div>}
+      {report && <EnglishFluencyReport filters={report} onClose={() => setReport(null)} />}
       {open && <Detail row={open} onClose={() => setOpen(null)} />}
     </div>
   );
