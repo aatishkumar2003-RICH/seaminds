@@ -7,6 +7,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
 import { CADET_CURRICULUM, stageLabel, type CadetTrack } from "@/lib/cadetCurriculum";
 import { lessonFor } from "@/lib/cadetLessons";
+import { oralFor } from "@/lib/cadetOralBank";
+import { buildTrbPdf, trbShareText, type TrbInput } from "@/lib/cadetTrbPdf";
 
 const CACHE = "cadet_prog_v1"; const OUTBOX = "cadet_outbox_v1";
 const readJ = (k: string, d: any) => { try { return JSON.parse(localStorage.getItem(k) || "") ?? d; } catch { return d; } };
@@ -87,6 +89,12 @@ export default function CadetPassport() {
           <div><p className="font-semibold">🗣️ Say it in Maritime English</p><ul className="list-disc pl-5">{L.english.map((x) => <li key={x}>"{x}"</li>)}</ul>
             <Link to="/training?tab=english" className="text-xs text-primary underline">Practise speaking in the English Lab</Link></div>
           <div><p className="font-semibold">❓ Ask your officer</p><ul className="list-disc pl-5">{L.ask.map((x) => <li key={x}>{x}</li>)}</ul></div>
+          {(() => { const oral = oralFor(e.track, `${m.t} ${m.eq.join(" ")}`); return oral.length > 0 && (
+            <div><p className="font-semibold">🎖️ Superintendent oral questions</p><ul className="list-disc pl-5">{oral.map((x) => <li key={x.id}>{x.q}</li>)}</ul>
+              <p className="text-[11px] text-muted-foreground">Real questions from superintendent interviews — prepare a spoken answer.</p></div>); })()}
+          <div className="rounded-lg border border-primary/30 p-3"><p className="font-semibold">🧠 Senior Officer review (SI Brain)</p>
+            <p className="text-xs text-muted-foreground">Get an independent senior officer's explanation of this module. The question is copied — paste it in the Brain.</p>
+            <Button size="sm" variant="outline" className="mt-2" onClick={async () => { try { await navigator.clipboard.writeText(`Act as an independent senior officer (Chief Mate / Second Engineer). Review and explain for a ${e.track} cadet: "${m.t}". Equipment: ${m.eq.join(", ")}. Give normal parameters, common cadet mistakes, safety rules (${m.ref}) and what the officer will check. Point out anything in this lesson a senior officer would correct: ${L.steps.join("; ")}`); toast.success("Question copied — paste it in the Brain"); } catch { /* clipboard blocked */ } window.location.assign("/training?tab=brain"); }}>Ask Senior Officer Brain</Button></div>
           <label className="flex items-center gap-2 font-semibold"><input type="checkbox" checked={studied} onChange={(ev) => setStudied(ev.target.checked)} />I have studied this module</label>
         </div>); })()}
         <div className="rounded-xl border border-primary/30 bg-card p-4">
@@ -127,6 +135,15 @@ export default function CadetPassport() {
         <div className="mt-2 h-2 rounded bg-background"><div className="h-2 rounded bg-primary" style={{ width: `${(done / 32) * 100}%` }} /></div>
         {badges.length > 0 && <div className="mt-3 flex flex-wrap gap-1.5">{badges.slice(-8).map((b) => <span key={b.week} className="rounded-full border border-primary/40 px-2 py-0.5 text-[11px]">⭐ {cur[b.week - 1].eq[0]}</span>)}</div>}
         <p className="mt-2 text-xs text-muted-foreground">📶 Works offline: open modules once in port; saves sync automatically.{queued > 0 ? ` ${queued} module(s) waiting to sync.` : ""} No penalty for late modules — complete all before sign-off.</p>
+        {queued > 0 && <Button size="sm" className="mt-2" onClick={async () => { if (!navigator.onLine) return toast.error("Still no signal — try again in port or on Wi-Fi"); await flush(); if (readJ(OUTBOX, []).length) toast.error("Some modules could not sync yet — try again"); }}>🔄 Sync now</Button>}
+        {(() => { const trb: TrbInput = { name: e.name || user.email || "Cadet", email: user.email, company: e.company, vessel: e.vessel, track: e.track, current_week: e.current_week, results: p.results || [] };
+          return (<div className="mt-3 flex flex-wrap gap-2">
+            <select defaultValue="" aria-label="Download my record book" className="rounded-md border border-primary bg-background px-2 py-1.5 text-xs font-bold text-primary"
+              onChange={async (ev) => { const v = ev.target.value as "summary" | "full"; ev.target.value = ""; if (!v) return; const { doc, file } = await buildTrbPdf(trb, v); doc.save(file); }}>
+              <option value="" disabled>📄 Download my e-TRB ▾</option><option value="summary">Progress summary</option><option value="full">Full record book</option></select>
+            <Button size="sm" variant="outline" asChild><a href={`https://wa.me/?text=${encodeURIComponent(trbShareText(trb))}`} target="_blank" rel="noopener noreferrer">📲 Send report (WhatsApp)</a></Button>
+            <Button size="sm" variant="outline" asChild><a href={`mailto:?subject=${encodeURIComponent(`e-TRB progress — ${trb.name}`)}&body=${encodeURIComponent(trbShareText(trb))}`}>✉️ Email report</a></Button>
+          </div>); })()}
         <p className="mt-3 text-xs text-muted-foreground">Show this screen to your officer — they can check your passport anytime.</p>
       </div>
       {cur.map((m) => {

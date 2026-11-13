@@ -151,6 +151,10 @@ const Join = () => {
       </button>
 
       <main className="max-w-md mx-auto px-5 pt-16 pb-12">
+        {dest.includes("tab=cadet") && (
+          <div role="note" style={{ border: `1px solid ${GOLD}`, background: CARD, borderRadius: 12, padding: 12, marginBottom: 16, color: "#fff", fontSize: 13 }}>
+            <b style={{ color: GOLD }}>⚓ Welcome to Cadet Academy</b><br />Sign in or register with the <b>exact email your company enrolled</b> so your record book connects automatically.
+          </div>)}
         <div className="text-center">
           <div
             className="mx-auto mb-4 flex items-center justify-center rounded-full"

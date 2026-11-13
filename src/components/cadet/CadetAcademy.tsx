@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { readXlsxTable, parseCsv } from "@/lib/companyCrewImport";
 import { readDocumentText } from "@/lib/brainAttachments";
 import { parseCadetTable, parseCadetText, cadetInviteText, type CadetBulkRow } from "@/lib/cadetBulk";
+import { buildTrbPdf, type TrbMode } from "@/lib/cadetTrbPdf";
 import { CADET_CURRICULUM, CADET_WEEKS, cadetFlag, stageLabel, type CadetTrack } from "@/lib/cadetCurriculum";
 
 const GOLD = "#D4AF37", NAVY = "#0D1B2A", CARD = "#112240", BORDER = "rgba(212,175,55,0.3)", MUTED = "#94A3B8";
@@ -110,7 +111,8 @@ export default function CadetAcademy({ company }: { company?: string }) {
               </div>) : null; })()}
             <p style={{ color: MUTED, fontSize: 11 }}>Shore from {r.shore_start}{r.join_date ? ` · joins ${r.join_date}` : " · joining date not set"}{r.last_activity ? ` · last synced ${Math.max(0, Math.floor((Date.now() - new Date(r.last_activity).getTime()) / 86400000))} day(s) ago` : " · not synced yet"}</p>
             <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
-              <button onClick={() => void exportTrb(r.id)} style={btn(true)}>📄 Record Book PDF</button>
+              <select defaultValue="" aria-label="Record book report" onChange={(ev) => { const v = ev.target.value as TrbMode; ev.target.value = ""; if (v) void exportTrb(r.id, v); }} style={{ ...btn(true), appearance: "auto" }}>
+                <option value="" disabled>📄 Record Book report ▾</option><option value="summary">Progress summary (1–2 pages)</option><option value="full">Full 32-module record book</option></select>
               <button onClick={() => setOpenId(openId === r.id ? null : r.id)} style={btn()}>{openId === r.id ? "Hide progress" : "👁 Live progress"}</button>
               <button onClick={async () => { const ok = await sendInvite(r.email, r.name, r.track, company); toast[ok ? "success" : "error"](ok ? `Invitation re-sent to ${r.email}` : "Email failed — use WhatsApp"); }} style={btn()}>✉️ Resend email</button>
               <a href={`https://wa.me/?text=${encodeURIComponent(cadetInviteText(r.name, company || "", r.track, r.email))}`} target="_blank" rel="noopener noreferrer" style={{ ...btn(), textDecoration: "none" }}>💬 WhatsApp</a>
@@ -126,40 +128,15 @@ export default function CadetAcademy({ company }: { company?: string }) {
 }
 const btn = (primary = false): React.CSSProperties => ({ fontSize: 12, fontWeight: 800, borderRadius: 10, padding: "7px 11px", cursor: "pointer", border: `1px solid ${GOLD}`, background: primary ? GOLD : "transparent", color: primary ? NAVY : GOLD });
 
-/** Builds an A4 Cadet Training Record Book from server records. */
-export async function exportTrb(id: string) {
+/** Builds the cadet e-TRB PDF (summary or full) from server records. */
+export async function exportTrb(id: string, mode: TrbMode = "full") {
   const { data, error } = await rpc("manager_cadet_dossier", { p_id: id });
   const d = data as any;
   if (error || !d?.ok) { toast.error("Could not load record"); return; }
-  const { jsPDF } = await import("jspdf");
-  const c = d.cadet; const track = c.track as CadetTrack; const cur = CADET_CURRICULUM[track];
-  const doc = new jsPDF({ unit: "mm", format: "a4" }); let y = 16;
-  const line = (t: string, size = 9, bold = false, color: [number, number, number] = [20, 20, 20]) => {
-    doc.setFont("helvetica", bold ? "bold" : "normal"); doc.setFontSize(size); doc.setTextColor(...color);
-    for (const l of doc.splitTextToSize(t, 180)) { if (y > 282) { doc.addPage(); y = 16; } doc.text(l, 15, y); y += size * 0.45; } };
-  doc.setFillColor(13, 27, 42); doc.rect(0, 0, 210, 30, "F"); doc.setTextColor(212, 175, 55); doc.setFont("helvetica", "bold"); doc.setFontSize(15);
-  doc.text("ELECTRONIC TRAINING RECORD BOOK (e-TRB)", 15, 14); doc.setFontSize(9); doc.setTextColor(255, 255, 255);
-  doc.text(`STCW ${track === "deck" ? "A-II/1" : "A-III/1"} · SeaMinds Cadet Academy · ${track === "deck" ? "Deck" : "Engine"} track · Generated ${new Date().toISOString().slice(0, 10)}`, 15, 22); y = 40;
-  const results = (d.weeks as any[]).filter((w) => w.result); const avg = results.length ? Math.round(results.reduce((s, w) => s + w.result.score, 0) / results.length) : null;
-  line(`Cadet: ${c.display_name}`, 11, true); line(`Email: ${c.email}   ·   Company: ${c.company || "—"}`);
-  line(`Vessel: ${c.vessel || "—"}${c.imo ? ` (IMO ${c.imo})` : ""}   ·   Shore start: ${c.shore_start}   ·   Joined: ${c.join_date || "—"}`);
-  line(`Progress: ${results.length}/32 weeks completed   ·   Average test score: ${avg ?? "—"}%   ·   Current week: ${c.current_week}`, 9, true); y += 3;
-  for (const w of d.weeks as any[]) {
-    const m = cur[w.week - 1]; const r = w.result;
-    if (y > 262) { doc.addPage(); y = 16; }
-    doc.setDrawColor(212, 175, 55); doc.line(15, y - 2, 195, y - 2); y += 2;
-    line(`Week ${w.week} · ${stageLabel(w.week)} · ${m.t}`, 9.5, true, [13, 27, 42]);
-    line(`Equipment: ${m.eq.join(", ")}   ·   Ref: ${m.ref}`, 8, false, [90, 90, 90]);
-    if (r) {
-      const ck = (r.checklist as boolean[]) || [];
-      line(`Completed ${String(r.completed_at).slice(0, 10)} · Test ${r.correct}/${r.total} (${r.score}%) · Attempts ${r.attempts} · Officer: ${r.officer_name || "______________"}`, 8.5, false, r.score < 60 ? [180, 30, 30] : [20, 110, 50]);
-      m.chk.forEach((t, i) => line(`${ck[i] ? "[x]" : "[ ]"} ${t}`, 8));
-    } else line(`Pending — to be completed before sign-off`, 8.5, false, [150, 110, 0]);
-    y += 2;
-  }
-  y += 6; line("Verified by Master / Chief Engineer: ______________________   Signature & stamp: ______________   Date: __________", 9, true);
-  line("Scores are graded by SeaMinds from the cadet's own answers. Practical checklist items are self-declared by the cadet and must be verified by the supervising officer.", 7.5, false, [100, 100, 100]);
-  doc.save(`Cadet-TRB-${String(c.display_name).replace(/[^\w]+/g, "_")}.pdf`);
+  const c = d.cadet;
+  const { doc, file } = await buildTrbPdf({ name: c.display_name, email: c.email, company: c.company, vessel: c.vessel, imo: c.imo, track: c.track, current_week: c.current_week, shore_start: c.shore_start, join_date: c.join_date,
+    results: (d.weeks as any[]).filter((w) => w.result).map((w) => ({ week: w.week, ...w.result })) }, mode);
+  doc.save(file);
 }
 
 /** Cohort snapshot: what the group is learning this week and who finished it. */
