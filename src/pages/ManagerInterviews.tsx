@@ -1,6 +1,7 @@
 import { shareZalo } from "@/lib/zaloShare";
 import { useEffect, useState, useCallback, lazy, Suspense } from "react";
 import TrainingRadar from "@/components/manager/TrainingRadar";
+import { todayIso } from "@/lib/targetDate";
 import TrainingInviteCard from "@/components/manager/TrainingInviteCard";
 import CandidateBoard from "@/components/manager/CandidateBoard";
 import RankCrewPicker, { sendInterviewInvites, type Pick } from "@/components/manager/RankCrewPicker";
@@ -118,6 +119,7 @@ const ManagerInterviews = () => {
   const [language, setLanguage] = useState("en");
   const [engineTypes, setEngineTypes] = useState<string[]>([]);
   const [prepTracks, setPrepTracks] = useState<string[]>([]);
+  const [targetDate, setTargetDate] = useState("");
   const [followup, setFollowup] = useState<Record<string, { reminder_count: number; improvement_status: string }>>({});
 
   const load = useCallback(async () => {
@@ -149,15 +151,15 @@ const ManagerInterviews = () => {
       if (error) throw error;
       const res: any = data;
       if (!res?.ok) throw new Error(res?.error || "Could not create");
-      if ((engineTypes.length || prepTracks.length) && res?.campaign_id) {
+      if ((engineTypes.length || prepTracks.length || targetDate) && res?.campaign_id) {
         await supabase.from("interview_campaigns" as any)
-          .update({ engine_types: engineTypes, prep_tracks: prepTracks } as any)
+          .update({ engine_types: engineTypes, prep_tracks: prepTracks, target_date: targetDate || null } as any)
           .eq("id", res.campaign_id);
       }
       if (picks.length && res?.campaign_id) await sendInterviewInvites(res.campaign_id, picks);
       else toast.success("Interview created. Share the link with your candidates.");
       setCreating(false);
-      setTitle(""); setRank(""); setVessel(""); setLanguage("en"); setEngineTypes([]); setPrepTracks([]);
+      setTitle(""); setRank(""); setVessel(""); setLanguage("en"); setEngineTypes([]); setPrepTracks([]); setTargetDate("");
       await load();
     } catch (e: any) {
       toast.error(e?.message || "Could not create the interview");
@@ -357,6 +359,11 @@ const ManagerInterviews = () => {
               <p style={{ color: "#64748b", fontSize: 10.5, marginTop: 7, lineHeight: 1.5 }}>
                 Self-paced, no fixed time. Candidates get an email reminder every 24h (up to 3). After the interview, a low score (below 3.50) or any track you pick sends them a refresher plan by email, with reminders until done.
               </p>
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <label style={label}>Complete by (target date, optional)</label>
+              <input type="date" value={targetDate} min={todayIso()} onChange={(e) => setTargetDate(e.target.value)} style={{ ...input, colorScheme: "dark" }} />
+              <p style={{ color: "#64748b", fontSize: 10.5, marginTop: 5, lineHeight: 1.5 }}>Shown in the invitation. The link stays open after this date — late candidates are marked overdue, not blocked.</p>
             </div>
             <div style={{ marginBottom: 14 }}>
               <label style={label}>Title (optional)</label>

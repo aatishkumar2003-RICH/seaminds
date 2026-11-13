@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
 
     const { data: camp } = await svc
       .from("interview_campaigns")
-      .select("id, manager_id, company_name, title, rank_required, vessel_type, language, closes_at, status, open_link_token")
+      .select("id, manager_id, company_name, title, rank_required, vessel_type, language, closes_at, target_date, status, open_link_token")
       .eq("id", campaignId)
       .maybeSingle();
 
@@ -111,6 +111,7 @@ Deno.serve(async (req) => {
   <p style="margin:0 0 4px"><strong style="color:#D4AF37">Vessel type:</strong> ${esc(camp.vessel_type || "Any vessel")}</p>
   <p style="margin:0 0 4px"><strong style="color:#D4AF37">Mode:</strong> online written questions in ${esc(lang)} — Maritime English is assessed separately</p>
   <p style="margin:0 0 4px"><strong style="color:#D4AF37">Estimated time:</strong> 15 minutes — self-paced, no fixed appointment. Do it when you are off watch.</p>
+  ${camp.target_date ? `<p style="margin:0 0 4px"><strong style="color:#D4AF37">Please complete by:</strong> ${esc(new Date(`${camp.target_date}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }))}</p>` : ""}
   <p style="margin:0 0 16px"><strong style="color:#D4AF37">Valid until:</strong> ${esc(validUntil)}</p>
   <h3 style="color:#D4AF37;font-size:16px">Prepare your profile — choose either option</h3>
   <p><strong>AI CV Scan (recommended):</strong> Upload your CV PDF or take a clear photo. SeaMinds AI extracts your sea time, vessels and certificates for you to confirm — no retyping your CV.</p>
