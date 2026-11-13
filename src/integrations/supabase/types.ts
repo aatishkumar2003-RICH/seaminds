@@ -4121,16 +4121,19 @@ export type Database = {
           created_at: string
           email: string
           manager_id: string
+          slugs: string[]
         }
         Insert: {
           created_at?: string
           email: string
           manager_id: string
+          slugs?: string[]
         }
         Update: {
           created_at?: string
           email?: string
           manager_id?: string
+          slugs?: string[]
         }
         Relationships: []
       }
@@ -7361,6 +7364,10 @@ export type Database = {
           whatsapp: string
         }[]
       }
+      _mgr_assign_modules: {
+        Args: { p_crew: string; p_manager: string; p_slugs: string[] }
+        Returns: number
+      }
       _start_incident_upsert: {
         Args: {
           p_assessment: string
@@ -7844,6 +7851,10 @@ export type Database = {
         Returns: undefined
       }
       make_invite_token: { Args: never; Returns: string }
+      manager_assign_training: {
+        Args: { p_email: string; p_phone?: string; p_slugs?: string[] }
+        Returns: Json
+      }
       manager_candidate_dossier: {
         Args: { p_invite_id: string }
         Returns: Json

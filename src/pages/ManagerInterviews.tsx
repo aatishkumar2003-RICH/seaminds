@@ -33,6 +33,12 @@ const ENGINE_TYPES = [
   { key: "Medium-speed", label: "Medium-speed" },
 ];
 
+const DECK_TOPICS = ["ECDIS & electronic navigation","COLREGs & bridge team (BRM)","Stability & loading computer","Cargo operations","Mooring & MEG4 line safety","LSA / FFA & drills","GMDSS communications","Ballast & heavy weather","SIRE 2.0 / vetting readiness"].map((k) => ({ key: k, label: k }));
+const CATERING_TOPICS = ["HACCP & food safety","Galley fire & safety","Provisions & stock control","Allergens & special diets","Hygiene & sanitation inspection"].map((k) => ({ key: k, label: k }));
+export const deptOfRank = (r: string): "engine" | "deck" | "catering" | "" =>
+  !r ? "" : /cook|messman|steward/i.test(r) ? "catering" : /engineer|eto|electrician|oiler|fitter|engine cadet|wiper|motorman/i.test(r) ? "engine" : "deck";
+const topicsForRank = (r: string) => { const d = deptOfRank(r); return d === "engine" ? ENGINE_TYPES : d === "catering" ? CATERING_TOPICS : d === "deck" ? DECK_TOPICS : []; };
+
 const LANGS = [
   { code: "en", label: "English" },
   { code: "vi", label: "Tiếng Việt" },
@@ -288,7 +294,7 @@ const ManagerInterviews = () => {
           <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: 16, marginBottom: 18 }}>
             <div style={{ marginBottom: 12 }}>
               <label style={label}>Rank you are interviewing for *</label>
-              <select value={rank} onChange={(e) => setRank(e.target.value)} style={input}>
+              <select value={rank} onChange={(e) => { if (deptOfRank(e.target.value) !== deptOfRank(rank)) setEngineTypes([]); setRank(e.target.value); }} style={input}>
                 <option value="">Choose rank…</option>
                 {RANKS.map((r) => <option key={r} value={r}>{r}</option>)}
               </select>
@@ -302,9 +308,9 @@ const ManagerInterviews = () => {
               </select>
             </div>
             <div style={{ marginBottom: 12 }}>
-              <label style={label}>Engine / technology (optional)</label>
+              <label style={label}>{deptOfRank(rank) === "engine" ? "Engine & machinery technology focus (optional)" : deptOfRank(rank) === "catering" ? "Galley & food safety focus (optional)" : deptOfRank(rank) === "deck" ? "Deck operations & bridge focus (optional)" : "Focus topics (choose a rank first)"}</label>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginTop: 7 }}>
-                {ENGINE_TYPES.map((e) => {
+                {topicsForRank(rank).map((e) => {
                   const on = engineTypes.includes(e.key);
                   return (
                     <button key={e.key} type="button"
@@ -319,7 +325,7 @@ const ManagerInterviews = () => {
                 })}
               </div>
               <p style={{ color: "#64748b", fontSize: 10.5, marginTop: 7, lineHeight: 1.5 }}>
-                Engineer and electrical candidates get extra questions on the technology you actually run.
+                Topics match the rank's department — candidates get extra questions on what you pick.
               </p>
             </div>
             <div style={{ marginBottom: 12 }}>
