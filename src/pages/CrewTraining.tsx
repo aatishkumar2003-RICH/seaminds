@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import MaritimeEnglishLab from "@/components/training/MaritimeEnglishLab";
 import MaritimeMasterBrain from "@/components/training/MaritimeMasterBrain";
 import FleetDrills from "@/components/training/FleetDrills";
+import CadetPassport from "@/components/cadet/CadetPassport";
 import { Helmet } from "react-helmet-async";
 import { ChevronLeft, ExternalLink, Loader2, CheckCircle2, GraduationCap, Clock, Home, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
@@ -142,7 +143,7 @@ const Module = ({ token }: { token: string }) => {
 const MyTraining = () => {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const tab = (params.get("tab") || "required") as "required" | "drills" | "matrix" | "records" | "english" | "brain";
+  const tab = (params.get("tab") || "required") as "required" | "drills" | "matrix" | "records" | "english" | "brain" | "cadet";
   const english = tab === "english";
   const [items, setItems] = useState<LedgerItem[] | null>(null);
   const [recs, setRecs] = useState<Recommendation[]>([]);
@@ -174,6 +175,7 @@ const MyTraining = () => {
     ["records", "📊 Records", 0],
     ["english", "🎙️ English", 0],
     ["brain", "🧠 Brain", 0],
+    ["cadet", "⚓ Cadet", 0],
   ] as const;
 
   return (
@@ -191,7 +193,7 @@ const MyTraining = () => {
           </button>
         ))}
       </div>
-      {tab === "drills" ? <FleetDrills /> : tab === "brain" ? <MaritimeMasterBrain /> : english ? <MaritimeEnglishLab /> : items === null ? <p className="text-muted-foreground">Loading…</p> : (
+      {tab === "cadet" ? <CadetPassport /> : tab === "drills" ? <FleetDrills /> : tab === "brain" ? <MaritimeMasterBrain /> : english ? <MaritimeEnglishLab /> : items === null ? <p className="text-muted-foreground">Loading…</p> : (
         <>
           {tab === "required" && (() => {
             const required = items.filter((i) => i.company?.trim() && i.status !== "completed" && i.token);
