@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, RefreshCw, X } from "lucide-react";
+import { dueStatus, rangeFor, type RangeKey } from "@/lib/targetDate";
 
 const GOLD = "#D4AF37", NAVY = "#0D1B2A", CARD = "#112240", BORDER = "#1e3a5f";
-type Row = { crew_id: string; name: string; rank: string | null; email: string | null; whatsapp: string | null; eng_attempts: number; eng_24h: number; eng_avg: number | null; eng_best: number | null; eng_last: string | null; eng_scenario: string | null; modules_done: number; modules_total: number; interviews: number; last_active: string | null };
+type Row = { crew_id: string; name: string; rank: string | null; email: string | null; whatsapp: string | null; eng_attempts: number; eng_24h: number; eng_avg: number | null; eng_best: number | null; eng_last: string | null; eng_scenario: string | null; modules_done: number; modules_total: number; interviews: number; last_active: string | null; vessel?: string | null; target_date?: string | null };
 
 export const ago = (iso: string | null, now = Date.now()) => {
   if (!iso) return "No activity yet";
@@ -20,14 +21,16 @@ export default function TrainingRadar() {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [total, setTotal] = useState(0); const [q, setQ] = useState(""); const [off, setOff] = useState(0);
   const [rank, setRank] = useState(""); const [status, setStatus] = useState("all"); const [ranks, setRanks] = useState<string[]>([]);
+  const [vessel, setVessel] = useState(""); const [vessels, setVessels] = useState<string[]>([]);
+  const [range, setRange] = useState<RangeKey>("any"); const [from, setFrom] = useState(""); const [to, setTo] = useState("");
   const [open, setOpen] = useState<Row | null>(null); const [stamp, setStamp] = useState(Date.now());
   const qRef = useRef(q); qRef.current = q;
   const load = useCallback(async () => {
-    const { data } = await supabase.rpc("manager_training_radar" as any, { p_search: qRef.current.trim(), p_offset: off, p_rank: rank, p_status: status });
+    const { data } = await supabase.rpc("manager_training_radar" as any, { p_search: qRef.current.trim(), p_offset: off, p_rank: rank, p_status: status, p_vessel: vessel, p_from: rangeFor(range, from, to).from, p_to: rangeFor(range, from, to).to });
     const d = data as any;
-    if (d?.ok) { setRows(d.rows); setTotal(d.total); setRanks(d.ranks || []); } else setRows([]);
+    if (d?.ok) { setRows(d.rows); setTotal(d.total); setRanks(d.ranks || []); setVessels(d.vessels || []); } else setRows([]);
     setStamp(Date.now());
-  }, [off, rank, status]);
+  }, [off, rank, status, vessel, range, from, to]);
   useEffect(() => { const t = setTimeout(load, 300); return () => clearTimeout(t); }, [load, q]);
   useEffect(() => {
     const id = setInterval(() => { if (document.visibilityState === "visible") void load(); }, 20000);
@@ -48,9 +51,16 @@ export default function TrainingRadar() {
         <select value={rank} onChange={(e) => { setRank(e.target.value); setOff(0); }} aria-label="Filter by rank" style={{ minWidth: 140, background: NAVY, color: "#fff", border: `1px solid ${BORDER}`, borderRadius: 9, padding: 8, fontSize: 12 }}>
           <option value="">All ranks</option>{ranks.map((r) => <option key={r} value={r}>{r}</option>)}
         </select>
+        <select value={vessel} onChange={(e) => { setVessel(e.target.value); setOff(0); }} aria-label="Filter by vessel" style={{ minWidth: 130, background: NAVY, color: "#fff", border: `1px solid ${BORDER}`, borderRadius: 9, padding: 8, fontSize: 12 }}>
+          <option value="">All vessels</option>{vessels.map((v) => <option key={v} value={v}>{v}</option>)}<option value="__none">No vessel recorded</option>
+        </select>
+        <select value={range} onChange={(e) => { setRange(e.target.value as RangeKey); setOff(0); }} aria-label="Practice date" style={{ minWidth: 120, background: NAVY, color: "#fff", border: `1px solid ${BORDER}`, borderRadius: 9, padding: 8, fontSize: 12 }}>
+          <option value="any">Practised any time</option><option value="today">Today</option><option value="week">Last 7 days</option><option value="month">Last 30 days</option><option value="custom">Pick dates…</option>
+        </select>
+        {range === "custom" && <><input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setOff(0); }} aria-label="From date" style={{ background: NAVY, color: "#fff", border: `1px solid ${BORDER}`, borderRadius: 9, padding: 7, fontSize: 12, colorScheme: "dark" }} /><input type="date" value={to} onChange={(e) => { setTo(e.target.value); setOff(0); }} aria-label="To date" style={{ background: NAVY, color: "#fff", border: `1px solid ${BORDER}`, borderRadius: 9, padding: 7, fontSize: 12, colorScheme: "dark" }} /></>}
       </div>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
-        {([["all", "All linked crew"], ["today", "● Active today"], ["complete", "✅ Training complete"], ["idle", "💤 Idle 7+ days"]] as const).map(([k, l]) =>
+        {([["all", "All linked crew"], ["today", "● Active today"], ["complete", "✅ Training complete"], ["idle", "💤 Idle 7+ days"], ["overdue", "🔴 Past target date"]] as const).map(([k, l]) =>
           <button key={k} onClick={() => { setStatus(k); setOff(0); }} style={{ padding: "5px 10px", borderRadius: 999, fontSize: 11, fontWeight: 700, cursor: "pointer", background: status === k ? GOLD : "transparent", color: status === k ? NAVY : GOLD, border: `1px solid ${status === k ? GOLD : "rgba(212,175,55,0.45)"}` }}>{l}</button>)}
       </div>
       {rows === null ? <p style={{ color: "#94a3b8", fontSize: 12, marginTop: 10 }}><Loader2 size={13} className="inline animate-spin" /> Loading…</p>
@@ -61,7 +71,7 @@ export default function TrainingRadar() {
             return (
               <button key={r.crew_id} onClick={() => setOpen(r)} style={{ textAlign: "left", background: NAVY, border: `1px solid ${hot ? "#22c55e" : BORDER}`, borderRadius: 11, padding: 10, cursor: "pointer", color: "#fff" }}>
                 <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <span style={{ fontWeight: 800, fontSize: 13, flex: 1 }}>{r.name || "Crew"} <span style={{ color: "#94a3b8", fontWeight: 600 }}>· {r.rank || "—"}</span></span>
+                  <span style={{ fontWeight: 800, fontSize: 13, flex: 1 }}>{r.name || "Crew"} <span style={{ color: "#94a3b8", fontWeight: 600 }}>· {r.rank || "—"}{r.vessel ? ` · 🚢 ${r.vessel}` : ""}</span></span>
                   <span style={{ fontSize: 11, color: hot ? "#22c55e" : "#94a3b8", fontWeight: 700 }}>{hot ? "● " : ""}{ago(r.last_active)}</span>
                 </div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6, fontSize: 11 }}>
@@ -69,6 +79,7 @@ export default function TrainingRadar() {
                   <span style={pill}>{r.eng_attempts} voice drills{r.eng_24h ? ` (${r.eng_24h} today)` : ""}</span>
                   <span style={pill}>📚 {r.modules_done}/{r.modules_total} modules</span>
                   <span style={pill}>🧭 {r.interviews} AI interviews</span>
+                  {(() => { const ds = dueStatus(r.target_date, r.modules_total > 0 && r.modules_done === r.modules_total); return ds ? <span style={{ ...pill, color: ds.color, borderColor: ds.color }}>{ds.label}</span> : null; })()}
                   {r.eng_scenario && <span style={{ ...pill, color: "#cbd5e1" }}>Last: {scen(r.eng_scenario)}</span>}
                   <span role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); const [first, ...rest] = (r.name || "").split(" "); window.dispatchEvent(new CustomEvent("training-pick-crew", { detail: { id: `c:${r.crew_id}`, first_name: first || "", last_name: rest.join(" "), rank: r.rank || "", email: r.email, whatsapp: r.whatsapp, vessel: null } })); }}
                     style={{ ...pill, background: GOLD, color: NAVY, marginLeft: "auto" }}>🎓 Send training</span>

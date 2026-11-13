@@ -1,6 +1,7 @@
 import { shareZalo } from "@/lib/zaloShare";
 import { useEffect, useState, useCallback, lazy, Suspense } from "react";
 import TrainingRadar from "@/components/manager/TrainingRadar";
+import { todayIso, fmtDue } from "@/lib/targetDate";
 import TrainingInviteCard from "@/components/manager/TrainingInviteCard";
 import CandidateBoard from "@/components/manager/CandidateBoard";
 import RankCrewPicker, { sendInterviewInvites, type Pick } from "@/components/manager/RankCrewPicker";
@@ -118,6 +119,7 @@ const ManagerInterviews = () => {
   const [language, setLanguage] = useState("en");
   const [engineTypes, setEngineTypes] = useState<string[]>([]);
   const [prepTracks, setPrepTracks] = useState<string[]>([]);
+  const [targetDate, setTargetDate] = useState("");
   const [followup, setFollowup] = useState<Record<string, { reminder_count: number; improvement_status: string }>>({});
 
   const load = useCallback(async () => {
@@ -125,7 +127,7 @@ const ManagerInterviews = () => {
     if (!user) { navigate("/manager"); return; }
     const { data } = await supabase
       .from("interview_campaigns" as any)
-      .select("id, title, rank_required, vessel_type, language, open_link_token, status, created_at")
+      .select("id, title, rank_required, vessel_type, language, open_link_token, status, created_at, target_date")
       .order("created_at", { ascending: false });
     setCampaigns(((data as any[]) || []) as Campaign[]);
     setChecking(false);
@@ -149,15 +151,15 @@ const ManagerInterviews = () => {
       if (error) throw error;
       const res: any = data;
       if (!res?.ok) throw new Error(res?.error || "Could not create");
-      if ((engineTypes.length || prepTracks.length) && res?.campaign_id) {
+      if ((engineTypes.length || prepTracks.length || targetDate) && res?.campaign_id) {
         await supabase.from("interview_campaigns" as any)
-          .update({ engine_types: engineTypes, prep_tracks: prepTracks } as any)
+          .update({ engine_types: engineTypes, prep_tracks: prepTracks, target_date: targetDate || null } as any)
           .eq("id", res.campaign_id);
       }
       if (picks.length && res?.campaign_id) await sendInterviewInvites(res.campaign_id, picks);
       else toast.success("Interview created. Share the link with your candidates.");
       setCreating(false);
-      setTitle(""); setRank(""); setVessel(""); setLanguage("en"); setEngineTypes([]); setPrepTracks([]);
+      setTitle(""); setRank(""); setVessel(""); setLanguage("en"); setEngineTypes([]); setPrepTracks([]); setTargetDate("");
       await load();
     } catch (e: any) {
       toast.error(e?.message || "Could not create the interview");
@@ -202,10 +204,10 @@ const ManagerInterviews = () => {
   };
 
   const shareWhatsApp = (c: Campaign) => {
-    const msg = `⚓ You are invited to a SeaMinds crew assessment\n\n${c.title}\nRank: ${c.rank_required}${c.vessel_type ? `\nVessel: ${c.vessel_type}` : ""}\n\nPrepare your profile first: upload a CV PDF or clear photo for an easy AI scan, or fill a short Quick Profile without a CV. Confirm your details, then start your interview.\n\nFree for crew.\n\n${linkFor(c.open_link_token)}`;
+    const msg = `⚓ You are invited to a SeaMinds crew assessment\n\n${c.title}\nRank: ${c.rank_required}${c.vessel_type ? `\nVessel: ${c.vessel_type}` : ""}${(c as any).target_date ? `\nPlease complete by: ${fmtDue((c as any).target_date)}` : ""}\n\nPrepare your profile first: upload a CV PDF or clear photo for an easy AI scan, or fill a short Quick Profile without a CV. Confirm your details, then start your interview.\n\nFree for crew.\n\n${linkFor(c.open_link_token)}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
   };
-  const shareZaloInvite = (c: Campaign) => shareZalo(`⚓ You are invited to a SeaMinds crew assessment\n\n${c.title}\nRank: ${c.rank_required}${c.vessel_type ? `\nVessel: ${c.vessel_type}` : ""}\n\nPrepare your profile first (CV upload or Quick Profile), then start your interview when you are free. Free for crew.\n\n${linkFor(c.open_link_token)}`);
+  const shareZaloInvite = (c: Campaign) => shareZalo(`⚓ You are invited to a SeaMinds crew assessment\n\n${c.title}\nRank: ${c.rank_required}${c.vessel_type ? `\nVessel: ${c.vessel_type}` : ""}${(c as any).target_date ? `\nPlease complete by: ${fmtDue((c as any).target_date)}` : ""}\n\nPrepare your profile first (CV upload or Quick Profile), then start your interview when you are free. Free for crew.\n\n${linkFor(c.open_link_token)}`);
 
   const sendEmailInvite = async () => {
     if (!inviteFor) return;
@@ -358,6 +360,11 @@ const ManagerInterviews = () => {
                 Self-paced, no fixed time. Candidates get an email reminder every 24h (up to 3). After the interview, a low score (below 3.50) or any track you pick sends them a refresher plan by email, with reminders until done.
               </p>
             </div>
+            <div style={{ marginBottom: 12 }}>
+              <label style={label}>Complete by (target date, optional)</label>
+              <input type="date" value={targetDate} min={todayIso()} onChange={(e) => setTargetDate(e.target.value)} style={{ ...input, colorScheme: "dark" }} />
+              <p style={{ color: "#64748b", fontSize: 10.5, marginTop: 5, lineHeight: 1.5 }}>Shown in the invitation. The link stays open after this date — late candidates are marked overdue, not blocked.</p>
+            </div>
             <div style={{ marginBottom: 14 }}>
               <label style={label}>Title (optional)</label>
               <input value={title} onChange={(e) => setTitle(e.target.value)}
@@ -399,7 +406,7 @@ const ManagerInterviews = () => {
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <p style={{ color: "#fff", fontSize: 14, fontWeight: 800 }}>{c.title}</p>
                   <p style={{ color: "#94a3b8", fontSize: 11.5, marginTop: 3 }}>
-                    {c.rank_required}{c.vessel_type ? ` · ${c.vessel_type}` : ""} · {LANGS.find((l) => l.code === c.language)?.label || c.language}
+                    {c.rank_required}{c.vessel_type ? ` · ${c.vessel_type}` : ""} · {LANGS.find((l) => l.code === c.language)?.label || c.language}{(c as any).target_date ? ` · Complete by ${fmtDue((c as any).target_date)}` : ""}
                   </p>
                 </div>
                 <span style={{ color: "#64748b", fontSize: 10, whiteSpace: "nowrap" }}>
