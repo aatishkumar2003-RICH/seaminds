@@ -206,10 +206,20 @@ function AddCrewDialog({ onClose, onSave }: { onClose: () => void; onSave: (r: C
     finally { setReading(false); if (cvIn.current) cvIn.current.value = ""; }
   };
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => setF(s => ({ ...s, [k]: e.target.value }));
+  const [found, setFound] = useState<any>(null);
+  const lookup = async () => {
+    const em = (f.email || "").trim().toLowerCase(); setFound(null);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)) return;
+    const { data } = await supabase.rpc("manager_lookup_crew_by_email" as any, { p_emails: [em] });
+    const m = ((data as any[]) || [])[0]; if (!m) return;
+    setFound(m);
+    setF(s => ({ ...s, first_name: s.first_name || m.first_name || "", last_name: s.last_name || m.last_name || "", rank: s.rank || m.rank || "", nationality: s.nationality || m.nationality || "" }));
+  };
   const submit = async () => {
-    if (!f.first_name?.trim() || !f.rank?.trim()) { toast.error("First name and rank are required."); return; }
+    const okEmail = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test((f.email || "").trim());
+    if (!okEmail && (!f.first_name?.trim() || !f.rank?.trim())) { toast.error("Enter an email address, or first name and rank."); return; }
     setSaving(true);
-    await onSave({ first_name: f.first_name.trim(), last_name: (f.last_name || "").trim(), rank: f.rank.trim(), nationality: f.nationality, email: f.email, whatsapp: f.whatsapp,
+    await onSave({ first_name: (f.first_name || "").trim(), last_name: (f.last_name || "").trim(), rank: (f.rank || "").trim(), nationality: f.nationality, email: f.email, whatsapp: f.whatsapp,
       date_of_birth: f.date_of_birth || undefined, vessel: f.vessel, available_from: f.available_from || undefined, cdc_no: f.cdc_no, passport_no: f.passport_no, ...extra } as any, cv || undefined);
     setSaving(false);
   };
