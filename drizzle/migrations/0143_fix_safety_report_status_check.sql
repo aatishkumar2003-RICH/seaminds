@@ -1,0 +1,3 @@
+DROP POLICY IF EXISTS "Authenticated can insert safety reports" ON public.safety_reports;
+CREATE POLICY "Authenticated can insert safety reports" ON public.safety_reports FOR INSERT TO authenticated
+WITH CHECK (auth.uid() IS NOT NULL AND length(ship_name) BETWEEN 1 AND 200 AND coalesce(length(manning_agency),0) <= 200 AND length(category) BETWEEN 1 AND 100 AND length(description) BETWEEN 1 AND 5000 AND status = 'New');
