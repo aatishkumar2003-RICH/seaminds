@@ -716,6 +716,27 @@ export type Database = {
         }
         Relationships: []
       }
+      assignment_reminder_state: {
+        Row: {
+          crew_id: string
+          last_reminder_at: string | null
+          reminder_count: number
+          thanked_at: string | null
+        }
+        Insert: {
+          crew_id: string
+          last_reminder_at?: string | null
+          reminder_count?: number
+          thanked_at?: string | null
+        }
+        Update: {
+          crew_id?: string
+          last_reminder_at?: string | null
+          reminder_count?: number
+          thanked_at?: string | null
+        }
+        Relationships: []
+      }
       auth_rate_limits: {
         Row: {
           attempt_count: number
@@ -873,6 +894,98 @@ export type Database = {
           value?: Json | null
         }
         Relationships: []
+      }
+      cadet_enrollments: {
+        Row: {
+          created_at: string
+          crew_id: string | null
+          email: string
+          id: string
+          imo: string | null
+          join_date: string | null
+          manager_id: string
+          name: string | null
+          shore_start: string
+          status: string
+          track: string
+          vessel: string | null
+        }
+        Insert: {
+          created_at?: string
+          crew_id?: string | null
+          email: string
+          id?: string
+          imo?: string | null
+          join_date?: string | null
+          manager_id: string
+          name?: string | null
+          shore_start?: string
+          status?: string
+          track?: string
+          vessel?: string | null
+        }
+        Update: {
+          created_at?: string
+          crew_id?: string | null
+          email?: string
+          id?: string
+          imo?: string | null
+          join_date?: string | null
+          manager_id?: string
+          name?: string | null
+          shore_start?: string
+          status?: string
+          track?: string
+          vessel?: string | null
+        }
+        Relationships: []
+      }
+      cadet_week_results: {
+        Row: {
+          attempts: number
+          checklist: Json
+          completed_at: string
+          correct: number
+          enrollment_id: string
+          id: string
+          officer_name: string | null
+          score: number
+          total: number
+          week: number
+        }
+        Insert: {
+          attempts?: number
+          checklist?: Json
+          completed_at?: string
+          correct: number
+          enrollment_id: string
+          id?: string
+          officer_name?: string | null
+          score: number
+          total: number
+          week: number
+        }
+        Update: {
+          attempts?: number
+          checklist?: Json
+          completed_at?: string
+          correct?: number
+          enrollment_id?: string
+          id?: string
+          officer_name?: string | null
+          score?: number
+          total?: number
+          week?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cadet_week_results_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "cadet_enrollments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       candidate_rate_limits: {
         Row: {
@@ -7339,6 +7452,18 @@ export type Database = {
       }
     }
     Functions: {
+      _cadet_current_week: {
+        Args: { e: Database["public"]["Tables"]["cadet_enrollments"]["Row"] }
+        Returns: number
+      }
+      _cadet_key: { Args: never; Returns: Json }
+      _cadet_week_due: {
+        Args: {
+          e: Database["public"]["Tables"]["cadet_enrollments"]["Row"]
+          w: number
+        }
+        Returns: string
+      }
       _cert_min_days: {
         Args: { p: Json }
         Returns: {
@@ -7498,6 +7623,17 @@ export type Database = {
         }
         Returns: Json
       }
+      assignment_reminders_due: {
+        Args: { p_limit?: number }
+        Returns: {
+          company: string
+          crew_id: string
+          email: string
+          items: Json
+          kind: string
+          name: string
+        }[]
+      }
       band_years_midpoint: { Args: { p_band: string }; Returns: number }
       blueprint_coverage: {
         Args: { p_ctx: Json; p_include_test: boolean }
@@ -7520,6 +7656,16 @@ export type Database = {
       }
       build_post: {
         Args: { p_audience?: string; p_id?: string; p_kind?: string }
+        Returns: Json
+      }
+      cadet_my_program: { Args: never; Returns: Json }
+      cadet_submit_week: {
+        Args: {
+          p_answers: number[]
+          p_checklist: boolean[]
+          p_officer?: string
+          p_week: number
+        }
         Returns: Json
       }
       campaign_candidates_v2: {
@@ -7861,16 +8007,31 @@ export type Database = {
         Args: { p_email: string; p_phone?: string; p_slugs?: string[] }
         Returns: Json
       }
+      manager_cadet_dossier: { Args: { p_id: string }; Returns: Json }
+      manager_cadet_roster: { Args: never; Returns: Json }
       manager_candidate_dossier: {
         Args: { p_invite_id: string }
         Returns: Json
       }
+      manager_delete_cadet: { Args: { p_id: string }; Returns: Json }
       manager_delete_campaign: {
         Args: { p_campaign_id: string; p_force?: boolean }
         Returns: Json
       }
       manager_delete_invite: {
         Args: { p_force?: boolean; p_invite_id: string }
+        Returns: Json
+      }
+      manager_enroll_cadet: {
+        Args: {
+          p_email: string
+          p_imo?: string
+          p_join_date?: string
+          p_name: string
+          p_shore_start?: string
+          p_track: string
+          p_vessel?: string
+        }
         Returns: Json
       }
       manager_interview_people: {
@@ -8008,6 +8169,16 @@ export type Database = {
           p_contract_months?: number
           p_joining_date?: string
           p_offer?: Json
+        }
+        Returns: Json
+      }
+      manager_update_cadet: {
+        Args: {
+          p_id: string
+          p_imo: string
+          p_join_date: string
+          p_status: string
+          p_vessel: string
         }
         Returns: Json
       }
