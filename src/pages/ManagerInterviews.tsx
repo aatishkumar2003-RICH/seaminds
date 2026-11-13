@@ -1,6 +1,7 @@
 import { shareZalo } from "@/lib/zaloShare";
 import { useEffect, useState, useCallback, lazy, Suspense } from "react";
 import TrainingRadar from "@/components/manager/TrainingRadar";
+const CadetAcademy = lazy(() => import("@/components/cadet/CadetAcademy"));
 import { todayIso, fmtDue } from "@/lib/targetDate";
 import TrainingInviteCard from "@/components/manager/TrainingInviteCard";
 import CandidateBoard from "@/components/manager/CandidateBoard";
@@ -56,7 +57,7 @@ interface Campaign {
 const ManagerInterviews = () => {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const tab = params.get("tab") === "training" ? "training" : "interviews";
+  const tab = params.get("tab") === "training" ? "training" : params.get("tab") === "cadets" ? "cadets" : "interviews";
   const [checking, setChecking] = useState(true);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [creating, setCreating] = useState(false);
@@ -263,8 +264,8 @@ const ManagerInterviews = () => {
 
       <main style={{ maxWidth: 760, margin: "0 auto", padding: 16 }}>
         <div role="tablist" style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-          {([["interviews", "🎙️ Interview invitations"], ["training", "🎓 Crew training"]] as const).map(([k, l]) => (
-            <button key={k} role="tab" aria-selected={tab === k} onClick={() => setParams(k === "training" ? { tab: "training" } : {})}
+          {([["interviews", "🎙️ Interviews"], ["training", "🎓 Crew training"], ["cadets", "⚓ Cadets"]] as const).map(([k, l]) => (
+            <button key={k} role="tab" aria-selected={tab === k} onClick={() => setParams(k === "interviews" ? {} : { tab: k })}
               style={{ flex: 1, padding: "11px 0", borderRadius: 12, fontWeight: 800, fontSize: 13.5, cursor: "pointer", border: `1px solid ${GOLD}`, background: tab === k ? GOLD : "transparent", color: tab === k ? NAVY : GOLD }}>{l}</button>
           ))}
         </div>
@@ -400,7 +401,8 @@ const ManagerInterviews = () => {
           </p>
         )}
 
-        <div style={{ display: tab === "interviews" && iview === "people" ? "none" : "flex", flexDirection: "column", gap: 12 }}>
+        {tab === "cadets" && <Suspense fallback={<p style={{ color: "#94a3b8" }}>Loading…</p>}><CadetAcademy company={companyName} /></Suspense>}
+        <div style={{ display: tab === "cadets" || (tab === "interviews" && iview === "people") ? "none" : "flex", flexDirection: "column", gap: 12 }}>
           {campaigns.map((c) => (
             <div key={c.id} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: 14 }}>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>

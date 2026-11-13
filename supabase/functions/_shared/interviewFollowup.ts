@@ -37,3 +37,22 @@ export function followupEmail(r: FollowupRow) {
   const html = `<div style="background:#0D1B2A;border-radius:14px;padding:24px;color:#ffffff;font-family:Arial,Helvetica,sans-serif;line-height:1.6">${en}${vn ? `<hr style="border-color:rgba(212,175,55,0.3)">${vn}` : ""}<p style="color:#94A3B8;font-size:12px;margin-top:20px">Free for crew. Need help? support@seaminds.life · The SeaMinds Team</p></div>`;
   return { subject, html, text: [...text, "", "Free for crew. Help: support@seaminds.life — The SeaMinds Team"].join("\n") };
 }
+
+/** Daily "pending items" digest and one-time thank-you for manager-assigned training / cadet weeks. */
+export type AssignmentRow = { kind: "pending" | "thanks"; crew_id: string; email: string; name: string | null; company: string | null; items: { title: string; url: string }[] };
+export function assignmentEmail(r: AssignmentRow) {
+  const co = r.company || "Your company";
+  const hi = r.name ? `Dear ${esc(r.name)},` : "Hello,";
+  const wrap = (inner: string) => `<div style="background:#0D1B2A;border-radius:14px;padding:24px;color:#ffffff;font-family:Arial,Helvetica,sans-serif;line-height:1.6">${inner}<p style="color:#94A3B8;font-size:12px;margin-top:20px">Free for crew. Need help? support@seaminds.life · The SeaMinds Team</p></div>`;
+  if (r.kind === "thanks") {
+    const subject = `Thank you — all training from ${co} is complete`;
+    return { subject, html: wrap(`<p>${hi}</p><p>Thank you. You have completed every item assigned by <b>${esc(co)}</b>. Your results have been shared with them.</p><p>Keep practising anytime in SeaMinds Training.</p>`),
+      text: `${hi.replace(/<[^>]+>/g, "")}\nThank you. You have completed every item assigned by ${co}. Your results have been shared with them.\n\nThe SeaMinds Team` };
+  }
+  const items = r.items || [];
+  const subject = `Pending for you: ${items.length} training item${items.length === 1 ? "" : "s"} from ${co}`;
+  const list = items.map((i) => `<li><a href="${esc(i.url)}" style="color:#D4AF37">${esc(i.title)}</a></li>`).join("");
+  return { subject,
+    html: wrap(`<p>${hi}</p><p>These are the pending items assigned to you by <b>${esc(co)}</b>:</p><ol>${list}</ol><p>Each takes only a few minutes. We will remind you daily until they are done.</p>`),
+    text: [hi.replace(/<[^>]+>/g, ""), `These are the pending items assigned to you by ${co}:`, ...items.map((i, n) => `${n + 1}. ${i.title}: ${i.url}`), "", "The SeaMinds Team"].join("\n") };
+}
