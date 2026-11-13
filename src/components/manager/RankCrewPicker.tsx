@@ -24,10 +24,15 @@ export default function RankCrewPicker({ rank, onChange }: { rank: string; onCha
   const [pool, setPool] = useState<PoolCrew[] | null>(poolCache);
   const [sel, setSel] = useState<Record<string, boolean>>({});
   const [extra, setExtra] = useState(""); const [q, setQ] = useState("");
-  useEffect(() => {
-    if (poolCache) return;
-    void supabase.rpc("manager_training_pool" as any).then(({ data }) => { poolCache = ((data as any[]) || []) as PoolCrew[]; setPool(poolCache); });
-  }, []);
+  const load = () => { void supabase.rpc("manager_training_pool" as any).then(({ data }) => { poolCache = ((data as any[]) || []) as PoolCrew[]; setPool(poolCache); }); };
+  useEffect(load, []); // always fetch fresh on open; cache only paints instantly
+  const remove = async (c: PoolCrew) => {
+    const nm = `${c.first_name} ${c.last_name}`.trim() || c.email || "this crew";
+    if (!confirm(`Remove ${nm} from your crew database?\n\nThis deletes your company record, training links/sends, cadet enrolment and unstarted interview invites. Completed interviews and the seafarer's own SeaMinds account are not touched.`)) return;
+    const { data, error } = await supabase.rpc("manager_remove_crew_from_pool" as any, { p_email: c.email || "", p_crew_id: null });
+    if (error || !(data as any)?.ok) { toast.error("Could not remove — please try again"); return; }
+    toast.success(`${nm} removed`); setPool((p) => (p || []).filter((x) => x.id !== c.id)); load();
+  };
   const matches = useMemo(() => (pool || []).filter((c) => rankMatches(c.rank, rank)), [pool, rank]);
   const shown = useMemo(() => !q ? matches : matches.filter((c) => `${c.first_name} ${c.last_name} ${c.email || ""} ${c.whatsapp || ""} ${c.vessel || ""}`.toLowerCase().includes(q.toLowerCase())), [matches, q]);
   useEffect(() => { // default: everyone with an email selected
@@ -52,6 +57,7 @@ export default function RankCrewPicker({ rank, onChange }: { rank: string; onCha
         </p>
         {withEmail.length > 0 && <button type="button" onClick={() => { const s: Record<string, boolean> = {}; if (!all) withEmail.forEach((c) => { s[c.id] = true; }); setSel(s); }}
           style={{ background: "transparent", color: GOLD, border: `1px solid ${GOLD}`, borderRadius: 8, padding: "4px 10px", fontSize: 11.5, fontWeight: 700, cursor: "pointer" }}>{all ? "Deselect all" : "Select all"}</button>}
+        <button type="button" onClick={load} title="Refresh list" style={{ background: "transparent", color: GOLD, border: `1px solid ${GOLD}`, borderRadius: 8, padding: "4px 10px", fontSize: 11.5, fontWeight: 700, cursor: "pointer" }}>↻ Refresh</button>
       </div>
       {matches.length > 6 && <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, email, vessel…"
         style={{ width: "100%", marginTop: 8, background: NAVY, color: "#fff", border: `1px solid ${BORDER}`, borderRadius: 9, padding: "7px 10px", fontSize: 12.5 }} />}
@@ -66,6 +72,8 @@ export default function RankCrewPicker({ rank, onChange }: { rank: string; onCha
                 <p style={{ color: has ? "#cbd5e1" : "#f59e0b", fontSize: 11.5, wordBreak: "break-all" }}>{has ? c.email : "No email — WhatsApp only"}{c.whatsapp ? ` · ${c.whatsapp}` : ""}</p>
                 <p style={{ color: "#64748b", fontSize: 10.5 }}>{[c.vessel, SRC[c.source || ""]].filter(Boolean).join(" · ")}</p>
               </div>
+              {c.email && <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); void remove(c); }} title="Remove from my crew database"
+                style={{ background: "transparent", color: "#f87171", border: "1px solid rgba(248,113,113,0.4)", borderRadius: 7, padding: "3px 8px", fontSize: 11, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>Remove</button>}
             </label>
           );
         })}

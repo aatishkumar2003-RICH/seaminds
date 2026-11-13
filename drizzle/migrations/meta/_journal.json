@@ -1051,6 +1051,13 @@
       "when": 1794564951074,
       "tag": "0149_assignment_thanks_recent_only",
       "breakpoints": true
+    },
+    {
+      "idx": 150,
+      "version": "7",
+      "when": 1794567126668,
+      "tag": "0150_manager_remove_crew_from_pool",
+      "breakpoints": true
     }
   ]
 }
