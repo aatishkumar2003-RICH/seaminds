@@ -250,7 +250,7 @@ export function shoreModule(track: CadetTrack, week: number): ShoreModule | null
   if (week === 1) return { ...ENGLISH, sections: [...ENGLISH.sections, ...FAMIL.sections.slice(1, 4)], drills: [...ENGLISH.drills, ...FAMIL.drills.slice(0, 3)] };
   if (week === 2) return SAFETY;
   if (week === 3) return BASICS(track);
-  if (week === 4) { const r = READY(track); return { ...r, sections: r.sections.filter((x) => !x.h.startsWith("Day-one")).concat(FAMIL.sections.slice(4)), params: [...(r.params || []).slice(0, 3), ...(FAMIL.params || []).slice(2)], failures: [...r.failures, FAMIL.failures[2]], oral: [...r.oral.slice(0, 2), FAMIL.oral[2]], drills: [...r.drills.slice(0, 3), ...FAMIL.drills.slice(4)] }; }
+  if (week === 4) { const r = READY(track); return { ...r, sections: r.sections.filter((x) => !x.h.startsWith("Day-one")).concat(FAMIL.sections.slice(4)), params: [...(r.params || []).slice(0, 3), ...(FAMIL.params || []).slice(2)], failures: [...r.failures, FAMIL.failures[2]], oral: [...r.oral.slice(0, 2), FAMIL.oral[2]], drills: [...r.drills.slice(0, 3), ...FAMIL.drills.slice(3)] }; }
   return null;
 }
 /** Part 1 is cleared when all four shore modules have a passing result (≥60%). */
