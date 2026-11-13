@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { dueStatus, fmtDue, inRange, rangeFor, type RangeKey } from "@/lib/targetDate";
 import { ChevronDown, ChevronRight, Copy, Loader2, Mail, MessageCircle, Search, Trash2 } from "lucide-react";
 
 const GOLD = "#D4AF37", NAVY = "#0D1B2A", CARD = "#112240", BORDER = "#1e3a5f";
-type Invite = { id: string; token: string; campaign: string; status: string; score: number | null; created_at: string; completed_at: string | null };
-type TH = { at: string; channel: string; items: string[]; message: string | null };
+type Invite = { id: string; token: string; campaign: string; status: string; score: number | null; created_at: string; completed_at: string | null; target_date?: string | null; vessel_type?: string | null };
+type TH = { at: string; channel: string; items: string[]; message: string | null; target_date?: string | null };
 type Person = { key: string; name: string; rank: string | null; nationality: string | null; email: string | null; whatsapp: string | null; invites_count: number; last_at: string; best_score: number | null; status: string; shortlisted: boolean; invites: Invite[]; training?: TH[]; train_status?: string; modules_done?: number; modules_total?: number };
 const CH: Record<string, string> = { email: "✉️ Email", whatsapp: "🟢 WhatsApp", zalo: "🔵 Zalo", copy: "📋 Link copied" };
 const TST: Record<string, string> = { completed: "Training complete", in_progress: "Training in progress", joined: "Signed in · not started", not_joined: "Not signed in yet" };
@@ -48,7 +49,7 @@ export default function InterviewPeopleBoard({ linkFor, company, onOpenCampaign,
     return () => { alive = false; clearInterval(i); };
   }, [dq, rank, status, off, kind, tick]);
   const rows: Person[] = res?.rows || []; const total = res?.total || 0;
-  const msg = (p: Person, inv: Invite) => `Hello ${p.name || ""}, ${company || "our company"} invites you to a free AI interview on SeaMinds (${inv.campaign}). Open your personal link: ${linkFor(inv.token)}`;
+  const msg = (p: Person, inv: Invite) => `Hello ${p.name || ""}, ${company || "our company"} invites you to a free AI interview on SeaMinds (${inv.campaign}).${inv.target_date ? ` Please complete by ${fmtDue(inv.target_date)}.` : ""} Open your personal link: ${linkFor(inv.token)}`;
   return (
     <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: 14, marginBottom: 16 }}>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>

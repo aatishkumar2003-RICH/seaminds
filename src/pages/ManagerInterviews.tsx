@@ -1,7 +1,7 @@
 import { shareZalo } from "@/lib/zaloShare";
 import { useEffect, useState, useCallback, lazy, Suspense } from "react";
 import TrainingRadar from "@/components/manager/TrainingRadar";
-import { todayIso } from "@/lib/targetDate";
+import { todayIso, fmtDue, dueStatus } from "@/lib/targetDate";
 import TrainingInviteCard from "@/components/manager/TrainingInviteCard";
 import CandidateBoard from "@/components/manager/CandidateBoard";
 import RankCrewPicker, { sendInterviewInvites, type Pick } from "@/components/manager/RankCrewPicker";
@@ -127,7 +127,7 @@ const ManagerInterviews = () => {
     if (!user) { navigate("/manager"); return; }
     const { data } = await supabase
       .from("interview_campaigns" as any)
-      .select("id, title, rank_required, vessel_type, language, open_link_token, status, created_at")
+      .select("id, title, rank_required, vessel_type, language, open_link_token, status, created_at, target_date")
       .order("created_at", { ascending: false });
     setCampaigns(((data as any[]) || []) as Campaign[]);
     setChecking(false);
@@ -204,10 +204,10 @@ const ManagerInterviews = () => {
   };
 
   const shareWhatsApp = (c: Campaign) => {
-    const msg = `⚓ You are invited to a SeaMinds crew assessment\n\n${c.title}\nRank: ${c.rank_required}${c.vessel_type ? `\nVessel: ${c.vessel_type}` : ""}\n\nPrepare your profile first: upload a CV PDF or clear photo for an easy AI scan, or fill a short Quick Profile without a CV. Confirm your details, then start your interview.\n\nFree for crew.\n\n${linkFor(c.open_link_token)}`;
+    const msg = `⚓ You are invited to a SeaMinds crew assessment\n\n${c.title}\nRank: ${c.rank_required}${c.vessel_type ? `\nVessel: ${c.vessel_type}` : ""}${(c as any).target_date ? `\nPlease complete by: ${fmtDue((c as any).target_date)}` : ""}\n\nPrepare your profile first: upload a CV PDF or clear photo for an easy AI scan, or fill a short Quick Profile without a CV. Confirm your details, then start your interview.\n\nFree for crew.\n\n${linkFor(c.open_link_token)}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
   };
-  const shareZaloInvite = (c: Campaign) => shareZalo(`⚓ You are invited to a SeaMinds crew assessment\n\n${c.title}\nRank: ${c.rank_required}${c.vessel_type ? `\nVessel: ${c.vessel_type}` : ""}\n\nPrepare your profile first (CV upload or Quick Profile), then start your interview when you are free. Free for crew.\n\n${linkFor(c.open_link_token)}`);
+  const shareZaloInvite = (c: Campaign) => shareZalo(`⚓ You are invited to a SeaMinds crew assessment\n\n${c.title}\nRank: ${c.rank_required}${c.vessel_type ? `\nVessel: ${c.vessel_type}` : ""}${(c as any).target_date ? `\nPlease complete by: ${fmtDue((c as any).target_date)}` : ""}\n\nPrepare your profile first (CV upload or Quick Profile), then start your interview when you are free. Free for crew.\n\n${linkFor(c.open_link_token)}`);
 
   const sendEmailInvite = async () => {
     if (!inviteFor) return;
@@ -406,7 +406,7 @@ const ManagerInterviews = () => {
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <p style={{ color: "#fff", fontSize: 14, fontWeight: 800 }}>{c.title}</p>
                   <p style={{ color: "#94a3b8", fontSize: 11.5, marginTop: 3 }}>
-                    {c.rank_required}{c.vessel_type ? ` · ${c.vessel_type}` : ""} · {LANGS.find((l) => l.code === c.language)?.label || c.language}
+                    {c.rank_required}{c.vessel_type ? ` · ${c.vessel_type}` : ""} · {LANGS.find((l) => l.code === c.language)?.label || c.language}{(c as any).target_date ? ` · Complete by ${fmtDue((c as any).target_date)}` : ""}
                   </p>
                 </div>
                 <span style={{ color: "#64748b", fontSize: 10, whiteSpace: "nowrap" }}>
