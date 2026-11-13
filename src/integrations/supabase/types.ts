@@ -7859,6 +7859,14 @@ export type Database = {
         Args: { p_invite_id: string }
         Returns: Json
       }
+      manager_delete_campaign: {
+        Args: { p_campaign_id: string; p_force?: boolean }
+        Returns: Json
+      }
+      manager_delete_invite: {
+        Args: { p_force?: boolean; p_invite_id: string }
+        Returns: Json
+      }
       manager_interview_people: {
         Args: {
           p_offset?: number

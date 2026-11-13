@@ -9,7 +9,7 @@ const TrainingPlanner = lazy(() => import("@/components/manager/TrainingPlanner"
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Copy, Users, Mail } from "lucide-react";
+import { ArrowLeft, Plus, Copy, Users, Mail, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { campaignTrainingSummary, trainingStatus, type TrainingSummary } from "@/lib/training";
 
@@ -405,6 +405,16 @@ const ManagerInterviews = () => {
                 <span style={{ color: "#64748b", fontSize: 10, whiteSpace: "nowrap" }}>
                   {new Date(c.created_at).toLocaleDateString()}
                 </span>
+                <button aria-label="Delete interview" title="Delete interview" onClick={async () => {
+                  if (!window.confirm(`Delete "${c.title}" and all its unused invites?`)) return;
+                  let { data, error } = await supabase.rpc("manager_delete_campaign" as any, { p_campaign_id: c.id });
+                  if ((data as any)?.error === "HAS_PROGRESS") {
+                    if (!window.confirm(`${(data as any).count} candidate(s) already started or finished this interview. Delete anyway? Their results will be removed.`)) return;
+                    ({ data, error } = await supabase.rpc("manager_delete_campaign" as any, { p_campaign_id: c.id, p_force: true }));
+                  }
+                  if (error || !(data as any)?.ok) { toast.error("Could not delete this interview"); return; }
+                  toast.success("Interview deleted"); void load();
+                }} style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", padding: 2 }}><Trash2 size={14} /></button>
               </div>
 
               <div style={{ display: "flex", gap: 7, marginTop: 12, flexWrap: "wrap" }}>
