@@ -8023,6 +8023,10 @@ export type Database = {
       }
       marketplace_is_open: { Args: never; Returns: boolean }
       my_proctor_strikes: { Args: never; Returns: number }
+      name_from_campaign_title: {
+        Args: { p_rank: string; p_title: string }
+        Returns: string
+      }
       next_crew_unique_id: { Args: never; Returns: string }
       open_assessment_v2: {
         Args: { p_invite_id?: string; p_mode: string; p_restart?: boolean }
