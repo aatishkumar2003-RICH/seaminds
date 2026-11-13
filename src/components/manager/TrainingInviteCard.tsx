@@ -67,8 +67,12 @@ export default function TrainingInviteCard({ company }: { company: string }) {
   useEffect(() => {
     void trainingCatalog().then((d: any) => d?.ok && setItems(d.items || []));
     void supabase.auth.getUser().then(({ data: u }) => u.user && supabase.from("manager_profiles").select("id").eq("user_id", u.user.id).maybeSingle().then(({ data }) => data?.id && setMt(data.id)));
-    void supabase.rpc("company_crew_list" as any).then(({ data }) => setCrew(((data as any[]) || []) as Crew[]));
+    void supabase.rpc("manager_training_pool" as any).then(({ data }) => setCrew(((data as any[]) || []) as Crew[]));
   }, []);
+  useEffect(() => {
+    const f = (e: Event) => { const c = (e as CustomEvent).detail as Crew; if (c) { chooseCrew(c); document.getElementById("training-invite-card")?.scrollIntoView({ behavior: "smooth", block: "start" }); toast.success(`${`${c.first_name} ${c.last_name}`.trim() || "Crew"} selected — choose the training below`); } };
+    window.addEventListener("training-pick-crew", f); return () => window.removeEventListener("training-pick-crew", f);
+  });
   const titles = items.filter((i) => picked.includes(i.slug)).map((i) => i.title);
   const total = titles.length + practice.length + drafts.length;
   const msg = () => trainingInviteText(company, titles, window.location.origin, drafts, practice, mt);
@@ -105,7 +109,7 @@ export default function TrainingInviteCard({ company }: { company: string }) {
     setDrafts((d) => [...d, data.draft]); setTopic(""); toast.success("Briefing added to the invitation");
   };
   const chooseCrew = (c: Crew) => { setWho(c); setPhone(c.whatsapp || ""); setEmail(c.email || ""); setCq(""); if (rank === "Any rank" && RANKS.includes(c.rank)) setRank(c.rank); };
-  const matches = useMemo(() => !cq ? [] : crew.filter((c) => `${c.first_name} ${c.last_name} ${c.rank} ${c.vessel || ""} ${c.email || ""}`.toLowerCase().includes(cq.toLowerCase())).slice(0, 8), [cq, crew]);
+  const matches = useMemo(() => !cq ? [] : crew.filter((c) => `${c.first_name} ${c.last_name} ${c.rank} ${c.vessel || ""} ${c.email || ""} ${c.whatsapp || ""}`.toLowerCase().includes(cq.toLowerCase())).slice(0, 8), [cq, crew]);
   const btn = (bg: string, color = "#fff") => ({ flex: 1, minWidth: 110, padding: "9px 0", borderRadius: 10, border: "none", background: bg, color, fontSize: 12.5, fontWeight: 800, cursor: "pointer" });
   const chip = (on: boolean) => ({ padding: "6px 11px", borderRadius: 999, fontSize: 11.5, fontWeight: 700, cursor: "pointer", background: on ? GOLD : "transparent", color: on ? NAVY : GOLD, border: `1px solid ${on ? GOLD : "rgba(212,175,55,0.45)"}` });
   const field = { flex: 1, minWidth: 180, background: NAVY, color: "#fff", border: `1px solid ${BORDER}`, borderRadius: 9, padding: 8, fontSize: 12 } as const;
