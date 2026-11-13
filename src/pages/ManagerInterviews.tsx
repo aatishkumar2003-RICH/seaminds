@@ -4,7 +4,6 @@ import TrainingRadar from "@/components/manager/TrainingRadar";
 import TrainingInviteCard from "@/components/manager/TrainingInviteCard";
 import CandidateBoard from "@/components/manager/CandidateBoard";
 import InterviewPeopleBoard from "@/components/manager/InterviewPeopleBoard";
-import TrainingSentLog from "@/components/manager/TrainingSentLog";
 const TrainingPlanner = lazy(() => import("@/components/manager/TrainingPlanner"));
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -258,7 +257,7 @@ const ManagerInterviews = () => {
         )}
         {tab === "training" && <TrainingRadar />}
         {tab === "training" && <TrainingInviteCard company={companyName} />}
-        {tab === "training" && <TrainingSentLog />}
+        {tab === "training" && <InterviewPeopleBoard linkFor={linkFor} company={companyName} onOpenCampaign={() => { setTab("interviews" as any); setIview("campaigns"); }} initialKind="training" />}
         {tab === "interviews" && <div style={{ background: "rgba(212,175,55,0.07)", border: `1px solid rgba(212,175,55,0.3)`, borderRadius: 14, padding: 14, marginBottom: 16 }}>
           <p style={{ color: GOLD, fontSize: 13, fontWeight: 800, marginBottom: 5 }}>Free AI crew interviews</p>
           <p style={{ color: "#cbd5e1", fontSize: 12, lineHeight: 1.55 }}>
@@ -367,7 +366,7 @@ const ManagerInterviews = () => {
             ))}
           </div>
         )}
-        {tab === "interviews" && !creating && iview === "people" && campaigns.length > 0 && <InterviewPeopleBoard linkFor={linkFor} company={companyName} onOpenCampaign={() => setIview("campaigns")} />}
+        {tab === "interviews" && !creating && iview === "people" && <InterviewPeopleBoard linkFor={linkFor} company={companyName} onOpenCampaign={() => setIview("campaigns")} />}
 
         {campaigns.length === 0 && !creating && (
           <p style={{ color: "#64748b", fontSize: 13, textAlign: "center", padding: "36px 20px", lineHeight: 1.6 }}>
