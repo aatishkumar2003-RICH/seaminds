@@ -425,3 +425,12 @@ export const ORAL_BANK: Record<"deck" | "engine", [string, string][]> = {
 ]
 ]
 };
+
+const STOP = new Set(["the", "and", "for", "with", "your", "from", "onboard", "board", "ship", "first", "basic", "what", "how", "when", "this", "that", "system", "systems", "equipment"]);
+/** Up to `n` bank questions sharing keywords with the module title/equipment; fewest-overlap weeks get none. */
+export function oralFor(track: "deck" | "engine", text: string, n = 3): { id: string; q: string }[] {
+  const words = [...new Set(text.toLowerCase().match(/[a-z]{4,}/g) || [])].filter((w) => !STOP.has(w));
+  return ORAL_BANK[track]
+    .map(([id, q]) => ({ id, q, s: words.filter((w) => q.toLowerCase().includes(w.slice(0, 6))).length }))
+    .filter((x) => x.s > 0).sort((a, b) => b.s - a.s).slice(0, n).map(({ id, q }) => ({ id, q }));
+}
