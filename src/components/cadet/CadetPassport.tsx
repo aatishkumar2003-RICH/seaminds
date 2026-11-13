@@ -3,24 +3,33 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { Link } from "react-router-dom";
 import { CADET_CURRICULUM, stageLabel, type CadetTrack } from "@/lib/cadetCurriculum";
 
 type Res = { week: number; score: number; correct: number; total: number; checklist: boolean[]; officer_name: string | null; completed_at: string };
 type Prog = { enrolled: boolean; enrollment?: { track: CadetTrack; company: string | null; vessel: string | null; current_week: number; status: string; name: string | null }; dues?: string[]; results?: Res[] };
 
 export default function CadetPassport() {
+  const { user } = useAuth();
   const [p, setP] = useState<Prog | null>(null);
   const [open, setOpen] = useState<number | null>(null);
   const [ans, setAns] = useState<number[]>([]); const [chk, setChk] = useState<boolean[]>([]); const [officer, setOfficer] = useState("");
   const [busy, setBusy] = useState(false); const [graded, setGraded] = useState<{ score: number; answers: number[] } | null>(null);
   const load = useCallback(async () => { const { data } = await supabase.rpc("cadet_my_program" as any); setP((data as any)?.ok ? data as any : { enrolled: false }); }, []);
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { if (user) void load(); }, [load, user]);
 
+  if (!user) return (
+    <div className="rounded-xl border border-primary/40 bg-card p-5 text-sm space-y-3">
+      <p className="font-bold text-primary">⚓ Cadet Academy</p>
+      <p className="text-muted-foreground">Your company has enrolled you. Sign in or create your free account with the <b>same email</b> your company used, and your Cadet Passport opens here.</p>
+      <Button asChild className="w-full font-bold"><Link to={`/join?next=${encodeURIComponent("/training?tab=cadet")}`}>Sign in / Register as cadet</Link></Button>
+    </div>);
   if (!p) return <p className="text-muted-foreground">Loading…</p>;
   if (!p.enrolled || !p.enrollment) return (
     <div className="rounded-xl border border-primary/30 bg-card p-5 text-sm">
       <p className="font-bold text-primary">⚓ Cadet Academy</p>
-      <p className="mt-2 text-muted-foreground">This programme opens when your company enrols you. Ask your training manager to add the email you use on SeaMinds.</p>
+      <p className="mt-2 text-muted-foreground">No cadet enrolment found for {user.email}. Ask your training manager to enrol exactly this email, then refresh.</p>
     </div>);
 
   const e = p.enrollment; const cur = CADET_CURRICULUM[e.track]; const res = new Map((p.results || []).map((r) => [r.week, r]));
