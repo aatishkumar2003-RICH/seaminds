@@ -294,7 +294,7 @@ const ManagerInterviews = () => {
           <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: 16, marginBottom: 18 }}>
             <div style={{ marginBottom: 12 }}>
               <label style={label}>Rank you are interviewing for *</label>
-              <select value={rank} onChange={(e) => setRank(e.target.value)} style={input}>
+              <select value={rank} onChange={(e) => { if (deptOfRank(e.target.value) !== deptOfRank(rank)) setEngineTypes([]); setRank(e.target.value); }} style={input}>
                 <option value="">Choose rank…</option>
                 {RANKS.map((r) => <option key={r} value={r}>{r}</option>)}
               </select>
