@@ -5,6 +5,7 @@
 // GET ?u=<user_id>&s=<sig> = one-click unsubscribe. POST {dry:true} = report only.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { jobsLabel } from "../_shared/shipBulletin.ts";
 
 const SITE = "https://seaminds.life";
 const SVC_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -28,9 +29,9 @@ function featureBlock(nat: string | null, rank: string | null) {
     { t: "🧠 SeaMinds Brain", d: "Ask any machinery or navigation question by voice, photo or document — in your language.", u: `${SITE}/training?tab=brain` },
     { t: "🚢 Fleet incident drills", d: "LPG, tanker, bulk, container and reefer drills built on real casualty cases.", u: `${SITE}/training?tab=drills` },
   ];
-  const week = Math.floor(Date.now() / (7 * 86400000));
-  const f = /engineer|officer|master|mate|\d\/[eo]|c\/[eo]/i.test(rank || "") && week % 2 === 0 ? list[0] : list[week % list.length];
-  return `<div style="background:#0D1B2A;border-radius:10px;padding:12px;margin-top:8px"><b style="color:#D4AF37">${f.t}</b><br><span style="color:#CBD5E1;font-size:13px">${f.d}</span><br><a href="${f.u}" style="color:#D4AF37">Try it free →</a></div>`;
+  void rank;
+  const rows = list.map((f) => `<div style="margin-top:10px"><b style="color:#fff">${f.t}</b><br><span style="color:#CBD5E1;font-size:13px">${f.d}</span><br><a href="${f.u}" style="color:#D4AF37;font-size:13px">Start free →</a></div>`).join("");
+  return `<div style="background:#0D1B2A;border:1px solid rgba(212,175,55,0.3);border-radius:10px;padding:14px;margin-top:10px"><b style="color:#D4AF37;letter-spacing:1px;font-size:13px">🎓 FREE MARITIME TRAINING — JOIN TODAY</b>${rows}<p style="margin:14px 0 2px"><a href="${SITE}/training" style="background:#D4AF37;color:#0D1B2A;padding:10px 18px;border-radius:10px;text-decoration:none;font-weight:bold;display:inline-block">Start Free Training →</a></p></div>`;
 }
 const esc = (s: unknown) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -62,10 +63,10 @@ const lang = (nat?: string | null) => {
   return "en";
 };
 function topics(rank?: string | null, manager = false): string[] {
-  if (manager) return ["psc", "sire", "vetting", "detention", "retention", "crewing", "inspection", "compliance", "manager"];
+  if (manager) return ["for ship managers", "manning agenc", "sire", "psc", "vetting", "drill", "training", "interview", "inspection"];
   const r = (rank || "").toLowerCase();
-  if (/engineer|eto|electr|oiler|fitter|motorman|wiper|\d\/e|c\/e/.test(r)) return ["engine", "machinery", "bunker", "fuel", "boiler", "pump", "electric", "maintenance"];
-  if (/master|captain|officer|mate|\d\/o|c\/o|cadet/.test(r)) return ["navigation", "bridge", "colreg", "ecdis", "cargo", "weather", "psc", "sire"];
+  if (/engineer|eto|electr|oiler|fitter|motorman|wiper|\d\/e|c\/e/.test(r)) return ["meo", "oral", "lpg", "lng", ""engine", "machinery", "bunker", "fuel", "boiler", "pump", "electric", "maintenance"];
+  if (/master|captain|officer|mate|\d\/o|c\/o|cadet/.test(r)) return ["mmd", "marina", "oral", ""navigation", "bridge", "colreg", "ecdis", "cargo", "weather", "psc", "sire"];
   return ["safety", "seaman", "mlc", "rest hour", "wellness", "mooring", "career", "stcw"];
 }
 
@@ -90,12 +91,14 @@ async function posts(l: string): Promise<Post[]> {
   }
   return postCache[l];
 }
+// Weekly briefing is training-only: never send job-count digests.
+const JOB_DIGEST = /jobs?\s*(&|and)?\s*vacanc|live openings|new seafarer jobs|live maritime vacancies/i;
 async function pickPost(userId: string, l: string, kw: string[]): Promise<Post | null> {
   const since = new Date(Date.now() - 90 * 86400000).toISOString();
   const { data: prev } = await svc.from("briefing_log").select("post_id").eq("user_id", userId).gte("sent_at", since);
   const seen = new Set((prev || []).map((p: any) => p.post_id));
   for (const lg of l === "en" ? ["en"] : [l, "en"]) {
-    const list = (await posts(lg)).filter((p) => !seen.has(p.id));
+    const list = (await posts(lg)).filter((p) => !seen.has(p.id) && !JOB_DIGEST.test(p.title));
     const hit = list.find((p) => kw.some((k) => `${p.title} ${p.excerpt || ""}`.toLowerCase().includes(k)));
     if (hit || list[0]) return hit || list[0];
   }
@@ -113,14 +116,15 @@ function html(name: string, p: Post, extra: string, unsub: string, manager: bool
   const link = `${SITE}/blog/${p.slug}?utm_source=weekly_briefing&utm_medium=email&utm_campaign=${manager ? "manager" : "crew"}`;
   return `<div style="background:#0D1B2A;padding:24px;font-family:Arial,sans-serif;color:#E2E8F0">
   <div style="max-width:560px;margin:auto;background:#112240;border:1px solid rgba(212,175,55,0.3);border-radius:14px;padding:22px">
-  <div style="color:#D4AF37;font-weight:bold;font-size:13px;letter-spacing:1px">⚓ SEAMINDS WEEKLY MARITIME BRIEFING</div>
+  <div style="color:#D4AF37;font-weight:bold;font-size:13px;letter-spacing:1px">⚓ SEAMINDS WEEKLY MARITIME TRAINING BRIEFING</div>
+  <div style="color:#94A3B8;font-size:12px">Systems • Operational drills • STCW competencies</div>
   <p>Hi ${esc(name || "there")},</p>
   ${p.image_url ? `<img src="${esc(p.image_url)}" alt="" style="width:100%;border-radius:10px;margin:6px 0">` : ""}
   <h2 style="color:#fff;font-size:20px;margin:10px 0">${esc(p.title)}</h2>
   <p style="color:#CBD5E1">${esc((p.excerpt || "").slice(0, 320))}</p>
-  <p style="margin:18px 0"><a href="${link}" style="background:#D4AF37;color:#0D1B2A;padding:11px 20px;border-radius:10px;text-decoration:none;font-weight:bold;display:inline-block">Read Full Insight (3 min) →</a></p>
+  <p style="margin:18px 0"><a href="${link}" style="background:#D4AF37;color:#0D1B2A;padding:11px 20px;border-radius:10px;text-decoration:none;font-weight:bold;display:inline-block">Read the Lesson (3 min) →</a></p>
   ${extra}
-  <p style="color:#94A3B8;font-size:12px;margin-top:20px">One article a week from SeaMinds. <a href="${brandUnsub(unsub)}" style="color:#94A3B8">Unsubscribe</a></p>
+  <p style="color:#94A3B8;font-size:12px;margin-top:20px">One training lesson a week from The SeaMinds Team. <a href="${brandUnsub(unsub)}" style="color:#94A3B8">Unsubscribe</a></p>
   </div></div>`;
 }
 
@@ -183,17 +187,20 @@ Deno.serve(async (req) => {
   const batch = list.slice(0, budget);
   if (body.dry) return json({ group, used, eligible: list.length, would_send: batch.length });
 
+  const { data: oc } = await svc.rpc("vacancy_origin_counts");
+  const liveJobs = Number((oc as { total?: number } | null)?.total) || null;
   const stats = { group, used, eligible: list.length, sent: 0, failed: 0 };
   for (const r of batch) {
     const p = await pickPost(r.id, r.manager ? "en" : lang(r.nat), topics(r.rank, r.manager));
     if (!p) continue;
-    let extra = "";
+    let extra = r.manager ? featureBlock(null, null) : "";
     if (r.manager) {
-      extra = `<div style="background:#0D1B2A;border-radius:10px;padding:12px;margin-top:8px"><b style="color:#D4AF37">Post a vacancy in 15 seconds</b><br><span style="color:#CBD5E1;font-size:13px">Paste any advert into Vacancy Studio — free.</span><br><a href="${SITE}/post-vacancy" style="color:#D4AF37">Open Vacancy Studio →</a></div>`;
+      extra += `<div style="background:#0D1B2A;border-radius:10px;padding:12px;margin-top:8px"><b style="color:#D4AF37">${jobsLabel(liveJobs)} live seafarer berths on SeaMinds</b><br><span style="color:#CBD5E1;font-size:13px">Post a vacancy in 15 seconds</b><br><span style="color:#CBD5E1;font-size:13px">Paste any advert into Vacancy Studio — free.</span><br><a href="${SITE}/post-vacancy" style="color:#D4AF37">Open Vacancy Studio →</a></div>`;
     } else {
+      extra = featureBlock(r.nat, r.rank);
       const v = await vacancies(r.rank);
-      if (v.length) extra = `<div style="background:#0D1B2A;border-radius:10px;padding:12px;margin-top:8px"><b style="color:#D4AF37">Berths for your rank</b>${v.map((j: any) => `<div style="color:#CBD5E1;font-size:13px;margin-top:6px">• ${esc(j.rank_required)}${j.vessel_type ? ` — ${esc(j.vessel_type)}` : ""}${j.company_name ? ` (${esc(j.company_name)})` : ""}</div>`).join("")}<a href="${SITE}/jobs" style="color:#D4AF37;font-size:13px">See all vacancies →</a></div>`;
-      extra += featureBlock(r.nat, r.rank);
+      extra += `<div style="background:#0D1B2A;border-radius:10px;padding:12px;margin-top:8px"><b style="color:#D4AF37">💼 ${jobsLabel(liveJobs)} live seafarer jobs on SeaMinds</b><br><a href="${SITE}/jobs" style="color:#D4AF37;font-size:13px">Browse new jobs →</a></div>`;
+      if (v.length) extra += `<div style="background:#0D1B2A;border-radius:10px;padding:12px;margin-top:8px"><b style="color:#D4AF37">Berths for your rank</b>${v.map((j: any) => `<div style="color:#CBD5E1;font-size:13px;margin-top:6px">• ${esc(j.rank_required)}${j.vessel_type ? ` — ${esc(j.vessel_type)}` : ""}${j.company_name ? ` (${esc(j.company_name)})` : ""}</div>`).join("")}<a href="${SITE}/jobs" style="color:#D4AF37;font-size:13px">See all vacancies →</a></div>`;
     }
     // Recruiters use the outreach opt-out (confirm button, scanner-safe) so one click stops all emails.
     const unsub = r.recruiter ? `${REC_FN}?c=${r.id}&s=${await recSign(r.id)}` : `${FN_URL}?u=${r.id}&s=${await sign(r.id)}`;
@@ -202,7 +209,7 @@ Deno.serve(async (req) => {
       const res = await fetch("https://api.resend.com/emails", {
         method: "POST", headers: { Authorization: `Bearer ${RESEND_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({ from: "SeaMinds Briefing <crew@seaminds.life>", reply_to: "support@seaminds.life", to: [r.email],
-          subject: `⚓ This week: ${p.title}`.slice(0, 150), html: html(r.name, p, extra, unsub, r.manager),
+          subject: `⚓ Free training this week: ${p.title}`.slice(0, 150), html: html(r.name, p, extra, unsub, r.manager),
           headers: { "List-Unsubscribe": `<${unsub}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" } }),
       });
       ok = res.ok; if (!ok) error = (await res.text()).slice(0, 300);
