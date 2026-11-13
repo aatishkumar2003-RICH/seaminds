@@ -1,7 +1,7 @@
-// Hourly: 24h interview reminders (max 3, 24h apart) and post-interview improvement emails (max 3, 48h apart). Email only.
+// Hourly: daily interview reminders until done (60-day stop), daily pending-training digests + thank-you and post-interview improvement emails (max 3, 48h apart). Email only.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { authenticateCronRequest } from "../_shared/cron-auth.ts";
-import { followupEmail, type FollowupRow } from "../_shared/interviewFollowup.ts";
+import { followupEmail, assignmentEmail, type FollowupRow, type AssignmentRow } from "../_shared/interviewFollowup.ts";
 
 const svc = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 const RESEND_KEY = Deno.env.get("RESEND_API_KEY") || "";
@@ -48,5 +48,26 @@ Deno.serve(async (req) => {
       message: `Interview ${r.kind} ${ok ? "sent" : "failed"}`, metadata: { invite_id: r.invite_id, attempt: r.attempt, ok } });
     ok ? sent++ : skipped++;
   }
-  return Response.json({ ok: true, sent, skipped });
+  // Manager-assigned training & cadet weeks: one digest per crew per day, thank-you once all done.
+  let digests = 0;
+  const { data: due2, error: e2 } = await svc.rpc("assignment_reminders_due", { p_limit: CAP });
+  if (e2) console.error("assignment_reminders_due", e2.message);
+  for (const r of (due2 || []) as AssignmentRow[]) {
+    const m = assignmentEmail(r);
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${RESEND_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: "SeaMinds <crew@seaminds.life>", reply_to: "support@seaminds.life", to: [r.email], subject: m.subject, html: m.html, text: m.text }),
+    });
+    if (!res.ok) console.error("resend", res.status, await res.text());
+    const now = new Date().toISOString();
+    const { data: st } = await svc.from("assignment_reminder_state").select("reminder_count").eq("crew_id", r.crew_id).maybeSingle();
+    await svc.from("assignment_reminder_state").upsert(r.kind === "thanks"
+      ? { crew_id: r.crew_id, thanked_at: now, reminder_count: 0 }
+      : { crew_id: r.crew_id, last_reminder_at: now, reminder_count: (st?.reminder_count || 0) + 1 });
+    await svc.from("app_events").insert({ event_type: `training_${r.kind}_email`, severity: res.ok ? "info" : "warning",
+      message: `Training ${r.kind} ${res.ok ? "sent" : "failed"}`, metadata: { crew_id: r.crew_id, items: r.items?.length || 0 } });
+    if (res.ok) digests++;
+  }
+  return Response.json({ ok: true, sent, skipped, digests });
 });
