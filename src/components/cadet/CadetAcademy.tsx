@@ -104,6 +104,7 @@ export default function CadetAcademy({ company }: { company?: string }) {
             </div>
             <div style={{ height: 6, background: NAVY, borderRadius: 4, margin: "10px 0 6px" }}><div style={{ width: `${pct}%`, height: 6, background: GOLD, borderRadius: 4 }} /></div>
             <p style={{ color: "#cbd5e1", fontSize: 12 }}>Week {r.current_week}/32 · {stageLabel(r.current_week)} · {r.done} done · Avg {r.avg_score ?? "—"}%{` · e-TRB ${Math.round((r.done / CADET_WEEKS) * 100)}%`}</p>
+            <p style={{ fontSize: 12, fontWeight: 700, color: r.current_week > 4 && r.done >= 4 ? "#22c55e" : "#f59e0b" }}>{r.current_week > 4 && r.done >= 4 ? "🏢 Part 1 Pre-joining: done · 🚢 Part 2 Onboard in progress" : `🏢 Part 1 Pre-joining: module ${Math.min(4, r.current_week)} of 4 — not ready to fly yet`}</p>
             {(() => { const m = CADET_CURRICULUM[r.track][Math.min(32, r.current_week) - 1]; return m ? (
               <div style={{ background: NAVY, border: `1px solid ${BORDER}`, borderRadius: 10, padding: "8px 10px", margin: "6px 0" }}>
                 <p style={{ color: GOLD, fontSize: 11, fontWeight: 800 }}>📘 Learning now · Week {m.week}: {m.t}</p>
@@ -112,7 +113,7 @@ export default function CadetAcademy({ company }: { company?: string }) {
             <p style={{ color: MUTED, fontSize: 11 }}>Shore from {r.shore_start}{r.join_date ? ` · joins ${r.join_date}` : " · joining date not set"}{r.last_activity ? ` · last synced ${Math.max(0, Math.floor((Date.now() - new Date(r.last_activity).getTime()) / 86400000))} day(s) ago` : " · not synced yet"}</p>
             <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
               <select defaultValue="" aria-label="Record book report" onChange={(ev) => { const v = ev.target.value as TrbMode; ev.target.value = ""; if (v) void exportTrb(r.id, v); }} style={{ ...btn(true), appearance: "auto" }}>
-                <option value="" disabled>📄 Record Book report ▾</option><option value="summary">Progress summary (1–2 pages)</option><option value="full">Full 32-module record book</option></select>
+                <option value="" disabled>📄 Record Book report ▾</option><option value="summary">Progress summary (1–2 pages)</option><option value="clearance">Pre-joining clearance (Part 1)</option><option value="full">Full 32-module record book</option></select>
               <button onClick={() => setOpenId(openId === r.id ? null : r.id)} style={btn()}>{openId === r.id ? "Hide progress" : "👁 Live progress"}</button>
               <button onClick={async () => { const ok = await sendInvite(r.email, r.name, r.track, company); toast[ok ? "success" : "error"](ok ? `Invitation re-sent to ${r.email}` : "Email failed — use WhatsApp"); }} style={btn()}>✉️ Resend email</button>
               <a href={`https://wa.me/?text=${encodeURIComponent(cadetInviteText(r.name, company || "", r.track, r.email))}`} target="_blank" rel="noopener noreferrer" style={{ ...btn(), textDecoration: "none" }}>💬 WhatsApp</a>
