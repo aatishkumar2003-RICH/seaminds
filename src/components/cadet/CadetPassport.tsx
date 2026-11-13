@@ -9,6 +9,8 @@ import { CADET_CURRICULUM, stageLabel, type CadetTrack } from "@/lib/cadetCurric
 import { lessonFor } from "@/lib/cadetLessons";
 import { oralFor } from "@/lib/cadetOralBank";
 import { buildTrbPdf, trbShareText, type TrbInput } from "@/lib/cadetTrbPdf";
+import { shoreModule, shoreCleared } from "@/lib/cadetShoreInduction";
+import ShoreStudy from "./ShoreStudy";
 
 const CACHE = "cadet_prog_v1"; const OUTBOX = "cadet_outbox_v1";
 const readJ = (k: string, d: any) => { try { return JSON.parse(localStorage.getItem(k) || "") ?? d; } catch { return d; } };
@@ -22,7 +24,7 @@ export default function CadetPassport() {
   const [open, setOpen] = useState<number | null>(null);
   const [ans, setAns] = useState<number[]>([]); const [chk, setChk] = useState<boolean[]>([]); const [officer, setOfficer] = useState("");
   const [busy, setBusy] = useState(false); const [graded, setGraded] = useState<{ score: number; answers: number[] } | null>(null);
-  const [studied, setStudied] = useState(false); const [queued, setQueued] = useState<number>(readJ(OUTBOX, []).length);
+  const [part, setPart] = useState<1 | 2 | null>(null); const [studied, setStudied] = useState(false); const [queued, setQueued] = useState<number>(readJ(OUTBOX, []).length);
   const load = useCallback(async () => {
     const { data, error } = await supabase.rpc("cadet_my_program" as any);
     if (error) { const c = readJ(CACHE, null); if (c) setP(c); else setP({ enrolled: false }); return; }
@@ -81,6 +83,7 @@ export default function CadetPassport() {
         </div>
         {(() => { const L = lessonFor(e.track, open); return (
         <div className="rounded-xl border border-primary/40 bg-card p-4 space-y-3 text-sm">
+          {shoreModule(e.track, open) ? <ShoreStudy s={shoreModule(e.track, open)!} /> : <>
           <p className="font-bold text-primary">📘 Study first (~{L.minutes} min)</p>
           <p><b>Why it matters:</b> {L.why}</p>
           <div><p className="font-semibold">Step by step</p><ol className="list-decimal pl-5 space-y-1">{L.steps.map((x) => <li key={x}>{x}</li>)}</ol></div>
@@ -92,6 +95,7 @@ export default function CadetPassport() {
           {(() => { const oral = oralFor(e.track, `${m.t} ${m.eq.join(" ")}`); return oral.length > 0 && (
             <div><p className="font-semibold">🎖️ Superintendent oral questions</p><ul className="list-disc pl-5">{oral.map((x) => <li key={x.id}>{x.q}</li>)}</ul>
               <p className="text-[11px] text-muted-foreground">Real questions from superintendent interviews — prepare a spoken answer.</p></div>); })()}
+          </>}
           <div className="rounded-lg border border-primary/30 p-3"><p className="font-semibold">🧠 Senior Officer review (SI Brain)</p>
             <p className="text-xs text-muted-foreground">Get an independent senior officer's explanation of this module. The question is copied — paste it in the Brain.</p>
             <Button size="sm" variant="outline" className="mt-2" onClick={async () => { try { await navigator.clipboard.writeText(`Act as an independent senior officer (Chief Mate / Second Engineer). Review and explain for a ${e.track} cadet: "${m.t}". Equipment: ${m.eq.join(", ")}. Give normal parameters, common cadet mistakes, safety rules (${m.ref}) and what the officer will check. Point out anything in this lesson a senior officer would correct: ${L.steps.join("; ")}`); toast.success("Question copied — paste it in the Brain"); } catch { /* clipboard blocked */ } window.location.assign("/training?tab=brain"); }}>Ask Senior Officer Brain</Button></div>
@@ -146,7 +150,20 @@ export default function CadetPassport() {
           </div>); })()}
         <p className="mt-3 text-xs text-muted-foreground">Show this screen to your officer — they can check your passport anytime.</p>
       </div>
-      {cur.map((m) => {
+      {(() => { const cleared = shoreCleared(p.results || []); const tab = part ?? (e.current_week <= 4 && !cleared ? 1 : 2); const shoreDone = [1, 2, 3, 4].filter((w) => res.has(w)).length;
+        return (<>
+          <div className="grid grid-cols-2 gap-2">
+            {([1, 2] as const).map((n) => <button key={n} onClick={() => setPart(n)} className={`rounded-xl border p-3 text-left text-xs ${tab === n ? "border-primary bg-primary/15" : "border-primary/20 bg-card"}`}>
+              <p className="font-bold text-primary">{n === 1 ? "🏢 Part 1 · Pre-joining" : "🚢 Part 2 · Onboard e-TRB"}</p>
+              <p className="text-muted-foreground">{n === 1 ? `${shoreDone}/4 modules${cleared ? " · ✅ cleared" : ""}` : `${(p.results || []).filter((r) => r.week > 4).length}/28 modules`}</p></button>)}
+          </div>
+          {tab === 1 && <div className="rounded-xl border border-primary/30 bg-card p-3 text-xs space-y-2">
+            <p>Study at your own speed — joining in 2 days or in 2 months, finish all 4 before you fly. Modules open one after another; there is no waiting time.</p>
+            {cleared ? <Button size="sm" onClick={async () => { const { doc, file } = await buildTrbPdf({ name: e.name || user.email || "Cadet", email: user.email, company: e.company, vessel: e.vessel, track: e.track, current_week: e.current_week, results: p.results || [] }, "clearance"); doc.save(file); }}>📄 Download Pre-joining Clearance</Button>
+              : <p className="text-muted-foreground">Pass all 4 modules (60%+) to unlock your Pre-joining Clearance certificate for your crewing office.</p>}
+          </div>}
+          {tab === 2 && !cleared && <p className="rounded-xl border border-primary/30 bg-card p-3 text-xs text-muted-foreground">Part 1 not yet cleared — you can still continue on board, but finish Part 1 first if you can.</p>}
+          {cur.filter((m) => tab === 1 ? m.week <= 4 : m.week > 4).map((m) => {
         const r = res.get(m.week); const locked = m.week > e.current_week;
         return (
           <button key={m.week} disabled={locked} onClick={() => startWeek(m.week)}
@@ -154,6 +171,6 @@ export default function CadetPassport() {
             <div className="flex justify-between gap-2 text-xs text-muted-foreground"><span>Module {m.week} · {stageLabel(m.week)}</span><span>{r ? `✅ ${r.score}%` : locked ? "🔒" : "Pending"}</span></div>
             <p className="mt-0.5 text-sm font-semibold">{m.t}</p>
           </button>);
-      })}
+      })}</>); })()}
     </div>);
 }
