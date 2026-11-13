@@ -21,6 +21,8 @@ export default function InterviewPeopleBoard({ linkFor, company, onOpenCampaign,
   const [kind, setKind] = useState(initialKind); const [tick, setTick] = useState(0);
   useEffect(() => { const f = () => setTick((n) => n + 1); window.addEventListener("training-invite-sent", f); return () => window.removeEventListener("training-invite-sent", f); }, []);
   const [q, setQ] = useState(""); const [dq, setDq] = useState(""); const [rank, setRank] = useState(""); const [status, setStatus] = useState("all");
+  const [range, setRange] = useState<RangeKey>("any"); const [from, setFrom] = useState(""); const [to, setTo] = useState("");
+  const [vessel, setVessel] = useState(""); const [groupBy, setGroupBy] = useState<"none" | "rank" | "vessel" | "date">("none");
   const [off, setOff] = useState(0); const [res, setRes] = useState<any>(null); const [open, setOpen] = useState<string | null>(null);
   useEffect(() => { const t = setTimeout(() => { setDq(q.trim()); setOff(0); }, 300); return () => clearTimeout(t); }, [q]);
   useEffect(() => {
@@ -48,7 +50,15 @@ export default function InterviewPeopleBoard({ linkFor, company, onOpenCampaign,
     void go(); const i = setInterval(() => document.visibilityState === "visible" && void go(), 30000);
     return () => { alive = false; clearInterval(i); };
   }, [dq, rank, status, off, kind, tick]);
-  const rows: Person[] = res?.rows || []; const total = res?.total || 0;
+  const r0 = rangeFor(range, from, to);
+  const vesselOf = (p: Person) => p.invites.find((i) => i.vessel_type)?.vessel_type || "";
+  const vessels = [...new Set(((res?.rows || []) as Person[]).map(vesselOf).filter(Boolean))].sort();
+  const grp = (p: Person) => groupBy === "rank" ? (p.rank || "Rank not set") : groupBy === "vessel" ? (vesselOf(p) || "Any vessel / not set") : groupBy === "date" ? (p.last_at ? new Date(p.last_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "No date") : "";
+  const rows: Person[] = ((res?.rows || []) as Person[])
+    .filter((p) => inRange(p.last_at, r0) && (!vessel || vesselOf(p) === vessel))
+    .sort((a, b) => groupBy === "rank" || groupBy === "vessel" ? grp(a).localeCompare(grp(b)) : 0);
+  const total = res?.total || 0;
+  const nextDue = (p: Person) => { const inv = p.invites.find((i) => i.target_date && i.status !== "completed"); const t = (p.training || []).find((h) => h.target_date); return inv ? dueStatus(inv.target_date) : t && p.train_status !== "completed" ? dueStatus(t.target_date) : null; };
   const msg = (p: Person, inv: Invite) => `Hello ${p.name || ""}, ${company || "our company"} invites you to a free AI interview on SeaMinds (${inv.campaign}).${inv.target_date ? ` Please complete by ${fmtDue(inv.target_date)}.` : ""} Open your personal link: ${linkFor(inv.token)}`;
   return (
     <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: 14, marginBottom: 16 }}>
@@ -61,6 +71,18 @@ export default function InterviewPeopleBoard({ linkFor, company, onOpenCampaign,
           <option value="">All ranks</option>{(res?.ranks || []).map((r: string) => <option key={r} value={r}>{r}</option>)}
         </select>
       </div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
+        <select value={vessel} onChange={(e) => setVessel(e.target.value)} aria-label="Filter by vessel" style={{ ...field, minWidth: 130 }}>
+          <option value="">All vessels</option>{vessels.map((v) => <option key={v} value={v}>{v}</option>)}
+        </select>
+        <select value={range} onChange={(e) => setRange(e.target.value as RangeKey)} aria-label="Filter by date" style={{ ...field, minWidth: 120 }}>
+          <option value="any">Any date</option><option value="today">Today</option><option value="week">Last 7 days</option><option value="month">Last 30 days</option><option value="custom">Pick dates…</option>
+        </select>
+        {range === "custom" && <><input type="date" value={from} onChange={(e) => setFrom(e.target.value)} aria-label="From date" style={{ ...field, colorScheme: "dark" }} /><input type="date" value={to} onChange={(e) => setTo(e.target.value)} aria-label="To date" style={{ ...field, colorScheme: "dark" }} /></>}
+        <select value={groupBy} onChange={(e) => setGroupBy(e.target.value as any)} aria-label="Group by" style={{ ...field, minWidth: 120 }}>
+          <option value="none">No grouping</option><option value="rank">Group by rank</option><option value="vessel">Group by vessel</option><option value="date">Group by date</option>
+        </select>
+      </div>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
         {([["all", "📁 All sends"], ["interview", "🎙️ AI interviews"], ["training", "🎓 Training"]] as const).map(([k, l]) => <button key={k} onClick={() => { setKind(k); setOff(0); if (k === "training") setStatus("all"); }} style={{ ...chip(kind === k), borderRadius: 8 }}>{l}</button>)}
       </div>
@@ -68,12 +90,15 @@ export default function InterviewPeopleBoard({ linkFor, company, onOpenCampaign,
         {STATUS.map(([k, l]) => <button key={k} onClick={() => { setStatus(k); setOff(0); }} style={chip(status === k)}>{l} ({res?.counts?.[k] ?? 0})</button>)}
       </div>}
       {!res ? <p style={muted}><Loader2 size={13} className="inline animate-spin" /> Loading candidates…</p>
-        : rows.length === 0 ? <p style={muted}>No one matches. Clear the filters — every AI interview link and training invitation you send appears here, one card per person.</p>
+        : rows.length === 0 ? <p style={muted}>No one matches{range !== "any" || vessel ? " these dates/vessel on this page" : ""}. Clear the filters — every AI interview link and training invitation you send appears here, one card per person.</p>
         : <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
-          {rows.map((p) => {
+          {rows.map((p, idx) => {
             const st = ST[p.status] || ["", "#94a3b8"]; const isOpen = open === p.key;
+            const g = grp(p); const head = groupBy !== "none" && (idx === 0 || grp(rows[idx - 1]) !== g);
+            const due = nextDue(p);
             return (
-              <div key={p.key} style={{ background: NAVY, border: `1px solid ${isOpen ? GOLD : BORDER}`, borderRadius: 11 }}>
+              <div key={p.key}>{head && <p style={{ color: GOLD, fontSize: 12, fontWeight: 800, margin: "6px 0 4px" }}>{g} · {rows.filter((x) => grp(x) === g).length}</p>}
+              <div style={{ background: NAVY, border: `1px solid ${isOpen ? GOLD : BORDER}`, borderRadius: 11 }}>
                 <button onClick={() => setOpen(isOpen ? null : p.key)} style={{ width: "100%", textAlign: "left", background: "none", border: "none", color: "#fff", padding: 10, cursor: "pointer" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     {isOpen ? <ChevronDown size={14} color={GOLD} /> : <ChevronRight size={14} color={GOLD} />}
@@ -84,13 +109,15 @@ export default function InterviewPeopleBoard({ linkFor, company, onOpenCampaign,
                     {p.invites_count > 0 && <span style={pill}>🎙️ {p.invites_count} interview{p.invites_count === 1 ? "" : "s"}</span>}
                     {!!p.training?.length && <span style={pill}>🎓 {p.training.length} training send{p.training.length === 1 ? "" : "s"}{p.modules_total ? ` · ${p.modules_done}/${p.modules_total} modules` : ""}</span>}
                     {p.best_score != null && <span style={pill}>Best {Number(p.best_score).toFixed(2)} / 5.00</span>}
+                    {vesselOf(p) && <span style={pill}>🚢 {vesselOf(p)}</span>}
+                    {due && <span style={{ ...pill, color: due.color, borderColor: due.color }}>{due.label}</span>}
                     <span style={{ color: "#94a3b8" }}>Last sent {d(p.last_at)}</span>
                   </div>
                 </button>
                 {isOpen && <div style={{ borderTop: `1px solid ${BORDER}`, padding: "6px 10px 10px" }}>
                   {(p.training || []).map((h, i) => (
                     <div key={`t${i}`} style={{ padding: "7px 0", borderBottom: `1px solid ${BORDER}` }}>
-                      <div style={{ display: "flex", gap: 6, fontSize: 12, color: "#fff" }}><span style={{ flex: 1 }}>🎓 Training · {CH[h.channel] || h.channel}</span><span style={{ color: "#94a3b8" }}>{d(h.at)}</span></div>
+                      <div style={{ display: "flex", gap: 6, fontSize: 12, color: "#fff" }}><span style={{ flex: 1 }}>🎓 Training · {CH[h.channel] || h.channel}</span><span style={{ color: "#94a3b8" }}>{d(h.at)}{h.target_date ? ` · target ${fmtDue(h.target_date)}` : ""}</span></div>
                       {h.items?.length > 0 && <p style={{ fontSize: 11, color: "#cbd5e1", marginTop: 3 }}>{h.items.join(" · ")}</p>}
                       {h.message && <div style={{ display: "flex", gap: 6, marginTop: 5, flexWrap: "wrap" }}>
                         <button style={act} onClick={() => navigator.clipboard.writeText(h.message!).then(() => toast.success("Training invitation copied"), () => toast.error("Could not copy"))}><Copy size={12} /> Copy training link</button>
@@ -104,7 +131,7 @@ export default function InterviewPeopleBoard({ linkFor, company, onOpenCampaign,
                         <span style={{ flex: 1 }}>🎙️ AI interview · {inv.campaign}</span>
                         <span style={{ color: ST[inv.status]?.[1] || "#94a3b8", fontWeight: 700 }}>{label(inv.status)}{inv.score != null ? ` · ${Number(inv.score).toFixed(2)}` : ""}</span>
                       </div>
-                      <p style={{ fontSize: 10.5, color: "#94a3b8" }}>Sent {d(inv.created_at)}{inv.completed_at ? ` · finished ${d(inv.completed_at)}` : ""}</p>
+                      <p style={{ fontSize: 10.5, color: "#94a3b8" }}>Sent {d(inv.created_at)}{inv.completed_at ? ` · finished ${d(inv.completed_at)}` : ""}{inv.target_date ? ` · target ${fmtDue(inv.target_date)}` : ""}</p>
                       <div style={{ display: "flex", gap: 6, marginTop: 5, flexWrap: "wrap" }}>
                         <button style={act} onClick={() => navigator.clipboard.writeText(linkFor(inv.token)).then(() => toast.success("Interview link copied"), () => toast.error("Could not copy"))}><Copy size={12} /> Copy link</button>
                         {p.whatsapp && <a style={act} target="_blank" rel="noopener noreferrer" href={`https://wa.me/${p.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(msg(p, inv))}`}><MessageCircle size={12} /> WhatsApp</a>}
@@ -123,7 +150,7 @@ export default function InterviewPeopleBoard({ linkFor, company, onOpenCampaign,
                       </div>
                     </div>))}
                 </div>}
-              </div>);
+              </div></div>);
           })}
           {total > 25 && <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#94a3b8", alignItems: "center" }}>
             <button disabled={off === 0} onClick={() => setOff(Math.max(0, off - 25))} style={act}>‹ Prev</button>

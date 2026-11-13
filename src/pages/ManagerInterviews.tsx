@@ -1,7 +1,7 @@
 import { shareZalo } from "@/lib/zaloShare";
 import { useEffect, useState, useCallback, lazy, Suspense } from "react";
 import TrainingRadar from "@/components/manager/TrainingRadar";
-import { todayIso, fmtDue, dueStatus } from "@/lib/targetDate";
+import { todayIso, fmtDue } from "@/lib/targetDate";
 import TrainingInviteCard from "@/components/manager/TrainingInviteCard";
 import CandidateBoard from "@/components/manager/CandidateBoard";
 import RankCrewPicker, { sendInterviewInvites, type Pick } from "@/components/manager/RankCrewPicker";
