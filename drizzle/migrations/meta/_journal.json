@@ -967,6 +967,13 @@
       "when": 1794542113229,
       "tag": "0137_manager_training_pool",
       "breakpoints": true
+    },
+    {
+      "idx": 138,
+      "version": "7",
+      "when": 1794542144240,
+      "tag": "0138_fix_manager_training_pool",
+      "breakpoints": true
     }
   ]
 }
