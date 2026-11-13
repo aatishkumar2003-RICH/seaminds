@@ -974,6 +974,13 @@
       "when": 1794542144240,
       "tag": "0138_fix_manager_training_pool",
       "breakpoints": true
+    },
+    {
+      "idx": 139,
+      "version": "7",
+      "when": 1794544548146,
+      "tag": "0139_email_only_crew_intake",
+      "breakpoints": true
     }
   ]
 }
