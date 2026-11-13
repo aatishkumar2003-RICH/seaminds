@@ -67,8 +67,12 @@ export default function TrainingInviteCard({ company }: { company: string }) {
   useEffect(() => {
     void trainingCatalog().then((d: any) => d?.ok && setItems(d.items || []));
     void supabase.auth.getUser().then(({ data: u }) => u.user && supabase.from("manager_profiles").select("id").eq("user_id", u.user.id).maybeSingle().then(({ data }) => data?.id && setMt(data.id)));
-    void supabase.rpc("company_crew_list" as any).then(({ data }) => setCrew(((data as any[]) || []) as Crew[]));
+    void supabase.rpc("manager_training_pool" as any).then(({ data }) => setCrew(((data as any[]) || []) as Crew[]));
   }, []);
+  useEffect(() => {
+    const f = (e: Event) => { const c = (e as CustomEvent).detail as Crew; if (c) { chooseCrew(c); document.getElementById("training-invite-card")?.scrollIntoView({ behavior: "smooth", block: "start" }); toast.success(`${`${c.first_name} ${c.last_name}`.trim() || "Crew"} selected — choose the training below`); } };
+    window.addEventListener("training-pick-crew", f); return () => window.removeEventListener("training-pick-crew", f);
+  });
   const titles = items.filter((i) => picked.includes(i.slug)).map((i) => i.title);
   const total = titles.length + practice.length + drafts.length;
   const msg = () => trainingInviteText(company, titles, window.location.origin, drafts, practice, mt);
@@ -105,7 +109,7 @@ export default function TrainingInviteCard({ company }: { company: string }) {
     setDrafts((d) => [...d, data.draft]); setTopic(""); toast.success("Briefing added to the invitation");
   };
   const chooseCrew = (c: Crew) => { setWho(c); setPhone(c.whatsapp || ""); setEmail(c.email || ""); setCq(""); if (rank === "Any rank" && RANKS.includes(c.rank)) setRank(c.rank); };
-  const matches = useMemo(() => !cq ? [] : crew.filter((c) => `${c.first_name} ${c.last_name} ${c.rank} ${c.vessel || ""} ${c.email || ""}`.toLowerCase().includes(cq.toLowerCase())).slice(0, 8), [cq, crew]);
+  const matches = useMemo(() => !cq ? [] : crew.filter((c) => `${c.first_name} ${c.last_name} ${c.rank} ${c.vessel || ""} ${c.email || ""} ${c.whatsapp || ""}`.toLowerCase().includes(cq.toLowerCase())).slice(0, 8), [cq, crew]);
   const btn = (bg: string, color = "#fff") => ({ flex: 1, minWidth: 110, padding: "9px 0", borderRadius: 10, border: "none", background: bg, color, fontSize: 12.5, fontWeight: 800, cursor: "pointer" });
   const chip = (on: boolean) => ({ padding: "6px 11px", borderRadius: 999, fontSize: 11.5, fontWeight: 700, cursor: "pointer", background: on ? GOLD : "transparent", color: on ? NAVY : GOLD, border: `1px solid ${on ? GOLD : "rgba(212,175,55,0.45)"}` });
   const field = { flex: 1, minWidth: 180, background: NAVY, color: "#fff", border: `1px solid ${BORDER}`, borderRadius: 9, padding: 8, fontSize: 12 } as const;
@@ -113,7 +117,7 @@ export default function TrainingInviteCard({ company }: { company: string }) {
   const tray = [...titles.map((t) => ({ t, rm: () => setPicked((p) => p.filter((s) => items.find((i) => i.slug === s)?.title !== t)) })),
     ...practice.map((p) => ({ t: p.title, rm: () => togglePractice(p) })), ...drafts.map((d, k) => ({ t: `📘 ${d.title}`, rm: () => setDrafts((x) => x.filter((_, j) => j !== k)) }))];
   return (
-    <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: 14, marginBottom: 16 }}>
+    <div id="training-invite-card" style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: 14, marginBottom: 16, scrollMarginTop: 80 }}>
       <p style={{ color: GOLD, fontSize: 14, fontWeight: 800 }}>🎓 Send training invitation</p>
       <p style={{ color: "#94a3b8", fontSize: 11.5, marginTop: 3 }}>1) Choose crew 2) Tick training in any tab — mix freely 3) Send.</p>
 
@@ -124,7 +128,7 @@ export default function TrainingInviteCard({ company }: { company: string }) {
             <button type="button" onClick={() => { setWho(null); setPhone(""); setEmail(""); }} style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer" }}><X size={14} /></button>
           </div>
         ) : (
-          <input value={cq} onChange={(e) => setCq(e.target.value)} placeholder={crew.length ? `Search your company crew (${crew.length}) — or type contact below` : "No company crew yet — type contact below"} style={{ ...field, width: "100%" }} />
+          <input value={cq} onChange={(e) => setCq(e.target.value)} placeholder={crew.length ? `Search all your crew & candidates (${crew.length}) by name, rank, email or WhatsApp` : "No crew yet — type contact below"} style={{ ...field, width: "100%" }} />
         )}
         {matches.length > 0 && (
           <div style={{ position: "absolute", zIndex: 20, left: 0, right: 0, background: NAVY, border: `1px solid ${BORDER}`, borderRadius: 9, marginTop: 4, maxHeight: 220, overflowY: "auto" }}>
