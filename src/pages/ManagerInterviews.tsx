@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback, lazy, Suspense } from "react";
 import TrainingRadar from "@/components/manager/TrainingRadar";
 import TrainingInviteCard from "@/components/manager/TrainingInviteCard";
 import CandidateBoard from "@/components/manager/CandidateBoard";
+import RankCrewPicker, { sendInterviewInvites, type Pick } from "@/components/manager/RankCrewPicker";
 import InterviewPeopleBoard from "@/components/manager/InterviewPeopleBoard";
 const TrainingPlanner = lazy(() => import("@/components/manager/TrainingPlanner"));
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -101,6 +102,8 @@ const ManagerInterviews = () => {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteName, setInviteName] = useState("");
   const [sending, setSending] = useState(false);
+  const [picks, setPicks] = useState<Pick[]>([]);
+  const [invPicks, setInvPicks] = useState<Pick[]>([]);
 
   // create form
   const [title, setTitle] = useState("");
@@ -145,7 +148,8 @@ const ManagerInterviews = () => {
           .update({ engine_types: engineTypes, prep_tracks: prepTracks } as any)
           .eq("id", res.campaign_id);
       }
-      toast.success("Interview created. Share the link with your candidates.");
+      if (picks.length && res?.campaign_id) await sendInterviewInvites(res.campaign_id, picks);
+      else toast.success("Interview created. Share the link with your candidates.");
       setCreating(false);
       setTitle(""); setRank(""); setVessel(""); setLanguage("en"); setEngineTypes([]); setPrepTracks([]);
       await load();
@@ -200,6 +204,13 @@ const ManagerInterviews = () => {
   const sendEmailInvite = async () => {
     if (!inviteFor) return;
     const email = inviteEmail.trim();
+    if (invPicks.length) {
+      setSending(true);
+      const all = email && !invPicks.some((p) => p.email === email.toLowerCase()) ? [...invPicks, { email, name: inviteName.trim() }] : invPicks;
+      await sendInterviewInvites(inviteFor.id, all);
+      setSending(false); setInviteFor(null); setInviteEmail(""); setInviteName(""); setInvPicks([]);
+      return;
+    }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { toast.error("Enter a valid email address."); return; }
     setSending(true);
     try {
@@ -282,6 +293,7 @@ const ManagerInterviews = () => {
                 {RANKS.map((r) => <option key={r} value={r}>{r}</option>)}
               </select>
             </div>
+            {rank && <RankCrewPicker rank={rank} onChange={setPicks} />}
             <div style={{ marginBottom: 12 }}>
               <label style={label}>Vessel type</label>
               <select value={vessel} onChange={(e) => setVessel(e.target.value)} style={input}>
@@ -348,7 +360,7 @@ const ManagerInterviews = () => {
             <div style={{ display: "flex", gap: 9 }}>
               <button onClick={create} disabled={busy || !rank}
                 style={{ flex: 1, padding: "12px 0", borderRadius: 12, border: "none", background: GOLD, color: NAVY, fontWeight: 800, fontSize: 14, cursor: busy || !rank ? "default" : "pointer", opacity: busy || !rank ? 0.45 : 1 }}>
-                {busy ? "Creating…" : "Create Interview"}
+                {busy ? (picks.length ? "Creating & sending…" : "Creating…") : picks.length ? `Create & email ${picks.length} candidate${picks.length > 1 ? "s" : ""}` : "Create Interview (link only)"}
               </button>
               <button onClick={() => setCreating(false)}
                 style={{ padding: "12px 18px", borderRadius: 12, background: "transparent", color: "#94a3b8", border: `1px solid ${BORDER}`, fontSize: 13, cursor: "pointer" }}>
@@ -390,9 +402,9 @@ const ManagerInterviews = () => {
               </div>
 
               <div style={{ display: "flex", gap: 7, marginTop: 12, flexWrap: "wrap" }}>
-                <button onClick={() => { setInviteFor(c); setInviteEmail(""); setInviteName(""); }}
+                <button onClick={() => { setInviteFor(c); setInviteEmail(""); setInviteName(""); setInvPicks([]); }}
                   style={{ flex: 1, minWidth: 150, padding: "9px 0", borderRadius: 10, border: "none", background: GOLD, color: NAVY, fontSize: 12.5, fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                  <Mail size={13} /> Email invite
+                  <Mail size={13} /> Send invites
                 </button>
                 <button onClick={() => shareWhatsApp(c)}
                   style={{ flex: 1, minWidth: 150, padding: "9px 0", borderRadius: 10, border: "none", background: "#25D366", color: "#fff", fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}>
@@ -476,12 +488,13 @@ const ManagerInterviews = () => {
         <div onClick={() => !sending && setInviteFor(null)}
           style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", display: "flex", alignItems: "center", justifyContent: "center", padding: 18, zIndex: 60 }}>
           <div onClick={(e) => e.stopPropagation()}
-            style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 18, width: "100%", maxWidth: 400 }}>
-            <p style={{ color: GOLD, fontSize: 15, fontWeight: 800 }}>Email invite</p>
-            <p style={{ color: "#94a3b8", fontSize: 11.5, marginTop: 4 }}>{inviteFor.title}</p>
+            style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 18, width: "100%", maxWidth: 460, maxHeight: "92vh", overflowY: "auto" }}>
+            <p style={{ color: GOLD, fontSize: 15, fontWeight: 800 }}>Send interview invites</p>
+            <p style={{ color: "#94a3b8", fontSize: 11.5, marginTop: 4, marginBottom: 12 }}>{inviteFor.title}</p>
+            <RankCrewPicker rank={inviteFor.rank_required} onChange={setInvPicks} />
 
             <div style={{ marginTop: 14 }}>
-              <label style={label}>Candidate email *</label>
+              <label style={label}>Or one candidate email</label>
               <input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)}
                 placeholder="candidate@example.com" style={input} />
             </div>
@@ -492,9 +505,9 @@ const ManagerInterviews = () => {
             </div>
 
             <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
-              <button onClick={sendEmailInvite} disabled={sending || !inviteEmail.trim()}
-                style={{ flex: 1, padding: "12px 0", borderRadius: 12, border: "none", background: GOLD, color: NAVY, fontWeight: 800, fontSize: 14, cursor: sending || !inviteEmail.trim() ? "default" : "pointer", opacity: sending || !inviteEmail.trim() ? 0.45 : 1 }}>
-                {sending ? "Sending…" : "Send"}
+              <button onClick={sendEmailInvite} disabled={sending || (!inviteEmail.trim() && !invPicks.length)}
+                style={{ flex: 1, padding: "12px 0", borderRadius: 12, border: "none", background: GOLD, color: NAVY, fontWeight: 800, fontSize: 14, cursor: sending ? "default" : "pointer", opacity: sending || (!inviteEmail.trim() && !invPicks.length) ? 0.45 : 1 }}>
+                {sending ? "Sending…" : invPicks.length ? `Send to ${invPicks.length + (inviteEmail.trim() && !invPicks.some((p) => p.email === inviteEmail.trim().toLowerCase()) ? 1 : 0)}` : "Send"}
               </button>
               <button onClick={() => setInviteFor(null)} disabled={sending}
                 style={{ padding: "12px 18px", borderRadius: 12, background: "transparent", color: "#94a3b8", border: `1px solid ${BORDER}`, fontSize: 13, cursor: "pointer" }}>
