@@ -3,6 +3,8 @@ import { useEffect, useState, useCallback, lazy, Suspense } from "react";
 import TrainingRadar from "@/components/manager/TrainingRadar";
 import TrainingInviteCard from "@/components/manager/TrainingInviteCard";
 import CandidateBoard from "@/components/manager/CandidateBoard";
+import InterviewPeopleBoard from "@/components/manager/InterviewPeopleBoard";
+import TrainingSentLog from "@/components/manager/TrainingSentLog";
 const TrainingPlanner = lazy(() => import("@/components/manager/TrainingPlanner"));
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,6 +53,7 @@ const ManagerInterviews = () => {
   const [checking, setChecking] = useState(true);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [creating, setCreating] = useState(false);
+  const [iview, setIview] = useState<"people" | "campaigns">("people");
   const [openId, setOpenId] = useState<string | null>(null);
   const [board, setBoard] = useState<Record<string, any[]>>({});
   const [busy, setBusy] = useState(false);
@@ -255,6 +258,7 @@ const ManagerInterviews = () => {
         )}
         {tab === "training" && <TrainingRadar />}
         {tab === "training" && <TrainingInviteCard company={companyName} />}
+        {tab === "training" && <TrainingSentLog />}
         {tab === "interviews" && <div style={{ background: "rgba(212,175,55,0.07)", border: `1px solid rgba(212,175,55,0.3)`, borderRadius: 14, padding: 14, marginBottom: 16 }}>
           <p style={{ color: GOLD, fontSize: 13, fontWeight: 800, marginBottom: 5 }}>Free AI crew interviews</p>
           <p style={{ color: "#cbd5e1", fontSize: 12, lineHeight: 1.55 }}>
@@ -355,13 +359,23 @@ const ManagerInterviews = () => {
           </div>
         )}
 
+        {tab === "interviews" && !creating && campaigns.length > 0 && (
+          <div role="tablist" style={{ display: "flex", gap: 6, marginBottom: 12 }}>
+            {([["people", "👤 By candidate"], ["campaigns", "📁 By interview"]] as const).map(([k, l]) => (
+              <button key={k} role="tab" aria-selected={iview === k} onClick={() => setIview(k)}
+                style={{ flex: 1, padding: "8px 0", borderRadius: 10, fontWeight: 700, fontSize: 12.5, cursor: "pointer", border: `1px solid rgba(212,175,55,0.45)`, background: iview === k ? "rgba(212,175,55,0.18)" : "transparent", color: GOLD }}>{l}</button>
+            ))}
+          </div>
+        )}
+        {tab === "interviews" && !creating && iview === "people" && campaigns.length > 0 && <InterviewPeopleBoard linkFor={linkFor} company={companyName} onOpenCampaign={() => setIview("campaigns")} />}
+
         {campaigns.length === 0 && !creating && (
           <p style={{ color: "#64748b", fontSize: 13, textAlign: "center", padding: "36px 20px", lineHeight: 1.6 }}>
             No interviews yet. Create one, send the link on WhatsApp, and candidates appear here ranked by score.
           </p>
         )}
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ display: tab === "interviews" && iview === "people" ? "none" : "flex", flexDirection: "column", gap: 12 }}>
           {campaigns.map((c) => (
             <div key={c.id} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: 14 }}>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>

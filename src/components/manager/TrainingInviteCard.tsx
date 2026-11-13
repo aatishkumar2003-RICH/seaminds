@@ -73,7 +73,12 @@ export default function TrainingInviteCard({ company }: { company: string }) {
   const total = titles.length + practice.length + drafts.length;
   const msg = () => trainingInviteText(company, titles, window.location.origin, drafts, practice, mt);
   const link = () => { if (email.trim() || phone.trim()) void supabase.rpc("manager_link_training_crew" as any, { p_email: email.trim(), p_phone: phone.trim() }).then(({ data }: any) => data?.linked && toast.success("Crew added to your live training radar")); };
-  const need = () => { if (!total) { toast.error("Choose at least one training item first."); return false; } link(); return true; };
+  const record = (channel: "email" | "whatsapp" | "zalo" | "copy") => {
+    const allItems = [...titles, ...practice.map((p) => p.title), ...drafts.map((d) => d.title)];
+    void supabase.rpc("manager_log_training_send" as any, { p_name: who ? `${who.first_name} ${who.last_name}`.trim() : "", p_email: email.trim(), p_phone: phone.trim(), p_rank: who?.rank || (rank === "Any rank" ? "" : rank), p_channel: channel, p_items: allItems, p_message: msg() })
+      .then(() => window.dispatchEvent(new Event("training-invite-sent")));
+  };
+  const need = (channel?: "whatsapp" | "zalo" | "copy") => { if (!total) { toast.error("Choose at least one training item first."); return false; } link(); if (channel) record(channel); return true; };
   const full = () => { if (total >= MAX) { toast.error(`Up to ${MAX} items per invitation.`); return true; } return false; };
   const [sending, setSending] = useState(false);
   const sendEmail = async () => {
@@ -83,7 +88,7 @@ export default function TrainingInviteCard({ company }: { company: string }) {
     const { data, error } = await supabase.functions.invoke("send-training-invite", { body: { email: email.trim(), message: msg(), company } });
     setSending(false);
     const d = data as any;
-    if (!error && d?.ok) { toast.success(d.skipped ? `Already emailed to ${email.trim()} a few minutes ago` : `✅ Training invitation emailed to ${email.trim()}`); return; }
+    if (!error && d?.ok) { if (!d.skipped) record("email"); toast.success(d.skipped ? `Already emailed to ${email.trim()} a few minutes ago` : `✅ Training invitation emailed to ${email.trim()}`); return; }
     toast.error(d?.error || "Email could not be sent. Try WhatsApp, Zalo or Copy.");
   };
   const C = CATS.find((c) => c.key === cat)!;
@@ -168,9 +173,9 @@ export default function TrainingInviteCard({ company }: { company: string }) {
       </div>
       <div style={{ display: "flex", gap: 7, marginTop: 10, flexWrap: "wrap" }}>
         <button style={{ ...btn(GOLD, NAVY), opacity: sending ? 0.6 : 1 }} disabled={sending} onClick={() => void sendEmail()}>{sending ? "Sending…" : "📧 Email invite"}</button>
-        <button style={btn("#25D366")} onClick={() => need() && window.open(`https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(msg())}`, "_blank")}>WhatsApp</button>
-        <button style={btn("#0068FF")} onClick={() => need() && void shareZalo(msg(), phone || null)}>Send on Zalo</button>
-        <button style={btn("transparent", GOLD)} onClick={() => need() && navigator.clipboard.writeText(msg()).then(() => toast.success("Training invitation copied"), () => toast.error("Could not copy"))}>Copy</button>
+        <button style={btn("#25D366")} onClick={() => need("whatsapp") && window.open(`https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(msg())}`, "_blank")}>WhatsApp</button>
+        <button style={btn("#0068FF")} onClick={() => need("zalo") && void shareZalo(msg(), phone || null)}>Send on Zalo</button>
+        <button style={btn("transparent", GOLD)} onClick={() => need("copy") && navigator.clipboard.writeText(msg()).then(() => toast.success("Training invitation copied"), () => toast.error("Could not copy"))}>Copy</button>
       </div>
     </div>
   );
