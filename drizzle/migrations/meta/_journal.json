@@ -981,6 +981,13 @@
       "when": 1794544548146,
       "tag": "0139_email_only_crew_intake",
       "breakpoints": true
+    },
+    {
+      "idx": 140,
+      "version": "7",
+      "when": 1794545233633,
+      "tag": "0140_manager_training_portal_sync",
+      "breakpoints": true
     }
   ]
 }
