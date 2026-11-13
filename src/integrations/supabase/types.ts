@@ -7882,6 +7882,10 @@ export type Database = {
         }
         Returns: Json
       }
+      manager_lookup_crew_by_email: {
+        Args: { p_emails: string[] }
+        Returns: Json
+      }
       manager_maritime_report: {
         Args: { p_application: string }
         Returns: {

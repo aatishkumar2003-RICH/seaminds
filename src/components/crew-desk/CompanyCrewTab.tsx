@@ -32,7 +32,7 @@ export default function CompanyCrewTab() {
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [adding, setAdding] = useState(false); const [openId, setOpenId] = useState<string | null>(null);
   const [preview, setPreview] = useState<{ rows: CrewImportRow[]; problems: { line: number; reason: string }[]; duplicates: number; name: string } | null>(null);
-  const [bulkCv, setBulkCv] = useState(false); const lastIds = useRef<string[]>([]);
+  const [bulkCv, setBulkCv] = useState(false); const [emailList, setEmailList] = useState(false); const lastIds = useRef<string[]>([]);
   const [busy, setBusy] = useState(""); const fileRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -58,18 +58,18 @@ export default function CompanyCrewTab() {
     finally { if (fileRef.current) fileRef.current.value = ""; }
   };
   const importRows = async (rows: CrewImportRow[]) => {
-    let created = 0, skipped = 0, invalid = 0;
+    let created = 0, skipped = 0, invalid = 0, updated = 0, linked = 0;
     for (let i = 0; i < rows.length; i += 200) {
       setBusy(`Adding crew ${Math.min(i + 200, rows.length)} / ${rows.length}…`);
       const { data, error } = await supabase.rpc("company_crew_import" as any, { p_rows: rows.slice(i, i + 200) as any });
       const d = data as any;
       if (error || !d?.ok) { setBusy(""); toast.error(IMPORT_ERRORS[d?.error] || "Could not add crew. Please try again."); await load(); return null; }
       lastIds.current = [...(i ? lastIds.current : []), ...((d.records || []) as any[]).map((x: any) => x.id)];
-      created += d.created; skipped += d.skipped; invalid += d.invalid;
+      created += d.created; skipped += d.skipped; invalid += d.invalid; updated += d.updated || 0; linked += d.linked || 0;
     }
     setBusy(""); await load();
-    toast.success(`${created} crew added with new Crew IDs${skipped ? ` · ${skipped} already in your list` : ""}${invalid ? ` · ${invalid} skipped (missing name/rank)` : ""}`);
-    return created;
+    toast.success(`${created} crew added${updated ? ` · ${updated} existing updated` : ""}${linked ? ` · ${linked} already on SeaMinds` : ""}${skipped ? ` · ${skipped} already in your list` : ""}${invalid ? ` · ${invalid} skipped (no email, name or rank)` : ""}`);
+    return created + updated;
   };
 
   const markInvited = (ids: string[], channel: "whatsapp" | "link") => supabase.rpc("company_crew_mark_invited" as any, { p_ids: ids, p_channel: channel }).then(() => load());
@@ -114,6 +114,7 @@ export default function CompanyCrewTab() {
           <Button onClick={() => setAdding(true)} className="rounded-xl font-bold"><UserPlus size={16} /> Add crew member</Button>
           <Button variant="outline" onClick={() => fileRef.current?.click()} className="rounded-xl border-primary text-primary"><Upload size={16} /> Upload crew list (Excel / CSV)</Button>
           <Button variant="outline" onClick={() => setBulkCv(true)} className="rounded-xl border-primary text-primary"><ScanLine size={16} /> Bulk upload CVs</Button>
+          <Button variant="outline" onClick={() => setEmailList(true)} className="rounded-xl border-primary text-primary"><Mail size={16} /> Add by email list</Button>
           <Button variant="ghost" onClick={downloadTemplate} className="rounded-xl text-primary"><Download size={16} /> Download template</Button>
           <input ref={fileRef} type="file" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="hidden" onChange={e => pickFile(e.target.files?.[0])} />
         </div>
@@ -148,7 +149,7 @@ export default function CompanyCrewTab() {
             <div key={r.id} className="rounded-xl border border-border bg-card p-3 flex flex-wrap items-center gap-3">
               <input type="checkbox" checked={sel.has(r.id)} onChange={() => toggle(r.id)} aria-label="Select crew" />
               <button onClick={() => setOpenId(r.id)} className="flex-1 min-w-[200px] text-left">
-                <p className="font-semibold text-foreground">{`${r.first_name} ${r.last_name}`.trim()} <span className="text-xs font-mono text-primary ml-1">{r.live_crew_unique_id}</span></p>
+                <p className="font-semibold text-foreground">{`${r.first_name} ${r.last_name}`.trim() || r.email || "Awaiting details"} <span className="text-xs font-mono text-primary ml-1">{r.live_crew_unique_id}</span></p>
                 <p className="text-xs text-muted-foreground">{[r.rank, r.nationality, r.vessel].filter(Boolean).join(" • ")}</p>
                 <p className="text-[11px] text-muted-foreground">{r.sea_service?.length || 0} sea service · {r.certificates?.length || 0} certificates{soon ? <span className="text-amber-400"> · {soon} expiring ≤90 days</span> : null}</p>
               </button>
@@ -167,6 +168,7 @@ export default function CompanyCrewTab() {
       </div>
 
       {adding && <AddCrewDialog onClose={() => setAdding(false)} onSave={async (row, cv) => { const n = await importRows([row]); if (n) { if (cv && lastIds.current[0]) await archiveCv(lastIds.current[0], cv); setAdding(false); } }} />}
+      {emailList && <EmailListDialog onClose={() => setEmailList(false)} onAdd={async rows => { const n = await importRows(rows); if (n !== null) setEmailList(false); }} />}
       {bulkCv && <BulkCvDialog onClose={() => setBulkCv(false)} importOne={async (row, cv) => { const n = await importRows([row]); if (n && lastIds.current[0]) await archiveCv(lastIds.current[0], cv); return !!n; }} />}
       {preview && (
         <Dialog open onOpenChange={o => !o && setPreview(null)}>
@@ -206,10 +208,20 @@ function AddCrewDialog({ onClose, onSave }: { onClose: () => void; onSave: (r: C
     finally { setReading(false); if (cvIn.current) cvIn.current.value = ""; }
   };
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => setF(s => ({ ...s, [k]: e.target.value }));
+  const [found, setFound] = useState<any>(null);
+  const lookup = async () => {
+    const em = (f.email || "").trim().toLowerCase(); setFound(null);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)) return;
+    const { data } = await supabase.rpc("manager_lookup_crew_by_email" as any, { p_emails: [em] });
+    const m = ((data as any[]) || [])[0]; if (!m) return;
+    setFound(m);
+    setF(s => ({ ...s, first_name: s.first_name || m.first_name || "", last_name: s.last_name || m.last_name || "", rank: s.rank || m.rank || "", nationality: s.nationality || m.nationality || "" }));
+  };
   const submit = async () => {
-    if (!f.first_name?.trim() || !f.rank?.trim()) { toast.error("First name and rank are required."); return; }
+    const okEmail = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test((f.email || "").trim());
+    if (!okEmail && (!f.first_name?.trim() || !f.rank?.trim())) { toast.error("Enter an email address, or first name and rank."); return; }
     setSaving(true);
-    await onSave({ first_name: f.first_name.trim(), last_name: (f.last_name || "").trim(), rank: f.rank.trim(), nationality: f.nationality, email: f.email, whatsapp: f.whatsapp,
+    await onSave({ first_name: (f.first_name || "").trim(), last_name: (f.last_name || "").trim(), rank: (f.rank || "").trim(), nationality: f.nationality, email: f.email, whatsapp: f.whatsapp,
       date_of_birth: f.date_of_birth || undefined, vessel: f.vessel, available_from: f.available_from || undefined, cdc_no: f.cdc_no, passport_no: f.passport_no, ...extra } as any, cv || undefined);
     setSaving(false);
   };
@@ -226,10 +238,13 @@ function AddCrewDialog({ onClose, onSave }: { onClose: () => void; onSave: (r: C
               <p className="text-xs text-muted-foreground mt-1">PDF, Word, Excel, CSV, text or a photo of the CV</p></>}
         </button>
         <input ref={cvIn} type="file" accept={CV_ACCEPT} className="hidden" onChange={e => readCv(e.target.files?.[0])} />
+        <label className="block text-xs text-muted-foreground">Email — enough on its own; other details can be added later
+          <input type="email" value={f.email || ""} onChange={set("email")} onBlur={lookup} placeholder="crew@email.com" className={`${input} mt-1`} /></label>
+        {found && <p className="rounded-xl border border-primary/40 bg-primary/10 p-2 text-xs text-foreground">✨ Already registered on SeaMinds: <b>{`${found.first_name || ""} ${found.last_name || ""}`.trim() || "crew member"}</b>{found.rank ? ` · ${found.rank}` : ""}. Details filled in — they can accept your company link with their own login.</p>}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {field("first_name", "First name *")}{field("last_name", "Last name")}
-          {field("rank", "Rank *", "text", "e.g. Chief Officer")}{field("nationality", "Nationality")}
-          {field("whatsapp", "WhatsApp", "tel", "+63 917 123 4567")}{field("email", "Email", "email")}
+          {field("first_name", "First name")}{field("last_name", "Last name")}
+          {field("rank", "Rank", "text", "e.g. Chief Officer")}{field("nationality", "Nationality")}
+          {field("whatsapp", "WhatsApp", "tel", "+63 917 123 4567")}
           {field("vessel", "Vessel")}{field("available_from", "Available from", "date")}
           {field("date_of_birth", "Date of birth", "date")}{field("cdc_no", "CDC / Seaman book no.")}
           {field("passport_no", "Passport no.")}
@@ -442,6 +457,38 @@ function BulkCvDialog({ onClose, importOne }: { onClose: () => void; importOne: 
           {run ? <><Loader2 className="animate-spin" size={16} /> Adding crew…</> : reading ? "Reading CVs…" : `Add ${ready.length} crew & create Crew IDs`}
         </Button>
         {items.some(x => x.state === "added") && !run && <Button variant="outline" onClick={onClose} className="w-full rounded-xl">Done</Button>}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function EmailListDialog({ onClose, onAdd }: { onClose: () => void; onAdd: (rows: CrewImportRow[]) => Promise<void> }) {
+  const [text, setText] = useState(""); const [found, setFound] = useState<Record<string, any>>({}); const [busy, setBusy] = useState(false);
+  const emails = useMemo(() => Array.from(new Set((text.match(/[^\s@,;<>()"']+@[^\s@,;<>()"']+\.[a-z]{2,}/gi) || []).map(e => e.toLowerCase()))).slice(0, 500), [text]);
+  useEffect(() => {
+    if (!emails.length) { setFound({}); return; }
+    const t = setTimeout(async () => {
+      const { data } = await supabase.rpc("manager_lookup_crew_by_email" as any, { p_emails: emails });
+      const m: Record<string, any> = {}; ((data as any[]) || []).forEach(x => { m[x.email] = x; }); setFound(m);
+    }, 500);
+    return () => clearTimeout(t);
+  }, [emails]);
+  const reg = emails.filter(e => found[e]).length;
+  const add = async () => { setBusy(true); await onAdd(emails.map(email => ({ email, first_name: "", last_name: "", rank: "" } as any))); setBusy(false); };
+  return (
+    <Dialog open onOpenChange={o => !o && onClose()}>
+      <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>Add crew by email list</DialogTitle></DialogHeader>
+        <p className="text-xs text-muted-foreground">Paste emails from a sheet, email or chat — any format. Each one gets a Crew ID now. Crew already registered on SeaMinds are filled in automatically. Upload their CV later and the details join the same record (matched by email) — no duplicates.</p>
+        <textarea value={text} onChange={e => setText(e.target.value)} rows={6} placeholder={"crew1@email.com\ncrew2@email.com, crew3@email.com"} className={`${input} min-h-[140px] py-2`} />
+        {emails.length > 0 && <>
+          <p className="text-sm text-foreground"><b>{emails.length}</b> emails found · <span className="text-primary">{reg} already on SeaMinds</span> · {emails.length - reg} waiting for details</p>
+          <div className="max-h-56 overflow-y-auto rounded-xl border border-border divide-y divide-border">
+            {emails.map(e => <div key={e} className="flex justify-between gap-2 px-3 py-2 text-xs"><span className="truncate text-foreground">{e}</span>
+              {found[e] ? <span className="text-primary shrink-0">✨ {`${found[e].first_name || ""} ${found[e].last_name || ""}`.trim()}{found[e].rank ? ` · ${found[e].rank}` : ""}</span> : <span className="text-muted-foreground shrink-0">Details later</span>}</div>)}
+          </div>
+        </>}
+        <Button disabled={!emails.length || busy} onClick={add} className="rounded-xl font-bold w-full">{busy ? <Loader2 className="animate-spin" size={16} /> : null} Add {emails.length || ""} crew & create Crew IDs</Button>
       </DialogContent>
     </Dialog>
   );
