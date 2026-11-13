@@ -195,7 +195,7 @@ Deno.serve(async (req) => {
     if (!p) continue;
     let extra = r.manager ? featureBlock(null, null) : "";
     if (r.manager) {
-      extra += `<div style="background:#0D1B2A;border-radius:10px;padding:12px;margin-top:8px"><b style="color:#D4AF37">${jobsLabel(liveJobs)} live seafarer berths on SeaMinds</b><br><span style="color:#CBD5E1;font-size:13px">Post a vacancy in 15 seconds</b><br><span style="color:#CBD5E1;font-size:13px">Paste any advert into Vacancy Studio — free.</span><br><a href="${SITE}/post-vacancy" style="color:#D4AF37">Open Vacancy Studio →</a></div>`;
+      extra += `<div style="background:#0D1B2A;border-radius:10px;padding:12px;margin-top:8px"><b style="color:#D4AF37">${jobsLabel(liveJobs)} live seafarer berths on SeaMinds</b><br><span style="color:#CBD5E1;font-size:13px">Post a vacancy in 15 seconds — paste any advert into Vacancy Studio — free.</span><br><a href="${SITE}/post-vacancy" style="color:#D4AF37">Open Vacancy Studio →</a></div>`;
     } else {
       extra = featureBlock(r.nat, r.rank);
       const v = await vacancies(r.rank);
