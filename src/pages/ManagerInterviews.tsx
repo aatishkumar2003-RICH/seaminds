@@ -361,6 +361,7 @@ const ManagerInterviews = () => {
               </p>
             </div>
             <div style={{ marginBottom: 12 }}>
+              <p style={{ color: "#94a3b8", fontSize: 12, margin: "0 0 4px" }}>📤 Link created / sent on: {fmtDue(todayIso())}</p>
               <label style={{ ...label, color: GOLD, fontWeight: 800 }}>📅 Complete by (target date, optional)</label>
               <input type="date" value={targetDate} min={todayIso()} onChange={(e) => setTargetDate(e.target.value)} style={{ ...input, colorScheme: "dark" }} />
               <p style={{ color: "#64748b", fontSize: 10.5, marginTop: 5, lineHeight: 1.5 }}>Shown in the invitation. The link stays open after this date — late candidates are marked overdue, not blocked.</p>
@@ -406,7 +407,7 @@ const ManagerInterviews = () => {
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <p style={{ color: "#fff", fontSize: 14, fontWeight: 800 }}>{c.title}</p>
                   <p style={{ color: "#94a3b8", fontSize: 11.5, marginTop: 3 }}>
-                    {c.rank_required}{c.vessel_type ? ` · ${c.vessel_type}` : ""} · {LANGS.find((l) => l.code === c.language)?.label || c.language}{(c as any).target_date ? ` · Complete by ${fmtDue((c as any).target_date)}` : ""}
+                    {c.rank_required}{c.vessel_type ? ` · ${c.vessel_type}` : ""} · {LANGS.find((l) => l.code === c.language)?.label || c.language}{` · Created ${new Date((c as any).created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`}{(c as any).target_date ? ` · Complete by ${fmtDue((c as any).target_date)}` : ""}
                   </p>
                 </div>
                 <span style={{ color: "#64748b", fontSize: 10, whiteSpace: "nowrap" }}>
