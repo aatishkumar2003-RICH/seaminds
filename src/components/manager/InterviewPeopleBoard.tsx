@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ChevronDown, ChevronRight, Copy, Loader2, Mail, MessageCircle, Search } from "lucide-react";
+import { ChevronDown, ChevronRight, Copy, Loader2, Mail, MessageCircle, Search, Trash2 } from "lucide-react";
 
 const GOLD = "#D4AF37", NAVY = "#0D1B2A", CARD = "#112240", BORDER = "#1e3a5f";
 type Invite = { id: string; token: string; campaign: string; status: string; score: number | null; created_at: string; completed_at: string | null };
@@ -109,6 +109,16 @@ export default function InterviewPeopleBoard({ linkFor, company, onOpenCampaign,
                         {p.whatsapp && <a style={act} target="_blank" rel="noopener noreferrer" href={`https://wa.me/${p.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(msg(p, inv))}`}><MessageCircle size={12} /> WhatsApp</a>}
                         {p.email && <a style={act} href={`mailto:${p.email}?subject=${encodeURIComponent(`${company || "SeaMinds"} — AI interview`)}&body=${encodeURIComponent(msg(p, inv))}`}><Mail size={12} /> Email</a>}
                         {inv.status === "completed" && <button style={act} onClick={onOpenCampaign}>View result ›</button>}
+                        <button style={{ ...act, color: "#f87171", borderColor: "rgba(248,113,113,0.5)" }} onClick={async () => {
+                          if (!window.confirm(`Remove this invite (${inv.campaign})?`)) return;
+                          let { data, error } = await supabase.rpc("manager_delete_invite" as any, { p_invite_id: inv.id });
+                          if ((data as any)?.error === "HAS_PROGRESS") {
+                            if (!window.confirm("This candidate already started or finished this interview. Remove anyway? The result will be deleted.")) return;
+                            ({ data, error } = await supabase.rpc("manager_delete_invite" as any, { p_invite_id: inv.id, p_force: true }));
+                          }
+                          if (error || !(data as any)?.ok) { toast.error("Could not remove invite"); return; }
+                          toast.success("Invite removed"); setTick((n) => n + 1);
+                        }}><Trash2 size={12} /> Remove</button>
                       </div>
                     </div>))}
                 </div>}
