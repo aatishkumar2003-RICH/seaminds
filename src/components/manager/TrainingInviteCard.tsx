@@ -46,7 +46,7 @@ const MAX = 10;
 
 export const trainingInviteText = (company: string, titles: string[], origin = "https://seaminds.life", drafts: Draft[] = [], practice: Practice[] = [], mt = "", due = "", title = "", name = "") => {
   let n = 0; const tag = `utm_source=manager_invite${mt ? `&mt=${mt}` : ""}`;
-  return [`Hello${name ? ` ${name}` : ""},`, ...(title ? [`📌 ${title}`] : []), `${company || "Our company"} invites you to complete pre-joining training on SeaMinds:`, "",
+  return [`Hello${name ? ` ${name}` : ""},`, ...(title ? [`📌 ${title}`] : []), `📅 Sent: ${fmtDue(todayIso())}`, `${company || "Our company"} invites you to complete pre-joining training on SeaMinds:`, "",
     ...titles.map((t) => `${++n}. ${t}`),
     ...practice.map((p) => `${++n}. ${p.title}\n   ${origin}${p.path}${p.path.includes("?") ? "&" : "?"}${tag}`),
     ...drafts.flatMap((d) => ["", `📘 ${++n}. ${d.title}`, ...d.objectives.map((o) => `• ${o}`), "Key points:", ...d.key_points.map((p) => `- ${p}`), "Check yourself:", ...d.self_check.map((q) => `? ${q}`)]),
@@ -184,7 +184,7 @@ export default function TrainingInviteCard({ company }: { company: string }) {
         <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Crew WhatsApp / Zalo number" style={field} />
         <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Crew email (links an existing SeaMinds account on sign-in)" style={field} />
       </div>
-      <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, color: GOLD, fontSize: 12.5, fontWeight: 800, flexWrap: "wrap" }}>📅 Complete by (target date, optional)
+      <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, color: GOLD, fontSize: 12.5, fontWeight: 800, flexWrap: "wrap" }}><span style={{ color: "#94a3b8", fontWeight: 600, width: "100%" }}>📤 Link created / sent on: {fmtDue(todayIso())}</span>📅 Complete by (target date, optional)
         <input type="date" value={due} min={todayIso()} onChange={(e) => setDue(e.target.value)} style={{ ...field, flex: "none", colorScheme: "dark" }} />
       </label>
       <div style={{ display: "flex", gap: 7, marginTop: 10, flexWrap: "wrap" }}>

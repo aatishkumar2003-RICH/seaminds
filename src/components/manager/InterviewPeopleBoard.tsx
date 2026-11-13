@@ -7,7 +7,7 @@ import { ChevronDown, ChevronRight, Copy, Loader2, Mail, MessageCircle, Search, 
 const GOLD = "#D4AF37", NAVY = "#0D1B2A", CARD = "#112240", BORDER = "#1e3a5f";
 type Invite = { id: string; token: string; campaign: string; status: string; score: number | null; created_at: string; completed_at: string | null; target_date?: string | null; vessel_type?: string | null };
 type TH = { at: string; channel: string; items: string[]; message: string | null; target_date?: string | null };
-type Person = { key: string; name: string; rank: string | null; nationality: string | null; email: string | null; whatsapp: string | null; invites_count: number; last_at: string; best_score: number | null; status: string; shortlisted: boolean; invites: Invite[]; training?: TH[]; train_status?: string; modules_done?: number; modules_total?: number };
+type Person = { key: string; name: string; rank: string | null; nationality: string | null; email: string | null; whatsapp: string | null; invites_count: number; last_at: string; best_score: number | null; status: string; shortlisted: boolean; invites: Invite[]; training?: TH[]; train_status?: string; modules_done?: number; modules_total?: number; vessel?: string | null; first_at?: string | null };
 const CH: Record<string, string> = { email: "✉️ Email", whatsapp: "🟢 WhatsApp", zalo: "🔵 Zalo", copy: "📋 Link copied" };
 const TST: Record<string, string> = { completed: "Training complete", in_progress: "Training in progress", joined: "Signed in · not started", not_joined: "Not signed in yet" };
 const pkey = (email?: string | null, phone?: string | null, name?: string | null) => (email || "").toLowerCase().trim() || (phone || "").replace(/\D/g, "") || (name || "").toLowerCase().trim();
@@ -39,7 +39,7 @@ export default function InterviewPeopleBoard({ linkFor, company, onOpenCampaign,
       for (const p of ia.rows as Person[]) m.set(pkey(p.email, p.whatsapp, p.name), { ...p, training: [] });
       for (const t of ta.rows as any[]) {
         const k = pkey(t.email, t.phone, t.name); const ex = m.get(k);
-        const extra = { training: t.history as TH[], train_status: t.status, modules_done: t.modules_done, modules_total: t.modules_total };
+        const extra = { vessel: t.vessel || null, first_at: t.first_sent || null, training: t.history as TH[], train_status: t.status, modules_done: t.modules_done, modules_total: t.modules_total };
         if (ex) m.set(k, { ...ex, ...extra, whatsapp: ex.whatsapp || t.phone, email: ex.email || t.email, last_at: ex.last_at > t.last_sent ? ex.last_at : t.last_sent });
         else m.set(k, { key: `t:${t.key}`, name: t.name, rank: t.rank, nationality: null, email: t.email, whatsapp: t.phone, invites_count: 0, last_at: t.last_sent, best_score: null, status: "", shortlisted: false, invites: [], ...extra });
       }
@@ -50,13 +50,16 @@ export default function InterviewPeopleBoard({ linkFor, company, onOpenCampaign,
     void go(); const i = setInterval(() => document.visibilityState === "visible" && void go(), 30000);
     return () => { alive = false; clearInterval(i); };
   }, [dq, rank, status, off, kind, tick]);
+  const [roster, setRoster] = useState<Record<string, string>>({});
+  useEffect(() => { void (supabase as any).from("company_crew_records").select("email,vessel").not("vessel", "is", null).limit(5000).then(({ data }: any) => { const m: Record<string, string> = {}; for (const r of data || []) if (r.email && r.vessel?.trim()) m[r.email.toLowerCase().trim()] = r.vessel.trim(); setRoster(m); }); }, [tick]);
   const r0 = rangeFor(range, from, to);
-  const vesselOf = (p: Person) => p.invites.find((i) => i.vessel_type)?.vessel_type || "";
-  const vessels = [...new Set(((res?.rows || []) as Person[]).map(vesselOf).filter(Boolean))].sort();
+  const vesselOf = (p: Person) => p.vessel || roster[(p.email || "").toLowerCase().trim()] || p.invites.find((i) => i.vessel_type)?.vessel_type || "";
+  const vessels = [...new Set([...((res?.rows || []) as Person[]).map(vesselOf), ...Object.values(roster)].filter(Boolean))].sort();
   const grp = (p: Person) => groupBy === "rank" ? (p.rank || "Rank not set") : groupBy === "vessel" ? (vesselOf(p) || "Any vessel / not set") : groupBy === "date" ? (p.last_at ? new Date(p.last_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "No date") : "";
   const rows: Person[] = ((res?.rows || []) as Person[])
     .filter((p) => inRange(p.last_at, r0) && (!vessel || vesselOf(p) === vessel))
     .sort((a, b) => groupBy === "rank" || groupBy === "vessel" ? grp(a).localeCompare(grp(b)) : 0);
+  const firstOf = (p: Person) => [p.first_at, ...p.invites.map((i) => i.created_at), ...(p.training || []).map((h) => h.at)].filter(Boolean).sort()[0] || p.last_at;
   const total = res?.total || 0;
   const nextDue = (p: Person) => { const inv = p.invites.find((i) => i.target_date && i.status !== "completed"); const t = (p.training || []).find((h) => h.target_date); return inv ? dueStatus(inv.target_date) : t && p.train_status !== "completed" ? dueStatus(t.target_date) : null; };
   const msg = (p: Person, inv: Invite) => `Hello ${p.name || ""}, ${company || "our company"} invites you to a free AI interview on SeaMinds (${inv.campaign}).${inv.target_date ? ` Please complete by ${fmtDue(inv.target_date)}.` : ""} Open your personal link: ${linkFor(inv.token)}`;
@@ -111,7 +114,7 @@ export default function InterviewPeopleBoard({ linkFor, company, onOpenCampaign,
                     {p.best_score != null && <span style={pill}>Best {Number(p.best_score).toFixed(2)} / 5.00</span>}
                     {vesselOf(p) && <span style={pill}>🚢 {vesselOf(p)}</span>}
                     {due && <span style={{ ...pill, color: due.color, borderColor: due.color }}>{due.label}</span>}
-                    <span style={{ color: "#94a3b8" }}>Last sent {d(p.last_at)}</span>
+                    <span style={{ color: "#94a3b8" }}>📅 Sent {d(firstOf(p))}{firstOf(p) && firstOf(p) !== p.last_at ? ` · last ${d(p.last_at)}` : ""}</span>
                   </div>
                 </button>
                 {isOpen && <div style={{ borderTop: `1px solid ${BORDER}`, padding: "6px 10px 10px" }}>
