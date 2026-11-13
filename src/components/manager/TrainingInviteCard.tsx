@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { trainingCatalog, MATRIX_TIERS, type CatalogItem } from "@/lib/training";
 import { shareZalo } from "@/lib/zaloShare";
+import { fmtDue, todayIso } from "@/lib/targetDate";
 import { Loader2, Sparkles, X } from "lucide-react";
 
 const GOLD = "#D4AF37", NAVY = "#0D1B2A", CARD = "#112240", BORDER = "#1e3a5f";
@@ -43,12 +44,13 @@ const PRACTICE: Record<"english" | "drills" | "rank", Practice[]> = {
 const RANKS = ["Any rank", "Master", "Chief Officer", "2nd Officer", "3rd Officer", "Chief Engineer", "2nd Engineer", "3rd Engineer", "4th Engineer", "ETO", "Bosun", "AB", "Oiler", "Cadet"];
 const MAX = 10;
 
-export const trainingInviteText = (company: string, titles: string[], origin = "https://seaminds.life", drafts: Draft[] = [], practice: Practice[] = [], mt = "") => {
+export const trainingInviteText = (company: string, titles: string[], origin = "https://seaminds.life", drafts: Draft[] = [], practice: Practice[] = [], mt = "", due = "") => {
   let n = 0; const tag = `utm_source=manager_invite${mt ? `&mt=${mt}` : ""}`;
   return [`Hello,`, `${company || "Our company"} invites you to complete pre-joining training on SeaMinds:`, "",
     ...titles.map((t) => `${++n}. ${t}`),
     ...practice.map((p) => `${++n}. ${p.title}\n   ${origin}${p.path}${p.path.includes("?") ? "&" : "?"}${tag}`),
     ...drafts.flatMap((d) => ["", `📘 ${++n}. ${d.title}`, ...d.objectives.map((o) => `• ${o}`), "Key points:", ...d.key_points.map((p) => `- ${p}`), "Check yourself:", ...d.self_check.map((q) => `? ${q}`)]),
+    ...(due ? ["", `Please complete by: ${fmtDue(due)}`] : []),
     "", `Sign in free and open My training: ${origin}/training?${tag}`, "Free for crew."].join("\n");
 };
 
@@ -62,7 +64,7 @@ export default function TrainingInviteCard({ company }: { company: string }) {
   const [topic, setTopic] = useState(""); const [rank, setRank] = useState("Any rank");
   const [drafting, setDrafting] = useState(false); const [drafts, setDrafts] = useState<Draft[]>([]);
   const [phone, setPhone] = useState(""); const [email, setEmail] = useState("");
-  const [mt, setMt] = useState("");
+  const [mt, setMt] = useState(""); const [due, setDue] = useState("");
   const [crew, setCrew] = useState<Crew[]>([]); const [cq, setCq] = useState(""); const [who, setWho] = useState<Crew | null>(null);
   useEffect(() => {
     void trainingCatalog().then((d: any) => d?.ok && setItems(d.items || []));
@@ -75,14 +77,14 @@ export default function TrainingInviteCard({ company }: { company: string }) {
   });
   const titles = items.filter((i) => picked.includes(i.slug)).map((i) => i.title);
   const total = titles.length + practice.length + drafts.length;
-  const msg = () => trainingInviteText(company, titles, window.location.origin, drafts, practice, mt);
+  const msg = () => trainingInviteText(company, titles, window.location.origin, drafts, practice, mt, due);
   const link = () => { if (email.trim() || phone.trim()) void supabase.rpc("manager_assign_training" as any, { p_email: email.trim(), p_phone: phone.trim(), p_slugs: picked }).then(({ data }: any) => {
     if (data?.linked) toast.success(data.assigned ? `${data.assigned} module${data.assigned > 1 ? "s" : ""} now waiting in the crew's My training → Required` : "Crew added to your live training radar");
     else if (data?.pending && picked.length) toast.message("Crew is not on SeaMinds yet — modules will appear in their My training as soon as they sign up with this email");
   }); };
   const record = (channel: "email" | "whatsapp" | "zalo" | "copy") => {
     const allItems = [...titles, ...practice.map((p) => p.title), ...drafts.map((d) => d.title)];
-    void supabase.rpc("manager_log_training_send" as any, { p_name: who ? `${who.first_name} ${who.last_name}`.trim() : "", p_email: email.trim(), p_phone: phone.trim(), p_rank: who?.rank || (rank === "Any rank" ? "" : rank), p_channel: channel, p_items: allItems, p_message: msg() })
+    void supabase.rpc("manager_log_training_send" as any, { p_name: who ? `${who.first_name} ${who.last_name}`.trim() : "", p_email: email.trim(), p_phone: phone.trim(), p_rank: who?.rank || (rank === "Any rank" ? "" : rank), p_channel: channel, p_items: allItems, p_message: msg(), p_target: due || null })
       .then(() => window.dispatchEvent(new Event("training-invite-sent")));
   };
   const need = (channel?: "whatsapp" | "zalo" | "copy") => { if (!total) { toast.error("Choose at least one training item first."); return false; } link(); if (channel) record(channel); return true; };
@@ -178,6 +180,9 @@ export default function TrainingInviteCard({ company }: { company: string }) {
         <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Crew WhatsApp / Zalo number" style={field} />
         <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Crew email (links an existing SeaMinds account on sign-in)" style={field} />
       </div>
+      <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, color: "#94a3b8", fontSize: 11.5 }}>📅 Complete by (optional)
+        <input type="date" value={due} min={todayIso()} onChange={(e) => setDue(e.target.value)} style={{ ...field, flex: "none", colorScheme: "dark" }} />
+      </label>
       <div style={{ display: "flex", gap: 7, marginTop: 10, flexWrap: "wrap" }}>
         <button style={{ ...btn(GOLD, NAVY), opacity: sending ? 0.6 : 1 }} disabled={sending} onClick={() => void sendEmail()}>{sending ? "Sending…" : "📧 Email invite"}</button>
         <button style={btn("#25D366")} onClick={() => need("whatsapp") && window.open(`https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(msg())}`, "_blank")}>WhatsApp</button>
