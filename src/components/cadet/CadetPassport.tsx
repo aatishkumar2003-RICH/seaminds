@@ -6,6 +6,10 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
 import { CADET_CURRICULUM, stageLabel, type CadetTrack } from "@/lib/cadetCurriculum";
+import { lessonFor } from "@/lib/cadetLessons";
+
+const CACHE = "cadet_prog_v1"; const OUTBOX = "cadet_outbox_v1";
+const readJ = (k: string, d: any) => { try { return JSON.parse(localStorage.getItem(k) || "") ?? d; } catch { return d; } };
 
 type Res = { week: number; score: number; correct: number; total: number; checklist: boolean[]; officer_name: string | null; completed_at: string };
 type Prog = { enrolled: boolean; enrollment?: { track: CadetTrack; company: string | null; vessel: string | null; current_week: number; status: string; name: string | null }; dues?: string[]; results?: Res[] };
@@ -16,8 +20,20 @@ export default function CadetPassport() {
   const [open, setOpen] = useState<number | null>(null);
   const [ans, setAns] = useState<number[]>([]); const [chk, setChk] = useState<boolean[]>([]); const [officer, setOfficer] = useState("");
   const [busy, setBusy] = useState(false); const [graded, setGraded] = useState<{ score: number; answers: number[] } | null>(null);
-  const load = useCallback(async () => { const { data } = await supabase.rpc("cadet_my_program" as any); setP((data as any)?.ok ? data as any : { enrolled: false }); }, []);
-  useEffect(() => { if (user) void load(); }, [load, user]);
+  const [studied, setStudied] = useState(false); const [queued, setQueued] = useState<number>(readJ(OUTBOX, []).length);
+  const load = useCallback(async () => {
+    const { data, error } = await supabase.rpc("cadet_my_program" as any);
+    if (error) { const c = readJ(CACHE, null); if (c) setP(c); else setP({ enrolled: false }); return; }
+    const v = (data as any)?.ok ? data as any : { enrolled: false }; setP(v); try { localStorage.setItem(CACHE, JSON.stringify(v)); } catch { /* full */ }
+  }, []);
+  const flush = useCallback(async () => {
+    const box: any[] = readJ(OUTBOX, []); if (!box.length || !navigator.onLine) return;
+    const left: any[] = [];
+    for (const b of box) { const { data, error } = await supabase.rpc("cadet_submit_week" as any, b); if (error || !(data as any)?.ok) left.push(b); }
+    localStorage.setItem(OUTBOX, JSON.stringify(left)); setQueued(left.length);
+    if (left.length < box.length) { toast.success(`Synced ${box.length - left.length} saved week(s) to your company`); void load(); }
+  }, [load]);
+  useEffect(() => { if (!user) return; const c = readJ(CACHE, null); if (c) setP(c); void flush().then(load); const on = () => void flush(); window.addEventListener("online", on); return () => window.removeEventListener("online", on); }, [load, flush, user]);
 
   if (!user) return (
     <div className="rounded-xl border border-primary/40 bg-card p-5 text-sm space-y-3">
@@ -33,12 +49,16 @@ export default function CadetPassport() {
     </div>);
 
   const e = p.enrollment; const cur = CADET_CURRICULUM[e.track]; const res = new Map((p.results || []).map((r) => [r.week, r]));
-  const startWeek = (w: number) => { const m = cur[w - 1]; setOpen(w); setAns(Array(m.q.length).fill(-1)); setChk(res.get(w)?.checklist || Array(m.chk.length).fill(false)); setOfficer(res.get(w)?.officer_name || ""); setGraded(null); };
+  const startWeek = (w: number) => { const m = cur[w - 1]; setOpen(w); setAns(Array(m.q.length).fill(-1)); setChk(res.get(w)?.checklist || Array(m.chk.length).fill(false)); setOfficer(res.get(w)?.officer_name || ""); setGraded(null); setStudied(!!res.get(w)); };
   const submit = async () => {
     if (open === null) return; if (ans.some((a) => a < 0)) return toast.error("Answer all questions");
-    setBusy(true);
-    const { data, error } = await supabase.rpc("cadet_submit_week" as any, { p_week: open, p_answers: ans, p_checklist: chk, p_officer: officer || null } as any);
+    setBusy(true); const args = { p_week: open, p_answers: ans, p_checklist: chk, p_officer: officer || null };
+    const { data, error } = navigator.onLine ? await supabase.rpc("cadet_submit_week" as any, args as any) : { data: null, error: { message: "offline" } };
     setBusy(false); const d = data as any;
+    if (error && (!navigator.onLine || /fetch|network|offline/i.test(error.message || ""))) {
+      const box = readJ(OUTBOX, []).filter((b: any) => b.p_week !== open); box.push(args); localStorage.setItem(OUTBOX, JSON.stringify(box)); setQueued(box.length);
+      toast.success("No signal — saved on your phone. It will sync automatically when you reach port or Wi-Fi."); setOpen(null); return;
+    }
     if (error || !d?.ok) return toast.error(d?.error === "LOCKED" ? "This week is not open yet" : "Could not save — try again");
     setGraded({ score: d.score, answers: d.answers }); toast.success(d.score >= 60 ? `Week ${open} passed — ${d.score}%` : `Saved — ${d.score}%. Review and retry to improve.`); void load();
   };
@@ -49,7 +69,7 @@ export default function CadetPassport() {
       <div className="space-y-4">
         <button onClick={() => setOpen(null)} className="text-sm text-primary">‹ Back to passport</button>
         <div className="rounded-xl border border-primary/30 bg-card p-4">
-          <p className="text-xs text-muted-foreground">Week {open} · {stageLabel(open)} · due {p.dues?.[open - 1]}</p>
+          <p className="text-xs text-muted-foreground">Module {open} · {stageLabel(open)} · self-paced, finish before sign-off</p>
           <h2 className="mt-1 text-lg font-bold text-primary">{m.t}</h2>
           <p className="mt-1 text-sm">{m.f}</p>
           <p className="mt-3 text-xs font-bold text-primary">🔧 Equipment to know</p>
@@ -57,6 +77,18 @@ export default function CadetPassport() {
           <p className="mt-3 rounded-lg border border-destructive/40 bg-destructive/10 p-2 text-sm">⚠️ {m.safe}</p>
           <p className="mt-2 text-xs text-muted-foreground">Rule: {m.ref}</p>
         </div>
+        {(() => { const L = lessonFor(e.track, open); return (
+        <div className="rounded-xl border border-primary/40 bg-card p-4 space-y-3 text-sm">
+          <p className="font-bold text-primary">📘 Study first (~{L.minutes} min)</p>
+          <p><b>Why it matters:</b> {L.why}</p>
+          <div><p className="font-semibold">Step by step</p><ol className="list-decimal pl-5 space-y-1">{L.steps.map((x) => <li key={x}>{x}</li>)}</ol></div>
+          <div className="rounded-lg border border-primary/30 p-3 space-y-1"><p className="font-semibold">🎬 Real onboard scenario</p><p>{L.scenario.situation}</p>
+            <p className="text-destructive">✖ Wrong: {L.scenario.wrong}</p><p className="text-green-500">✔ Right: {L.scenario.right}</p></div>
+          <div><p className="font-semibold">🗣️ Say it in Maritime English</p><ul className="list-disc pl-5">{L.english.map((x) => <li key={x}>"{x}"</li>)}</ul>
+            <Link to="/training?tab=english" className="text-xs text-primary underline">Practise speaking in the English Lab</Link></div>
+          <div><p className="font-semibold">❓ Ask your officer</p><ul className="list-disc pl-5">{L.ask.map((x) => <li key={x}>{x}</li>)}</ul></div>
+          <label className="flex items-center gap-2 font-semibold"><input type="checkbox" checked={studied} onChange={(ev) => setStudied(ev.target.checked)} />I have studied this module</label>
+        </div>); })()}
         <div className="rounded-xl border border-primary/30 bg-card p-4">
           <p className="text-sm font-bold text-primary">✅ Practical checklist (do it on board / at home)</p>
           {m.chk.map((t, i) => (
@@ -64,8 +96,9 @@ export default function CadetPassport() {
           <input className="mt-3 w-full rounded-lg border border-primary/30 bg-background p-2 text-sm" placeholder="Officer who checked you (optional)" value={officer} onChange={(ev) => setOfficer(ev.target.value)} />
         </div>
         <div className="rounded-xl border border-primary/30 bg-card p-4">
-          <p className="text-sm font-bold text-primary">🎯 Weekly test</p>
-          {m.q.map((q, i) => (
+          <p className="text-sm font-bold text-primary">🎯 Knowledge check</p>
+          {!studied && <p className="mt-2 text-sm text-muted-foreground">Tick "I have studied this module" above to open the check.</p>}
+          {studied && m.q.map((q, i) => (
             <div key={i} className="mt-3">
               <p className="text-sm font-semibold">{i + 1}. {q.q}</p>
               {q.o.map((o, k) => {
@@ -77,7 +110,7 @@ export default function CadetPassport() {
           {graded ? (
             <div className="mt-4 space-y-2"><p className="text-sm font-bold">Score: {graded.score}%</p>
               <Button variant="outline" onClick={() => startWeek(open)}>Try again</Button> <Button onClick={() => setOpen(null)}>Done</Button></div>
-          ) : <Button className="mt-4 w-full" disabled={busy} onClick={submit}>{busy ? "Saving…" : "Submit week"}</Button>}
+          ) : studied && <Button className="mt-4 w-full" disabled={busy} onClick={submit}>{busy ? "Saving…" : "Save module"}</Button>}
         </div>
       </div>);
   }
@@ -87,12 +120,13 @@ export default function CadetPassport() {
   return (
     <div className="space-y-4">
       <div className="rounded-xl border border-primary/40 bg-card p-4">
-        <p className="text-xs text-muted-foreground">⚓ CADET EQUIPMENT PASSPORT</p>
+        <p className="text-xs text-muted-foreground">⚓ ELECTRONIC TRAINING RECORD BOOK (e-TRB)</p>
         <p className="text-lg font-bold text-primary">{e.track === "deck" ? "Deck" : "Engine"} Cadet{e.company ? ` · ${e.company}` : ""}</p>
         {e.vessel && <p className="text-sm">🚢 {e.vessel}</p>}
         <p className="mt-2 text-sm">Week {e.current_week} of 32 · {done} done · Avg {avg ?? "—"}% · 🏅 {badges.length} badges</p>
         <div className="mt-2 h-2 rounded bg-background"><div className="h-2 rounded bg-primary" style={{ width: `${(done / 32) * 100}%` }} /></div>
         {badges.length > 0 && <div className="mt-3 flex flex-wrap gap-1.5">{badges.slice(-8).map((b) => <span key={b.week} className="rounded-full border border-primary/40 px-2 py-0.5 text-[11px]">⭐ {cur[b.week - 1].eq[0]}</span>)}</div>}
+        <p className="mt-2 text-xs text-muted-foreground">📶 Works offline: open modules once in port; saves sync automatically.{queued > 0 ? ` ${queued} module(s) waiting to sync.` : ""} No penalty for late modules — complete all before sign-off.</p>
         <p className="mt-3 text-xs text-muted-foreground">Show this screen to your officer — they can check your passport anytime.</p>
       </div>
       {cur.map((m) => {
@@ -100,7 +134,7 @@ export default function CadetPassport() {
         return (
           <button key={m.week} disabled={locked} onClick={() => startWeek(m.week)}
             className={`w-full rounded-xl border p-3 text-left ${m.week === e.current_week && !r ? "border-primary bg-primary/10" : "border-primary/20 bg-card"} ${locked ? "opacity-50" : ""}`}>
-            <div className="flex justify-between gap-2 text-xs text-muted-foreground"><span>Week {m.week} · {stageLabel(m.week)}</span><span>{r ? `✅ ${r.score}%` : locked ? "🔒" : `due ${p.dues?.[m.week - 1] || ""}`}</span></div>
+            <div className="flex justify-between gap-2 text-xs text-muted-foreground"><span>Module {m.week} · {stageLabel(m.week)}</span><span>{r ? `✅ ${r.score}%` : locked ? "🔒" : "Pending"}</span></div>
             <p className="mt-0.5 text-sm font-semibold">{m.t}</p>
           </button>);
       })}
