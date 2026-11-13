@@ -19,14 +19,15 @@ const scen = (s: string | null) => (s || "").replace(/^(eng|deck|bridge|safe|psc
 export default function TrainingRadar() {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [total, setTotal] = useState(0); const [q, setQ] = useState(""); const [off, setOff] = useState(0);
+  const [rank, setRank] = useState(""); const [status, setStatus] = useState("all"); const [ranks, setRanks] = useState<string[]>([]);
   const [open, setOpen] = useState<Row | null>(null); const [stamp, setStamp] = useState(Date.now());
   const qRef = useRef(q); qRef.current = q;
   const load = useCallback(async () => {
-    const { data } = await supabase.rpc("manager_training_radar" as any, { p_search: qRef.current.trim(), p_offset: off });
+    const { data } = await supabase.rpc("manager_training_radar" as any, { p_search: qRef.current.trim(), p_offset: off, p_rank: rank, p_status: status });
     const d = data as any;
-    if (d?.ok) { setRows(d.rows); setTotal(d.total); } else setRows([]);
+    if (d?.ok) { setRows(d.rows); setTotal(d.total); setRanks(d.ranks || []); } else setRows([]);
     setStamp(Date.now());
-  }, [off]);
+  }, [off, rank, status]);
   useEffect(() => { const t = setTimeout(load, 300); return () => clearTimeout(t); }, [load, q]);
   useEffect(() => {
     const id = setInterval(() => { if (document.visibilityState === "visible") void load(); }, 20000);
@@ -41,8 +42,17 @@ export default function TrainingRadar() {
         <button onClick={() => void load()} aria-label="Refresh" style={{ background: "none", border: "none", color: GOLD, cursor: "pointer" }}><RefreshCw size={14} /></button>
       </div>
       <p style={{ color: "#94a3b8", fontSize: 11, marginTop: 3 }}>Crew appear here once they open your training link while signed in. Updates every 20 seconds · last {new Date(stamp).toLocaleTimeString()}</p>
-      <input value={q} onChange={(e) => { setQ(e.target.value); setOff(0); }} placeholder={`Search ${total} crew by name, rank or email`}
-        style={{ width: "100%", marginTop: 10, background: NAVY, color: "#fff", border: `1px solid ${BORDER}`, borderRadius: 9, padding: 8, fontSize: 12 }} />
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
+      <input value={q} onChange={(e) => { setQ(e.target.value); setOff(0); }} placeholder={`Search ${total} crew by name or email`}
+        style={{ flex: 1, minWidth: 180, background: NAVY, color: "#fff", border: `1px solid ${BORDER}`, borderRadius: 9, padding: 8, fontSize: 12 }} />
+        <select value={rank} onChange={(e) => { setRank(e.target.value); setOff(0); }} aria-label="Filter by rank" style={{ minWidth: 140, background: NAVY, color: "#fff", border: `1px solid ${BORDER}`, borderRadius: 9, padding: 8, fontSize: 12 }}>
+          <option value="">All ranks</option>{ranks.map((r) => <option key={r} value={r}>{r}</option>)}
+        </select>
+      </div>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
+        {([["all", "All linked crew"], ["today", "● Active today"], ["complete", "✅ Training complete"], ["idle", "💤 Idle 7+ days"]] as const).map(([k, l]) =>
+          <button key={k} onClick={() => { setStatus(k); setOff(0); }} style={{ padding: "5px 10px", borderRadius: 999, fontSize: 11, fontWeight: 700, cursor: "pointer", background: status === k ? GOLD : "transparent", color: status === k ? NAVY : GOLD, border: `1px solid ${status === k ? GOLD : "rgba(212,175,55,0.45)"}` }}>{l}</button>)}
+      </div>
       {rows === null ? <p style={{ color: "#94a3b8", fontSize: 12, marginTop: 10 }}><Loader2 size={13} className="inline animate-spin" /> Loading…</p>
         : rows.length === 0 ? <p style={{ color: "#94a3b8", fontSize: 12, marginTop: 10 }}>No crew yet. Send a training invitation below — progress shows here as soon as they start.</p>
         : <div style={{ marginTop: 10, display: "grid", gap: 8 }}>
@@ -84,6 +94,7 @@ function Detail({ row, onClose }: { row: Row; onClose: () => void }) {
     void go(); const id = setInterval(go, 20000);
     return () => { alive = false; clearInterval(id); };
   }, [row.crew_id]);
+  const [mq, setMq] = useState("");
   const eng: any[] = d?.english || [];
   const byScen = Object.values(eng.reduce((m: any, e: any) => { const k = e.scenario; m[k] ??= { s: k, n: 0, best: 0, first: e.score, last: e.score, at: e.at }; m[k].n++; m[k].best = Math.max(m[k].best, e.score); m[k].first = e.score; return m; }, {})) as any[];
   const curve = [...eng].reverse().slice(-40);
@@ -103,7 +114,8 @@ function Detail({ row, onClose }: { row: Row; onClose: () => void }) {
           {byScen.map((s) => <div key={s.s} style={line}><span style={{ flex: 1, textTransform: "capitalize" }}>{scen(s.s)}</span><span style={muted}>{s.n}× · first {s.first}% → best {s.best}% · {ago(s.at)}</span></div>)}
 
           <h3 style={h3}>📚 Training modules</h3>
-          {(d.modules || []).length === 0 ? <p style={muted}>No modules yet.</p> : d.modules.map((m: any, i: number) =>
+          {(d.modules || []).length > 5 && <input value={mq} onChange={(e) => setMq(e.target.value)} placeholder="Search modules (e.g. fire, CO2, SIRE)" style={{ width: "100%", background: CARD, color: "#fff", border: `1px solid ${BORDER}`, borderRadius: 8, padding: 7, fontSize: 12, marginBottom: 6 }} />}
+          {(d.modules || []).length === 0 ? <p style={muted}>No modules yet.</p> : d.modules.filter((m: any) => !mq || String(m.title || "").toLowerCase().includes(mq.toLowerCase())).map((m: any, i: number) =>
             <div key={i} style={line}><span style={{ flex: 1 }}>{m.status === "completed" ? "✅" : m.status === "opened" ? "⏳" : "•"} {m.title}</span>
               <span style={muted}>{m.quiz_total ? `${m.quiz_correct}/${m.quiz_total}` : ""} {m.completed_at ? new Date(m.completed_at).toLocaleDateString() : m.status}</span></div>)}
 

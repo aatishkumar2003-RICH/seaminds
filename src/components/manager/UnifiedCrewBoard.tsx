@@ -8,27 +8,27 @@ import { ago, englishLevel } from "@/components/manager/TrainingRadar";
 import FourPartScores from "@/components/interview/FourPartScores";
 
 type Row = { key: string; record_id: string | null; crew_id: string | null; name: string; rank: string | null; nationality: string | null; vessel: string | null; status: string; sources: string[]; crew_unique_id: string | null; certs_total: number; certs_30: number; certs_90: number; certs_expired: number; sea_count: number; eng_avg: number | null; eng_last: string | null; mods_done: number; mods_total: number };
-type Res = { total: number; counts: Record<string, number>; vessels: { vessel: string; n: number }[]; rows: Row[] };
+type Res = { total: number; counts: Record<string, number>; ranks?: string[]; vessels: { vessel: string; n: number }[]; rows: Row[] };
 
 const PAGE = 25;
 const FILTERS: [string, string][] = [["all", "All crew"], ["certs", "⚠️ Certs ≤30 days"], ["training", "🎓 Training pending"], ["pending", "✉️ Not yet accepted"], ["onboard", "🚢 Assigned to vessel"]];
-const SRC: Record<string, string> = { company: "Company crew", training: "Training", joining: "Joining" };
+const SRC: Record<string, string> = { company: "Company crew", training: "Training", joining: "Joining", interview: "🎙️ Interview invited", training_invite: "✉️ Training invited" };
 
 /** One live roster for every crew source (company crew, training invites, confirmed joinings). Server-paged so 10,000 crew stay fast. */
 export default function UnifiedCrewBoard({ compact = false }: { compact?: boolean }) {
   const [q, setQ] = useState(""); const [dq, setDq] = useState("");
-  const [filter, setFilter] = useState("all"); const [vessel, setVessel] = useState("");
+  const [filter, setFilter] = useState("all"); const [vessel, setVessel] = useState(""); const [rank, setRank] = useState("");
   const [view, setView] = useState<"list" | "vessel">("list");
   const [page, setPage] = useState(0); const [res, setRes] = useState<Res | null>(null);
   const [open, setOpen] = useState<string | null>(null);
 
   useEffect(() => { const t = setTimeout(() => { setDq(q); setPage(0); }, 300); return () => clearTimeout(t); }, [q]);
   const load = useCallback(async () => {
-    const { data, error } = await supabase.rpc("manager_unified_crew" as any, { p_search: dq, p_filter: filter, p_vessel: vessel, p_offset: page * PAGE, p_limit: PAGE });
+    const { data, error } = await supabase.rpc("manager_unified_crew" as any, { p_search: dq, p_filter: filter, p_vessel: vessel, p_offset: page * PAGE, p_limit: PAGE, p_rank: rank });
     const d = data as any;
     if (error || !d?.ok) { setRes({ total: 0, counts: {}, vessels: [], rows: [] }); return; }
     setRes(d);
-  }, [dq, filter, vessel, page]);
+  }, [dq, filter, vessel, rank, page]);
   useEffect(() => { void load(); const i = setInterval(load, 30000); const f = () => void load(); window.addEventListener("focus", f); return () => { clearInterval(i); window.removeEventListener("focus", f); }; }, [load]);
 
   const pages = res ? Math.max(1, Math.ceil(res.total / PAGE)) : 1;
@@ -59,7 +59,7 @@ export default function UnifiedCrewBoard({ compact = false }: { compact?: boolea
     <div className="space-y-3">
       {!compact && <div>
         <p className="font-bold text-primary">👥 All my crew — live</p>
-        <p className="text-xs text-muted-foreground">Company crew, training invites and confirmed joinings in one list. Tap anyone for their full record.</p>
+        <p className="text-xs text-muted-foreground">Company crew, interview and training invitees, and confirmed joinings in one list. Tap anyone for their full record.</p>
       </div>}
       <div className="flex flex-wrap gap-2">
         {FILTERS.map(([k, l]) => (
@@ -73,6 +73,9 @@ export default function UnifiedCrewBoard({ compact = false }: { compact?: boolea
           <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search name, rank, Crew ID, vessel, nationality…" className="w-full rounded-xl border border-border bg-background pl-8 pr-3 min-h-[42px] text-sm text-foreground" /></div>
         <select value={vessel} onChange={e => { setVessel(e.target.value); setPage(0); }} className="rounded-xl border border-border bg-background px-2 min-h-[42px] text-sm text-foreground">
           <option value="">All vessels</option>{(res?.vessels || []).map(v => <option key={v.vessel} value={v.vessel}>{v.vessel} ({v.n})</option>)}
+        </select>
+        <select value={rank} onChange={e => { setRank(e.target.value); setPage(0); }} aria-label="Filter by rank" className="rounded-xl border border-border bg-background px-2 min-h-[42px] text-sm text-foreground">
+          <option value="">All ranks</option>{(res?.ranks || []).map(r => <option key={r} value={r}>{r}</option>)}
         </select>
         <div className="flex rounded-xl border border-border overflow-hidden">
           <button onClick={() => setView("list")} aria-label="List view" className={`px-3 min-h-[42px] ${view === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}><List size={16} /></button>
