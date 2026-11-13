@@ -361,7 +361,7 @@ const ManagerInterviews = () => {
               </p>
             </div>
             <div style={{ marginBottom: 12 }}>
-              <label style={label}>Complete by (target date, optional)</label>
+              <label style={{ ...label, color: GOLD, fontWeight: 800 }}>📅 Complete by (target date, optional)</label>
               <input type="date" value={targetDate} min={todayIso()} onChange={(e) => setTargetDate(e.target.value)} style={{ ...input, colorScheme: "dark" }} />
               <p style={{ color: "#64748b", fontSize: 10.5, marginTop: 5, lineHeight: 1.5 }}>Shown in the invitation. The link stays open after this date — late candidates are marked overdue, not blocked.</p>
             </div>

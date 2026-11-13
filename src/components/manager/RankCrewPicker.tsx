@@ -9,7 +9,7 @@ export type Pick = { email: string; name: string };
 const norm = (r: string) => (r || "").toLowerCase()
   .replace(/\bsecond\b/g, "2nd").replace(/\bthird\b/g, "3rd").replace(/\bfourth\b/g, "4th")
   .replace(/\bc\/o\b/g, "chief officer").replace(/\bc\/e\b/g, "chief engineer")
-  .replace(/\b(deck|engine)\s+cadet\b/g, "cadet").replace(/[^a-z0-9]+/g, " ").trim();
+  .replace(/[^a-z0-9]+/g, " ").trim();
 export const rankMatches = (crewRank: string, target: string) => {
   const a = norm(crewRank), b = norm(target);
   return !!a && !!b && (a === b || a.includes(b) || b.includes(a));
