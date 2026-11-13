@@ -10,7 +10,7 @@ import { CADET_CURRICULUM, CADET_WEEKS, cadetFlag, stageLabel, type CadetTrack }
 const GOLD = "#D4AF37", NAVY = "#0D1B2A", CARD = "#112240", BORDER = "rgba(212,175,55,0.3)", MUTED = "#94A3B8";
 type Row = { id: string; email: string; name: string; track: CadetTrack; vessel: string | null; imo: string | null; registered: boolean; status: string;
   shore_start: string; join_date: string | null; current_week: number; done: number; avg_score: number | null; low_weeks: number; last_activity: string | null; overdue_days: number };
-const FLAG: Record<string, [string, string]> = { overdue: ["🔴 Overdue", "#ef4444"], weak: ["🟡 Needs attention", "#f59e0b"], ok: ["🟢 On track", "#22c55e"], closed: ["⚪ Closed", MUTED] };
+const FLAG: Record<string, [string, string]> = { overdue: ["🟠 Behind plan", "#f59e0b"], weak: ["🟡 Needs attention", "#f59e0b"], ok: ["🟢 On track", "#22c55e"], closed: ["⚪ Closed", MUTED] };
 const inp: React.CSSProperties = { background: NAVY, border: `1px solid ${BORDER}`, borderRadius: 10, color: "#fff", padding: "9px 10px", fontSize: 13, width: "100%" };
 const sendInvite = async (email: string, name: string, track: CadetTrack, company?: string) => {
   const { data, error } = await supabase.functions.invoke("send-training-invite", { body: { email, message: cadetInviteText(name, company || "", track, email) } });
@@ -102,13 +102,13 @@ export default function CadetAcademy({ company }: { company?: string }) {
               <span style={{ color: fl[1], fontSize: 11.5, fontWeight: 800, whiteSpace: "nowrap" }}>{fl[0]}</span>
             </div>
             <div style={{ height: 6, background: NAVY, borderRadius: 4, margin: "10px 0 6px" }}><div style={{ width: `${pct}%`, height: 6, background: GOLD, borderRadius: 4 }} /></div>
-            <p style={{ color: "#cbd5e1", fontSize: 12 }}>Week {r.current_week}/32 · {stageLabel(r.current_week)} · {r.done} done · Avg {r.avg_score ?? "—"}%{r.overdue_days > 0 ? ` · ${r.overdue_days} days late` : ""}</p>
+            <p style={{ color: "#cbd5e1", fontSize: 12 }}>Week {r.current_week}/32 · {stageLabel(r.current_week)} · {r.done} done · Avg {r.avg_score ?? "—"}%{` · e-TRB ${Math.round((r.done / CADET_WEEKS) * 100)}%`}</p>
             {(() => { const m = CADET_CURRICULUM[r.track][Math.min(32, r.current_week) - 1]; return m ? (
               <div style={{ background: NAVY, border: `1px solid ${BORDER}`, borderRadius: 10, padding: "8px 10px", margin: "6px 0" }}>
                 <p style={{ color: GOLD, fontSize: 11, fontWeight: 800 }}>📘 Learning now · Week {m.week}: {m.t}</p>
                 <p style={{ color: "#cbd5e1", fontSize: 11.5, marginTop: 2 }}>🔧 {m.eq.join(" · ")}</p>
               </div>) : null; })()}
-            <p style={{ color: MUTED, fontSize: 11 }}>Shore from {r.shore_start}{r.join_date ? ` · joins ${r.join_date}` : " · joining date not set"}{r.last_activity ? ` · last activity ${r.last_activity.slice(0, 10)}` : ""}</p>
+            <p style={{ color: MUTED, fontSize: 11 }}>Shore from {r.shore_start}{r.join_date ? ` · joins ${r.join_date}` : " · joining date not set"}{r.last_activity ? ` · last synced ${Math.max(0, Math.floor((Date.now() - new Date(r.last_activity).getTime()) / 86400000))} day(s) ago` : " · not synced yet"}</p>
             <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
               <button onClick={() => void exportTrb(r.id)} style={btn(true)}>📄 Record Book PDF</button>
               <button onClick={() => setOpenId(openId === r.id ? null : r.id)} style={btn()}>{openId === r.id ? "Hide progress" : "👁 Live progress"}</button>
@@ -138,8 +138,8 @@ export async function exportTrb(id: string) {
     doc.setFont("helvetica", bold ? "bold" : "normal"); doc.setFontSize(size); doc.setTextColor(...color);
     for (const l of doc.splitTextToSize(t, 180)) { if (y > 282) { doc.addPage(); y = 16; } doc.text(l, 15, y); y += size * 0.45; } };
   doc.setFillColor(13, 27, 42); doc.rect(0, 0, 210, 30, "F"); doc.setTextColor(212, 175, 55); doc.setFont("helvetica", "bold"); doc.setFontSize(15);
-  doc.text("CADET TRAINING RECORD BOOK", 15, 14); doc.setFontSize(9); doc.setTextColor(255, 255, 255);
-  doc.text(`SeaMinds Cadet Academy · ${track === "deck" ? "Deck" : "Engine"} track · Generated ${new Date().toISOString().slice(0, 10)}`, 15, 22); y = 40;
+  doc.text("ELECTRONIC TRAINING RECORD BOOK (e-TRB)", 15, 14); doc.setFontSize(9); doc.setTextColor(255, 255, 255);
+  doc.text(`STCW ${track === "deck" ? "A-II/1" : "A-III/1"} · SeaMinds Cadet Academy · ${track === "deck" ? "Deck" : "Engine"} track · Generated ${new Date().toISOString().slice(0, 10)}`, 15, 22); y = 40;
   const results = (d.weeks as any[]).filter((w) => w.result); const avg = results.length ? Math.round(results.reduce((s, w) => s + w.result.score, 0) / results.length) : null;
   line(`Cadet: ${c.display_name}`, 11, true); line(`Email: ${c.email}   ·   Company: ${c.company || "—"}`);
   line(`Vessel: ${c.vessel || "—"}${c.imo ? ` (IMO ${c.imo})` : ""}   ·   Shore start: ${c.shore_start}   ·   Joined: ${c.join_date || "—"}`);
@@ -154,7 +154,7 @@ export async function exportTrb(id: string) {
       const ck = (r.checklist as boolean[]) || [];
       line(`Completed ${String(r.completed_at).slice(0, 10)} · Test ${r.correct}/${r.total} (${r.score}%) · Attempts ${r.attempts} · Officer: ${r.officer_name || "______________"}`, 8.5, false, r.score < 60 ? [180, 30, 30] : [20, 110, 50]);
       m.chk.forEach((t, i) => line(`${ck[i] ? "[x]" : "[ ]"} ${t}`, 8));
-    } else line(`Not completed · due ${w.due}`, 8.5, false, [150, 110, 0]);
+    } else line(`Pending — to be completed before sign-off`, 8.5, false, [150, 110, 0]);
     y += 2;
   }
   y += 6; line("Verified by Master / Chief Engineer: ______________________   Signature & stamp: ______________   Date: __________", 9, true);
