@@ -8123,6 +8123,10 @@ export type Database = {
           vessel: string
         }[]
       }
+      manager_remove_crew_from_pool: {
+        Args: { p_crew_id?: string; p_email: string }
+        Returns: Json
+      }
       manager_schedule_interview: {
         Args: {
           p_flex_hours?: number
