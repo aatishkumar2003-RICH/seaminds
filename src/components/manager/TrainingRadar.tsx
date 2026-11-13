@@ -70,6 +70,8 @@ export default function TrainingRadar() {
                   <span style={pill}>📚 {r.modules_done}/{r.modules_total} modules</span>
                   <span style={pill}>🧭 {r.interviews} AI interviews</span>
                   {r.eng_scenario && <span style={{ ...pill, color: "#cbd5e1" }}>Last: {scen(r.eng_scenario)}</span>}
+                  <span role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); const [first, ...rest] = (r.name || "").split(" "); window.dispatchEvent(new CustomEvent("training-pick-crew", { detail: { id: `c:${r.crew_id}`, first_name: first || "", last_name: rest.join(" "), rank: r.rank || "", email: r.email, whatsapp: r.whatsapp, vessel: null } })); }}
+                    style={{ ...pill, background: GOLD, color: NAVY, marginLeft: "auto" }}>🎓 Send training</span>
                 </div>
               </button>);
           })}

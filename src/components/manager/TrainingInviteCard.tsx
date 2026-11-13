@@ -117,7 +117,7 @@ export default function TrainingInviteCard({ company }: { company: string }) {
   const tray = [...titles.map((t) => ({ t, rm: () => setPicked((p) => p.filter((s) => items.find((i) => i.slug === s)?.title !== t)) })),
     ...practice.map((p) => ({ t: p.title, rm: () => togglePractice(p) })), ...drafts.map((d, k) => ({ t: `📘 ${d.title}`, rm: () => setDrafts((x) => x.filter((_, j) => j !== k)) }))];
   return (
-    <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: 14, marginBottom: 16 }}>
+    <div id="training-invite-card" style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: 14, marginBottom: 16, scrollMarginTop: 80 }}>
       <p style={{ color: GOLD, fontSize: 14, fontWeight: 800 }}>🎓 Send training invitation</p>
       <p style={{ color: "#94a3b8", fontSize: 11.5, marginTop: 3 }}>1) Choose crew 2) Tick training in any tab — mix freely 3) Send.</p>
 
@@ -128,7 +128,7 @@ export default function TrainingInviteCard({ company }: { company: string }) {
             <button type="button" onClick={() => { setWho(null); setPhone(""); setEmail(""); }} style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer" }}><X size={14} /></button>
           </div>
         ) : (
-          <input value={cq} onChange={(e) => setCq(e.target.value)} placeholder={crew.length ? `Search your company crew (${crew.length}) — or type contact below` : "No company crew yet — type contact below"} style={{ ...field, width: "100%" }} />
+          <input value={cq} onChange={(e) => setCq(e.target.value)} placeholder={crew.length ? `Search all your crew & candidates (${crew.length}) by name, rank, email or WhatsApp` : "No crew yet — type contact below"} style={{ ...field, width: "100%" }} />
         )}
         {matches.length > 0 && (
           <div style={{ position: "absolute", zIndex: 20, left: 0, right: 0, background: NAVY, border: `1px solid ${BORDER}`, borderRadius: 9, marginTop: 4, maxHeight: 220, overflowY: "auto" }}>
