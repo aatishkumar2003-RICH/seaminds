@@ -7942,6 +7942,7 @@ export type Database = {
         Returns: Json
       }
       manager_training_detail: { Args: { p_crew: string }; Returns: Json }
+      manager_training_pool: { Args: never; Returns: Json[] }
       manager_training_radar: {
         Args: {
           p_offset?: number
