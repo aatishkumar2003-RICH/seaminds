@@ -173,11 +173,86 @@ const FAMIL: ShoreModule = {
   ],
 };
 
+const BASICS = (t: CadetTrack): ShoreModule => t === "deck" ? {
+  competence: "STCW A-II/1 — Plan and conduct a passage (COLREG), Mooring & anchoring, Draft & soundings; IMO Model Course 7.03", minutes: 55,
+  objectives: ["Apply COLREG Rules 5, 7 and 13–17", "Recognise navigation lights and day shapes of common vessels", "Name the mooring lines and keep out of snap-back zones", "Read metric draft marks and take a tank sounding"],
+  sections: [
+    { h: "COLREG — the rules you use every watch", li: ["Rule 5 Lookout: by sight, hearing and all available means (radar, AIS) at all times", "Rule 6 Safe speed: visibility, traffic density, manoeuvrability, sea state", "Rule 7 Risk of collision: compass bearing not appreciably changing = risk exists", "Rule 13 Overtaking: coming up > 22.5° abaft the beam; overtaking vessel keeps clear", "Rule 14 Head-on: both alter course to starboard", "Rule 15 Crossing: vessel that has the other on her starboard side gives way", "Rule 16/17: give-way acts early and substantially; stand-on keeps course and speed, may act when give-way does not"] },
+    { h: "Lights you must know", li: ["Power-driven vessel underway: masthead light(s) 225°, sidelights 112.5° (red port, green starboard), sternlight 135°", "At anchor: all-round white forward (and aft if ≥ 50 m) — by day one black ball", "Not under command: two all-round red — by day two balls", "Restricted in ability to manoeuvre: red-white-red all-round — by day ball-diamond-ball", "Fishing (trawling): green over white; other fishing: red over white"] },
+    { h: "Mooring arrangement", li: ["Head line and stern line — lead forward/aft from the ends", "Breast lines — perpendicular, hold the ship alongside", "Forward and aft springs — stop fore-and-aft movement", "Mooring winch brake holds the line; drum is not used to hold load", "Snap-back zone: area where a parting line whips back — painted/marked on many ships but can be anywhere near a loaded line"] },
+    { h: "Draft marks and soundings", p: "Metric draft figures are 10 cm high with 10 cm spacing; the bottom of a figure is the draft it shows. Read forward, midships and aft on both sides; mean = average of port and starboard. Soundings measure liquid depth with a tape and bob through the sounding pipe; ullage measures empty space from the top. Use water-finding paste on the bob to detect water under oil." },
+    { h: "Anchoring basics", p: "One shackle of anchor cable = 27.5 m (15 fathoms). Typical scope 5–10 × water depth depending on weather and holding ground. The windlass brake holds the cable; the bow stopper/guillotine takes the load at sea." },
+  ],
+  params: [["Masthead light arc", "225°"], ["Sidelight arc", "112.5° each"], ["Sternlight arc", "135°"], ["One shackle of cable", "27.5 m (15 fathoms)"], ["Draft figure height", "10 cm"]],
+  failures: [
+    { what: "Bearing of an approaching ship is steady", action: "Risk of collision exists (Rule 7) — inform the OOW immediately." },
+    { what: "Mooring line creaking and thinning under load", action: "Warn everyone, clear the snap-back zone, report to the officer in charge to ease the load." },
+    { what: "Sounding of a void/bilge higher than yesterday", action: "Record the real figure and report — it may be a leak." },
+  ],
+  scenario: { situation: "Night lookout. You see a red light only, fine on the starboard bow; its bearing is steady.", choices: [
+    { c: "It is a stand-on vessel; ignore it", ok: false, fb: "Wrong. You see her port side: she is crossing from starboard — WE are the give-way vessel (Rule 15)." },
+    { c: "'Light fine on starboard bow, red, bearing steady, sir.'", ok: true, fb: "Correct. Report clearly and early; the OOW decides the alteration." },
+    { c: "Wait until it comes closer to be sure", ok: false, fb: "Wrong. Rule 7 — a steady bearing means risk. Report now." },
+  ] },
+  english: [["Light two points on starboard bow", "Lookout report"], ["Bearing steady", "Collision risk"], ["Heave away / Slack away / Hold on", "Mooring orders"], ["Forward draft seven decimal two metres", "Reporting drafts"]],
+  oral: [
+    { q: "How do you know a risk of collision exists?", a: "Compass bearing of the approaching vessel does not appreciably change (also large ships/close range even with bearing change) — Rule 7." },
+    { q: "Name the mooring lines.", a: "Head lines, forward breast, forward spring, aft spring, aft breast, stern lines." },
+    { q: "What does a vessel show at anchor by day?", a: "One black ball in the fore part." },
+  ],
+  drills: [
+    { q: "A vessel with you on her port side in a crossing situation:", o: ["Gives way", "Stands on", "Both stop", "Both alter to port"], a: 1, why: "You are on her port side → she has you to port → you have her on starboard; you give way, she stands on." },
+    { q: "Sidelight arc each side:", o: ["90°", "112.5°", "135°", "225°"], a: 1, why: "Rule 21." },
+    { q: "Two all-round red lights mean:", o: ["At anchor", "Not under command", "Fishing", "Pilot vessel"], a: 1, why: "Rule 27 — NUC." },
+    { q: "Lines that stop fore-and-aft movement:", o: ["Breast lines", "Springs", "Head lines only", "Heaving lines"], a: 1, why: "Springs." },
+    { q: "One shackle of cable is:", o: ["10 m", "15 m", "27.5 m", "50 m"], a: 2, why: "15 fathoms = 27.5 m." },
+    { q: "Bottom of the figure '7' at waterline means draft:", o: ["6.9 m", "7.0 m", "7.1 m", "7.2 m"], a: 1, why: "Bottom edge of the figure marks the value." },
+  ],
+} : {
+  competence: "STCW A-III/1 — Operate main and auxiliary machinery; pumping systems; IMO Model Course 7.04", minutes: 55,
+  objectives: ["Explain the 2-stroke and 4-stroke cycles", "Know the main engine room systems and their normal parameters", "Start and stop a centrifugal pump safely", "Find emergency stops and the escape route"],
+  sections: [
+    { h: "2-stroke main engine (slow speed)", p: "Most deep-sea ships use a slow-speed 2-stroke crosshead engine (MAN B&W, WinGD) at about 60–120 rpm, directly coupled to the propeller. One power stroke every revolution: (1) Compression — piston rises, scavenge ports and exhaust valve closed; (2) Power/Exhaust — fuel injected near TDC, combustion pushes the piston down, exhaust valve opens, then scavenge air from the turbocharger blows out exhaust gas (uniflow scavenging)." },
+    { h: "4-stroke generators (medium speed)", p: "Diesel generators run at constant speed (720/900 rpm for 60 Hz, 750/1000 rpm for 50 Hz): Induction, Compression, Power, Exhaust — one power stroke every two revolutions. Typical output 440 V, 60 Hz, three-phase. Load sharing and paralleling are done from the main switchboard." },
+    { h: "Main engine room systems", li: ["Fuel oil: storage → settling → purifier → service tank → booster → engine (HFO heated for ~10–15 cSt at injection)", "Lube oil: main sump → LO pump → cooler → filter → bearings; purifier cleans it continuously", "Cooling: jacket fresh water (HT, ~80–90 °C), central LT FW, sea water through central coolers", "Compressed air: starting air 25–30 bar, control/service air ~7 bar", "Steam/thermal oil: heating fuel and tanks"] },
+    { h: "Pumps", li: ["Centrifugal (SW, FW, ballast): must be primed and flooded; start with discharge nearly closed, then open slowly; never run dry", "Positive displacement (gear, screw — LO, FO): never start against a closed discharge; relief valve protects", "Check before start: suction valve open, casing vented, no leaks, motor free; after start: pressure, amps, vibration, noise"] },
+    { h: "Engine room rounds (first habits)", p: "Look, listen, feel (carefully), smell. Check levels (sumps, expansion tanks), pressures, temperatures, leaks, bilges. Record readings honestly in the log; compare with the previous watch. Any change → report to the duty engineer." },
+  ],
+  params: [["ME jacket cooling water outlet", "~80–90 °C"], ["ME LO inlet pressure (typical)", "~2–4.5 bar"], ["Starting air", "25–30 bar"], ["Generator output", "440 V · 60 Hz"], ["HFO injection viscosity", "~10–15 cSt"]],
+  failures: [
+    { what: "Pump running but no pressure", action: "Stop it; check suction valve open, strainer clean, priming/venting. Report to the duty engineer." },
+    { what: "Hot oily smell, smoke near the generator", action: "Raise the alarm, inform the duty engineer, keep clear; do not touch hot surfaces." },
+    { what: "Bilge level rising faster than normal", action: "Report immediately — find the source; do not pump overboard (MARPOL)." },
+  ],
+  scenario: { situation: "The 3/E asks you to start the stand-by SW cooling pump. You press START and the pressure gauge stays at zero.", choices: [
+    { c: "Keep it running, pressure will come", ok: false, fb: "Wrong. A dry centrifugal pump destroys its mechanical seal within minutes." },
+    { c: "Stop it, check suction valve and vent the casing, report: 'Pump no pressure, stopped, Third.'", ok: true, fb: "Correct. Stop, check the basics, report — never guess." },
+    { c: "Open the discharge fully and wait", ok: false, fb: "Wrong. Without suction/priming the pump cannot build pressure." },
+  ] },
+  english: [["Pressure dropping on No.2 SW pump", "Reporting"], ["Pump started, pressure 2.5 bar", "Confirming"], ["Temperature high on …", "Alarm report"], ["Engine room rounds completed, all normal", "Round report"]],
+  oral: [
+    { q: "Difference between 2-stroke and 4-stroke?", a: "2-stroke: one power stroke per revolution (main engine, slow speed). 4-stroke: one power stroke per two revolutions (generators, medium speed)." },
+    { q: "How do you start a centrifugal pump?", a: "Suction open, vent/prime casing, discharge throttled, start, check pressure/amps, open discharge slowly." },
+    { q: "What is the starting air pressure?", a: "About 25–30 bar in the main air receivers." },
+  ],
+  drills: [
+    { q: "Main engines of most bulk carriers are:", o: ["High-speed 4-stroke", "Slow-speed 2-stroke", "Gas turbines", "Steam turbines"], a: 1, why: "Slow-speed 2-stroke crosshead engines." },
+    { q: "Power strokes per revolution in a 4-stroke?", o: ["2", "1", "½", "4"], a: 2, why: "One every two revolutions." },
+    { q: "Before starting a centrifugal pump it must be:", o: ["Hot", "Primed / flooded", "Dry", "Pressurised with air"], a: 1, why: "It cannot lift liquid when dry." },
+    { q: "Gear pump started with discharge closed:", o: ["Safe", "Relief valve lifts / damage", "No flow, no harm", "Pump reverses"], a: 1, why: "Positive displacement builds pressure." },
+    { q: "Typical generator voltage on board:", o: ["110 V", "230 V", "440 V", "11 kV always"], a: 2, why: "440 V, 60 Hz three-phase is typical." },
+    { q: "Bilge rising fast. Your first action:", o: ["Pump overboard", "Report to duty engineer", "Ignore", "Close all valves"], a: 1, why: "Find the cause; MARPOL forbids oily discharge." },
+  ],
+};
+
 /** Full shore study manual for module 1–4, or null for onboard modules. */
 export function shoreModule(track: CadetTrack, week: number): ShoreModule | null {
-  return week === 1 ? ENGLISH : week === 2 ? SAFETY : week === 3 ? (track === "deck" ? { ...READY("deck"), competence: READY("deck").competence } : READY("engine")) : week === 4 ? FAMIL : null;
+  if (week === 1) return { ...ENGLISH, sections: [...ENGLISH.sections, ...FAMIL.sections.slice(1, 4)], drills: [...ENGLISH.drills, ...FAMIL.drills.slice(0, 3)] };
+  if (week === 2) return SAFETY;
+  if (week === 3) return BASICS(track);
+  if (week === 4) { const r = READY(track); return { ...r, sections: r.sections.filter((x) => !x.h.startsWith("Day-one")).concat(FAMIL.sections.slice(4)), params: [...(r.params || []).slice(0, 3), ...(FAMIL.params || []).slice(2)], failures: [...r.failures, FAMIL.failures[2]], oral: [...r.oral.slice(0, 2), FAMIL.oral[2]], drills: [...r.drills.slice(0, 3), ...FAMIL.drills.slice(4)] }; }
+  return null;
 }
-
 /** Part 1 is cleared when all four shore modules have a passing result (≥60%). */
 export function shoreCleared(results: { week: number; score: number }[]) {
   const ok = new Set(results.filter((r) => r.score >= 60).map((r) => r.week));
