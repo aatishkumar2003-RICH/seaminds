@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { readRosterFile, templateCsv, inviteMessage, claimLink, IMPORT_ERRORS, toIsoDate, type CrewImportRow } from "@/lib/companyCrewImport";
 import { readXlsxCv, isSpreadsheet } from "@/lib/xlsxCv";
 import { buildResumePdf } from "@/lib/resumePdf";
+import { cvToCrewRow, archiveCv, CV_ACCEPT } from "@/lib/cvToCrewRow";
 
 type Rec = {
   id: string; crew_unique_id: string; live_crew_unique_id: string; first_name: string; last_name: string; rank: string; nationality: string | null;
@@ -31,6 +32,7 @@ export default function CompanyCrewTab() {
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [adding, setAdding] = useState(false); const [openId, setOpenId] = useState<string | null>(null);
   const [preview, setPreview] = useState<{ rows: CrewImportRow[]; problems: { line: number; reason: string }[]; duplicates: number; name: string } | null>(null);
+  const [bulkCv, setBulkCv] = useState(false); const lastIds = useRef<string[]>([]);
   const [busy, setBusy] = useState(""); const fileRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -62,6 +64,7 @@ export default function CompanyCrewTab() {
       const { data, error } = await supabase.rpc("company_crew_import" as any, { p_rows: rows.slice(i, i + 200) as any });
       const d = data as any;
       if (error || !d?.ok) { setBusy(""); toast.error(IMPORT_ERRORS[d?.error] || "Could not add crew. Please try again."); await load(); return null; }
+      lastIds.current = [...(i ? lastIds.current : []), ...((d.records || []) as any[]).map((x: any) => x.id)];
       created += d.created; skipped += d.skipped; invalid += d.invalid;
     }
     setBusy(""); await load();
@@ -110,6 +113,7 @@ export default function CompanyCrewTab() {
         <div className="flex flex-wrap gap-2">
           <Button onClick={() => setAdding(true)} className="rounded-xl font-bold"><UserPlus size={16} /> Add crew member</Button>
           <Button variant="outline" onClick={() => fileRef.current?.click()} className="rounded-xl border-primary text-primary"><Upload size={16} /> Upload crew list (Excel / CSV)</Button>
+          <Button variant="outline" onClick={() => setBulkCv(true)} className="rounded-xl border-primary text-primary"><ScanLine size={16} /> Bulk upload CVs</Button>
           <Button variant="ghost" onClick={downloadTemplate} className="rounded-xl text-primary"><Download size={16} /> Download template</Button>
           <input ref={fileRef} type="file" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="hidden" onChange={e => pickFile(e.target.files?.[0])} />
         </div>
@@ -162,7 +166,8 @@ export default function CompanyCrewTab() {
         })}
       </div>
 
-      {adding && <AddCrewDialog onClose={() => setAdding(false)} onSave={async row => { const n = await importRows([row]); if (n) setAdding(false); }} />}
+      {adding && <AddCrewDialog onClose={() => setAdding(false)} onSave={async (row, cv) => { const n = await importRows([row]); if (n) { if (cv && lastIds.current[0]) await archiveCv(lastIds.current[0], cv); setAdding(false); } }} />}
+      {bulkCv && <BulkCvDialog onClose={() => setBulkCv(false)} importOne={async (row, cv) => { const n = await importRows([row]); if (n && lastIds.current[0]) await archiveCv(lastIds.current[0], cv); return !!n; }} />}
       {preview && (
         <Dialog open onOpenChange={o => !o && setPreview(null)}>
           <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
@@ -186,14 +191,26 @@ export default function CompanyCrewTab() {
   );
 }
 
-function AddCrewDialog({ onClose, onSave }: { onClose: () => void; onSave: (r: CrewImportRow) => Promise<void> }) {
+function AddCrewDialog({ onClose, onSave }: { onClose: () => void; onSave: (r: CrewImportRow, cv?: File) => Promise<void> }) {
   const [f, setF] = useState<Record<string, string>>({}); const [saving, setSaving] = useState(false);
+  const [cv, setCv] = useState<File | null>(null); const [reading, setReading] = useState(false); const [extra, setExtra] = useState<{ sea_service: any[]; certificates: any[] }>({ sea_service: [], certificates: [] });
+  const cvIn = useRef<HTMLInputElement>(null);
+  const readCv = async (file?: File) => {
+    if (!file) return; setReading(true);
+    try {
+      const x: any = await cvToCrewRow(file);
+      setF(s => { const n = { ...s }; for (const k of ["first_name", "last_name", "rank", "nationality", "whatsapp", "email", "vessel", "date_of_birth", "cdc_no", "passport_no"]) if (!n[k] && x[k]) n[k] = x[k]; return n; });
+      setExtra({ sea_service: x.sea_service || [], certificates: x.certificates || [] }); setCv(file);
+      toast.success(`CV read: ${x.sea_service?.length || 0} sea service, ${x.certificates?.length || 0} certificates — please check the details`);
+    } catch (e: any) { toast.error(e?.message || "Could not read this CV."); }
+    finally { setReading(false); if (cvIn.current) cvIn.current.value = ""; }
+  };
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => setF(s => ({ ...s, [k]: e.target.value }));
   const submit = async () => {
     if (!f.first_name?.trim() || !f.rank?.trim()) { toast.error("First name and rank are required."); return; }
     setSaving(true);
     await onSave({ first_name: f.first_name.trim(), last_name: (f.last_name || "").trim(), rank: f.rank.trim(), nationality: f.nationality, email: f.email, whatsapp: f.whatsapp,
-      date_of_birth: f.date_of_birth || undefined, vessel: f.vessel, available_from: f.available_from || undefined, cdc_no: f.cdc_no, passport_no: f.passport_no });
+      date_of_birth: f.date_of_birth || undefined, vessel: f.vessel, available_from: f.available_from || undefined, cdc_no: f.cdc_no, passport_no: f.passport_no, ...extra } as any, cv || undefined);
     setSaving(false);
   };
   const field = (k: string, label: string, type = "text", ph = "") => <label className="text-xs text-muted-foreground">{label}<input type={type} value={f[k] || ""} onChange={set(k)} placeholder={ph} className={`${input} mt-1`} /></label>;
@@ -201,6 +218,14 @@ function AddCrewDialog({ onClose, onSave }: { onClose: () => void; onSave: (r: C
     <Dialog open onOpenChange={o => !o && onClose()}>
       <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Add crew member</DialogTitle></DialogHeader>
+        <button type="button" disabled={reading} onClick={() => cvIn.current?.click()} onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); void readCv(e.dataTransfer.files?.[0]); }}
+          className="w-full rounded-xl border-2 border-dashed border-primary/50 p-4 text-center hover:bg-primary/5">
+          {reading ? <p className="flex items-center justify-center gap-2 text-sm text-primary"><Loader2 className="animate-spin" size={16} /> Reading CV…</p>
+            : cv ? <p className="text-sm text-primary">✅ Filled from {cv.name} — tap to use another CV</p>
+            : <><p className="flex items-center justify-center gap-2 text-sm font-semibold text-primary"><ScanLine size={16} /> Upload or drop the crew CV to fill this form</p>
+              <p className="text-xs text-muted-foreground mt-1">PDF, Word, Excel, CSV, text or a photo of the CV</p></>}
+        </button>
+        <input ref={cvIn} type="file" accept={CV_ACCEPT} className="hidden" onChange={e => readCv(e.target.files?.[0])} />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {field("first_name", "First name *")}{field("last_name", "Last name")}
           {field("rank", "Rank *", "text", "e.g. Chief Officer")}{field("nationality", "Nationality")}
@@ -209,7 +234,7 @@ function AddCrewDialog({ onClose, onSave }: { onClose: () => void; onSave: (r: C
           {field("date_of_birth", "Date of birth", "date")}{field("cdc_no", "CDC / Seaman book no.")}
           {field("passport_no", "Passport no.")}
         </div>
-        <p className="text-xs text-muted-foreground">After saving, open the crew member to scan their CV and attach documents (CoC, passport, medical).</p>
+        <p className="text-xs text-muted-foreground">{cv ? "The original CV is saved in this crew member's company folder." : "Or fill the details by hand."} After saving, open the crew member to attach documents (CoC, passport, medical).</p>
         <Button onClick={submit} disabled={saving} className="w-full min-h-12 rounded-xl font-bold">{saving ? "Saving…" : "Save & create Crew ID"}</Button>
       </DialogContent>
     </Dialog>
@@ -362,5 +387,62 @@ function CertAdder({ onAdd }: { onAdd: (c: { name: string; number: string; expir
       <input type="date" value={ex} onChange={e => setEx(e.target.value)} className={`${input} w-40`} />
       <Button variant="outline" className="rounded-xl border-primary text-primary" onClick={() => { if (!n.trim()) return; onAdd({ name: n.trim(), number: no.trim(), expiry_date: ex }); setN(""); setNo(""); setEx(""); }}>Add</Button>
     </div>
+  );
+}
+
+type BulkItem = { file: File; state: "wait" | "reading" | "ready" | "error" | "added" | "skipped"; row?: CrewImportRow; err?: string };
+function BulkCvDialog({ onClose, importOne }: { onClose: () => void; importOne: (r: CrewImportRow, cv: File) => Promise<boolean> }) {
+  const [items, setItems] = useState<BulkItem[]>([]); const [run, setRun] = useState(false); const inRef = useRef<HTMLInputElement>(null);
+  const upd = (i: number, p: Partial<BulkItem>) => setItems(a => a.map((x, j) => j === i ? { ...x, ...p } : x));
+  const add = async (files: FileList | File[] | null) => {
+    const list = Array.from(files || []).slice(0, 20 - items.length);
+    if (!list.length) return;
+    const start = items.length;
+    setItems(a => [...a, ...list.map(file => ({ file, state: "wait" as const }))]);
+    for (let k = 0; k < list.length; k++) {
+      upd(start + k, { state: "reading" });
+      try { const row = await cvToCrewRow(list[k]); upd(start + k, row.first_name || row.last_name ? { state: "ready", row } : { state: "error", err: "No name found in this CV" }); }
+      catch (e: any) { upd(start + k, { state: "error", err: e?.message || "Could not read" }); }
+    }
+    if (inRef.current) inRef.current.value = "";
+  };
+  const edit = (i: number, k: keyof CrewImportRow, v: string) => setItems(a => a.map((x, j) => j === i && x.row ? { ...x, row: { ...x.row, [k]: v } } : x));
+  const ready = items.filter(x => x.state === "ready" && x.row?.rank?.trim());
+  const go = async () => {
+    setRun(true);
+    for (let i = 0; i < items.length; i++) { const x = items[i]; if (x.state !== "ready" || !x.row?.rank?.trim()) continue; upd(i, { state: (await importOne(x.row, x.file)) ? "added" : "skipped" }); }
+    setRun(false);
+  };
+  const reading = items.some(x => x.state === "reading" || x.state === "wait");
+  const badge: Record<string, string> = { wait: "Waiting", reading: "Reading…", ready: "Ready", error: "Problem", added: "Added ✓", skipped: "Not added" };
+  return (
+    <Dialog open onOpenChange={o => !o && !run && onClose()}>
+      <DialogContent className="max-w-3xl max-h-[88vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>Bulk upload CVs</DialogTitle></DialogHeader>
+        <button type="button" disabled={items.length >= 20 || run} onClick={() => inRef.current?.click()} onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); void add(e.dataTransfer.files); }}
+          className="w-full rounded-xl border-2 border-dashed border-primary/50 p-5 text-center hover:bg-primary/5 disabled:opacity-50">
+          <p className="flex items-center justify-center gap-2 text-sm font-semibold text-primary"><Upload size={16} /> Choose or drop up to 20 CVs ({items.length}/20)</p>
+          <p className="text-xs text-muted-foreground mt-1">PDF, Word, Excel, CSV, text or photos — AI reads each one, you check, then add all.</p>
+        </button>
+        <input ref={inRef} type="file" multiple accept={CV_ACCEPT} className="hidden" onChange={e => add(e.target.files)} />
+        {items.length > 0 && <div className="rounded-xl border border-border overflow-x-auto">
+          <table className="w-full text-xs"><thead className="text-muted-foreground"><tr>{["CV file", "First name", "Last name", "Rank *", "WhatsApp", "Email", "Status"].map(h => <th key={h} className="text-left p-2">{h}</th>)}</tr></thead>
+            <tbody>{items.map((x, i) => <tr key={i} className="border-t border-border align-top">
+              <td className="p-2 max-w-[140px] truncate" title={x.file.name}>{x.file.name}</td>
+              {(["first_name", "last_name", "rank", "whatsapp", "email"] as const).map(k => <td key={k} className="p-1">{x.row && x.state === "ready"
+                ? <input value={(x.row as any)[k] || ""} onChange={e => edit(i, k, e.target.value)} className={`w-full min-w-[90px] rounded-lg border bg-background px-2 py-1 text-foreground ${k === "rank" && !x.row.rank?.trim() ? "border-destructive" : "border-border"}`} />
+                : <span className="text-muted-foreground">{(x.row as any)?.[k] || ""}</span>}</td>)}
+              <td className="p-2 whitespace-nowrap"><span className={x.state === "error" || x.state === "skipped" ? "text-destructive" : x.state === "added" ? "text-emerald-400" : "text-primary"}>{badge[x.state]}</span>
+                {x.err && <p className="text-[10px] text-muted-foreground">{x.err}</p>}
+                {!run && x.state !== "added" && <button className="block text-[10px] text-muted-foreground underline" onClick={() => setItems(a => a.filter((_, j) => j !== i))}>remove</button>}</td>
+            </tr>)}</tbody></table>
+        </div>}
+        <p className="text-xs text-muted-foreground">Crew already in your list (same email or WhatsApp) are not added twice. Each original CV is saved in that crew member's company folder.</p>
+        <Button disabled={!ready.length || run || reading} onClick={go} className="w-full min-h-12 rounded-xl font-bold">
+          {run ? <><Loader2 className="animate-spin" size={16} /> Adding crew…</> : reading ? "Reading CVs…" : `Add ${ready.length} crew & create Crew IDs`}
+        </Button>
+        {items.some(x => x.state === "added") && !run && <Button variant="outline" onClick={onClose} className="w-full rounded-xl">Done</Button>}
+      </DialogContent>
+    </Dialog>
   );
 }
