@@ -149,7 +149,7 @@ export default function CompanyCrewTab() {
             <div key={r.id} className="rounded-xl border border-border bg-card p-3 flex flex-wrap items-center gap-3">
               <input type="checkbox" checked={sel.has(r.id)} onChange={() => toggle(r.id)} aria-label="Select crew" />
               <button onClick={() => setOpenId(r.id)} className="flex-1 min-w-[200px] text-left">
-                <p className="font-semibold text-foreground">{`${r.first_name} ${r.last_name}`.trim()} <span className="text-xs font-mono text-primary ml-1">{r.live_crew_unique_id}</span></p>
+                <p className="font-semibold text-foreground">{`${r.first_name} ${r.last_name}`.trim() || r.email || "Awaiting details"} <span className="text-xs font-mono text-primary ml-1">{r.live_crew_unique_id}</span></p>
                 <p className="text-xs text-muted-foreground">{[r.rank, r.nationality, r.vessel].filter(Boolean).join(" • ")}</p>
                 <p className="text-[11px] text-muted-foreground">{r.sea_service?.length || 0} sea service · {r.certificates?.length || 0} certificates{soon ? <span className="text-amber-400"> · {soon} expiring ≤90 days</span> : null}</p>
               </button>
