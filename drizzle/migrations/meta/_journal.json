@@ -953,6 +953,13 @@
       "when": 1794540597400,
       "tag": "0135_manager_training_interview_usability",
       "breakpoints": true
+    },
+    {
+      "idx": 136,
+      "version": "7",
+      "when": 1794540637196,
+      "tag": "0136_fix_training_radar_stable",
+      "breakpoints": true
     }
   ]
 }
