@@ -4155,6 +4155,48 @@ export type Database = {
         }
         Relationships: []
       }
+      manager_training_sends: {
+        Row: {
+          channel: string
+          created_at: string
+          crew_id: string | null
+          email: string | null
+          id: string
+          items: string[]
+          manager_id: string
+          message: string | null
+          phone: string | null
+          rank: string | null
+          recipient_name: string | null
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          crew_id?: string | null
+          email?: string | null
+          id?: string
+          items?: string[]
+          manager_id: string
+          message?: string | null
+          phone?: string | null
+          rank?: string | null
+          recipient_name?: string | null
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          crew_id?: string | null
+          email?: string | null
+          id?: string
+          items?: string[]
+          manager_id?: string
+          message?: string | null
+          phone?: string | null
+          rank?: string | null
+          recipient_name?: string | null
+        }
+        Relationships: []
+      }
       maritime_interview_sessions: {
         Row: {
           completed_at: string | null
@@ -7806,6 +7848,15 @@ export type Database = {
         Args: { p_invite_id: string }
         Returns: Json
       }
+      manager_interview_people: {
+        Args: {
+          p_offset?: number
+          p_rank?: string
+          p_search?: string
+          p_status?: string
+        }
+        Returns: Json
+      }
       manager_invite_promotion: {
         Args: {
           p_application: string
@@ -7817,6 +7868,18 @@ export type Database = {
       }
       manager_link_training_crew: {
         Args: { p_email: string; p_phone?: string }
+        Returns: Json
+      }
+      manager_log_training_send: {
+        Args: {
+          p_channel: string
+          p_email: string
+          p_items: string[]
+          p_message: string
+          p_name: string
+          p_phone: string
+          p_rank: string
+        }
         Returns: Json
       }
       manager_maritime_report: {
@@ -7880,7 +7943,16 @@ export type Database = {
       }
       manager_training_detail: { Args: { p_crew: string }; Returns: Json }
       manager_training_radar: {
-        Args: { p_offset?: number; p_search?: string }
+        Args: {
+          p_offset?: number
+          p_rank?: string
+          p_search?: string
+          p_status?: string
+        }
+        Returns: Json
+      }
+      manager_training_sent: {
+        Args: { p_offset?: number; p_rank?: string; p_search?: string }
         Returns: Json
       }
       manager_unified_crew: {
@@ -7888,6 +7960,7 @@ export type Database = {
           p_filter?: string
           p_limit?: number
           p_offset?: number
+          p_rank?: string
           p_search?: string
           p_vessel?: string
         }

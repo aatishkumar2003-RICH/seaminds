@@ -946,6 +946,13 @@
       "when": 1794507041513,
       "tag": "0134_crew_connected_companies",
       "breakpoints": true
+    },
+    {
+      "idx": 135,
+      "version": "7",
+      "when": 1794540597400,
+      "tag": "0135_manager_training_interview_usability",
+      "breakpoints": true
     }
   ]
 }
