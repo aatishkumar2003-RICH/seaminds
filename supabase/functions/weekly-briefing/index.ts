@@ -65,8 +65,8 @@ const lang = (nat?: string | null) => {
 function topics(rank?: string | null, manager = false): string[] {
   if (manager) return ["for ship managers", "manning agenc", "sire", "psc", "vetting", "drill", "training", "interview", "inspection"];
   const r = (rank || "").toLowerCase();
-  if (/engineer|eto|electr|oiler|fitter|motorman|wiper|\d\/e|c\/e/.test(r)) return ["meo", "oral", "lpg", "lng", ""engine", "machinery", "bunker", "fuel", "boiler", "pump", "electric", "maintenance"];
-  if (/master|captain|officer|mate|\d\/o|c\/o|cadet/.test(r)) return ["mmd", "marina", "oral", ""navigation", "bridge", "colreg", "ecdis", "cargo", "weather", "psc", "sire"];
+  if (/engineer|eto|electr|oiler|fitter|motorman|wiper|\d\/e|c\/e/.test(r)) return ["meo", "oral", "lpg", "lng", "engine", "machinery", "bunker", "fuel", "boiler", "pump", "electric", "maintenance"];
+  if (/master|captain|officer|mate|\d\/o|c\/o|cadet/.test(r)) return ["mmd", "marina", "oral", "navigation", "bridge", "colreg", "ecdis", "cargo", "weather", "psc", "sire"];
   return ["safety", "seaman", "mlc", "rest hour", "wellness", "mooring", "career", "stcw"];
 }
 
