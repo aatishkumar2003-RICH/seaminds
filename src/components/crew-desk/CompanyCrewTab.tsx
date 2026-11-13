@@ -58,17 +58,17 @@ export default function CompanyCrewTab() {
     finally { if (fileRef.current) fileRef.current.value = ""; }
   };
   const importRows = async (rows: CrewImportRow[]) => {
-    let created = 0, skipped = 0, invalid = 0;
+    let created = 0, skipped = 0, invalid = 0, updated = 0, linked = 0;
     for (let i = 0; i < rows.length; i += 200) {
       setBusy(`Adding crew ${Math.min(i + 200, rows.length)} / ${rows.length}…`);
       const { data, error } = await supabase.rpc("company_crew_import" as any, { p_rows: rows.slice(i, i + 200) as any });
       const d = data as any;
       if (error || !d?.ok) { setBusy(""); toast.error(IMPORT_ERRORS[d?.error] || "Could not add crew. Please try again."); await load(); return null; }
       lastIds.current = [...(i ? lastIds.current : []), ...((d.records || []) as any[]).map((x: any) => x.id)];
-      created += d.created; skipped += d.skipped; invalid += d.invalid;
+      created += d.created; skipped += d.skipped; invalid += d.invalid; updated += d.updated || 0; linked += d.linked || 0;
     }
     setBusy(""); await load();
-    toast.success(`${created} crew added with new Crew IDs${skipped ? ` · ${skipped} already in your list` : ""}${invalid ? ` · ${invalid} skipped (missing name/rank)` : ""}`);
+    toast.success(`${created} crew added${updated ? ` · ${updated} existing updated` : ""}${linked ? ` · ${linked} already on SeaMinds` : ""}${skipped ? ` · ${skipped} already in your list` : ""}${invalid ? ` · ${invalid} skipped (no email, name or rank)` : ""}`);
     return created;
   };
 
@@ -114,6 +114,7 @@ export default function CompanyCrewTab() {
           <Button onClick={() => setAdding(true)} className="rounded-xl font-bold"><UserPlus size={16} /> Add crew member</Button>
           <Button variant="outline" onClick={() => fileRef.current?.click()} className="rounded-xl border-primary text-primary"><Upload size={16} /> Upload crew list (Excel / CSV)</Button>
           <Button variant="outline" onClick={() => setBulkCv(true)} className="rounded-xl border-primary text-primary"><ScanLine size={16} /> Bulk upload CVs</Button>
+          <Button variant="outline" onClick={() => setEmailList(true)} className="rounded-xl border-primary text-primary"><Mail size={16} /> Add by email list</Button>
           <Button variant="ghost" onClick={downloadTemplate} className="rounded-xl text-primary"><Download size={16} /> Download template</Button>
           <input ref={fileRef} type="file" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="hidden" onChange={e => pickFile(e.target.files?.[0])} />
         </div>
@@ -236,10 +237,13 @@ function AddCrewDialog({ onClose, onSave }: { onClose: () => void; onSave: (r: C
               <p className="text-xs text-muted-foreground mt-1">PDF, Word, Excel, CSV, text or a photo of the CV</p></>}
         </button>
         <input ref={cvIn} type="file" accept={CV_ACCEPT} className="hidden" onChange={e => readCv(e.target.files?.[0])} />
+        <label className="block text-xs text-muted-foreground">Email — enough on its own; other details can be added later
+          <input type="email" value={f.email || ""} onChange={set("email")} onBlur={lookup} placeholder="crew@email.com" className={`${input} mt-1`} /></label>
+        {found && <p className="rounded-xl border border-primary/40 bg-primary/10 p-2 text-xs text-foreground">✨ Already registered on SeaMinds: <b>{`${found.first_name || ""} ${found.last_name || ""}`.trim() || "crew member"}</b>{found.rank ? ` · ${found.rank}` : ""}. Details filled in — they can accept your company link with their own login.</p>}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {field("first_name", "First name *")}{field("last_name", "Last name")}
-          {field("rank", "Rank *", "text", "e.g. Chief Officer")}{field("nationality", "Nationality")}
-          {field("whatsapp", "WhatsApp", "tel", "+63 917 123 4567")}{field("email", "Email", "email")}
+          {field("first_name", "First name")}{field("last_name", "Last name")}
+          {field("rank", "Rank", "text", "e.g. Chief Officer")}{field("nationality", "Nationality")}
+          {field("whatsapp", "WhatsApp", "tel", "+63 917 123 4567")}
           {field("vessel", "Vessel")}{field("available_from", "Available from", "date")}
           {field("date_of_birth", "Date of birth", "date")}{field("cdc_no", "CDC / Seaman book no.")}
           {field("passport_no", "Passport no.")}
