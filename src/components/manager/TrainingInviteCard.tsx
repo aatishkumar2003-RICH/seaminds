@@ -76,7 +76,10 @@ export default function TrainingInviteCard({ company }: { company: string }) {
   const titles = items.filter((i) => picked.includes(i.slug)).map((i) => i.title);
   const total = titles.length + practice.length + drafts.length;
   const msg = () => trainingInviteText(company, titles, window.location.origin, drafts, practice, mt);
-  const link = () => { if (email.trim() || phone.trim()) void supabase.rpc("manager_link_training_crew" as any, { p_email: email.trim(), p_phone: phone.trim() }).then(({ data }: any) => data?.linked && toast.success("Crew added to your live training radar")); };
+  const link = () => { if (email.trim() || phone.trim()) void supabase.rpc("manager_assign_training" as any, { p_email: email.trim(), p_phone: phone.trim(), p_slugs: picked }).then(({ data }: any) => {
+    if (data?.linked) toast.success(data.assigned ? `${data.assigned} module${data.assigned > 1 ? "s" : ""} now waiting in the crew's My training → Required` : "Crew added to your live training radar");
+    else if (data?.pending && picked.length) toast.message("Crew is not on SeaMinds yet — modules will appear in their My training as soon as they sign up with this email");
+  }); };
   const record = (channel: "email" | "whatsapp" | "zalo" | "copy") => {
     const allItems = [...titles, ...practice.map((p) => p.title), ...drafts.map((d) => d.title)];
     void supabase.rpc("manager_log_training_send" as any, { p_name: who ? `${who.first_name} ${who.last_name}`.trim() : "", p_email: email.trim(), p_phone: phone.trim(), p_rank: who?.rank || (rank === "Any rank" ? "" : rank), p_channel: channel, p_items: allItems, p_message: msg() })
