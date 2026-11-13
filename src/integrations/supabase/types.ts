@@ -3158,6 +3158,7 @@ export type Database = {
           rank_required: string
           sections: string[] | null
           status: string
+          target_date: string | null
           title: string
           vessel_type: string | null
         }
@@ -3175,6 +3176,7 @@ export type Database = {
           rank_required: string
           sections?: string[] | null
           status?: string
+          target_date?: string | null
           title: string
           vessel_type?: string | null
         }
@@ -3192,6 +3194,7 @@ export type Database = {
           rank_required?: string
           sections?: string[] | null
           status?: string
+          target_date?: string | null
           title?: string
           vessel_type?: string | null
         }
@@ -4171,6 +4174,7 @@ export type Database = {
           phone: string | null
           rank: string | null
           recipient_name: string | null
+          target_date: string | null
         }
         Insert: {
           channel: string
@@ -4184,6 +4188,7 @@ export type Database = {
           phone?: string | null
           rank?: string | null
           recipient_name?: string | null
+          target_date?: string | null
         }
         Update: {
           channel?: string
@@ -4197,6 +4202,7 @@ export type Database = {
           phone?: string | null
           rank?: string | null
           recipient_name?: string | null
+          target_date?: string | null
         }
         Relationships: []
       }
@@ -7898,6 +7904,7 @@ export type Database = {
           p_name: string
           p_phone: string
           p_rank: string
+          p_target?: string
         }
         Returns: Json
       }
@@ -7968,10 +7975,13 @@ export type Database = {
       manager_training_pool: { Args: never; Returns: Json[] }
       manager_training_radar: {
         Args: {
+          p_from?: string
           p_offset?: number
           p_rank?: string
           p_search?: string
           p_status?: string
+          p_to?: string
+          p_vessel?: string
         }
         Returns: Json
       }
