@@ -1,7 +1,7 @@
 // Cadet e-TRB PDF: "summary" = 1–2 page progress record by phase; "full" = all 32 modules with checklists.
 import { CADET_CURRICULUM, stageLabel, type CadetTrack } from "@/lib/cadetCurriculum";
 
-export type TrbMode = "summary" | "full";
+export type TrbMode = "summary" | "full" | "clearance";
 export type TrbResult = { week: number; score: number; correct?: number; total?: number; attempts?: number; checklist?: boolean[]; officer_name?: string | null; completed_at: string };
 export type TrbInput = { name: string; email?: string | null; company?: string | null; vessel?: string | null; imo?: string | null; track: CadetTrack; current_week: number; shore_start?: string | null; join_date?: string | null; results: TrbResult[] };
 
@@ -29,14 +29,19 @@ export async function buildTrbPdf(d: TrbInput, mode: TrbMode) {
     doc.setFont("helvetica", bold ? "bold" : "normal"); doc.setFontSize(size); doc.setTextColor(...color);
     for (const l of doc.splitTextToSize(t, 180)) { if (y > 282) { doc.addPage(); y = 16; } doc.text(l, 15, y); y += size * 0.45; } };
   doc.setFillColor(13, 27, 42); doc.rect(0, 0, 210, 30, "F"); doc.setTextColor(212, 175, 55); doc.setFont("helvetica", "bold"); doc.setFontSize(15);
-  doc.text(mode === "summary" ? "e-TRB PROGRESS RECORD (SUMMARY)" : "ELECTRONIC TRAINING RECORD BOOK (e-TRB)", 15, 14); doc.setFontSize(9); doc.setTextColor(255, 255, 255);
+  doc.text(mode === "clearance" ? "PRE-JOINING INDUCTION CLEARANCE" : mode === "summary" ? "e-TRB PROGRESS RECORD (SUMMARY)" : "ELECTRONIC TRAINING RECORD BOOK (e-TRB)", 15, 14); doc.setFontSize(9); doc.setTextColor(255, 255, 255);
   doc.text(`STCW ${d.track === "deck" ? "A-II/1" : "A-III/1"} · SeaMinds Cadet Academy · ${d.track === "deck" ? "Deck" : "Engine"} track · Generated ${new Date().toISOString().slice(0, 10)}`, 15, 22); y = 40;
   const res = new Map(d.results.map((r) => [r.week, r])); const n = d.results.length;
   const avg = n ? Math.round(d.results.reduce((s, r) => s + r.score, 0) / n) : null;
   line(`Cadet: ${d.name}`, 11, true); if (d.email || d.company) line(`Email: ${d.email || "—"}   ·   Company: ${d.company || "—"}`);
   line(`Vessel: ${d.vessel || "—"}${d.imo ? ` (IMO ${d.imo})` : ""}   ·   Shore start: ${d.shore_start || "—"}   ·   Joined: ${d.join_date || "—"}`);
   line(`Progress: ${n}/32 modules (${Math.round((n / 32) * 100)}%)   ·   Average test score: ${avg ?? "—"}%   ·   Current module: ${d.current_week}`, 9, true); y += 3;
-  if (mode === "summary") {
+  if (mode === "clearance") {
+    const shore = [1, 2, 3, 4].map((w) => res.get(w)); const ok = shore.every((r) => r && r.score >= 60);
+    line(ok ? "STATUS: CLEARED — all four pre-joining modules passed" : "STATUS: NOT YET CLEARED", 11, true, ok ? [20, 110, 50] : [180, 30, 30]); y += 2;
+    shore.forEach((r, i) => line(`Module ${i + 1} · ${cur[i].t} — ${r ? `${r.score}% · ${String(r.completed_at).slice(0, 10)}` : "pending"}`, 9));
+    y += 3; line("Covers: Maritime English & SMCP, safety culture & stop-work authority, ISM/PPE/permit-to-work, track basics, document & medical readiness, SOLAS safety familiarisation.", 8.5);
+  } else if (mode === "summary") {
     for (const p of phaseStats(d.results)) line(`${p.label}: ${p.done}/${p.total} completed`, 9.5, true, [13, 27, 42]);
     y += 3; line("Completed modules", 10, true);
     for (const r of [...d.results].sort((a, b) => a.week - b.week)) {
