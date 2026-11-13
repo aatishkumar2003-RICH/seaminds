@@ -257,7 +257,7 @@ const ManagerInterviews = () => {
         )}
         {tab === "training" && <TrainingRadar />}
         {tab === "training" && <TrainingInviteCard company={companyName} />}
-        {tab === "training" && <InterviewPeopleBoard linkFor={linkFor} company={companyName} onOpenCampaign={() => { setTab("interviews" as any); setIview("campaigns"); }} initialKind="training" />}
+        {tab === "training" && <InterviewPeopleBoard linkFor={linkFor} company={companyName} onOpenCampaign={() => { setParams({}); setIview("campaigns"); }} initialKind="training" />}
         {tab === "interviews" && <div style={{ background: "rgba(212,175,55,0.07)", border: `1px solid rgba(212,175,55,0.3)`, borderRadius: 14, padding: 14, marginBottom: 16 }}>
           <p style={{ color: GOLD, fontSize: 13, fontWeight: 800, marginBottom: 5 }}>Free AI crew interviews</p>
           <p style={{ color: "#cbd5e1", fontSize: 12, lineHeight: 1.55 }}>
