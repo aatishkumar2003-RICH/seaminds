@@ -62,6 +62,7 @@ const SYSTEM_PROMPT = `You are a maritime HR expert. Extract ALL information fro
     }
   ]
 }
+AGENCY SHIELD: CVs are often on a crewing agency / manning office template. Letterheads, headers, footers, logos and "contact us" blocks (office address, office phone, agency email) belong to the AGENCY, never to the seafarer. Never use an agency office address or phone country to decide nationality, phone or address. Fill "nationality" ONLY when the CV explicitly states the seafarer's nationality/citizenship (or a passport/CDC issued by that country for this person); otherwise use "". Fill "phone"/"email" only from the seafarer's own personal details section.
 Use empty string "" for any field not found. Use empty array [] for any array not found. Return ONLY the JSON object. No markdown. No preamble.`;
 
 Deno.serve(async (req) => {
