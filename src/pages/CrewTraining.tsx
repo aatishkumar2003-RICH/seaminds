@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import MaritimeEnglishLab from "@/components/training/MaritimeEnglishLab";
 import MaritimeMasterBrain from "@/components/training/MaritimeMasterBrain";
@@ -143,7 +143,15 @@ const Module = ({ token }: { token: string }) => {
 const MyTraining = () => {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const tab = (params.get("tab") || "required") as "required" | "drills" | "matrix" | "records" | "english" | "brain" | "cadet";
+  const [cadetCo, setCadetCo] = useState<string | null | undefined>(undefined);
+  useEffect(() => {
+    void supabase.rpc("crew_my_companies" as any).then(({ data }) => {
+      const c = ((data as any) || []).find((x: any) => (x.kinds || []).includes("cadet"));
+      setCadetCo(c ? c.company : null);
+    });
+  }, []);
+  const stripRef = useRef<HTMLDivElement>(null);
+  const tab = (params.get("tab") || (cadetCo ? "cadet" : "required")) as "required" | "drills" | "matrix" | "records" | "english" | "brain" | "cadet";
   const english = tab === "english";
   const [items, setItems] = useState<LedgerItem[] | null>(null);
   const [recs, setRecs] = useState<Recommendation[]>([]);
@@ -168,15 +176,18 @@ const MyTraining = () => {
   };
   const openItem = (c: CatalogItem) => (c.token ? navigate(`/training/${c.token}`) : start(c.slug));
   const requiredCount = (items || []).filter((i) => i.company?.trim() && i.status !== "completed" && i.token).length;
-  const TABS = [
+  const BASE = [
     ["required", "⭐ Required", requiredCount],
     ["drills", "🚢 Fleet Drills", 0],
     ["matrix", "📋 Matrix", 0],
     ["records", "📊 Records", 0],
     ["english", "🎙️ English", 0],
     ["brain", "🧠 Brain", 0],
-    ["cadet", "⚓ Cadet", 0],
-  ] as const;
+  ] as [string, string, number][];
+  const TABS: [string, string, number][] = cadetCo ? [["cadet", "⚓ Cadet e-TRB", 0], ...BASE] : [...BASE, ["cadet", "⚓ Cadet", 0]];
+  useEffect(() => {
+    stripRef.current?.querySelector<HTMLElement>('[aria-selected="true"]')?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+  }, [tab, cadetCo]);
 
   return (
     <section className="space-y-4">
@@ -185,9 +196,16 @@ const MyTraining = () => {
         <h1 className="text-xl font-bold">My training</h1>
         <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => navigate("/maritime-interview")}>AI interview practice</Button>
       </div>
-      <div role="tablist" className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 no-scrollbar">
+      {cadetCo && tab !== "cadet" && (
+        <button onClick={() => setParams({ tab: "cadet" }, { replace: true })} className="flex w-full items-center gap-2 rounded-xl border border-primary bg-card p-3 text-left">
+          <span className="text-lg">⚓</span>
+          <span className="min-w-0 flex-1 text-xs"><span className="block font-bold text-primary">Your Cadet Record Book (e-TRB)</span><span className="block truncate text-muted-foreground">Enrolled by {cadetCo}</span></span>
+          <span className="shrink-0 text-xs font-bold text-primary">Open ›</span>
+        </button>
+      )}
+      <div ref={stripRef} role="tablist" className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 no-scrollbar">
         {TABS.map(([k, label, n]) => (
-          <button key={k} role="tab" aria-selected={tab === k} onClick={() => setParams(k === "required" ? {} : { tab: k }, { replace: true })}
+          <button key={k} role="tab" aria-selected={tab === k} onClick={() => setParams(k === "required" && !cadetCo ? {} : { tab: k }, { replace: true })}
             className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-bold ${tab === k ? "border-primary bg-primary text-primary-foreground" : "border-primary/40 text-primary"}`}>
             {label}{n > 0 && <span className={`ml-1.5 rounded-full px-1.5 text-[10px] ${tab === k ? "bg-background text-primary" : "bg-primary text-primary-foreground"}`}>{n}</span>}
           </button>

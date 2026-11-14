@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Building2, ChevronLeft, ShieldCheck } from "lucide-react";
@@ -47,6 +48,16 @@ export default function ConnectedCompanies() {
         <span className="text-[11px] font-bold" style={{ color: GOLD }}>Manage ›</span>
       </button>
 
+      {(() => { const cad = list.find(c => (c.kinds || []).includes("cadet")); return cad ? (
+        <Link to="/training?tab=cadet" className="w-full mb-2.5 flex items-center gap-2 rounded-xl px-3 py-3 no-underline"
+          style={{ background: `linear-gradient(135deg, ${GOLD}, #C5941F)`, color: NAVY }}>
+          <span className="text-lg">⚓</span>
+          <span className="flex-1 min-w-0">
+            <span className="block text-[10px] font-bold uppercase tracking-widest">Cadet Academy · {cad.company}</span>
+            <span className="block text-[14px] font-extrabold">Open my Record Book (e-TRB)</span>
+          </span>
+          <span className="text-[16px] font-extrabold">›</span>
+        </Link>) : null; })()}
       {open && (
         <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: "rgba(0,0,0,0.6)" }} onClick={() => setOpen(false)}>
           <div className="w-full max-w-md max-h-[85vh] overflow-y-auto rounded-t-3xl p-5 pb-8" style={{ background: CARD, borderTop: `1px solid ${GOLD}` }} onClick={e => e.stopPropagation()}>
