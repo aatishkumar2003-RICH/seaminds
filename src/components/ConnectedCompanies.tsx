@@ -8,7 +8,7 @@ const NAVY = "#0D1B2A";
 const CARD = "#112240";
 const BORDER = "rgba(212,175,55,0.3)";
 type Co = { manager_uid: string; company: string; since: string; kinds: string[] };
-const KIND: Record<string, string> = { roster: "Company crew list", training: "Training", fleet: "Fleet" };
+const KIND: Record<string, string> = { roster: "Company crew list", training: "Training", fleet: "Fleet", cadet: "Cadet Academy" };
 
 /** Top-panel strip: which companies can see this seafarer, with one-tap disconnect. */
 export default function ConnectedCompanies() {
