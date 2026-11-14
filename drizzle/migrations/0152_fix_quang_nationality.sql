@@ -1,0 +1,2 @@
+UPDATE public.crew_profiles SET nationality = 'Vietnamese' WHERE id = 'a8ed555c-51f0-475f-a634-7cdacb9b1d61';
+UPDATE public.crew_cv_data SET medical = jsonb_set(medical, '{personal,nationality}', '"Vietnamese"') WHERE user_id = 'a8ed555c-51f0-475f-a634-7cdacb9b1d61' AND jsonb_typeof(medical->'personal') = 'object';

@@ -1065,6 +1065,13 @@
       "when": 1794618288676,
       "tag": "0151_cadet_connected_companies",
       "breakpoints": true
+    },
+    {
+      "idx": 152,
+      "version": "7",
+      "when": 1794629269389,
+      "tag": "0152_fix_quang_nationality",
+      "breakpoints": true
     }
   ]
 }
