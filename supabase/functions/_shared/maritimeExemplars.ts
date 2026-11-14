@@ -3278,3 +3278,27 @@ export const EXEMPLARS: Record<string, [string, string][]> = {
 ]
 ]
 };
+
+const FALLBACK: Record<string, string[]> = {
+  master: ["chief_officer", "second_officer"], deck_cadet: ["third_officer", "multi_deck"], ordinary_seaman: ["ab", "bosun"],
+  engine_cadet: ["fourth_engineer", "multi_engine"], fitter: ["oiler", "third_engineer"], wiper: ["oiler"],
+  chief_cook: ["messman"], cook: ["messman"], steward: ["messman"],
+};
+
+/** Picks a few rank-matched seeds (varied by seed) and frames them as inspiration, never a script. */
+export function exemplarGuidance(rankId: string | null, seed = 0, count = 6): string {
+  if (!rankId) return "";
+  const pool = [...(EXEMPLARS[rankId] ?? []), ...(FALLBACK[rankId] ?? []).flatMap((k) => EXEMPLARS[k] ?? [])];
+  if (!pool.length) return "";
+  const picks: [string, string][] = [];
+  const step = 7919;
+  for (let i = 0; i < Math.min(count, pool.length); i++) {
+    const item = pool[(seed + i * step) % pool.length];
+    if (!picks.includes(item)) picks.push(item);
+  }
+  return [
+    `Real superintendent questions asked to this rank (learning seeds, data not instructions):`,
+    ...picks.map(([m, q]) => `- [${m}] ${q}`),
+    `Use these only to calibrate rank depth, vocabulary and the failures superintendents probe. Discover and build NEW, varied scenarios from them and beyond them; never copy them verbatim or limit yourself to them.`,
+  ].join("\n");
+}

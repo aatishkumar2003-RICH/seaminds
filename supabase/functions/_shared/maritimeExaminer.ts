@@ -1,4 +1,5 @@
 // Phase 2 — adaptive examiner logic (pure, no imports besides the brain; vitest-testable).
+import { exemplarGuidance } from "./maritimeExemplars.ts";
 import { buildBrainPrompt, detectSafetyGates, resolveRank, VESSEL_TYPES, type Department, type VesselType } from "./maritimeBrain.ts";
 
 // Legacy adaptive interviews remain resumable. New interviews use the fixed four-part framework below.
@@ -165,6 +166,7 @@ export function buildExamMessages(input: ExamInput, pendingQuestion: string | nu
       `Current part: ${currentModule}. Technical stage: ${stage ?? "not applicable"}. Responsibility pillar: ${pillar}.`,
       moduleInstruction,
       ...(seaContext && currentModule === "technical" ? [seaContext] : []),
+      ...(currentModule === "technical" && stage === "immediate" ? [exemplarGuidance(resolveRank(input.targetRank || input.rank), seed + turnIndex)] : []),
       `Vary incidents and parameters using variation key ${seed % 997}; never repeat an earlier question. Do not reveal model answers or learning feedback during the interview.`,
       `If an answer proposes an unsafe action, set safety_flag true, name the hazard in feedback and cap depth at 1. For pickup answers judge both the option and reason; a wrong option is depth ≤1.`,
       `depth scale: 0 no answer, 1 unsafe/incorrect, 2 partial, 3 competent, 4 expert. For English score communication only; for writing score structure, clarity and maritime terminology; for composure score professional actions only.`,
@@ -177,6 +179,7 @@ export function buildExamMessages(input: ExamInput, pendingQuestion: string | nu
       turnIndex <= 1 ? `Opening: first learn the candidate's last vessel, machinery/cargo, PSC findings and duties, then anchor later questions to that experience.` : `Anchor questions to the vessel and equipment the candidate described earlier when relevant.`,
       `Responsibility pillars for this ${dept} rank: ${PILLARS[dept].join(", ")}. Include rank duties, statutory paperwork and SMS records, not only troubleshooting.`,
       `Next question pillar: ${pillar}. Next phase: ${nextPhase}.`,
+      exemplarGuidance(resolveRank(input.targetRank || input.rank), seed + turnIndex, 4),
       pickup
         ? `This turn is a QUICK-DECISION PICKUP: give a short emergency/priority scenario then exactly 4 options on separate lines formatted "A) …", "B) …", "C) …", "D) …". Ask the candidate to pick the best FIRST action and give a one-line reason. Exactly one option is clearly best.`
         : `This turn is ORAL: open question answered in the candidate's own words.`,
