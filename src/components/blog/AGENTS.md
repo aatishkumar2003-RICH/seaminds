@@ -1,0 +1,1 @@
+- Blog reader prompt: full article text always stays visible to Google (no paywall/cloaking); signed-out readers get a dismissible bottom join dock only after real engagement, linking to /join?next=. Why: zero SEO impact.
