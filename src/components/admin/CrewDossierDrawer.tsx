@@ -20,11 +20,13 @@ export default function CrewDossierDrawer({ crew, onClose, onSaved }: { crew: an
   const [busy, setBusy] = useState(false);
   const [passport, setPassport] = useState("");
   const [dob, setDob] = useState("");
+  const [nat, setNat] = useState("");
+  const [wa, setWa] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!crew) return;
-    setPassport(crew.passport_number || ""); setDob(crew.date_of_birth || "");
+    setPassport(crew.passport_number || ""); setDob(crew.date_of_birth || ""); setNat(crew.nationality || ""); setWa(crew.whatsapp_number || "");
     setBusy(true);
     const since = new Date(Date.now() - 7 * 86400000).toISOString();
     (async () => {
@@ -53,7 +55,7 @@ export default function CrewDossierDrawer({ crew, onClose, onSaved }: { crew: an
 
   const save = async () => {
     setSaving(true);
-    const { error } = await supabase.from("crew_profiles").update({ passport_number: passport, date_of_birth: dob || null }).eq("id", crew.id);
+    const { error } = await supabase.from("crew_profiles").update({ passport_number: passport, date_of_birth: dob || null, nationality: nat.trim() || null, whatsapp_number: wa.trim() || null }).eq("id", crew.id);
     setSaving(false);
     if (error) return toast.error("Could not save: " + error.message);
     toast.success("Saved"); onSaved();
@@ -110,6 +112,10 @@ export default function CrewDossierDrawer({ crew, onClose, onSaved }: { crew: an
               </Section>
 
               <Section title="🛂 Admin edit">
+                <label className="text-xs" style={{ color: "#94A3B8" }}>Nationality</label>
+                <input value={nat} onChange={(e) => setNat(e.target.value)} placeholder="e.g. Vietnamese" className="w-full px-2 py-1.5 rounded-lg mb-2" style={{ background: "#0D1B2A", border: `1px solid ${BORDER}` }} />
+                <label className="text-xs" style={{ color: "#94A3B8" }}>WhatsApp / phone (with country code)</label>
+                <input value={wa} onChange={(e) => setWa(e.target.value)} placeholder="+84..." className="w-full px-2 py-1.5 rounded-lg mb-2" style={{ background: "#0D1B2A", border: `1px solid ${BORDER}` }} />
                 <label className="text-xs" style={{ color: "#94A3B8" }}>Passport number</label>
                 <input value={passport} onChange={(e) => setPassport(e.target.value)} className="w-full px-2 py-1.5 rounded-lg mb-2" style={{ background: "#0D1B2A", border: `1px solid ${BORDER}` }} />
                 <label className="text-xs" style={{ color: "#94A3B8" }}>Date of birth (YYYY-MM-DD)</label>

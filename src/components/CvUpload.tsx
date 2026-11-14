@@ -147,6 +147,16 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
     }
   };
 
+  const [regPhone, setRegPhone] = useState("");
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase.from("crew_profiles").select("whatsapp_number").eq("id", user.id).maybeSingle()
+      .then(({ data }) => setRegPhone((data as any)?.whatsapp_number || ""));
+  }, [user?.id]);
+  const parsedNat = (cvSummary?.personal?.nationality ?? cvSummary?.nationality ?? "") as string;
+  const phoneNat = nationalityFromPhone(regPhone);
+  const natConflict = !!(parsedNat && phoneNat && !parsedNat.toLowerCase().startsWith(phoneNat.toLowerCase().slice(0, 4)));
+
   const handleConfirm = async () => {
     if (!cvSummary || !user || saving) return;
     setSaving(true);
@@ -161,7 +171,8 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
     
     if (firstName) mapped.firstName = firstName;
     if (lastName) mapped.lastName = lastName;
-    if (cv.nationality || cvSummary.nationality) mapped.nationality = cv.nationality || cvSummary.nationality;
+    const natVal = (cvSummary.personal?.nationality ?? cvSummary.nationality ?? "").trim();
+    if (natVal) mapped.nationality = natVal;
     
     const rankVal = cv.rank || cvSummary.rank;
     if (rankVal && RANK_MAP[rankVal]) mapped.role = RANK_MAP[rankVal];
@@ -255,6 +266,19 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
       {!isProcessing && showConfirmation && cvSummary && (
         <div style={{ background: '#0D1B2A', border: '1px solid #D4AF37', borderRadius: '12px', padding: '20px' }}>
           <h3 style={{ color: '#D4AF37', marginBottom: '16px', fontSize: '15px', fontWeight: 'bold' }}>✅ CV Read Successfully — Please Confirm</h3>
+
+          {/* Nationality — always confirmed by the seafarer, never silently overwritten */}
+          <div style={{ marginBottom: '12px' }}>
+            <label style={{ color: '#888', fontSize: '12px' }}>NATIONALITY</label>
+            <input value={parsedNat} placeholder={phoneNat || 'e.g. Filipino'} onChange={e => setCvSummary({ ...cvSummary, nationality: e.target.value, personal: cvSummary.personal ? { ...cvSummary.personal, nationality: e.target.value } : cvSummary.personal })}
+              style={{ display:'block', width:'100%', background:'#1a2e47', border: natConflict ? '1px solid #f59e0b' : '1px solid #2a4060', color:'white', padding:'8px', borderRadius:'6px', marginTop:'4px', fontSize: '13px' }} />
+            {natConflict && (
+              <p style={{ color: '#f59e0b', fontSize: '12px', marginTop: '6px' }}>
+                ⚠ The CV says "{parsedNat}" but your registered phone is from {phoneNat}. This often comes from an agency letterhead. Please correct it if needed.
+                {' '}<button type="button" onClick={() => setCvSummary({ ...cvSummary, nationality: phoneNat, personal: cvSummary.personal ? { ...cvSummary.personal, nationality: phoneNat } : cvSummary.personal })} style={{ color: '#D4AF37', textDecoration: 'underline' }}>Use {phoneNat}</button>
+              </p>
+            )}
+          </div>
 
           {/* Rank & Experience */}
           <div style={{ marginBottom: '12px' }}>
