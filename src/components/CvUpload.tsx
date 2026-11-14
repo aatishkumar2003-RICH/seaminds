@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { logEvent } from "@/lib/logEvent";
 import { Button } from "@/components/ui/button";
 import { readDocumentText } from "@/lib/brainAttachments";
+import { resolveNationality } from "@/lib/crewManning";
 import { Check, Loader2, FileText, Ship, GraduationCap, Stethoscope, Upload } from "lucide-react";
 
 interface CvUploadProps {
@@ -154,8 +155,9 @@ const CvUpload = ({ onParsed, onFileReady }: CvUploadProps) => {
       .then(({ data }) => setRegPhone((data as any)?.whatsapp_number || ""));
   }, [user?.id]);
   const parsedNat = (cvSummary?.personal?.nationality ?? cvSummary?.nationality ?? "") as string;
-  const phoneNat = nationalityFromPhone(regPhone);
-  const natConflict = !!(parsedNat && phoneNat && !parsedNat.toLowerCase().startsWith(phoneNat.toLowerCase().slice(0, 4)));
+  const phoneRes = resolveNationality({ whatsapp_number: regPhone });
+  const phoneNat = phoneRes.source === "phone" ? phoneRes.name : "";
+  const natConflict = !!(parsedNat && phoneNat && resolveNationality({ nationality: parsedNat }).name !== phoneNat);
 
   const handleConfirm = async () => {
     if (!cvSummary || !user || saving) return;
