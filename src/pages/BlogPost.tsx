@@ -7,6 +7,7 @@ import { ArrowLeft, Share2 } from "lucide-react";
 import HomeNav from "@/components/homepage/HomeNav";
 import HomeFooter from "@/components/homepage/HomeFooter";
 import CrewInviteBanner from "@/components/blog/CrewInviteBanner";
+import BlogReaderDock from "@/components/blog/BlogReaderDock";
 
 interface BlogPostData {
   id: string;
@@ -179,6 +180,7 @@ const BlogPost = () => {
             url: `https://seaminds.life/blog/${slug}`,
             datePublished: post.created_at,
             dateModified: post.created_at,
+            isAccessibleForFree: true,
             author: { "@type": "Organization", name: "SeaMinds", url: "https://seaminds.life" },
             publisher: {
               "@type": "Organization",
@@ -425,6 +427,7 @@ const BlogPost = () => {
           </Button>
         </div>
       </article>
+      {slug && <BlogReaderDock slug={slug} />}
       <HomeFooter />
     </div>
   );
