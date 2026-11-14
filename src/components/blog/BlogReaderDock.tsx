@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { getConsent } from "@/lib/analytics";
 
 /**
  * SEO-safe reader prompt: the full article always stays on the page for Google.
@@ -23,7 +24,8 @@ const BlogReaderDock = ({ slug }: { slug: string }) => {
       if (at && Date.now() - at < COOLDOWN_MS) return;
     } catch { /* ignore */ }
     let scrolled = false, timed = false;
-    const tryShow = () => { if (scrolled && timed) setShow(true); };
+    const tryShow = () => { if (scrolled && timed && getConsent() !== null) setShow(true); };
+    const poll = window.setInterval(tryShow, 2000);
     const timer = window.setTimeout(() => { timed = true; tryShow(); }, 12000);
     const onScroll = () => {
       const h = document.documentElement;
@@ -31,7 +33,7 @@ const BlogReaderDock = ({ slug }: { slug: string }) => {
       if (depth >= 0.4) { scrolled = true; tryShow(); }
     };
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => { window.clearTimeout(timer); window.removeEventListener("scroll", onScroll); };
+    return () => { window.clearTimeout(timer); window.clearInterval(poll); window.removeEventListener("scroll", onScroll); };
   }, [isReady, user]);
 
   if (!show || user) return null;
